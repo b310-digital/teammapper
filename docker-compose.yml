@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    tty: true
+    stdin_open: true
+    environment:
+      MODE: DEV
+      BINDING: "0.0.0.0"
+      POSTGRES_DATABASE: ${POSTGRES_DB:-mindmapper-backend-dev}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mindmapper-password}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-mindmapper-user}
+      POSTGRES_TEST_DATABASE: ${DOCKER_COMPOSE_APP_ENV_POSTGRES_TEST_DATABASE:-mindmapper-backend-test}
+      POSTGRES_TEST_HOST: ${DOCKER_COMPOSE_APP_ENV_POSTGRES_HOST:-postgres}
+      POSTGRES_TEST_PASSWORD: ${DOCKER_COMPOSE_APP_ENV_POSTGRES_PASSWORD:-mindmapper-password}
+      POSTGRES_TEST_PORT: ${DOCKER_COMPOSE_APP_ENV_POSTGRES_PORT:-5432}
+      POSTGRES_TEST_USER: ${DOCKER_COMPOSE_APP_ENV_POSTGRES_USER:-mindmapper-user}
+    ports:
+      - "${APP_FRONTEND_PORT:-4200}:4200"
+      - "${APP_BACKTEND_PORT:-3000}:3000"
+    volumes:
+      - .:/home/node/app
+      - app_backend_node_modules:/home/node/app/mindmapper-backend/node_modules
+      - app_frontend_node_modules:/home/node/app/mindmapper-frontend/node_modules
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: ${POSTGRES_DB:-mindmapper-backend-dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mindmapper-password}
+      POSTGRES_USER: ${POSTGRES_USER:-mindmapper-user}
+    # Exposing the port is not needed unless you want to access this database instance from the host.
+    # Be careful when other postgres docker container are running on the same port
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/pgdata
+
+volumes:
+  postgres_data:
+  app_backend_node_modules:
+  app_frontend_node_modules:

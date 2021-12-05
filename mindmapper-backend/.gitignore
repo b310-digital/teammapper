@@ -42,10 +42,9 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
-docker-compose.override.yml
+
 .env
 
-ca/*.crt
-ca/*.pem
-ca/*.key
-ca/*.req
+# We serve the frontend from this folder.
+# During production build this directory will be filled with the production-ready frontend code.
+client

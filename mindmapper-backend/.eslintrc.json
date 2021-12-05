@@ -1,0 +1,43 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true,
+        "jest/globals": true
+    },
+    "extends": [
+        "plugin:import/typescript",
+        "airbnb-typescript/base",
+        "plugin:nestjs/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 12,
+        "sourceType": "module",
+        "project": ["tsconfig.json"]
+    },
+    "plugins": [
+        "@typescript-eslint",
+        "jest",
+        "nestjs",
+        "import"
+    ],
+    "rules": {
+        "import/extensions": [
+           "error",
+           "ignorePackages",
+           {
+             "js": "never",
+             "ts": "never"
+           }
+        ]
+     },
+    "settings": {
+        "import/resolver": {
+            "typescript": {},
+            "node": {
+                "extensions": [".js", ".ts"],
+                "moduleDirectory": ["node_modules", "src/"]
+            }
+        }
+    }
+}

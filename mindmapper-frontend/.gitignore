@@ -42,10 +42,3 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
-docker-compose.override.yml
-.env
-
-ca/*.crt
-ca/*.pem
-ca/*.key
-ca/*.req

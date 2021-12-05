@@ -1,0 +1,49 @@
+div.floating-buttons {
+    .mat-mini-fab {
+        z-index: 2;
+        position: absolute;
+    }
+
+    .add-node, .remove-node,
+    .undo, .redo {
+        top: 80px;
+    }
+
+    .add-node, .remove-node {
+        background-color: #00a3d3;
+        color: #fff;
+    }
+
+    .add-node {
+        left: 15px;
+    }
+
+    .remove-node {
+        left: 65px;
+    }
+
+    .undo {
+        right: 65px;
+    }
+
+    .redo {
+        right: 15px;
+    }
+
+    .zoom-in, .zoom-out, .center {
+        right: 15px;
+    }
+
+    .zoom-out {
+        bottom: 100px;
+    }
+
+    .zoom-in {
+        bottom: 150px;
+    }
+
+    .center {
+        bottom: 45px;
+    }
+
+}
