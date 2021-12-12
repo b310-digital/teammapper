@@ -7,10 +7,9 @@ import Node, {
     NodeProperties,
     UserNodeProperties
 } from '../models/node'
-import Map, { DomElements } from '../map'
+import MmpMap, { DomElements } from '../map'
 import * as d3 from 'd3'
 import { v4 as uuidv4 } from 'uuid'
-import {Map as D3Map} from 'd3-collection'
 import {Event} from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
@@ -23,20 +22,20 @@ export default class Nodes {
 
     /**
      * Get the associated map instance and initialize counter and nodes.
-     * @param {Map} map
+     * @param {MmpMap} map
      */
-    constructor(map: Map) {
+    constructor(map: MmpMap) {
         this.map = map
 
         this.counter = 0
-        this.nodes = d3.map()
+        this.nodes = new Map()
     }
     static NodePropertyMapping: any
 
-    private map: Map
+    private map: MmpMap
 
     private counter: number
-    private nodes: D3Map<Node>
+    private nodes: Map<string, Node>
     private selectedNode: Node
 
     /**
@@ -311,10 +310,10 @@ export default class Nodes {
         }
 
         if (!node.isRoot) {
-            this.nodes.remove(node.id)
+            this.nodes.delete(node.id)
 
             this.getDescendants(node).forEach((node: Node) => {
-                this.nodes.remove(node.id)
+                this.nodes.delete(node.id)
             })
 
             this.map.draw.clear()
@@ -346,7 +345,7 @@ export default class Nodes {
             Log.error('There are no nodes with id "' + id + '"')
         }
 
-        return this.nodes.values().filter((n: Node) => {
+        return Array.from(this.nodes.values()).filter((n: Node) => {
             return n.parent && n.parent.id === node.id
         }).map((n: Node) => {
             return this.getNodeProperties(n)
@@ -435,7 +434,7 @@ export default class Nodes {
      * @returns {Node[]}
      */
     public getChildren(node: Node): Node[] {
-        return this.nodes.values().filter((n: Node) => {
+        return Array.from(this.nodes.values()).filter((n: Node) => {
             return n.parent && n.parent.id === node.id
         })
     }
@@ -467,7 +466,7 @@ export default class Nodes {
      * Return an array of all nodes.
      */
     public getNodes(): Node[] {
-        return this.nodes.values()
+        return Array.from(this.nodes.values())
     }
 
     /**
@@ -629,7 +628,7 @@ export default class Nodes {
      * @param {Node[]} nodes
      * @returns {Node} lowerNode
      */
-    private getLowerNode(nodes: Node[] = this.nodes.values()): Node {
+    private getLowerNode(nodes: Node[] = Array.from(this.nodes.values())): Node {
         if (nodes.length > 0) {
             let tmp = nodes[0].coordinates.y, lowerNode = nodes[0]
 

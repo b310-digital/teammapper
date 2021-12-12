@@ -1,7 +1,7 @@
 import * as d3 from 'd3'
 import Map from '../map'
 import {Event} from './events'
-import {ZoomBehavior} from 'd3-zoom'
+import {ZoomBehavior, D3ZoomEvent} from 'd3-zoom'
 import Log from '../../utils/log'
 
 /**
@@ -20,8 +20,8 @@ export default class Zoom {
     constructor(map: Map) {
         this.map = map
 
-        this.zoomBehavior = d3.zoom().scaleExtent([0.5, 2]).on('zoom', () => {
-            this.map.dom.g.attr('transform', d3.event.transform)
+        this.zoomBehavior = d3.zoom().scaleExtent([0.5, 2]).on('zoom', (event: D3ZoomEvent<any, any>) => {
+            this.map.dom.g.attr('transform', event.transform)
         })
     }
 
