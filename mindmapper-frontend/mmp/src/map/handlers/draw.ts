@@ -65,10 +65,10 @@ export default class Draw {
                 return node.id
             })
             .attr('transform', (node: Node) => 'translate(' + node.coordinates.x + ',' + node.coordinates.y + ')')
-            .on('dblclick', (node: Node) => {
-                d3.event.stopPropagation()
+            .on('dblclick', (event: MouseEvent, node: Node) => {
+                event.stopPropagation()
                 this.enableNodeNameEditing(node)
-            }).on('touchstart', (node: Node) => {
+            }).on('touchstart', (_event: TouchEvent, node: Node) => {
                 if (!tapedTwice) {
                     tapedTwice = true
 
