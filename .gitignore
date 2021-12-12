@@ -43,7 +43,10 @@ testem.log
 .DS_Store
 Thumbs.db
 docker-compose.override.yml
+
+# Environment vars
 .env
+.env.prod
 
 ca/*.crt
 ca/*.pem
