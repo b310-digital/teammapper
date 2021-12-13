@@ -49,3 +49,5 @@ ca/*.crt
 ca/*.pem
 ca/*.key
 ca/*.req
+
+.env.prod

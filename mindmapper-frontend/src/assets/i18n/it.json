@@ -86,7 +86,7 @@
             "SECTIONS": [
                 {
                     "TITLE": "Mappe mentali",
-                    "SUBTITLE": "Mindmapp segue l'approccio delle mappe mentali di Tony Buzan, che sfruttano l'evocatività delle immagini e dei colori per facilitare la memorizzazione di concetti, stimolando la creatività e le associazioni mentali.",
+                    "SUBTITLE": "Mindmapper segue l'approccio delle mappe mentali di Tony Buzan, che sfruttano l'evocatività delle immagini e dei colori per facilitare la memorizzazione di concetti, stimolando la creatività e le associazioni mentali.",
                     "CARDS": [
                         {
                             "TITLE": "Colori e immagini",
@@ -104,7 +104,7 @@
                 },
                 {
                     "TITLE": "Obiettivi",
-                    "SUBTITLE": "Mindmapp si pone come principi cardine la semplicità e l'adattabilità, e sulla base di tali principi cresce secondo le esigenze dell'utente e le tecnologie future, ma assicurando sempre un'applicazione intuitiva.",
+                    "SUBTITLE": "Mindmapper si pone come principi cardine la semplicità e l'adattabilità, e sulla base di tali principi cresce secondo le esigenze dell'utente e le tecnologie future, ma assicurando sempre un'applicazione intuitiva.",
                     "CARDS": [
                         {
                             "TITLE": "Design minimale",
@@ -112,7 +112,7 @@
                         },
                         {
                             "TITLE": "Orientata al futuro",
-                            "CONTENT": "Le tecnologie web si evolvono continuamente, e con esse il modo in cui vengono utilizzate. Mindmapp segue ed eventualmente adotta le ultime tecnologie per garantire un servizio sempre migliore."
+                            "CONTENT": "Le tecnologie web si evolvono continuamente, e con esse il modo in cui vengono utilizzate. Mindmapper segue ed eventualmente adotta le ultime tecnologie per garantire un servizio sempre migliore."
                         },
                         {
                             "TITLE": "Personalizzabile",
@@ -122,7 +122,7 @@
                 },
                 {
                     "TITLE": "Donazioni",
-                    "SUBTITLE": "Mindmapp è gratuita ed il suo codice è pubblico, ogni contributo sarà di grande aiuto per mantenere e migliorare l'applicazione!"
+                    "SUBTITLE": "Mindmapper è gratuita ed il suo codice è pubblico, ogni contributo sarà di grande aiuto per mantenere e migliorare l'applicazione!"
                 }
             ]
         },
@@ -135,8 +135,8 @@
     },
     "MESSAGES": {
         "NO_SAVED_MAPS": "Nessuna mappa salvata!",
-        "INITIAL_INFORMATION": "Mindmapp è pronto ☺",
-        "WELCOME_MESSAGE": "Benvenuti nell'app Mindmapp ☺",
+        "INITIAL_INFORMATION": "Mindmapper è pronto ☺",
+        "WELCOME_MESSAGE": "Benvenuti nell'app Mindmapper ☺",
         "MAP_DELETION_CONFIRM": "Sei sicuro di voler cancellare la mappa?"
     },
     "GENERAL": {

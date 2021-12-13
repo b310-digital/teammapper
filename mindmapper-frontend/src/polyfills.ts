@@ -43,3 +43,6 @@ import 'zone.js/dist/zone' // Included with Angular CLI.
  * Need to import at least one locale-data with intl.
  */
 // import 'intl/locale-data/jsonp/en';
+
+// to support the process keyword
+(window as any).process = { env: { DEBUG: undefined }, };

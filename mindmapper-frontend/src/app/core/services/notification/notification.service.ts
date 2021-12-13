@@ -10,7 +10,7 @@ export class NotificationService {
 
     public message: Observable<string>
     private readonly messageSubject: BehaviorSubject<string>
-    private messageTimeoutId: number | null
+    private messageTimeoutId: NodeJS.Timeout | null
 
     constructor (private matSnackBar: MatSnackBar,
                  private utilsService: UtilsService) {

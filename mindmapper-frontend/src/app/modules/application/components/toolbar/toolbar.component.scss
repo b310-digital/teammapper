@@ -1,3 +1,4 @@
+@use '@angular/material' as mat;
 @import "~src/theme.scss";
 
 mat-toolbar {
@@ -34,9 +35,9 @@ mat-toolbar::-webkit-scrollbar-track {
 }
 
 mat-toolbar::-webkit-scrollbar-thumb {
-    background: mat-color($app-primary, .7);
+    background: mat.get-color-from-palette($app-primary, .7);
 }
 
 mat-toolbar::-webkit-scrollbar-thumb:hover {
-    background: mat-color($app-primary, .8);
+    background: mat.get-color-from-palette($app-primary, .8);
 }
