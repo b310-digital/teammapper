@@ -3,11 +3,11 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "mindmapp": {
+    "mindmapper": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
-      "prefix": "mindmapp",
+      "prefix": "mindmapper",
       "schematics": {
         "@schematics/angular:component": {
           "style": "scss"
@@ -47,7 +47,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -60,25 +59,37 @@
                   "maximumError": "5mb"
                 }
               ]
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
             }
           }
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "mindmapp:build",
+            "browserTarget": "mindmapper:build",
             "proxyConfig": "src/proxy.conf.json"
           },
           "configurations": {
             "production": {
-              "browserTarget": "mindmapp:build:production"
+              "browserTarget": "mindmapper:build:production"
+            },
+            "development": {
+              "browserTarget": "mindmapper:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "mindmapp:build"
+            "browserTarget": "mindmapper:build"
           }
         },
         "test": {
@@ -118,11 +129,11 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "mindmapp:serve"
+            "devServerTarget": "mindmapper:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "mindmapp:serve:production"
+              "devServerTarget": "mindmapper:serve:production"
             }
           }
         },
@@ -133,7 +144,7 @@
       }
     }
   },
-  "defaultProject": "mindmapp",
+  "defaultProject": "mindmapper",
   "cli": {
     "analytics": false
   }

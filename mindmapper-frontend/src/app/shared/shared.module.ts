@@ -57,7 +57,6 @@ const PIPES = [
         MatToolbarModule,
         ...PIPES
     ],
-    entryComponents:[ConnectionInfoDialogComponent],
     providers: [DialogService]
 })
 export class SharedModule {

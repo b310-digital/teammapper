@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core'
 import {Observable} from 'rxjs'
 import {SettingsService} from '../settings/settings.service'
 import {UtilsService} from '../utils/utils.service'
-import * as JsPDF from 'jspdf'
+import { jsPDF } from "jspdf";
 import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
 import { ExportHistory, ExportNodeProperties, MapSnapshot, UserNodeProperties } from '@mmp/map/types'
@@ -283,12 +283,12 @@ export class MmpService {
             case 'pdf':
                 const imageUri = await this.exportAsImage('jpeg')
                 const htmlImageElement = await UtilsService.imageFromUri(imageUri)
-                const pdf = new JsPDF({
+                const pdf = new jsPDF({
                     orientation: htmlImageElement.width > htmlImageElement.height ? 'l' : 'p',
-                    format: [htmlImageElement.width * 0.75, htmlImageElement.height * 0.75]
+                    format: [htmlImageElement.width * 0.75, htmlImageElement.height * 0.75],
+                    unit: 'px'
                 })
-
-                pdf.addImage(imageUri, 'JPEG', 0, 0)
+                pdf.addImage(imageUri, 'JPEG', 0, 0, htmlImageElement.width * 0.5, htmlImageElement.height * 0.5, '', 'NONE', 0)
 
                 pdf.save(`${name}.${format}`)
 
@@ -328,8 +328,15 @@ export class MmpService {
     /**
      * Set the current mind mmp.
      */
-    public setCurrentMap (id: string) {
+    public setCurrentMap (id: string): void {
         this.currentMap = this.maps.get(id)
+    }
+
+    /**
+     * Get the current mind mmp.
+     */
+    public getCurrentMap (): MmpMap {
+        return this.currentMap
     }
 
     /**

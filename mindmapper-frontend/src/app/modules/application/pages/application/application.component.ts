@@ -4,7 +4,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { NotificationService } from '../../../../core/services/notification/notification.service'
-import { ActivatedRoute, Router } from '@angular/router'
+import { ActivatedRoute, Router, NavigationStart, NavigationEnd, RouterEvent } from '@angular/router'
 import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent } from '@mmp/map/types'
 import { MapOptions } from 'src/app/shared/models/settings.model'
 
@@ -35,6 +35,12 @@ export class ApplicationComponent implements OnInit {
         this.notificationService.setMessage('MESSAGES.INITIAL_INFORMATION')
 
         this.handleImageDropObservable()
+
+        this.router.events.subscribe((event: RouterEvent) => {
+            if (event instanceof NavigationStart) {
+                this.mapSyncService.leaveMap()
+            }
+        });
     }
 
     public handleImageDropObservable () {

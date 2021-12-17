@@ -1,6 +1,4 @@
 import {Component, OnInit} from '@angular/core'
-import {UtilsService} from '../../../../core/services/utils/utils.service'
-import * as packageJson from '../../../../../../package.json'
 
 @Component({
     selector: 'mindmapp-jumbotron',
@@ -15,7 +13,6 @@ export class JumbotronComponent implements OnInit {
     }
 
     public ngOnInit () {
-        this.projectName = UtilsService.capitalizeWord(packageJson.name)
     }
 
 }

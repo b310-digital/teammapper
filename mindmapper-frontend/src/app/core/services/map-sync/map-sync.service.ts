@@ -187,6 +187,10 @@ export class MapSyncService {
       })
     }
 
+    public leaveMap(): void {
+      this.socket.emit('leave')
+    }
+
     public async updateMap(_oldMapData?: MapSnapshot): Promise<void> {
         const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
         this.notificationService.setMessage('Client: Update Map')
