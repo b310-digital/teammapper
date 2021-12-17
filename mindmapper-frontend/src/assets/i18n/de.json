@@ -75,7 +75,7 @@
      "PAGES": {
         "ABOUT": {
             "INTRODUCTION": {
-                "APPLICATION_DESCRIPTION": "Web application to draw mind maps.",
+                "APPLICATION_DESCRIPTION": "Web application to collaboratively draw mind maps. Forked from mindmapp by cedoor.",
                 "APPLICATION_PROPERTIES": [
                     "Effective mind maps",
                     "Modern web application",
