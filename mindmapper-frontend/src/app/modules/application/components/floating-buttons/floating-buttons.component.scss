@@ -1,18 +1,16 @@
 div.floating-buttons {
     .no-touch {
-        touch-action: manipulation;
         width: 50px;
         height: 50px;
         z-index: 2;
         position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
-    .mat-button-wrapper {
+    button {
         touch-action: manipulation;
-    }
-
-    .mat-mini-fab {
-        position: absolute;
     }
 
     .add-node, .remove-node,
