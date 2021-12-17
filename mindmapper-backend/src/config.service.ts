@@ -65,7 +65,7 @@ class ConfigService {
       //
       // See https://www.andronio.me/2020/08/20/connecting-typeorm-to-a-postgres-database-on-heroku/
       // See https://github.com/typeorm/typeorm/issues/278
-      ssl: this.isProduction() && { rejectUnauthorized: this.getValue('POSTGRES_SSL_REJECT_UNAUTHORIZED', true) !== 'false' },
+      ssl: this.getValue('POSTGRES_SSL') !== 'false'  && { rejectUnauthorized: this.getValue('POSTGRES_SSL_REJECT_UNAUTHORIZED') !== 'false' },
     };
   }
 }

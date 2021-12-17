@@ -78,7 +78,7 @@ Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     cp .env.default .env.prod
     ```
 
--   Adjust all configs in `.env.prod`, e.g. database settings, ports
+-   Adjust all configs in `.env.prod`, e.g. database settings, ports, disable ssl env vars if necessary
 
 -   Start everything at once:
 
