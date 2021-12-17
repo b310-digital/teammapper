@@ -1,6 +1,17 @@
 div.floating-buttons {
-    .mat-mini-fab {
+    .no-touch {
+        touch-action: manipulation;
+        width: 50px;
+        height: 50px;
         z-index: 2;
+        position: absolute;
+    }
+
+    .mat-button-wrapper {
+        touch-action: manipulation;
+    }
+
+    .mat-mini-fab {
         position: absolute;
     }
 
@@ -9,7 +20,7 @@ div.floating-buttons {
         top: 80px;
     }
 
-    .add-node, .remove-node {
+    .add-node button, .remove-node button {
         background-color: #00a3d3;
         color: #fff;
     }

@@ -1,29 +1,40 @@
 <div class="floating-buttons">
-    <button (click)="mmpService.addNode()" [title]="'TOOLTIPS.ADD_NODE' | translate"
-            class="mat-elevation-z2 add-node"
-            mat-mini-fab>
-        <mat-icon aria-label="Add node">add</mat-icon>
-    </button>
-    <button (click)="mmpService.removeNode()" [title]="'TOOLTIPS.REMOVE_NODE' | translate"
-            class="mat-elevation-z2 remove-node"
-            mat-mini-fab>
-        <mat-icon aria-label="Remove node">remove</mat-icon>
-    </button>
+    <div class="add-node no-touch">
+        <button (click)="mmpService.addNode()" [title]="'TOOLTIPS.ADD_NODE' | translate"
+                class="mat-elevation-z2"
+                mat-mini-fab>
+            <mat-icon aria-label="Add node">add</mat-icon>
+        </button>
+    </div>
+    <div class="remove-node no-touch">
+        <button (click)="mmpService.removeNode()" [title]="'TOOLTIPS.REMOVE_NODE' | translate"
+                class="mat-elevation-z2"
+                mat-mini-fab>
+            <mat-icon aria-label="Remove node">remove</mat-icon>
+        </button>
+    </div>
 
-    <button (click)="mmpService.zoomIn()" [title]="'TOOLTIPS.ZOOM_IN_MAP' | translate"
-            class="mat-elevation-z2 zoom-in"
-            mat-mini-fab>
-        <mat-icon aria-label="Zoom in" color="primary">zoom_in</mat-icon>
-    </button>
-    <button (click)="mmpService.zoomOut()" [title]="'TOOLTIPS.ZOOM_OUT_MAP' | translate"
-            class="mat-elevation-z2 zoom-out"
-            mat-mini-fab>
-        <mat-icon aria-label="Zoom out" color="primary">zoom_out</mat-icon>
-    </button>
+    <div class="zoom-in no-touch">
+        <button (click)="mmpService.zoomIn()" [title]="'TOOLTIPS.ZOOM_IN_MAP' | translate"
+                class="mat-elevation-z2"
+                mat-mini-fab>
+            <mat-icon aria-label="Zoom in" color="primary">zoom_in</mat-icon>
+        </button>
+    </div>
 
-    <button (click)="mmpService.center()" [title]="'TOOLTIPS.CENTER_MAP' | translate"
-            class="mat-elevation-z2 center"
-            mat-mini-fab>
-        <mat-icon aria-label="Center" color="primary">center_focus_weak</mat-icon>
-    </button>
+    <div class="zoom-out no-touch">
+        <button (click)="mmpService.zoomOut()" [title]="'TOOLTIPS.ZOOM_OUT_MAP' | translate"
+                class="mat-elevation-z2 "
+                mat-mini-fab>
+            <mat-icon aria-label="Zoom out" color="primary">zoom_out</mat-icon>
+        </button>
+    </div>
+
+    <div class="center no-touch">
+        <button (click)="mmpService.center()" [title]="'TOOLTIPS.CENTER_MAP' | translate"
+                class="mat-elevation-z2"
+                mat-mini-fab>
+            <mat-icon aria-label="Center" color="primary">center_focus_weak</mat-icon>
+        </button>
+    </div>
 </div>
