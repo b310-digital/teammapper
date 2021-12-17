@@ -285,10 +285,10 @@ export class MmpService {
                 const htmlImageElement = await UtilsService.imageFromUri(imageUri)
                 const pdf = new jsPDF({
                     orientation: htmlImageElement.width > htmlImageElement.height ? 'l' : 'p',
-                    format: [htmlImageElement.width * 0.75, htmlImageElement.height * 0.75]
+                    format: [htmlImageElement.width * 0.75, htmlImageElement.height * 0.75],
+                    unit: 'px'
                 })
-
-                pdf.addImage(imageUri, 'JPEG', 0, 0, 0, 0, '', 'NONE', 0)
+                pdf.addImage(imageUri, 'JPEG', 0, 0, htmlImageElement.width * 0.5, htmlImageElement.height * 0.5, '', 'NONE', 0)
 
                 pdf.save(`${name}.${format}`)
 
@@ -328,8 +328,15 @@ export class MmpService {
     /**
      * Set the current mind mmp.
      */
-    public setCurrentMap (id: string) {
+    public setCurrentMap (id: string): void {
         this.currentMap = this.maps.get(id)
+    }
+
+    /**
+     * Get the current mind mmp.
+     */
+    public getCurrentMap (): MmpMap {
+        return this.currentMap
     }
 
     /**

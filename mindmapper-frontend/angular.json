@@ -59,6 +59,14 @@
                   "maximumError": "5mb"
                 }
               ]
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
             }
           }
         },
@@ -71,8 +79,12 @@
           "configurations": {
             "production": {
               "browserTarget": "mindmapper:build:production"
+            },
+            "development": {
+              "browserTarget": "mindmapper:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
@@ -132,7 +144,7 @@
       }
     }
   },
-  "defaultProject": "mindmapperer",
+  "defaultProject": "mindmapper",
   "cli": {
     "analytics": false
   }
