@@ -75,7 +75,7 @@
     text-decoration: underline;
 }
 
-.gitlab_link {
+.github_link {
     text-align: center;
     font-size : 12px;
     margin-top: 5px;
@@ -85,16 +85,6 @@
         text-decoration: none;
         transition     : color .3s ease;
     }
-}
-
-#kits_gitlab_link {
-    display     : inline-block;
-    width       : auto;
-    height      : 20px;
-    position    : relative;
-    top         : 5px;
-    margin-right: 3px;
-    color       : #999;
 }
 
 @media (max-width: 480px) {
