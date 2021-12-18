@@ -49,9 +49,10 @@ jobs:
         needs: mindmapper-backend-build
         container:
             image: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
+            options: --user root
 
         steps:
-            # - uses: actions/checkout@v2
+            - uses: actions/checkout@v2
 
             - run: npm --prefix mindmapper-backend ci
 
