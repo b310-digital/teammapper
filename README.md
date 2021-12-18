@@ -1,7 +1,5 @@
 # Mindmapper
 
-[![GitHub Super-Linter](https://github.com/b310-digital/mindmapper/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
-
 Mindmapping made simple: Host and create your own mindmaps. Share your mindmap sessions with others and collaborate on mindmaps.
 
 Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, mindmapper features shared mindmapping sessions with multiple users based on websockets.
