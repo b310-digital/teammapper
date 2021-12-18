@@ -3,8 +3,7 @@ import { MapSyncService } from '../../../../core/services/map-sync/map-sync.serv
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
-import { NotificationService } from '../../../../core/services/notification/notification.service'
-import { ActivatedRoute, Router, NavigationStart, NavigationEnd, RouterEvent } from '@angular/router'
+import { ActivatedRoute, Router, NavigationStart, RouterEvent } from '@angular/router'
 import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent } from '@mmp/map/types'
 import { MapOptions } from 'src/app/shared/models/settings.model'
 
@@ -19,7 +18,6 @@ export class ApplicationComponent implements OnInit {
 
     constructor (private mmpService: MmpService,
                  private settingsService: SettingsService,
-                 private notificationService: NotificationService,
                  private mapSyncService: MapSyncService,
                  private route: ActivatedRoute,
                  private router: Router) {
@@ -31,8 +29,6 @@ export class ApplicationComponent implements OnInit {
 
         // Create the mind map.
         this.initMap(settings.mapOptions)
-
-        this.notificationService.setMessage('MESSAGES.INITIAL_INFORMATION')
 
         this.handleImageDropObservable()
 
