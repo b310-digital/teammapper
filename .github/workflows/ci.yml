@@ -32,8 +32,27 @@ jobs:
               uses: docker/build-push-action@v2
               with:
                   context: .
+                  target: development
+                  push: true
                   tags: |
-                      ghcr.io/b310-digital/mindmapper:latest
+                      ghcr.io/b310-digital/mindmapper:ci-${{ github.ref }}-${{ github.sha }}-dev
+            #   outputs: type=docker,dest=/tmp/myimage.tar
+
+            # - name: Upload artifact
+            #   uses: actions/upload-artifact@v2
+            #   with:
+            #       name: myimage
+            #       path: /tmp/myimage.tar
+
+    mindmapper-backend-lint-2:
+        needs: mindmapper-backend-build
+        container:
+            image: ghcr.io/b310-digital/mindmapper:ci-${{ github.ref }}-${{ github.sha }}-dev
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - run: npm --prefix mindmapper-backend ci
 
     mindmapper-backend-lint:
         runs-on: ubuntu-latest
