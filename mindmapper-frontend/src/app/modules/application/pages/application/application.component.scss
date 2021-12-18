@@ -1,9 +1,9 @@
-div.mindmapp-application {
+div.mindmapper-application {
     height: 100%;
     display: flex;
     flex-direction: column;
 
-    mindmapp-map {
+    mindmapper-map {
         flex: 1;
     }
 }

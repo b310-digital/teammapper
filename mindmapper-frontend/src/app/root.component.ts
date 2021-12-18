@@ -6,7 +6,7 @@ import { ShortcutsService } from './core/services/shortcuts/shortcuts.service'
 import { routeAnimation } from './shared/animations/route.animation'
 
 @Component({
-    selector: 'mindmapp-root',
+    selector: 'mindmapper-root',
     templateUrl: 'root.component.html',
     styleUrls: ['./root.component.scss'],
     animations: [routeAnimation]

@@ -75,7 +75,7 @@
     "PAGES": {
         "ABOUT": {
             "INTRODUCTION": {
-                "APPLICATION_DESCRIPTION": "Applicazione web per creare mappe mentali.",
+                "APPLICATION_DESCRIPTION": "Applicazione web per creare mappe mentali. Forked from mindmapp by cedoor.",
                 "APPLICATION_PROPERTIES": [
                     "Mappe mentali efficaci",
                     "Applicazione web moderna",

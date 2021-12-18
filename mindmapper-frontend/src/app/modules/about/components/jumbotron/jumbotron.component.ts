@@ -1,18 +1,15 @@
 import {Component, OnInit} from '@angular/core'
 
 @Component({
-    selector: 'mindmapp-jumbotron',
+    selector: 'mindmapper-jumbotron',
     templateUrl: './jumbotron.component.html',
     styleUrls: ['./jumbotron.component.scss']
 })
-export class JumbotronComponent implements OnInit {
+export class JumbotronComponent {
 
     public projectName: string
 
     constructor () {
-    }
-
-    public ngOnInit () {
     }
 
 }
