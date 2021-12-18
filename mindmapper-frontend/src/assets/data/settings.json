@@ -1,12 +1,12 @@
 {
     "general": {
-        "language": "en"
+        "language": "de"
     },
     "mapOptions": {
         "centerOnResize": false,
         "autoBranchColors": true,
         "defaultNode": {
-            "name": "Node",
+            "name": "Knoten",
             "image": {
                 "src": "",
                 "size": 60
@@ -24,7 +24,7 @@
             "locked": true
         },
         "rootNode": {
-            "name": "Root node",
+            "name": "Wurzelknoten",
             "image": {
                 "src": "",
                 "size": 70
