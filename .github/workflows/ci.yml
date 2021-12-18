@@ -33,10 +33,33 @@ jobs:
   mindmapper-backend-test-e2e:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: mindmapper-user
+          POSTGRES_PASSWORD: mindmapper-password
+          POSTGRES_DB: mindmapper-backend-test
+        ports:
+        # will assign a random free host port
+        - 5432/tcp
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
     steps:
       - uses: actions/checkout@v2
 
       - run: npm --prefix mindmapper-backend ci
 
       - run: npm --prefix mindmapper-backend run test:e2e
+        env:
+          POSTGRES_TEST_HOST: localhost
+          POSTGRES_TEST_PASSWORD: mindmapper-password
+          POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
+          POSTGRES_TEST_USER: mindmapper-user
+          POSTGRES_TEST_DATABASE: mindmapper-backend-test
+          # use localhost for the host here because we are running the job on the VM.
+          # If we were running the job on in a container this would be postgres
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
 
