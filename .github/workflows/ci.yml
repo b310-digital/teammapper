@@ -60,8 +60,8 @@ jobs:
                   POSTGRES_TEST_DATABASE: mindmapper-backend-test
                   # Currently, the following env vars are required by mindmapper-backend/src/config.service.ts – even when the test are running.
                   # We should change this in the future.
-                  POSTGRES_DATABASE: "not"
-                  POSTGRES_PASSWORD: ""
-                  POSTGRES_PORT: ""
-                  POSTGRES_USER: ""
+                  POSTGRES_DATABASE: "value-required-but-not-relevant-for-test"
+                  POSTGRES_PASSWORD: "value-required-but-not-relevant-for-test"
+                  POSTGRES_PORT: "value-required-but-not-relevant-for-test"
+                  POSTGRES_USER: "value-required-but-not-relevant-for-test"
                   POSTGRES_HOST: localhost
