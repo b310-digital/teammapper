@@ -23,18 +23,20 @@ jobs:
   mindmapper-backend:lint:
     runs-on: ubuntu-latest
 
-    - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v2
 
-    - run: npm --prefix mindmapper-backend ci
+      - run: npm --prefix mindmapper-backend ci
 
-    - run: npm --prefix mindmapper-backend run lint
+      - run: npm --prefix mindmapper-backend run lint
 
   mindmapper-backend-test-e2e:
     runs-on: ubuntu-latest
 
-    - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v2
 
-    - run: npm --prefix mindmapper-backend ci
+      - run: npm --prefix mindmapper-backend ci
 
-    - run: npm --prefix mindmapper-backend run test:e2e
+      - run: npm --prefix mindmapper-backend run test:e2e
 
