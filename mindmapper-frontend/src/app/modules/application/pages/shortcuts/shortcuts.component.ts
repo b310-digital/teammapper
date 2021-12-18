@@ -4,7 +4,7 @@ import {Hotkey} from 'angular2-hotkeys'
 import { Location } from '@angular/common'
 
 @Component({
-    selector: 'mindmapp-shortcuts',
+    selector: 'mindmapper-shortcuts',
     templateUrl: './shortcuts.component.html',
     styleUrls: ['./shortcuts.component.scss']
 })

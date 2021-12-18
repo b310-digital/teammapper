@@ -2,7 +2,7 @@ import {Component, Input} from '@angular/core'
 import {MmpService} from '../../../../core/services/mmp/mmp.service'
 
 @Component({
-    selector: 'mindmapp-sliders-panel',
+    selector: 'mindmapper-sliders-panel',
     templateUrl: './slider-panels.component.html',
     styleUrls: ['./slider-panels.component.scss']
 })

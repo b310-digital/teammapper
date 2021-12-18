@@ -8,7 +8,7 @@ import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent } from '@mmp/map/
 import { MapOptions } from 'src/app/shared/models/settings.model'
 
 @Component({
-    selector: 'mindmapp-application',
+    selector: 'mindmapper-application',
     templateUrl: './application.component.html',
     styleUrls: ['./application.component.scss']
 })
@@ -50,7 +50,6 @@ export class ApplicationComponent implements OnInit {
         // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
         // Map_1 is currently apparently hardcoded inside the map component...
         this.mmpService.create('map_1', options)
-
 
         // Try to either load the given id from the server, or initialize a new map with empty data
         const givenId: string = this.route.snapshot.paramMap.get('id')

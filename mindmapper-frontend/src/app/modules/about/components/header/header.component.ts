@@ -3,19 +3,16 @@ import {UtilsService} from '../../../../core/services/utils/utils.service'
 import {faGithub, faGitter} from '@fortawesome/free-brands-svg-icons'
 
 @Component({
-    selector: 'mindmapp-header',
+    selector: 'mindmapper-header',
     templateUrl: './header.component.html',
     styleUrls: ['./header.component.scss']
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent {
 
     public faGithub = faGithub
     public faGitter = faGitter
 
     constructor () {
-    }
-
-    public ngOnInit () {
     }
 
     public slide (selector: string, event: Event) {

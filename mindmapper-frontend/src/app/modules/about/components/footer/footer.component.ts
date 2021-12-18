@@ -4,7 +4,7 @@ import {TranslateService} from '@ngx-translate/core'
 import {Settings} from '../../../../shared/models/settings.model'
 
 @Component({
-    selector: 'mindmapp-footer',
+    selector: 'mindmapper-footer',
     templateUrl: './footer.component.html',
     styleUrls: ['./footer.component.scss']
 })
