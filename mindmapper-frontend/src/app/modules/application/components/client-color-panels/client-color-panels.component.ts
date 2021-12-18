@@ -2,11 +2,11 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core'
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
 
 @Component({
-    selector: 'mindmapp-client-colors-panel',
+    selector: 'mindmapper-client-colors-panel',
     templateUrl: './client-color-panels.component.html',
     styleUrls: ['./client-color-panels.component.scss']
 })
-export class ClientColorPanelsComponent implements OnInit {
+export class ClientColorPanelsComponent {
 
     @ViewChild('background') public background: ElementRef
 
@@ -16,9 +16,6 @@ export class ClientColorPanelsComponent implements OnInit {
         mapSyncService.clientListChanged.subscribe((clients: string[]) => {
             this.clientColors = clients
         })
-    }
-
-    ngOnInit () {
     }
 
 }

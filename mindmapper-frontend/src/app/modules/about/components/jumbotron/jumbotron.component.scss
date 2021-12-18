@@ -1,7 +1,8 @@
+@use '@angular/material' as mat;
 @import "~src/theme.scss";
 
 section.jumbotron {
-    background-color: mat-color($app-primary);
+    background-color: mat.get-color-from-palette($app-primary);
     padding: 100px 0 40px 0;
     text-align: center;
     display: flex;
@@ -53,7 +54,7 @@ section.jumbotron {
         > a {
             width: 150px;
             font-weight: bold;
-            color: mat-color($app-primary);
+            color: mat.get-color-from-palette($app-primary);
             margin-bottom: 10px;
         }
 

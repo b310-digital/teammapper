@@ -1,7 +1,7 @@
 import {Component} from '@angular/core'
 
 @Component({
-    selector: 'mindmapp-share-fallback',
+    selector: 'mindmapper-share-fallback',
     templateUrl: 'share-fallback.component.html',
   })
   export class ShareFallbackComponent {

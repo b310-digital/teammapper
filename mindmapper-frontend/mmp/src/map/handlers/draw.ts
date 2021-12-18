@@ -65,10 +65,10 @@ export default class Draw {
                 return node.id
             })
             .attr('transform', (node: Node) => 'translate(' + node.coordinates.x + ',' + node.coordinates.y + ')')
-            .on('dblclick', (node: Node) => {
-                d3.event.stopPropagation()
+            .on('dblclick', (event: MouseEvent, node: Node) => {
+                event.stopPropagation()
                 this.enableNodeNameEditing(node)
-            }).on('touchstart', (node: Node) => {
+            }).on('touchstart', (_event: TouchEvent, node: Node) => {
                 if (!tapedTwice) {
                     tapedTwice = true
 
@@ -335,15 +335,18 @@ export default class Draw {
      */
     private updateNodeNameContainer(node: Node) {
         const name = node.getNameDOM(),
-            foreignObject: SVGForeignObjectElement = name.parentNode as SVGForeignObjectElement
+              foreignObject: SVGForeignObjectElement = name?.parentNode as SVGForeignObjectElement
         
         const [width, height]: number[] = (() => {
-            if (name.offsetWidth !== 0) {
+            if (name?.offsetWidth !== 0) {
               return [name.clientWidth, name.clientHeight]
-            } else {
+            } else if(node?.name?.length > 0) {
               // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
               // In these cases, try to estimate height and width before rendering
               return [node.name.length * node.font.size / 1.9, node.font.size]
+            } else {
+              // default values if empty
+              return [20, 20]
             }
         })()
 

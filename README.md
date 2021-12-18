@@ -78,15 +78,34 @@ Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     cp .env.default .env.prod
     ```
 
--   Adjust all configs in `.env.prod`, e.g. database settings, ports
+-   Adjust all configs in `.env.prod`, e.g. database settings, ports, disable ssl env vars if necessary
 
--   Start everything at once:
+-   Start everything at once (including a forced build):
 
     ```bash
     docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --build --force-recreate
     ```
 
 -   Go to `http://localhost` to open up mindmapper
+- Optional:
+
+    If you want to make sure, to include the most recent updates, run first:
+
+    ```bash
+    docker-compose --file docker-compose-prod.yml --env-file .env.prod build --no-cache
+    ```
+
+    then:
+
+    ```bash
+    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
+    ```
+
+    If you want to remove old data, including cached node packages and stored databases (DANGER!):
+
+    ```bash
+    docker-compose --file docker-compose-prod.yml --env-file .env.prod down -v
+    ```
 
 ### Further details
 

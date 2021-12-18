@@ -75,7 +75,7 @@
     "PAGES": {
         "ABOUT": {
             "INTRODUCTION": {
-                "APPLICATION_DESCRIPTION": "Web application to draw mind maps.",
+                "APPLICATION_DESCRIPTION": "Web application to collaboratively draw mind maps. Forked from mindmapp by cedoor.",
                 "APPLICATION_PROPERTIES": [
                     "Effective mind maps",
                     "Modern web application",
@@ -86,7 +86,7 @@
             "SECTIONS": [
                 {
                     "TITLE": "Mind maps",
-                    "SUBTITLE": "Mindmapp follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
+                    "SUBTITLE": "Mindmapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
                     "CARDS": [
                         {
                             "TITLE": "Colors and images",
@@ -104,7 +104,7 @@
                 },
                 {
                     "TITLE": "Goals",
-                    "SUBTITLE": "Mindmapp is based on the simplicity and adaptability principles, and according to these principles it grows following the user's needs and future technologies, but always ensuring an intuitive application.",
+                    "SUBTITLE": "Mindmapper is based on the simplicity and adaptability principles, and according to these principles it grows following the user's needs and future technologies, but always ensuring an intuitive application.",
                     "CARDS": [
                         {
                             "TITLE": "Minimal design",
@@ -112,7 +112,7 @@
                         },
                         {
                             "TITLE": "Future-oriented",
-                            "CONTENT": "Web technologies are constantly evolving, and with them the way they are used. Mindmapp follows and eventually adopts the latest technologies to ensure a better service."
+                            "CONTENT": "Web technologies are constantly evolving, and with them the way they are used. Mindmapper follows and eventually adopts the latest technologies to ensure a better service."
                         },
                         {
                             "TITLE": "Customizable",
@@ -122,7 +122,7 @@
                 },
                 {
                     "TITLE": "Donations",
-                    "SUBTITLE": "Mindmapp is free and its code is public, every contribution is very helpful to maintain and improve the application!"
+                    "SUBTITLE": "Mindmapper is free and its code is public, every contribution is very helpful to maintain and improve the application!"
                 }
             ]
         },
@@ -135,8 +135,8 @@
     },
     "MESSAGES": {
         "NO_SAVED_MAPS": "No saved maps!",
-        "INITIAL_INFORMATION": "Mindmapp está listo ☺",
-        "WELCOME_MESSAGE": "Bienvenido a Mindmapp app ☺",
+        "INITIAL_INFORMATION": "Mindmapper está listo ☺",
+        "WELCOME_MESSAGE": "Bienvenido a Mindmapper app ☺",
         "MAP_DELETION_CONFIRM": "Are you sure you want to delete the map?"
     },
     "GENERAL": {

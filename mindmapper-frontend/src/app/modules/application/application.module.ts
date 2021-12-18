@@ -5,7 +5,6 @@ import {ColorPanelsComponent} from './components/color-panels/color-panels.compo
 import {SliderPanelsComponent} from './components/slider-panels/slider-panels.component'
 import {FloatingButtonsComponent} from './components/floating-buttons/floating-buttons.component'
 import {MapComponent} from './components/map/map.component'
-import {InformationComponent} from './components/information/information.component'
 import {ApplicationComponent} from './pages/application/application.component'
 import {SettingsComponent} from './pages/settings/settings.component'
 import {ShortcutsComponent} from './pages/shortcuts/shortcuts.component'
@@ -34,7 +33,6 @@ import { ClientColorPanelsComponent } from './components/client-color-panels/cli
         ClientColorPanelsComponent,
         ColorPanelsComponent,
         FloatingButtonsComponent,
-        InformationComponent,
         MapComponent,
         SliderPanelsComponent,
         ToolbarComponent

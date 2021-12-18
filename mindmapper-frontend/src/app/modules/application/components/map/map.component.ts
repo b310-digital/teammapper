@@ -1,16 +1,13 @@
 import {Component, OnInit} from '@angular/core'
 
 @Component({
-    selector: 'mindmapp-map',
+    selector: 'mindmapper-map',
     templateUrl: './map.component.html',
     styleUrls: ['./map.component.scss']
 })
-export class MapComponent implements OnInit {
+export class MapComponent {
 
     constructor () {
-    }
-
-    ngOnInit () {
     }
 
 }

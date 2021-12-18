@@ -6,7 +6,7 @@
         "centerOnResize": false,
         "autoBranchColors": true,
         "defaultNode": {
-            "name": "Knoten",
+            "name": "Node",
             "image": {
                 "src": "",
                 "size": 60
@@ -24,7 +24,7 @@
             "locked": true
         },
         "rootNode": {
-            "name": "Wurzelknoten",
+            "name": "Root node",
             "image": {
                 "src": "",
                 "size": 70

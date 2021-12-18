@@ -4,7 +4,7 @@ import {MmpService} from '../../../../core/services/mmp/mmp.service'
 import {UtilsService} from '../../../../core/services/utils/utils.service'
 
 @Component({
-    selector: 'mindmapp-toolbar',
+    selector: 'mindmapper-toolbar',
     templateUrl: './toolbar.component.html',
     styleUrls: ['./toolbar.component.scss']
 })

@@ -3,13 +3,12 @@ import { MapSyncService } from '../../../../core/services/map-sync/map-sync.serv
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
-import { NotificationService } from '../../../../core/services/notification/notification.service'
-import { ActivatedRoute, Router } from '@angular/router'
+import { ActivatedRoute, Router, NavigationStart, RouterEvent } from '@angular/router'
 import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent } from '@mmp/map/types'
 import { MapOptions } from 'src/app/shared/models/settings.model'
 
 @Component({
-    selector: 'mindmapp-application',
+    selector: 'mindmapper-application',
     templateUrl: './application.component.html',
     styleUrls: ['./application.component.scss']
 })
@@ -19,7 +18,6 @@ export class ApplicationComponent implements OnInit {
 
     constructor (private mmpService: MmpService,
                  private settingsService: SettingsService,
-                 private notificationService: NotificationService,
                  private mapSyncService: MapSyncService,
                  private route: ActivatedRoute,
                  private router: Router) {
@@ -32,9 +30,13 @@ export class ApplicationComponent implements OnInit {
         // Create the mind map.
         this.initMap(settings.mapOptions)
 
-        this.notificationService.setMessage('MESSAGES.INITIAL_INFORMATION')
-
         this.handleImageDropObservable()
+
+        this.router.events.subscribe((event: RouterEvent) => {
+            if (event instanceof NavigationStart) {
+                this.mapSyncService.leaveMap()
+            }
+        });
     }
 
     public handleImageDropObservable () {
@@ -48,7 +50,6 @@ export class ApplicationComponent implements OnInit {
         // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
         // Map_1 is currently apparently hardcoded inside the map component...
         this.mmpService.create('map_1', options)
-
 
         // Try to either load the given id from the server, or initialize a new map with empty data
         const givenId: string = this.route.snapshot.paramMap.get('id')

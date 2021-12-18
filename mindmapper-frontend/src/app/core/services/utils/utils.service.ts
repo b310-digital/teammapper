@@ -20,6 +20,7 @@ export class UtilsService {
      * Return the word with the first letter capitalized.
      */
     public static capitalizeWord(word: string): string {
+        if(word === undefined || word === '') return '' 
         return word.charAt(0).toUpperCase() + word.toLowerCase().slice(1)
     }
 

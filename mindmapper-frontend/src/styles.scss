@@ -1,3 +1,4 @@
+@use '@angular/material' as mat;
 @import "~src/theme.scss";
 
 @font-face {
@@ -36,7 +37,7 @@ body {
 
 ::selection {
     color: whitesmoke;
-    background: mat-color($app-primary);
+    background: mat.get-color-from-palette($app-primary);
 }
 
 *:focus {

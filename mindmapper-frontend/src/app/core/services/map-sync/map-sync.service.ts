@@ -5,7 +5,6 @@ import {CachedMap, CachedMapEntry} from '../../../shared/models/cached-map.model
 import {v4 as uuidv4} from 'uuid'
 import { io, Socket } from 'socket.io-client'
 import { NodePropertyMapping } from '@mmp/index'
-import { NotificationService } from '../notification/notification.service'
 import { ExportNodeProperties, MapProperties, MapSnapshot, NodeUpdateEvent } from '@mmp/map/types'
 import { ResponseMapUpdated, ResponseNodeAdded, ResponseNodeRemoved, ResponseNodeUpdated, ResponseSelectionUpdated, ServerMap } from './server-types'
 import { API_URL, HttpService } from '../../http/http.service'
@@ -45,7 +44,6 @@ export class MapSyncService {
 
     constructor (
         private mmpService: MmpService,
-        private notificationService: NotificationService,
         private httpService: HttpService,
         private dialogService: DialogService
     ) {
@@ -97,7 +95,6 @@ export class MapSyncService {
      * Adds a new node on the server
      */
     public async addNode(newNode: ExportNodeProperties) {
-      this.notificationService.setMessage('Client: Node added')
       this.socket.emit('addNode', {mapId: this.getAttachedMap().cachedMap.uuid, node: newNode})
     }
 
@@ -105,7 +102,6 @@ export class MapSyncService {
      * Exchanges the given node with a new one
      */
     public async updateNode(nodeUpdate: NodeUpdateEvent) {
-        this.notificationService.setMessage('Client: Node updated')
         this.socket.emit(
             'updateNode',
             { mapId: this.getAttachedMap().cachedMap.uuid, node: nodeUpdate.nodeProperties, updatedProperty: nodeUpdate.changedProperty }
@@ -116,7 +112,6 @@ export class MapSyncService {
      * Adds a new node on the server
      */
     public async removeNode(removedNode: ExportNodeProperties) {
-        this.notificationService.setMessage('Client: Node removed')
         this.socket.emit('removeNode', { mapId: this.getAttachedMap().cachedMap.uuid, node: removedNode })
     }
 
@@ -187,9 +182,12 @@ export class MapSyncService {
       })
     }
 
+    public leaveMap(): void {
+      this.socket.emit('leave')
+    }
+
     public async updateMap(_oldMapData?: MapSnapshot): Promise<void> {
         const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
-        this.notificationService.setMessage('Client: Update Map')
         this.socket.emit('updateMap', { map: cachedMapEntry.cachedMap })
     }
 
@@ -210,7 +208,6 @@ export class MapSyncService {
             if(colorForNode !== '') this.mmpService.highlightNode(id, colorForNode, false)
         }
 
-        this.notificationService.setMessage('Client: Update Node Selection')
         this.socket.emit('updateNodeSelection', { mapId: this.getAttachedMap().cachedMap.uuid, nodeId: id, selected })
     }
 
@@ -243,7 +240,6 @@ export class MapSyncService {
             if(result.clientId === this.socket.id) return
 
             if(!this.mmpService.existNode(result?.node?.id)) {
-                this.notificationService.setMessage('Server: Node added')
                 this.mmpService.addNode(result.node, false)
             }
           })
@@ -251,7 +247,6 @@ export class MapSyncService {
         this.socket.on('nodeUpdated', (result: ResponseNodeUpdated) => {
             if(result.clientId === this.socket.id) return
 
-            this.notificationService.setMessage('Server: Node updated')
             const newNode = result.node
             const existingNode = this.mmpService.getNode(newNode.id)
             const propertyPath = NodePropertyMapping[result.property]
@@ -262,7 +257,6 @@ export class MapSyncService {
         this.socket.on('mapUpdated', (result: ResponseMapUpdated) => {
             if(result.clientId === this.socket.id) return
 
-            this.notificationService.setMessage('Server: Map updated')
             this.mmpService.new(result.map.data, false)
             this.updateAttachedMap()
         })
@@ -270,7 +264,6 @@ export class MapSyncService {
         this.socket.on('nodeRemoved', (result: ResponseNodeRemoved) => {
             if(result.clientId === this.socket.id) return
 
-            this.notificationService.setMessage('Server: Node removed')
             const removedNodeId = result.nodeId
             if (this.mmpService.existNode(removedNodeId)) {
                 this.mmpService.removeNode(removedNodeId, false)
@@ -280,8 +273,6 @@ export class MapSyncService {
         this.socket.on('selectionUpdated', (result: ResponseSelectionUpdated) => {
             if (result.clientId === this.socket.id) return
             if (!this.mmpService.existNode(result.nodeId)) return
-
-            this.notificationService.setMessage('Server: Selection from other user updated')
 
             if (!this.colorMapping[result.clientId]) {
                 this.colorMapping[result.clientId] = { color: DEFAULT_COLOR, nodeId: ''}

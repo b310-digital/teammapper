@@ -6,7 +6,7 @@ import {TranslateService} from '@ngx-translate/core'
 import { Location } from '@angular/common'
 
 @Component({
-    selector: 'mindmapp-settings',
+    selector: 'mindmapper-settings',
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss']
 })

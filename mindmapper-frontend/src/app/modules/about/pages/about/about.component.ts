@@ -2,11 +2,11 @@ import {Component, OnInit} from '@angular/core'
 import {faBrain, faChartLine, faCheck, faCogs, faHeart, faRocket} from '@fortawesome/free-solid-svg-icons'
 
 @Component({
-    selector: 'mindmapp-about',
+    selector: 'mindmapper-about',
     templateUrl: './about.component.html',
     styleUrls: ['./about.component.scss']
 })
-export class AboutComponent implements OnInit {
+export class AboutComponent {
 
     public faBrain = faBrain
     public faRocket = faRocket
@@ -16,9 +16,6 @@ export class AboutComponent implements OnInit {
     public faCheck = faCheck
 
     constructor () {
-    }
-
-    public ngOnInit () {
     }
 
 }

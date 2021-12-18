@@ -2,7 +2,7 @@ import * as d3 from 'd3'
 import Map from '../map'
 import Node from '../models/node'
 import {Event} from './events'
-import {DragBehavior} from 'd3-drag'
+import {DragBehavior, D3DragEvent} from 'd3-drag'
 import Utils from '../../utils/utils'
 import Log from '../../utils/log'
 
@@ -26,9 +26,9 @@ export default class Drag {
         this.map = map
 
         this.dragBehavior = d3.drag()
-            .on('start', (node: Node) => this.started(node))
-            .on('drag', (node: Node) => this.dragged(node))
-            .on('end', (node: Node) => this.ended(node))
+            .on('start', (event: D3DragEvent<any, any, any>, node: Node) => this.started(event, node))
+            .on('drag', (event: D3DragEvent<any, any, any>, node: Node) => this.dragged(event, node))
+            .on('end', (event: D3DragEvent<any, any, any>, node: Node) => this.ended(event, node))
     }
 
     /**
@@ -43,8 +43,8 @@ export default class Drag {
      * Select the node and calculate node position data for dragging.
      * @param {Node} node
      */
-    private started(node: Node) {
-        d3.event.sourceEvent.preventDefault()
+    private started(event: D3DragEvent<any, any, any>, node: Node) {
+        event.sourceEvent.preventDefault()
 
         this.orientation = this.map.nodes.getOrientation(node)
         this.descendants = this.map.nodes.getDescendants(node)
@@ -56,13 +56,13 @@ export default class Drag {
      * Move the dragged node and if it is locked all their descendants.
      * @param {Node} node
      */
-    private dragged(node: Node) {
-        const dy = d3.event.dy,
-            dx = d3.event.dx
+    private dragged(event: D3DragEvent<any, any, any>, node: Node) {
+        const dy = event.dy,
+              dx = event.dx
 
         // Set new coordinates
         const x = node.coordinates.x += dx,
-            y = node.coordinates.y += dy
+              y = node.coordinates.y += dy
 
         // Move graphically the node in new coordinates
         node.dom.setAttribute('transform', 'translate(' + [x, y] + ')')
@@ -103,7 +103,7 @@ export default class Drag {
      * If the node was actually dragged change the state of dragging and save the snapshot.
      * @param {Node} node
      */
-    private ended(node: Node) {
+    private ended(_event: D3DragEvent<any, any, any>, node: Node) {
         if (this.dragging) {
             this.dragging = false
             this.map.history.save()

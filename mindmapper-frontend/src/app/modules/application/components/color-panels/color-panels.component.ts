@@ -2,7 +2,7 @@ import {Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core'
 import {MmpService} from '../../../../core/services/mmp/mmp.service'
 
 @Component({
-    selector: 'mindmapp-colors-panel',
+    selector: 'mindmapper-colors-panel',
     templateUrl: './color-panels.component.html',
     styleUrls: ['./color-panels.component.scss']
 })
