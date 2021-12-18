@@ -57,16 +57,14 @@ jobs:
 
             - run: npm --prefix mindmapper-backend run test:e2e
               env:
-                  POSTGRES_TEST_DATABASE: "mindmapper-backend-test"
-                  POSTGRES_TEST_HOST: "localhost"
-                  POSTGRES_TEST_PASSWORD: "mindmapper-password"
-                  POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
-                  POSTGRES_TEST_USER: "mindmapper-user"
-                  # Currently, the following env vars are required by mindmapper-backend/src/config.service.ts – even when the test are running.
-                  # We should change this in the future.
                   POSTGRES_DATABASE: "mindmapper-backend-test"
                   POSTGRES_HOST: "localhost"
                   POSTGRES_PASSWORD: "mindmapper-password"
                   POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
                   POSTGRES_SSL: false
+                  POSTGRES_TEST_DATABASE: "mindmapper-backend-test"
+                  POSTGRES_TEST_HOST: "localhost"
+                  POSTGRES_TEST_PASSWORD: "mindmapper-password"
+                  POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
+                  POSTGRES_TEST_USER: "mindmapper-user"
                   POSTGRES_USER: "mindmapper-user"
