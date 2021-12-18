@@ -22,7 +22,7 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
 
-  mindmapper-backend-lint:
+  "mindmapper-backend-lint":
     runs-on: ubuntu-latest
 
     - uses: actions/checkout@v2
@@ -31,7 +31,7 @@ jobs:
 
     - run: npm --prefix mindmapper-backend run lint
 
-  mindmapper-backend-test-e2e:
+  "mindmapper-backend-test-e2e":
     runs-on: ubuntu-latest
 
     - uses: actions/checkout@v2
