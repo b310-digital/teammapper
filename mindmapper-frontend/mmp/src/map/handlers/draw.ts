@@ -376,6 +376,8 @@ export default class Draw {
         div.style.setProperty('height', 'auto')
         div.style.setProperty('font-family', this.map.options.fontFamily)
         div.style.setProperty('text-align', 'center')
+        // fix against cursor jumping out of nodes on firefox
+        div.style.setProperty('min-width', '20px')
 
         div.setAttribute('contenteditable', 'true')
 
