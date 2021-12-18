@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build:
+  mindmapper-backend-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -53,6 +53,11 @@ jobs:
 
       - run: npm --prefix mindmapper-backend run test:e2e
         env:
+          POSTGRES_DATABASE: ""
+          POSTGRES_PASSWORD: ""
+          POSTGRES_PORT: ""
+          POSTGRES_USER: ""
+          POSTGRES_HOST: localhost
           POSTGRES_TEST_HOST: localhost
           POSTGRES_TEST_PASSWORD: mindmapper-password
           POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
