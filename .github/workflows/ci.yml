@@ -56,9 +56,9 @@ jobs:
                     POSTGRES_PASSWORD: mindmapper-password
                     POSTGRES_DB: mindmapper-backend-test
                 ports:
-                    # will assign a random free host port
+                    # Will assign a random free host port
                     - 5432/tcp
-                # needed because the postgres container does not provide a healthcheck
+                # Needed because the postgres container does not provide a healthcheck
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
         steps:
