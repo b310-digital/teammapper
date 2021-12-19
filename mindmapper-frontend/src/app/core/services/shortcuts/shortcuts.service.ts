@@ -47,7 +47,7 @@ export class ShortcutsService {
             keys: 'n',
             description: 'TOOLTIPS.NEW_MAP',
             callback: () => {
-                this.mmpService.new()
+                this.router.navigate([''])
             }
         }, {
             keys: 'c',
