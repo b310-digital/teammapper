@@ -53,6 +53,8 @@ jobs:
         container:
             image: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
             options: --user root
+            volumes:
+                - ${{ github.workspace }}:/home/node/app
 
         steps:
             - run: pwd
