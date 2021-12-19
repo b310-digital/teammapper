@@ -53,7 +53,11 @@ jobs:
 
         steps:
             - uses: actions/checkout@v2
+            - run: pwd
             - run: ls -lisa
+            - run: ls -lisa mindmapper-backend
+            - run: ls -lisa mindmapper-backend/node_modules
+            - run: ls -lisa mindmapper-backend/src
             - run: npm --prefix mindmapper-backend run lint
 
     mindmapper-backend-test-e2e-2:
@@ -78,7 +82,11 @@ jobs:
 
         steps:
             - uses: actions/checkout@v2
+            - run: pwd
             - run: ls -lisa
+            - run: ls -lisa mindmapper-backend
+            - run: ls -lisa mindmapper-backend/node_modules
+            - run: ls -lisa mindmapper-backend/src
             - run: npm --prefix mindmapper-backend run test:e2e
               env:
                   POSTGRES_DATABASE: "mindmapper-backend-test"
@@ -103,7 +111,11 @@ jobs:
 
         steps:
             - uses: actions/checkout@v2
+            - run: pwd
             - run: ls -lisa
+            - run: ls -lisa mindmapper-frontend
+            - run: ls -lisa mindmapper-frontend/node_modules
+            - run: ls -lisa mindmapper-frontend/src
             - run: npm --prefix mindmapper-frontend run lint
 
     mindmapper-backend-lint:
