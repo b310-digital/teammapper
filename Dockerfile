@@ -43,6 +43,8 @@ CMD ["./entrypoint.prod.sh"]
 FROM base as development
 USER node
 
+COPY --chown=node:node package.json $APP_PATH/
+
 COPY --chown=node:node mindmapper-frontend/package.json mindmapper-frontend/package-lock.json $APP_FRONTEND_PATH/
 RUN npm --prefix mindmapper-frontend install
 
