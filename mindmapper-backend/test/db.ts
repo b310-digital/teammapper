@@ -4,8 +4,8 @@ require('dotenv').config();
 
 export const createTestConfiguration = (): TypeOrmModuleOptions => ({
   type: 'postgres',
-  host: process.env.POSTGRES_HOST,
-  port: parseInt(process.env.POSTGRES_PORT),
+  host: process.env.POSTGRES_TEST_HOST,
+  port: parseInt(process.env.POSTGRES_TEST_PORT),
   username: process.env.POSTGRES_TEST_USER,
   password: process.env.POSTGRES_TEST_PASSWORD,
   database: process.env.POSTGRES_TEST_DATABASE,
