@@ -60,8 +60,8 @@ jobs:
             - run: ls -lisa /
             - run: ls -lisa /home/node/app
             - uses: actions/checkout@v2
-              with:
-                path: /home/node/app
+            #   with:
+                # path: /home/node/app
             - run: pwd
             - run: ls -lisa
             - run: ls -lisa mindmapper-backend
