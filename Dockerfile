@@ -50,3 +50,5 @@ RUN npm --prefix mindmapper-frontend install
 
 COPY --chown=node:node mindmapper-backend/package.json mindmapper-backend/package-lock.json $APP_BACKEND_PATH/
 RUN npm --prefix mindmapper-backend install
+
+COPY . $APP_PATH/
