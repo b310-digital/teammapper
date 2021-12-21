@@ -68,6 +68,7 @@ jobs:
 
         steps:
             - run: npm --prefix mindmapper-backend run test:e2e
+              working-directory: /home/node/app
               env:
                   POSTGRES_DATABASE: "mindmapper-backend-test"
                   POSTGRES_HOST: "postgres"
@@ -89,6 +90,7 @@ jobs:
 
         steps:
             - run: npm --prefix mindmapper-frontend run lint
+              working-directory: /home/node/app
 
     # mindmapper-backend-lint:
     #     runs-on: ubuntu-latest
