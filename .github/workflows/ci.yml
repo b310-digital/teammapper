@@ -37,24 +37,21 @@ jobs:
                   tags: |
                       ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
 
-    mindmapper-backend-lint-2:
+    mindmapper-backend-lint:
         runs-on: ubuntu-latest
         needs: mindmapper-build
         defaults:
             run:
                 working-directory: /home/node/app
-        container:
-            image: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
+        container: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
 
         steps:
             - run: npm --prefix mindmapper-backend run lint
 
-    mindmapper-backend-test-e2e-2:
+    mindmapper-backend-test-e2e:
         runs-on: ubuntu-latest
         needs: mindmapper-build
-        container:
-            image: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
-            options: --user root
+        container: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
 
         services:
             postgres:
@@ -70,14 +67,6 @@ jobs:
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
         steps:
-            - run: pwd
-            - run: ls -lisa
-            - uses: actions/checkout@v2
-            - run: pwd
-            - run: ls -lisa
-            - run: ls -lisa mindmapper-backend
-            - run: ls -lisa mindmapper-backend/node_modules
-            - run: ls -lisa mindmapper-backend/src
             - run: npm --prefix mindmapper-backend run test:e2e
               env:
                   POSTGRES_DATABASE: "mindmapper-backend-test"
@@ -93,65 +82,55 @@ jobs:
                   POSTGRES_USER: "mindmapper-user"
 
 
-    mindmapper-frontend-lint-2:
+    mindmapper-frontend-lint:
         runs-on: ubuntu-latest
         needs: mindmapper-build
-        container:
-            image: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
-            options: --user root
+        container: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
 
         steps:
-            - run: pwd
-            - run: ls -lisa
-            - uses: actions/checkout@v2
-            - run: pwd
-            - run: ls -lisa
-            - run: ls -lisa mindmapper-frontend
-            - run: ls -lisa mindmapper-frontend/node_modules
-            - run: ls -lisa mindmapper-frontend/src
             - run: npm --prefix mindmapper-frontend run lint
 
-    mindmapper-backend-lint:
-        runs-on: ubuntu-latest
+    # mindmapper-backend-lint:
+    #     runs-on: ubuntu-latest
 
-        steps:
-            - uses: actions/checkout@v2
+    #     steps:
+    #         - uses: actions/checkout@v2
 
-            - run: npm --prefix mindmapper-backend ci
+    #         - run: npm --prefix mindmapper-backend ci
 
-            - run: npm --prefix mindmapper-backend run lint
+    #         - run: npm --prefix mindmapper-backend run lint
 
-    mindmapper-backend-test-e2e:
-        runs-on: ubuntu-latest
+    # mindmapper-backend-test-e2e:
+    #     runs-on: ubuntu-latest
 
-        services:
-            postgres:
-                image: postgres:10.8
-                env:
-                    POSTGRES_USER: mindmapper-user
-                    POSTGRES_PASSWORD: mindmapper-password
-                    POSTGRES_DB: mindmapper-backend-test
-                ports:
-                    # Will assign a random free host port
-                    - 5432/tcp
-                # Needed because the postgres container does not provide a healthcheck
-                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    #     services:
+    #         postgres:
+    #             image: postgres:10.8
+    #             env:
+    #                 POSTGRES_USER: mindmapper-user
+    #                 POSTGRES_PASSWORD: mindmapper-password
+    #                 POSTGRES_DB: mindmapper-backend-test
+    #             ports:
+    #                 # Will assign a random free host port
+    #                 - 5432/tcp
+    #             # Needed because the postgres container does not provide a healthcheck
+    #             options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-        steps:
-            - uses: actions/checkout@v2
+    #     steps:
+    #         - uses: actions/checkout@v2
 
-            - run: npm --prefix mindmapper-backend ci
+    #         - run: npm --prefix mindmapper-backend ci
 
-            - run: npm --prefix mindmapper-backend run test:e2e
-              env:
-                  POSTGRES_DATABASE: "mindmapper-backend-test"
-                  POSTGRES_HOST: "localhost"
-                  POSTGRES_PASSWORD: "mindmapper-password"
-                  POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
-                  POSTGRES_SSL: false
-                  POSTGRES_TEST_DATABASE: "mindmapper-backend-test"
-                  POSTGRES_TEST_HOST: "localhost"
-                  POSTGRES_TEST_PASSWORD: "mindmapper-password"
-                  POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
-                  POSTGRES_TEST_USER: "mindmapper-user"
-                  POSTGRES_USER: "mindmapper-user"
+    #         - run: npm --prefix mindmapper-backend run test:e2e
+    #           env:
+    #               POSTGRES_DATABASE: "mindmapper-backend-test"
+    #               POSTGRES_HOST: "localhost"
+    #               POSTGRES_PASSWORD: "mindmapper-password"
+    #               POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+    #               POSTGRES_SSL: false
+    #               POSTGRES_TEST_DATABASE: "mindmapper-backend-test"
+    #               POSTGRES_TEST_HOST: "localhost"
+    #               POSTGRES_TEST_PASSWORD: "mindmapper-password"
+    #               POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
+    #               POSTGRES_TEST_USER: "mindmapper-user"
+    #               POSTGRES_USER: "mindmapper-user"
