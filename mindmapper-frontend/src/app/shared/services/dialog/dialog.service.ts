@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core'
 import { MatDialog, MatDialogRef } from '@angular/material/dialog'
 import { ConnectionInfoDialogComponent } from 'src/app/shared/components/connection-info/connection-info-dialog.component'
+import { AboutDialogComponent } from '../../components/about-modal/about-dialog.component'
 import { ShareFallbackComponent } from '../../components/share-fallback/share-fallback.component'
 
 
@@ -11,6 +12,7 @@ export class DialogService {
 
   private disconnectModalRef: MatDialogRef<ConnectionInfoDialogComponent>
   private shareModalRef: MatDialogRef<ShareFallbackComponent>
+  private aboutModalRef: MatDialogRef<AboutDialogComponent>
 
   constructor (public dialog: MatDialog) {
   }
@@ -27,6 +29,16 @@ export class DialogService {
     if(!this.disconnectModalRef) return
 
     this.disconnectModalRef.close()
+  }
+
+  openAboutDialog() {
+    this.aboutModalRef = this.dialog.open(AboutDialogComponent)
+  }
+
+  closeAboutDialog() {
+    if(!this.aboutModalRef) return
+
+    this.aboutModalRef.close()
   }
 
   closeShareDialog() {
