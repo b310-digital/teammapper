@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
-import { MatDialog, MatDialogRef } from '@angular/material/dialog'
+import { MatDialog, MatDialogRef, MatDialogConfig } from '@angular/material/dialog'
+import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
 import { ConnectionInfoDialogComponent } from 'src/app/shared/components/connection-info/connection-info-dialog.component'
 import { AboutDialogComponent } from '../../components/about-modal/about-dialog.component'
 import { ShareFallbackComponent } from '../../components/share-fallback/share-fallback.component'
@@ -14,7 +15,7 @@ export class DialogService {
   private shareModalRef: MatDialogRef<ShareFallbackComponent>
   private aboutModalRef: MatDialogRef<AboutDialogComponent>
 
-  constructor (public dialog: MatDialog) {
+  constructor (public dialog: MatDialog, private mapSyncService: MapSyncService) {
   }
 
   openDisconnectDialog() {
@@ -32,7 +33,12 @@ export class DialogService {
   }
 
   openAboutDialog() {
-    this.aboutModalRef = this.dialog.open(AboutDialogComponent)
+    const dialogConfig: MatDialogConfig = new MatDialogConfig()
+    dialogConfig.data = {
+      deletedAt: this.mapSyncService.getAttachedMap().cachedMap.deletedAt || '',
+      deleteAfterDays: this.mapSyncService.getAttachedMap().cachedMap.deleteAfterDays || '-'
+    }
+    this.aboutModalRef = this.dialog.open(AboutDialogComponent, dialogConfig)
   }
 
   closeAboutDialog() {

@@ -124,14 +124,17 @@ export class MapSyncService {
         this.mmpService.new()
 
         const mapData = this.mmpService.exportAsJSON()
+        const serverMap: MapProperties = await this.postMapToServer(uuid, mapData)
+
         const cachedMap: CachedMap = {
             data: mapData,
-            lastModified: Date.now(),
+            lastModified: serverMap.lastModified,
             uuid,
+            deleteAfterDays: serverMap.deleteAfterDays,
+            deletedAt: serverMap.deletedAt
         }
 
         this.attachMap({key, cachedMap})
-        await this.postMapToServer()
         this.listenServerEvents(uuid)
     }
 
@@ -151,7 +154,9 @@ export class MapSyncService {
         const cachedMap: CachedMap = {
             data: this.mmpService.exportAsJSON(),
             lastModified: Date.now(),
-            uuid: cachedMapEntry.cachedMap.uuid
+            uuid: cachedMapEntry.cachedMap.uuid,
+            deletedAt: cachedMapEntry.cachedMap.deletedAt,
+            deleteAfterDays: cachedMapEntry.cachedMap.deleteAfterDays
         }
 
         this.attachMap({key: cachedMapEntry.key, cachedMap})
@@ -165,9 +170,9 @@ export class MapSyncService {
       return this.convertMap(json)
     }
 
-    public async postMapToServer(): Promise<void> {
-      const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
-      await this.httpService.post(API_URL.ROOT, '/maps/', JSON.stringify(cachedMapEntry.cachedMap))
+    public async postMapToServer(uuid: string, data: MapSnapshot): Promise<MapProperties> {
+      const response = await this.httpService.post(API_URL.ROOT, '/maps/', JSON.stringify({uuid, data}))
+      return response.json()
     }
 
     public async joinMap(mmpUuid: string, color: string): Promise<MapProperties> {

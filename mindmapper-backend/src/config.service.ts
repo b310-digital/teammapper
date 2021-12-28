@@ -39,6 +39,10 @@ class ConfigService {
     return mode !== 'DEV';
   }
 
+  public deleteAfterDays() {
+    return parseInt(this.getValue('DELETE_AFTER_DAYS', false) || '30');
+  }
+
   public getTypeOrmConfig(): TypeOrmModuleOptions {
     return {
       type: 'postgres',

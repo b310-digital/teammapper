@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { MapsService } from './maps.service';
+import configService from '../../config.service';
+
 
 /*
  * This service takes care of _very_ simple job scheduling. 
@@ -19,6 +21,6 @@ export class TasksService {
   @Cron('0 0 * * *')
   handleCron() {
     this.logger.log('Deleting old maps ...');
-    this.mapsService.deleteOutdatedMaps();
+    this.mapsService.deleteOutdatedMaps(configService.deleteAfterDays());
   }
 }

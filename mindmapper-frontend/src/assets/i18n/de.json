@@ -70,17 +70,22 @@
         "TITLE": "Map teilen",
         "CONTENT": "Kopiere diesen Link und teile ihn: {{link}}",
         "BUTTON_CLOSE": "Schließen"
+      },
+      "INFO": {
+          "DELETED_AT": "Map Löschung am",
+          "DELETE_AFTER_DAYS": "Server Mindmap Löschung nach {{deleteAfterDays}} Tagen"
       }
     },
      "PAGES": {
         "ABOUT": {
+            "APPLICATION_NAME" :"Mindmapper",
             "INTRODUCTION": {
-                "APPLICATION_DESCRIPTION": "Web application to collaboratively draw mind maps. Forked from mindmapp by cedoor.",
+                "APPLICATION_DESCRIPTION": "Web Applikation, um Mindmaps zu erstellen. Basiert auf mindmapp von cedoor.",
                 "APPLICATION_PROPERTIES": [
-                    "Effective mind maps",
-                    "Modern web application",
-                    "Simple interface",
-                    "Open source software"
+                    "Effektive Mindmaps",
+                    "Moderne Web-Application",
+                    "Simples Interface",
+                    "Open source Software"
                 ]
             },
             "SECTIONS": [

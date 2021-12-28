@@ -18,6 +18,7 @@ import { ConnectionInfoDialogComponent } from './components/connection-info/conn
 import { MatDialogModule } from '@angular/material/dialog'
 import { DialogService } from './services/dialog/dialog.service'
 import { ShareFallbackComponent } from './components/share-fallback/share-fallback.component'
+import { AboutDialogComponent } from './components/about-modal/about-dialog.component'
 
 const PIPES = [
     StripTags
@@ -40,7 +41,7 @@ const PIPES = [
         MatToolbarModule,
         MatDialogModule,
     ],
-    declarations: [...PIPES, ConnectionInfoDialogComponent, ShareFallbackComponent],
+    declarations: [...PIPES, ConnectionInfoDialogComponent, ShareFallbackComponent, AboutDialogComponent],
     exports: [
         CommonModule,
         FormsModule,

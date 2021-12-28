@@ -7,14 +7,16 @@ interface MapCreateEvent {
 }
 
 interface MapProperties {
-    uuid: string
-    lastModified: number
-    data: MapSnapshot
+    uuid: string,
+    lastModified: number,
+    data: MapSnapshot,
+    deletedAt: Date,
+    deleteAfterDays: number
 }
 
 interface NodeUpdateEvent {
-    nodeProperties: NodeProperties
-    previousValue: any
+    nodeProperties: NodeProperties,
+    previousValue: any,
     changedProperty: string
 }
 

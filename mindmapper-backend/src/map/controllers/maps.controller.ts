@@ -1,6 +1,7 @@
 import {
   Body, Controller, Get, NotFoundException, Param, Post,
 } from '@nestjs/common';
+import { MmpMap } from '../entities/mmpMap.entity';
 import { MapsService } from '../services/maps.service';
 import { IMmpClientMap } from '../types';
 
@@ -17,7 +18,8 @@ export default class MapsController {
   }
 
   @Post()
-  create(@Body() mmpMap: IMmpClientMap) {
-    return this.mapsService.createMap(mmpMap);
+  async create(@Body() mmpMap: IMmpClientMap): Promise<IMmpClientMap> {
+    const newMap: MmpMap = await this.mapsService.createMap(mmpMap);
+    return this.mapsService.exportMapToClient(newMap.id);
   }
 }
