@@ -50,7 +50,7 @@ $ npm run test:cov
 ```
 
 ## Typeorm
-For a list of commands check https://github.com/typeorm/typeorm/blob/master/docs/using-cli.md#drop-database-schema
+For a list of commands check https://github.com/typeorm/typeorm/blob/master/docs/using-cli.md
 
 Some useful commands include:
 
@@ -66,10 +66,16 @@ For development, sync db structure
 npm run typeorm schema:sync
 ```
 
-For pruction environments, run migrations
+For pruction environments, run migrations, see https://github.com/typeorm/typeorm/blob/master/docs/migrations.md
 
 ```bash
 npm run typeorm:prod:migrate
+```
+
+Generate new migration based on current changes
+
+```bash
+npm run typeorm migration:generate -- -n MindmapperRefactoring
 ```
 
 ## License
