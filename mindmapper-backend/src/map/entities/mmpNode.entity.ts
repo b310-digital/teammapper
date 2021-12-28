@@ -83,7 +83,7 @@ export class MmpNode {
   @Column({ nullable: true })
   nodeParentId: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: false })
   @Generated('increment')
   orderNumber: number;
 }
