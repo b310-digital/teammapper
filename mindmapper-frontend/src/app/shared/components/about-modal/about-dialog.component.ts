@@ -13,6 +13,7 @@ import { environment } from '../../../../environments/environment'
     public faGithub = faGithub
     public faGitter = faGitter
     public version: string
+    public applicationName: string
 
     constructor(
       public dialogRef: MatDialogRef<AboutDialogComponent>,
@@ -20,5 +21,6 @@ import { environment } from '../../../../environments/environment'
       ) {
 
       this.version = environment.version
+      this.applicationName = environment.name
     }
   }
