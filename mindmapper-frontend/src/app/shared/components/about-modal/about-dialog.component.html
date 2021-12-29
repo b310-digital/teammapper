@@ -4,10 +4,10 @@
         <img src="./assets/icons/icon-128x128.png" />
         {{ "PAGES.ABOUT.INTRODUCTION.APPLICATION_DESCRIPTION" | translate }}
     </div>
-    <div class="about-modal-section">
+    <div class="about-modal-section border-top">
         <mat-list>
             <mat-list-item>{{ "MODALS.INFO.DELETE_AFTER_DAYS" | translate: { deleteAfterDays: data.deleteAfterDays } }}</mat-list-item>
-            <mat-list-item>{{ "MODALS.INFO.DELETED_AT" | translate }} {{data.deletedAt | date }}</mat-list-item>
+            <mat-list-item>{{ "MODALS.INFO.DELETED_AT" | translate }} {{data.deletedAt | date: 'YYYY-MM-dd' }}</mat-list-item>
             <mat-list-item>
                 <a href="https://github.com/b310-digital/mindmapper" class="link" target="_blank">
                     {{ applicationName }} <fa-icon [icon]="faGithub" size="lg"></fa-icon>

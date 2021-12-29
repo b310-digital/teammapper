@@ -17,9 +17,8 @@ import { environment } from '../../../../environments/environment'
 
     constructor(
       public dialogRef: MatDialogRef<AboutDialogComponent>,
-      @Inject(MAT_DIALOG_DATA) public data: {deletedAt: Date, deleteAfterDays: number}
+      @Inject(MAT_DIALOG_DATA) public data: {deletedAt: Date, deleteAfterDays: number, language: string}
       ) {
-
       this.version = environment.version
       this.applicationName = environment.name
     }

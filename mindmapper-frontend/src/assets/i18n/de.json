@@ -74,7 +74,7 @@
         "CONTENT": "Kopiere diesen Link und teile ihn: {{link}}"
       },
       "INFO": {
-          "DELETED_AT": "Mindmap Löschung am",
+          "DELETED_AT": "Diese Mindmap wird gelöscht am",
           "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht."
       }
     },
