@@ -2,7 +2,6 @@ import { HttpClient, HttpClientModule } from '@angular/common/http'
 import { APP_INITIALIZER, NgModule } from '@angular/core'
 import { BrowserModule } from '@angular/platform-browser'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
-import { ServiceWorkerModule } from '@angular/service-worker'
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core'
 import { TranslateHttpLoader } from '@ngx-translate/http-loader'
 import { HotkeyModule } from 'angular2-hotkeys'
@@ -31,7 +30,6 @@ export function createTranslateLoader (http: HttpClient) {
             }
         }),
         HotkeyModule.forRoot(),
-        ServiceWorkerModule.register('ngsw-worker.js', {enabled: environment.production})
     ],
     declarations: [
         RootComponent
