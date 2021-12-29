@@ -128,8 +128,7 @@ kits is a project platform hosted by a public institution for quality
 development in schools (Lower Saxony, Germany) and focusses on digital tools
 and media in language teaching. mindmapper is used in workshops to activate
 prior knowledge, and collect and structure ideas. In addition, mindmapper can
-be found on https://kits.blog/tools and can be used by schools for free. More info on
-how to use it can be found in this post https://kits.blog/digitale-lesestrategien-brainstorming/
+be found on https://kits.blog/tools and can be used by schools for free.
 
 Logos and text provided with courtesy of kits.
 

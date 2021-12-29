@@ -77,6 +77,8 @@ describe('AppController (e2e)', () => {
       const map: IMmpClientMap = {
         uuid: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
         lastModified: new Date(),
+        deleteAfterDays: 30,
+        deletedAt: null,
         data: [
           {
             name: 'test',

@@ -8,7 +8,7 @@ export class MmpMap {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
   lastModified: Date;
 
   @Column({ nullable: true })

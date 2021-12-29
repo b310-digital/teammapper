@@ -18,6 +18,8 @@ export interface IMmpClientFont {
 export interface IMmpClientMap {
   uuid: string;
   lastModified: Date;
+  deleteAfterDays: number;
+  deletedAt: Date;
   data: IMmpClientNode[];
 }
 

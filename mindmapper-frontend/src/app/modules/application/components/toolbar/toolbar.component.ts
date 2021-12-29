@@ -54,4 +54,8 @@ export class ToolbarComponent {
         }
     }
 
+    public async openAbout () {
+        this.dialogService.openAboutDialog()
+    }
+
 }
