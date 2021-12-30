@@ -9,7 +9,7 @@ on:
             - main
 
 jobs:
-    mindmapper-backend-build:
+    mindmapper-build:
         runs-on: ubuntu-latest
 
         steps:
@@ -32,21 +32,24 @@ jobs:
               uses: docker/build-push-action@v2
               with:
                   context: .
+                  target: development
+                  push: true
                   tags: |
-                      ghcr.io/b310-digital/mindmapper:latest
+                      ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
 
     mindmapper-backend-lint:
         runs-on: ubuntu-latest
+        needs: mindmapper-build
+        container: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
 
         steps:
-            - uses: actions/checkout@v2
-
-            - run: npm --prefix mindmapper-backend ci
-
             - run: npm --prefix mindmapper-backend run lint
+              working-directory: /home/node/app
 
     mindmapper-backend-test-e2e:
         runs-on: ubuntu-latest
+        needs: mindmapper-build
+        container: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
 
         services:
             postgres:
@@ -59,23 +62,79 @@ jobs:
                     # Will assign a random free host port
                     - 5432/tcp
                 # Needed because the postgres container does not provide a healthcheck
-                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
 
         steps:
-            - uses: actions/checkout@v2
-
-            - run: npm --prefix mindmapper-backend ci
-
             - run: npm --prefix mindmapper-backend run test:e2e
+              working-directory: /home/node/app
               env:
                   POSTGRES_DATABASE: "mindmapper-backend-test"
-                  POSTGRES_HOST: "localhost"
+                  POSTGRES_HOST: "postgres"
                   POSTGRES_PASSWORD: "mindmapper-password"
                   POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
                   POSTGRES_SSL: false
                   POSTGRES_TEST_DATABASE: "mindmapper-backend-test"
-                  POSTGRES_TEST_HOST: "localhost"
+                  POSTGRES_TEST_HOST: "postgres"
                   POSTGRES_TEST_PASSWORD: "mindmapper-password"
                   POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
                   POSTGRES_TEST_USER: "mindmapper-user"
                   POSTGRES_USER: "mindmapper-user"
+
+
+    mindmapper-frontend-lint:
+        runs-on: ubuntu-latest
+        needs: mindmapper-build
+        container: ghcr.io/b310-digital/mindmapper/ci:${{ github.sha }}-dev
+
+        steps:
+            - run: npm --prefix mindmapper-frontend run lint
+              working-directory: /home/node/app
+
+    # mindmapper-backend-lint:
+    #     runs-on: ubuntu-latest
+
+    #     steps:
+    #         - uses: actions/checkout@v2
+
+    #         - run: npm --prefix mindmapper-backend ci
+
+    #         - run: npm --prefix mindmapper-backend run lint
+
+    # mindmapper-backend-test-e2e:
+    #     runs-on: ubuntu-latest
+
+    #     services:
+    #         postgres:
+    #             image: postgres:10.8
+    #             env:
+    #                 POSTGRES_USER: mindmapper-user
+    #                 POSTGRES_PASSWORD: mindmapper-password
+    #                 POSTGRES_DB: mindmapper-backend-test
+    #             ports:
+    #                 # Will assign a random free host port
+    #                 - 5432/tcp
+    #             # Needed because the postgres container does not provide a healthcheck
+    #             options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    #     steps:
+    #         - uses: actions/checkout@v2
+
+    #         - run: npm --prefix mindmapper-backend ci
+
+    #         - run: npm --prefix mindmapper-backend run test:e2e
+    #           env:
+    #               POSTGRES_DATABASE: "mindmapper-backend-test"
+    #               POSTGRES_HOST: "localhost"
+    #               POSTGRES_PASSWORD: "mindmapper-password"
+    #               POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+    #               POSTGRES_SSL: false
+    #               POSTGRES_TEST_DATABASE: "mindmapper-backend-test"
+    #               POSTGRES_TEST_HOST: "localhost"
+    #               POSTGRES_TEST_PASSWORD: "mindmapper-password"
+    #               POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
+    #               POSTGRES_TEST_USER: "mindmapper-user"
+    #               POSTGRES_USER: "mindmapper-user"
