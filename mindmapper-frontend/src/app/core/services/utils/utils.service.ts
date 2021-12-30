@@ -58,17 +58,18 @@ export class UtilsService {
      * Upload a file with a fake input click.
      */
     public static uploadFile(accept: string[] | string = 'application/json'): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const fakeInput = document.createElement('input')
+        const fakeInput: HTMLInputElement = document.createElement('input')
+        fakeInput.type = 'file'
+        fakeInput.accept = Array.isArray(accept) ? accept.join(',') : accept
+        document.body.appendChild(fakeInput)
 
-            fakeInput.type = 'file'
-            fakeInput.accept = Array.isArray(accept) ? accept.join(', ') : accept
-
-            document.body.appendChild(fakeInput)
-
-            fakeInput.click()
-
-            fakeInput.oninput = () => {
+        // Open bug (not critical): If the user presses cancel, the input element is NOT removed.
+        // It cant be directly removed, because ios camera capture might still need it,
+        // so need to wait for the user to finish file upload. But canceling the dialog 
+        // does not fire any event at all - so its hard to guess when the user has actually canceled
+        // and the input field has to be deleted. This creates useless file input elements inside the DOM. 
+        const uploadPromise: Promise<string> = new Promise((resolve, reject) => {
+            fakeInput.addEventListener('change', () => {               
                 const fileReader = new FileReader()
 
                 fileReader.onload = (event: any) => {
@@ -80,7 +81,7 @@ export class UtilsService {
                         img.src = event.target.result // result is base64-encoded Data URI
                         img.onload = function (el: any) {
                             const resizeWidth = 360 // without px
-                            const elem = document.createElement('canvas')// create a canvas
+                            const elem = document.createElement('canvas') // create a canvas
 
                             // scale the image to 360 (width) and keep aspect ratio
                             const scaleFactor = resizeWidth / el.target.width
@@ -105,11 +106,17 @@ export class UtilsService {
                 } else {
                     fileReader.readAsDataURL(fakeInput.files[0])
                 }
-            }
+            })
             fakeInput.onerror = reject
+        })
 
+        uploadPromise.finally(() => {
             document.body.removeChild(fakeInput)
         })
+
+        fakeInput.click()
+
+        return uploadPromise
     }
 
     /**
