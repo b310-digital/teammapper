@@ -23,8 +23,13 @@ export interface IMmpClientMap {
   data: IMmpClientNode[];
 }
 
+export interface IMmpClientMapWithAdminId {
+  map: IMmpClientMap;
+  adminId: string;
+}
+
 export interface IMmpClientMapRequest {
-  map: IMmpClientMap
+  map: IMmpClientMap;
 }
 
 export interface IMmpClientNode {
@@ -58,5 +63,5 @@ export interface IMmpClientNodeSelectionRequest {
 }
 
 export interface IClientCache {
-  [clientId: string]: string
+  [clientId: string]: string;
 }

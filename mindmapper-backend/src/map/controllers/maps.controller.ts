@@ -1,9 +1,9 @@
 import {
-  Body, Controller, Get, NotFoundException, Param, Post,
+  Body, Controller, Get, Delete, NotFoundException, Param, Post,
 } from '@nestjs/common';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MapsService } from '../services/maps.service';
-import { IMmpClientMap } from '../types';
+import { IMmpClientMap, IMmpClientMapWithAdminId } from '../types';
 
 @Controller('maps')
 export default class MapsController {
@@ -17,9 +17,14 @@ export default class MapsController {
     return map;
   }
 
+  @Delete(':id')
+  async delete(@Param('id') mapId: string) {
+    this.mapsService.deleteMap(mapId);
+  }
+
   @Post()
-  async create(@Body() mmpMap: IMmpClientMap): Promise<IMmpClientMap> {
+  async create(@Body() mmpMap: IMmpClientMap): Promise<IMmpClientMapWithAdminId> {
     const newMap: MmpMap = await this.mapsService.createMap(mmpMap);
-    return this.mapsService.exportMapToClient(newMap.id);
+    return { map: await this.mapsService.exportMapToClient(newMap.id), adminId: newMap.adminId };
   }
 }

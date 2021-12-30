@@ -22,6 +22,13 @@ export class HttpService {
         return fetch(`${apiUrl}${endpoint}`)
     }
 
+    public delete(apiUrl: API_URL, endpoint: string): Promise<any> {
+        return fetch(
+            `${apiUrl}${endpoint}`,
+            { method: 'DELETE' }
+        )
+    }
+
     /**
      * Constructs a `POST` request that interprets the body as a JSON object and
      * returns the response body as a JSON object.

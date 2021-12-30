@@ -1,6 +1,6 @@
 import {Component, Inject} from '@angular/core'
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
-import {faGithub, faGitter} from '@fortawesome/free-brands-svg-icons'
+import {faGithub} from '@fortawesome/free-brands-svg-icons'
 import { environment } from '../../../../environments/environment'
 
 @Component({
@@ -11,13 +11,12 @@ import { environment } from '../../../../environments/environment'
   export class AboutDialogComponent {
 
     public faGithub = faGithub
-    public faGitter = faGitter
     public version: string
     public applicationName: string
 
     constructor(
       public dialogRef: MatDialogRef<AboutDialogComponent>,
-      @Inject(MAT_DIALOG_DATA) public data: {deletedAt: Date, deleteAfterDays: number, language: string}
+      @Inject(MAT_DIALOG_DATA) public data: {deletedAt: Date, deleteAfterDays: number, language: string, isAdmin: boolean, deleteCallback: Function}
       ) {
       this.version = environment.version
       this.applicationName = environment.name

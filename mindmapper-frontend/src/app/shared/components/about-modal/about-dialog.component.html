@@ -18,4 +18,5 @@
 </mat-dialog-content>
 <mat-dialog-actions>
     <button mat-button [mat-dialog-close]="true">{{ "MODALS.GENERAL.BUTTON_CLOSE" | translate }}</button>
+    <button mat-button (click)="data.deleteCallback()" color="warn">{{ "MODALS.INFO.DELETE" | translate }}</button>
 </mat-dialog-actions>

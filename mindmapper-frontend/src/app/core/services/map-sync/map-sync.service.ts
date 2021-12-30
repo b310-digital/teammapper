@@ -6,11 +6,12 @@ import {v4 as uuidv4} from 'uuid'
 import { io, Socket } from 'socket.io-client'
 import { NodePropertyMapping } from '@mmp/index'
 import { ExportNodeProperties, MapProperties, MapSnapshot, NodeUpdateEvent } from '@mmp/map/types'
-import { ResponseMapUpdated, ResponseNodeAdded, ResponseNodeRemoved, ResponseNodeUpdated, ResponseSelectionUpdated, ServerMap } from './server-types'
+import { ResponseMapUpdated, ResponseNodeAdded, ResponseNodeRemoved, ResponseNodeUpdated, ResponseSelectionUpdated, ServerMap, ServerMapWithAdminId } from './server-types'
 import { API_URL, HttpService } from '../../http/http.service'
 import { DialogService } from '../../../shared/services/dialog/dialog.service'
 import { COLORS } from '../mmp/mmp-utils'
 import { UtilsService } from '../utils/utils.service'
+import { StorageService } from '../storage/storage.service'
 
 const DEFAULT_COLOR = '#000000'
 const DEFAULT_SELF_COLOR = '#c0c0c0'
@@ -45,7 +46,8 @@ export class MapSyncService {
     constructor (
         private mmpService: MmpService,
         private httpService: HttpService,
-        private dialogService: DialogService
+        private dialogService: DialogService,
+        private storageService: StorageService
     ) {
         // Initialization of the behavior subjects.
         this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null)
@@ -124,7 +126,9 @@ export class MapSyncService {
         this.mmpService.new()
 
         const mapData = this.mmpService.exportAsJSON()
-        const serverMap: MapProperties = await this.postMapToServer(uuid, mapData)
+        const serverMapWithAdminId: ServerMapWithAdminId = await this.postMapToServer(uuid, mapData)
+        const serverMap: MapProperties = serverMapWithAdminId.map
+        this.storageService.set(serverMap.uuid, serverMapWithAdminId.adminId)
 
         const cachedMap: CachedMap = {
             data: mapData,
@@ -170,7 +174,7 @@ export class MapSyncService {
       return this.convertMap(json)
     }
 
-    public async postMapToServer(uuid: string, data: MapSnapshot): Promise<MapProperties> {
+    public async postMapToServer(uuid: string, data: MapSnapshot): Promise<ServerMapWithAdminId> {
       const response = await this.httpService.post(API_URL.ROOT, '/maps/', JSON.stringify({uuid, data}))
       return response.json()
     }
@@ -194,6 +198,11 @@ export class MapSyncService {
     public async updateMap(_oldMapData?: MapSnapshot): Promise<void> {
         const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
         this.socket.emit('updateMap', { map: cachedMapEntry.cachedMap })
+    }
+
+    public deleteMap() {
+        const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
+        this.httpService.delete(API_URL.ROOT, '/maps/' + cachedMapEntry.cachedMap.uuid)
     }
 
     /**
