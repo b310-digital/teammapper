@@ -146,12 +146,6 @@ export class ShortcutsService {
                 this.mmpService.moveNodeTo('down')
             }
         }, {
-            keys: 'ctrl+i',
-            description: 'TOOLTIPS.IMPORT_MAP',
-            callback: () => {
-                this.mmpService.importMap()
-            }
-        }, {
             keys: 'ctrl+e',
             description: 'TOOLTIPS.EXPORT_MAP',
             callback: () => {

@@ -306,23 +306,22 @@ export class MmpService {
     /**
      * Import an existing map from the local file system.
      */
-    public async importMap () {
-        const json = await UtilsService.uploadFile()
-
+    public importMap (json: string) {
         this.new(JSON.parse(json))
     }
 
     /**
      * Insert an image in the selected node.
      */
-    public async addNodeImage () {
-        if (!this.selectNode().image.src) {
-            const image = await UtilsService.uploadFile(['image/png', 'image/gif', 'image/jpg', 'image/jpeg'])
+    public addNodeImage (image: string) {
+        this.updateNode('imageSrc', image)
+    }
 
-            this.updateNode('imageSrc', image)
-        } else {
-            this.updateNode('imageSrc', '')
-        }
+    /**
+     * Removes an image of the selected node.
+     */
+    public removeNodeImage () {
+        this.updateNode('imageSrc', '')
     }
 
     /**
