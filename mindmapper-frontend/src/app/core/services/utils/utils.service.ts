@@ -65,9 +65,10 @@ export class UtilsService {
 
         // Open bug (not critical): If the user presses cancel, the input element is NOT removed.
         // It cant be directly removed, because ios camera capture might still need it,
-        // so need to wait for the user to finish file upload. But canceling the dialog 
-        // does not fire any event at all - so its hard to guess when the user has actually canceled
-        // and the input field has to be deleted. This creates useless file input elements inside the DOM. 
+        // so need to wait for the user to finish file upload.
+        // But canceling the dialog does not fire any event at all -
+        // so its hard to guess when the user has actually canceled and the input field has to be deleted. 
+        // This creates useless file input elements inside the DOM for each file upload cancel action. 
         const uploadPromise: Promise<string> = new Promise((resolve, reject) => {
             fakeInput.addEventListener('change', () => {               
                 const fileReader = new FileReader()
