@@ -42,3 +42,15 @@ mat-toolbar::-webkit-scrollbar-thumb {
 mat-toolbar::-webkit-scrollbar-thumb:hover {
     background: mat.get-color-from-palette($app-primary, .8);
 }
+
+.label-file-upload {
+    cursor: pointer;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+input[type="file"] {
+    display: none;
+}
