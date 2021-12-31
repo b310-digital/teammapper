@@ -127,8 +127,9 @@ export class MapSyncService {
 
         const mapData = this.mmpService.exportAsJSON()
         const serverMapWithAdminId: ServerMapWithAdminId = await this.postMapToServer(uuid, mapData)
-        const serverMap: MapProperties = serverMapWithAdminId.map
-        this.storageService.set(serverMap.uuid, serverMapWithAdminId.adminId)
+        const serverMap: MapProperties = this.convertMap(serverMapWithAdminId.map)
+        // store the admin id locally
+        this.storageService.set("admin_" + serverMap.uuid, { adminId: serverMapWithAdminId.adminId, ttl: serverMap.deletedAt })
 
         const cachedMap: CachedMap = {
             data: mapData,
@@ -200,9 +201,10 @@ export class MapSyncService {
         this.socket.emit('updateMap', { map: cachedMapEntry.cachedMap })
     }
 
-    public deleteMap() {
+    public deleteMap(adminId: string): Promise<any> {
         const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
-        this.httpService.delete(API_URL.ROOT, '/maps/' + cachedMapEntry.cachedMap.uuid)
+        const body: {adminId: string} = {adminId}
+        return this.httpService.delete(API_URL.ROOT, '/maps/' + cachedMapEntry.cachedMap.uuid, JSON.stringify(body))
     }
 
     /**
@@ -236,7 +238,7 @@ export class MapSyncService {
      * Converts server map
      */
     private convertMap(serverMap: ServerMap): MapProperties {
-        return Object.assign({}, serverMap, { lastModified: Date.parse(serverMap.lastModified) })
+        return Object.assign({}, serverMap, { lastModified: Date.parse(serverMap.lastModified), deletedAt: Date.parse(serverMap.deletedAt) })
     }
 
     private listenServerEvents(uuid: string): void {

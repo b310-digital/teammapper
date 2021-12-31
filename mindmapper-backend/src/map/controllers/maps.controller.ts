@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MapsService } from '../services/maps.service';
-import { IMmpClientMap, IMmpClientMapWithAdminId } from '../types';
+import { IMmpClientDeleteRequest, IMmpClientMap, IMmpClientMapWithAdminId } from '../types';
 
 @Controller('maps')
 export default class MapsController {
@@ -18,8 +18,9 @@ export default class MapsController {
   }
 
   @Delete(':id')
-  async delete(@Param('id') mapId: string) {
-    this.mapsService.deleteMap(mapId);
+  async delete(@Param('id') mapId: string, @Body() body: IMmpClientDeleteRequest): Promise<void> {
+    const mmpMap: MmpMap = await this.mapsService.findMap(mapId);
+    if (mmpMap.adminId === body.adminId) this.mapsService.deleteMap(mapId);
   }
 
   @Post()

@@ -8,5 +8,5 @@ export interface CachedMap {
     data: any
     uuid: string
     deleteAfterDays: number
-    deletedAt: Date
+    deletedAt: number
 }

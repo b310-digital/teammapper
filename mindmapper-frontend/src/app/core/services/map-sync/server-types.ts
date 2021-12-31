@@ -30,13 +30,13 @@ interface ResponseSelectionUpdated extends ResponseServer {
 interface ServerMap {
     uuid: string
     lastModified: string
-    deletedAt: Date
+    deletedAt: string
     deleteAfterDays: number
     data: MapSnapshot
 }
 
 interface ServerMapWithAdminId {
-  map: MapProperties
+  map: ServerMap
   adminId: string
 }
 

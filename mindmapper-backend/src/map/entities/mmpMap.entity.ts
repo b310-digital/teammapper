@@ -1,5 +1,5 @@
 import {
-  Entity, Column, PrimaryGeneratedColumn, OneToMany, Generated
+  Entity, Column, PrimaryGeneratedColumn, OneToMany, Generated,
 } from 'typeorm';
 import { MmpNode } from './mmpNode.entity';
 
@@ -12,8 +12,8 @@ export class MmpMap {
   lastModified: Date;
 
   @Column({ nullable: true })
-  @Generated("uuid")
-  adminId: string
+  @Generated('uuid')
+  adminId: string;
 
   @Column({ nullable: true })
   name: string;

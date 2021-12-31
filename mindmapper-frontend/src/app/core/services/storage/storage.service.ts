@@ -108,4 +108,17 @@ export class StorageService {
         return items && items.length > 0
     }
 
+    /*
+    * Cleans all outdated entries that support a ttl
+    */
+    public async cleanExpired(): Promise<void> {
+        const today = new Date()
+        const time: number = today.getTime()
+        const entries = await this.getAllEntries()
+        entries.forEach(([key, value]: [any, any]) => {
+            if(!value?.ttl) return
+
+            if (time > value?.ttl) this.remove(key)
+        })
+    }
 }

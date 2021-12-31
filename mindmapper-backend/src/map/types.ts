@@ -56,6 +56,10 @@ export interface IMmpClientJoinRequest {
   color: string;
 }
 
+export interface IMmpClientDeleteRequest {
+  adminId: string;
+}
+
 export interface IMmpClientNodeSelectionRequest {
   mapId: string;
   nodeId: string;
