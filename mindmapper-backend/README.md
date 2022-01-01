@@ -72,6 +72,12 @@ For pruction environments, run migrations, see https://github.com/typeorm/typeor
 npm run typeorm:prod:migrate
 ```
 
+or run migrations on dev:
+
+```bash
+npm run typeorm migration:run
+```
+
 Generate new migration based on current changes
 
 ```bash

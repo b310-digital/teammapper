@@ -94,4 +94,8 @@ export class MapsService {
   deleteOutdatedMaps(afterDays: number = 30) {
     this.mapsRepository.delete({ lastModified: MoreThan(this.getDeletedAt(afterDays)) });
   }
+
+  deleteMap(uuid: string) {
+    this.mapsRepository.delete({ id: uuid });
+  }
 }

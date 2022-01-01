@@ -12,5 +12,5 @@ export const createTestConfiguration = (): TypeOrmModuleOptions => ({
   synchronize: true,
   autoLoadEntities: true,
   dropSchema: true,
-  keepConnectionAlive: true
+  keepConnectionAlive: true,
 });

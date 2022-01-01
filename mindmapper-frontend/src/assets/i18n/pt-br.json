@@ -75,7 +75,9 @@
           },
         "INFO": {
             "DELETED_AT": "Mindmap is going to be deleted at",
-            "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days."
+            "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
+            "DELETE": "Delete mindmap",
+            "CONFIRM_DELETE": "Delete?"
         }
     },
     "PAGES": {

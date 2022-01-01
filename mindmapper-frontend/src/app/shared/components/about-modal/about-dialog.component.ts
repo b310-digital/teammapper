@@ -1,6 +1,11 @@
 import {Component, Inject} from '@angular/core'
+import {TranslateService} from '@ngx-translate/core'
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
-import {faGithub, faGitter} from '@fortawesome/free-brands-svg-icons'
+import {faGithub} from '@fortawesome/free-brands-svg-icons'
+import { MapProperties } from '@mmp/map/types';
+import { SettingsService } from 'src/app/core/services/settings/settings.service';
+import { StorageService } from 'src/app/core/services/storage/storage.service';
+import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
 import { environment } from '../../../../environments/environment'
 
 @Component({
@@ -11,15 +16,37 @@ import { environment } from '../../../../environments/environment'
   export class AboutDialogComponent {
 
     public faGithub = faGithub
-    public faGitter = faGitter
     public version: string
     public applicationName: string
+    public map: MapProperties
+    public mapAdminId: Promise<string>
 
     constructor(
       public dialogRef: MatDialogRef<AboutDialogComponent>,
-      @Inject(MAT_DIALOG_DATA) public data: {deletedAt: Date, deleteAfterDays: number, language: string}
+      private translateService: TranslateService,
+      private settingsService: SettingsService,
+      private storageService: StorageService,
+      private mapSyncService: MapSyncService,
       ) {
       this.version = environment.version
       this.applicationName = environment.name
+      this.map = this.mapSyncService.getAttachedMap().cachedMap
+      this.mapAdminId = this.getMapAdminId()
+    }
+
+    async deleteMap() {
+      if(confirm(this.translateService.instant('MODALS.INFO.CONFIRM_DELETE'))) {
+        await this.mapSyncService.deleteMap(await this.mapAdminId)
+        await this.storageService.remove("admin_" + this.map.uuid)
+        window.location.reload()
+      } 
+    }
+
+    language(): string {
+      return this.settingsService.getCachedSettings().general.language
+    }
+
+    async getMapAdminId(): Promise<string> {
+      return (await this.storageService.get("admin_" + this.map.uuid)).adminId
     }
   }

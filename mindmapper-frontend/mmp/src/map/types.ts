@@ -10,7 +10,7 @@ interface MapProperties {
     uuid: string,
     lastModified: number,
     data: MapSnapshot,
-    deletedAt: Date,
+    deletedAt: number,
     deleteAfterDays: number
 }
 
