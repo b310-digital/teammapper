@@ -47,6 +47,6 @@ import { environment } from '../../../../environments/environment'
     }
 
     async getMapAdminId(): Promise<string> {
-      return (await this.storageService.get("admin_" + this.map.uuid)).adminId
+      return (await this.storageService.get("admin_" + this.map.uuid))?.adminId
     }
   }
