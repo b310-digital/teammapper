@@ -1,5 +1,4 @@
-import {Component, OnInit} from '@angular/core'
-import {UtilsService} from '../../../../core/services/utils/utils.service'
+import {Component} from '@angular/core'
 import {faGithub, faGitter} from '@fortawesome/free-brands-svg-icons'
 
 @Component({

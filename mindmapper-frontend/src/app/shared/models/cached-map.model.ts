@@ -7,4 +7,6 @@ export interface CachedMap {
     lastModified: number
     data: any
     uuid: string
+    deleteAfterDays: number
+    deletedAt: number
 }

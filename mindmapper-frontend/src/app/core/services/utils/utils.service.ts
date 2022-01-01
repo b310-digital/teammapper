@@ -55,64 +55,6 @@ export class UtilsService {
     }
 
     /**
-     * Upload a file with a fake input click.
-     */
-    public static uploadFile(accept: string[] | string = 'application/json'): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const fakeInput = document.createElement('input')
-
-            fakeInput.type = 'file'
-            fakeInput.accept = Array.isArray(accept) ? accept.join(', ') : accept
-
-            document.body.appendChild(fakeInput)
-
-            fakeInput.click()
-
-            fakeInput.oninput = () => {
-                const fileReader = new FileReader()
-
-                fileReader.onload = (event: any) => {
-                    if (accept === 'application/json') {
-                        resolve(fileReader.result.toString())
-                    } else {
-                        // in case file is an image resize it
-                        const img = new Image()// create a image
-                        img.src = event.target.result // result is base64-encoded Data URI
-                        img.onload = function (el: any) {
-                            const resizeWidth = 360 // without px
-                            const elem = document.createElement('canvas')// create a canvas
-
-                            // scale the image to 360 (width) and keep aspect ratio
-                            const scaleFactor = resizeWidth / el.target.width
-                            elem.width = resizeWidth
-                            elem.height = el.target.height * scaleFactor
-
-                            // draw in canvas
-                            const ctx = elem.getContext('2d')
-                            ctx.drawImage(el.target, 0, 0, elem.width, elem.height)
-
-                            // get the base64-encoded Data URI from the resize image
-                            const srcEncoded = ctx.canvas.toDataURL(el.target, 'image/jpeg')
-
-                            resolve(srcEncoded)
-                        }
-                    }
-                }
-                fileReader.onerror = reject
-
-                if (accept === 'application/json') {
-                    fileReader.readAsText(fakeInput.files[0])
-                } else {
-                    fileReader.readAsDataURL(fakeInput.files[0])
-                }
-            }
-            fakeInput.onerror = reject
-
-            document.body.removeChild(fakeInput)
-        })
-    }
-
-    /**
      * Download a file with a fake link click.
      */
     public static downloadFile(name: string, content: string) {

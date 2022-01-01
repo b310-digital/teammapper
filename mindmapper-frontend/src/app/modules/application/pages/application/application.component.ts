@@ -6,6 +6,7 @@ import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { ActivatedRoute, Router, NavigationStart, RouterEvent } from '@angular/router'
 import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent } from '@mmp/map/types'
 import { MapOptions } from 'src/app/shared/models/settings.model'
+import { StorageService } from 'src/app/core/services/storage/storage.service'
 
 @Component({
     selector: 'mindmapper-application',
@@ -19,6 +20,7 @@ export class ApplicationComponent implements OnInit {
     constructor (private mmpService: MmpService,
                  private settingsService: SettingsService,
                  private mapSyncService: MapSyncService,
+                 private storageService: StorageService,
                  private route: ActivatedRoute,
                  private router: Router) {
         this.node = {}
@@ -26,6 +28,7 @@ export class ApplicationComponent implements OnInit {
 
     public async ngOnInit () {
         const settings = this.settingsService.getCachedSettings()
+        this.storageService.cleanExpired()
 
         // Create the mind map.
         this.initMap(settings.mapOptions)

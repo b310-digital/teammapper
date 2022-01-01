@@ -126,7 +126,8 @@ export default class CopyPaste {
 
             const nodePropertiesCopy = Utils.cloneObject(nodeProperties)
             // use the new parents branch color
-            const fixedColors: Colors = Object.assign({}, nodePropertiesCopy.color, { branch: newParentNode?.colors?.branch })
+            const branch = !newParentNode?.colors?.branch ? this.map.options.defaultNode.colors.branch : newParentNode.colors.branch
+            const fixedColors: Colors = Object.assign({}, nodePropertiesCopy.color, { branch })
 
             this.map.nodes.addNode({
                 name: nodePropertiesCopy.name,

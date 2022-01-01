@@ -5,6 +5,7 @@ import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { IMmpClientMap, IMmpClientNode } from '../types';
 import { mapClientNodeToMmpNode, mapMmpMapToClient } from '../utils/clientServerMapping';
+import configService from '../../config.service';
 
 @Injectable()
 export class MapsService {
@@ -26,7 +27,8 @@ export class MapsService {
     if (map === undefined) return null;
 
     const nodes: MmpNode[] = await this.findNodes(map?.id);
-    return mapMmpMapToClient(map, nodes);
+    const days: number = configService.deleteAfterDays();
+    return mapMmpMapToClient(map, nodes, this.getDeletedAt(days), days);
   }
 
   async addNode(mapId: string, clientNode: IMmpClientNode): Promise<MmpNode> {
@@ -77,16 +79,23 @@ export class MapsService {
   async createMap(clientMap: IMmpClientMap): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create({
       id: clientMap.uuid,
-      lastModified: new Date(clientMap.lastModified),
       nodes: clientMap.data.map((node) => mapClientNodeToMmpNode(node)),
     });
     return this.mapsRepository.save(newMap);
   }
 
-  deleteOutdatedMaps(afterDays: number = 30) {
+  getDeletedAt(afterDays: number): Date {
     const today: Date = new Date();
     const comparisonTime: Date = new Date();
     comparisonTime.setDate(today.getDate() + afterDays);
-    this.mapsRepository.delete({ lastModified: MoreThan(comparisonTime) });
+    return comparisonTime;
+  }
+
+  deleteOutdatedMaps(afterDays: number = 30) {
+    this.mapsRepository.delete({ lastModified: MoreThan(this.getDeletedAt(afterDays)) });
+  }
+
+  deleteMap(uuid: string) {
+    this.mapsRepository.delete({ id: uuid });
   }
 }

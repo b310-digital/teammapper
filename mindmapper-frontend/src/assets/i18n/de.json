@@ -61,6 +61,9 @@
         "SHARE": "Teilen"
     },
     "MODALS": {
+      "GENERAL": {
+        "BUTTON_CLOSE": "Schließen"
+      },
       "CONNECTION_INFO": {
           "TITLE": "Verbindung verloren",
           "CONTENT": "Leider ist die Verbindung zum Server verloren gegangen. Versuche erneut zu verbinden...",
@@ -68,19 +71,24 @@
       },
       "SHARE": {
         "TITLE": "Map teilen",
-        "CONTENT": "Kopiere diesen Link und teile ihn: {{link}}",
-        "BUTTON_CLOSE": "Schließen"
+        "CONTENT": "Kopiere diesen Link und teile ihn: {{link}}"
+      },
+      "INFO": {
+          "DELETED_AT": "Diese Mindmap wird gelöscht am",
+          "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
+          "DELETE": "Mindmap löschen",
+          "CONFIRM_DELETE": "Wirklich löschen?"
       }
     },
      "PAGES": {
         "ABOUT": {
             "INTRODUCTION": {
-                "APPLICATION_DESCRIPTION": "Web application to collaboratively draw mind maps. Forked from mindmapp by cedoor.",
+                "APPLICATION_DESCRIPTION": "Mindmaps sind eine wunderbare Möglichkeit, um Themen strukturiert zu visualisieren. Unsere Anwendung »Mindmapper« bietet dir zahlreiche Funktionen: Arbeite kollaborativ mit anderen gemeinsam, färbe deine Mindmap oder füge Bilder zur Veranschaulichung hinzu.",
                 "APPLICATION_PROPERTIES": [
-                    "Effective mind maps",
-                    "Modern web application",
-                    "Simple interface",
-                    "Open source software"
+                    "Effektive Mindmaps",
+                    "Moderne Webapplikation",
+                    "Simples Interface",
+                    "Open Source Software"
                 ]
             },
             "SECTIONS": [

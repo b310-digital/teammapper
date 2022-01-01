@@ -1,5 +1,5 @@
 import {
-  Entity, Column, PrimaryGeneratedColumn, OneToMany,
+  Entity, Column, PrimaryGeneratedColumn, OneToMany, Generated,
 } from 'typeorm';
 import { MmpNode } from './mmpNode.entity';
 
@@ -8,8 +8,12 @@ export class MmpMap {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
   lastModified: Date;
+
+  @Column({ nullable: true })
+  @Generated('uuid')
+  adminId: string;
 
   @Column({ nullable: true })
   name: string;

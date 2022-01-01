@@ -1,4 +1,4 @@
-import { MapSnapshot, ExportNodeProperties } from '@mmp/map/types'
+import { MapSnapshot, ExportNodeProperties, MapProperties } from '@mmp/map/types'
 
 interface ResponseServer {
   // socket id of the triggering client, to prevent endless update loops
@@ -30,7 +30,14 @@ interface ResponseSelectionUpdated extends ResponseServer {
 interface ServerMap {
     uuid: string
     lastModified: string
+    deletedAt: string
+    deleteAfterDays: number
     data: MapSnapshot
+}
+
+interface ServerMapWithAdminId {
+  map: ServerMap
+  adminId: string
 }
 
 export {
@@ -39,5 +46,6 @@ export {
   ResponseNodeRemoved,
   ResponseNodeUpdated,
   ResponseSelectionUpdated,
-  ServerMap
+  ServerMap,
+  ServerMapWithAdminId
 }

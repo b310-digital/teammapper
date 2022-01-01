@@ -18,11 +18,18 @@ export interface IMmpClientFont {
 export interface IMmpClientMap {
   uuid: string;
   lastModified: Date;
+  deleteAfterDays: number;
+  deletedAt: Date;
   data: IMmpClientNode[];
 }
 
+export interface IMmpClientMapWithAdminId {
+  map: IMmpClientMap;
+  adminId: string;
+}
+
 export interface IMmpClientMapRequest {
-  map: IMmpClientMap
+  map: IMmpClientMap;
 }
 
 export interface IMmpClientNode {
@@ -49,6 +56,10 @@ export interface IMmpClientJoinRequest {
   color: string;
 }
 
+export interface IMmpClientDeleteRequest {
+  adminId: string;
+}
+
 export interface IMmpClientNodeSelectionRequest {
   mapId: string;
   nodeId: string;
@@ -56,5 +67,5 @@ export interface IMmpClientNodeSelectionRequest {
 }
 
 export interface IClientCache {
-  [clientId: string]: string
+  [clientId: string]: string;
 }
