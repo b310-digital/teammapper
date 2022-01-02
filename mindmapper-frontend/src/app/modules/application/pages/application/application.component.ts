@@ -9,120 +9,120 @@ import { MapOptions } from 'src/app/shared/models/settings.model'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 
 @Component({
-    selector: 'mindmapper-application',
-    templateUrl: './application.component.html',
-    styleUrls: ['./application.component.scss']
+  selector: 'mindmapper-application',
+  templateUrl: './application.component.html',
+  styleUrls: ['./application.component.scss']
 })
 export class ApplicationComponent implements OnInit {
 
-    public node: any
+  public node: any
 
-    constructor (private mmpService: MmpService,
-                 private settingsService: SettingsService,
-                 private mapSyncService: MapSyncService,
-                 private storageService: StorageService,
-                 private route: ActivatedRoute,
-                 private router: Router) {
-        this.node = {}
+  constructor (private mmpService: MmpService,
+    private settingsService: SettingsService,
+    private mapSyncService: MapSyncService,
+    private storageService: StorageService,
+    private route: ActivatedRoute,
+    private router: Router) {
+    this.node = {}
+  }
+
+  public async ngOnInit () {
+    const settings = this.settingsService.getCachedSettings()
+    this.storageService.cleanExpired()
+
+    // Create the mind map.
+    this.initMap(settings.mapOptions)
+
+    this.handleImageDropObservable()
+
+    this.router.events.subscribe((event: RouterEvent) => {
+      if (event instanceof NavigationStart) {
+        this.mapSyncService.leaveMap()
+      }
+    });
+  }
+
+  public handleImageDropObservable () {
+    UtilsService.observableDroppedImages().subscribe((image: string) => {
+      this.mmpService.updateNode('imageSrc', image)
+    })
+  }
+
+  public async initMap (options: MapOptions) {
+    // Initialize a map
+    // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
+    // Map_1 is currently apparently hardcoded inside the map component...
+    this.mmpService.create('map_1', options)
+
+    // Try to either load the given id from the server, or initialize a new map with empty data
+    const givenId: string = this.route.snapshot.paramMap.get('id')
+
+    const result: boolean = await this.mapSyncService.init(givenId)
+
+    // not found, return to start page
+    if(!result) {
+      this.router.navigate([''])
+      return
     }
 
-    public async ngOnInit () {
-        const settings = this.settingsService.getCachedSettings()
-        this.storageService.cleanExpired()
+    const attachedMap = this.mapSyncService.getAttachedMap()
 
-        // Create the mind map.
-        this.initMap(settings.mapOptions)
-
-        this.handleImageDropObservable()
-
-        this.router.events.subscribe((event: RouterEvent) => {
-            if (event instanceof NavigationStart) {
-                this.mapSyncService.leaveMap()
-            }
-        });
+    if(!givenId) {
+      history.replaceState({}, '', `/mmp/${attachedMap.cachedMap.uuid}`)
     }
 
-    public handleImageDropObservable () {
-        UtilsService.observableDroppedImages().subscribe((image: string) => {
-            this.mmpService.updateNode('imageSrc', image)
-        })
-    }
+    this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)
 
-    public async initMap (options: MapOptions) {
-        // Initialize a map
-        // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
-        // Map_1 is currently apparently hardcoded inside the map component...
-        this.mmpService.create('map_1', options)
+    // Initialize all listeners
+    this.createMapListeners()
+  }
 
-        // Try to either load the given id from the server, or initialize a new map with empty data
-        const givenId: string = this.route.snapshot.paramMap.get('id')
+  public createMapListeners () {
+    // create is NOT called for initial map load / and call, but for imported maps
+    this.mmpService.on('create').subscribe((result: MapCreateEvent) => {
+      Object.assign(this.node, this.mmpService.selectNode())
 
-        const result: boolean = await this.mapSyncService.init(givenId)
+      this.mapSyncService.updateAttachedMap()
+      this.mapSyncService.updateMap(result.previousMapData)
+    })
 
-        // not found, return to start page
-        if(!result) {
-            this.router.navigate([''])
-            return
-        }
+    this.mmpService.on('nodeSelect').subscribe((nodeProps: ExportNodeProperties) => {
+      this.mapSyncService.updateNodeSelection(nodeProps.id, true)
+      Object.assign(this.node, nodeProps)
+    })
 
-        const attachedMap = this.mapSyncService.getAttachedMap()
+    this.mmpService.on('nodeDeselect').subscribe((nodeProps: ExportNodeProperties) => {
+      this.mapSyncService.updateNodeSelection(nodeProps.id, false)
+      Object.assign(this.node, this.mmpService.selectNode())
+    })
 
-        if(!givenId) {
-          history.replaceState({}, '', `/mmp/${attachedMap.cachedMap.uuid}`)
-        }
+    this.mmpService.on('nodeUpdate').subscribe((result: NodeUpdateEvent) => {
+      Object.assign(this.node, result.nodeProperties)
+      this.mapSyncService.updateNode(result)
+      this.mapSyncService.updateAttachedMap()
+    })
 
-        this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)
+    this.mmpService.on('undo').subscribe(() => {
+      Object.assign(this.node, this.mmpService.selectNode())
+      this.mapSyncService.updateAttachedMap()
+      this.mapSyncService.updateMap()
+    })
 
-        // Initialize all listeners
-        this.createMapListeners()
-    }
+    this.mmpService.on('redo').subscribe(() => {
+      Object.assign(this.node, this.mmpService.selectNode())
+      this.mapSyncService.updateAttachedMap()
+      this.mapSyncService.updateMap()
+    })
 
-    public createMapListeners () {
-        // create is NOT called for initial map load / and call, but for imported maps
-        this.mmpService.on('create').subscribe((result: MapCreateEvent) => {
-            Object.assign(this.node, this.mmpService.selectNode())
+    this.mmpService.on('nodeCreate').subscribe((newNode: ExportNodeProperties) => {
+      this.mapSyncService.addNode(newNode)
+      this.mapSyncService.updateAttachedMap()
+    })
 
-            this.mapSyncService.updateAttachedMap()
-            this.mapSyncService.updateMap(result.previousMapData)
-        })
-
-        this.mmpService.on('nodeSelect').subscribe((nodeProps: ExportNodeProperties) => {
-            this.mapSyncService.updateNodeSelection(nodeProps.id, true)
-            Object.assign(this.node, nodeProps)
-        })
-
-        this.mmpService.on('nodeDeselect').subscribe((nodeProps: ExportNodeProperties) => {
-            this.mapSyncService.updateNodeSelection(nodeProps.id, false)
-            Object.assign(this.node, this.mmpService.selectNode())
-        })
-
-        this.mmpService.on('nodeUpdate').subscribe((result: NodeUpdateEvent) => {
-            Object.assign(this.node, result.nodeProperties)
-            this.mapSyncService.updateNode(result)
-            this.mapSyncService.updateAttachedMap()
-        })
-
-        this.mmpService.on('undo').subscribe(() => {
-            Object.assign(this.node, this.mmpService.selectNode())
-            this.mapSyncService.updateAttachedMap()
-            this.mapSyncService.updateMap()
-        })
-
-        this.mmpService.on('redo').subscribe(() => {
-            Object.assign(this.node, this.mmpService.selectNode())
-            this.mapSyncService.updateAttachedMap()
-            this.mapSyncService.updateMap()
-        })
-
-        this.mmpService.on('nodeCreate').subscribe((newNode: ExportNodeProperties) => {
-            this.mapSyncService.addNode(newNode)
-            this.mapSyncService.updateAttachedMap()
-        })
-
-        this.mmpService.on('nodeRemove').subscribe((removedNode: ExportNodeProperties) => {
-            this.mapSyncService.removeNode(removedNode)
-            this.mapSyncService.updateAttachedMap()
-        })
-    }
+    this.mmpService.on('nodeRemove').subscribe((removedNode: ExportNodeProperties) => {
+      this.mapSyncService.removeNode(removedNode)
+      this.mapSyncService.updateAttachedMap()
+    })
+  }
 }
 

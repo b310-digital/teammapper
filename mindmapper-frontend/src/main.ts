@@ -5,9 +5,9 @@ import {RootModule} from './app/root.module'
 import {environment} from './environments/environment'
 
 if (environment.production) {
-    enableProdMode()
+  enableProdMode()
 }
 
 setTimeout(() => {
-    platformBrowserDynamic().bootstrapModule(RootModule).catch(console.error)
+  platformBrowserDynamic().bootstrapModule(RootModule).catch(console.error)
 }, 0)

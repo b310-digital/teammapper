@@ -12,32 +12,32 @@ import { RootComponent } from './root.component'
 import { SharedModule } from './shared/shared.module'
 
 export function createTranslateLoader (http: HttpClient) {
-    return new TranslateHttpLoader(http, './assets/i18n/', '.json')
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json')
 }
 
 @NgModule({
-    imports: [
-        BrowserModule,
-        SharedModule,
-        BrowserAnimationsModule,
-        RootRoutingModule,
-        HttpClientModule,
-        TranslateModule.forRoot({
-            loader: {
-                provide: TranslateLoader,
-                useFactory: (createTranslateLoader),
-                deps: [HttpClient]
-            }
-        }),
-        HotkeyModule.forRoot(),
-    ],
-    declarations: [
-        RootComponent
-    ],
-    providers: [
-        { provide: APP_INITIALIZER, useFactory: appSettingsFactory, deps: [SettingsService], multi: true },
-    ],
-    bootstrap: [RootComponent]
+  imports: [
+    BrowserModule,
+    SharedModule,
+    BrowserAnimationsModule,
+    RootRoutingModule,
+    HttpClientModule,
+    TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useFactory: (createTranslateLoader),
+        deps: [HttpClient]
+      }
+    }),
+    HotkeyModule.forRoot(),
+  ],
+  declarations: [
+    RootComponent
+  ],
+  providers: [
+    { provide: APP_INITIALIZER, useFactory: appSettingsFactory, deps: [SettingsService], multi: true },
+  ],
+  bootstrap: [RootComponent]
 })
 export class RootModule {
 }

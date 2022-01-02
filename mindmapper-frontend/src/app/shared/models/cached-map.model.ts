@@ -1,12 +1,12 @@
 export interface CachedMapEntry {
-    cachedMap: CachedMap,
-    key: string
+  cachedMap: CachedMap;
+  key: string;
 }
 
 export interface CachedMap {
-    lastModified: number
-    data: any
-    uuid: string
-    deleteAfterDays: number
-    deletedAt: number
+  lastModified: number;
+  data: any;
+  uuid: string;
+  deleteAfterDays: number;
+  deletedAt: number;
 }

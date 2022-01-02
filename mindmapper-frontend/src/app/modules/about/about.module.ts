@@ -7,16 +7,16 @@ import {HeaderComponent} from './components/header/header.component'
 import {FooterComponent} from './components/footer/footer.component'
 
 @NgModule({
-    imports: [
-        SharedModule,
-        AboutRoutingModule
-    ],
-    declarations: [
-        AboutComponent,
-        JumbotronComponent,
-        HeaderComponent,
-        FooterComponent
-    ]
+  imports: [
+    SharedModule,
+    AboutRoutingModule
+  ],
+  declarations: [
+    AboutComponent,
+    JumbotronComponent,
+    HeaderComponent,
+    FooterComponent
+  ]
 })
 export class AboutModule {
 }

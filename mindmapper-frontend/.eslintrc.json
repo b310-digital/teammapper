@@ -35,6 +35,20 @@
             "style": "camelCase",
             "type": "attribute"
           }
+        ],
+        "@typescript-eslint/indent": ["error", 2],
+        "@typescript-eslint/member-delimiter-style": [
+          "warn",
+          {
+            "multiline": {
+                "delimiter": "semi",
+                "requireLast": true
+            },
+            "singleline": {
+                "delimiter": "semi",
+                "requireLast": false
+            }
+          }
         ]
       }
     },

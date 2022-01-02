@@ -2,27 +2,27 @@ import {Component, Input} from '@angular/core'
 import {MmpService} from '../../../../core/services/mmp/mmp.service'
 
 @Component({
-    selector: 'mindmapper-sliders-panel',
-    templateUrl: './slider-panels.component.html',
-    styleUrls: ['./slider-panels.component.scss']
+  selector: 'mindmapper-sliders-panel',
+  templateUrl: './slider-panels.component.html',
+  styleUrls: ['./slider-panels.component.scss']
 })
 export class SliderPanelsComponent {
 
-    @Input() public node: any
+  @Input() public node: any
 
-    constructor (public mmpService: MmpService) {
-    }
+  constructor (public mmpService: MmpService) {
+  }
 
-    public updateNodeFontSize (event: any, graphic?: boolean) {
-        const value = parseInt(event.source.value, 10)
+  public updateNodeFontSize (event: any, graphic?: boolean) {
+    const value = parseInt(event.source.value, 10)
 
-        this.mmpService.updateNode('fontSize', value, graphic)
-    }
+    this.mmpService.updateNode('fontSize', value, graphic)
+  }
 
-    public updateNodeImageSize (event: any, graphic?: boolean) {
-        const value = parseInt(event.source.value, 10)
+  public updateNodeImageSize (event: any, graphic?: boolean) {
+    const value = parseInt(event.source.value, 10)
 
-        this.mmpService.updateNode('imageSize', value, graphic)
-    }
+    this.mmpService.updateNode('imageSize', value, graphic)
+  }
 
 }

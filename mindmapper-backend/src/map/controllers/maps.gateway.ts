@@ -13,10 +13,12 @@ import { Server, Socket } from 'socket.io';
 import { MapsService } from '../services/maps.service';
 import {
   IClientCache,
+  IMmpClientDeleteRequest,
   IMmpClientJoinRequest,
   IMmpClientMap, IMmpClientMapRequest, IMmpClientNodeRequest, IMmpClientNodeSelectionRequest,
 } from '../types';
 import { mapMmpNodeToClient } from '../utils/clientServerMapping';
+import { MmpMap } from '../entities/mmpMap.entity';
 
 
 @WebSocketGateway({ cors: { credentials: true } })
@@ -59,6 +61,22 @@ export class MapsGateway implements OnGatewayDisconnect {
   ): Promise<boolean> {
     await this.mapsService.createMap(mmpMap);
     return true;
+  }
+
+  @SubscribeMessage('deleteMap')
+  async onDeleteMap(
+    @ConnectedSocket() _client: Socket,
+      @MessageBody() request: IMmpClientDeleteRequest,
+  ): Promise<boolean> {
+    const mmpMap: MmpMap = await this.mapsService.findMap(request.mapId);
+    if (mmpMap.adminId === request.adminId) {
+      this.mapsService.deleteMap(request.mapId);
+      this.server
+        .to(request.mapId)
+        .emit('mapDeleted');
+      return true;
+    }
+    return false;
   }
 
   @SubscribeMessage('addNode')
