@@ -171,7 +171,7 @@ export default class Nodes {
                     background = node.getBackgroundDOM()
 
                 if (background.style.stroke !== color) {
-                    background.style.stroke = color
+                    background.style.stroke = DOMPurify.sanitize(color)
 
                     if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, this.getNodeProperties(node))
                 }
@@ -707,17 +707,19 @@ export default class Nodes {
             Log.error('The background color must be a string', 'type')
         }
 
+        const sanitizedColor = DOMPurify.sanitize(color)
+
         if (node.colors.background !== color || graphic) {
             const background = node.getBackgroundDOM()
 
-            background.style.fill = color
+            background.style.fill = sanitizedColor
 
             if (background.style.stroke !== '') {
-                background.style.stroke = d3.color(color).darker(.5).toString()
+                background.style.stroke = d3.color(sanitizedColor).darker(.5).toString()
             }
 
             if (graphic === false) {
-                node.colors.background = color
+                node.colors.background = sanitizedColor
             }
         } else {
             return false
@@ -736,11 +738,13 @@ export default class Nodes {
             Log.error('The text color must be a string', 'type')
         }
 
+        const sanitizedColor = DOMPurify.sanitize(color)
+
         if (node.colors.name !== color || graphic) {
-            node.getNameDOM().style.color = color
+            node.getNameDOM().style.color = sanitizedColor
 
             if (graphic === false) {
-                node.colors.name = color
+                node.colors.name = sanitizedColor
             }
         } else {
             return false
@@ -759,14 +763,16 @@ export default class Nodes {
             Log.error('The branch color must be a string', 'type')
         }
 
+        const sanitizedColor = DOMPurify.sanitize(color)
+
         if (!node.isRoot) {
             if (node.colors.name !== color || graphic) {
                 const branch = document.getElementById(node.id + '_branch')
 
-                branch.style.fill = branch.style.stroke = color
+                branch.style.fill = branch.style.stroke = sanitizedColor
 
                 if (graphic === false) {
-                    node.colors.branch = color
+                    node.colors.branch = sanitizedColor
                 }
             } else {
                 return false
@@ -869,7 +875,7 @@ export default class Nodes {
         }
 
         if (node.font.style !== style) {
-            node.getNameDOM().style['font-style'] = style
+            node.getNameDOM().style['font-style'] = DOMPurify.sanitize(style)
 
             if (graphic === false) {
                 node.font.style = style
@@ -892,7 +898,7 @@ export default class Nodes {
         }
 
         if (node.font.weight !== weight) {
-            node.getNameDOM().style['font-weight'] = weight
+            node.getNameDOM().style['font-weight'] = DOMPurify.sanitize(weight)
 
             this.map.draw.updateNodeShapes(node)
 
@@ -917,7 +923,7 @@ export default class Nodes {
         }
 
         if (node.font.decoration !== decoration) {
-            node.getNameDOM().style['text-decoration'] = decoration
+            node.getNameDOM().style['text-decoration'] = DOMPurify.sanitize(decoration)
 
             this.map.draw.updateNodeShapes(node)
 
