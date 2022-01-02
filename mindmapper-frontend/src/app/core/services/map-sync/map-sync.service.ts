@@ -17,16 +17,16 @@ const DEFAULT_COLOR = '#000000'
 const DEFAULT_SELF_COLOR = '#c0c0c0'
 
 interface ClientColorMapping {
-  [clientId: string]: ClientColorMappingValue
+  [clientId: string]: ClientColorMappingValue;
 }
 
 interface ClientColorMappingValue {
-  nodeId: string
-  color: string
+  nodeId: string;
+  color: string;
 }
 
 interface ServerClientList {
-  [clientId: string]: string
+  [clientId: string]: string;
 }
 
 @Injectable({
@@ -203,7 +203,7 @@ export class MapSyncService {
 
   public async deleteMap(adminId: string): Promise<any> {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
-    const body: {adminId: string, mapId: string} = {adminId, mapId: cachedMapEntry.cachedMap.uuid}
+    const body: {adminId: string; mapId: string} = {adminId, mapId: cachedMapEntry.cachedMap.uuid}
     return await this.socket.emit('deleteMap', body)
   }
 

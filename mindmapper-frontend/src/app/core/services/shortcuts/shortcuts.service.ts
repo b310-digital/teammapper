@@ -168,9 +168,9 @@ export class ShortcutsService {
      * Get some shortcut parameters and return the corresponding hot key.
      */
   private getHotKey (options: {
-    keys: string | string[],
-    description: string,
-    callback: (event?: KeyboardEvent) => void
+    keys: string | string[];
+    description: string;
+    callback: (event?: KeyboardEvent) => void;
   }) {
     return new Hotkey(options.keys, (event: KeyboardEvent) => {
       options.callback(event)
