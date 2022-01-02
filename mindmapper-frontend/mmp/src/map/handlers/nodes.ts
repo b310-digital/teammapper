@@ -9,6 +9,7 @@ import Node, {
 } from '../models/node'
 import MmpMap, { DomElements } from '../map'
 import * as d3 from 'd3'
+import DOMPurify from 'dompurify'
 import { v4 as uuidv4 } from 'uuid'
 import {Event} from './events'
 import Log from '../../utils/log'
@@ -656,7 +657,7 @@ export default class Nodes {
         }
 
         if (node.name != name || graphic) {
-            node.getNameDOM().innerHTML = name
+            node.getNameDOM().innerHTML = DOMPurify.sanitize(name)
 
             this.map.draw.updateNodeShapes(node)
 
