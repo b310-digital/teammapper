@@ -35,7 +35,8 @@
             "style": "camelCase",
             "type": "attribute"
           }
-        ]
+        ],
+        "@typescript-eslint/indent": ["error", 2]
       }
     },
     {

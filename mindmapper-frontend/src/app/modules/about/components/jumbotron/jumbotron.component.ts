@@ -1,15 +1,15 @@
 import {Component, OnInit} from '@angular/core'
 
 @Component({
-    selector: 'mindmapper-jumbotron',
-    templateUrl: './jumbotron.component.html',
-    styleUrls: ['./jumbotron.component.scss']
+  selector: 'mindmapper-jumbotron',
+  templateUrl: './jumbotron.component.html',
+  styleUrls: ['./jumbotron.component.scss']
 })
 export class JumbotronComponent {
 
-    public projectName: string
+  public projectName: string
 
-    constructor () {
-    }
+  constructor () {
+  }
 
 }

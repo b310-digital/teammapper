@@ -4,32 +4,32 @@ import {TranslateService} from '@ngx-translate/core'
 import {Settings} from '../../../../shared/models/settings.model'
 
 @Component({
-    selector: 'mindmapper-footer',
-    templateUrl: './footer.component.html',
-    styleUrls: ['./footer.component.scss']
+  selector: 'mindmapper-footer',
+  templateUrl: './footer.component.html',
+  styleUrls: ['./footer.component.scss']
 })
 export class FooterComponent implements OnInit {
 
-    public settings: Settings
-    public languages: string[]
+  public settings: Settings
+  public languages: string[]
 
-    public currentYear: string
+  public currentYear: string
 
-    constructor (private settingsService: SettingsService,
-                 private translateService: TranslateService) {
-    }
+  constructor (private settingsService: SettingsService,
+    private translateService: TranslateService) {
+  }
 
-    public ngOnInit () {
-        this.settings = this.settingsService.getCachedSettings()
-        this.languages = SettingsService.LANGUAGES
+  public ngOnInit () {
+    this.settings = this.settingsService.getCachedSettings()
+    this.languages = SettingsService.LANGUAGES
 
-        this.currentYear = new Date().getFullYear().toString()
-    }
+    this.currentYear = new Date().getFullYear().toString()
+  }
 
-    public async updateLanguage () {
-        await this.settingsService.updateCachedSettings(this.settings)
+  public async updateLanguage () {
+    await this.settingsService.updateCachedSettings(this.settings)
 
-        this.translateService.use(this.settings.general.language)
-    }
+    this.translateService.use(this.settings.general.language)
+  }
 
 }

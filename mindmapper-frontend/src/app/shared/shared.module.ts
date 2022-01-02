@@ -21,44 +21,44 @@ import { ShareFallbackComponent } from './components/share-fallback/share-fallba
 import { AboutDialogComponent } from './components/about-modal/about-dialog.component'
 
 const PIPES = [
-    StripTags
+  StripTags
 ]
 
 @NgModule({
-    imports: [
-        CommonModule,
-        FormsModule,
-        FontAwesomeModule,
-        MatSliderModule,
-        RouterModule,
-        TranslateModule,
-        MatIconModule,
-        MatSnackBarModule,
-        ColorPickerModule,
-        MatButtonModule,
-        MatCardModule,
-        MatListModule,
-        MatToolbarModule,
-        MatDialogModule,
-    ],
-    declarations: [...PIPES, ConnectionInfoDialogComponent, ShareFallbackComponent, AboutDialogComponent],
-    exports: [
-        CommonModule,
-        FormsModule,
-        FontAwesomeModule,
-        MatSliderModule,
-        TranslateModule,
-        MatIconModule,
-        MatSelectModule,
-        MatSnackBarModule,
-        ColorPickerModule,
-        MatButtonModule,
-        MatCardModule,
-        MatListModule,
-        MatToolbarModule,
-        ...PIPES
-    ],
-    providers: [DialogService]
+  imports: [
+    CommonModule,
+    FormsModule,
+    FontAwesomeModule,
+    MatSliderModule,
+    RouterModule,
+    TranslateModule,
+    MatIconModule,
+    MatSnackBarModule,
+    ColorPickerModule,
+    MatButtonModule,
+    MatCardModule,
+    MatListModule,
+    MatToolbarModule,
+    MatDialogModule,
+  ],
+  declarations: [...PIPES, ConnectionInfoDialogComponent, ShareFallbackComponent, AboutDialogComponent],
+  exports: [
+    CommonModule,
+    FormsModule,
+    FontAwesomeModule,
+    MatSliderModule,
+    TranslateModule,
+    MatIconModule,
+    MatSelectModule,
+    MatSnackBarModule,
+    ColorPickerModule,
+    MatButtonModule,
+    MatCardModule,
+    MatListModule,
+    MatToolbarModule,
+    ...PIPES
+  ],
+  providers: [DialogService]
 })
 export class SharedModule {
 }

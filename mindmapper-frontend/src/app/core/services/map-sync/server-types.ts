@@ -6,20 +6,20 @@ interface ResponseServer {
 }
 
 interface ResponseMapUpdated extends ResponseServer {
-    map: ServerMap
+  map: ServerMap
 }
 
 interface ResponseNodeUpdated extends ResponseServer {
-    node: ExportNodeProperties
-    property: string
+  node: ExportNodeProperties
+  property: string
 }
 
 interface ResponseNodeAdded extends ResponseServer {
-    node: ExportNodeProperties
+  node: ExportNodeProperties
 }
 
 interface ResponseNodeRemoved extends ResponseServer {
-    nodeId: string
+  nodeId: string
 }
 
 interface ResponseSelectionUpdated extends ResponseServer {
@@ -28,11 +28,11 @@ interface ResponseSelectionUpdated extends ResponseServer {
 }
 
 interface ServerMap {
-    uuid: string
-    lastModified: string
-    deletedAt: string
-    deleteAfterDays: number
-    data: MapSnapshot
+  uuid: string
+  lastModified: string
+  deletedAt: string
+  deleteAfterDays: number
+  data: MapSnapshot
 }
 
 interface ServerMapWithAdminId {

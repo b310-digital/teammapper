@@ -6,7 +6,7 @@ import { ShareFallbackComponent } from '../../components/share-fallback/share-fa
 
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class DialogService {
 

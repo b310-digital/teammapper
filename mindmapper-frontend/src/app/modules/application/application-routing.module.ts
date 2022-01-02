@@ -5,19 +5,19 @@ import {SettingsComponent} from './pages/settings/settings.component'
 import {ShortcutsComponent} from './pages/shortcuts/shortcuts.component'
 
 const routes: Routes = [{
-    path: '',
-    component: ApplicationComponent
+  path: '',
+  component: ApplicationComponent
 }, {
-    path: 'settings',
-    component: SettingsComponent
+  path: 'settings',
+  component: SettingsComponent
 }, {
-    path: 'shortcuts',
-    component: ShortcutsComponent
+  path: 'shortcuts',
+  component: ShortcutsComponent
 }]
 
 @NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule]
+  imports: [RouterModule.forChild(routes)],
+  exports: [RouterModule]
 })
 export class ApplicationRoutingModule {
 }

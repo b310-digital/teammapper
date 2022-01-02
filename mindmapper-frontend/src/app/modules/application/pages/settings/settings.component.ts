@@ -6,40 +6,40 @@ import {TranslateService} from '@ngx-translate/core'
 import { Location } from '@angular/common'
 
 @Component({
-    selector: 'mindmapper-settings',
-    templateUrl: './settings.component.html',
-    styleUrls: ['./settings.component.scss']
+  selector: 'mindmapper-settings',
+  templateUrl: './settings.component.html',
+  styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent {
 
-    public readonly languages: string[]
-    public settings: Settings
+  public readonly languages: string[]
+  public settings: Settings
 
-    constructor (private settingsService: SettingsService,
-                 private mmpService: MmpService,
-                 private translateService: TranslateService,
-                 private location: Location) {
-        this.languages = SettingsService.LANGUAGES
-        this.settings = this.settingsService.getCachedSettings()
-    }
+  constructor (private settingsService: SettingsService,
+    private mmpService: MmpService,
+    private translateService: TranslateService,
+    private location: Location) {
+    this.languages = SettingsService.LANGUAGES
+    this.settings = this.settingsService.getCachedSettings()
+  }
 
-    public async updateMapOptions () {
-        await this.settingsService.updateCachedSettings(this.settings)
+  public async updateMapOptions () {
+    await this.settingsService.updateCachedSettings(this.settings)
 
-        this.mmpService.updateOptions('rootNode', this.settings.mapOptions.rootNode)
-        this.mmpService.updateOptions('defaultNode', this.settings.mapOptions.defaultNode)
-        this.mmpService.updateOptions('centerOnResize', this.settings.mapOptions.centerOnResize)
+    this.mmpService.updateOptions('rootNode', this.settings.mapOptions.rootNode)
+    this.mmpService.updateOptions('defaultNode', this.settings.mapOptions.defaultNode)
+    this.mmpService.updateOptions('centerOnResize', this.settings.mapOptions.centerOnResize)
 
-    }
+  }
 
-    public async updateLanguage () {
-        await this.settingsService.updateCachedSettings(this.settings)
+  public async updateLanguage () {
+    await this.settingsService.updateCachedSettings(this.settings)
 
-        this.translateService.use(this.settings.general.language)
-    }
+    this.translateService.use(this.settings.general.language)
+  }
 
-    public back() {
-        this.location.back()
-    }
+  public back() {
+    this.location.back()
+  }
 
 }

@@ -4,31 +4,31 @@ import {Hotkey} from 'angular2-hotkeys'
 import { Location } from '@angular/common'
 
 @Component({
-    selector: 'mindmapper-shortcuts',
-    templateUrl: './shortcuts.component.html',
-    styleUrls: ['./shortcuts.component.scss']
+  selector: 'mindmapper-shortcuts',
+  templateUrl: './shortcuts.component.html',
+  styleUrls: ['./shortcuts.component.scss']
 })
 export class ShortcutsComponent implements OnInit {
 
-    public shortcuts: any[]
+  public shortcuts: any[]
 
-    constructor (private shortcutsService: ShortcutsService, private location: Location) {
-    }
+  constructor (private shortcutsService: ShortcutsService, private location: Location) {
+  }
 
-    public ngOnInit () {
-        const hotKeys: Hotkey[] = this.shortcutsService.getHotKeys()
-        this.shortcuts = hotKeys.map((hotKey: Hotkey) => {
-            const keys = hotKey.combo[0]
+  public ngOnInit () {
+    const hotKeys: Hotkey[] = this.shortcutsService.getHotKeys()
+    this.shortcuts = hotKeys.map((hotKey: Hotkey) => {
+      const keys = hotKey.combo[0]
 
-            return {
-                keys: keys === '+' ? [keys] : keys.split('+'),
-                description: hotKey.description
-            }
-        })
-    }
+      return {
+        keys: keys === '+' ? [keys] : keys.split('+'),
+        description: hotKey.description
+      }
+    })
+  }
 
-    public back() {
-        this.location.back()
-    }
+  public back() {
+    this.location.back()
+  }
 
 }
