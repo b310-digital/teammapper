@@ -15,13 +15,11 @@
     <link href="./assets/icons/web/icons/icon-72x72.png" rel="icon" type="image/png" />
     <meta content="#37474f" name="theme-color">
 
-    <!-- https://github.com/aws/aws-amplify/issues/678 fix: -->
-    <script>
-        if (global === undefined) {
-        var global = window;
-        }
-    </script>
-    <!-- https://github.com/aws/aws-amplify/issues/678 fix end-->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' *.arasaac.org data:;
+        " />
 
     <!-- apple icons and splash screens -->
     <meta name="apple-mobile-web-app-capable" content="yes" />

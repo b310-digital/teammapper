@@ -17,26 +17,26 @@ import { MatDialogModule } from '@angular/material/dialog'
 import { ClientColorPanelsComponent } from './components/client-color-panels/client-color-panels.component'
 
 @NgModule({
-    imports: [
-        SharedModule,
-        MatInputModule,
-        MatMenuModule,
-        MatSlideToggleModule,
-        MatTabsModule,
-        ApplicationRoutingModule,
-        MatDialogModule
-    ],
-    declarations: [
-        ApplicationComponent,
-        SettingsComponent,
-        ShortcutsComponent,
-        ClientColorPanelsComponent,
-        ColorPanelsComponent,
-        FloatingButtonsComponent,
-        MapComponent,
-        SliderPanelsComponent,
-        ToolbarComponent
-    ]
+  imports: [
+    SharedModule,
+    MatInputModule,
+    MatMenuModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    ApplicationRoutingModule,
+    MatDialogModule
+  ],
+  declarations: [
+    ApplicationComponent,
+    SettingsComponent,
+    ShortcutsComponent,
+    ClientColorPanelsComponent,
+    ColorPanelsComponent,
+    FloatingButtonsComponent,
+    MapComponent,
+    SliderPanelsComponent,
+    ToolbarComponent
+  ]
 })
 export class ApplicationModule {
 
