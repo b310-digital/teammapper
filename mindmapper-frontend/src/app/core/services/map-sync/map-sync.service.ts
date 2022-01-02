@@ -129,7 +129,7 @@ export class MapSyncService {
     const serverMapWithAdminId: ServerMapWithAdminId = await this.postMapToServer(uuid, mapData)
     const serverMap: MapProperties = this.convertMap(serverMapWithAdminId.map)
     // store the admin id locally
-    this.storageService.set("admin_" + serverMap.uuid, { adminId: serverMapWithAdminId.adminId, ttl: serverMap.deletedAt })
+    this.storageService.set(serverMap.uuid, { adminId: serverMapWithAdminId.adminId, ttl: serverMap.deletedAt })
 
     const cachedMap: CachedMap = {
       data: mapData,
