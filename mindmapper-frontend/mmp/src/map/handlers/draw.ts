@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import DOMPurify from 'dompurify'
 import Map from '../map'
 import Utils from '../../utils/utils'
 import Node from '../models/node'
@@ -10,6 +11,7 @@ import {Path} from 'd3-path'
 export default class Draw {
 
     private map: Map
+    private base64regex: RegExp = /[^A-Z0-9+\/=]/i
 
     /**
      * Get the associated map instance.
@@ -99,7 +101,7 @@ export default class Draw {
 
         // Set background of the node
         outer.insert('path', 'foreignObject')
-            .style('fill', (node: Node) => node.colors.background)
+            .style('fill', (node: Node) => DOMPurify.sanitize(node.colors.background))
             .style('stroke-width', 3)
             .attr('d', (node: Node) => this.drawNodeBackground(node))
 
@@ -110,8 +112,8 @@ export default class Draw {
 
 
         dom.branches.enter().insert('path', 'g')
-            .style('fill', (node: Node) => node.colors.branch)
-            .style('stroke', (node: Node) => node.colors.branch)
+            .style('fill', (node: Node) => DOMPurify.sanitize(node.colors.branch))
+            .style('stroke', (node: Node) => DOMPurify.sanitize(node.colors.branch))
             .attr('class', this.map.id + '_branch')
             .attr('id', (node: Node) => node.id + '_branch')
             .attr('d', (node: Node) => this.drawBranch(node))
@@ -213,7 +215,7 @@ export default class Draw {
             node.dom.appendChild(domImage)
         }
 
-        if (node.image.src !== '') {
+        if (node.image.src !== '' && this.base64regex.test(node.image.src)) {
             const image = new Image()
 
             image.src = node.image.src
@@ -316,10 +318,10 @@ export default class Draw {
         }
 
         name.onblur = () => {
-            name.innerHTML = name.innerHTML === '<br>' ? '' : name.innerHTML
+            name.innerHTML = name.innerHTML === '<br>' ? '' : DOMPurify.sanitize(name.innerHTML)
 
-            if (name.innerHTML !== node.name) {
-                this.map.nodes.updateNode('name', name.innerHTML)
+            if (DOMPurify.sanitize(name.innerHTML) !== DOMPurify.sanitize(node.name)) {
+                this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
 
             name.ondblclick = name.onmousedown = name.onblur =
@@ -372,11 +374,11 @@ export default class Draw {
     private createNodeNameDOM(node: Node) {
         const div = document.createElement('div')
 
-        div.style.setProperty('font-size', node.font.size.toString() + 'px')
-        div.style.setProperty('color', node.colors.name)
-        div.style.setProperty('font-style', node.font.style)
-        div.style.setProperty('font-weight', node.font.weight)
-        div.style.setProperty('text-decoration', node.font.decoration)
+        div.style.setProperty('font-size', DOMPurify.sanitize(node.font.size.toString()) + 'px')
+        div.style.setProperty('color', DOMPurify.sanitize(node.colors.name))
+        div.style.setProperty('font-style', DOMPurify.sanitize(node.font.style))
+        div.style.setProperty('font-weight', DOMPurify.sanitize(node.font.weight))
+        div.style.setProperty('text-decoration', DOMPurify.sanitize(node.font.decoration))
 
         div.style.setProperty('display', 'inline-block')
         div.style.setProperty('white-space', 'pre')
@@ -389,7 +391,7 @@ export default class Draw {
 
         div.setAttribute('contenteditable', 'true')
 
-        div.innerHTML = node.name
+        div.innerHTML = DOMPurify.sanitize(node.name)
 
         return div.outerHTML
     }
