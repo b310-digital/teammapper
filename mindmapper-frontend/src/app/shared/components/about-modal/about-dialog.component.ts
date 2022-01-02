@@ -37,7 +37,7 @@ export class AboutDialogComponent {
   async deleteMap() {
     if(confirm(this.translateService.instant('MODALS.INFO.CONFIRM_DELETE'))) {
       await this.mapSyncService.deleteMap(await this.mapAdminId)
-      await this.storageService.remove("admin_" + this.map.uuid)
+      await this.storageService.remove(this.map.uuid)
       window.location.reload()
     } 
   }
@@ -47,6 +47,6 @@ export class AboutDialogComponent {
   }
 
   async getMapAdminId(): Promise<string> {
-    return (await this.storageService.get("admin_" + this.map.uuid))?.adminId
+    return (await this.storageService.get(this.map.uuid))?.adminId
   }
 }
