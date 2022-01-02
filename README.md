@@ -135,7 +135,5 @@ Logos and text provided with courtesy of kits.
 ## Acknowledgements
 
 -   Mindmapp: https://github.com/cedoor/mindmapp (discontinued)
--   mmp Library: https://github.com/cedoor/mmp (discontinued)
--   https://github.com/JannikStreek
--   https://github.com/gerardo-navarro
--   https://github.com/nwittstruck
+-   mmp: https://github.com/cedoor/mmp (discontinued)
+-   D3: https://github.com/d3/d3
