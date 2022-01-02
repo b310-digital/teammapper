@@ -193,7 +193,7 @@ export class MapSyncService {
     }
 
     public leaveMap(): void {
-      this.socket.emit('leave')
+        this.socket.emit('leave')
     }
 
     public async updateMap(_oldMapData?: MapSnapshot): Promise<void> {
@@ -201,10 +201,10 @@ export class MapSyncService {
         this.socket.emit('updateMap', { map: cachedMapEntry.cachedMap })
     }
 
-    public deleteMap(adminId: string): Promise<any> {
+    public async deleteMap(adminId: string): Promise<any> {
         const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
-        const body: {adminId: string} = {adminId}
-        return this.httpService.delete(API_URL.ROOT, '/maps/' + cachedMapEntry.cachedMap.uuid, JSON.stringify(body))
+        const body: {adminId: string, mapId: string} = {adminId, mapId: cachedMapEntry.cachedMap.uuid}
+        return await this.socket.emit('deleteMap', body)
     }
 
     /**
@@ -322,6 +322,10 @@ export class MapSyncService {
 
         this.socket.on('disconnect', () => {
           this.dialogService.openDisconnectDialog()
+        })
+
+        this.socket.on('mapDeleted', () => {
+          window.location.reload()
         })
 
         this.joinMap(uuid, this.clientColor)
