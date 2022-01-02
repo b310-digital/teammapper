@@ -11,7 +11,7 @@ import {Path} from 'd3-path'
 export default class Draw {
 
     private map: Map
-    private base64regex: RegExp = /[^A-Z0-9+\/=]/i
+    private base64regex: RegExp = /[^a-zA-Z0-9+\/;:,=]/i
 
     /**
      * Get the associated map instance.
@@ -215,10 +215,10 @@ export default class Draw {
             node.dom.appendChild(domImage)
         }
 
-        if (node.image.src !== '' && this.base64regex.test(node.image.src)) {
+        if (DOMPurify.sanitize(node.image.src) !== '' && !this.base64regex.test(node.image.src)) {
             const image = new Image()
 
-            image.src = node.image.src
+            image.src = DOMPurify.sanitize(node.image.src)
 
             image.onload = function () {
                 const h = node.image.size,
@@ -226,7 +226,7 @@ export default class Draw {
                     y = -(h + node.dimensions.height / 2 + 5),
                     x = -w / 2
 
-                domImage.setAttribute('href', node.image.src)
+                domImage.setAttribute('href', DOMPurify.sanitize(node.image.src))
                 domImage.setAttribute('height', h.toString())
                 domImage.setAttribute('width', w.toString())
                 domImage.setAttribute('y', y.toString())
@@ -247,7 +247,7 @@ export default class Draw {
      * @param {Node} node
      */
     public updateImagePosition(node: Node) {
-        if (node.image.src !== '') {
+        if (DOMPurify.sanitize(node.image.src) !== '') {
             const image = node.getImageDOM(),
                 y = -((image as any).getBBox().height + node.dimensions.height / 2 + 5)
             image.setAttribute('y', y.toString())
