@@ -1,8 +1,8 @@
-# teammapper
+# TeamMapper
 
 Mindmapping made simple: Host and create your own mindmaps. Share your mindmap sessions with others and collaborate on mindmaps.
 
-teammapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, teammapper features shared mindmapping sessions with multiple users based on websockets.
+TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, TeamMapper features shared mindmapping sessions with multiple users based on websockets.
 
 ## Features:
 
@@ -126,8 +126,8 @@ teammapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 
 kits is a project platform hosted by a public institution for quality
 development in schools (Lower Saxony, Germany) and focusses on digital tools
-and media in language teaching. teammapper is used in workshops to activate
-prior knowledge, and collect and structure ideas. In addition, teammapper can
+and media in language teaching. TeamMapper is used in workshops to activate
+prior knowledge, and collect and structure ideas. In addition, TeamMapper can
 be found on https://kits.blog/tools and can be used by schools for free.
 
 Logos and text provided with courtesy of kits.
