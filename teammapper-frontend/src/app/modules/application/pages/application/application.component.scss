@@ -1,0 +1,9 @@
+div.teammapper-application {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    teammapper-map {
+        flex: 1;
+    }
+}

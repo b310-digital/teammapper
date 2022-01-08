@@ -1,8 +1,8 @@
-# Mindmapper
+# teammapper
 
 Mindmapping made simple: Host and create your own mindmaps. Share your mindmap sessions with others and collaborate on mindmaps.
 
-Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, mindmapper features shared mindmapping sessions with multiple users based on websockets.
+teammapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, teammapper features shared mindmapping sessions with multiple users based on websockets.
 
 ## Features:
 
@@ -28,7 +28,7 @@ Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     ```bash
     docker-compose exec app sh
     # Inside docker container, you execute the following
-    npm --prefix mindmapper-backend run dev
+    npm --prefix teammapper-backend run dev
     ```
 
     or start frontend and backend separately
@@ -37,10 +37,10 @@ Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     # Open to terminal session on your host machine
 
     # I first terminal session
-    docker-compose exec app npm --prefix mindmapper-backend start
+    docker-compose exec app npm --prefix teammapper-backend start
 
     # I second terminal session
-    docker-compose exec app npm --prefix mindmapper-frontend start
+    docker-compose exec app npm --prefix teammapper-frontend start
     ```
 
 -   Visit the frontend in http://localhost:4200
@@ -50,13 +50,13 @@ Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 -   Create a test database
 
     ```bash
-    docker-compose exec postgres createdb -e -U mindmapper-user -W mindmapper-backend-test
+    docker-compose exec postgres createdb -e -U teammapper-user -W teammapper-backend-test
     ```
 
 -   Execute the tests
 
     ```bash
-    docker-compose exec app npm -prefix mindmapper-backend run test:e2e
+    docker-compose exec app npm -prefix teammapper-backend run test:e2e
     ```
 
 ### Production
@@ -86,7 +86,7 @@ Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --build --force-recreate
     ```
 
--   Go to `http://localhost` to open up mindmapper
+-   Go to `http://localhost` to open up teammapper
 - Optional:
 
     If you want to make sure, to include the most recent updates, run first:
@@ -126,8 +126,8 @@ Mindmapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 
 kits is a project platform hosted by a public institution for quality
 development in schools (Lower Saxony, Germany) and focusses on digital tools
-and media in language teaching. mindmapper is used in workshops to activate
-prior knowledge, and collect and structure ideas. In addition, mindmapper can
+and media in language teaching. teammapper is used in workshops to activate
+prior knowledge, and collect and structure ideas. In addition, teammapper can
 be found on https://kits.blog/tools and can be used by schools for free.
 
 Logos and text provided with courtesy of kits.

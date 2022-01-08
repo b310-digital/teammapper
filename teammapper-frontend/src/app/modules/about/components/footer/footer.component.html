@@ -1,0 +1,31 @@
+<footer class="footer">
+    <div class="container">
+        <div class="license">
+            {{ currentYear }} <a href="https://b310.de">B310 Digital GmbH</a>
+        </div>
+        <div class="links">
+            <a routerLink="/app" target="_blank">
+                {{ "GENERAL.APPLICATION" | translate }}
+            </a>
+            <a href="https://b310.de" target="_blank">
+                {{ "GENERAL.ORGANIZATION" | translate }}
+            </a>
+            <a href="https://github.com/b310-digital/teammapper" target="_blank">
+                {{ "GENERAL.REPOSITORY" | translate }}
+            </a>
+            <a href="https://github.com/b310-digital/teammapper" target="_blank">
+                {{ "GENERAL.LIBRARY" | translate }}
+            </a>
+        </div>
+        <div class="spacer"></div>
+        <div class="languages">
+            <mat-select (selectionChange)="updateLanguage()" [(value)]="settings.general.language"
+                        [title]="'TOOLTIPS.LANGUAGE' | translate">
+                <mat-option *ngFor="let language of languages"
+                            [value]="language">
+                    {{ "LANGUAGES." + language.toUpperCase() | translate }}
+                </mat-option>
+            </mat-select>
+        </div>
+    </div>
+</footer>
