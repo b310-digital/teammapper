@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>{{ applicationName }} {{ version }}</h2>
 <mat-dialog-content>
     <div class="about-modal-section">
-        <img src="./assets/images/Mindmapp.svg" style="max-width: 100%"/>
+        <img src="./assets/images/TeamMapper.svg" style="max-width: 100%"/>
         {{ "PAGES.ABOUT.INTRODUCTION.APPLICATION_DESCRIPTION" | translate }}
         <br /><br />
         <a href="https://kits.blog/impressum/" target="_blank">Impressum</a> - <a href="https://kits.blog/datenschutzerklaerung/" target="_blank">Datenschutz</a>
@@ -11,7 +11,7 @@
             <mat-list-item>{{ "MODALS.INFO.DELETE_AFTER_DAYS" | translate: { deleteAfterDays: map.deleteAfterDays } }}</mat-list-item>
             <mat-list-item>{{ "MODALS.INFO.DELETED_AT" | translate }} {{map.deletedAt | date: 'YYYY-MM-dd' }}</mat-list-item>
             <mat-list-item>
-                <a href="https://github.com/b310-digital/teammapper" class="link" target="_blank">
+                <a href="https://github.com/kitsteam/teammapper" class="link" target="_blank">
                     {{ applicationName }} <fa-icon [icon]="faGithub" size="lg"></fa-icon>
                 </a>
             </mat-list-item>
