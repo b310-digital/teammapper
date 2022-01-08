@@ -1,8 +1,8 @@
 # TeamMapper
 
-Mindmapping made simple: Host and create your own mindmaps. Share your mindmap sessions with others and collaborate on mindmaps.
+Mindmapping made simple: Host and create your own mindmaps. Share your mindmap sessions with your team and collaborate on mindmaps.
 
-TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, TeamMapper features shared mindmapping sessions with multiple users based on websockets.
+TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, TeamMapper features shared mindmapping sessions for your team based on websockets.
 
 ## Features:
 

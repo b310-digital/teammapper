@@ -33,7 +33,7 @@ jobs:
               with:
                   context: .
                   tags: |
-                      ghcr.io/b310-digital/mindmapper:latest
+                      ghcr.io/b310-digital/teammapper:latest
 
     teammapper-backend-lint:
         runs-on: ubuntu-latest
