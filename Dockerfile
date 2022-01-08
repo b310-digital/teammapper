@@ -3,8 +3,8 @@ FROM node:16.13.1-alpine3.14 as base
 USER node
 
 ENV APP_PATH=/home/node/app
-ENV APP_BACKEND_PATH=${APP_PATH}/mindmapper-backend
-ENV APP_FRONTEND_PATH=${APP_PATH}/mindmapper-frontend
+ENV APP_BACKEND_PATH=${APP_PATH}/teammapper-backend
+ENV APP_FRONTEND_PATH=${APP_PATH}/teammapper-frontend
 
 RUN mkdir -p $APP_PATH
 WORKDIR $APP_PATH
@@ -12,18 +12,18 @@ WORKDIR $APP_PATH
 FROM base as production_buildstage
 USER node
 
-COPY --chown=node:node mindmapper-backend/package.json mindmapper-backend/package-lock.json $APP_BACKEND_PATH/
-RUN npm --prefix mindmapper-backend install
+COPY --chown=node:node teammapper-backend/package.json teammapper-backend/package-lock.json $APP_BACKEND_PATH/
+RUN npm --prefix teammapper-backend install
 
-COPY --chown=node:node mindmapper-frontend/package.json mindmapper-frontend/package-lock.json $APP_FRONTEND_PATH/
-RUN npm --prefix mindmapper-frontend install
+COPY --chown=node:node teammapper-frontend/package.json teammapper-frontend/package-lock.json $APP_FRONTEND_PATH/
+RUN npm --prefix teammapper-frontend install
 
 COPY --chown=node:node package.json $APP_PATH/
 
-COPY --chown=node:node mindmapper-backend $APP_BACKEND_PATH/
+COPY --chown=node:node teammapper-backend $APP_BACKEND_PATH/
 RUN npm run build:backend:prod
 
-COPY --chown=node:node mindmapper-frontend $APP_FRONTEND_PATH/
+COPY --chown=node:node teammapper-frontend $APP_FRONTEND_PATH/
 RUN GENERATE_SOURCEMAP=false npm run build:frontend:prod
 
 FROM base as production
@@ -31,8 +31,8 @@ USER node
 
 COPY --chown=node:node package.json $APP_PATH/
 
-COPY --chown=node:node mindmapper-backend/package.json mindmapper-backend/package-lock.json $APP_BACKEND_PATH/
-RUN npm --prefix mindmapper-backend install --production
+COPY --chown=node:node teammapper-backend/package.json teammapper-backend/package-lock.json $APP_BACKEND_PATH/
+RUN npm --prefix teammapper-backend install --production
 
 COPY --chown=node:node --from=production_buildstage $APP_BACKEND_PATH/dist $APP_BACKEND_PATH/dist
 COPY --chown=node:node --from=production_buildstage $APP_FRONTEND_PATH/dist $APP_BACKEND_PATH/client
@@ -43,8 +43,8 @@ CMD ["./entrypoint.prod.sh"]
 FROM base as development
 USER node
 
-COPY --chown=node:node mindmapper-frontend/package.json mindmapper-frontend/package-lock.json $APP_FRONTEND_PATH/
-RUN npm --prefix mindmapper-frontend install
+COPY --chown=node:node teammapper-frontend/package.json teammapper-frontend/package-lock.json $APP_FRONTEND_PATH/
+RUN npm --prefix teammapper-frontend install
 
-COPY --chown=node:node mindmapper-backend/package.json mindmapper-backend/package-lock.json $APP_BACKEND_PATH/
-RUN npm --prefix mindmapper-backend install
+COPY --chown=node:node teammapper-backend/package.json teammapper-backend/package-lock.json $APP_BACKEND_PATH/
+RUN npm --prefix teammapper-backend install
