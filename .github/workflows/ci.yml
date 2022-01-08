@@ -9,7 +9,7 @@ on:
             - main
 
 jobs:
-    mindmapper-backend-build:
+    teammapper-backend-build:
         runs-on: ubuntu-latest
 
         steps:
@@ -33,28 +33,28 @@ jobs:
               with:
                   context: .
                   tags: |
-                      ghcr.io/b310-digital/mindmapper:latest
+                      ghcr.io/b310-digital/teammapper:latest
 
-    mindmapper-backend-lint:
+    teammapper-backend-lint:
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@v2
 
-            - run: npm --prefix mindmapper-backend ci
+            - run: npm --prefix teammapper-backend ci
 
-            - run: npm --prefix mindmapper-backend run lint
+            - run: npm --prefix teammapper-backend run lint
 
-    mindmapper-backend-test-e2e:
+    teammapper-backend-test-e2e:
         runs-on: ubuntu-latest
 
         services:
             postgres:
                 image: postgres:10.8
                 env:
-                    POSTGRES_USER: mindmapper-user
-                    POSTGRES_PASSWORD: mindmapper-password
-                    POSTGRES_DB: mindmapper-backend-test
+                    POSTGRES_USER: teammapper-user
+                    POSTGRES_PASSWORD: teammapper-password
+                    POSTGRES_DB: teammapper-backend-test
                 ports:
                     # Will assign a random free host port
                     - 5432/tcp
@@ -64,18 +64,18 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
-            - run: npm --prefix mindmapper-backend ci
+            - run: npm --prefix teammapper-backend ci
 
-            - run: npm --prefix mindmapper-backend run test:e2e
+            - run: npm --prefix teammapper-backend run test:e2e
               env:
-                  POSTGRES_DATABASE: "mindmapper-backend-test"
+                  POSTGRES_DATABASE: "teammapper-backend-test"
                   POSTGRES_HOST: "localhost"
-                  POSTGRES_PASSWORD: "mindmapper-password"
+                  POSTGRES_PASSWORD: "teammapper-password"
                   POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
                   POSTGRES_SSL: false
-                  POSTGRES_TEST_DATABASE: "mindmapper-backend-test"
+                  POSTGRES_TEST_DATABASE: "teammapper-backend-test"
                   POSTGRES_TEST_HOST: "localhost"
-                  POSTGRES_TEST_PASSWORD: "mindmapper-password"
+                  POSTGRES_TEST_PASSWORD: "teammapper-password"
                   POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
-                  POSTGRES_TEST_USER: "mindmapper-user"
-                  POSTGRES_USER: "mindmapper-user"
+                  POSTGRES_TEST_USER: "teammapper-user"
+                  POSTGRES_USER: "teammapper-user"
