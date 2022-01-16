@@ -20,14 +20,7 @@ export class ToolbarComponent {
   }
 
   public async share () {
-    if ((window.navigator as any)?.share) {
-      await (window.navigator as any)?.share({
-        title: 'TeamMapper',
-        url: window.location.href,
-      })
-    } else {
-      this.dialogService.openShareDialog()
-    }
+    this.dialogService.openShareDialog()
   }
 
   public toggleFullScreen () {

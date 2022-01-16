@@ -55,6 +55,7 @@
     "localforage": "1.10.0",
     "material-design-icons": "^3.0.1",
     "ngx-color-picker": "^11.0.0",
+    "qr-code-styling": "1.5.0",
     "rxjs": "~7.4.0",
     "socket.io-client": "~4.3.2",
     "tslib": "^2.3.1",

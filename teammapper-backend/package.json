@@ -6,8 +6,8 @@
   "private": true,
   "license": "MIT",
   "engines": {
-    "npm": "~7.20.3",
-    "node": "~16.6.2"
+    "npm": "~8.1.2",
+    "node": "~16.13.2"
   },
   "scripts": {
     "prebuild": "rimraf dist",
