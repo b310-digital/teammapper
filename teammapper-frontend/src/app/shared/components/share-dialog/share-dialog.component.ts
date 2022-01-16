@@ -20,25 +20,25 @@ export class ShareDialogComponent implements OnInit{
       type: 'svg',
       image: "",
       dotsOptions: {
-          color: '#000000',
-          type: "dots",
+        color: '#000000',
+        type: "dots",
       },
       cornersSquareOptions: {
-          type: 'square'
+        type: 'square'
       },
       cornersDotOptions: {
-          type: 'dot'
+        type: 'dot'
       },
       backgroundOptions: {
-          color: "#fff",
+        color: "#fff",
       },
       imageOptions: {
-          crossOrigin: "anonymous",
-          margin: 20,
+        crossOrigin: "anonymous",
+        margin: 20,
       },
       data: window.location.href
-  });
-  qrCode.append(this.qrCodeCanvas.nativeElement);
+    });
+    qrCode.append(this.qrCodeCanvas.nativeElement);
   }
 
   async share() {
