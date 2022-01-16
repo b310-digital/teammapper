@@ -13,11 +13,13 @@ import { MatCardModule } from '@angular/material/card'
 import { MatListModule } from '@angular/material/list'
 import { MatToolbarModule } from '@angular/material/toolbar'
 import { MatSelectModule } from '@angular/material/select'
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { StripTags } from './pipes/striptags.pipe'
 import { ConnectionInfoDialogComponent } from './components/connection-info/connection-info-dialog.component'
 import { MatDialogModule } from '@angular/material/dialog'
 import { DialogService } from './services/dialog/dialog.service'
-import { ShareFallbackComponent } from './components/share-fallback/share-fallback.component'
+import { ShareDialogComponent } from './components/share-dialog/share-dialog.component'
 import { AboutDialogComponent } from './components/about-modal/about-dialog.component'
 
 const PIPES = [
@@ -40,8 +42,10 @@ const PIPES = [
     MatListModule,
     MatToolbarModule,
     MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
-  declarations: [...PIPES, ConnectionInfoDialogComponent, ShareFallbackComponent, AboutDialogComponent],
+  declarations: [...PIPES, ConnectionInfoDialogComponent, ShareDialogComponent, AboutDialogComponent],
   exports: [
     CommonModule,
     FormsModule,

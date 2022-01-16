@@ -20,12 +20,6 @@ export class ShortcutsService {
      */
   public init () {
     this.hotKeys = [{
-      keys: 'esc',
-      description: 'TOOLTIPS.ESC',
-      callback: () => {
-        this.router.navigate([''])
-      }
-    }, {
       keys: '?',
       description: 'TOOLTIPS.SHORTCUTS',
       callback: () => {

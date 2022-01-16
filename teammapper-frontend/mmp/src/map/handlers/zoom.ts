@@ -20,7 +20,7 @@ export default class Zoom {
     constructor(map: Map) {
         this.map = map
 
-        this.zoomBehavior = d3.zoom().scaleExtent([0.5, 2]).on('zoom', (event: D3ZoomEvent<any, any>) => {
+        this.zoomBehavior = d3.zoom().scaleExtent([0.1, 2]).on('zoom', (event: D3ZoomEvent<any, any>) => {
             this.map.dom.g.attr('transform', event.transform)
         })
     }
