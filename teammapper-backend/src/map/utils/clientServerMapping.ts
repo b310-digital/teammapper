@@ -4,23 +4,23 @@ import { IMmpClientMap, IMmpClientNode } from '../types';
 
 const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   colors: {
-    name: serverNode.colorsName,
-    background: serverNode.colorsBackground,
-    branch: serverNode.colorsBranch,
+    name: serverNode.colorsName || '',
+    background: serverNode.colorsBackground || '',
+    branch: serverNode.colorsBranch || '',
   },
-  coordinates: { x: serverNode.coordinatesX, y: serverNode.coordinatesY },
+  coordinates: { x: serverNode.coordinatesX || 0, y: serverNode.coordinatesY || 0},
   font: {
-    style: serverNode.fontStyle,
-    size: serverNode.fontSize,
-    weight: serverNode.fontWeight,
+    style: serverNode.fontStyle || '',
+    size: serverNode.fontSize || 12,
+    weight: serverNode.fontWeight || '',
   },
   id: serverNode.id,
-  image: { src: serverNode.imageSrc, size: serverNode.imageSize },
-  k: serverNode.k,
-  locked: serverNode.locked,
-  name: serverNode.name,
+  image: { src: serverNode.imageSrc || '', size: serverNode.imageSize || 0 },
+  k: serverNode.k || 1,
+  locked: serverNode.locked || false,
+  name: serverNode.name || '',
   parent: serverNode.nodeParentId || '',
-  isRoot: serverNode.root,
+  isRoot: serverNode.root || false,
 });
 
 const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt: Date, deleteAfterDays: number): IMmpClientMap => ({
