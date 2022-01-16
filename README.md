@@ -137,3 +137,4 @@ Logos and text provided with courtesy of kits.
 -   Mindmapp: https://github.com/cedoor/mindmapp (discontinued)
 -   mmp: https://github.com/cedoor/mmp (discontinued)
 -   D3: https://github.com/d3/d3
+-   DomPurify: https://github.com/cure53/DOMPurify

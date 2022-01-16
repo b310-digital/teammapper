@@ -71,10 +71,11 @@
       },
       "SHARE": {
         "TITLE": "Map teilen",
-        "CONTENT": "Kopiere diesen Link und teile ihn: {{link}}"
+        "CONTENT": "Kopiere diesen Link und teile ihn:",
+        "BUTTON_SHARE": "Klicken zum Teilen"
       },
       "INFO": {
-          "DELETED_AT": "Diese Mindmap wird gelöscht am",
+          "DELETED_AT": "Diese Mindmap wird gelöscht am:",
           "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
           "DELETE": "Mindmap löschen",
           "CONFIRM_DELETE": "Wirklich löschen?"
