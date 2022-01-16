@@ -71,10 +71,11 @@
         },
         "SHARE": {
             "TITLE": "Share map",
-            "CONTENT": "Copy this link to share the map: {{link}}"
+            "CONTENT": "Copy this link to share the map",
+            "BUTTON_SHARE": "Click to share"
           },
         "INFO": {
-            "DELETED_AT": "Mindmap is going to be deleted at",
+            "DELETED_AT": "Mindmap is going to be deleted at:",
             "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
             "DELETE": "Delete mindmap",
             "CONFIRM_DELETE": "Delete?"
