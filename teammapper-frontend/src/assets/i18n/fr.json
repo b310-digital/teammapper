@@ -71,8 +71,7 @@
         },
         "SHARE": {
             "TITLE": "Share map",
-            "CONTENT": "Copy this link to share the map",
-            "BUTTON_SHARE": "Click to share"
+            "CONTENT": "Copy this link to share the map"
           },
         "INFO": {
             "DELETED_AT": "Mindmap is going to be deleted at:",

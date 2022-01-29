@@ -9,12 +9,14 @@ import QRCodeStyling from 'qr-code-styling'
 export class ShareDialogComponent implements OnInit{
   @ViewChild("qrcodecanvas", { static: true }) qrCodeCanvas: ElementRef<HTMLCanvasElement>;
   @ViewChild("sharedialog", { static: true }) shareDialog: ElementRef<HTMLElement>;
+  @ViewChild("inputlink", { static: true }) inputLink: ElementRef<HTMLInputElement>;
   
   public link: string = window.location.href
+  public qrCode: QRCodeStyling
 
   ngOnInit() {
     const size: number = window.innerWidth > 400 ? 300 : 200
-    const qrCode: QRCodeStyling = new QRCodeStyling({
+    this.qrCode = new QRCodeStyling({
       width: size,
       height: size,
       type: 'svg',
@@ -38,7 +40,20 @@ export class ShareDialogComponent implements OnInit{
       },
       data: window.location.href
     });
-    qrCode.append(this.qrCodeCanvas.nativeElement);
+    this.qrCode.append(this.qrCodeCanvas.nativeElement);
+  }
+
+  downloadQrCode() {
+    this.qrCode.download()
+  }
+
+  isShareable() {
+    return !!(window.navigator as any)?.share
+  }
+
+  copy() {
+    this.inputLink.nativeElement.select()
+    navigator.clipboard.writeText(this.link)
   }
 
   async share() {
