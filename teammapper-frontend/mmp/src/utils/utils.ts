@@ -102,7 +102,10 @@ export default class Utils {
                     const rule = rules[j],
                         fontFace = rule.cssText.match(/^@font-face/)
 
-                    if (element.querySelector(rule.selectorText) || fontFace) {
+                        // Fix: Safari does not accept double colon as selector, e.g. abc::placeholder
+                        const sanitizedSelector: string = rule.selectorText?.replace(/::.*/, '')
+
+                    if ((sanitizedSelector && element.querySelector(sanitizedSelector)) || fontFace) {
                         css += rule.cssText
                     }
                 }
