@@ -261,7 +261,7 @@ export default class Draw {
      */
     public enableNodeNameEditing(node: Node) {
         const name = node.getNameDOM()
-        name.innerHTML = node.name
+        name.innerHTML =  DOMPurify.sanitize(node.name)
 
         Utils.focusWithCaretAtEnd(name)
 
@@ -321,7 +321,7 @@ export default class Draw {
 
         name.onblur = () => {
             if (name.innerHTML !== node.name) {
-                this.map.nodes.updateNode('name', name.innerHTML)
+                this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
 
             name.innerHTML = name.innerHTML === '<br>' ? '' : DOMPurify.sanitize(marked(name.innerHTML))
