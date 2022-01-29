@@ -283,12 +283,12 @@ export class MmpService {
       case 'pdf':
         const imageUri = await this.exportAsImage('jpeg')
         const htmlImageElement = await UtilsService.imageFromUri(imageUri)
+        const imageRatio = htmlImageElement.width / htmlImageElement.height
         const pdf = new jsPDF({
-          orientation: htmlImageElement.width > htmlImageElement.height ? 'l' : 'p',
-          format: [htmlImageElement.width * 0.75, htmlImageElement.height * 0.75],
-          unit: 'px'
+          orientation: htmlImageElement.width > htmlImageElement.height ? 'l' : 'p'
         })
-        pdf.addImage(imageUri, 'JPEG', 0, 0, htmlImageElement.width * 0.5, htmlImageElement.height * 0.5, '', 'NONE', 0)
+        const width = pdf.internal.pageSize.getWidth();
+        pdf.addImage(imageUri, 'JPEG', 0, 0, width, width / imageRatio, '', 'NONE', 0)
 
         pdf.save(`${name}.${format}`)
 
