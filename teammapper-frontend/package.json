@@ -54,6 +54,7 @@
     "jspdf": "^2.4.0",
     "localforage": "1.10.0",
     "material-design-icons": "^3.0.1",
+    "marked": "4.0.12",
     "ngx-color-picker": "^11.0.0",
     "qr-code-styling": "1.5.0",
     "rxjs": "~7.4.0",

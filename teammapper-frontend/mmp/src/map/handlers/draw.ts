@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import Map from '../map'
 import Utils from '../../utils/utils'
@@ -260,6 +261,7 @@ export default class Draw {
      */
     public enableNodeNameEditing(node: Node) {
         const name = node.getNameDOM()
+        name.innerHTML = node.name
 
         Utils.focusWithCaretAtEnd(name)
 
@@ -318,11 +320,12 @@ export default class Draw {
         }
 
         name.onblur = () => {
-            name.innerHTML = name.innerHTML === '<br>' ? '' : DOMPurify.sanitize(name.innerHTML)
-
-            if (DOMPurify.sanitize(name.innerHTML) !== DOMPurify.sanitize(node.name)) {
-                this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
+            if (name.innerHTML !== node.name) {
+                this.map.nodes.updateNode('name', name.innerHTML)
             }
+
+            name.innerHTML = name.innerHTML === '<br>' ? '' : DOMPurify.sanitize(marked(name.innerHTML))
+            this.updateNodeNameContainer(node)
 
             name.ondblclick = name.onmousedown = name.onblur =
                 name.onkeydown = name.oninput = name.onpaste = null
@@ -391,7 +394,7 @@ export default class Draw {
 
         div.setAttribute('contenteditable', 'true')
 
-        div.innerHTML = DOMPurify.sanitize(node.name)
+        div.innerHTML = DOMPurify.sanitize(marked(node.name))
 
         return div.outerHTML
     }

@@ -7,6 +7,7 @@ import Node, {
     NodeProperties,
     UserNodeProperties
 } from '../models/node'
+import { marked } from 'marked'
 import MmpMap, { DomElements } from '../map'
 import * as d3 from 'd3'
 import DOMPurify from 'dompurify'
@@ -657,7 +658,7 @@ export default class Nodes {
         }
 
         if (node.name != name || graphic) {
-            node.getNameDOM().innerHTML = DOMPurify.sanitize(name)
+            node.getNameDOM().innerHTML = DOMPurify.sanitize(marked.parse(name))
 
             this.map.draw.updateNodeShapes(node)
 
