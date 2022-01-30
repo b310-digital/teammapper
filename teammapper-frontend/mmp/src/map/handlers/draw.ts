@@ -267,6 +267,8 @@ export default class Draw {
 
         name.style.setProperty('cursor', 'auto')
 
+        this.updateNodeShapes(node)
+
         name.ondblclick = name.onmousedown = (event) => {
             event.stopPropagation()
         }
@@ -324,8 +326,8 @@ export default class Draw {
                 this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
 
-            name.innerHTML = name.innerHTML === '<br>' ? '' : DOMPurify.sanitize(marked.parseInline(name.innerHTML))
-            this.updateNodeNameContainer(node)
+            name.innerHTML = DOMPurify.sanitize(marked.parseInline(name.innerHTML))
+            this.updateNodeShapes(node)
 
             name.ondblclick = name.onmousedown = name.onblur =
                 name.onkeydown = name.oninput = name.onpaste = null

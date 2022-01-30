@@ -16,7 +16,11 @@ DOMPurify.setConfig({ADD_ATTR: ['contenteditable']})
 const renderer = {
     link(href: string, title: string, text: string): string {
         const link: string = new Renderer().link(href, title, text)
-        return link.slice(0, 2) + ' contenteditable="false" ' + link.slice(3)
+        return link.slice(0, 2) + ' contenteditable="false" onclick="confirm()" ' + link.slice(3)
+    },
+    // disable image - already available in the app
+    image(text: string) {
+        return text;
     }
 }
 marked.use({ renderer })

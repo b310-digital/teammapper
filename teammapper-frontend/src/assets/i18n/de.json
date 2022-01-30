@@ -145,7 +145,8 @@
         "NO_SAVED_MAPS": "Keine Mindmap vorhanden!",
         "INITIAL_INFORMATION": "»TeamMapper« ist bereit ☺",
         "WELCOME_MESSAGE": "Willkommen zur Anwendung »TeamMapper« ☺",
-        "MAP_DELETION_CONFIRM": "Bist du sicher, dass du die Mindmap löschen möchtest?"
+        "MAP_DELETION_CONFIRM": "Bist du sicher, dass du die Mindmap löschen möchtest?",
+        "UNLOAD_WARN": "Seite wirklich verlassen?"
     },
     "GENERAL": {
         "ORGANIZATION": "Organisation",
