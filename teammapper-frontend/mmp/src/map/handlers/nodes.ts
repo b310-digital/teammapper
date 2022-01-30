@@ -658,7 +658,7 @@ export default class Nodes {
         }
 
         if (node.name != name || graphic) {
-            node.getNameDOM().innerHTML = DOMPurify.sanitize(marked.parse(name))
+            node.getNameDOM().innerHTML = DOMPurify.sanitize(marked.parseInline(name))
 
             this.map.draw.updateNodeShapes(node)
 

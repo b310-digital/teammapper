@@ -261,7 +261,7 @@ export default class Draw {
      */
     public enableNodeNameEditing(node: Node) {
         const name = node.getNameDOM()
-        name.innerHTML =  DOMPurify.sanitize(node.name)
+        name.innerHTML = DOMPurify.sanitize(node.name)
 
         Utils.focusWithCaretAtEnd(name)
 
@@ -324,7 +324,7 @@ export default class Draw {
                 this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
 
-            name.innerHTML = name.innerHTML === '<br>' ? '' : DOMPurify.sanitize(marked(name.innerHTML))
+            name.innerHTML = name.innerHTML === '<br>' ? '' : DOMPurify.sanitize(marked.parseInline(name.innerHTML))
             this.updateNodeNameContainer(node)
 
             name.ondblclick = name.onmousedown = name.onblur =
@@ -394,7 +394,7 @@ export default class Draw {
 
         div.setAttribute('contenteditable', 'true')
 
-        div.innerHTML = DOMPurify.sanitize(marked(node.name))
+        div.innerHTML = DOMPurify.sanitize(marked.parseInline(node.name))
 
         return div.outerHTML
     }
