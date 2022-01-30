@@ -46,5 +46,4 @@ export class RootComponent implements OnInit {
     this.translateService.setDefaultLang(language)
     await this.translateService.use(language).toPromise()
   }
-
 }

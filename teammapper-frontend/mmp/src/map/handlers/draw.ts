@@ -260,10 +260,13 @@ export default class Draw {
      */
     public enableNodeNameEditing(node: Node) {
         const name = node.getNameDOM()
+        name.innerHTML = DOMPurify.sanitize(node.name)
 
         Utils.focusWithCaretAtEnd(name)
 
         name.style.setProperty('cursor', 'auto')
+
+        this.updateNodeShapes(node)
 
         name.ondblclick = name.onmousedown = (event) => {
             event.stopPropagation()
@@ -318,11 +321,11 @@ export default class Draw {
         }
 
         name.onblur = () => {
-            name.innerHTML = name.innerHTML === '<br>' ? '' : DOMPurify.sanitize(name.innerHTML)
-
-            if (DOMPurify.sanitize(name.innerHTML) !== DOMPurify.sanitize(node.name)) {
+            if (name.innerHTML !== node.name) {
                 this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
+            name.innerHTML = DOMPurify.sanitize(name.innerHTML)
+            this.updateNodeShapes(node)
 
             name.ondblclick = name.onmousedown = name.onblur =
                 name.onkeydown = name.oninput = name.onpaste = null

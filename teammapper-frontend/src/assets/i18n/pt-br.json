@@ -58,7 +58,8 @@
         "NODE_DRAGGING": "Permite arrastar os nós no mapa",
         "MAP_ZOOM": "Permite ampliar o mapa",
         "AUTO_BRANCH_COLORS": "Permite escolher automaticamente as cores dos ramos",
-        "SHARE": "Share"
+        "SHARE": "Share",
+        "LINK": "Adds a link"
     },
     "MODALS": {
         "GENERAL": {
@@ -78,6 +79,10 @@
             "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
             "DELETE": "Delete mindmap",
             "CONFIRM_DELETE": "Delete?"
+        },
+        "LINK": {
+            "URL": "Link URL",
+            "NAME": "Link name"
         }
     },
     "PAGES": {
