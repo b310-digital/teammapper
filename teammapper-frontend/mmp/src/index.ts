@@ -1,7 +1,6 @@
 import {OptionParameters} from './map/options'
 import MmpMap from './map/map'
 import { PropertyMapping } from './map/handlers/nodes'
-import { marked, Renderer } from 'marked'
 import DOMPurify from 'dompurify'
 
 /**
@@ -12,17 +11,5 @@ export function create (id: string, options?: OptionParameters) {
 }
 
 DOMPurify.setConfig({ADD_ATTR: ['contenteditable']})
-
-const renderer = {
-    link(href: string, title: string, text: string): string {
-        const link: string = new Renderer().link(href, title, text)
-        return link.slice(0, 2) + ' contenteditable="false" onclick="confirm()" ' + link.slice(3)
-    },
-    // disable image - already available in the app
-    image(text: string) {
-        return text;
-    }
-}
-marked.use({ renderer })
 
 export const NodePropertyMapping = PropertyMapping

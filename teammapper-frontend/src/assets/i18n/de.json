@@ -58,7 +58,8 @@
         "NODE_DRAGGING": "Verschieben von Knoten erlauben",
         "MAP_ZOOM": "Zoomen der Mindmap erlauben",
         "AUTO_BRANCH_COLORS": "Automatische Auswahl von Zweigfarben erlauben",
-        "SHARE": "Teilen"
+        "SHARE": "Teilen",
+        "LINK": "Link hinzufügen"
     },
     "MODALS": {
       "GENERAL": {
@@ -78,6 +79,10 @@
           "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
           "DELETE": "Mindmap löschen",
           "CONFIRM_DELETE": "Wirklich löschen?"
+      },
+      "LINK": {
+          "URL": "Link URL",
+          "NAME": "Link Name"
       }
     },
      "PAGES": {

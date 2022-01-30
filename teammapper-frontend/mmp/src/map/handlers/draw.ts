@@ -1,5 +1,4 @@
 import * as d3 from 'd3'
-import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import Map from '../map'
 import Utils from '../../utils/utils'
@@ -325,8 +324,7 @@ export default class Draw {
             if (name.innerHTML !== node.name) {
                 this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
-
-            name.innerHTML = DOMPurify.sanitize(marked.parseInline(name.innerHTML))
+            name.innerHTML = DOMPurify.sanitize(name.innerHTML)
             this.updateNodeShapes(node)
 
             name.ondblclick = name.onmousedown = name.onblur =
@@ -396,7 +394,7 @@ export default class Draw {
 
         div.setAttribute('contenteditable', 'true')
 
-        div.innerHTML = DOMPurify.sanitize(marked.parseInline(node.name))
+        div.innerHTML = DOMPurify.sanitize(node.name)
 
         return div.outerHTML
     }

@@ -58,7 +58,8 @@
         "NODE_DRAGGING": "允許拖曳地圖中的節點",
         "MAP_ZOOM": "允許縮放地圖",
         "AUTO_BRANCH_COLORS": "允許自動分配分支的顏色",
-        "SHARE": "Share"
+        "SHARE": "Share",
+        "LINK": "Adds a link"
     },
     "MODALS": {
         "GENERAL": {
@@ -78,6 +79,10 @@
             "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
             "DELETE": "Delete mindmap",
             "CONFIRM_DELETE": "Delete?"
+        },
+        "LINK": {
+            "URL": "Link URL",
+            "NAME": "Link name"
         }
     },
     "PAGES": {
