@@ -1,4 +1,5 @@
 import {Component, Input} from '@angular/core'
+import {TranslateService} from '@ngx-translate/core'
 import { DialogService } from 'src/app/shared/services/dialog/dialog.service'
 import {MmpService} from '../../../../core/services/mmp/mmp.service'
 import {UtilsService} from '../../../../core/services/utils/utils.service'
@@ -12,7 +13,7 @@ export class ToolbarComponent {
 
   @Input() public node: any
 
-  constructor (public mmpService: MmpService, public dialogService: DialogService) {
+  constructor (public mmpService: MmpService, public dialogService: DialogService, public translationService: TranslateService) {
   }
 
   public exportMap (format: string) {
@@ -35,6 +36,12 @@ export class ToolbarComponent {
     } else {
       this.mmpService.updateNode('fontStyle', 'italic')
     }
+  }
+
+  public addLink () {
+    const link = prompt(this.translationService.instant("MODALS.LINK.URL")) || window.location.href
+    const linkName = prompt(this.translationService.instant("MODALS.LINK.NAME")) || 'Link'
+    this.mmpService.updateNode('name', `<a href="${link}" contenteditable="false">${linkName}</a>`)
   }
 
   public toogleNodeFontWeight () {

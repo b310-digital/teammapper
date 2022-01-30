@@ -58,7 +58,8 @@
         "NODE_DRAGGING": "Verschieben von Knoten erlauben",
         "MAP_ZOOM": "Zoomen der Mindmap erlauben",
         "AUTO_BRANCH_COLORS": "Automatische Auswahl von Zweigfarben erlauben",
-        "SHARE": "Teilen"
+        "SHARE": "Teilen",
+        "LINK": "Link hinzufügen"
     },
     "MODALS": {
       "GENERAL": {
@@ -78,6 +79,10 @@
           "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
           "DELETE": "Mindmap löschen",
           "CONFIRM_DELETE": "Wirklich löschen?"
+      },
+      "LINK": {
+          "URL": "Link URL",
+          "NAME": "Link Name"
       }
     },
      "PAGES": {
@@ -145,7 +150,8 @@
         "NO_SAVED_MAPS": "Keine Mindmap vorhanden!",
         "INITIAL_INFORMATION": "»TeamMapper« ist bereit ☺",
         "WELCOME_MESSAGE": "Willkommen zur Anwendung »TeamMapper« ☺",
-        "MAP_DELETION_CONFIRM": "Bist du sicher, dass du die Mindmap löschen möchtest?"
+        "MAP_DELETION_CONFIRM": "Bist du sicher, dass du die Mindmap löschen möchtest?",
+        "UNLOAD_WARN": "Seite wirklich verlassen?"
     },
     "GENERAL": {
         "ORGANIZATION": "Organisation",

@@ -185,7 +185,6 @@ export default class Options implements OptionParameters {
     private updateDefaultRootNode(properties: DefaultNodeProperties) {
         this.rootNode = Utils.mergeObjects(this.rootNode, properties, true) as DefaultNodeProperties
     }
-
 }
 
 export interface DefaultNodeProperties {
