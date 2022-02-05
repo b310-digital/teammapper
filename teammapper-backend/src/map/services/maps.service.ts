@@ -78,12 +78,14 @@ export class MapsService {
 
   async createMap(clientMap: IMmpClientMap): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create({
-      id: clientMap.uuid,
+      id: clientMap.uuid
     });
+    // if the map already exists, its only upldated here
     await this.mapsRepository.save(newMap);
     // remove existing nodes, otherwise we will end up with multiple roots
     await this.nodesRepository.delete({ nodeMapId: clientMap.uuid });
 
+    // add new nodes from given map
     const nodes: Array<Promise<any>> = clientMap.data.map((node) => this.nodesRepository.save(mapClientNodeToMmpNode(node, clientMap.uuid)));
     await Promise.all(nodes);
 
