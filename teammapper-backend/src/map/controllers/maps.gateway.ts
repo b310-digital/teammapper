@@ -120,6 +120,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     await this.mapsService.createMap(
       mmpMap,
     );
+    
     const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid);
 
     this.server

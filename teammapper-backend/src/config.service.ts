@@ -61,7 +61,7 @@ class ConfigService {
         migrationsDir: 'migrations',
       },
 
-      synchronize: !this.isProduction(),
+      synchronize: false,
 
       // As reported in https://github.com/brianc/node-postgres/issues/2009, implicit disabling of unauthorized certificates has been deprecated.
       // You either need to configure a custom certificate provided by yourself that is signed by an official certification authority, or connections will be refused.

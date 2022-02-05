@@ -2,6 +2,7 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
+  PrimaryColumn,
   ManyToOne,
   JoinColumn,
   Generated,
@@ -77,7 +78,7 @@ export class MmpNode {
   @Column({ nullable: true, type: 'float' })
   k: number;
 
-  @Column({ nullable: true })
+  @PrimaryColumn('uuid')
   nodeMapId: string;
 
   @Column({ nullable: true })

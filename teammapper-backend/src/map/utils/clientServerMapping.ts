@@ -8,7 +8,7 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
     background: serverNode.colorsBackground || '',
     branch: serverNode.colorsBranch || '',
   },
-  coordinates: { x: serverNode.coordinatesX || 0, y: serverNode.coordinatesY || 0},
+  coordinates: { x: serverNode.coordinatesX || 0, y: serverNode.coordinatesY || 0 },
   font: {
     style: serverNode.fontStyle || '',
     size: serverNode.fontSize || 12,
@@ -31,7 +31,7 @@ const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt:
   lastModified: serverMap.lastModified,
 });
 
-const mapClientNodeToMmpNode = (clientNode: IMmpClientNode): Object => ({
+const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Object => ({
   id: clientNode.id,
   colorsBackground: clientNode.colors.background,
   colorsBranch: clientNode.colors.branch,
@@ -48,6 +48,7 @@ const mapClientNodeToMmpNode = (clientNode: IMmpClientNode): Object => ({
   name: clientNode.name,
   nodeParentId: clientNode.parent ? clientNode.parent : null,
   root: clientNode.isRoot,
+  nodeMapId: mapId,
 });
 
 export { mapMmpNodeToClient, mapClientNodeToMmpNode, mapMmpMapToClient };
