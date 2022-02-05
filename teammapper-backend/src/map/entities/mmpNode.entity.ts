@@ -7,10 +7,12 @@ import {
   JoinColumn,
   Generated,
   OneToMany,
+  Unique
 } from 'typeorm';
 import { MmpMap } from './mmpMap.entity';
 
 @Entity()
+//@Unique("nodeParentNodeMapIndex", ["nodeParentId", "nodeMapId"])
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -30,7 +32,10 @@ export class MmpNode {
   @ManyToOne(type => MmpNode, (node) => node.children, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
+  @JoinColumn([
+    { name: 'nodeMapId', referencedColumnName: 'nodeMapId' },
+    { name: 'nodeParentId', referencedColumnName: 'id' },
+  ])
   nodeParent: MmpNode;
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
