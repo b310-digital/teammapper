@@ -65,15 +65,14 @@ export class MapsService {
     });
   }
 
-  async removeNode(clientNode: IMmpClientNode): Promise<boolean> {
-    const existingNode = await this.nodesRepository.findOne({ id: clientNode.id });
+  async removeNode(clientNode: IMmpClientNode, mapId: string): Promise<MmpNode | undefined> {
+    const existingNode = await this.nodesRepository.findOne({ id: clientNode.id, nodeMapId: mapId });
 
     if (!existingNode) {
-      return false;
+      return;
     }
 
-    await this.nodesRepository.remove(existingNode);
-    return true;
+    return this.nodesRepository.remove(existingNode);
   }
 
   async createMap(clientMap: IMmpClientMap): Promise<MmpMap> {
@@ -85,9 +84,13 @@ export class MapsService {
     // remove existing nodes, otherwise we will end up with multiple roots
     await this.nodesRepository.delete({ nodeMapId: clientMap.uuid });
 
-    // add new nodes from given map
-    const nodes: Array<Promise<any>> = clientMap.data.map((node) => this.nodesRepository.save(mapClientNodeToMmpNode(node, clientMap.uuid)));
-    await Promise.all(nodes);
+    // Add new nodes from given map
+    // Reduce is used in conjunction with a promise to keep the order of creation.
+    // Otherwise there will be FK violations
+    clientMap.data.reduce(async (promise: Promise<any>, node: IMmpClientNode) => {
+      await promise;
+      await this.nodesRepository.save(mapClientNodeToMmpNode(node, clientMap.uuid));
+    }, Promise.resolve());
 
     return newMap;
   }
