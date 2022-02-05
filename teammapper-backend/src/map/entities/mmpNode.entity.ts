@@ -2,6 +2,7 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
+  PrimaryColumn,
   ManyToOne,
   JoinColumn,
   Generated,
@@ -29,7 +30,10 @@ export class MmpNode {
   @ManyToOne(type => MmpNode, (node) => node.children, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
+  @JoinColumn([
+    { name: 'nodeMapId', referencedColumnName: 'nodeMapId' },
+    { name: 'nodeParentId', referencedColumnName: 'id' },
+  ])
   nodeParent: MmpNode;
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
@@ -77,7 +81,7 @@ export class MmpNode {
   @Column({ nullable: true, type: 'float' })
   k: number;
 
-  @Column({ nullable: true })
+  @PrimaryColumn('uuid')
   nodeMapId: string;
 
   @Column({ nullable: true })

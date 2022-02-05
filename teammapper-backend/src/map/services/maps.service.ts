@@ -38,7 +38,7 @@ export class MapsService {
     if (existingNode) return existingNode;
 
     const newNode = this.nodesRepository.create({
-      ...mapClientNodeToMmpNode(clientNode),
+      ...mapClientNodeToMmpNode(clientNode, mapId),
       nodeMapId: mapId,
     });
     return this.nodesRepository.save(newNode);
@@ -61,7 +61,7 @@ export class MapsService {
 
     return this.nodesRepository.save({
       ...existingNode,
-      ...mapClientNodeToMmpNode(clientNode),
+      ...mapClientNodeToMmpNode(clientNode, mapId),
     });
   }
 
@@ -79,9 +79,17 @@ export class MapsService {
   async createMap(clientMap: IMmpClientMap): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create({
       id: clientMap.uuid,
-      nodes: clientMap.data.map((node) => mapClientNodeToMmpNode(node)),
     });
-    return this.mapsRepository.save(newMap);
+    // if the map already exists, its only upldated here
+    await this.mapsRepository.save(newMap);
+    // remove existing nodes, otherwise we will end up with multiple roots
+    await this.nodesRepository.delete({ nodeMapId: clientMap.uuid });
+
+    // add new nodes from given map
+    const nodes: Array<Promise<any>> = clientMap.data.map((node) => this.nodesRepository.save(mapClientNodeToMmpNode(node, clientMap.uuid)));
+    await Promise.all(nodes);
+
+    return newMap;
   }
 
   getDeletedAt(afterDays: number): Date {
