@@ -78,7 +78,7 @@ export class MapsService {
 
   async createMap(clientMap: IMmpClientMap): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create({
-      id: clientMap.uuid
+      id: clientMap.uuid,
     });
     // if the map already exists, its only upldated here
     await this.mapsRepository.save(newMap);

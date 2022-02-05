@@ -7,12 +7,10 @@ import {
   JoinColumn,
   Generated,
   OneToMany,
-  Unique
 } from 'typeorm';
 import { MmpMap } from './mmpMap.entity';
 
 @Entity()
-//@Unique("nodeParentNodeMapIndex", ["nodeParentId", "nodeMapId"])
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
   id: string;
