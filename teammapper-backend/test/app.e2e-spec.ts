@@ -129,7 +129,7 @@ describe('AppController (e2e)', () => {
             id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
             coordinatesX: 1,
             coordinatesY: 2,
-            nodeMapId: '51271bf2-81fa-477a-b0bd-10cecf8d6b65'
+            nodeMapId: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
           }),
         ],
       });
