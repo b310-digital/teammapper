@@ -10,6 +10,6 @@ export function create (id: string, options?: OptionParameters) {
     return new MmpMap(id, options)
 }
 
-DOMPurify.setConfig({ADD_ATTR: ['contenteditable']})
+DOMPurify.setConfig({ADD_ATTR: ['contenteditable'], ADD_TAGS: ['mat-icon']})
 
 export const NodePropertyMapping = PropertyMapping
