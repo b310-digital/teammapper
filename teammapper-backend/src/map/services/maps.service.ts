@@ -38,7 +38,7 @@ export class MapsService {
     if (existingNode) return existingNode;
 
     const newNode = this.nodesRepository.create({
-      ...mapClientNodeToMmpNode(clientNode),
+      ...mapClientNodeToMmpNode(clientNode, mapId),
       nodeMapId: mapId,
     });
     return this.nodesRepository.save(newNode);
@@ -61,27 +61,38 @@ export class MapsService {
 
     return this.nodesRepository.save({
       ...existingNode,
-      ...mapClientNodeToMmpNode(clientNode),
+      ...mapClientNodeToMmpNode(clientNode, mapId),
     });
   }
 
-  async removeNode(clientNode: IMmpClientNode): Promise<boolean> {
-    const existingNode = await this.nodesRepository.findOne({ id: clientNode.id });
+  async removeNode(clientNode: IMmpClientNode, mapId: string): Promise<MmpNode | undefined> {
+    const existingNode = await this.nodesRepository.findOne({ id: clientNode.id, nodeMapId: mapId });
 
     if (!existingNode) {
-      return false;
+      return;
     }
 
-    await this.nodesRepository.remove(existingNode);
-    return true;
+    return this.nodesRepository.remove(existingNode);
   }
 
   async createMap(clientMap: IMmpClientMap): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create({
       id: clientMap.uuid,
-      nodes: clientMap.data.map((node) => mapClientNodeToMmpNode(node)),
     });
-    return this.mapsRepository.save(newMap);
+    // if the map already exists, its only upldated here
+    await this.mapsRepository.save(newMap);
+    // remove existing nodes, otherwise we will end up with multiple roots
+    await this.nodesRepository.delete({ nodeMapId: clientMap.uuid });
+
+    // Add new nodes from given map
+    // Reduce is used in conjunction with a promise to keep the order of creation.
+    // Otherwise there will be FK violations
+    clientMap.data.reduce(async (promise: Promise<any>, node: IMmpClientNode) => {
+      await promise;
+      await this.nodesRepository.save(mapClientNodeToMmpNode(node, clientMap.uuid));
+    }, Promise.resolve());
+
+    return newMap;
   }
 
   getDeletedAt(afterDays: number): Date {

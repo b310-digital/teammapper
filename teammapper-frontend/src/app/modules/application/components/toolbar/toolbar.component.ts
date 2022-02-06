@@ -39,9 +39,13 @@ export class ToolbarComponent {
   }
 
   public addLink () {
-    const link = prompt(this.translationService.instant("MODALS.LINK.URL")) || window.location.href
+    const linkInput = prompt(this.translationService.instant("MODALS.LINK.URL")) || window.location.href
+    const validatedLink = this.isValidLink(linkInput) ? linkInput : window.location.href
     const linkName = prompt(this.translationService.instant("MODALS.LINK.NAME")) || 'Link'
-    this.mmpService.updateNode('name', `<a href="${link}" contenteditable="false">${linkName}</a>`)
+    this.mmpService.updateNode(
+      'name',
+      `<a href="${validatedLink}" target="_blank" contenteditable="false" style="color:#00a3d3;"><mat-icon role="img" class="mat-icon notranslate material-icons mat-icon-no-color" style="vertical-align: middle;">insert_link</mat-icon>${linkName}</a>`
+    )
   }
 
   public toogleNodeFontWeight () {
@@ -97,5 +101,14 @@ export class ToolbarComponent {
 
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement 
     fileReader.readAsText(fileUpload.files[0])
+  }
+
+  private isValidLink(input: string) {
+    try {
+      new URL(input);
+    } catch (_) {
+      return false;
+    }
+    return true;
   }
 }

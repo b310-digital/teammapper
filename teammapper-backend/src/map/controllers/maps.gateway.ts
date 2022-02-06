@@ -19,6 +19,7 @@ import {
 } from '../types';
 import { mapMmpNodeToClient } from '../utils/clientServerMapping';
 import { MmpMap } from '../entities/mmpMap.entity';
+import { MmpNode } from '../entities/mmpNode.entity';
 
 
 @WebSocketGateway({ cors: { credentials: true } })
@@ -120,6 +121,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     await this.mapsService.createMap(
       mmpMap,
     );
+    
     const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid);
 
     this.server
@@ -133,9 +135,10 @@ export class MapsGateway implements OnGatewayDisconnect {
   async removeNode(
     @ConnectedSocket() client: Socket,
       @MessageBody() request: IMmpClientNodeRequest,
-  ): Promise<boolean> {
-    const nodeRemoveStatus: boolean = await this.mapsService.removeNode(
+  ): Promise<MmpNode | undefined> {
+    const nodeRemoveStatus: MmpNode | undefined = await this.mapsService.removeNode(
       request.node,
+      request.mapId,
     );
 
     this.server

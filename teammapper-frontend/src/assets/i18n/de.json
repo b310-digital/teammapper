@@ -81,7 +81,7 @@
           "CONFIRM_DELETE": "Wirklich löschen?"
       },
       "LINK": {
-          "URL": "Link URL",
+          "URL": "Link URL (bitte mit http/https)",
           "NAME": "Link Name"
       }
     },
