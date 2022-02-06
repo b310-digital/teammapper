@@ -4,6 +4,7 @@ export class AddNodeMapIdAsPrimaryColumnOnNodes1644079415806 implements Migratio
   name = 'AddNodeMapIdAsPrimaryColumnOnNodes1644079415806';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query('DELETE FROM "public"."mmp_node" WHERE id IN (SELECT node_1.id FROM "public"."mmp_node" node_1 INNER JOIN "public"."mmp_node" AS node_2 ON "node_1"."nodeParentId" = "node_2"."id" WHERE "node_1"."nodeMapId" != "node_2"."nodeMapId")');
     await queryRunner.query('DELETE FROM "public"."mmp_node" WHERE "nodeMapId" IS NULL');
     await queryRunner.query('ALTER TABLE "public"."mmp_node" DROP CONSTRAINT "FK_9919032f542cee8cab97749e1a5"');
     await queryRunner.query('ALTER TABLE "public"."mmp_node" DROP CONSTRAINT "PK_70f65b529c3e785462fb35c05cf"');
