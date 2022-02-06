@@ -106,6 +106,12 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     ```bash
     docker-compose --file docker-compose-prod.yml --env-file .env.prod down -v
     ```
+    
+    If you want to run prod migrations (again):
+    
+    ```bash
+    docker-compose exec app_prod npm -prefix teammapper-backend run typeorm:prod:migrate
+    ```
 
 ### Further details
 
