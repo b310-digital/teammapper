@@ -138,6 +138,10 @@ be found on https://kits.blog/tools and can be used by schools for free.
 
 Logos and text provided with courtesy of kits.
 
+## Additional licence
+
+The TeamMapper[logo](https://thenounproject.com/icon/188125/) in this repo – created by [Gregor Cresnar](https://thenounproject.com/grega.cresnar) – is licenced under [CC BY 3.0 Unported](https://creativecommons.org/licenses/by/3.0/).
+
 ## Acknowledgements
 
 -   Mindmapp: https://github.com/cedoor/mindmapp (discontinued)
