@@ -13,10 +13,10 @@ FROM base as production_buildstage
 USER node
 
 COPY --chown=node:node teammapper-backend/package.json teammapper-backend/package-lock.json $APP_BACKEND_PATH/
-RUN npm --prefix teammapper-backend install
+RUN npm --prefix teammapper-backend ci
 
 COPY --chown=node:node teammapper-frontend/package.json teammapper-frontend/package-lock.json $APP_FRONTEND_PATH/
-RUN npm --prefix teammapper-frontend install
+RUN npm --prefix teammapper-frontend ci
 
 COPY --chown=node:node package.json $APP_PATH/
 
