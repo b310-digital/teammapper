@@ -5,7 +5,7 @@ import {UtilsService} from '../utils/utils.service'
 import { jsPDF } from "jspdf";
 import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
-import { ExportHistory, ExportNodeProperties, MapSnapshot, UserNodeProperties } from '@mmp/map/types'
+import { ExportHistory, ExportNodeProperties, MapSnapshot, NodeProperties, UserNodeProperties } from '@mmp/map/types'
 import { MapOptions } from 'src/app/shared/models/settings.model'
 import { COLORS } from './mmp-utils'
 

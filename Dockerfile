@@ -1,4 +1,4 @@
-FROM node:16.13.2-alpine3.14 as base
+FROM node:16.14.0-alpine3.15 as base
 # Ensuring that all npm packages and commands are executed with a non-root user
 USER node
 
@@ -13,10 +13,10 @@ FROM base as production_buildstage
 USER node
 
 COPY --chown=node:node teammapper-backend/package.json teammapper-backend/package-lock.json $APP_BACKEND_PATH/
-RUN npm --prefix teammapper-backend install
+RUN npm --prefix teammapper-backend ci
 
 COPY --chown=node:node teammapper-frontend/package.json teammapper-frontend/package-lock.json $APP_FRONTEND_PATH/
-RUN npm --prefix teammapper-frontend install
+RUN npm --prefix teammapper-frontend ci
 
 COPY --chown=node:node package.json $APP_PATH/
 

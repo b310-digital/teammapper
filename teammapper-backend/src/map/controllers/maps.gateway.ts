@@ -89,6 +89,10 @@ export class MapsGateway implements OnGatewayDisconnect {
     this.server
       .to(request.mapId)
       .emit('nodeAdded', { clientId: client.id, node: mapMmpNodeToClient(newNode) });
+    
+    this.server
+      .to(request.mapId)
+      .emit('selectionUpdated', { clientId: client.id, nodeId: newNode.id, selected: true });
 
     return true;
   }
