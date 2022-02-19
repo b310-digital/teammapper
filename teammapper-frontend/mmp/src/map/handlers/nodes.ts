@@ -81,7 +81,7 @@ export default class Nodes {
      * @param {string} parentId
      * @param {string} overwriteId
      */
-    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string): Node => {
+    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string) => {
         if (parentId && typeof parentId !== 'string') {
             Log.error('The node id must be a string', 'type')
         }
@@ -110,7 +110,6 @@ export default class Nodes {
         this.map.history.save()
 
         if(notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
-        return node
     }
 
     /**

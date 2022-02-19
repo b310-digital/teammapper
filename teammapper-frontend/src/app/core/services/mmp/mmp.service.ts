@@ -142,8 +142,7 @@ export class MmpService {
       }
     }
 
-    const node: NodeProperties = this.currentMap.instance.addNode(newProps, notifyWithEvent, properties?.parent, properties?.id)
-    this.selectNode(node.id)
+    this.currentMap.instance.addNode(newProps, notifyWithEvent, properties?.parent, properties?.id)
   }
 
   /**
