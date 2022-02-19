@@ -6,8 +6,8 @@
   "private": true,
   "license": "MIT",
   "engines": {
-    "npm": "~8.1.2",
-    "node": "~16.13.2"
+    "npm": "~8.3.1",
+    "node": "~16.14.0"
   },
   "scripts": {
     "prebuild": "rimraf dist",
@@ -49,7 +49,7 @@
     "typeorm": "^0.2.32"
   },
   "devDependencies": {
-    "@nestjs/cli": "8.1.1",
+    "@nestjs/cli": "^8.2.1",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
     "@types/cache-manager": "3.4.2",
