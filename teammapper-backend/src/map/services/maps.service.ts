@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { Repository, DeleteResult } from 'typeorm';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { IMmpClientMap, IMmpClientNode } from '../types';
@@ -28,7 +28,7 @@ export class MapsService {
 
     const nodes: MmpNode[] = await this.findNodes(map?.id);
     const days: number = configService.deleteAfterDays();
-    return mapMmpMapToClient(map, nodes, this.getDeletedAt(days), days);
+    return mapMmpMapToClient(map, nodes, await this.getDeletedAt(map.lastModified, days), days);
   }
 
   async addNode(mapId: string, clientNode: IMmpClientNode): Promise<MmpNode> {
@@ -95,15 +95,19 @@ export class MapsService {
     return newMap;
   }
 
-  getDeletedAt(afterDays: number): Date {
-    const today: Date = new Date();
+  async getDeletedAt(lastModified: Date, afterDays: number): Promise<Date> {
     const comparisonTime: Date = new Date();
-    comparisonTime.setDate(today.getDate() + afterDays);
+    comparisonTime.setDate(lastModified.getDate() + afterDays);
     return comparisonTime;
   }
 
-  deleteOutdatedMaps(afterDays: number = 30) {
-    this.mapsRepository.delete({ lastModified: MoreThan(this.getDeletedAt(afterDays)) });
+  deleteOutdatedMaps(afterDays: number = 30): Promise<DeleteResult> {
+    return this.mapsRepository
+      .createQueryBuilder()
+      .where("(lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: new Date() })
+      .delete()
+      .from(MmpMap)
+      .execute();
   }
 
   deleteMap(uuid: string) {
