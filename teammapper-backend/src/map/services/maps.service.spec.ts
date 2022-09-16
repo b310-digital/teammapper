@@ -33,14 +33,21 @@ describe('MapsController', () => {
   });
 
   describe('deleteOutdatedMaps', () => {
-    it('deletes the old map', async () => {
+    it('deletes the old map and node', async () => {
 
       const map: MmpMap = await mapsRepo.save({
         lastModified: new Date('2019-01-01'),
       });
 
+      const node: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+      });
+
       await mapsService.deleteOutdatedMaps(30);
       expect(await mapsService.findMap(map.id)).toEqual(undefined);
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).toEqual(undefined);
     });
 
     it('does not delete the new map', async () => {
