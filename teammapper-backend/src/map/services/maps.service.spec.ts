@@ -54,4 +54,10 @@ describe('MapsController', () => {
       expect(foundMap.id).toEqual(map.id);
     });
   });
+
+  describe('getDeletedAt', () => {
+    it('calculates the correct date', async () => {
+      expect(mapsService.getDeletedAt(new Date('2022-01-01'), 5)).toEqual(new Date('2022-01-06'));
+    });
+  });
 });

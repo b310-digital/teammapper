@@ -28,7 +28,7 @@ export class MapsService {
 
     const nodes: MmpNode[] = await this.findNodes(map?.id);
     const days: number = configService.deleteAfterDays();
-    return mapMmpMapToClient(map, nodes, await this.getDeletedAt(map.lastModified, days), days);
+    return mapMmpMapToClient(map, nodes, this.getDeletedAt(map.lastModified, days), days);
   }
 
   async addNode(mapId: string, clientNode: IMmpClientNode): Promise<MmpNode> {
@@ -95,10 +95,11 @@ export class MapsService {
     return newMap;
   }
 
-  async getDeletedAt(lastModified: Date, afterDays: number): Promise<Date> {
-    const comparisonTime: Date = new Date();
-    comparisonTime.setDate(lastModified.getDate() + afterDays);
-    return comparisonTime;
+  getDeletedAt(lastModified: Date, afterDays: number): Date {
+    // dont modify original input as this might be used somewhere else
+    const copyDate: Date = new Date(lastModified.getTime());
+    copyDate.setDate(copyDate.getDate() + afterDays);
+    return copyDate;
   }
 
   deleteOutdatedMaps(afterDays: number = 30): Promise<DeleteResult> {
