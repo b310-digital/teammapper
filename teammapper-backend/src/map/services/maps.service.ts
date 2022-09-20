@@ -102,8 +102,8 @@ export class MapsService {
     return copyDate;
   }
 
-  deleteOutdatedMaps(afterDays: number = 30): Promise<DeleteResult> {
-    return this.mapsRepository
+  async deleteOutdatedMaps(afterDays: number = 30): Promise<DeleteResult> {
+    return await this.mapsRepository
       .createQueryBuilder()
       .where("(lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: new Date() })
       .delete()
