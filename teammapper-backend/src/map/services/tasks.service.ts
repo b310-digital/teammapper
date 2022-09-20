@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { MapsService } from './maps.service';
 import configService from '../../config.service';
+import { DeleteResult } from 'typeorm';
 
 
 /*
@@ -19,8 +20,9 @@ export class TasksService {
 
   // every day midnight
   @Cron('0 0 * * *')
-  handleCron() {
+  async handleCron() {
     this.logger.log('Deleting old maps ...');
-    this.mapsService.deleteOutdatedMaps(configService.deleteAfterDays());
+    const result: DeleteResult = await this.mapsService.deleteOutdatedMaps(configService.deleteAfterDays());
+    this.logger.log("Affected rows: " + result.affected);
   }
 }
