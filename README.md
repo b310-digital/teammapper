@@ -36,10 +36,10 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     ```bash
     # Open to terminal session on your host machine
 
-    # I first terminal session
+    # In first terminal session
     docker-compose exec app npm --prefix teammapper-backend start
 
-    # I second terminal session
+    # In second terminal session
     docker-compose exec app npm --prefix teammapper-frontend start
     ```
 
