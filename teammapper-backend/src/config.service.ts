@@ -61,6 +61,11 @@ class ConfigService {
         migrationsDir: 'migrations',
       },
 
+      extra: {
+        query_timeout: 2000,
+        statement_timeout: 2000
+      },
+
       synchronize: !this.isProduction(),
 
       // As reported in https://github.com/brianc/node-postgres/issues/2009, implicit disabling of unauthorized certificates has been deprecated.
