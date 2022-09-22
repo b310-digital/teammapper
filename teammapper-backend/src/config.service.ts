@@ -62,8 +62,8 @@ class ConfigService {
       },
 
       extra: {
-        query_timeout: 2000,
-        statement_timeout: 2000
+        query_timeout: 20000,
+        statement_timeout: 20000
       },
 
       synchronize: !this.isProduction(),
