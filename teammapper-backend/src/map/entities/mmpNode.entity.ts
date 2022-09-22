@@ -87,6 +87,7 @@ export class MmpNode {
   nodeMapId: string;
 
   @Column({ nullable: true })
+  @Index()
   nodeParentId: string;
 
   @Column({ nullable: false })
