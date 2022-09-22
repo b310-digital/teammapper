@@ -1,6 +1,7 @@
 import {
   Entity,
   Column,
+  Index,
   PrimaryGeneratedColumn,
   PrimaryColumn,
   ManyToOne,
@@ -82,9 +83,11 @@ export class MmpNode {
   k: number;
 
   @PrimaryColumn('uuid')
+  @Index()
   nodeMapId: string;
 
   @Column({ nullable: true })
+  @Index()
   nodeParentId: string;
 
   @Column({ nullable: false })
