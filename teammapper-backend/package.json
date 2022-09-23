@@ -25,8 +25,11 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js --config src/ormconfig.ts",
-    "typeorm:prod:migrate": "typeorm migration:run --config dist/ormconfig.js"
+    "dev:typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js --config src/ormconfig.ts",
+    "dev:data:maps:cleanup": "ts-node ./src/jobs/deleteMaps.job.ts",
+    "dev:data:maps:seed": "ts-node ./src/jobs/seedMapData.job.ts",
+    "prod:data:maps:cleanup": "node ./dist/jobs/deleteMaps.job.js",
+    "prod:typeorm:migrate": "typeorm migration:run --config dist/ormconfig.js"
   },
   "dependencies": {
     "@nestjs/common": "^8.0.0",

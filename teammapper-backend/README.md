@@ -69,7 +69,7 @@ npm run typeorm schema:sync
 For pruction environments, run migrations, see https://github.com/typeorm/typeorm/blob/master/docs/migrations.md
 
 ```bash
-npm run typeorm:prod:migrate
+npm run prod:typeorm:migrate
 ```
 
 or run migrations on dev:
