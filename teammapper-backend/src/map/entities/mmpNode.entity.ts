@@ -12,7 +12,6 @@ import {
 import { MmpMap } from './mmpMap.entity';
 
 @Entity()
-@Index(["id", "nodeMapId"])
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -29,13 +28,15 @@ export class MmpNode {
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
+  // Cascade is too performance intensive on large deletes
   @ManyToOne(type => MmpNode, (node) => node.children, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT'
   })
   @JoinColumn([
     { name: 'nodeMapId', referencedColumnName: 'nodeMapId' },
     { name: 'nodeParentId', referencedColumnName: 'id' },
   ])
+  @Index()
   nodeParent: MmpNode;
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
