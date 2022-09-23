@@ -112,6 +112,21 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     ```bash
     docker-compose exec app_prod npm -prefix teammapper-backend run typeorm:prod:migrate
     ```
+#### Running jobs
+
+Trigger delete job (also executed daily with cron task scheduler):
+
+```
+docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npm --prefix teammapper-backend run prod:data:maps:cleanup
+```
+
+#### Running further queries
+
+Example of running sql via typeorm:
+
+```
+npx typeorm query "select * from mmp_node" --config dist/ormconfig.js
+```
 
 ### Further details
 
