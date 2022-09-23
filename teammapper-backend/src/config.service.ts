@@ -62,8 +62,8 @@ class ConfigService {
       },
 
       extra: {
-        query_timeout: 20000,
-        statement_timeout: 20000,
+        query_timeout: this.getValue('POSTGRES_QUERY_TIMEOUT') || 100000,
+        statement_timeout: this.getValue('POSTGRES_STATEMENT_TIMEOUT') || 100000,
       },
 
       synchronize: !this.isProduction(),

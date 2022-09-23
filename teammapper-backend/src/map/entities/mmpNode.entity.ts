@@ -12,6 +12,7 @@ import {
 import { MmpMap } from './mmpMap.entity';
 
 @Entity()
+@Index(["id", "nodeMapId"])
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -35,7 +36,6 @@ export class MmpNode {
     { name: 'nodeMapId', referencedColumnName: 'nodeMapId' },
     { name: 'nodeParentId', referencedColumnName: 'id' },
   ])
-  @Index()
   nodeParent: MmpNode;
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
