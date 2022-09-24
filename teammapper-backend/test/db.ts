@@ -13,4 +13,8 @@ export const createTestConfiguration = (): TypeOrmModuleOptions => ({
   autoLoadEntities: true,
   dropSchema: true,
   keepConnectionAlive: true,
+  extra: {
+    query_timeout: 1000,
+    statement_timeout: 1000,
+  },
 });
