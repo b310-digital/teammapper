@@ -114,4 +114,20 @@ export class MapsService {
   deleteMap(uuid: string) {
     this.mapsRepository.delete({ id: uuid });
   }
+
+  // In case cascade is too slow, this is a WIP
+  // async recursiveFindAllNodeChildren(node: MmpNode): Promise<MmpNode[]> {
+  //   const children = await this.nodesRepository.find({
+  //     where: {
+  //         nodeParentId: node.id,
+  //         nodeMapId: node.nodeMapId,
+  //     }
+  //   });
+
+  //   if (children === undefined || children.length === 0) return [];
+
+  //   return (await Promise.all(children.map(async (node: MmpNode): Promise<MmpNode[]> => {
+  //     return [node, ...await this.recursiveFindAllNodeChildren(node)];
+  //   }, []))).flat()
+  // }
 }

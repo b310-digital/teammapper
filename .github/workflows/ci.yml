@@ -79,3 +79,5 @@ jobs:
                   POSTGRES_TEST_PORT: ${{ job.services.postgres.ports[5432] }}
                   POSTGRES_TEST_USER: "teammapper-user"
                   POSTGRES_USER: "teammapper-user"
+                  POSTGRES_QUERY_TIMEOUT: 10000
+                  POSTGRES_STATEMENT_TIMEOUT: 10000
