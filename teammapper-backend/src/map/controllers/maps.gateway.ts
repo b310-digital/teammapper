@@ -139,8 +139,8 @@ export class MapsGateway implements OnGatewayDisconnect {
   async removeNode(
     @ConnectedSocket() client: Socket,
       @MessageBody() request: IMmpClientNodeRequest,
-  ): Promise<MmpNode[] | undefined> {
-    const removedNodes: MmpNode[] | undefined = await this.mapsService.removeNode(
+  ): Promise<MmpNode | undefined> {
+    const removedNodes: MmpNode | undefined = await this.mapsService.removeNode(
       request.node,
       request.mapId,
     );

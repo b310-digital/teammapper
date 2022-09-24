@@ -65,15 +65,15 @@ export class MapsService {
     });
   }
 
-  async removeNode(clientNode: IMmpClientNode, mapId: string): Promise<MmpNode[] | undefined> {
+  async removeNode(clientNode: IMmpClientNode, mapId: string): Promise<MmpNode | undefined> {
     const existingNode = await this.nodesRepository.findOne({ id: clientNode.id, nodeMapId: mapId });
 
     if (!existingNode) {
       return;
     }
 
-    const nodesToDelete: MmpNode[] = await this.recursiveFindAllNodeChildren(existingNode);
-    return this.nodesRepository.remove([existingNode, ...nodesToDelete]);
+    //const nodesToDelete: MmpNode[] = await this.recursiveFindAllNodeChildren(existingNode);
+    return this.nodesRepository.remove(existingNode);
   }
 
   async createMap(clientMap: IMmpClientMap): Promise<MmpMap> {
@@ -116,18 +116,18 @@ export class MapsService {
     this.mapsRepository.delete({ id: uuid });
   }
 
-  async recursiveFindAllNodeChildren(node: MmpNode): Promise<MmpNode[]> {
-    const children = await this.nodesRepository.find({
-      where: {
-          nodeParentId: node.id,
-          nodeMapId: node.nodeMapId,
-      }
-    });
+  // async recursiveFindAllNodeChildren(node: MmpNode): Promise<MmpNode[]> {
+  //   const children = await this.nodesRepository.find({
+  //     where: {
+  //         nodeParentId: node.id,
+  //         nodeMapId: node.nodeMapId,
+  //     }
+  //   });
 
-    if (children === undefined || children.length === 0) return [];
+  //   if (children === undefined || children.length === 0) return [];
 
-    return (await Promise.all(children.map(async (node: MmpNode): Promise<MmpNode[]> => {
-      return [node, ...await this.recursiveFindAllNodeChildren(node)];
-    }, []))).flat()
-  }
+  //   return (await Promise.all(children.map(async (node: MmpNode): Promise<MmpNode[]> => {
+  //     return [node, ...await this.recursiveFindAllNodeChildren(node)];
+  //   }, []))).flat()
+  // }
 }

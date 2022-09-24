@@ -28,9 +28,8 @@ export class MmpNode {
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  // Cascade is too performance intensive on large deletes
   @ManyToOne(type => MmpNode, (node) => node.children, {
-    onDelete: 'RESTRICT'
+    onDelete: 'CASCADE'
   })
   @JoinColumn([
     { name: 'nodeMapId', referencedColumnName: 'nodeMapId' },
