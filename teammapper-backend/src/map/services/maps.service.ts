@@ -72,7 +72,6 @@ export class MapsService {
       return;
     }
 
-    //const nodesToDelete: MmpNode[] = await this.recursiveFindAllNodeChildren(existingNode);
     return this.nodesRepository.remove(existingNode);
   }
 
@@ -116,6 +115,7 @@ export class MapsService {
     this.mapsRepository.delete({ id: uuid });
   }
 
+  // In case cascade is too slow, this is a WIP
   // async recursiveFindAllNodeChildren(node: MmpNode): Promise<MmpNode[]> {
   //   const children = await this.nodesRepository.find({
   //     where: {
