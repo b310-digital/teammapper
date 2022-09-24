@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { ConfigModule } from '@nestjs/config';
 import AppModule from '../../app.module';
 import { createTestConfiguration } from '../../../test/db';
+import { mapMmpNodeToClient } from '../utils/clientServerMapping';
 
 describe('MapsController', () => {
   let mapsService: MapsService;
@@ -65,6 +66,28 @@ describe('MapsController', () => {
   describe('getDeletedAt', () => {
     it('calculates the correct date', async () => {
       expect(mapsService.getDeletedAt(new Date('2022-01-01'), 5)).toEqual(new Date('2022-01-06'));
+    });
+  });
+
+  describe('removeNode', () => {
+    it('remove all nodes connected together', async () => {
+      const map: MmpMap = await mapsRepo.save({});
+
+      const node: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+      });
+
+      const nodeTwo: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        nodeParent: node,
+        coordinatesX: 3,
+        coordinatesY: 1,
+      });
+
+      await mapsService.removeNode(mapMmpNodeToClient(node), map.id);
+      expect(await nodesRepo.findOne({ where: { id: nodeTwo.id } })).toEqual(undefined);
     });
   });
 });
