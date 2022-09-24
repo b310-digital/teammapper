@@ -8,8 +8,7 @@ import { Repository } from 'typeorm';
 import { ConfigModule } from '@nestjs/config';
 import AppModule from '../../app.module';
 import { createTestConfiguration } from '../../../test/db';
-import { mapClientNodeToMmpNode, mapMmpMapToClient, mapMmpNodeToClient } from '../utils/clientServerMapping';
-import { IMmpClientNode } from '../types';
+import { mapMmpNodeToClient } from '../utils/clientServerMapping';
 
 describe('MapsController', () => {
   let mapsService: MapsService;
@@ -80,7 +79,7 @@ describe('MapsController', () => {
         coordinatesY: 1,
       });
 
-      const node_two: MmpNode = await nodesRepo.save({
+      const nodeTwo: MmpNode = await nodesRepo.save({
         nodeMapId: map.id,
         nodeParent: node,
         coordinatesX: 3,
@@ -88,7 +87,7 @@ describe('MapsController', () => {
       });
 
       await mapsService.removeNode(mapMmpNodeToClient(node), map.id);
-      expect(await nodesRepo.findOne({ where: { id: node_two.id }})).toEqual(undefined);
+      expect(await nodesRepo.findOne({ where: { id: nodeTwo.id } })).toEqual(undefined);
     });
   });
 });

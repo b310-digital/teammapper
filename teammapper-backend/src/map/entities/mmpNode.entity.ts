@@ -29,7 +29,7 @@ export class MmpNode {
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
   @ManyToOne(type => MmpNode, (node) => node.children, {
-    onDelete: 'CASCADE'
+    onDelete: 'CASCADE',
   })
   @JoinColumn([
     { name: 'nodeMapId', referencedColumnName: 'nodeMapId' },
