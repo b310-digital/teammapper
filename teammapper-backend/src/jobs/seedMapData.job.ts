@@ -49,22 +49,20 @@ async function bootstrap() {
   const logger = new Logger('TaskRunner');
   const mapsService = application.get(MapsService);
 
-  logger.log('--- Creating maps ... ---');
+  logger.log('--- Creating map ... ---');
 
-  for (let i = 0; i < 100000; i++) {
-    const rootNode: IMmpClientNode = createNode(true, '', 0, 0);
-    const childNode: IMmpClientNode = createNode(false, rootNode.id, 150, 150);
-    const secondChildNode: IMmpClientNode = createNode(false, childNode.id, 250, 250);
-    const thirdChildNode: IMmpClientNode = createNode(false, childNode.id, 350, 350);
-    const fourthChildNode: IMmpClientNode = createNode(false, childNode.id, 450, 450);
-    const fifthChildNode: IMmpClientNode = createNode(false, childNode.id, 550, 550);
-    const mapData: IMmpClientMap = createMap([rootNode, childNode, secondChildNode, thirdChildNode, fourthChildNode, fifthChildNode]);
-    await mapsService.createMap(mapData);
+  const rootNode: IMmpClientNode = createNode(true, '', 0, 0);
+  const childNode: IMmpClientNode = createNode(false, rootNode.id, 150, 150);
+  const secondChildNode: IMmpClientNode = createNode(false, childNode.id, 250, 250);
+  const thirdChildNode: IMmpClientNode = createNode(false, childNode.id, 350, 350);
+  const fourthChildNode: IMmpClientNode = createNode(false, childNode.id, 450, 450);
+  const fifthChildNode: IMmpClientNode = createNode(false, childNode.id, 550, 550);
+  const mapData: IMmpClientMap = createMap([rootNode, childNode, secondChildNode, thirdChildNode, fourthChildNode, fifthChildNode]);
+  await mapsService.createMap(mapData);
 
-    if (i % 500 == 0) logger.log(`--- Map created with id ${mapData.uuid} ---`);
-  }
+  logger.log(`--- Map created with id ${mapData.uuid} ---`);
 
-  logger.log('--- Finished creating maps ---');
+  logger.log('--- Finished creating map ---');
 
   await application.close();
   process.exit(0);

@@ -52,11 +52,12 @@ export class ApplicationComponent implements OnInit {
     // Initialize a map
     // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
     // Map_1 is currently apparently hardcoded inside the map component...
+    console.log('initMap')
     this.mmpService.create('map_1', options)
 
     // Try to either load the given id from the server, or initialize a new map with empty data
     const givenId: string = this.route.snapshot.paramMap.get('id')
-
+    // Load existing map or create a new map if no id is present
     const result: boolean = await this.mapSyncService.init(givenId)
 
     // not found, return to start page
@@ -65,10 +66,11 @@ export class ApplicationComponent implements OnInit {
       return
     }
 
-    const attachedMap = this.mapSyncService.getAttachedMap()
+    const attachedMap = this.mapSyncService.getAttachedMap();
 
     if(!givenId) {
-      history.replaceState({}, '', `/mmp/${attachedMap.cachedMap.uuid}`)
+      // Make a full page reload after map creation to make sure, the correct listeners are set.
+      this.router.navigate([`/mmp/${attachedMap.cachedMap.uuid}`]).then(() => window.location.reload())
     }
 
     this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)

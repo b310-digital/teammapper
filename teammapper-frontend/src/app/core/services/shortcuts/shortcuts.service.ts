@@ -41,7 +41,7 @@ export class ShortcutsService {
       keys: 'n',
       description: 'TOOLTIPS.NEW_MAP',
       callback: () => {
-        this.router.navigate([''])
+        this.router.navigate(['app'])
       }
     }, {
       keys: 'c',
@@ -115,7 +115,13 @@ export class ShortcutsService {
       callback: () => {
         this.mmpService.selectNode('down')
       }
-    }, {
+    },{
+      keys: 'enter',
+      description: 'TOOLTIPS.START_EDIT_NODE',
+      callback: () => {
+        this.mmpService.editNode()
+      }
+    },{
       keys: 'alt+left',
       description: 'TOOLTIPS.MOVE_NODE_TO_THE_LEFT',
       callback: () => {
