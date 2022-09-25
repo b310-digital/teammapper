@@ -40,6 +40,7 @@
         "ITALIC_TEXT": "Kursiv",
         "TEXT_SIZE": "Textgröße",
         "IMAGE_SIZE": "Bildgröße",
+        "START_EDIT_NODE": "Knoten Text bearbeiten",
         "ADD_NODE": "Knoten hinzufügen",
         "REMOVE_NODE": "Knoten löschen",
         "ZOOM_IN_MAP": "Mindmap vergrößern",

@@ -68,29 +68,12 @@ export class MapSyncService {
     let newMap: MapProperties = null
 
     if(id) {
-      newMap = await this.fetchMapFromServer(id)
-    } else {
-      await this.attachNewMap()
-      return true
+      const result: boolean = await this.attachExistingMap(id);
+      return result;
     }
 
-    if(!newMap) {
-      return false
-    }
-
-    const mapKey = this.createKey(newMap.uuid)
-
-    this.attachMap({
-      key: mapKey,
-      cachedMap: newMap
-    })
-
-    this.mmpService.new(newMap.data)
-
-    const mmpUuid = newMap.uuid
-    this.listenServerEvents(mmpUuid)
-    this.initColorMapping()
-    return true
+    // with no id present, attach a new map
+    return await this.attachNewMap()
   }
 
   /**
@@ -120,7 +103,7 @@ export class MapSyncService {
   /**
      * Add current new application map to cache and attach it.
      */
-  public async attachNewMap (): Promise<void> {
+  public async attachNewMap (): Promise<boolean> {
     const uuid = uuidv4()
     const key = this.createKey(uuid)
     this.mmpService.new()
@@ -141,6 +124,32 @@ export class MapSyncService {
 
     this.attachMap({key, cachedMap})
     this.listenServerEvents(uuid)
+    return true
+  }
+
+  /**
+     * Attach existing map.
+     */
+  public async attachExistingMap(id: string): Promise<boolean> {
+    const newMap = await this.fetchMapFromServer(id)
+
+    if(!newMap) {
+      return false
+    }
+
+    const mapKey = this.createKey(newMap.uuid)
+
+    this.attachMap({
+      key: mapKey,
+      cachedMap: newMap
+    })
+
+    this.mmpService.new(newMap.data)
+
+    const mmpUuid = newMap.uuid
+    this.listenServerEvents(mmpUuid)
+    this.initColorMapping()
+    return true
   }
 
   /**

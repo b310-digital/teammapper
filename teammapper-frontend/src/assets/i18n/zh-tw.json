@@ -36,6 +36,7 @@
         "EDIT_NODE": "編輯選取的節點文字",
         "LOCK_NODE": "鎖定選取的節點",
         "NODE_IMAGE": "新增圖片於當前節點",
+        "START_EDIT_NODE": "Edit node text",
         "BOLD_TEXT": "將文字變成粗體",
         "ITALIC_TEXT": "將文字變為斜體",
         "TEXT_SIZE": "變更節點文字大小",

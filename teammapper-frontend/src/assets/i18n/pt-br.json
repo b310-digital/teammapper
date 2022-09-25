@@ -40,6 +40,7 @@
         "ITALIC_TEXT": "Itálico",
         "TEXT_SIZE": "Alterar o tamanho do texto e nó",
         "IMAGE_SIZE": "Alterar o tamanho da imagem do nó",
+        "START_EDIT_NODE": "Edit node text",
         "ADD_NODE": "Adicionar um nó",
         "REMOVE_NODE": "Remover um nó",
         "ZOOM_IN_MAP": "Ampliar o mapa",

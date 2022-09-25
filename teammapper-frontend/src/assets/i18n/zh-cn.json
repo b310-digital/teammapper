@@ -40,6 +40,7 @@
         "ITALIC_TEXT": "斜体",
         "TEXT_SIZE": "文字大小",
         "IMAGE_SIZE": "图片大小",
+        "START_EDIT_NODE": "Edit node text",
         "ADD_NODE": "新增节点",
         "REMOVE_NODE": "删除节点",
         "ZOOM_IN_MAP": "放大",

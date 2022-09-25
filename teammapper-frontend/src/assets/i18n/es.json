@@ -40,6 +40,7 @@
         "ITALIC_TEXT": "Cambiar el estilo del texto",
         "TEXT_SIZE": "Cambiar el tamaño del texto y del nodo",
         "IMAGE_SIZE": "Cambiar el tamaño de la imagen del nodo",
+        "START_EDIT_NODE": "Edit node text",
         "ADD_NODE": "Agregar un nodo",
         "REMOVE_NODE": "Quitar un nodo",
         "ZOOM_IN_MAP": "Acercar el mapa",
