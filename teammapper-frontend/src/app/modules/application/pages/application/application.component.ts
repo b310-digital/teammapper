@@ -56,7 +56,7 @@ export class ApplicationComponent implements OnInit {
 
     // Try to either load the given id from the server, or initialize a new map with empty data
     const givenId: string = this.route.snapshot.paramMap.get('id')
-
+    // Load existing map or create a new map if no id is present
     const result: boolean = await this.mapSyncService.init(givenId)
 
     // not found, return to start page
@@ -65,7 +65,7 @@ export class ApplicationComponent implements OnInit {
       return
     }
 
-    const attachedMap = this.mapSyncService.getAttachedMap()
+    const attachedMap = this.mapSyncService.getAttachedMap();
 
     if(!givenId) {
       history.replaceState({}, '', `/mmp/${attachedMap.cachedMap.uuid}`)
