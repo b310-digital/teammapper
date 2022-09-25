@@ -41,7 +41,8 @@ export class ShortcutsService {
       keys: 'n',
       description: 'TOOLTIPS.NEW_MAP',
       callback: () => {
-        this.router.navigate(['app'])
+        // use replace here to reload all service
+        window.location.replace('/app')
       }
     }, {
       keys: 'c',

@@ -68,8 +68,7 @@ export class ApplicationComponent implements OnInit {
     const attachedMap = this.mapSyncService.getAttachedMap();
 
     if(!givenId) {
-      // Make a full page reload after map creation to make sure, the correct listeners are set.
-      this.router.navigate([`/mmp/${attachedMap.cachedMap.uuid}`]).then(() => window.location.reload())
+      history.replaceState({}, '', `/mmp/${attachedMap.cachedMap.uuid}`)
     }
 
     this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)
