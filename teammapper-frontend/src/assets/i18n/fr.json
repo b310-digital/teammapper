@@ -36,6 +36,7 @@
         "EDIT_NODE": "Allows to edit the text of the node",
         "LOCK_NODE": "Verrouille ou déverrouille le nœud",
         "NODE_IMAGE": "Ajoute une image au noeud",
+        "START_EDIT_NODE": "Edit node text",
         "BOLD_TEXT": "Change la taille du texte",
         "ITALIC_TEXT": "Change le style du texte",
         "TEXT_SIZE": "Change la taille du texte et du noeud",

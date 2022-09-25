@@ -52,7 +52,6 @@ export class ApplicationComponent implements OnInit {
     // Initialize a map
     // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
     // Map_1 is currently apparently hardcoded inside the map component...
-    console.log('initMap')
     this.mmpService.create('map_1', options)
 
     // Try to either load the given id from the server, or initialize a new map with empty data
