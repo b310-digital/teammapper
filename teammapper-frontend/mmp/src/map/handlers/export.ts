@@ -48,13 +48,17 @@ export default class Export {
         this.map.nodes.deselectNode()
 
         this.dataURI(url => {
+            if(type === 'svg') {
+                return callback(url)
+            }
+
             const image = new Image()
 
             image.src = url
 
             image.onload = () => {
                 const canvas = document.createElement('canvas'),
-                    context = canvas.getContext('2d')
+                      context = canvas.getContext('2d')
 
                 canvas.width = image.width
                 canvas.height = image.height
