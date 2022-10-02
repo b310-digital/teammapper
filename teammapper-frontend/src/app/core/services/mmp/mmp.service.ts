@@ -283,19 +283,24 @@ export class MmpService {
       case 'pdf':
         const imageUri = await this.exportAsImage('png')
         const htmlImageElement = await UtilsService.imageFromUri(imageUri)
-        const imageRatio = htmlImageElement.width / htmlImageElement.height
         const pdf = new jsPDF({
           orientation: htmlImageElement.width > htmlImageElement.height ? 'l' : 'p',
           unit: 'pt',
           format: 'A4'
         })
         const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        if (pdfWidth > htmlImageElement.width) {
-          // Convert px to pt
-          pdf.addImage(imageUri, 0, 0, htmlImageElement.naturalWidth * 0.75, htmlImageElement.height * 0.75, '', 'NONE', 0)
+        const scaleFactorWidth: number = pdfWidth / htmlImageElement.width;
+        const scaleFactorHeight: number = pdfHeight / htmlImageElement.height;
+
+        if (pdfWidth > htmlImageElement.width && pdfHeight > htmlImageElement.height) {
+          // 0.75 to convert px to pt
+          pdf.addImage(imageUri, 0, 0, htmlImageElement.width * 0.75, htmlImageElement.height * 0.75, '', 'NONE', 0)
+        } else if (scaleFactorWidth < scaleFactorHeight){ // smaller needs to dominate
+          pdf.addImage(imageUri, 0, 0, htmlImageElement.width * scaleFactorWidth, htmlImageElement.height * scaleFactorWidth, '', 'NONE', 0)
         } else {
-          pdf.addImage(imageUri, 0, 0, pdfWidth, pdfWidth / imageRatio, '', 'NONE', 0)
+          pdf.addImage(imageUri, 0, 0, htmlImageElement.width * scaleFactorHeight, htmlImageElement.height * scaleFactorHeight, '', 'NONE', 0)
         }
         
         pdf.save(`${name}.${format}`)
