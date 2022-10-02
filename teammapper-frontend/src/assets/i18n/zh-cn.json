@@ -165,6 +165,7 @@
         "SAVED_MAPS": "Saved maps",
         "JSON": "File (.json)",
         "PNG": "图片 (.png)",
+        "SVG": "图片 (.svg)",
         "JPG": "图片 (.jpg)",
         "PDF": "文档 (.pdf)",
         "LANGUAGE": "语言",
