@@ -297,7 +297,7 @@ export class MmpService {
         if (pdfWidth > htmlImageElement.width && pdfHeight > htmlImageElement.height) {
           // 0.75 to convert px to pt
           pdf.addImage(imageUri, 0, 0, htmlImageElement.width * 0.75, htmlImageElement.height * 0.75, '', 'NONE', 0)
-        } else if (scaleFactorWidth < scaleFactorHeight){ // smaller needs to dominate
+        } else if (scaleFactorWidth < scaleFactorHeight) {
           pdf.addImage(imageUri, 0, 0, htmlImageElement.width * scaleFactorWidth, htmlImageElement.height * scaleFactorWidth, '', 'NONE', 0)
         } else {
           pdf.addImage(imageUri, 0, 0, htmlImageElement.width * scaleFactorHeight, htmlImageElement.height * scaleFactorHeight, '', 'NONE', 0)
