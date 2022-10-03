@@ -13,6 +13,10 @@
     "url": "https://b310.de"
   },
   "license": "MIT",
+  "engines": {
+    "npm": "~8.15.0",
+    "node": "~16.17.1"
+  },
   "keywords": [
     "mindmap",
     "node",
