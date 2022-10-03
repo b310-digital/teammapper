@@ -6,8 +6,8 @@
     "private": false,
     "license": "MIT",
     "engines": {
-      "npm": "~8.3.1",
-      "node": "~16.14.0"
+      "npm": "~8.15.0",
+      "node": "~16.17.1"
     },
     "scripts": {
       "build:prod": "npm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && npm run build:backend:prod",

@@ -1,5 +1,5 @@
-import {Component, OnInit} from '@angular/core'
-import {MmpService} from '../../../../core/services/mmp/mmp.service'
+import { Component } from '@angular/core'
+import { MmpService } from '../../../../core/services/mmp/mmp.service'
 
 @Component({
   selector: 'teammapper-floating-buttons',
@@ -7,8 +7,6 @@ import {MmpService} from '../../../../core/services/mmp/mmp.service'
   styleUrls: ['./floating-buttons.component.scss']
 })
 export class FloatingButtonsComponent {
-
   constructor (public mmpService: MmpService) {
   }
-
 }

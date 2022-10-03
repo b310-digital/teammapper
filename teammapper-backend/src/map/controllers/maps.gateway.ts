@@ -25,7 +25,7 @@ import { MmpNode } from '../entities/mmpNode.entity';
 @WebSocketGateway({ cors: { credentials: true } })
 export class MapsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+    server: Server;
 
   constructor(private mapsService: MapsService, @Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
@@ -42,7 +42,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('join')
   async onJoin(
     @ConnectedSocket() client: Socket,
-      @MessageBody() request: IMmpClientJoinRequest,
+    @MessageBody() request: IMmpClientJoinRequest,
   ): Promise<IMmpClientMap> {
     client.join(request.mapId);
     this.cacheManager.set(client.id, request.mapId, { ttl: 10000 });
@@ -58,7 +58,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('createMap')
   async onCreateMap(
     @ConnectedSocket() _client: Socket,
-      @MessageBody() mmpMap: IMmpClientMap,
+    @MessageBody() mmpMap: IMmpClientMap,
   ): Promise<boolean> {
     await this.mapsService.createMap(mmpMap);
     return true;
@@ -67,7 +67,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('deleteMap')
   async onDeleteMap(
     @ConnectedSocket() _client: Socket,
-      @MessageBody() request: IMmpClientDeleteRequest,
+    @MessageBody() request: IMmpClientDeleteRequest,
   ): Promise<boolean> {
     const mmpMap: MmpMap = await this.mapsService.findMap(request.mapId);
     if (mmpMap.adminId === request.adminId) {
@@ -83,7 +83,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('addNode')
   async addNode(
     @ConnectedSocket() client: Socket,
-      @MessageBody() request: IMmpClientNodeRequest,
+    @MessageBody() request: IMmpClientNodeRequest,
   ): Promise<boolean> {
     const newNode = await this.mapsService.addNode(request.mapId, request.node);
     this.server
@@ -100,7 +100,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('updateNode')
   async updateNode(
     @ConnectedSocket() client: Socket,
-      @MessageBody() request: IMmpClientNodeRequest,
+    @MessageBody() request: IMmpClientNodeRequest,
   ): Promise<boolean> {
     if (!request.node) return false;
 
@@ -118,7 +118,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('updateMap')
   async updateMap(
     @ConnectedSocket() client: Socket,
-      @MessageBody() request: IMmpClientMapRequest,
+    @MessageBody() request: IMmpClientMapRequest,
   ): Promise<boolean> {
     const mmpMap: IMmpClientMap = request.map;
 
@@ -138,7 +138,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('removeNode')
   async removeNode(
     @ConnectedSocket() client: Socket,
-      @MessageBody() request: IMmpClientNodeRequest,
+    @MessageBody() request: IMmpClientNodeRequest,
   ): Promise<MmpNode | undefined> {
     const removedNodes: MmpNode | undefined = await this.mapsService.removeNode(
       request.node,
@@ -155,7 +155,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('updateNodeSelection')
   async updateNodeSelection(
     @ConnectedSocket() client: Socket,
-      @MessageBody() request: IMmpClientNodeSelectionRequest,
+    @MessageBody() request: IMmpClientNodeSelectionRequest,
   ): Promise<boolean> {
     this.server
       .to(request.mapId)

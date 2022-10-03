@@ -13,5 +13,5 @@ import { TasksService } from './services/tasks.service';
   controllers: [MapsController],
   providers: [MapsService, MapsGateway, TasksService],
   exports: [MapsService],
-})
+  })
 export class MapModule {}

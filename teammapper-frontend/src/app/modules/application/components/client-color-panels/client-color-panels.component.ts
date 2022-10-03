@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core'
+import { Component, ElementRef, ViewChild } from '@angular/core'
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
 
 @Component({
@@ -7,7 +7,6 @@ import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
   styleUrls: ['./client-color-panels.component.scss']
 })
 export class ClientColorPanelsComponent {
-
   @ViewChild('background') public background: ElementRef
 
   public clientColors: string[]
@@ -17,5 +16,4 @@ export class ClientColorPanelsComponent {
       this.clientColors = clients
     })
   }
-
 }

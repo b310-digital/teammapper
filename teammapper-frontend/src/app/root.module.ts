@@ -5,7 +5,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core'
 import { TranslateHttpLoader } from '@ngx-translate/http-loader'
 import { HotkeyModule } from 'angular2-hotkeys'
-import { environment } from '../environments/environment'
 import { appSettingsFactory, SettingsService } from './core/services/settings/settings.service'
 import { RootRoutingModule } from './root-routing.module'
 import { RootComponent } from './root.component'
@@ -29,13 +28,13 @@ export function createTranslateLoader (http: HttpClient) {
         deps: [HttpClient]
       }
     }),
-    HotkeyModule.forRoot(),
+    HotkeyModule.forRoot()
   ],
   declarations: [
     RootComponent
   ],
   providers: [
-    { provide: APP_INITIALIZER, useFactory: appSettingsFactory, deps: [SettingsService], multi: true },
+    { provide: APP_INITIALIZER, useFactory: appSettingsFactory, deps: [SettingsService], multi: true }
   ],
   bootstrap: [RootComponent]
 })
