@@ -1,5 +1,5 @@
-import {Component, Input} from '@angular/core'
-import {MmpService} from '../../../../core/services/mmp/mmp.service'
+import { Component, Input } from '@angular/core'
+import { MmpService } from '../../../../core/services/mmp/mmp.service'
 
 @Component({
   selector: 'teammapper-sliders-panel',
@@ -7,7 +7,6 @@ import {MmpService} from '../../../../core/services/mmp/mmp.service'
   styleUrls: ['./slider-panels.component.scss']
 })
 export class SliderPanelsComponent {
-
   @Input() public node: any
 
   constructor (public mmpService: MmpService) {
@@ -24,5 +23,4 @@ export class SliderPanelsComponent {
 
     this.mmpService.updateNode('imageSize', value, graphic)
   }
-
 }

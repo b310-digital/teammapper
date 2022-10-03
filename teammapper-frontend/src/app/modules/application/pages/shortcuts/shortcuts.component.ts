@@ -1,6 +1,6 @@
-import {Component, OnInit} from '@angular/core'
-import {ShortcutsService} from '../../../../core/services/shortcuts/shortcuts.service'
-import {Hotkey} from 'angular2-hotkeys'
+import { Component, OnInit } from '@angular/core'
+import { ShortcutsService } from '../../../../core/services/shortcuts/shortcuts.service'
+import { Hotkey } from 'angular2-hotkeys'
 import { Location } from '@angular/common'
 
 @Component({
@@ -9,7 +9,6 @@ import { Location } from '@angular/common'
   styleUrls: ['./shortcuts.component.scss']
 })
 export class ShortcutsComponent implements OnInit {
-
   public shortcuts: any[]
 
   constructor (private shortcutsService: ShortcutsService, private location: Location) {
@@ -27,8 +26,7 @@ export class ShortcutsComponent implements OnInit {
     })
   }
 
-  public back() {
+  public back () {
     this.location.back()
   }
-
 }

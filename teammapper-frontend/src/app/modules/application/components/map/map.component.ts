@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core'
+import { Component } from '@angular/core'
 
 @Component({
   selector: 'teammapper-map',
@@ -6,8 +6,6 @@ import {Component, OnInit} from '@angular/core'
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent {
-
   constructor () {
   }
-
 }

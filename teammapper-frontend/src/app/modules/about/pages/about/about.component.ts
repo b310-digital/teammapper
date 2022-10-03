@@ -1,5 +1,5 @@
-import {Component, OnInit} from '@angular/core'
-import {faBrain, faChartLine, faCheck, faCogs, faHeart, faRocket} from '@fortawesome/free-solid-svg-icons'
+import { Component } from '@angular/core'
+import { faBrain, faChartLine, faCheck, faCogs, faHeart, faRocket } from '@fortawesome/free-solid-svg-icons'
 
 @Component({
   selector: 'teammapper-about',
@@ -7,7 +7,6 @@ import {faBrain, faChartLine, faCheck, faCogs, faHeart, faRocket} from '@fortawe
   styleUrls: ['./about.component.scss']
 })
 export class AboutComponent {
-
   public faBrain = faBrain
   public faRocket = faRocket
   public faHeart = faHeart
@@ -17,5 +16,4 @@ export class AboutComponent {
 
   constructor () {
   }
-
 }

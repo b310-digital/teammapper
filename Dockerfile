@@ -1,4 +1,4 @@
-FROM node:16.14.0-alpine3.15 as base
+FROM node:16.17.1-alpine3.15 as base
 # Ensuring that all npm packages and commands are executed with a non-root user
 USER node
 

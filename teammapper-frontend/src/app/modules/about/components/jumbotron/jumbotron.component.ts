@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core'
+import { Component } from '@angular/core'
 
 @Component({
   selector: 'teammapper-jumbotron',
@@ -6,10 +6,8 @@ import {Component, OnInit} from '@angular/core'
   styleUrls: ['./jumbotron.component.scss']
 })
 export class JumbotronComponent {
-
   public projectName: string
 
   constructor () {
   }
-
 }

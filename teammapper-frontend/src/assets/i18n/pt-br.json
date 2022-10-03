@@ -34,7 +34,7 @@
         "SELECT_NODE_BELOW": "Selecionar o nó abaixo",
         "SELECT_NODE_ABOVE": "Selecionar o nó acima",
         "EDIT_NODE": "Permitir editar o texto do nó",
-        "LOCK_NODE": "Bloqueia ou desbloqueia o nó",
+        "COUPLE_NODE": "Bloqueia ou desbloqueia o nó",
         "NODE_IMAGE": "Adiciona uma imagem ao nó",
         "BOLD_TEXT": "Negrito",
         "ITALIC_TEXT": "Itálico",

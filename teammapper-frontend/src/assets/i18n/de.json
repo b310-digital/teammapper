@@ -34,7 +34,7 @@
         "SELECT_NODE_BELOW": "Knoten unten auswählen",
         "SELECT_NODE_ABOVE": "Knoten oben auswählen",
         "EDIT_NODE": "Änderungen am Text eines Knotens erlauben",
-        "LOCK_NODE": "Knoten koppeln oder entkoppeln",
+        "COUPLE_NODE": "Knoten koppeln oder entkoppeln",
         "NODE_IMAGE": "Bild zum Knoten hinzufügen oder entfernen",
         "BOLD_TEXT": "Fett",
         "ITALIC_TEXT": "Kursiv",

@@ -1,4 +1,4 @@
-import { MapSnapshot, ExportNodeProperties, MapProperties } from '@mmp/map/types'
+import { MapSnapshot, ExportNodeProperties } from '@mmp/map/types'
 
 interface ResponseServer {
   // socket id of the triggering client, to prevent endless update loops

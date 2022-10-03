@@ -27,8 +27,7 @@
             ],
             "styles": [
               "src/styles.scss",
-              "src/theme.scss",
-              "node_modules/material-design-icons/iconfont/material-icons.css"
+              "src/theme.scss"
             ],
             "scripts": [],
             "serviceWorker": false
@@ -108,8 +107,7 @@
             ],
             "styles": [
               "src/styles.scss",
-              "src/theme.scss",
-              "node_modules/material-design-icons/iconfont/material-icons.css"
+              "src/theme.scss"
             ],
             "scripts": []
           }
@@ -142,9 +140,10 @@
       }
     }
   },
-  "defaultProject": "teammapper",
   "cli": {
     "analytics": false,
-    "defaultCollection": "@angular-eslint/schematics"
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }

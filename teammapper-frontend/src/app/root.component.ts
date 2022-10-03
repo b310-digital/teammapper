@@ -12,16 +12,15 @@ import { routeAnimation } from './shared/animations/route.animation'
   animations: [routeAnimation]
 })
 export class RootComponent implements OnInit {
-
   public tapCounter = 0
 
-  constructor(
+  constructor (
     private translateService: TranslateService,
     private router: Router,
     private settingsService: SettingsService,
     private shortcutsService: ShortcutsService) { }
 
-  public async ngOnInit() {
+  public async ngOnInit () {
     const settings = this.settingsService.getCachedSettings()
 
     const browserLang = this.translateService.getBrowserLang()
@@ -42,7 +41,7 @@ export class RootComponent implements OnInit {
     }
   }
 
-  private async initTranslations(language: string): Promise<void> {
+  private async initTranslations (language: string): Promise<void> {
     this.translateService.setDefaultLang(language)
     await this.translateService.use(language).toPromise()
   }
