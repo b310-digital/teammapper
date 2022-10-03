@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core'
-import { MatDialog, MatDialogRef, MatDialogConfig } from '@angular/material/dialog'
+import { MatDialog, MatDialogRef } from '@angular/material/dialog'
 import { ConnectionInfoDialogComponent } from 'src/app/shared/components/connection-info/connection-info-dialog.component'
 import { AboutDialogComponent } from '../../components/about-modal/about-dialog.component'
 import { ShareDialogComponent } from '../../components/share-dialog/share-dialog.component'
 
 @Injectable({
   providedIn: 'root'
-  })
+})
 export class DialogService {
   private disconnectModalRef: MatDialogRef<ConnectionInfoDialogComponent>
   private shareModalRef: MatDialogRef<ShareDialogComponent>

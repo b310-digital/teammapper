@@ -5,7 +5,7 @@ import { UtilsService } from '../utils/utils.service'
 import { jsPDF } from 'jspdf'
 import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
-import { ExportHistory, ExportNodeProperties, MapSnapshot, NodeProperties, UserNodeProperties } from '@mmp/map/types'
+import { ExportHistory, ExportNodeProperties, MapSnapshot, UserNodeProperties } from '@mmp/map/types'
 import { MapOptions } from 'src/app/shared/models/settings.model'
 import { COLORS } from './mmp-utils'
 
@@ -14,7 +14,7 @@ import { COLORS } from './mmp-utils'
  */
 @Injectable({
   providedIn: 'root'
-  })
+})
 export class MmpService {
   private maps: Map<string, MmpMap>
   private currentMap: MmpMap
@@ -48,7 +48,7 @@ export class MmpService {
   /**
      * Clear or load an existing mind mmp.
      */
-  public new (map?: MapSnapshot, notifyWithEvent: boolean = true) {
+  public new (map?: MapSnapshot, notifyWithEvent = true) {
     this.currentMap.instance.new(map, notifyWithEvent)
   }
 
@@ -119,7 +119,7 @@ export class MmpService {
   /**
      * Add a node in the mind mmp.
      */
-  public addNode (properties?: ExportNodeProperties, notifyWithEvent: boolean = true) {
+  public addNode (properties?: ExportNodeProperties, notifyWithEvent = true) {
     const newProps: UserNodeProperties = properties || {}
     // when the method is called with no params (from shortcut service), use the current selected node as parent
     const parent = properties?.parent ? this.getNode(properties.parent) : this.selectNode()
@@ -176,7 +176,7 @@ export class MmpService {
   /**
      * Highlights a node
      */
-  public highlightNode (nodeId: string, color: string, notifyWithEvent: boolean = true): void {
+  public highlightNode (nodeId: string, color: string, notifyWithEvent = true): void {
     return this.currentMap.instance.highlightNode(nodeId, color, notifyWithEvent)
   }
 
@@ -205,7 +205,7 @@ export class MmpService {
      * Remove the node with the id passed as parameter or, if the id is
      * not defined, the current selected node.
      */
-  public removeNode (nodeId?: string, notifyWithEvent: boolean = true) {
+  public removeNode (nodeId?: string, notifyWithEvent = true) {
     this.currentMap.instance.removeNode(nodeId, notifyWithEvent)
   }
 
@@ -243,7 +243,7 @@ export class MmpService {
   /**
      * Move the node in a direction.
      */
-  public moveNodeTo (direction: 'left' | 'right' | 'up' | 'down', range: number = 10) {
+  public moveNodeTo (direction: 'left' | 'right' | 'up' | 'down', range = 10) {
     const coordinates = this.currentMap.instance.selectNode().coordinates
 
     switch (direction) {
@@ -267,19 +267,20 @@ export class MmpService {
   /**
      * Export the current mind map with the format passed as parameter.
      */
-  public async exportMap (format: string = 'json') {
+  public async exportMap (format = 'json') {
     const name = this.getRootNode().name
       .replace(/\n/g, ' ').replace(/\s+/g, ' ').replace(/<[^>]*>?/gm, '')
 
     switch (format) {
-      case 'json':
+      case 'json': {
         const json = JSON.stringify(this.exportAsJSON())
         const uri = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`
 
         UtilsService.downloadFile(`${name}.${format}`, uri)
 
         break
-      case 'pdf':
+      }
+      case 'pdf': {
         const imageUri = await this.exportAsImage('png')
         const htmlImageElement = await UtilsService.imageFromUri(imageUri)
         const pdf = new jsPDF({
@@ -305,14 +306,16 @@ export class MmpService {
         pdf.save(`${name}.${format}`)
 
         break
+      }
       case 'svg':
       case 'jpeg':
-      case 'png':
+      case 'png': {
         const image = await this.exportAsImage(format)
 
         UtilsService.downloadFile(`${name}.${format === 'jpeg' ? 'jpg' : format}`, image)
 
         break
+      }
     }
   }
 

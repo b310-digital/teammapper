@@ -1,6 +1,6 @@
-import { Component, Inject } from '@angular/core'
+import { Component } from '@angular/core'
 import { TranslateService } from '@ngx-translate/core'
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog'
+import { MatDialogRef } from '@angular/material/dialog'
 import { faGithub } from '@fortawesome/free-brands-svg-icons'
 import { MapProperties } from '@mmp/map/types'
 import { SettingsService } from 'src/app/core/services/settings/settings.service'
@@ -12,7 +12,7 @@ import { environment } from '../../../../environments/environment'
   selector: 'teammapper-about-dialog',
   templateUrl: 'about-dialog.component.html',
   styleUrls: ['./about-dialog.component.scss']
-  })
+})
 export class AboutDialogComponent {
   public faGithub = faGithub
   public version: string

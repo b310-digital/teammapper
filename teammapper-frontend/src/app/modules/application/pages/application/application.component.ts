@@ -12,7 +12,7 @@ import { StorageService } from 'src/app/core/services/storage/storage.service'
   selector: 'teammapper-application',
   templateUrl: './application.component.html',
   styleUrls: ['./application.component.scss']
-  })
+})
 export class ApplicationComponent implements OnInit {
   public node: any
 

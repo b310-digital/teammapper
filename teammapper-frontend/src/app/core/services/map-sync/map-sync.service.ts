@@ -31,7 +31,7 @@ interface ServerClientList {
 
 @Injectable({
   providedIn: 'root'
-  })
+})
 export class MapSyncService {
   // Observable of behavior subject with the attached map key.
   public attachedMap: Observable<CachedMapEntry | null>
@@ -64,7 +64,6 @@ export class MapSyncService {
      * Otherwise set the attached map status to `null`.
      */
   public async init (id: string): Promise<boolean> {
-    const newMap: MapProperties = null
 
     if (id) {
       const result: boolean = await this.attachExistingMap(id)

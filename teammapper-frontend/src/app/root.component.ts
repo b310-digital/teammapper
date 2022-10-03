@@ -10,7 +10,7 @@ import { routeAnimation } from './shared/animations/route.animation'
   templateUrl: 'root.component.html',
   styleUrls: ['./root.component.scss'],
   animations: [routeAnimation]
-  })
+})
 export class RootComponent implements OnInit {
   public tapCounter = 0
 

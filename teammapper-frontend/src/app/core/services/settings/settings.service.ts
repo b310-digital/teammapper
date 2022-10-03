@@ -6,7 +6,7 @@ import { StorageService, STORAGE_KEYS } from '../storage/storage.service'
 
 @Injectable({
   providedIn: 'root'
-  })
+})
 export class SettingsService {
   public static readonly LANGUAGES = ['en', 'fr', 'de', 'it', 'zh-tw', 'zh-cn', 'es', 'pt-br']
 
@@ -24,17 +24,14 @@ export class SettingsService {
      * Initialize settings with the default or cached values and return them.
      */
   public async init () {
-    return new Promise(async (resolve, reject) => {
-      const defaultSettings: Settings = await this.getDefaultSettings()
-      const loadedSettings: Settings = await this.storageService.get(STORAGE_KEYS.SETTINGS)
-      const settings = loadedSettings || defaultSettings
+    const defaultSettings: Settings = await this.getDefaultSettings()
+    const loadedSettings: Settings = await this.storageService.get(STORAGE_KEYS.SETTINGS)
+    const settings = loadedSettings || defaultSettings
 
-      // Save the default settings.
-      await this.storageService.set(STORAGE_KEYS.SETTINGS, settings)
-      this.settingsSubject.next(settings)
-
-      resolve(true)
-    })
+    // Save the default settings.
+    await this.storageService.set(STORAGE_KEYS.SETTINGS, settings)
+    this.settingsSubject.next(settings)
+    return true
   }
 
   /**

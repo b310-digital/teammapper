@@ -5,7 +5,7 @@ import { Hotkey, HotkeysService } from 'angular2-hotkeys'
 
 @Injectable({
   providedIn: 'root'
-  })
+})
 export class ShortcutsService {
   private hotKeys: Hotkey[]
 

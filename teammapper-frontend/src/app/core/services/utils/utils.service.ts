@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core'
 
 @Injectable({
   providedIn: 'root'
-  })
+})
 export class UtilsService {
   constructor (private translateService: TranslateService) {
   }
@@ -119,7 +119,7 @@ export class UtilsService {
   public static isSameJSONStructure (json1: object, json2: object): boolean {
     function checkObjectStructure (object1: object, object2: object): boolean {
       for (const key of Object.keys(object1)) {
-        if (!object1.hasOwnProperty(key) || !object2.hasOwnProperty(key)) {
+        if (!Object.prototype.hasOwnProperty.call(object1, key) || !Object.prototype.hasOwnProperty.call(object2, key)) {
           return false
         }
 

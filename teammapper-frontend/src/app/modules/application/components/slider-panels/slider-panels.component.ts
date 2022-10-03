@@ -5,7 +5,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
   selector: 'teammapper-sliders-panel',
   templateUrl: './slider-panels.component.html',
   styleUrls: ['./slider-panels.component.scss']
-  })
+})
 export class SliderPanelsComponent {
   @Input() public node: any
 

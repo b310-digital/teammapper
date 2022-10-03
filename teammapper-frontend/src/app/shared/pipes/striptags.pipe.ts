@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core'
 
 @Pipe({
   name: 'stripTags'
-  })
+})
 
 export class StripTags implements PipeTransform {
   /**

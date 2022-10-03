@@ -8,7 +8,7 @@ import { UtilsService } from '../../../../core/services/utils/utils.service'
   selector: 'teammapper-toolbar',
   templateUrl: './toolbar.component.html',
   styleUrls: ['./toolbar.component.scss']
-  })
+})
 export class ToolbarComponent {
   @Input() public node: any
 

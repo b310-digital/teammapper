@@ -10,7 +10,7 @@ export enum STORAGE_KEYS {
 
 @Injectable({
   providedIn: 'root'
-  })
+})
 export class StorageService {
   /**
      * Initialize the storage service setting the default storage.
@@ -43,7 +43,7 @@ export class StorageService {
   public async getAll (): Promise<any[] | null> {
     const keys = await localforage.keys()
     const values = await Promise.all(keys.map(async (key: string) => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         this.get(key).then((value: any) => {
           resolve(value)
         })
@@ -59,7 +59,7 @@ export class StorageService {
   public async getAllEntries (): Promise<any[] | null> {
     const keys = await localforage.keys()
     const entries = await Promise.all(keys.map(async (key: string) => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         this.get(key).then((value: any) => {
           resolve([key, value])
         })

@@ -5,11 +5,11 @@ import QRCodeStyling from 'qr-code-styling'
   selector: 'teammapper-share-dialog',
   templateUrl: 'share-dialog.component.html',
   styleUrls: ['share-dialog.component.scss']
-  })
+})
 export class ShareDialogComponent implements OnInit {
-  @ViewChild("qrcodecanvas", { static: true }) qrCodeCanvas: ElementRef<HTMLCanvasElement>
-  @ViewChild("sharedialog", { static: true }) shareDialog: ElementRef<HTMLElement>
-  @ViewChild("inputlink", { static: true }) inputLink: ElementRef<HTMLInputElement>
+  @ViewChild('qrcodecanvas', { static: true }) qrCodeCanvas: ElementRef<HTMLCanvasElement>
+  @ViewChild('sharedialog', { static: true }) shareDialog: ElementRef<HTMLElement>
+  @ViewChild('inputlink', { static: true }) inputLink: ElementRef<HTMLInputElement>
 
   public link: string = window.location.href
   public qrCode: QRCodeStyling

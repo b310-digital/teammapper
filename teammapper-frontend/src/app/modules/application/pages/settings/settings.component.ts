@@ -9,7 +9,7 @@ import { Location } from '@angular/common'
   selector: 'teammapper-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
-  })
+})
 export class SettingsComponent {
   public readonly languages: string[]
   public settings: Settings

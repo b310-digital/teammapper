@@ -7,7 +7,7 @@ import { Location } from '@angular/common'
   selector: 'teammapper-shortcuts',
   templateUrl: './shortcuts.component.html',
   styleUrls: ['./shortcuts.component.scss']
-  })
+})
 export class ShortcutsComponent implements OnInit {
   public shortcuts: any[]
 

@@ -8,15 +8,15 @@ import { FooterComponent } from './components/footer/footer.component'
 
 @NgModule({
   imports: [
-  SharedModule,
-  AboutRoutingModule
+    SharedModule,
+    AboutRoutingModule
   ],
   declarations: [
-  AboutComponent,
-  JumbotronComponent,
-  HeaderComponent,
-  FooterComponent
+    AboutComponent,
+    JumbotronComponent,
+    HeaderComponent,
+    FooterComponent
   ]
-  })
+})
 export class AboutModule {
 }

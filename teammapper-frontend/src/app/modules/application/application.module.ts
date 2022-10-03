@@ -18,26 +18,26 @@ import { ClientColorPanelsComponent } from './components/client-color-panels/cli
 
 @NgModule({
   imports: [
-  SharedModule,
-  MatInputModule,
-  MatMenuModule,
-  MatSlideToggleModule,
-  MatTabsModule,
-  ApplicationRoutingModule,
-  MatDialogModule
+    SharedModule,
+    MatInputModule,
+    MatMenuModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    ApplicationRoutingModule,
+    MatDialogModule
   ],
   declarations: [
-  ApplicationComponent,
-  SettingsComponent,
-  ShortcutsComponent,
-  ClientColorPanelsComponent,
-  ColorPanelsComponent,
-  FloatingButtonsComponent,
-  MapComponent,
-  SliderPanelsComponent,
-  ToolbarComponent
+    ApplicationComponent,
+    SettingsComponent,
+    ShortcutsComponent,
+    ClientColorPanelsComponent,
+    ColorPanelsComponent,
+    FloatingButtonsComponent,
+    MapComponent,
+    SliderPanelsComponent,
+    ToolbarComponent
   ]
-  })
+})
 export class ApplicationModule {
 
 }
