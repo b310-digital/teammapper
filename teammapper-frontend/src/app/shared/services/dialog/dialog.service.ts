@@ -4,12 +4,10 @@ import { ConnectionInfoDialogComponent } from 'src/app/shared/components/connect
 import { AboutDialogComponent } from '../../components/about-modal/about-dialog.component'
 import { ShareDialogComponent } from '../../components/share-dialog/share-dialog.component'
 
-
 @Injectable({
   providedIn: 'root'
-})
+  })
 export class DialogService {
-
   private disconnectModalRef: MatDialogRef<ConnectionInfoDialogComponent>
   private shareModalRef: MatDialogRef<ShareDialogComponent>
   private aboutModalRef: MatDialogRef<AboutDialogComponent>
@@ -18,32 +16,32 @@ export class DialogService {
     public dialog: MatDialog) {
   }
 
-  openDisconnectDialog() {
+  openDisconnectDialog () {
     this.disconnectModalRef = this.dialog.open(ConnectionInfoDialogComponent)
   }
 
-  openShareDialog() {
+  openShareDialog () {
     this.shareModalRef = this.dialog.open(ShareDialogComponent)
   }
 
-  closeDisconnectDialog() {
-    if(!this.disconnectModalRef) return
+  closeDisconnectDialog () {
+    if (!this.disconnectModalRef) return
 
     this.disconnectModalRef.close()
   }
 
-  openAboutDialog() {
+  openAboutDialog () {
     this.aboutModalRef = this.dialog.open(AboutDialogComponent, { maxHeight: '90vh' })
   }
 
-  closeAboutDialog() {
-    if(!this.aboutModalRef) return
+  closeAboutDialog () {
+    if (!this.aboutModalRef) return
 
     this.aboutModalRef.close()
   }
 
-  closeShareDialog() {
-    if(!this.shareModalRef) return
+  closeShareDialog () {
+    if (!this.shareModalRef) return
 
     this.shareModalRef.close()
   }

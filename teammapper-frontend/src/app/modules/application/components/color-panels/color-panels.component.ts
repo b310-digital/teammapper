@@ -1,13 +1,12 @@
-import {Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core'
-import {MmpService} from '../../../../core/services/mmp/mmp.service'
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core'
+import { MmpService } from '../../../../core/services/mmp/mmp.service'
 
 @Component({
   selector: 'teammapper-colors-panel',
   templateUrl: './color-panels.component.html',
   styleUrls: ['./color-panels.component.scss']
-})
+  })
 export class ColorPanelsComponent implements OnInit {
-
   @Input() public node: any
 
   @ViewChild('background') public background: ElementRef
@@ -57,5 +56,4 @@ export class ColorPanelsComponent implements OnInit {
       this.mmpService.updateNode(property, value)
     }
   }
-
 }

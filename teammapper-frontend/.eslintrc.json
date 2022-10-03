@@ -16,6 +16,7 @@
         "createDefaultProgram": true
       },
       "extends": [
+        "standard",
         "plugin:@angular-eslint/recommended",
         "plugin:@angular-eslint/template/process-inline-templates"
       ],

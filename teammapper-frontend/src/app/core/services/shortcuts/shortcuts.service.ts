@@ -1,13 +1,12 @@
-import {Injectable} from '@angular/core'
-import {MmpService} from '../mmp/mmp.service'
-import {Router} from '@angular/router'
-import {Hotkey, HotkeysService} from 'angular2-hotkeys'
+import { Injectable } from '@angular/core'
+import { MmpService } from '../mmp/mmp.service'
+import { Router } from '@angular/router'
+import { Hotkey, HotkeysService } from 'angular2-hotkeys'
 
 @Injectable({
   providedIn: 'root'
-})
+  })
 export class ShortcutsService {
-
   private hotKeys: Hotkey[]
 
   constructor (private mmpService: MmpService,
@@ -116,13 +115,13 @@ export class ShortcutsService {
       callback: () => {
         this.mmpService.selectNode('down')
       }
-    },{
+    }, {
       keys: 'enter',
       description: 'TOOLTIPS.START_EDIT_NODE',
       callback: () => {
         this.mmpService.editNode()
       }
-    },{
+    }, {
       keys: 'alt+left',
       description: 'TOOLTIPS.MOVE_NODE_TO_THE_LEFT',
       callback: () => {
@@ -164,7 +163,6 @@ export class ShortcutsService {
     return this.hotKeys
   }
 
-
   /**
      * Get some shortcut parameters and return the corresponding hot key.
      */
@@ -179,5 +177,4 @@ export class ShortcutsService {
       return false
     }, undefined, options.description)
   }
-
 }

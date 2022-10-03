@@ -17,27 +17,27 @@ export function createTranslateLoader (http: HttpClient) {
 
 @NgModule({
   imports: [
-    BrowserModule,
-    SharedModule,
-    BrowserAnimationsModule,
-    RootRoutingModule,
-    HttpClientModule,
-    TranslateModule.forRoot({
-      loader: {
-        provide: TranslateLoader,
-        useFactory: (createTranslateLoader),
-        deps: [HttpClient]
-      }
+  BrowserModule,
+  SharedModule,
+  BrowserAnimationsModule,
+  RootRoutingModule,
+  HttpClientModule,
+  TranslateModule.forRoot({
+    loader: {
+    provide: TranslateLoader,
+    useFactory: (createTranslateLoader),
+    deps: [HttpClient]
+    }
     }),
-    HotkeyModule.forRoot(),
+  HotkeyModule.forRoot(),
   ],
   declarations: [
-    RootComponent
+  RootComponent
   ],
   providers: [
-    { provide: APP_INITIALIZER, useFactory: appSettingsFactory, deps: [SettingsService], multi: true },
+  { provide: APP_INITIALIZER, useFactory: appSettingsFactory, deps: [SettingsService], multi: true },
   ],
   bootstrap: [RootComponent]
-})
+  })
 export class RootModule {
 }

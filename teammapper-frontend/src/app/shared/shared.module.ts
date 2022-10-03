@@ -13,8 +13,8 @@ import { MatCardModule } from '@angular/material/card'
 import { MatListModule } from '@angular/material/list'
 import { MatToolbarModule } from '@angular/material/toolbar'
 import { MatSelectModule } from '@angular/material/select'
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field'
+import { MatInputModule } from '@angular/material/input'
 import { StripTags } from './pipes/striptags.pipe'
 import { ConnectionInfoDialogComponent } from './components/connection-info/connection-info-dialog.component'
 import { MatDialogModule } from '@angular/material/dialog'
@@ -28,41 +28,41 @@ const PIPES = [
 
 @NgModule({
   imports: [
-    CommonModule,
-    FormsModule,
-    FontAwesomeModule,
-    MatSliderModule,
-    RouterModule,
-    TranslateModule,
-    MatIconModule,
-    MatSnackBarModule,
-    ColorPickerModule,
-    MatButtonModule,
-    MatCardModule,
-    MatListModule,
-    MatToolbarModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
+  CommonModule,
+  FormsModule,
+  FontAwesomeModule,
+  MatSliderModule,
+  RouterModule,
+  TranslateModule,
+  MatIconModule,
+  MatSnackBarModule,
+  ColorPickerModule,
+  MatButtonModule,
+  MatCardModule,
+  MatListModule,
+  MatToolbarModule,
+  MatDialogModule,
+  MatFormFieldModule,
+  MatInputModule,
   ],
   declarations: [...PIPES, ConnectionInfoDialogComponent, ShareDialogComponent, AboutDialogComponent],
   exports: [
-    CommonModule,
-    FormsModule,
-    FontAwesomeModule,
-    MatSliderModule,
-    TranslateModule,
-    MatIconModule,
-    MatSelectModule,
-    MatSnackBarModule,
-    ColorPickerModule,
-    MatButtonModule,
-    MatCardModule,
-    MatListModule,
-    MatToolbarModule,
-    ...PIPES
+  CommonModule,
+  FormsModule,
+  FontAwesomeModule,
+  MatSliderModule,
+  TranslateModule,
+  MatIconModule,
+  MatSelectModule,
+  MatSnackBarModule,
+  ColorPickerModule,
+  MatButtonModule,
+  MatCardModule,
+  MatListModule,
+  MatToolbarModule,
+  ...PIPES
   ],
   providers: [DialogService]
-})
+  })
 export class SharedModule {
 }

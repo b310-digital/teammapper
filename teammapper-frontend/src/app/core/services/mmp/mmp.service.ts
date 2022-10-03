@@ -1,8 +1,8 @@
-import {Injectable} from '@angular/core'
-import {Observable} from 'rxjs'
-import {SettingsService} from '../settings/settings.service'
-import {UtilsService} from '../utils/utils.service'
-import { jsPDF } from "jspdf";
+import { Injectable } from '@angular/core'
+import { Observable } from 'rxjs'
+import { SettingsService } from '../settings/settings.service'
+import { UtilsService } from '../utils/utils.service'
+import { jsPDF } from 'jspdf'
 import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
 import { ExportHistory, ExportNodeProperties, MapSnapshot, NodeProperties, UserNodeProperties } from '@mmp/map/types'
@@ -14,9 +14,8 @@ import { COLORS } from './mmp-utils'
  */
 @Injectable({
   providedIn: 'root'
-})
+  })
 export class MmpService {
-
   private maps: Map<string, MmpMap>
   private currentMap: MmpMap
 
@@ -121,7 +120,7 @@ export class MmpService {
      * Add a node in the mind mmp.
      */
   public addNode (properties?: ExportNodeProperties, notifyWithEvent: boolean = true) {
-    const newProps: UserNodeProperties = properties ? properties : {}
+    const newProps: UserNodeProperties = properties || {}
     // when the method is called with no params (from shortcut service), use the current selected node as parent
     const parent = properties?.parent ? this.getNode(properties.parent) : this.selectNode()
     const settings = this.settingsService.getCachedSettings()
@@ -138,7 +137,7 @@ export class MmpService {
       const children = this.nodeChildren().length
 
       newProps.colors = {
-        branch: this.branchColors[children % this.branchColors.length],
+        branch: this.branchColors[children % this.branchColors.length]
       }
     }
 
@@ -156,28 +155,28 @@ export class MmpService {
   /**
      * exports the root node props
      */
-  public getRootNode(): ExportNodeProperties {
+  public getRootNode (): ExportNodeProperties {
     return this.currentMap.instance.exportRootProperties()
   }
 
   /**
      * exports the given node props
      */
-  public getNode(nodeId: string): ExportNodeProperties {
+  public getNode (nodeId: string): ExportNodeProperties {
     return this.currentMap.instance.exportNodeProperties(nodeId)
   }
 
   /**
      * Checks if a given node actually exists
      */
-  public existNode(nodeId: string): boolean {
+  public existNode (nodeId: string): boolean {
     return this.currentMap.instance.existNode(nodeId)
   }
 
   /**
      * Highlights a node
      */
-  public highlightNode(nodeId: string, color: string, notifyWithEvent: boolean = true): void {
+  public highlightNode (nodeId: string, color: string, notifyWithEvent: boolean = true): void {
     return this.currentMap.instance.highlightNode(nodeId, color, notifyWithEvent)
   }
 
@@ -288,11 +287,11 @@ export class MmpService {
           unit: 'pt',
           format: 'A4'
         })
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const pdfWidth = pdf.internal.pageSize.getWidth()
+        const pdfHeight = pdf.internal.pageSize.getHeight()
 
-        const scaleFactorWidth: number = pdfWidth / htmlImageElement.width;
-        const scaleFactorHeight: number = pdfHeight / htmlImageElement.height;
+        const scaleFactorWidth: number = pdfWidth / htmlImageElement.width
+        const scaleFactorHeight: number = pdfHeight / htmlImageElement.height
 
         if (pdfWidth > htmlImageElement.width && pdfHeight > htmlImageElement.height) {
           // 0.75 to convert px to pt
@@ -302,7 +301,7 @@ export class MmpService {
         } else {
           pdf.addImage(imageUri, 0, 0, htmlImageElement.width * scaleFactorHeight, htmlImageElement.height * scaleFactorHeight, '', 'NONE', 0)
         }
-        
+
         pdf.save(`${name}.${format}`)
 
         break

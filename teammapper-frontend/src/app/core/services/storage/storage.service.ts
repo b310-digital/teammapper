@@ -10,19 +10,18 @@ export enum STORAGE_KEYS {
 
 @Injectable({
   providedIn: 'root'
-})
+  })
 export class StorageService {
-
   /**
      * Initialize the storage service setting the default storage.
      */
-  constructor(
+  constructor (
   ) {}
 
   /**
      * Return the value or the values based on the keys passed as parameters.
      */
-  public async get(keys: string | string[]): Promise<any | any[] | null> {
+  public async get (keys: string | string[]): Promise<any | any[] | null> {
     if (typeof keys === 'string') {
       return localforage.getItem(keys)
     }
@@ -41,7 +40,7 @@ export class StorageService {
   /**
      * Return all the saved values in the storage.
      */
-  public async getAll(): Promise<any[] | null> {
+  public async getAll (): Promise<any[] | null> {
     const keys = await localforage.keys()
     const values = await Promise.all(keys.map(async (key: string) => {
       return new Promise((resolve, reject) => {
@@ -57,7 +56,7 @@ export class StorageService {
   /**
      * Return all the saved keys in the storage.
      */
-  public async getAllEntries(): Promise<any[] | null> {
+  public async getAllEntries (): Promise<any[] | null> {
     const keys = await localforage.keys()
     const entries = await Promise.all(keys.map(async (key: string) => {
       return new Promise((resolve, reject) => {
@@ -73,36 +72,35 @@ export class StorageService {
   /**
      * Save an item in the storage.
      */
-  public async set(key: string, item: any): Promise<void> {
+  public async set (key: string, item: any): Promise<void> {
     localforage.setItem(key, item)
   }
 
   /**
      * Remove an item from the storage.
      */
-  public async remove(key: string): Promise<void> {
+  public async remove (key: string): Promise<void> {
     localforage.removeItem(key)
   }
 
   /**
      * Check if an item exist in the storage. Return true if it exist, false otherwise.
      */
-  public async exist(key: string): Promise<boolean> {
+  public async exist (key: string): Promise<boolean> {
     return !!this.get(key)
   }
-
 
   /**
      * Remove all the items from the storage.
      */
-  public async clear(): Promise<void> {
+  public async clear (): Promise<void> {
     localforage.clear()
   }
 
   /**
      * Check if there are items in the storage. Return true if there are items, false otherwise.
      */
-  public async isEmpty(): Promise<boolean> {
+  public async isEmpty (): Promise<boolean> {
     const items: any[] = await this.getAll()
 
     return items && items.length > 0
@@ -111,12 +109,12 @@ export class StorageService {
   /*
     * Cleans all outdated entries that support a ttl
     */
-  public async cleanExpired(): Promise<void> {
+  public async cleanExpired (): Promise<void> {
     const today = new Date()
     const time: number = today.getTime()
     const entries = await this.getAllEntries()
     entries.forEach(([key, value]: [any, any]) => {
-      if(!value?.ttl) return
+      if (!value?.ttl) return
 
       if (time > value?.ttl) this.remove(key)
     })

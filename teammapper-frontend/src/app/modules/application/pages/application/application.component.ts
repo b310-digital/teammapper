@@ -12,9 +12,8 @@ import { StorageService } from 'src/app/core/services/storage/storage.service'
   selector: 'teammapper-application',
   templateUrl: './application.component.html',
   styleUrls: ['./application.component.scss']
-})
+  })
 export class ApplicationComponent implements OnInit {
-
   public node: any
 
   constructor (private mmpService: MmpService,
@@ -39,7 +38,7 @@ export class ApplicationComponent implements OnInit {
       if (event instanceof NavigationStart) {
         this.mapSyncService.leaveMap()
       }
-    });
+    })
   }
 
   public handleImageDropObservable () {
@@ -60,14 +59,14 @@ export class ApplicationComponent implements OnInit {
     const result: boolean = await this.mapSyncService.init(givenId)
 
     // not found, return to start page
-    if(!result) {
+    if (!result) {
       this.router.navigate([''])
       return
     }
 
-    const attachedMap = this.mapSyncService.getAttachedMap();
+    const attachedMap = this.mapSyncService.getAttachedMap()
 
-    if(!givenId) {
+    if (!givenId) {
       history.replaceState({}, '', `/mmp/${attachedMap.cachedMap.uuid}`)
     }
 
@@ -126,4 +125,3 @@ export class ApplicationComponent implements OnInit {
     })
   }
 }
-

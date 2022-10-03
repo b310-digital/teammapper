@@ -1,15 +1,14 @@
-import {Component, OnInit} from '@angular/core'
-import {SettingsService} from '../../../../core/services/settings/settings.service'
-import {TranslateService} from '@ngx-translate/core'
-import {Settings} from '../../../../shared/models/settings.model'
+import { Component, OnInit } from '@angular/core'
+import { SettingsService } from '../../../../core/services/settings/settings.service'
+import { TranslateService } from '@ngx-translate/core'
+import { Settings } from '../../../../shared/models/settings.model'
 
 @Component({
   selector: 'teammapper-footer',
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss']
-})
+  })
 export class FooterComponent implements OnInit {
-
   public settings: Settings
   public languages: string[]
 
@@ -31,5 +30,4 @@ export class FooterComponent implements OnInit {
 
     this.translateService.use(this.settings.general.language)
   }
-
 }
