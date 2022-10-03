@@ -31,13 +31,7 @@ export class ShortcutsService {
         this.router.navigate(['app', 'settings'])
       }
     }, {
-      keys: 'f2',
-      description: 'TOOLTIPS.EDIT_NODE',
-      callback: () => {
-        this.mmpService.editNode()
-      }
-    }, {
-      keys: 'n',
+      keys: 'alt+n',
       description: 'TOOLTIPS.NEW_MAP',
       callback: () => {
         // use a full page reload here to reload all singleton services

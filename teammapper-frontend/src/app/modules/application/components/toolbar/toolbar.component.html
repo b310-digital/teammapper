@@ -62,9 +62,9 @@
         <div></div>
     </div>
 
-    <button (click)="mmpService.updateNode('locked')" [title]="'TOOLTIPS.LOCK_NODE' | translate"
+    <button (click)="mmpService.updateNode('locked')" [title]="'TOOLTIPS.COUPLE_NODE' | translate"
             color="primary" mat-icon-button>
-        <mat-icon>{{ node?.locked ? "lock_outline" : "lock_open" }}</mat-icon>
+        <mat-icon>{{ node?.locked ? "deselect" : "select_all" }}</mat-icon>
     </button>
 
     <div *ngIf="node?.image?.src; then renderRemove else renderInput"></div>
@@ -111,7 +111,7 @@
     </div>
 
     <button color="primary" mat-icon-button routerLink="/app/shortcuts">
-        <mat-icon>timeline</mat-icon>
+        <mat-icon>shortcuts</mat-icon>
     </button>
 
     <button color="primary" mat-icon-button routerLink="/app/settings">

@@ -34,7 +34,7 @@
         "SELECT_NODE_BELOW": "选择下方节点",
         "SELECT_NODE_ABOVE": "选择上方节点",
         "EDIT_NODE": "编辑节点",
-        "LOCK_NODE": "锁定节点",
+        "COUPLE_NODE": "锁定节点",
         "NODE_IMAGE": "向节点添加图片",
         "BOLD_TEXT": "粗体",
         "ITALIC_TEXT": "斜体",

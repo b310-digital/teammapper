@@ -149,11 +149,11 @@ export default class Utils {
      */
     static focusWithCaretAtEnd(element: HTMLElement) {
         const range = document.createRange(),
-            sel = window.getSelection()
+              sel = window.getSelection()
 
         element.focus()
-        range.selectNodeContents(element)
-        range.collapse(false)
+        range.setStart(element.firstChild, 0)
+        range.setEnd(element.firstChild, element.firstChild.textContent.length)
         sel.removeAllRanges()
         sel.addRange(range)
     }
