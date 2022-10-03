@@ -288,8 +288,8 @@ export class MmpService {
           unit: 'pt',
           format: 'A4'
         })
-        const pdfWidth = pdf.internal.pageSize.getWidth()
-        const pdfHeight = pdf.internal.pageSize.getHeight()
+        const pdfWidth: number = pdf.internal.pageSize.getWidth()
+        const pdfHeight: number = pdf.internal.pageSize.getHeight()
 
         const scaleFactorWidth: number = pdfWidth / htmlImageElement.width
         const scaleFactorHeight: number = pdfHeight / htmlImageElement.height
