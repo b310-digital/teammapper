@@ -34,7 +34,7 @@
         "SELECT_NODE_BELOW": "選擇下方的節點",
         "SELECT_NODE_ABOVE": "選擇上方的節點",
         "EDIT_NODE": "編輯選取的節點文字",
-        "LOCK_NODE": "鎖定選取的節點",
+        "COUPLE_NODE": "鎖定選取的節點",
         "NODE_IMAGE": "新增圖片於當前節點",
         "START_EDIT_NODE": "Edit node text",
         "BOLD_TEXT": "將文字變成粗體",

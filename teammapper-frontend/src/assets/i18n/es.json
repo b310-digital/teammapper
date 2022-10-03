@@ -34,7 +34,7 @@
         "SELECT_NODE_BELOW": "Seleccionar el nodo de abajo",
         "SELECT_NODE_ABOVE": "Seleccionar el nodo de arriba",
         "EDIT_NODE": "Permitir editar el texto del nodo",
-        "LOCK_NODE": "Bloquear o desbloquear el nodo",
+        "COUPLE_NODE": "Bloquear o desbloquear el nodo",
         "NODE_IMAGE": "Añadir una imagen al nodo",
         "BOLD_TEXT": "Cambiar la importancia del texto",
         "ITALIC_TEXT": "Cambiar el estilo del texto",
