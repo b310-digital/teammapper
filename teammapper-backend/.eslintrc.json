@@ -1,13 +1,13 @@
 {
     "env": {
-        "browser": true,
         "es2021": true,
-        "jest/globals": true
+        "jest/globals": true,
+        "node": true
     },
     "extends": [
-        "plugin:import/typescript",
-        "airbnb-typescript/base",
-        "plugin:nestjs/recommended"
+        "eslint:recommended",
+        "plugin:nestjs/recommended",
+        "plugin:import/typescript"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -22,6 +22,8 @@
         "import"
     ],
     "rules": {
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
         "import/extensions": [
            "error",
            "ignorePackages",

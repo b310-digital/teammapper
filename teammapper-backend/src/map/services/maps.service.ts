@@ -66,7 +66,7 @@ export class MapsService {
   }
 
   async removeNode(clientNode: IMmpClientNode, mapId: string): Promise<MmpNode | undefined> {
-    const existingNode = await this.nodesRepository.findOne({ id: clientNode.id, nodeMapId: mapId });
+    const existingNode = await this.nodesRepository.findOneBy({ id: clientNode.id, nodeMapId: mapId });
 
     if (!existingNode) {
       return;

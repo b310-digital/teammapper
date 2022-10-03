@@ -47,8 +47,8 @@ describe('MapsController', () => {
       });
 
       await mapsService.deleteOutdatedMaps(30);
-      expect(await mapsService.findMap(map.id)).toEqual(undefined);
-      expect(await nodesRepo.findOne({ where: { id: node.id } })).toEqual(undefined);
+      expect(await mapsService.findMap(map.id)).toEqual(null);
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).toEqual(null);
     });
 
     it('does not delete the new map', async () => {
@@ -87,7 +87,7 @@ describe('MapsController', () => {
       });
 
       await mapsService.removeNode(mapMmpNodeToClient(node), map.id);
-      expect(await nodesRepo.findOne({ where: { id: nodeTwo.id } })).toEqual(undefined);
+      expect(await nodesRepo.findOne({ where: { id: nodeTwo.id } })).toEqual(null);
     });
   });
 });
