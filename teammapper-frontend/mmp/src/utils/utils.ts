@@ -152,8 +152,8 @@ export default class Utils {
               sel = window.getSelection()
 
         element.focus()
-        range.setStart(element.firstChild, 0)
-        range.setEnd(element.firstChild, element.firstChild.textContent.length)
+        range.selectNodeContents(element)
+        range.collapse(false)
         sel.removeAllRanges()
         sel.addRange(range)
     }
