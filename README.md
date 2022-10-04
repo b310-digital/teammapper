@@ -4,13 +4,16 @@ Mindmapping made simple: Host and create your own mindmaps. Share your mindmap s
 
 TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, TeamMapper features shared mindmapping sessions for your team based on websockets.
 
+![TeamMapper Screenshot](docs/teammapper-screenshot.png?raw=true "TeamMapper Screenshot with two users")
+
 ## Features:
 
 -   Host and create your own mindmaps
 -   Set node images, colors and font properties.
 -   Shortcuts
--   Import and export functionality (JSON, PDF, PNG...)
+-   Import and export functionality (JSON, SVG, PDF, PNG...)
 -   Mutli user support: Share your mindmap with friends and collegues. Work at the same time on the same mindmap!
+-   Use a QR Code or URL to share your maps
 -   By default, mindmaps are deleted after 30 days to ensure GDPR compliancy.
 
 ## Getting started
@@ -26,15 +29,13 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 -   Start frontend and backend at once
 
     ```bash
-    docker-compose exec app sh
-    # Inside docker container, you execute the following
-    npm --prefix teammapper-backend run dev
+    docker-compose exec app npm --prefix teammapper-backend run dev
     ```
 
     or start frontend and backend separately
 
     ```bash
-    # Open to terminal session on your host machine
+    # Open two terminal sessions on your host machine
 
     # In first terminal session
     docker-compose exec app npm --prefix teammapper-backend start
@@ -125,7 +126,7 @@ docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod
 Example of running sql via typeorm:
 
 ```
-npx typeorm query "select * from mmp_node" --config dist/ormconfig.js
+docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npx --prefix teammapper-backend typeorm query "select * from mmp_node" --config dist/ormconfig.js
 ```
 
 ### Further details

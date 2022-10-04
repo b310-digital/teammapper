@@ -28,6 +28,7 @@ services:
     image: postgres:12-alpine
     # Pass config parameters to the postgres server.
     # Find more information below when you need to generate the ssl-relevant file your self
+    # In case you dont plan to use a certificate, uncomment this line
     command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
