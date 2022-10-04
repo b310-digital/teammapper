@@ -120,7 +120,7 @@ export class MmpService {
      * Add a node in the mind mmp.
      */
   public addNode (properties?: ExportNodeProperties, notifyWithEvent = true) {
-    const newProps: UserNodeProperties = properties || {}
+    const newProps: UserNodeProperties = properties || { name: '' }
     // when the method is called with no params (from shortcut service), use the current selected node as parent
     const parent = properties?.parent ? this.getNode(properties.parent) : this.selectNode()
     const settings = this.settingsService.getCachedSettings()
@@ -142,6 +142,7 @@ export class MmpService {
     }
 
     this.currentMap.instance.addNode(newProps, notifyWithEvent, properties?.parent, properties?.id)
+    this.editNode()
   }
 
   /**

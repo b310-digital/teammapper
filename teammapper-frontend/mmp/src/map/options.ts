@@ -34,7 +34,7 @@ export default class Options implements OptionParameters {
 
         // Default node properties
         this.defaultNode = Utils.mergeObjects({
-            name: 'Node',
+            name: '',
             image: {
                 src: '',
                 size: 60
