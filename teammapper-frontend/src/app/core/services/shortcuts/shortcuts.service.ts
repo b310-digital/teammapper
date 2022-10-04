@@ -50,7 +50,7 @@ export class ShortcutsService {
         this.mmpService.addNode()
       }
     }, {
-      keys: '-',
+      keys: ['-', 'backspace'],
       description: 'TOOLTIPS.REMOVE_NODE',
       callback: () => {
         this.mmpService.removeNode()
