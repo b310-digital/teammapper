@@ -4,13 +4,13 @@ import {SharedModule} from '../../shared/shared.module'
 import {StartComponent} from './start.component'
 
 @NgModule({
-    imports: [
-        SharedModule,
-        StartRoutingModule
-    ],
-    declarations: [
-        StartComponent
-    ]
+  imports: [
+    SharedModule,
+    StartRoutingModule
+  ],
+  declarations: [
+    StartComponent
+  ]
 })
 export class StartModule {
 }
