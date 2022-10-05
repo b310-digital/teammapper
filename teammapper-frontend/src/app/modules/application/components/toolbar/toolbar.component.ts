@@ -2,7 +2,6 @@ import { Component, Input } from '@angular/core'
 import { TranslateService } from '@ngx-translate/core'
 import { DialogService } from 'src/app/shared/services/dialog/dialog.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
-import { UtilsService } from '../../../../core/services/utils/utils.service'
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -21,10 +20,6 @@ export class ToolbarComponent {
 
   public async share () {
     this.dialogService.openShareDialog()
-  }
-
-  public toggleFullScreen () {
-    UtilsService.toggleFullScreen()
   }
 
   public toogleNodeFontStyle () {

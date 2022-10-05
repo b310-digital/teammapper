@@ -84,24 +84,6 @@ export class UtilsService {
   }
 
   /**
-     * Return the status of the full screen mode.
-     */
-  public static isFullScreen (): boolean {
-    return !!window.document.fullscreenElement
-  }
-
-  /**
-     * Toggle the full screen mode.
-     */
-  public static toggleFullScreen () {
-    if (UtilsService.isFullScreen()) {
-      window.document.exitFullscreen()
-    } else {
-      window.document.querySelector('html').requestFullscreen()
-    }
-  }
-
-  /**
      * Return true if the string is a JSON Object.
      */
   public static isJSONString (JSONString: string) {
