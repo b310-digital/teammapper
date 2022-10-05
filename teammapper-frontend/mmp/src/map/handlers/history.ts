@@ -73,7 +73,7 @@ export default class History {
      * Undo last changes.
      */
     public undo = () => {
-        if (this.index > 0) {
+        if (this.index > 1) {
             this.redraw(this.snapshots[--this.index])
             this.map.events.call(Event.undo)
         }
