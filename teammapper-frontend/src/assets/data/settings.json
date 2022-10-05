@@ -6,7 +6,7 @@
         "centerOnResize": false,
         "autoBranchColors": true,
         "defaultNode": {
-            "name": "Knoten",
+            "name": "",
             "image": {
                 "src": "",
                 "size": 60
