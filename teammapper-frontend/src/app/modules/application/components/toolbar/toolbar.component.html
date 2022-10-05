@@ -62,6 +62,20 @@
         <div></div>
     </div>
 
+    <button (click)="mmpService.undo()" [title]="'TOOLTIPS.UNDO_MAP' | translate"
+            color="primary" mat-icon-button>
+        <mat-icon>undo</mat-icon>
+    </button>
+
+    <button (click)="mmpService.redo()" [title]="'TOOLTIPS.REDO_MAP' | translate"
+            color="primary" mat-icon-button>
+    <mat-icon>redo</mat-icon>
+    </button>
+
+    <div class="vertical-line">
+        <div></div>
+    </div>
+
     <button (click)="mmpService.updateNode('locked')" [title]="'TOOLTIPS.COUPLE_NODE' | translate"
             color="primary" mat-icon-button>
         <mat-icon>{{ node?.locked ? "deselect" : "select_all" }}</mat-icon>

@@ -361,4 +361,18 @@ export class MmpService {
   public exportSelectedNode (): ExportNodeProperties {
     return this.currentMap.instance.exportSelectedNode()
   }
+
+  /**
+   * Reverse the last one change of the mind mmp.
+   */
+  public undo () {
+    this.currentMap.instance.undo()
+  }
+
+  /**
+   * Repeat a previously undoed change of the mind mmp.
+   */
+  public redo () {
+    this.currentMap.instance.redo()
+  }
 }
