@@ -5,7 +5,7 @@ import { MmpMap } from '../entities/mmpMap.entity';
 import { MapsService } from '../services/maps.service';
 import { IMmpClientDeleteRequest, IMmpClientMap, IMmpClientMapWithAdminId } from '../types';
 
-@Controller('maps')
+@Controller('api/maps')
 export default class MapsController {
   constructor(private mapsService: MapsService) {}
 

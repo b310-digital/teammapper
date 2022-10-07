@@ -40,7 +40,7 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
-  it('/maps/:id(GET)', async () => {
+  it('/api/maps/:id(GET)', async () => {
     const map: MmpMap = await mapRepo.save({ name: 'test' });
     await nodesRepo.save({
       nodeMapId: map.id,
@@ -48,7 +48,7 @@ describe('AppController (e2e)', () => {
       coordinatesY: 1,
     });
     const response: request.Response = await request(server).get(
-      `/maps/${map.id}`,
+      `/api/maps/${map.id}`,
     );
     expect(response.body.uuid).toEqual(map.id);
   });

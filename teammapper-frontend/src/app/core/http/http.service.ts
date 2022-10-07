@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core'
  */
 export enum API_URL {
   LOCAL_ASSETS = './assets/data/',
-  ROOT = ''
+  ROOT = 'api'
 }
 
 @Injectable({

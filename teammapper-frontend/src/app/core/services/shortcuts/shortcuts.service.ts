@@ -35,7 +35,7 @@ export class ShortcutsService {
       description: 'TOOLTIPS.NEW_MAP',
       callback: () => {
         // use a full page reload here to reload all singleton services
-        window.location.replace('/app')
+        window.location.replace('/map')
       }
     }, {
       keys: 'c',

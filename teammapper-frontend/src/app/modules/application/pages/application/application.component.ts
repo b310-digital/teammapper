@@ -67,7 +67,7 @@ export class ApplicationComponent implements OnInit {
     const attachedMap = this.mapSyncService.getAttachedMap()
 
     if (!givenId) {
-      history.replaceState({}, '', `/mmp/${attachedMap.cachedMap.uuid}`)
+      history.replaceState({}, '', `/map/${attachedMap.cachedMap.uuid}`)
     }
 
     this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)
