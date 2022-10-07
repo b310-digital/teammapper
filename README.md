@@ -101,6 +101,7 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     ```bash
     docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
     ```
+    You might need to start it twice as on the initial time the database is created by the postgres image.
 
     If you want to remove old data, including cached node packages and stored databases (DANGER!):
 
@@ -111,7 +112,7 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     If you want to run prod migrations (again):
     
     ```bash
-    docker-compose exec app_prod npm -prefix teammapper-backend run typeorm:prod:migrate
+    docker-compose exec app_prod npm -prefix teammapper-backend run prod:typeorm:migrate
     ```
 #### Running jobs
 
