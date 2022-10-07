@@ -12,6 +12,7 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 -   Set node images, colors and font properties.
 -   Shortcuts
 -   Import and export functionality (JSON, SVG, PDF, PNG...)
+-   Redo / Undo
 -   Mutli user support: Share your mindmap with friends and collegues. Work at the same time on the same mindmap!
 -   Use a QR Code or URL to share your maps
 -   By default, mindmaps are deleted after 30 days to ensure GDPR compliancy.
@@ -101,7 +102,15 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     ```bash
     docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
     ```
-    You might need to start it twice as on the initial time the database is created by the postgres image.
+
+    *Attention*: For the first time (without any db existing) you actually might need to start the containers twice as on the initial run the database is created within the postgres container.
+    As the database is missing, the migrations in the app container will fail. On the second start though, the database exists and migrations will pass:
+
+    ```
+    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
+    docker-compose --file docker-compose-prod.yml --env-file .env.prod down
+    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d
+    ```
 
     If you want to remove old data, including cached node packages and stored databases (DANGER!):
 
@@ -127,7 +136,7 @@ docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod
 Example of running sql via typeorm:
 
 ```
-docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npx --prefix teammapper-backend typeorm query "select * from mmp_node" --config dist/ormconfig.js
+docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npx --prefix teammapper-backend typeorm query "select * from mmp_node" --dataSource ./teammapper-backend/dist/data-source.js
 ```
 
 ### Further details
