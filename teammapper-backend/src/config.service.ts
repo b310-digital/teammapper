@@ -1,6 +1,6 @@
 // Taken from https://github.com/GauSim/nestjs-typeorm
 
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { DataSourceOptions } from 'typeorm';
 import { join } from 'path';
 
 interface EnvProps {
@@ -43,7 +43,7 @@ class ConfigService {
     return parseInt(this.getValue('DELETE_AFTER_DAYS', false) || '30');
   }
 
-  public getTypeOrmConfig(): TypeOrmModuleOptions {
+  public getTypeOrmConfig(): DataSourceOptions {
     return {
       type: 'postgres',
       host: this.getValue('POSTGRES_HOST'),
