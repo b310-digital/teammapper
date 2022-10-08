@@ -1,4 +1,7 @@
 FROM node:16.17.1-alpine3.15 as base
+
+RUN apk add --no-cache postgresql-client
+
 # Ensuring that all npm packages and commands are executed with a non-root user
 USER node
 

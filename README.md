@@ -103,15 +103,6 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
     ```
 
-    *Attention*: For the first time (without any db existing) you actually might need to start the containers twice as on the initial run the database is created within the postgres container.
-    As the database is missing, the migrations in the app container will fail. On the second start though, the database exists and migrations will pass:
-
-    ```
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod down
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d
-    ```
-
     If you want to remove old data, including cached node packages and stored databases (DANGER!):
 
     ```bash
