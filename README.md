@@ -76,8 +76,8 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --build --force-recreate
     ```
 
--   Go to `http://localhost` to open up teammapper
-- Optional commands:
+-   Go to `http://localhost:3011` (if default port is used in .env.prod) to open up teammapper. Happy mapping!
+-   Optional commands:
 
     If you want to make sure to include the most recent updates, run first:
 
