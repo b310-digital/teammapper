@@ -62,25 +62,13 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     ```
 
 ### Production
-
--   Generate self-signed ssl sertificate for the postgres server on the host machine; the generated files are mounted into the docker container
-
-    ```bash
-    mkdir -p ./ca
-    openssl req -new -text -passout pass:abcd -subj /CN=localhost -out ./ca/server.req -keyout ./ca/privkey.pem
-    openssl rsa -in ./ca/privkey.pem -passin pass:abcd -out ./ca/server.key
-    openssl req -x509 -in ./ca/server.req -text -key ./ca/server.key -out ./ca/server.crt
-    chmod 600 ./ca/server.key
-    test $(uname -s) = Linux && chown 70 ./ca/server.key
-    ```
-
 -   Duplicate and rename `.env.default`
 
     ```bash
     cp .env.default .env.prod
     ```
 
--   Adjust all configs in `.env.prod`, e.g. database settings, ports, disable ssl env vars if necessary
+-   Adjust all configs in `.env.prod`, e.g. database settings, ports, enable ssl env vars if necessary
 
 -   Start everything at once (including a forced build):
 
@@ -88,10 +76,10 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --build --force-recreate
     ```
 
--   Go to `http://localhost` to open up teammapper
-- Optional:
+-   Go to `http://localhost:3011` (if default port is used in .env.prod) to open up teammapper. Happy mapping!
+-   Optional commands:
 
-    If you want to make sure, to include the most recent updates, run first:
+    If you want to make sure to include the most recent updates, run first:
 
     ```bash
     docker-compose --file docker-compose-prod.yml --env-file .env.prod build --no-cache
@@ -101,15 +89,6 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 
     ```bash
     docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
-    ```
-
-    *Attention*: For the first time (without any db existing) you actually might need to start the containers twice as on the initial run the database is created within the postgres container.
-    As the database is missing, the migrations in the app container will fail. On the second start though, the database exists and migrations will pass:
-
-    ```
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod down
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d
     ```
 
     If you want to remove old data, including cached node packages and stored databases (DANGER!):
@@ -123,6 +102,28 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
     ```bash
     docker-compose exec app_prod npm -prefix teammapper-backend run prod:typeorm:migrate
     ```
+#### Postgres and SSL
+If needed, you can make the connection to Postgres more secure by using a SSL connection.
+
+-   Generate self-signed ssl sertificate for the postgres server on the host machine; the generated files are mounted into the docker container
+
+    ```bash
+    mkdir -p ./ca
+    openssl req -new -text -passout pass:abcd -subj /CN=localhost -out ./ca/server.req -keyout ./ca/privkey.pem
+    openssl rsa -in ./ca/privkey.pem -passin pass:abcd -out ./ca/server.key
+    openssl req -x509 -in ./ca/server.req -text -key ./ca/server.key -out ./ca/server.crt
+    chmod 600 ./ca/server.key
+    test $(uname -s) = Linux && chown 70 ./ca/server.key
+    ```
+
+    And uncomment the line:
+
+    ```bash
+     # command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
+    ```
+
+    within the docker-compose-prod file.
+
 #### Running jobs
 
 Trigger delete job (also executed daily with cron task scheduler):
