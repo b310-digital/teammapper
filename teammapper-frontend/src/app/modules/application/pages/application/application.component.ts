@@ -117,6 +117,7 @@ export class ApplicationComponent implements OnInit {
       this.mapSyncService.addNode(newNode)
       this.mapSyncService.updateAttachedMap()
       this.mmpService.selectNode(newNode.id)
+      this.mmpService.editNode()
     })
 
     this.mmpService.on('nodeRemove').subscribe((removedNode: ExportNodeProperties) => {

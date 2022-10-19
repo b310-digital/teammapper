@@ -142,7 +142,6 @@ export class MmpService {
     }
 
     this.currentMap.instance.addNode(newProps, notifyWithEvent, properties?.parent, properties?.id)
-    this.editNode()
   }
 
   /**
