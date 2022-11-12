@@ -4,8 +4,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { ActivatedRoute, Router, NavigationStart, RouterEvent } from '@angular/router'
-import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent } from '@mmp/map/types'
-import { MapOptions } from 'src/app/shared/models/settings.model'
+import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent, OptionParameters } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 
 @Component({
@@ -47,7 +46,7 @@ export class ApplicationComponent implements OnInit {
     })
   }
 
-  public async initMap (options: MapOptions) {
+  public async initMap (options: OptionParameters) {
     // Initialize a map
     // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
     // Map_1 is currently apparently hardcoded inside the map component...

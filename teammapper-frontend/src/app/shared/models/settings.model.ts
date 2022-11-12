@@ -1,16 +1,8 @@
-import { DefaultNodeProperties } from '@mmp/map/types'
-
-export interface MapOptions {
-  centerOnResize: boolean;
-  // not used inside mmp?
-  autoBranchColors: boolean;
-  defaultNode: DefaultNodeProperties;
-  rootNode: DefaultNodeProperties;
-}
+import { OptionParameters } from '@mmp/map/types'
 
 export interface Settings {
   general: General;
-  mapOptions: MapOptions;
+  mapOptions: OptionParameters;
 }
 
 interface General {

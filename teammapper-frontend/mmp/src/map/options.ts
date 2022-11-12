@@ -12,6 +12,9 @@ export default class Options implements OptionParameters {
     private map: Map
 
     public fontFamily: string
+    public fontMinSize: number
+    public fontMaxSize: number
+    public fontIncrement: number
     public centerOnResize: boolean
     public drag: boolean
     public zoom: boolean
@@ -28,6 +31,9 @@ export default class Options implements OptionParameters {
         this.map = map
 
         this.fontFamily = parameters.fontFamily || 'Arial, Helvetica, sans-serif'
+        this.fontMinSize = parameters.fontMinSize || 15
+        this.fontMaxSize = parameters.fontMaxSize || 70
+        this.fontIncrement = parameters.fontIncrement || 1
         this.centerOnResize = parameters.centerOnResize !== undefined ? parameters.centerOnResize : true
         this.drag = parameters.drag !== undefined ? parameters.drag : true
         this.zoom = parameters.zoom !== undefined ? parameters.zoom : true
@@ -83,6 +89,15 @@ export default class Options implements OptionParameters {
             case 'fontFamily':
                 this.updateFontFamily(value)
                 break
+            case 'fontMinSize':
+                this.updateFontMinSize(value)
+                break
+            case 'fontMaxSize':
+                this.updateFontMaxSize(value)
+                break
+            case 'fontIncrement':
+                this.updateFontIncrement(value)
+                break
             case 'centerOnResize':
                 this.updateCenterOnResize(value)
                 break
@@ -115,6 +130,42 @@ export default class Options implements OptionParameters {
         this.fontFamily = font
 
         this.map.draw.update()
+    }
+
+    /**
+     * Update the font size min of all nodes.
+     * @param {number} size
+     */
+     private updateFontMinSize(size: number) {
+        if (typeof size !== 'number') {
+            Log.error('The size must be a number', 'type')
+        }
+
+        this.fontMinSize = size
+    }
+
+    /**
+     * Update the font size min of all nodes.
+     * @param {number} size
+     */
+     private updateFontMaxSize(size: number) {
+        if (typeof size !== 'number') {
+            Log.error('The size must be a number', 'type')
+        }
+
+        this.fontMaxSize = size
+    }
+
+    /**
+     * Update the font size min of all nodes.
+     * @param {number} size
+     */
+     private updateFontIncrement(size: number) {
+        if (typeof size !== 'number') {
+            Log.error('The size must be a number', 'type')
+        }
+
+        this.fontIncrement = size
     }
 
     /**
@@ -197,6 +248,9 @@ export interface DefaultNodeProperties {
 
 export interface OptionParameters {
     fontFamily?: string
+    fontMinSize?: number
+    fontMaxSize?: number
+    fontIncrement?: number
     centerOnResize?: boolean
     drag?: boolean
     zoom?: boolean

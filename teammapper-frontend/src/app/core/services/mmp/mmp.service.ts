@@ -5,8 +5,7 @@ import { UtilsService } from '../utils/utils.service'
 import { jsPDF } from 'jspdf'
 import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
-import { ExportHistory, ExportNodeProperties, MapSnapshot, UserNodeProperties } from '@mmp/map/types'
-import { MapOptions } from 'src/app/shared/models/settings.model'
+import { ExportHistory, ExportNodeProperties, MapSnapshot, OptionParameters, UserNodeProperties } from '@mmp/map/types'
 import { COLORS } from './mmp-utils'
 
 /**
@@ -30,7 +29,7 @@ export class MmpService {
      * Create a mind mmp and save the instance with corresponding id.
      * All function below require the mmp id.
      */
-  public create (id: string, options?: MapOptions) {
+  public create (id: string, options?: OptionParameters) {
     const map: MmpMap = mmp.create(id, options)
 
     this.maps.set(id, map)

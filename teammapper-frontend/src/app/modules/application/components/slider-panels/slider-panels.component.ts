@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core'
+import { SettingsService } from 'src/app/core/services/settings/settings.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 
 @Component({
@@ -9,7 +10,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 export class SliderPanelsComponent {
   @Input() public node: any
 
-  constructor (public mmpService: MmpService) {
+  constructor (public mmpService: MmpService, public settingsService: SettingsService) {
   }
 
   public updateNodeFontSize (event: any, graphic?: boolean) {
@@ -22,5 +23,20 @@ export class SliderPanelsComponent {
     const value = parseInt(event.source.value, 10)
 
     this.mmpService.updateNode('imageSize', value, graphic)
+  }
+
+  public getSettingsFontMaxSize() {
+    const settings = this.settingsService.getCachedSettings()
+    return settings.mapOptions.fontMaxSize
+  }
+
+  public getSettingsFontMinSize() {
+    const settings = this.settingsService.getCachedSettings()
+    return settings.mapOptions.fontMinSize
+  }
+
+  public getSettingsFontIncrement() {
+    const settings = this.settingsService.getCachedSettings()
+    return settings.mapOptions.fontIncrement
   }
 }

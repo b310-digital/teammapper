@@ -4,8 +4,10 @@
                 [value]="node.font.size"
                 class="font-size"
                 color="primary"
-                max="70"
-                min="15"
+                max="getSettingsFontMaxSize()"
+                min="getSettingsFontMinSize()"
+                tickInterval="getSettingsFontIncrement()"
+                thumbLabel
                 vertical>
     </mat-slider>
     <mat-slider (change)="updateNodeImageSize($event)" (input)="updateNodeImageSize($event, true)"
@@ -15,6 +17,8 @@
                 color="primary"
                 max="350"
                 min="50"
+                tickInterval="1"
+                thumbLabel
                 vertical>
     </mat-slider>
 </div>
