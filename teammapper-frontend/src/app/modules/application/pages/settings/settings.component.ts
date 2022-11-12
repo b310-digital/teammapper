@@ -28,6 +28,9 @@ export class SettingsComponent {
     this.mmpService.updateOptions('rootNode', this.settings.mapOptions.rootNode)
     this.mmpService.updateOptions('defaultNode', this.settings.mapOptions.defaultNode)
     this.mmpService.updateOptions('centerOnResize', this.settings.mapOptions.centerOnResize)
+    this.mmpService.updateOptions('fontMinSize', this.settings.mapOptions.fontMinSize)
+    this.mmpService.updateOptions('fontMaxSize', this.settings.mapOptions.fontMaxSize)
+    this.mmpService.updateOptions('fontIncrement', this.settings.mapOptions.fontIncrement)
   }
 
   public async updateLanguage () {

@@ -56,6 +56,32 @@
                                 color="primary">
                                 {{ "GENERAL.AUTO_BRANCH_COLORS" | translate }}
                             </mat-slide-toggle>
+                            <mat-form-field>
+                                <input (change)="updateMapOptions()" [(ngModel)]="settings.mapOptions.fontMinSize"
+                                       [placeholder]="'GENERAL.FONT_MIN_SIZE' | translate"
+                                       [title]="'TOOLTIPS.FONT_MIN_SIZE' | translate"
+                                       type="number"
+                                       matInput
+                                       name="fontMinSize">
+                            </mat-form-field>
+                            <br />
+                            <mat-form-field>
+                                <input (change)="updateMapOptions()" [(ngModel)]="settings.mapOptions.fontMaxSize"
+                                       [placeholder]="'GENERAL.FONT_MAX_SIZE' | translate"
+                                       [title]="'TOOLTIPS.FONT_MAX_SIZE' | translate"
+                                       type="number"
+                                       matInput
+                                       name="fontMaxSize">
+                            </mat-form-field>
+                            <br />
+                            <mat-form-field>
+                                <input (change)="updateMapOptions()" [(ngModel)]="settings.mapOptions.fontIncrement"
+                                       [placeholder]="'GENERAL.FONT_INCREMENT' | translate"
+                                       [title]="'TOOLTIPS.FONT_INCREMENT' | translate"
+                                       type="number"
+                                       matInput
+                                       name="fontIncrement">
+                            </mat-form-field>
                         </mat-card-content>
                     </mat-card>
                     <mat-card class="map-options-nodes">

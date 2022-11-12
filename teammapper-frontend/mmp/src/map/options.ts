@@ -133,7 +133,7 @@ export default class Options implements OptionParameters {
     }
 
     /**
-     * Update the font size min of all nodes.
+     * Update the font size min.
      * @param {number} size
      */
      private updateFontMinSize(size: number) {
@@ -145,7 +145,7 @@ export default class Options implements OptionParameters {
     }
 
     /**
-     * Update the font size min of all nodes.
+     * Update the font size max.
      * @param {number} size
      */
      private updateFontMaxSize(size: number) {
@@ -157,7 +157,7 @@ export default class Options implements OptionParameters {
     }
 
     /**
-     * Update the font size min of all nodes.
+     * Update the font increment.
      * @param {number} size
      */
      private updateFontIncrement(size: number) {

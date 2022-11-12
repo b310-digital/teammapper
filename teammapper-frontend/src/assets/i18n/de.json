@@ -60,7 +60,10 @@
         "MAP_ZOOM": "Zoomen der Mindmap erlauben",
         "AUTO_BRANCH_COLORS": "Automatische Auswahl von Zweigfarben erlauben",
         "SHARE": "Teilen",
-        "LINK": "Link hinzufügen"
+        "LINK": "Link hinzufügen",
+        "FONT_MIN_SIZE": "Minimale Schriftgröße",
+        "FONT_MAX_SIZE": "Maximale Schriftgröße",
+        "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße"
     },
     "MODALS": {
       "GENERAL": {
@@ -186,6 +189,9 @@
         "SAVED": "Gespeichert",
         "NOT_SAVED": "Nicht gespeichert",
         "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
-        "NODE_NAME": "Bezeichnung von Knoten"
+        "NODE_NAME": "Bezeichnung von Knoten",
+        "FONT_MIN_SIZE": "Minimale Schriftgröße",
+        "FONT_MAX_SIZE": "Maximale Schriftgröße",
+        "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße"
     }
 }

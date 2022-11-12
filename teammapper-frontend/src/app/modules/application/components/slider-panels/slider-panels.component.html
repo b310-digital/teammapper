@@ -4,9 +4,10 @@
                 [value]="node.font.size"
                 class="font-size"
                 color="primary"
-                max="getSettingsFontMaxSize()"
-                min="getSettingsFontMinSize()"
-                tickInterval="getSettingsFontIncrement()"
+                [max]="getSettingsFontMaxSize()"
+                [min]="getSettingsFontMinSize()"
+                [tickInterval]="getSettingsFontIncrement()"
+                [step]="getSettingsFontIncrement()"
                 thumbLabel
                 vertical>
     </mat-slider>
