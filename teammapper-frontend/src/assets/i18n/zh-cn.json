@@ -60,7 +60,10 @@
         "MAP_ZOOM": "缩放地图",
         "AUTO_BRANCH_COLORS": "自动分配分支颜色",
         "SHARE": "Share",
-        "LINK": "Adds a link"
+        "LINK": "Adds a link",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     },
     "MODALS": {
         "GENERAL": {
@@ -185,6 +188,9 @@
         "SAVED": "已保存",
         "NOT_SAVED": "未保存",
         "ROOT_NODE_NAME": "根节点名称",
-        "NODE_NAME": "节点名称"
+        "NODE_NAME": "节点名称",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     }
 }

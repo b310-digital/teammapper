@@ -60,7 +60,10 @@
         "MAP_ZOOM": "Permitir acercar el mapa",
         "AUTO_BRANCH_COLORS": "Permitir elegir automáticamente los colores de las ramificaciones",
         "SHARE": "Share",
-        "LINK": "Adds a link"
+        "LINK": "Adds a link",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     },
     "MODALS": {
         "GENERAL": {
@@ -185,6 +188,9 @@
         "SAVED": "Guardado",
         "NOT_SAVED": "No guardado",
         "ROOT_NODE_NAME": "Nombre del nodo raíz",
-        "NODE_NAME": "Nombre del nodo"
+        "NODE_NAME": "Nombre del nodo",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     }
 }

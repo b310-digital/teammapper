@@ -60,7 +60,10 @@
         "MAP_ZOOM": "Permite ampliar o mapa",
         "AUTO_BRANCH_COLORS": "Permite escolher automaticamente as cores dos ramos",
         "SHARE": "Share",
-        "LINK": "Adds a link"
+        "LINK": "Adds a link",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     },
     "MODALS": {
         "GENERAL": {
@@ -185,6 +188,9 @@
         "SAVED": "Salvo",
         "NOT_SAVED": "Não salvo",
         "ROOT_NODE_NAME": "Nome do nó raiz",
-        "NODE_NAME": "Nome do nó"
+        "NODE_NAME": "Nome do nó",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     }
 }

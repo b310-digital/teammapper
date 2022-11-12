@@ -23,14 +23,15 @@ export class SettingsComponent {
   }
 
   public async updateMapOptions () {
+    if(this.settings.mapOptions.fontIncrement > this.settings.mapOptions.fontMaxSize || this.settings.mapOptions.fontIncrement < 1) this.settings.mapOptions.fontIncrement = 5
+    if(this.settings.mapOptions.fontMaxSize > 99 || this.settings.mapOptions.fontMaxSize < 15) this.settings.mapOptions.fontMaxSize = 70
+    if(this.settings.mapOptions.fontMinSize > 99 || this.settings.mapOptions.fontMinSize < 15) this.settings.mapOptions.fontMinSize = 15
+
     await this.settingsService.updateCachedSettings(this.settings)
 
     this.mmpService.updateOptions('rootNode', this.settings.mapOptions.rootNode)
     this.mmpService.updateOptions('defaultNode', this.settings.mapOptions.defaultNode)
     this.mmpService.updateOptions('centerOnResize', this.settings.mapOptions.centerOnResize)
-    this.mmpService.updateOptions('fontMinSize', this.settings.mapOptions.fontMinSize)
-    this.mmpService.updateOptions('fontMaxSize', this.settings.mapOptions.fontMaxSize)
-    this.mmpService.updateOptions('fontIncrement', this.settings.mapOptions.fontIncrement)
   }
 
   public async updateLanguage () {

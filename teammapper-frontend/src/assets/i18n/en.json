@@ -60,7 +60,10 @@
         "MAP_ZOOM": "Allows to zoom the map",
         "AUTO_BRANCH_COLORS": "Allows to choose automatically the colors of the branches",
         "SHARE": "Share",
-        "LINK": "Adds a link"
+        "LINK": "Adds a link",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     },
     "MODALS": {
         "GENERAL": {
@@ -185,6 +188,9 @@
         "SAVED": "Saved",
         "NOT_SAVED": "Not saved",
         "ROOT_NODE_NAME": "Root node name",
-        "NODE_NAME": "Node name"
+        "NODE_NAME": "Node name",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     }
 }

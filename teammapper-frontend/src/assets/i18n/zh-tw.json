@@ -60,7 +60,10 @@
         "MAP_ZOOM": "允許縮放地圖",
         "AUTO_BRANCH_COLORS": "允許自動分配分支的顏色",
         "SHARE": "Share",
-        "LINK": "Adds a link"
+        "LINK": "Adds a link",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     },
     "MODALS": {
         "GENERAL": {
@@ -185,6 +188,9 @@
         "SAVED": "已儲存",
         "NOT_SAVED": "尚未儲存",
         "ROOT_NODE_NAME": "根節點名稱",
-        "NODE_NAME": "節點名稱"
+        "NODE_NAME": "節點名稱",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     }
 }

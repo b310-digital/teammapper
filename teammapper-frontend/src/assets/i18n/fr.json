@@ -60,7 +60,10 @@
         "MAP_ZOOM": "Permet de zoomer sur la carte",
         "AUTO_BRANCH_COLORS": "Allows to choose automatically the colors of the branches",
         "SHARE": "Share",
-        "LINK": "Adds a link"
+        "LINK": "Adds a link",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     },
     "MODALS": {
         "GENERAL": {
@@ -185,6 +188,9 @@
         "SAVED": "Enregistré",
         "NOT_SAVED": "Non enregistré",
         "ROOT_NODE_NAME": "Nom du noeud racine",
-        "NODE_NAME": "Nom du noeud"
+        "NODE_NAME": "Nom du noeud",
+        "FONT_MIN_SIZE": "Minimal font size",
+        "FONT_MAX_SIZE": "Maximal font size",
+        "FONT_INCREMENT": "Font size step"
     }
 }
