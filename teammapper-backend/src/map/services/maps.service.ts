@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeleteResult } from 'typeorm';
-import { MmpMap, mmpMapOptionDefaults } from '../entities/mmpMap.entity';
+import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { IMmpClientMap, IMmpClientMapOptions, IMmpClientNode, MapOptions } from '../types';
 import { mapClientNodeToMmpNode, mapMmpMapToClient } from '../utils/clientServerMapping';
@@ -96,8 +96,7 @@ export class MapsService {
   }
 
   async updateMapOptions(mapId: string, clientOptions: IMmpClientMapOptions): Promise<MmpMap> {
-    const options: MapOptions = clientOptions || mmpMapOptionDefaults
-    await this.mapsRepository.update(mapId, { options });
+    await this.mapsRepository.update(mapId, { options: clientOptions });
 
     return await this.mapsRepository.findOne({ where: { id: mapId }} );
   }

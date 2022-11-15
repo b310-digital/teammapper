@@ -1,4 +1,4 @@
-import { MmpMap, mmpMapOptionDefaults } from '../entities/mmpMap.entity';
+import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { IMmpClientMap, IMmpClientNode } from '../types';
 
@@ -24,14 +24,13 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
 });
 
 const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt: Date, deleteAfterDays: number): IMmpClientMap => {
-  const options = serverMap?.options || mmpMapOptionDefaults
   return {
     uuid: serverMap.id,
     data: serverNodes.map((node) => mapMmpNodeToClient(node)),
     deleteAfterDays,
     deletedAt,
     lastModified: serverMap.lastModified,
-    options: { fontMaxSize: options?.fontMaxSize, fontMinSize: options?.fontMinSize, fontIncrement: options?.fontIncrement }
+    options: serverMap?.options
   }
 };
 

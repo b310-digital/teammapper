@@ -4,14 +4,8 @@ import {
 import { MapOptions } from '../types';
 import { MmpNode } from './mmpNode.entity';
 
-const mmpMapOptionDefaults: MapOptions = {
-  fontIncrement: 5,
-  fontMaxSize: 70,
-  fontMinSize: 15
-}
-
 @Entity()
-class MmpMap {
+export class MmpMap {
   @PrimaryGeneratedColumn('uuid')
     id: string;
 
@@ -35,5 +29,3 @@ class MmpMap {
   /* eslint-enable @typescript-eslint/no-unused-vars */
     nodes: MmpNode[];
 }
-
-export { MmpMap, mmpMapOptionDefaults }
