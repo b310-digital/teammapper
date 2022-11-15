@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeleteResult } from 'typeorm';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
-import { IMmpClientMap, IMmpClientMapOptions, IMmpClientNode, MapOptions } from '../types';
+import { IMmpClientMap, IMmpClientMapOptions, IMmpClientNode } from '../types';
 import { mapClientNodeToMmpNode, mapMmpMapToClient } from '../utils/clientServerMapping';
 import configService from '../../config.service';
 
