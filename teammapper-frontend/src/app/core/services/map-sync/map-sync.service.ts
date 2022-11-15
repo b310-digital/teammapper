@@ -220,7 +220,7 @@ export class MapSyncService {
 
   public async updateMapOptions (options?: CachedMapOptions): Promise<void> {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
-    this.socket.emit('updateMapOptions', { mapId: cachedMapEntry.cachedMap.uuid, options: options })
+    this.socket.emit('updateMapOptions', { mapId: cachedMapEntry.cachedMap.uuid, options: options })
   }
 
   public async deleteMap (adminId: string): Promise<any> {

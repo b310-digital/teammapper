@@ -10,8 +10,11 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 })
 export class SliderPanelsComponent {
   @Input() public node: any
+  public mapOptions: CachedMapOptions
 
-  constructor (public mmpService: MmpService, public settingsService: SettingsService) {
+  constructor (public mmpService: MmpService,
+    public settingsService: SettingsService) {
+    this.mapOptions = this.mmpService.getAdditionalMapOptions()
   }
 
   public updateNodeFontSize (event: any, graphic?: boolean) {

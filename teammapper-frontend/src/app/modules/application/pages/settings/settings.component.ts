@@ -37,7 +37,7 @@ export class SettingsComponent {
   }
 
   public async updateMapOptions () {
-    this.validateMapOptionsInput()
+    await this.validateMapOptionsInput()
     // Update locally
     this.mmpService.updateAdditionalMapOptions(this.mapOptions)
     // Sync to other users
@@ -54,9 +54,10 @@ export class SettingsComponent {
     this.location.back()
   }
 
-  private validateMapOptionsInput() {
-    if(this.mapOptions.fontIncrement > this.mapOptions.fontMaxSize || this.mapOptions.fontIncrement < 1) this.mapOptions.fontIncrement = 5
-    if(this.mapOptions.fontMaxSize > 99 || this.mapOptions.fontMaxSize < 15) this.mapOptions.fontMaxSize = 70
-    if(this.mapOptions.fontMinSize > 99 || this.mapOptions.fontMinSize < 15) this.mapOptions.fontMinSize = 15
+  private async validateMapOptionsInput() {
+    const defaultSettings: Settings = await this.settingsService.getDefaultSettings();
+    if(this.mapOptions.fontIncrement > this.mapOptions.fontMaxSize || this.mapOptions.fontIncrement < 1) this.mapOptions.fontIncrement = defaultSettings.mapOptions.fontIncrement
+    if(this.mapOptions.fontMaxSize > 99 || this.mapOptions.fontMaxSize < 15) this.mapOptions.fontMaxSize = defaultSettings.mapOptions.fontMaxSize
+    if(this.mapOptions.fontMinSize > 99 || this.mapOptions.fontMinSize < 15) this.mapOptions.fontMinSize = defaultSettings.mapOptions.fontMinSize
   }
 }

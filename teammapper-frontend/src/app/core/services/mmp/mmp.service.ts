@@ -33,8 +33,11 @@ export class MmpService {
      * Create a mind mmp and save the instance with corresponding id.
      * All function below require the mmp id.
      */
-  public create (id: string, options?: OptionParameters) {
+  public async create (id: string, options?: OptionParameters) {
     const map: MmpMap = mmp.create(id, options)
+
+    // additional options do not include the standard mmp map options
+    this.additionalOptions = await this.defaultAdditionalOptions()
 
     this.maps.set(id, map)
 
@@ -79,16 +82,17 @@ export class MmpService {
   /**
    * Update the additional map settings
    */
-  public updateAdditionalMapOptions (options: CachedMapOptions) {
-    this.additionalOptions = options
+  public async updateAdditionalMapOptions (options: CachedMapOptions) {
+    const defaultOptions = await this.defaultAdditionalOptions()
+    this.additionalOptions = {...defaultOptions, ...options}
   }
 
-    /**
+  /**
    * Get the additional options
    */
-     public getAdditionalMapOptions (): CachedMapOptions {
-      return this.additionalOptions
-    }
+  public getAdditionalMapOptions (): CachedMapOptions {
+    return this.additionalOptions
+  }
 
   /**
      * Return the json of the mind mmp.
@@ -390,5 +394,18 @@ export class MmpService {
    */
   public redo () {
     this.currentMap.instance.redo()
+  }
+
+  /**
+   * Initialize additional map settings with defaults
+   */
+  private async defaultAdditionalOptions(): Promise<CachedMapOptions> {
+    const defaultSettings = await this.settingsService.getDefaultSettings()
+
+    return {
+      fontMinSize: defaultSettings.mapOptions.fontMinSize,
+      fontMaxSize: defaultSettings.mapOptions.fontMaxSize,
+      fontIncrement: defaultSettings.mapOptions.fontIncrement 
+    }
   }
 }

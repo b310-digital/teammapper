@@ -145,6 +145,28 @@ export class ShortcutsService {
       callback: () => {
         this.mmpService.exportMap()
       }
+    }, {
+      keys: 'alt+.',
+      description: 'TOOLTIPS.FONT_INCREASE',
+      callback: () => {
+        const node = this.mmpService.selectNode()
+        const size: number = node.font.size
+        if(size >= this.mmpService.getAdditionalMapOptions().fontMaxSize) return
+
+        const increment = this.mmpService.getAdditionalMapOptions().fontIncrement
+        this.mmpService.updateNode('fontSize', size + increment, false)
+      }
+    }, {
+      keys: 'alt+-',
+      description: 'TOOLTIPS.FONT_DECREASE',
+      callback: () => {
+        const node = this.mmpService.selectNode()
+        const size: number = node.font.size
+        if(size <= this.mmpService.getAdditionalMapOptions().fontMinSize) return
+
+        const increment = this.mmpService.getAdditionalMapOptions().fontIncrement
+        this.mmpService.updateNode('fontSize', size - increment, false)
+      }
     }].map(this.getHotKey)
 
     this.hotkeysService.add(this.hotKeys)

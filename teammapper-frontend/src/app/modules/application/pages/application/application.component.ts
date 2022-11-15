@@ -50,7 +50,7 @@ export class ApplicationComponent implements OnInit {
     // Initialize the mmpService component
     // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
     // Map_1 is currently apparently hardcoded inside the map component...
-    this.mmpService.create('map_1', options)
+    await this.mmpService.create('map_1', options)
 
     // Try to either load the given id from the server, or initialize a new map with empty data
     const givenId: string = this.route.snapshot.paramMap.get('id')
