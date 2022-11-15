@@ -1,16 +1,13 @@
 import { OptionParameters } from '@mmp/map/types'
 
-export interface MapOptions extends OptionParameters {
+export interface MmpOptions extends OptionParameters {
   // single attribute that is not contained in OptionParameters interface
   autoBranchColors: boolean;
-  fontMaxSize: number;
-  fontMinSize: number;
-  fontIncrement: number;
 }
 
 export interface Settings {
   general: General;
-  mapOptions: MapOptions;
+  mapOptions: MmpOptions;
 }
 
 interface General {

@@ -1,4 +1,4 @@
-import { MmpMap } from '../entities/mmpMap.entity';
+import { MmpMap, mmpMapOptionDefaults } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { IMmpClientMap, IMmpClientNode } from '../types';
 
@@ -23,13 +23,17 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   isRoot: serverNode.root || false,
 });
 
-const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt: Date, deleteAfterDays: number): IMmpClientMap => ({
-  uuid: serverMap.id,
-  data: serverNodes.map((node) => mapMmpNodeToClient(node)),
-  deleteAfterDays,
-  deletedAt,
-  lastModified: serverMap.lastModified,
-});
+const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt: Date, deleteAfterDays: number): IMmpClientMap => {
+  const options = serverMap?.options || mmpMapOptionDefaults
+  return {
+    uuid: serverMap.id,
+    data: serverNodes.map((node) => mapMmpNodeToClient(node)),
+    deleteAfterDays,
+    deletedAt,
+    lastModified: serverMap.lastModified,
+    options: { fontMaxSize: options?.fontMaxSize, fontMinSize: options?.fontMinSize, fontIncrement: options?.fontIncrement }
+  }
+};
 
 const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Object => ({
   id: clientNode.id,

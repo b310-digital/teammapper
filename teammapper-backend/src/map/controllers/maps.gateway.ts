@@ -15,7 +15,7 @@ import {
   IClientCache,
   IMmpClientDeleteRequest,
   IMmpClientJoinRequest,
-  IMmpClientMap, IMmpClientMapRequest, IMmpClientNodeRequest, IMmpClientNodeSelectionRequest,
+  IMmpClientMap, IMmpClientMapRequest, IMmpClientNodeRequest, IMmpClientNodeSelectionRequest, IMmpClientUpdateMapOptionsRequest,
 } from '../types';
 import { mapMmpNodeToClient } from '../utils/clientServerMapping';
 import { MmpMap } from '../entities/mmpMap.entity';
@@ -61,6 +61,19 @@ export class MapsGateway implements OnGatewayDisconnect {
     @MessageBody() mmpMap: IMmpClientMap,
   ): Promise<boolean> {
     await this.mapsService.createMap(mmpMap);
+    return true;
+  }
+
+  @SubscribeMessage('updateMapOptions')
+  async onUpdateMap(
+    @ConnectedSocket() _client: Socket,
+    @MessageBody() request: IMmpClientUpdateMapOptionsRequest,
+  ): Promise<boolean> {
+    const updatedMap: MmpMap = await this.mapsService.updateMapOptions(request.mapId, request.options);
+    this.server
+        .to(request.mapId)
+        .emit('mapOptionsUpdated', updatedMap);
+
     return true;
   }
 

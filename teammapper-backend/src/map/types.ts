@@ -1,3 +1,9 @@
+export interface MapOptions {
+  fontIncrement: number,
+  fontMaxSize: number,
+  fontMinSize: number
+}
+
 export interface IMmpClientColor {
   name: string;
   background: string;
@@ -21,6 +27,7 @@ export interface IMmpClientMap {
   deleteAfterDays: number;
   deletedAt: Date;
   data: IMmpClientNode[];
+  options: IMmpClientMapOptions;
 }
 
 export interface IMmpClientMapWithAdminId {
@@ -65,6 +72,17 @@ export interface IMmpClientNodeSelectionRequest {
   mapId: string;
   nodeId: string;
   selected: boolean;
+}
+
+export interface IMmpClientMapOptions {
+  fontMaxSize: number;
+  fontMinSize: number;
+  fontIncrement: number;
+}
+
+export interface IMmpClientUpdateMapOptionsRequest {
+  mapId: string;
+  options: IMmpClientMapOptions;
 }
 
 export interface IClientCache {

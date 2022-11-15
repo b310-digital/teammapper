@@ -7,6 +7,7 @@ import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
 import { ExportHistory, ExportNodeProperties, MapSnapshot, OptionParameters, UserNodeProperties } from '@mmp/map/types'
 import { COLORS } from './mmp-utils'
+import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 
 /**
  * Mmp wrapper service with mmp and other functions.
@@ -19,9 +20,12 @@ export class MmpService {
   private currentMap: MmpMap
 
   private readonly branchColors: Array<string>
+  // additional options that are not handled within mmp, like fontMaxSize etc.
+  private additionalOptions: CachedMapOptions;
 
   constructor (public settingsService: SettingsService) {
     this.maps = new Map<string, MmpMap>()
+    this.additionalOptions = null
     this.branchColors = COLORS
   }
 
@@ -71,6 +75,20 @@ export class MmpService {
   public updateOptions (property: string, value: any) {
     this.currentMap.instance.updateOptions(property, value)
   }
+
+  /**
+   * Update the additional map settings
+   */
+  public updateAdditionalMapOptions (options: CachedMapOptions) {
+    this.additionalOptions = options
+  }
+
+    /**
+   * Get the additional options
+   */
+     public getAdditionalMapOptions (): CachedMapOptions {
+      return this.additionalOptions
+    }
 
   /**
      * Return the json of the mind mmp.

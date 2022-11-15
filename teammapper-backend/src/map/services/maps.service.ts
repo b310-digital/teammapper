@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeleteResult } from 'typeorm';
-import { MmpMap } from '../entities/mmpMap.entity';
+import { MmpMap, mmpMapOptionDefaults } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
-import { IMmpClientMap, IMmpClientNode } from '../types';
+import { IMmpClientMap, IMmpClientMapOptions, IMmpClientNode, MapOptions } from '../types';
 import { mapClientNodeToMmpNode, mapMmpMapToClient } from '../utils/clientServerMapping';
 import configService from '../../config.service';
 
@@ -93,6 +93,13 @@ export class MapsService {
     }, Promise.resolve());
 
     return newMap;
+  }
+
+  async updateMapOptions(mapId: string, clientOptions: IMmpClientMapOptions): Promise<MmpMap> {
+    const options: MapOptions = clientOptions || mmpMapOptionDefaults
+    await this.mapsRepository.update(mapId, { options });
+
+    return await this.mapsRepository.findOne({ where: { id: mapId }} );
   }
 
   getDeletedAt(lastModified: Date, afterDays: number): Date {

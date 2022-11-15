@@ -81,7 +81,7 @@ npm run typeorm migration:run
 Generate new migration based on current changes
 
 ```bash
-npm run typeorm migration:generate -- -n teammapperRefactoring
+npm run dev:typeorm migration:generate -n AddSomethingHere
 ```
 
 ## License

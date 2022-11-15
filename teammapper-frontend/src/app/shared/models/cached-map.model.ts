@@ -9,4 +9,11 @@ export interface CachedMap {
   uuid: string;
   deleteAfterDays: number;
   deletedAt: number;
+  options: CachedMapOptions;
+}
+
+export interface CachedMapOptions {
+  fontMaxSize: number;
+  fontMinSize: number;
+  fontIncrement: number;
 }

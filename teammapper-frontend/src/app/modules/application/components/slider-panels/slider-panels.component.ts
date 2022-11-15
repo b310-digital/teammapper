@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core'
 import { SettingsService } from 'src/app/core/services/settings/settings.service'
+import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 
 @Component({
@@ -26,17 +27,17 @@ export class SliderPanelsComponent {
   }
 
   public getSettingsFontMaxSize() {
-    const settings = this.settingsService.getCachedSettings()
-    return settings.mapOptions.fontMaxSize
+    const options: CachedMapOptions = this.mmpService.getAdditionalMapOptions()
+    return options.fontMaxSize
   }
 
   public getSettingsFontMinSize() {
-    const settings = this.settingsService.getCachedSettings()
-    return settings.mapOptions.fontMinSize
+    const options: CachedMapOptions = this.mmpService.getAdditionalMapOptions()
+    return options.fontMinSize
   }
 
   public getSettingsFontIncrement() {
-    const settings = this.settingsService.getCachedSettings()
-    return settings.mapOptions.fontIncrement
+    const options: CachedMapOptions = this.mmpService.getAdditionalMapOptions()
+    return options.fontIncrement
   }
 }
