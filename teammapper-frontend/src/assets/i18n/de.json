@@ -63,7 +63,9 @@
         "LINK": "Link hinzufügen",
         "FONT_MIN_SIZE": "Minimale Schriftgröße",
         "FONT_MAX_SIZE": "Maximale Schriftgröße",
-        "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße"
+        "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
+        "FONT_INCREASE": "Schrift vergrößern",
+        "FONT_DECREASE": "Schrift verkleinern"
     },
     "MODALS": {
       "GENERAL": {
