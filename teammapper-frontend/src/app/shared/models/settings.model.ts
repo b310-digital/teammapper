@@ -1,16 +1,18 @@
-import { DefaultNodeProperties } from '@mmp/map/types'
+import { OptionParameters } from '@mmp/map/types'
 
-export interface MapOptions {
-  centerOnResize: boolean;
-  // not used inside mmp?
+// Options for the service
+// Mmp itself only takes the options parameters. The service can be sugered with additonal options though.
+export interface MmpOptions extends OptionParameters {
+  // single attribute that is not contained in OptionParameters interface
   autoBranchColors: boolean;
-  defaultNode: DefaultNodeProperties;
-  rootNode: DefaultNodeProperties;
+  fontMaxSize: number;
+  fontMinSize: number;
+  fontIncrement: number;
 }
 
 export interface Settings {
   general: General;
-  mapOptions: MapOptions;
+  mapOptions: MmpOptions;
 }
 
 interface General {

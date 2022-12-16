@@ -23,13 +23,16 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   isRoot: serverNode.root || false,
 });
 
-const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt: Date, deleteAfterDays: number): IMmpClientMap => ({
-  uuid: serverMap.id,
-  data: serverNodes.map((node) => mapMmpNodeToClient(node)),
-  deleteAfterDays,
-  deletedAt,
-  lastModified: serverMap.lastModified,
-});
+const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt: Date, deleteAfterDays: number): IMmpClientMap => {
+  return {
+    uuid: serverMap.id,
+    data: serverNodes.map((node) => mapMmpNodeToClient(node)),
+    deleteAfterDays,
+    deletedAt,
+    lastModified: serverMap.lastModified,
+    options: serverMap?.options
+  }
+};
 
 const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Object => ({
   id: clientNode.id,

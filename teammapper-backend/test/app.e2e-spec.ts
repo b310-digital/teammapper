@@ -79,6 +79,7 @@ describe('AppController (e2e)', () => {
         lastModified: new Date(),
         deleteAfterDays: 30,
         deletedAt: null,
+        options: null,
         data: [
           {
             name: 'test',

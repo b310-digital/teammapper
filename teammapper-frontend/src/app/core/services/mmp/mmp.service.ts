@@ -5,9 +5,9 @@ import { UtilsService } from '../utils/utils.service'
 import { jsPDF } from 'jspdf'
 import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
-import { ExportHistory, ExportNodeProperties, MapSnapshot, UserNodeProperties } from '@mmp/map/types'
-import { MapOptions } from 'src/app/shared/models/settings.model'
+import { ExportHistory, ExportNodeProperties, MapSnapshot, OptionParameters, UserNodeProperties } from '@mmp/map/types'
 import { COLORS } from './mmp-utils'
+import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 
 /**
  * Mmp wrapper service with mmp and other functions.
@@ -20,9 +20,12 @@ export class MmpService {
   private currentMap: MmpMap
 
   private readonly branchColors: Array<string>
+  // additional options that are not handled within mmp, like fontMaxSize etc.
+  private additionalOptions: CachedMapOptions;
 
   constructor (public settingsService: SettingsService) {
     this.maps = new Map<string, MmpMap>()
+    this.additionalOptions = null
     this.branchColors = COLORS
   }
 
@@ -30,8 +33,11 @@ export class MmpService {
      * Create a mind mmp and save the instance with corresponding id.
      * All function below require the mmp id.
      */
-  public create (id: string, options?: MapOptions) {
+  public async create (id: string, options?: OptionParameters) {
     const map: MmpMap = mmp.create(id, options)
+
+    // additional options do not include the standard mmp map options
+    this.additionalOptions = await this.defaultAdditionalOptions()
 
     this.maps.set(id, map)
 
@@ -71,6 +77,21 @@ export class MmpService {
      */
   public updateOptions (property: string, value: any) {
     this.currentMap.instance.updateOptions(property, value)
+  }
+
+  /**
+   * Update the additional map settings
+   */
+  public async updateAdditionalMapOptions (options: CachedMapOptions) {
+    const defaultOptions = await this.defaultAdditionalOptions()
+    this.additionalOptions = {...defaultOptions, ...options}
+  }
+
+  /**
+   * Get the additional options
+   */
+  public getAdditionalMapOptions (): CachedMapOptions {
+    return this.additionalOptions
   }
 
   /**
@@ -373,5 +394,18 @@ export class MmpService {
    */
   public redo () {
     this.currentMap.instance.redo()
+  }
+
+  /**
+   * Initialize additional map settings with defaults
+   */
+  private async defaultAdditionalOptions(): Promise<CachedMapOptions> {
+    const defaultSettings = await this.settingsService.getDefaultSettings()
+
+    return {
+      fontMinSize: defaultSettings.mapOptions.fontMinSize,
+      fontMaxSize: defaultSettings.mapOptions.fontMaxSize,
+      fontIncrement: defaultSettings.mapOptions.fontIncrement 
+    }
   }
 }

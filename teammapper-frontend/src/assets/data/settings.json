@@ -5,6 +5,9 @@
     "mapOptions": {
         "centerOnResize": false,
         "autoBranchColors": true,
+        "fontMaxSize": 70,
+        "fontMinSize": 15,
+        "fontIncrement": 5,
         "defaultNode": {
             "name": "",
             "image": {

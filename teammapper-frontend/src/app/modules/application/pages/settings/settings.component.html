@@ -43,19 +43,51 @@
                         <hr>
                         <mat-card-content>
                             <mat-slide-toggle
-                                (change)="updateMapOptions()"
+                                (change)="updateGeneralMapOptions()"
                                 [(ngModel)]="settings.mapOptions.centerOnResize"
                                 [title]="'TOOLTIPS.CENTER_ON_RESIZING' | translate"
                                 color="primary">
                                 {{ "GENERAL.CENTER_ON_RESIZING" | translate }}
                             </mat-slide-toggle>
                             <mat-slide-toggle
-                                (change)="updateMapOptions()"
+                                (change)="updateGeneralMapOptions()"
                                 [(ngModel)]="settings.mapOptions.autoBranchColors"
                                 [title]="'TOOLTIPS.AUTO_BRANCH_COLORS' | translate"
                                 color="primary">
                                 {{ "GENERAL.AUTO_BRANCH_COLORS" | translate }}
                             </mat-slide-toggle>
+                            <mat-form-field>
+                                <input (change)="updateMapOptions()" [(ngModel)]="mapOptions.fontMinSize"
+                                       [placeholder]="'GENERAL.FONT_MIN_SIZE' | translate"
+                                       [title]="'TOOLTIPS.FONT_MIN_SIZE' | translate"
+                                       type="number"
+                                       min="15" 
+                                       max="100" 
+                                       matInput
+                                       name="fontMinSize">
+                            </mat-form-field>
+                            <br />
+                            <mat-form-field>
+                                <input (change)="updateMapOptions()" [(ngModel)]="mapOptions.fontMaxSize"
+                                       [placeholder]="'GENERAL.FONT_MAX_SIZE' | translate"
+                                       [title]="'TOOLTIPS.FONT_MAX_SIZE' | translate"
+                                       type="number"
+                                       min="15" 
+                                       max="100" 
+                                       matInput
+                                       name="fontMaxSize">
+                            </mat-form-field>
+                            <br />
+                            <mat-form-field>
+                                <input (change)="updateMapOptions()" [(ngModel)]="mapOptions.fontIncrement"
+                                       [placeholder]="'GENERAL.FONT_INCREMENT' | translate"
+                                       [title]="'TOOLTIPS.FONT_INCREMENT' | translate"
+                                       type="number"
+                                       min="1" 
+                                       max="100" 
+                                       matInput
+                                       name="fontIncrement">
+                            </mat-form-field>
                         </mat-card-content>
                     </mat-card>
                     <mat-card class="map-options-nodes">

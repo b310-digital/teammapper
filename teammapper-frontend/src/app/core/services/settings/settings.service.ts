@@ -7,14 +7,17 @@ import { StorageService, STORAGE_KEYS } from '../storage/storage.service'
 @Injectable({
   providedIn: 'root'
 })
+// Global per user settings service
 export class SettingsService {
   public static readonly LANGUAGES = ['en', 'fr', 'de', 'it', 'zh-tw', 'zh-cn', 'es', 'pt-br']
 
   public settings: Observable<Settings | null>
   private settingsSubject: BehaviorSubject<Settings | null>
 
-  constructor (private storageService: StorageService,
+  constructor (
+    private storageService: StorageService,
     private httpService: HttpService) {
+
     // Initialization of the behavior subjects.
     this.settingsSubject = new BehaviorSubject(null)
     this.settings = this.settingsSubject.asObservable()
@@ -39,7 +42,6 @@ export class SettingsService {
      */
   public async updateCachedSettings (settings: Settings): Promise<void> {
     await this.storageService.set(STORAGE_KEYS.SETTINGS, settings)
-
     this.settingsSubject.next(settings)
   }
 
@@ -53,7 +55,7 @@ export class SettingsService {
   /**
      * Return the default settings.
      */
-  private async getDefaultSettings (): Promise<Settings> {
+  public async getDefaultSettings (): Promise<Settings> {
     const response = await this.httpService.get(API_URL.LOCAL_ASSETS, 'settings.json')
     return response.json()
   }
