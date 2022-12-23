@@ -3,21 +3,24 @@
 @import "~src/theme.scss";
 
 @font-face {
-    font-family: "Source Sans Pro";
-    src: url("assets/font/source-sans-pro/SourceSansPro-Regular.ttf") format("truetype");
-}
-
-@font-face {
-    font-family: "Fira Sans";
-    src: url("assets/font/firasans/FiraSans-Regular.ttf") format("truetype");
-    font-weight: 500;
-}
-
-@font-face {
-    font-family: "Fira Sans";
-    src: url("assets/font/firasans/FiraSans-Bold.ttf") format("truetype");
-    font-weight: 700;
-}
+    font-family: FiraSans;
+    src: url("/assets/font/firasans/FiraSans-Regular.otf") format("opentype");
+  }
+  
+  @font-face {
+    font-family: FiraSans;
+    font-weight: light;
+    src: url("/assets/font/firasans/FiraSans-Light.otf") format("opentype");
+  }
+  
+  @font-face {
+    font-family: FiraSans;
+    font-weight: bold;
+    src: url("/assets/font/firasans/FiraSans-Bold.otf") format("opentype");
+  }
+  
+  // Set bootstrap font:
+  $font-family-base: FiraSans;
 
 html, body {
     margin: 0;
@@ -26,7 +29,7 @@ html, body {
 }
 
 body {
-    font-family: "Fira Sans", sans;
+    font-family: $font-family-base, sans;
     font-size: 17px;
 }
 

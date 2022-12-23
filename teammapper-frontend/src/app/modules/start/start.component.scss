@@ -1,16 +1,31 @@
+$kits-main-color: rgb(0, 163, 211);
+$font-grey: rgb(33, 37, 41);
+$button-color: #00456f;
+
 .min-vh-100 {
   min-height: 100vh;
 }
 
-.center {
-  justify-content: center;
-  align-items: center;
+.kits-primary-button {
+  background-color: $button-color;
+  font-family: FiraSans !important;
 }
 
-.footer-text {
+.center {
+  justify-content: center;
+  background-color: transparent !important;
+}
+
+.kits-left-footer-text {
   display: flex;
   align-items: center;
   padding: 2px 2px 2px 2px;
+  font-family: FiraSans;
+}
+
+.list-border {
+  border-left: 3px solid $kits-main-color;
+  padding: 0;
 }
 
 .gradient {
@@ -24,4 +39,27 @@
 .font-white {
   color: #FFFFFF;
   text-decoration: none;
+}
+
+.font-grey {
+  color: $font-grey !important;
+  text-decoration: none;
+}
+
+.header {
+  background-color: transparent !important;
+  height: 70px !important;
+  a {
+    margin-left: auto;
+    margin-top: 16px;
+  }
+}
+
+.font-sm {
+  font-size: 0.75rem !important;
+}
+
+.kits-list .mat-list-item {
+  height: 35px;
+  font-family: FiraSans;
 }
