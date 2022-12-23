@@ -13,6 +13,7 @@ export class StartComponent {
   public breakpoint: number
 
   constructor () {
+    this.breakpoint = 1
   }
 
   ngOnInit() {

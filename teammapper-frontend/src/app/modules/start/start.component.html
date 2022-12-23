@@ -1,5 +1,5 @@
 <mat-grid-list rowHeight="fit" class="min-vh-100" [cols]="breakpoint" (window:resize)="onResize($event)">
-  <mat-grid-tile class="gradient">
+  <mat-grid-tile class="gradient" *ngIf="breakpoint === 2">
     <img src="/assets/images/teammapper-logo.png" class="img-fluid d-block" alt="TeamMapper Logo" />
     <mat-grid-tile-footer class="center">
       <div class="kits-left-footer-text">
@@ -7,11 +7,11 @@
           ><img src="/assets/images/github-logo.svg" class="img-fluid d-block" alt="GitHub Logo"
         /></a>
 
-        <a class="padding-2 font-white" href="https://github.com/kitsteam/teammapper"
+        <a class="padding-8 font-white" href="https://github.com/kitsteam/teammapper"
           >TeamMapper</a
         >
-        <a class="padding-2 font-white" href="https://kits.blog/impressum/">Impressum</a>
-        <a class="padding-2 font-white" href="https://kits.blog/datenschutzerklaerung/"
+        <a class="padding-8 font-white" href="https://kits.blog/impressum/">Impressum</a>
+        <a class="padding-8 font-white" href="https://kits.blog/datenschutzerklaerung/"
           >Datenschutz</a
         >
       </div>
@@ -40,6 +40,24 @@
     <mat-grid-tile-footer class="center font-grey font-sm ">
       <div>
         Dieses Tool darf nur in Lehr-Lern-Kontexten genutzt werden. Die Eingabe personenbezogener Daten ist nicht gestattet.
+      </div>
+    </mat-grid-tile-footer>
+  </mat-grid-tile>
+  <mat-grid-tile class="gradient" *ngIf="breakpoint === 1">
+    <img src="/assets/images/teammapper-logo.png" class="img-fluid d-block" alt="TeamMapper Logo" />
+    <mat-grid-tile-footer class="center">
+      <div class="kits-left-footer-text">
+        <a href="https://github.com/kitsteam/teammapper"
+          ><img src="/assets/images/github-logo.svg" class="img-fluid d-block" alt="GitHub Logo"
+        /></a>
+
+        <a class="padding-8 font-white" href="https://github.com/kitsteam/teammapper"
+          >TeamMapper</a
+        >
+        <a class="padding-8 font-white" href="https://kits.blog/impressum/">Impressum</a>
+        <a class="padding-8 font-white" href="https://kits.blog/datenschutzerklaerung/"
+          >Datenschutz</a
+        >
       </div>
     </mat-grid-tile-footer>
   </mat-grid-tile>
