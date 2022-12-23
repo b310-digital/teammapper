@@ -1,4 +1,35 @@
 <mat-grid-list rowHeight="fit" class="min-vh-100" [cols]="breakpoint" (window:resize)="onResize($event)">
-  <mat-grid-tile class="gradient">1</mat-grid-tile>
-  <mat-grid-tile>2</mat-grid-tile>
+  <mat-grid-tile class="gradient">
+    <img src="/assets/images/teammapper-logo.png" class="img-fluid d-block" alt="TeamMapper Logo" />
+    <mat-grid-tile-footer class="center">
+      <div class="footer-text">
+        <a href="https://github.com/kitsteam/teammapper"
+          ><img src="/assets/images/github-logo.svg" class="img-fluid d-block" alt="GitHub Logo"
+        /></a>
+
+        <a class="padding-2 font-white" href="https://github.com/kitsteam/teammapper"
+          >TeamMapper</a
+        >
+        <a class="padding-2 font-white" href="https://kits.blog/impressum/">Impressum</a>
+        <a class="padding-2 font-white" href="https://kits.blog/datenschutzerklaerung/"
+          >Datenschutz</a
+        >
+      </div>
+    </mat-grid-tile-footer>
+  </mat-grid-tile>
+  <mat-grid-tile>
+    <div>
+      <h1 class="fw-bold">TeamMapper</h1>
+
+      <mat-list>
+        <mat-list-item>Erstelle Mindmaps gemeinsam mit anderen!</mat-list-item>
+        <mat-list-item>Gestalte deine Mindmap mit Farben!</mat-list-item>
+        <mat-list-item>Ergänze Bilder!</mat-list-item>
+        </mat-list>
+
+      <a href="https://map.kits.blog/map">
+        <button mat-raised-button color="primary">Mindmap erstellen</button>
+      </a>
+    </div>
+  </mat-grid-tile>
 </mat-grid-list>

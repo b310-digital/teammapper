@@ -2,6 +2,26 @@
   min-height: 100vh;
 }
 
+.center {
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-text {
+  display: flex;
+  align-items: center;
+  padding: 2px 2px 2px 2px;
+}
+
 .gradient {
   background-image: linear-gradient(180deg, rgb(0, 69, 111) 0%, rgb(0, 163, 211) 100%) !important;
+}
+
+.padding-2 {
+  padding: 8px;
+}
+
+.font-white {
+  color: #FFFFFF;
+  text-decoration: none;
 }
