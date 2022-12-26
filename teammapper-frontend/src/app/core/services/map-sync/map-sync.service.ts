@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { BehaviorSubject, Observable } from 'rxjs'
-import { CachedMap, CachedMapEntry } from '../../../shared/models/cached-map.model'
+import { CachedMap, CachedMapEntry, CachedMapOptions } from '../../../shared/models/cached-map.model'
 import { v4 as uuidv4 } from 'uuid'
 import { io, Socket } from 'socket.io-client'
 import { NodePropertyMapping } from '@mmp/index'
 import { ExportNodeProperties, MapProperties, MapSnapshot, NodeUpdateEvent } from '@mmp/map/types'
-import { ResponseMapUpdated, ResponseNodeAdded, ResponseNodeRemoved, ResponseNodeUpdated, ResponseSelectionUpdated, ServerMap, ServerMapWithAdminId } from './server-types'
+import { ResponseMapOptionsUpdated, ResponseMapUpdated, ResponseNodeAdded, ResponseNodeRemoved, ResponseNodeUpdated, ResponseSelectionUpdated, ServerMap, ServerMapWithAdminId } from './server-types'
 import { API_URL, HttpService } from '../../http/http.service'
 import { DialogService } from '../../../shared/services/dialog/dialog.service'
 import { COLORS } from '../mmp/mmp-utils'
@@ -108,20 +108,25 @@ export class MapSyncService {
 
     const mapData = this.mmpService.exportAsJSON()
     const serverMapWithAdminId: ServerMapWithAdminId = await this.postMapToServer(uuid, mapData)
-    const serverMap: MapProperties = this.convertMap(serverMapWithAdminId.map)
+    const serverMap: ServerMap = serverMapWithAdminId.map
+    const mmpMap: MapProperties = this.convertServerMapToMmp(serverMapWithAdminId.map)
     // store the admin id locally
-    this.storageService.set(serverMap.uuid, { adminId: serverMapWithAdminId.adminId, ttl: serverMap.deletedAt })
+    this.storageService.set(mmpMap.uuid, { adminId: serverMapWithAdminId.adminId, ttl: mmpMap.deletedAt })
 
     const cachedMap: CachedMap = {
       data: mapData,
-      lastModified: serverMap.lastModified,
+      lastModified: mmpMap.lastModified,
       uuid,
-      deleteAfterDays: serverMap.deleteAfterDays,
-      deletedAt: serverMap.deletedAt
+      deleteAfterDays: mmpMap.deleteAfterDays,
+      deletedAt: mmpMap.deletedAt,
+      options: serverMap.options
     }
 
+    // init data and other components from new map data
     this.attachMap({ key, cachedMap })
     this.listenServerEvents(uuid)
+    this.mmpService.updateAdditionalMapOptions(serverMap.options)
+
     return true
   }
 
@@ -129,24 +134,28 @@ export class MapSyncService {
      * Attach existing map.
      */
   public async attachExistingMap (id: string): Promise<boolean> {
-    const newMap = await this.fetchMapFromServer(id)
+    const newServerMap = await this.fetchMapFromServer(id)
 
-    if (!newMap) {
+    if (!newServerMap) {
       return false
     }
 
-    const mapKey = this.createKey(newMap.uuid)
+    const mapKey = this.createKey(newServerMap.uuid)
 
     this.attachMap({
       key: mapKey,
-      cachedMap: newMap
+      cachedMap: { ...this.convertServerMapToMmp(newServerMap), ...{ options: newServerMap.options } }
     })
 
-    this.mmpService.new(newMap.data)
+    this.mmpService.new(newServerMap.data)
 
-    const mmpUuid = newMap.uuid
+    const mmpUuid = newServerMap.uuid
+
+    // init data and other components from exisitng data
     this.listenServerEvents(mmpUuid)
     this.initColorMapping()
+    this.mmpService.updateAdditionalMapOptions(newServerMap.options)
+
     return true
   }
 
@@ -168,18 +177,19 @@ export class MapSyncService {
       lastModified: Date.now(),
       uuid: cachedMapEntry.cachedMap.uuid,
       deletedAt: cachedMapEntry.cachedMap.deletedAt,
-      deleteAfterDays: cachedMapEntry.cachedMap.deleteAfterDays
+      deleteAfterDays: cachedMapEntry.cachedMap.deleteAfterDays,
+      options: cachedMapEntry.cachedMap.options
     }
 
     this.attachMap({ key: cachedMapEntry.key, cachedMap })
   }
 
-  public async fetchMapFromServer (id: string): Promise<MapProperties> {
+  public async fetchMapFromServer (id: string): Promise<ServerMap> {
     const response = await this.httpService.get(API_URL.ROOT, '/maps/' + id)
     if (!response.ok) return null
 
     const json: ServerMap = await response.json()
-    return this.convertMap(json)
+    return json
   }
 
   public async postMapToServer (uuid: string, data: MapSnapshot): Promise<ServerMapWithAdminId> {
@@ -206,6 +216,11 @@ export class MapSyncService {
   public async updateMap (_oldMapData?: MapSnapshot): Promise<void> {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
     this.socket.emit('updateMap', { map: cachedMapEntry.cachedMap })
+  }
+
+  public async updateMapOptions (options?: CachedMapOptions): Promise<void> {
+    const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
+    this.socket.emit('updateMapOptions', { mapId: cachedMapEntry.cachedMap.uuid, options: options })
   }
 
   public async deleteMap (adminId: string): Promise<any> {
@@ -244,7 +259,7 @@ export class MapSyncService {
   /**
      * Converts server map
      */
-  private convertMap (serverMap: ServerMap): MapProperties {
+  private convertServerMapToMmp (serverMap: ServerMap): MapProperties {
     return Object.assign({}, serverMap, { lastModified: Date.parse(serverMap.lastModified), deletedAt: Date.parse(serverMap.deletedAt) })
   }
 
@@ -282,6 +297,12 @@ export class MapSyncService {
 
       this.mmpService.new(result.map.data, false)
       this.updateAttachedMap()
+    })
+
+    this.socket.on('mapOptionsUpdated', (result: ResponseMapOptionsUpdated) => {
+      if (result.clientId === this.socket.id) return
+
+      this.mmpService.updateAdditionalMapOptions(result.options)
     })
 
     this.socket.on('nodeRemoved', (result: ResponseNodeRemoved) => {
