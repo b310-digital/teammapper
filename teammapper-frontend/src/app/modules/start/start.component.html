@@ -1,78 +1,64 @@
-<div class="content container-small">
-    <img src="./assets/images/TeamMapper.svg" alt="TeamMapper Logo" class="teammapper-logo">
+<mat-grid-list rowHeight="fit" class="min-vh-100" [cols]="breakpoint" (window:resize)="onResize($event)">
+  <mat-grid-tile class="gradient" *ngIf="breakpoint === 2">
+    <img src="/assets/images/teammapper-logo.png" class="img-fluid d-block" alt="TeamMapper Logo" />
+    <mat-grid-tile-footer class="center margin-bottom-10">
+      <div class="kits-left-footer-text">
+        <a href="https://github.com/kitsteam/teammapper"
+          ><img src="/assets/images/github-logo.svg" class="img-fluid d-block" alt="GitHub Logo"
+        /></a>
 
-    <p>
-        <small> Mindmaps sind eine wunderbare Möglichkeit, um Themen strukturiert zu
-            visualisieren. Unsere Anwendung »TeamMapper« bietet dir zahlreiche Funktionen:
-            Arbeite kollaborativ mit anderen gemeinsam, färbe deine Mindmap oder füge Bilder zur Veranschaulichung hinzu.</small>
-    </p>
+        <a class="padding-8 font-white" href="https://github.com/kitsteam/teammapper"
+          >TeamMapper</a
+        >
+        <a class="padding-8 font-white" href="https://kits.blog/impressum/">Impressum</a>
+        <a class="padding-8 font-white" href="https://kits.blog/datenschutzerklaerung/"
+          >Datenschutz</a
+        >
+      </div>
+    </mat-grid-tile-footer>
+  </mat-grid-tile>
+  <mat-grid-tile>
+    <mat-grid-tile-header class="header">
+      <a href="https://kits.blog/tools/"
+                ><img src="/assets/images/kits-logo.svg"  alt="Kits Logo"
+              /></a>
+    </mat-grid-tile-header>
+    <div>
+      <h1 class="fw-bold">TeamMapper</h1>
 
-    <a color="accent" class="button-accent" mat-flat-button routerLink="/map">
-        {{ "GENERAL.TRY_IT" | translate }}
-    </a>
+      <mat-list class="list-border kits-list">
+        <mat-list-item>Erstelle Mindmaps gemeinsam mit anderen!</mat-list-item>
+        <mat-list-item>Gestalte deine Mindmap mit Farben!</mat-list-item>
+        <mat-list-item>Ergänze Bilder!</mat-list-item>
+        </mat-list>
+        <br />
 
-
-    <div class="kits_footer">
-        <a href="https://kits.blog/tools/" target="_blank" title="Zurück zur Tools-Seite">
-            <svg version="1.1" id="kits_footer_logo" inkscape:version="0.92.3 (2405546, 2018-03-11)"
-                sodipodi:docname="kits_logo.svg" xmlns:dc="http://purl.org/dc/elements/1.1/"
-                xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-                xmlns:svg="http://www.w3.org/2000/svg"
-                xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="234.107px" height="122.289px"
-                viewBox="0 0 234.107 122.289" enable-background="new 0 0 234.107 122.289" xml:space="preserve">
-                <g id="layer2" transform="translate(17.987022,2.4044625)" inkscape:groupmode="layer"
-                    inkscape:label="Ebene 2">
-                    <g id="g35" transform="matrix(4.0529229,0,0,4.0529229,-223.55328,-470.63108)">
-                        <g id="flowRoot15" transform="matrix(0.26458333,0,0,0.26458333,108.88172,85.529972)">
-                            <path id="path841" fill="#000000" d="M-204.456,223.278h-9.91v-79.603l9.91-1.185V223.278z M-192.715,191.609l23.267,31.669
-                                    h-11.849l-22.513-31.024l20.897-25.744h11.094L-192.715,191.609z"></path>
-                            <path id="path843" fill="#000000" d="M-154.609,139.258c2.082,0,3.77,0.646,5.063,1.938c1.292,1.293,1.939,2.909,1.939,4.848
-                                    s-0.647,3.554-1.939,4.847c-1.293,1.221-2.981,1.831-5.063,1.831c-2.011,0-3.662-0.611-4.955-1.831
-                                    c-1.293-1.293-1.939-2.908-1.939-4.847s0.646-3.554,1.939-4.848C-158.271,139.905-156.62,139.258-154.609,139.258z
-                                     M-149.546,223.278h-9.91v-56.767h9.91V223.278z"></path>
-                            <path id="path845" fill="#000000" d="M-100.815,220.693c-3.735,2.585-7.972,3.878-12.711,3.878c-4.811,0-8.581-1.365-11.31-4.094
-                                    c-2.657-2.799-3.986-6.821-3.986-12.063v-34.255h-9.91v-7.648h9.91v-12.818l9.91-1.185v14.003h13.465l-1.077,7.648h-12.387
-                                    v33.824c0,2.943,0.503,5.098,1.508,6.462c1.077,1.292,2.837,1.939,5.278,1.939c2.227,0,4.738-0.753,7.54-2.262L-100.815,220.693z
-                                    "></path>
-                            <path id="path847" fill="#000000" d="M-75.145,165.218c3.879,0,7.361,0.539,10.449,1.616c3.088,1.077,6.032,2.693,8.834,4.848
-                                    l-4.202,6.246c-2.585-1.65-5.063-2.872-7.433-3.661c-2.298-0.79-4.739-1.185-7.325-1.185c-3.231,0-5.781,0.681-7.648,2.046
-                                    c-1.867,1.293-2.799,3.087-2.799,5.386c0,2.298,0.862,4.093,2.585,5.386c1.794,1.292,4.99,2.548,9.586,3.77
-                                    c6.319,1.58,11.024,3.734,14.11,6.462c3.161,2.729,4.74,6.463,4.74,11.202c0,5.602-2.189,9.875-6.571,12.819
-                                    c-4.308,2.944-9.587,4.417-15.834,4.417c-8.617,0-15.763-2.478-21.436-7.434l5.278-6.031c4.811,3.663,10.126,5.494,15.942,5.494
-                                    c3.735,0,6.679-0.755,8.833-2.262c2.227-1.579,3.339-3.698,3.339-6.355c0-1.94-0.394-3.483-1.185-4.633
-                                    c-0.79-1.22-2.155-2.261-4.094-3.123c-1.939-0.934-4.775-1.903-8.509-2.909c-6.031-1.58-10.412-3.698-13.141-6.356
-                                    c-2.657-2.657-3.986-6.031-3.986-10.126c0-2.944,0.862-5.601,2.585-7.97c1.796-2.442,4.237-4.309,7.325-5.602
-                                    C-82.541,165.9-79.023,165.218-75.145,165.218L-75.145,165.218z"></path>
-                        </g>
-                        <polygon id="polygon2" fill="#00A3D3"
-                            points="96.983,116.306 99.402,118.724 101.92,121.242 106.856,116.306      "></polygon>
-                        <polygon id="polygon4" fill="#00A3D3"
-                            points="107.02,116.47 102.083,121.406 104.61,123.932 107.02,126.342       "></polygon>
-                        <rect id="rect6" x="100.191" y="122.286"
-                            transform="matrix(0.7071 -0.7071 0.7071 0.7071 -57.8396 108.3909)" fill="#00A3D3"
-                            width="3.457" height="3.457"></rect>
-                        <polygon id="polygon8" fill="#00A3D3"
-                            points="106.856,126.506 104.528,124.178 102.199,126.506       "></polygon>
-                        <polygon id="polygon10" fill="#00A3D3"
-                            points="101.64,126.506 99.23,124.096 96.819,121.686 96.819,126.506       "></polygon>
-                        <polygon id="polygon12" fill="#00A3D3"
-                            points="96.819,121.358 99.204,123.742 99.204,118.854 96.819,116.47       "></polygon>
-                        <polygon id="polygon8-6" fill="#00A3D3"
-                            points="96.819,130.044 100.112,126.752 96.819,126.752       "></polygon>
-                    </g>
-                </g>
-            </svg>
-        </a>
-        <ul class="kits_footer_links">
-            <li><a href="https://kits.blog/impressum/" target="_blank">Impressum</a></li>
-            <li><a href="https://kits.blog/datenschutzerklaerung/" target="_blank">Datenschutz</a></li>
-        </ul>
-        <div class="github_link">
-            <a href="https://github.com/kitsteam/teammapper" class="link" target="_blank">
-                <fa-icon [icon]="faGithub" size="lg"></fa-icon> TeamMapper
-            </a>
-        </div>
+      <a href="/map">
+        <button mat-raised-button color="primary" class="kits-primary-button">Mindmap erstellen</button>
+      </a>
     </div>
-</div>
+    <mat-grid-tile-footer class="center font-grey font-sm ">
+      <div>
+        Dieses Tool darf nur in Lehr-Lern-Kontexten genutzt werden. Die Eingabe personenbezogener Daten ist nicht gestattet.
+      </div>
+    </mat-grid-tile-footer>
+  </mat-grid-tile>
+  <mat-grid-tile class="gradient" *ngIf="breakpoint === 1">
+    <img src="/assets/images/teammapper-logo.png" class="img-fluid d-block" alt="TeamMapper Logo" />
+    <mat-grid-tile-footer class="center">
+      <div class="kits-left-footer-text">
+        <a href="https://github.com/kitsteam/teammapper"
+          ><img src="/assets/images/github-logo.svg" class="img-fluid d-block" alt="GitHub Logo"
+        /></a>
+
+        <a class="padding-8 font-white" href="https://github.com/kitsteam/teammapper"
+          >TeamMapper</a
+        >
+        <a class="padding-8 font-white" href="https://kits.blog/impressum/">Impressum</a>
+        <a class="padding-8 font-white" href="https://kits.blog/datenschutzerklaerung/"
+          >Datenschutz</a
+        >
+      </div>
+    </mat-grid-tile-footer>
+  </mat-grid-tile>
+</mat-grid-list>

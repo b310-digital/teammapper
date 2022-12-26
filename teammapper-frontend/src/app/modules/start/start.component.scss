@@ -1,104 +1,70 @@
+$kits-main-color: rgb(0, 163, 211);
+$font-grey: rgb(33, 37, 41);
+$button-color: rgb(0, 69, 111);
 
-
-.container-small {
-    position : absolute;
-    top      : 50%;
-    left     : 50%;
-    transform: translate(-50%, -50%);
-    width    : 500px;
-    max-width: 90%;
+.min-vh-100 {
+  min-height: 100vh;
 }
 
-.container-small p {
-    text-align: center;
+.kits-primary-button {
+  background-color: $button-color;
+  font-family: FiraSans !important;
 }
 
-.teammapper-logo {
-    width    : 100%;
-    max-width: 300px;
-    margin   : 0 auto 35px auto;
-    display  : block;
+.center {
+  justify-content: center;
+  background-color: transparent !important;
 }
 
-.button-accent {
-    width        : 100%;
-    font-size    : 20px;
-    line-height  : 1.8;
-    color        : #fff;
-    background   : #00a3d3;
-    border-radius: 3px;
-    padding      : 8px 20px;
-    max-width    : 300px;
-    margin       : 0 auto;
-    display      : block;
+.kits-left-footer-text {
+  display: flex;
+  align-items: center;
+  padding: 2px 2px 2px 2px;
+  font-family: FiraSans;
+  font-size: 16px !important;
 }
 
-.kits_footer {
-    font-family  : Arial, Helvetica, sans-serif;
-    border-radius: 4px;
-    width        : 300px;
-    max-width    : 100%;
-    margin       : 100px auto 30px auto;
-    padding      : 20px;
-    border-left  : 4px solid #00a3d3;
-    box-sizing   : border-box;
-    box-shadow   : 0 0.25rem 0.5rem rgba(0, 0, 0, .1);
+.margin-bottom-10 {
+  margin-bottom: 15px;
 }
 
-.kits_footer #kits_footer_logo {
-    position     : relative;
-    left         : calc(50% + 10px);
-    transform    : translateX(-50%);
-    width        : 90px;
-    height       : auto;
-    margin-bottom: 5px;
+.list-border {
+  border-left: 3px solid $kits-main-color;
+  padding: 0;
 }
 
-.kits_footer_links {
-    padding   : 0;
-    text-align: center;
-    margin    : 0;
+.gradient {
+  background-image: linear-gradient(180deg, rgb(0, 69, 111) 0%, rgb(0, 163, 211) 100%) !important;
 }
 
-.kits_footer_links li {
-    display: inline-block;
-    padding: 5px;
+.padding-8 {
+  padding: 8px;
 }
 
-.kits_footer_links a {
-    color          : #000;
-    font-size      : 12px;
-    text-decoration: none;
+.font-white {
+  color: #FFFFFF;
+  text-decoration: none;
 }
 
-.kits_footer_links a:hover {
-    text-decoration: underline;
+.font-grey {
+  color: $font-grey !important;
+  text-decoration: none;
 }
 
-.github_link {
-    text-align: center;
-    font-size : 12px;
-    margin-top: 5px;
-
-    a {
-        color          : #999;
-        text-decoration: none;
-        transition     : color .3s ease;
-    }
+.header {
+  background-color: transparent !important;
+  height: 70px !important;
+  a {
+    margin-left: auto;
+    margin-top: 16px;
+  }
 }
 
-@media (max-width: 480px) {
-    .container-small {
-        position : relative;
-        top      : 0;
-        left     : 0;
-        transform: none;
-        width    : 80%;
-        max-width: 80%;
-        margin   : 20px 10%;
-        padding-bottom : 10px;
-    }
-    .kits_footer {
-        margin: 50px auto 30px auto;
-    }
+.font-sm {
+  font-size: 0.75rem !important;
+}
+
+.kits-list .mat-list-item {
+  height: 35px;
+  font-family: FiraSans;
 }

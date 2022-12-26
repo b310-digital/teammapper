@@ -10,7 +10,17 @@ export class StartComponent {
 
   public projectName: string
   public faGithub = faGithub
+  public breakpoint: number
 
   constructor () {
+    this.breakpoint = 1
+  }
+
+  ngOnInit() {
+    this.breakpoint = (window.innerWidth <= 990) ? 1 : 2;
+  }
+
+  onResize(event: Event) {
+    this.breakpoint = ((event.target as Window).innerWidth <= 990) ? 1 : 2;
   }
 }
