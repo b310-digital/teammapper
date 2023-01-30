@@ -1,14 +1,37 @@
-$kits-main-color: rgb(0, 163, 211);
-$font-grey: rgb(33, 37, 41);
-$button-color: rgb(0, 69, 111);
+@import "~src/colors.scss";
+
+.container {
+  padding: 12px;
+  margin: auto;
+  width: 90%;
+}
+
+a {
+  text-decoration: none;
+}
+
+.muted {
+  color: #6c757d !important;
+}
 
 .min-vh-100 {
   min-height: 100vh;
 }
 
 .kits-primary-button {
-  background-color: $button-color;
+  background-color: $primary;
   font-family: FiraSans !important;
+  font-size: large;
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: $primary-hover;
+  }
+}
+
+h1 {
+  font-size: 2.5em;
+  margin-bottom: 0.3em;
 }
 
 .center {
@@ -16,20 +39,73 @@ $button-color: rgb(0, 69, 111);
   background-color: transparent !important;
 }
 
-.kits-left-footer-text {
-  display: flex;
-  align-items: center;
-  padding: 2px 2px 2px 2px;
-  font-family: FiraSans;
-  font-size: 16px !important;
+// we don't want the footer logo to grow too big, otherwise the footer becomes too high:
+.kits-mobile-footer-wrapper {
+  height: 112px !important;
+  padding: 0 !important;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 
-.margin-bottom-10 {
-  margin-bottom: 15px;
+@media screen and (max-width: 574px) {
+  // for very small display widhts we need to reduce the font size for the footer:
+  .kits-mobile-footer-wrapper {
+    height: 55px !important;
+    padding: 0 !important;
+  }
+
+  .kits-footer-logo {
+    padding: 10px 20px 10px 20px;
+    width: 40px !important;
+    height: 40px !important;
+    text-align: center;
+  
+    img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+.kits-footer-container {
+  display: flex;  
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+}
+
+.kits-footer-logo {
+  padding: 10px 10px 10px 20px;
+  width: 80px;
+  height: 80px;
+  text-align: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.kits-footer-text {
+  align-items: center;
+  padding: 15px 15px 15px 15px;
+  font-family: FiraSans;
+  font-size: 16px !important;
+  justify-content: right;
+  width: 100%;
+  text-align: right;
+}
+
+.kits-footer-text-right {
+  @extend .kits-footer-text;
+  text-align: center;
 }
 
 .list-border {
-  border-left: 3px solid $kits-main-color;
+  border-left: 3px solid $secondary;
   padding: 0;
 }
 
@@ -54,6 +130,7 @@ $button-color: rgb(0, 69, 111);
 .header {
   background-color: transparent !important;
   height: 70px !important;
+  text-align: right;
   a {
     margin-left: auto;
     margin-top: 16px;
@@ -67,4 +144,10 @@ $button-color: rgb(0, 69, 111);
 .kits-list .mat-list-item {
   height: 35px;
   font-family: FiraSans;
+}
+
+.fw-bold {
+  font-size: calc(1.375rem + 1.5vw);
+  font-weight: 700 !important;
+  color: $primary;
 }

@@ -1,3 +1,5 @@
+@import "~src/colors.scss";
+
 div.floating-buttons {
     .no-touch {
         width: 50px;
@@ -19,8 +21,8 @@ div.floating-buttons {
     }
 
     .add-node button, .remove-node button {
-        background-color: #00a3d3;
-        color: #fff;
+        background-color: $secondary;
+        color: #FFFFFF;
     }
 
     .add-node {
