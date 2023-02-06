@@ -4,6 +4,7 @@
   padding: 12px;
   margin: auto;
   width: 90%;
+  padding-bottom: 112px !important;
 }
 
 a {
@@ -43,12 +44,12 @@ h1 {
 .kits-mobile-footer-wrapper {
   height: 112px !important;
   padding: 0 !important;
-  position: absolute;
+  position: fixed;
   bottom: 0;
   width: 100%;
 }
 
-@media screen and (max-width: 574px) {
+@media screen and (max-width: 574px), screen and (max-height: 500px) {
   // for very small display widhts we need to reduce the font size for the footer:
   .kits-mobile-footer-wrapper {
     height: 55px !important;
