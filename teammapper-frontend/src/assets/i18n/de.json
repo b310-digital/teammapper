@@ -157,7 +157,8 @@
         "INITIAL_INFORMATION": "»TeamMapper« ist bereit ☺",
         "WELCOME_MESSAGE": "Willkommen zur Anwendung »TeamMapper« ☺",
         "MAP_DELETION_CONFIRM": "Bist du sicher, dass du die Mindmap löschen möchtest?",
-        "UNLOAD_WARN": "Seite wirklich verlassen?"
+        "UNLOAD_WARN": "Seite wirklich verlassen?",
+        "JSON_FILE_SIZE_TOO_LARGE": "Die Datei ist größer als 1 MB und kann möglicherweise später nicht importiert werden. Bitte Datei verkleinern (z.B. Bilder entfernen)."
     },
     "GENERAL": {
         "ORGANIZATION": "Organisation",

@@ -14,8 +14,9 @@ export class ToolbarComponent {
   constructor (public mmpService: MmpService, public dialogService: DialogService, public translationService: TranslateService) {
   }
 
-  public exportMap (format: string) {
-    this.mmpService.exportMap(format)
+  public async exportMap (format: string) {
+    const result = await this.mmpService.exportMap(format)
+    if(result.size > 1000 && format === 'json') alert(this.translationService.instant('MESSAGES.JSON_FILE_SIZE_TOO_LARGE'))
   }
 
   public async share () {
@@ -79,7 +80,7 @@ export class ToolbarComponent {
         // set target value to empty string, otherwise new uploads are not triggered
         fileEvent.target.value = ''
         // get the base64-encoded Data URI from the resize image
-        this.mmpService.addNodeImage(ctx.canvas.toDataURL())
+        this.mmpService.addNodeImage(ctx.canvas.toDataURL('image/jpeg', 0.5))
       }
     }
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement
