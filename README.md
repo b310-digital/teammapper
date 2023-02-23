@@ -19,6 +19,59 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 
 ## Getting started
 
+### Quick Start (without building the image)
+
+Prepared docker image: `docker pull ghcr.io/b310-digital/teammapper:latest`
+
+#### Docker compose
+
+```docker
+version: "3.8"
+
+services:
+  app_prod:
+    image: ghcr.io/b310-digital/teammapper:latest
+    environment:
+      MODE: PROD
+      BINDING: "0.0.0.0"
+      POSTGRES_DATABASE: teammapper-db
+      POSTGRES_HOST: postgres_prod
+      POSTGRES_PASSWORD:
+      POSTGRES_PORT: 5432
+      POSTGRES_SSL: false
+      POSTGRES_SSL_REJECT_UNAUTHORIZED: false
+      POSTGRES_USER: teammapper-user
+      POSTGRES_QUERY_TIMEOUT: 100000
+      POSTGRES_STATEMENT_TIMEOUT: 100000
+      DELETE_AFTER_DAYS: 30
+    ports:
+      - 80:3000
+    depends_on:
+      - postgres_prod
+
+  postgres_prod:
+    image: postgres:12-alpine
+    # Pass config parameters to the postgres server.
+    # Find more information below when you need to generate the ssl-relevant file your self
+    # command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: teammapper-db
+      POSTGRES_PASSWORD:
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: teammapper-user
+    volumes:
+      # To setup an ssl-enabled postgres server locally, you need to generate a self-signed ssl certificate.
+      # See README.md for more information.
+      # Mount the ssl_cert_file and ssl_key_file into the docker container.
+      - ./ca/server.crt:/var/lib/postgresql/server.crt
+      - ./ca/server.key:/var/lib/postgresql/server.key
+      - postgres_prod_data:/var/lib/postgresql/data/pgdata
+
+volumes:
+  postgres_prod_data:
+```
+
 ### Development
 
 -   Start up app necessary services
