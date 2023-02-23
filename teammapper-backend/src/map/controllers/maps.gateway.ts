@@ -21,8 +21,9 @@ import { mapMmpNodeToClient } from '../utils/clientServerMapping';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 
-
-@WebSocketGateway({ cors: { credentials: true } })
+// For possible configuration options please see:
+// https://socket.io/docs/v4/server-initialization/
+@WebSocketGateway({ cors: { credentials: true }, maxHttpBufferSize: 2e6 })
 export class MapsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
     server: Server;

@@ -156,7 +156,8 @@
         "NO_SAVED_MAPS": "Nessuna mappa salvata!",
         "INITIAL_INFORMATION": "TeamMapper è pronto ☺",
         "WELCOME_MESSAGE": "Benvenuti nell'app TeamMapper ☺",
-        "MAP_DELETION_CONFIRM": "Sei sicuro di voler cancellare la mappa?"
+        "MAP_DELETION_CONFIRM": "Sei sicuro di voler cancellare la mappa?",
+        "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
     },
     "GENERAL": {
         "ORGANIZATION": "Organizzazione",

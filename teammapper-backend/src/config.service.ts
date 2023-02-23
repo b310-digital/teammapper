@@ -57,10 +57,6 @@ class ConfigService {
       migrationsTableName: 'migration',
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
 
-      cli: {
-        migrationsDir: 'migrations',
-      },
-
       extra: {
         query_timeout: this.getValue('POSTGRES_QUERY_TIMEOUT') || 100000,
         statement_timeout: this.getValue('POSTGRES_STATEMENT_TIMEOUT') || 100000,
