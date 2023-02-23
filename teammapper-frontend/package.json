@@ -14,8 +14,8 @@
   },
   "license": "MIT",
   "engines": {
-    "npm": "~8.15.0",
-    "node": "~16.17.1"
+    "npm": "~9.5.0",
+    "node": "~18.14.2"
   },
   "keywords": [
     "mindmap",
