@@ -13,7 +13,7 @@ name: Create and publish a Docker image
 
 on:
   push:
-    branches: ['release']
+    branches: ['fix-release-setup']
 
 # on:
 #  release:
