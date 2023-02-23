@@ -297,9 +297,11 @@ export class MmpService {
         const json = JSON.stringify(this.exportAsJSON())
         const uri = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`
 
+        const fileSizeKb = uri.length / 1024
+
         UtilsService.downloadFile(`${name}.${format}`, uri)
 
-        break
+        return { success: true, size: fileSizeKb }
       }
       case 'pdf': {
         const imageUri = await this.exportAsImage('png')
@@ -326,7 +328,7 @@ export class MmpService {
 
         pdf.save(`${name}.${format}`)
 
-        break
+        return { success: true, size: pdf.output().length }
       }
       case 'svg':
       case 'jpeg':
@@ -335,7 +337,7 @@ export class MmpService {
 
         UtilsService.downloadFile(`${name}.${format === 'jpeg' ? 'jpg' : format}`, image)
 
-        break
+        return { success: true, size: image.length / 1024 }
       }
     }
   }

@@ -14,8 +14,9 @@ export class ToolbarComponent {
   constructor (public mmpService: MmpService, public dialogService: DialogService, public translationService: TranslateService) {
   }
 
-  public exportMap (format: string) {
-    this.mmpService.exportMap(format)
+  public async exportMap (format: string) {
+    const result = await this.mmpService.exportMap(format)
+    if(result.size > 1000 && format === 'json') alert(this.translationService.instant('MESSAGES.JSON_FILE_SIZE_TOO_LARGE'))
   }
 
   public async share () {
