@@ -79,7 +79,7 @@ export class ToolbarComponent {
         // set target value to empty string, otherwise new uploads are not triggered
         fileEvent.target.value = ''
         // get the base64-encoded Data URI from the resize image
-        this.mmpService.addNodeImage(ctx.canvas.toDataURL())
+        this.mmpService.addNodeImage(ctx.canvas.toDataURL('image/jpeg', 1))
       }
     }
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement
