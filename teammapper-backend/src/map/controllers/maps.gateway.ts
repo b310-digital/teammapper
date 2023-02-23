@@ -22,7 +22,7 @@ import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 
 
-@WebSocketGateway({ cors: { credentials: true } })
+@WebSocketGateway({ cors: { credentials: true }, maxHttpBufferSize: 1e20 })
 export class MapsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
     server: Server;
