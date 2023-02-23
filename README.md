@@ -25,6 +25,10 @@ Prepared docker image: `docker pull ghcr.io/b310-digital/teammapper:latest`
 
 #### Docker compose
 
+Attention: Add the missing password for postgres inside app_prod and postgres_prod!
+
+`docker compose up -d` and visit `localhost:80`
+
 ```docker
 version: "3.8"
 
