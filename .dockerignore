@@ -12,16 +12,4 @@ ca/*.pem
 ca/*.req
 docker-compose*
 Dockerfile*
-LICENSE
-teammapper-backend/client-build
-teammapper-backend/dist
-teammapper-backend/LICENSE
-teammapper-backend/node_modules
-teammapper-backend/npm-debug.log
-teammapper-backend/README.md
-teammapper-frontend/dist
-teammapper-frontend/LICENSE
-teammapper-frontend/node_modules
-teammapper-frontend/npm-debug.log
-teammapper-frontend/README.md
 README.md

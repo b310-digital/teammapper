@@ -29,6 +29,8 @@ RUN npm run build:backend:prod
 COPY --chown=node:node teammapper-frontend $APP_FRONTEND_PATH/
 RUN GENERATE_SOURCEMAP=false npm run build:frontend:prod
 
+RUN mv $APP_FRONTEND_PATH/dist $APP_BACKEND_PATH/client
+
 COPY --chown=node:node entrypoint.prod.sh $APP_PATH/
 CMD ["./entrypoint.prod.sh"]
 
