@@ -105,9 +105,10 @@ export default class Draw {
             .style('stroke-width', 3)
             .attr('d', (node: Node) => this.drawNodeBackground(node))
 
-        // Set image of the node
+        // Set image and link of the node
         outer.each((node: Node) => {
             this.setImage(node)
+            this.setLink(node)
         })
 
 
@@ -241,6 +242,33 @@ export default class Draw {
             domImage.remove()
         }
     }
+
+    /**
+     * TODO
+     * Set main properties of node image and create it if it does not exist.
+     * @param {Node} node
+     */
+        public setLink(node: Node) {
+            let domLink = node.getLinkDOM()
+    
+            if (!domLink) {
+                domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
+                const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+                domText.textContent = '🔗'
+                domText.setAttribute('y', '50')
+                node.dom.appendChild(domLink)
+                domLink.appendChild(domText)
+            }
+    
+            if (DOMPurify.sanitize(node.link.href) !== '') {
+                domLink.setAttribute('href', DOMPurify.sanitize(node.link.href))
+                domLink.setAttribute('xlink:href', DOMPurify.sanitize(node.link.href))
+                domLink.setAttribute('target', '_self')
+
+            } else {
+                domLink.remove()
+            }
+        }
 
     /**
      * Update the node image position.

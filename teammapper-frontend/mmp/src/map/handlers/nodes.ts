@@ -264,6 +264,12 @@ export default class Nodes {
             case 'imageSize':
                 updated = this.updateNodeImageSize(node, value, graphic)
                 break
+            case 'linkHref':
+                updated = this.updateNodeLinkHref(node, value)
+                break
+            case 'linkName':
+                updated = this.updateNodeLinkName(node, value)
+                break
             case 'backgroundColor':
                 updated = this.updateNodeBackgroundColor(node, value, graphic)
                 break
@@ -863,6 +869,48 @@ export default class Nodes {
     }
 
     /**
+     * Update the node link href and name with new values.
+     * @param {Node} node
+     * @param {string} href
+     * @param {string} name
+     * @returns {boolean}
+     */
+    private updateNodeLinkHref = (node: Node, href: string) => {
+        if (href && typeof href !== 'string') {
+            Log.error('The link href must be a string', 'type')
+        }
+
+        if (node.link.href !== href) {
+            node.link.href = href
+
+            this.map.draw.setLink(node)
+        } else {
+            return false
+        }
+    }
+
+        /**
+     * Update the node link href and name with new values.
+     * @param {Node} node
+     * @param {string} href
+     * @param {string} name
+     * @returns {boolean}
+     */
+    private updateNodeLinkName = (node: Node, name: string) => {
+        if (name && typeof name !== 'string') {
+            Log.error('The link name must be a string', 'type')
+        }
+
+        if (node.link.name !== name) {
+            node.link.name = name
+
+            this.map.draw.setLink(node)
+        } else {
+            return false
+        }
+    }
+
+    /**
      * Update the node font style.
      * @param {Node} node
      * @param {string} style
@@ -1021,6 +1069,8 @@ export const PropertyMapping = {
     coordinates: ['coordinates'],
     imageSrc: ['image', 'src'],
     imageSize: ['image', 'size'],
+    linkName: ['link', 'name'],
+    linkHref: ['link', 'href'],
     backgroundColor: ['colors', 'background'],
     branchColor: ['colors', 'branch'],
     fontWeight: ['font', 'weight'],

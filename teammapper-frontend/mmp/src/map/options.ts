@@ -1,4 +1,4 @@
-import {Colors, Font, Image, UserNodeProperties} from './models/node'
+import {Colors, Font, Image, Link} from './models/node'
 import Utils from '../utils/utils'
 import Map from './map'
 import * as d3 from 'd3'
@@ -35,6 +35,10 @@ export default class Options implements OptionParameters {
         // Default node properties
         this.defaultNode = Utils.mergeObjects({
             name: '',
+            link: {
+              href: '',
+              name: ''
+            },
             image: {
                 src: '',
                 size: 60
@@ -56,6 +60,10 @@ export default class Options implements OptionParameters {
         // Default root node properties
         this.rootNode = Utils.mergeObjects({
             name: 'Root node',
+            link: {
+                href: '',
+                name: ''
+            },
             image: {
                 src: '',
                 size: 70
@@ -190,6 +198,7 @@ export default class Options implements OptionParameters {
 export interface DefaultNodeProperties {
     name: string
     image: Image
+    link: Link
     colors: Colors
     font: Font
     locked: boolean
