@@ -73,9 +73,9 @@ export default class Draw {
                 event.stopPropagation()
                 this.enableNodeNameEditing(node)
             }).on('touchstart', (event: TouchEvent, node: Node) => {
-                // disable all kinds of touch events despite for the link element and when in editing mode
-                // a single tap shall move the node and not edit
-                if(event.target['classList'][0] !== 'link-text' && !this.editing) {
+                // When not clicking a link and not in edit mode, disable all mobile native touch events
+                // A single tap is supposed to move the node in this application
+                if(!this.isLinkTarget(event) && !this.editing) {
                     event.preventDefault()
                 }
 
@@ -360,6 +360,7 @@ export default class Draw {
 
         name.onblur = () => {
             this.editing = false
+            
             if (name.innerHTML !== node.name) {
                 this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
@@ -437,6 +438,15 @@ export default class Draw {
         div.innerHTML = DOMPurify.sanitize(node.name)
 
         return div.outerHTML
+    }
+
+    /**
+     * Checks if the target of the event is the link below the node
+     * @param {TouchEvent} event
+     * @returns {boolean}
+     */
+    private isLinkTarget(event: TouchEvent): boolean {
+        return event.target['classList'][0] === 'link-text'
     }
 
 }
