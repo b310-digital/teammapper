@@ -262,9 +262,12 @@ export default class Draw {
             if (!domLink) {
                 domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
                 const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-                domText.textContent = `🔗`
+                domText.textContent = 'link'
                 domText.classList.add('link-text')
+                domText.classList.add('material-icons')
+                domText.style.setProperty('fill', node.colors.name)
                 domText.setAttribute('y', node.dimensions.height.toString())
+                domText.setAttribute('x', '-10')
                 node.dom.appendChild(domLink)
                 domLink.appendChild(domText)
             }
@@ -360,7 +363,7 @@ export default class Draw {
 
         name.onblur = () => {
             this.editing = false
-            
+
             if (name.innerHTML !== node.name) {
                 this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
