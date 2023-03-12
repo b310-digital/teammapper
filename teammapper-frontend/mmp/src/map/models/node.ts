@@ -134,7 +134,6 @@ export interface Image {
 
 export interface Link {
     href: string
-    name: string
 }
 
 export interface Colors {

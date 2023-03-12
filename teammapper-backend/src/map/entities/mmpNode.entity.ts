@@ -78,6 +78,9 @@ export class MmpNode {
     imageSize: number;
 
   @Column({ nullable: true })
+    linkHref: string;
+
+  @Column({ nullable: true })
     locked: boolean;
 
   @Column({ nullable: true, type: 'float' })

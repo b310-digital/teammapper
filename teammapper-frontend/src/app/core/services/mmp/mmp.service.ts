@@ -361,7 +361,6 @@ export class MmpService {
    */
   public addNodeLink (name: string, href: string) {
     this.updateNode('linkHref', href)
-    this.updateNode('linkName', name)
   }
 
   /**

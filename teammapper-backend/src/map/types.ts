@@ -46,6 +46,7 @@ export interface IMmpClientNode {
   id: string;
   image: { src: string; size: number };
   k: number;
+  link: { href: string }
   locked: boolean;
   name: string;
   parent: string;

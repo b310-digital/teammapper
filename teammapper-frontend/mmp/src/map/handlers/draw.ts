@@ -12,6 +12,7 @@ export default class Draw {
 
     private map: Map
     private base64regex: RegExp = /[^a-zA-Z0-9+\/;:,=]/i
+    private editing: boolean = false
 
     /**
      * Get the associated map instance.
@@ -61,6 +62,7 @@ export default class Draw {
 
         const outer = dom.nodes.enter().append('g')
             .style('cursor', 'pointer')
+            .style('touch-action', 'none')
             .attr('class', this.map.id + '_node')
             .attr('id', function (node: Node) {
                 node.dom = this
@@ -70,7 +72,14 @@ export default class Draw {
             .on('dblclick', (event: MouseEvent, node: Node) => {
                 event.stopPropagation()
                 this.enableNodeNameEditing(node)
-            }).on('touchstart', (_event: TouchEvent, node: Node) => {
+            }).on('touchstart', (event: TouchEvent, node: Node) => {
+                // disable all kinds of touch events despite for the link element and when in editing mode
+                // a single tap shall move the node and not edit
+                if(event.target['classList'][0] !== 'link-text' && !this.editing) {
+                    event.preventDefault()
+                }
+
+                // a single tap should enter moving node mode - not a selection
                 if (!tapedTwice) {
                     tapedTwice = true
 
@@ -244,7 +253,6 @@ export default class Draw {
     }
 
     /**
-     * TODO
      * Set main properties of node image and create it if it does not exist.
      * @param {Node} node
      */
@@ -254,15 +262,16 @@ export default class Draw {
             if (!domLink) {
                 domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
                 const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-                domText.textContent = '🔗'
-                domText.setAttribute('y', '50')
+                domText.textContent = `🔗`
+                domText.classList.add('link-text')
+                domText.setAttribute('y', node.dimensions.height.toString())
                 node.dom.appendChild(domLink)
                 domLink.appendChild(domText)
             }
     
             if (DOMPurify.sanitize(node.link.href) !== '') {
                 domLink.setAttribute('href', DOMPurify.sanitize(node.link.href))
-                domLink.setAttribute('xlink:href', DOMPurify.sanitize(node.link.href))
+                //domLink.setAttribute('xlink:href', DOMPurify.sanitize(node.link.href))
                 domLink.setAttribute('target', '_self')
 
             } else {
@@ -287,6 +296,7 @@ export default class Draw {
      * @param {Node} node
      */
     public enableNodeNameEditing(node: Node) {
+        this.editing = true
         const name = node.getNameDOM()
         name.innerHTML = DOMPurify.sanitize(node.name)
 
@@ -349,6 +359,7 @@ export default class Draw {
         }
 
         name.onblur = () => {
+            this.editing = false
             if (name.innerHTML !== node.name) {
                 this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
@@ -411,6 +422,7 @@ export default class Draw {
         div.style.setProperty('font-weight', DOMPurify.sanitize(node.font.weight))
         div.style.setProperty('text-decoration', DOMPurify.sanitize(node.font.decoration))
 
+        div.style.setProperty('touch-action', 'none')
         div.style.setProperty('display', 'inline-block')
         div.style.setProperty('white-space', 'pre')
         div.style.setProperty('width', 'auto')

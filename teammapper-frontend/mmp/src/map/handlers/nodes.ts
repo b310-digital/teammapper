@@ -4,6 +4,7 @@ import Node, {
     ExportNodeProperties,
     Font,
     Image,
+    Link,
     NodeProperties,
     UserNodeProperties
 } from '../models/node'
@@ -267,9 +268,6 @@ export default class Nodes {
             case 'linkHref':
                 updated = this.updateNodeLinkHref(node, value)
                 break
-            case 'linkName':
-                updated = this.updateNodeLinkName(node, value)
-                break
             case 'backgroundColor':
                 updated = this.updateNodeBackgroundColor(node, value, graphic)
                 break
@@ -376,6 +374,7 @@ export default class Nodes {
             image: Utils.cloneObject(node.image) as Image,
             colors: Utils.cloneObject(node.colors) as Colors,
             font: Utils.cloneObject(node.font) as Font,
+            link:  Utils.cloneObject(node.link) as Link,
             locked: node.locked,
             isRoot: node.isRoot,
             k: node.k
@@ -872,7 +871,6 @@ export default class Nodes {
      * Update the node link href and name with new values.
      * @param {Node} node
      * @param {string} href
-     * @param {string} name
      * @returns {boolean}
      */
     private updateNodeLinkHref = (node: Node, href: string) => {
@@ -882,27 +880,6 @@ export default class Nodes {
 
         if (node.link.href !== href) {
             node.link.href = href
-
-            this.map.draw.setLink(node)
-        } else {
-            return false
-        }
-    }
-
-        /**
-     * Update the node link href and name with new values.
-     * @param {Node} node
-     * @param {string} href
-     * @param {string} name
-     * @returns {boolean}
-     */
-    private updateNodeLinkName = (node: Node, name: string) => {
-        if (name && typeof name !== 'string') {
-            Log.error('The link name must be a string', 'type')
-        }
-
-        if (node.link.name !== name) {
-            node.link.name = name
 
             this.map.draw.setLink(node)
         } else {

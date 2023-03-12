@@ -25,6 +25,7 @@ export default class Export {
      */
     public asJSON = (): MapSnapshot => {
         const snapshot = this.map.history.current()
+        console.log(snapshot)
 
         this.map.events.call(Event.exportJSON)
 
