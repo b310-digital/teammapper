@@ -209,6 +209,7 @@ export default class Draw {
         d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => this.drawBranch(node) as any)
 
         this.updateImagePosition(node)
+        this.updateLinkPosition(node)
 
         this.updateNodeNameContainer(node)
     }
@@ -290,6 +291,18 @@ export default class Draw {
             const image = node.getImageDOM(),
                 y = -((image as any).getBBox().height + node.dimensions.height / 2 + 5)
             image.setAttribute('y', y.toString())
+        }
+    }
+
+    /**
+     * Update the node link position.
+     * @param {Node} node
+     */
+    public updateLinkPosition(node: Node) {
+        if (DOMPurify.sanitize(node.link.href) !== '') {
+            const link = node.getLinkDOM(),
+                  y = node.dimensions.height
+            link.setAttribute('y', y.toString())
         }
     }
 
