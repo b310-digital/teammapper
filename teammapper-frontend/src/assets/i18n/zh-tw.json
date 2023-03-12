@@ -88,8 +88,7 @@
             "CONFIRM_DELETE": "Delete?"
         },
         "LINK": {
-            "URL": "Link URL",
-            "NAME": "Link name"
+            "URL": "Link URL (including http/https)"
         }
     },
     "PAGES": {
