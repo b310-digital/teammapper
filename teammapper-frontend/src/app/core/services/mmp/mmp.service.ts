@@ -366,9 +366,9 @@ export class MmpService {
   /**
    * Removes a link in the selected node.
    */
-    public removeNodeLink () {
-      this.updateNode('linkHref', '')
-    }
+  public removeNodeLink () {
+    this.updateNode('linkHref', '')
+  }
 
   /**
      * Removes an image of the selected node.

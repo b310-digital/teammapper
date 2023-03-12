@@ -1046,7 +1046,6 @@ export const PropertyMapping = {
     coordinates: ['coordinates'],
     imageSrc: ['image', 'src'],
     imageSize: ['image', 'size'],
-    linkName: ['link', 'name'],
     linkHref: ['link', 'href'],
     backgroundColor: ['colors', 'background'],
     branchColor: ['colors', 'branch'],
