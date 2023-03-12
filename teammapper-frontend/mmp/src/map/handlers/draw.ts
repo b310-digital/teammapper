@@ -256,31 +256,30 @@ export default class Draw {
      * Set main properties of node image and create it if it does not exist.
      * @param {Node} node
      */
-        public setLink(node: Node) {
-            let domLink = node.getLinkDOM()
-    
-            if (!domLink) {
-                domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
-                const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-                domText.textContent = 'link'
-                domText.classList.add('link-text')
-                domText.classList.add('material-icons')
-                domText.style.setProperty('fill', node.colors.name)
-                domText.setAttribute('y', node.dimensions.height.toString())
-                domText.setAttribute('x', '-10')
-                node.dom.appendChild(domLink)
-                domLink.appendChild(domText)
-            }
-    
-            if (DOMPurify.sanitize(node.link.href) !== '') {
-                domLink.setAttribute('href', DOMPurify.sanitize(node.link.href))
-                //domLink.setAttribute('xlink:href', DOMPurify.sanitize(node.link.href))
-                domLink.setAttribute('target', '_self')
+    public setLink(node: Node) {
+        let domLink = node.getLinkDOM()
 
-            } else {
-                domLink.remove()
-            }
+        if (!domLink) {
+            domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
+            const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+            domText.textContent = 'link'
+            domText.classList.add('link-text')
+            domText.classList.add('material-icons')
+            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
+            domText.setAttribute('y', node.dimensions.height.toString())
+            domText.setAttribute('x', '-10')
+            node.dom.appendChild(domLink)
+            domLink.appendChild(domText)
         }
+
+        if (DOMPurify.sanitize(node.link.href) !== '') {
+            domLink.setAttribute('href', DOMPurify.sanitize(node.link.href))
+            domLink.setAttribute('target', '_self')
+
+        } else {
+            domLink.remove()
+        }
+    }
 
     /**
      * Update the node image position.

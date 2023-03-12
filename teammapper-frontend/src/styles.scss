@@ -37,8 +37,7 @@ body {
 }
 
 ::selection {
-    color: whitesmoke;
-    background: mat.get-color-from-palette($app-primary);
+    background: transparent;
 }
 
 *:focus {

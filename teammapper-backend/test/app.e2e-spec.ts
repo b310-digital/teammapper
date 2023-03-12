@@ -90,6 +90,7 @@ describe('AppController (e2e)', () => {
             parent: '',
             k: -15.361675447001142,
             id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+            link: { href: '' },
             locked: false,
             isRoot: true,
           },
@@ -118,6 +119,7 @@ describe('AppController (e2e)', () => {
           coordinates: { x: 1, y: 2 },
           font: {},
           colors: {},
+          link: {}
         },
       });
     });
@@ -150,6 +152,7 @@ describe('AppController (e2e)', () => {
           coordinates: { x: 3, y: 4 },
           font: {},
           colors: {},
+          link: {}
         },
       });
     });

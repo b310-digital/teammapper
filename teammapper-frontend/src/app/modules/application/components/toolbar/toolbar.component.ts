@@ -36,8 +36,11 @@ export class ToolbarComponent {
   public addLink () {
     const linkInput = prompt(this.translationService.instant('MODALS.LINK.URL')) || window.location.href
     const validatedLink = this.isValidLink(linkInput) ? linkInput : window.location.href
-    const linkName = prompt(this.translationService.instant('MODALS.LINK.NAME')) || 'Link'
-    this.mmpService.addNodeLink(linkName, validatedLink)
+    this.mmpService.addNodeLink(validatedLink)
+  }
+
+  public removeLink () {
+    this.mmpService.removeNodeLink()
   }
 
   public toogleNodeFontWeight () {
