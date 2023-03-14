@@ -2,6 +2,13 @@ import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { IMmpClientMap, IMmpClientNode, IMmpClientNodeBasics } from '../types';
 
+const DEFAULT_COLOR_NAME = '#787878';
+const DEFAULT_COLOR_BACKGROUND = '#f0f6f5';
+const DEFAULT_FONT_SIZE = 20;
+const DEFAULT_FONT_STYLE = 'normal';
+const DEFAULT_FONT_WEIGHT = 'normal';
+const DEFAULT_NAME = 'Root node';
+
 const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   colors: {
     name: serverNode.colorsName || '',
@@ -60,17 +67,17 @@ const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Obje
 
 // Maps and enhances given properties to a valid root node
 const mapClientBasicNodeToMmpRootNode = (clientRootNodeBasics: IMmpClientNodeBasics, mapId: string): Object => ({
-  colorsBackground: clientRootNodeBasics.colors.background || '#f0f6f5',
+  colorsBackground: clientRootNodeBasics.colors.background || DEFAULT_COLOR_BACKGROUND,
   colorsBranch: clientRootNodeBasics.colors.branch,
-  colorsName: clientRootNodeBasics.colors.name || '#787878',
+  colorsName: clientRootNodeBasics.colors.name || DEFAULT_COLOR_NAME,
   coordinatesX: 0,
   coordinatesY: 0,
-  fontSize: clientRootNodeBasics.font.size || 20,
-  fontStyle: clientRootNodeBasics.font.style || 'normal',
-  fontWeight: clientRootNodeBasics.font.weight || 'normal',
+  fontSize: clientRootNodeBasics.font.size || DEFAULT_FONT_SIZE,
+  fontStyle: clientRootNodeBasics.font.style || DEFAULT_FONT_STYLE,
+  fontWeight: clientRootNodeBasics.font.weight || DEFAULT_FONT_WEIGHT,
   imageSrc: clientRootNodeBasics.image?.src,
   imageSize: clientRootNodeBasics.image?.size,
-  name: clientRootNodeBasics.name || 'Root node',
+  name: clientRootNodeBasics.name || DEFAULT_NAME,
   nodeParentId: null,
   root: true,
   nodeMapId: mapId,

@@ -16,7 +16,6 @@ import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
   providedIn: 'root'
 })
 export class MmpService {
-  private maps: Map<string, MmpMap>
   private currentMap: MmpMap
 
   private readonly branchColors: Array<string>
@@ -24,13 +23,12 @@ export class MmpService {
   private additionalOptions: CachedMapOptions;
 
   constructor (public settingsService: SettingsService) {
-    this.maps = new Map<string, MmpMap>()
     this.additionalOptions = null
     this.branchColors = COLORS
   }
 
   /**
-     * Create a mind mmp and save the instance with corresponding id.
+     * Create a mindmap using mmp and save the instance with corresponding id.
      * All function below require the mmp id.
      */
   public async create (id: string, options?: OptionParameters) {
@@ -38,8 +36,6 @@ export class MmpService {
 
     // additional options do not include the standard mmp map options
     this.additionalOptions = await this.defaultAdditionalOptions()
-
-    this.maps.set(id, map)
 
     this.currentMap = map
   }
@@ -380,8 +376,8 @@ export class MmpService {
   /**
      * Set the current mind mmp.
      */
-  public setCurrentMap (id: string): void {
-    this.currentMap = this.maps.get(id)
+  public setCurrentMap (map: MmpMap): void {
+    this.currentMap = map
   }
 
   /**

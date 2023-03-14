@@ -104,18 +104,18 @@ export class MapSyncService {
      * Add current new application map to cache and attach it.
      */
   public async attachNewMap (): Promise<boolean> {
-    this.mmpService.new()
-
     const serverMapWithAdminId: ServerMapWithAdminId = await this.postMapToServer()
-    const mapData = serverMapWithAdminId.map.data
-    const serverMap: ServerMap = serverMapWithAdminId.map
+    const serverMap = serverMapWithAdminId.map
     const mmpMap: MapProperties = this.convertServerMapToMmp(serverMapWithAdminId.map)
     const key = this.createKey(mmpMap.uuid)
     // store the admin id locally
     this.storageService.set(mmpMap.uuid, { adminId: serverMapWithAdminId.adminId, ttl: mmpMap.deletedAt })
 
+    // initialize mmp with initial map data from server
+    this.mmpService.new(serverMap.data)
+
     const cachedMap: CachedMap = {
-      data: mapData,
+      data: serverMap.data,
       lastModified: mmpMap.lastModified,
       uuid: mmpMap.uuid,
       deleteAfterDays: mmpMap.deleteAfterDays,

@@ -46,10 +46,11 @@ export class ApplicationComponent implements OnInit {
     })
   }
 
+  // Initializes the map by either loading an existing one or creating a new one
+  // Right now creation would be triggered with the /map route and forward to /map/ABC.
   public async initMap (options: OptionParameters) {
     // Initialize the mmpService component
     // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
-    // Map_1 is currently apparently hardcoded inside the map component...
     await this.mmpService.create('map_1', options)
 
     // Try to either load the given id from the server, or initialize a new map with empty data
@@ -76,7 +77,7 @@ export class ApplicationComponent implements OnInit {
   }
 
   public createMapListeners () {
-    // create is NOT called for initial map load / and call, but for imported maps
+    // create is NOT called by the mmp lib for initial map load / and call, but for _imported_ maps
     this.mmpService.on('create').subscribe((result: MapCreateEvent) => {
       Object.assign(this.node, this.mmpService.selectNode())
 
