@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeleteResult } from 'typeorm';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
-import { IMmpClientMap, IMmpClientMapOptions, IMmpClientNode } from '../types';
-import { mapClientNodeToMmpNode, mapMmpMapToClient } from '../utils/clientServerMapping';
+import { IMmpClientMap, IMmpClientMapOptions, IMmpClientNode, IMmpClientNodeBasics } from '../types';
+import { mapClientBasicNodeToMmpRootNode, mapClientNodeToMmpNode, mapMmpMapToClient } from '../utils/clientServerMapping';
 import configService from '../../config.service';
 
 @Injectable()
@@ -75,7 +75,16 @@ export class MapsService {
     return this.nodesRepository.remove(existingNode);
   }
 
-  async createMap(clientMap: IMmpClientMap): Promise<MmpMap> {
+  async createEmptyMap(rootNode: IMmpClientNodeBasics): Promise<MmpMap> {
+    const newMap: MmpMap = this.mapsRepository.create();
+    const savedNewMap: MmpMap = await this.mapsRepository.save(newMap);
+    const newRootNode = this.nodesRepository.create(mapClientBasicNodeToMmpRootNode(rootNode, savedNewMap.id))
+    await this.nodesRepository.save(newRootNode);
+
+    return newMap;
+  }
+
+  async updateMap(clientMap: IMmpClientMap): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create({
       id: clientMap.uuid,
     });

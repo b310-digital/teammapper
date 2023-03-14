@@ -39,16 +39,23 @@ export interface IMmpClientMapRequest {
   map: IMmpClientMap;
 }
 
-export interface IMmpClientNode {
+export interface IMmpClientMapCreateRequest {
+  rootNode: IMmpClientNodeBasics
+}
+
+export interface IMmpClientNodeBasics {
   colors: IMmpClientColor;
-  coordinates: IMmpClientCoordinates;
   font: IMmpClientFont;
-  id: string;
+  name: string;
   image: { src: string; size: number };
+}
+
+export interface IMmpClientNode extends IMmpClientNodeBasics {
+  coordinates: IMmpClientCoordinates;
+  id: string;
   k: number;
   link: { href: string }
   locked: boolean;
-  name: string;
   parent: string;
   isRoot: boolean;
 }

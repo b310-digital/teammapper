@@ -61,7 +61,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() _client: Socket,
     @MessageBody() mmpMap: IMmpClientMap,
   ): Promise<boolean> {
-    await this.mapsService.createMap(mmpMap);
+    await this.mapsService.updateMap(mmpMap);
     return true;
   }
 
@@ -136,7 +136,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   ): Promise<boolean> {
     const mmpMap: IMmpClientMap = request.map;
 
-    await this.mapsService.createMap(
+    await this.mapsService.updateMap(
       mmpMap,
     );
     

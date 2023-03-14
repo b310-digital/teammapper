@@ -1,6 +1,6 @@
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
-import { IMmpClientMap, IMmpClientNode } from '../types';
+import { IMmpClientMap, IMmpClientNode, IMmpClientNodeBasics } from '../types';
 
 const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   colors: {
@@ -58,4 +58,22 @@ const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Obje
   nodeMapId: mapId,
 });
 
-export { mapMmpNodeToClient, mapClientNodeToMmpNode, mapMmpMapToClient };
+// Maps and enhances given properties to a valid root node
+const mapClientBasicNodeToMmpRootNode = (clientRootNodeBasics: IMmpClientNodeBasics, mapId: string): Object => ({
+  colorsBackground: clientRootNodeBasics.colors.background || '#f0f6f5',
+  colorsBranch: clientRootNodeBasics.colors.branch,
+  colorsName: clientRootNodeBasics.colors.name || '#787878',
+  coordinatesX: 0,
+  coordinatesY: 0,
+  fontSize: clientRootNodeBasics.font.size || 20,
+  fontStyle: clientRootNodeBasics.font.style || 'normal',
+  fontWeight: clientRootNodeBasics.font.weight || 'normal',
+  imageSrc: clientRootNodeBasics.image?.src,
+  imageSize: clientRootNodeBasics.image?.size,
+  name: clientRootNodeBasics.name || 'Root node',
+  nodeParentId: null,
+  root: true,
+  nodeMapId: mapId,
+});
+
+export { mapMmpNodeToClient, mapClientNodeToMmpNode, mapClientBasicNodeToMmpRootNode, mapMmpMapToClient };

@@ -12,6 +12,7 @@ import { DialogService } from '../../../shared/services/dialog/dialog.service'
 import { COLORS } from '../mmp/mmp-utils'
 import { UtilsService } from '../utils/utils.service'
 import { StorageService } from '../storage/storage.service'
+import { SettingsService } from '../settings/settings.service'
 
 const DEFAULT_COLOR = '#000000'
 const DEFAULT_SELF_COLOR = '#c0c0c0'
@@ -46,7 +47,8 @@ export class MapSyncService {
     private mmpService: MmpService,
     private httpService: HttpService,
     private dialogService: DialogService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private settingsService: SettingsService
   ) {
     // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null)
@@ -102,21 +104,20 @@ export class MapSyncService {
      * Add current new application map to cache and attach it.
      */
   public async attachNewMap (): Promise<boolean> {
-    const uuid = uuidv4()
-    const key = this.createKey(uuid)
     this.mmpService.new()
 
-    const mapData = this.mmpService.exportAsJSON()
-    const serverMapWithAdminId: ServerMapWithAdminId = await this.postMapToServer(uuid, mapData)
+    const serverMapWithAdminId: ServerMapWithAdminId = await this.postMapToServer()
+    const mapData = serverMapWithAdminId.map.data
     const serverMap: ServerMap = serverMapWithAdminId.map
     const mmpMap: MapProperties = this.convertServerMapToMmp(serverMapWithAdminId.map)
+    const key = this.createKey(mmpMap.uuid)
     // store the admin id locally
     this.storageService.set(mmpMap.uuid, { adminId: serverMapWithAdminId.adminId, ttl: mmpMap.deletedAt })
 
     const cachedMap: CachedMap = {
       data: mapData,
       lastModified: mmpMap.lastModified,
-      uuid,
+      uuid: mmpMap.uuid,
       deleteAfterDays: mmpMap.deleteAfterDays,
       deletedAt: mmpMap.deletedAt,
       options: serverMap.options
@@ -124,7 +125,7 @@ export class MapSyncService {
 
     // init data and other components from new map data
     this.attachMap({ key, cachedMap })
-    this.listenServerEvents(uuid)
+    this.listenServerEvents(mmpMap.uuid)
     this.mmpService.updateAdditionalMapOptions(serverMap.options)
 
     return true
@@ -192,8 +193,11 @@ export class MapSyncService {
     return json
   }
 
-  public async postMapToServer (uuid: string, data: MapSnapshot): Promise<ServerMapWithAdminId> {
-    const response = await this.httpService.post(API_URL.ROOT, '/maps/', JSON.stringify({ uuid, data }))
+  public async postMapToServer(): Promise<ServerMapWithAdminId> {
+    const response = await this.httpService.post(
+      API_URL.ROOT, '/maps/',
+      JSON.stringify({ rootNode: this.settingsService.getCachedSettings().mapOptions.rootNode })
+    )
     return response.json()
   }
 
