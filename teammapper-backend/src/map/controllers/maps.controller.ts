@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MapsService } from '../services/maps.service';
-import { IMmpClientDeleteRequest, IMmpClientMap, IMmpClientMapCreateRequest, IMmpClientMapWithAdminId } from '../types';
+import { IMmpClientDeleteRequest, IMmpClientMap, IMmpClientMapCreateRequest, IMmpClientPrivateMap } from '../types';
 
 @Controller('api/maps')
 export default class MapsController {
@@ -24,8 +24,12 @@ export default class MapsController {
   }
 
   @Post()
-  async create(@Body() body: IMmpClientMapCreateRequest): Promise<IMmpClientMapWithAdminId> {
+  async create(@Body() body: IMmpClientMapCreateRequest): Promise<IMmpClientPrivateMap> {
     const newMap: MmpMap = await this.mapsService.createEmptyMap(body.rootNode);
-    return { map: await this.mapsService.exportMapToClient(newMap.id), adminId: newMap.adminId };
+    return { 
+      map: await this.mapsService.exportMapToClient(newMap.id),
+      adminId: newMap.adminId,
+      editingPassword: newMap.editingPassword
+    };
   }
 }

@@ -17,6 +17,10 @@ export class MmpMap {
     adminId: string;
 
   @Column({ nullable: true })
+  @Generated('uuid')
+    editingPassword: string;
+
+  @Column({ nullable: true })
     name: string;
 
   @Column('jsonb', { nullable: false, default: {} })

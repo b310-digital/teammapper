@@ -13,6 +13,7 @@ export class SettingsService {
 
   public settings: Observable<Settings | null>
   private settingsSubject: BehaviorSubject<Settings | null>
+  private readonly editModeSubject: BehaviorSubject<boolean | null>
 
   constructor (
     private storageService: StorageService,
@@ -20,6 +21,7 @@ export class SettingsService {
 
     // Initialization of the behavior subjects.
     this.settingsSubject = new BehaviorSubject(null)
+    this.editModeSubject = new BehaviorSubject(null)
     this.settings = this.settingsSubject.asObservable()
   }
 
@@ -50,6 +52,18 @@ export class SettingsService {
      */
   public getCachedSettings (): Settings | null {
     return this.settingsSubject.getValue()
+  }
+
+  public getEditModeSubject (): BehaviorSubject<boolean | null> {
+    return this.editModeSubject
+  }
+
+  public getEditMode (): boolean {
+    return this.editModeSubject.getValue()
+  }
+
+  public setEditMode (value: boolean) {
+    return this.editModeSubject.next(value)
   }
 
   /**

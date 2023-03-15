@@ -15,6 +15,9 @@ export default class Options implements OptionParameters {
     public centerOnResize: boolean
     public drag: boolean
     public zoom: boolean
+    // Controls wether edit related click handlers will be registered in the draw module
+    // Note: node property updates are still available
+    public edit: boolean
 
     public defaultNode: DefaultNodeProperties
     public rootNode: DefaultNodeProperties
@@ -30,6 +33,7 @@ export default class Options implements OptionParameters {
         this.fontFamily = parameters.fontFamily || 'Arial, Helvetica, sans-serif'
         this.centerOnResize = parameters.centerOnResize !== undefined ? parameters.centerOnResize : true
         this.drag = parameters.drag !== undefined ? parameters.drag : true
+        this.edit = parameters.edit !== undefined ? parameters.edit : true
         this.zoom = parameters.zoom !== undefined ? parameters.zoom : true
 
         // Default node properties
@@ -61,6 +65,9 @@ export default class Options implements OptionParameters {
                 break
             case 'drag':
                 this.updateDrag(value)
+                break
+            case 'edit':
+                this.updateEdit(value)
                 break
             case 'zoom':
                 this.updateZoom(value)
@@ -124,6 +131,21 @@ export default class Options implements OptionParameters {
         this.map.draw.clear()
         this.map.draw.update()
     }
+
+    /**
+     * Update edit behavior.
+     * @param {boolean} flag
+     */
+        private updateEdit(flag: boolean) {
+            if (typeof flag !== 'boolean') {
+                Log.error('The value must be a boolean', 'type')
+            }
+    
+            this.edit = flag
+    
+            this.map.draw.clear()
+            this.map.draw.update()
+        }
 
     /**
      * Update zoom behavior.
@@ -222,6 +244,7 @@ export interface OptionParameters {
     fontFamily?: string
     centerOnResize?: boolean
     drag?: boolean
+    edit?: boolean
     zoom?: boolean
     defaultNode?: DefaultNodeProperties
     rootNode?: DefaultNodeProperties

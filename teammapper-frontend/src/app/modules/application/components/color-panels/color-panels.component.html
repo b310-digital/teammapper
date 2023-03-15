@@ -13,7 +13,8 @@
                [style.background]="node.colors.background"
                [title]="'TOOLTIPS.NODE_COLOR' | translate"
                class="background-color"
-               cpPosition="left"/>
+               cpPosition="left"
+               [disabled]="editDisabled" />
         <input readonly (colorPickerChange)="colorPickerChange('nameColor', $event)"
                (cpToggleChange)="colorPickerToggleChange($event, 'nameColor', node.colors.name)"
                [(colorPicker)]="node.colors.name"
@@ -25,7 +26,8 @@
                [style.background]="node.colors.name"
                [title]="'TOOLTIPS.TEXT_COLOR' | translate"
                class="text-color"
-               cpPosition="left"/>
+               cpPosition="left"
+               [disabled]="editDisabled" />
         <input readonly (colorPickerChange)="colorPickerChange('branchColor', $event)"
                (cpToggleChange)="colorPickerToggleChange($event, 'branchColor', node.colors.branch)"
                *ngIf="node.colors.branch"
@@ -38,6 +40,7 @@
                [style.background]="node.colors.branch"
                [title]="'TOOLTIPS.BRANCH_COLOR' | translate"
                class="branch-color"
-               cpPosition="left"/>
+               cpPosition="left"
+               [disabled]="editDisabled" />
     </div>
 </div>

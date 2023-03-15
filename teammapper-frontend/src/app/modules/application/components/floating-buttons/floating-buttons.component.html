@@ -1,13 +1,13 @@
 <div class="floating-buttons">
     <div class="add-node no-touch">
-        <button (click)="mmpService.addNode()" [title]="'TOOLTIPS.ADD_NODE' | translate"
+        <button (click)="mmpService.addNode()" [title]="'TOOLTIPS.ADD_NODE' | translate" [disabled]="editDisabled"
                 class="mat-elevation-z2"
                 mat-mini-fab>
             <mat-icon aria-label="Add node">add</mat-icon>
         </button>
     </div>
     <div class="remove-node no-touch">
-        <button (click)="mmpService.removeNode()" [title]="'TOOLTIPS.REMOVE_NODE' | translate"
+        <button (click)="mmpService.removeNode()" [title]="'TOOLTIPS.REMOVE_NODE' | translate" [disabled]="editDisabled"
                 class="mat-elevation-z2"
                 mat-mini-fab>
           <mat-icon aria-label="Remove node">remove</mat-icon>

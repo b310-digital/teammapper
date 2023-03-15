@@ -1,4 +1,4 @@
-import { CACHE_MANAGER, Inject } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, UseGuards } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { randomBytes } from 'crypto';
 import {
@@ -14,12 +14,14 @@ import { MapsService } from '../services/maps.service';
 import {
   IClientCache,
   IMmpClientDeleteRequest,
+  IMmpClientEditingRequest,
   IMmpClientJoinRequest,
   IMmpClientMap, IMmpClientMapRequest, IMmpClientNodeRequest, IMmpClientNodeSelectionRequest, IMmpClientUpdateMapOptionsRequest,
 } from '../types';
 import { mapMmpNodeToClient } from '../utils/clientServerMapping';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
+import { EditGuard } from '../guards/edit.guard';
 
 // For possible configuration options please see:
 // https://socket.io/docs/v4/server-initialization/
@@ -56,15 +58,18 @@ export class MapsGateway implements OnGatewayDisconnect {
     return this.mapsService.exportMapToClient(request.mapId);
   }
 
-  @SubscribeMessage('createMap')
-  async onCreateMap(
-    @ConnectedSocket() _client: Socket,
-    @MessageBody() mmpMap: IMmpClientMap,
+  @SubscribeMessage('checkEditingPassword')
+  async checkEditingPassword(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() request: IMmpClientEditingRequest,
   ): Promise<boolean> {
-    await this.mapsService.updateMap(mmpMap);
-    return true;
+    const map = await this.mapsService.findMap(request.mapId)
+    if(!map.editingPassword) return true
+
+    return request.editingPassword == map.editingPassword;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('updateMapOptions')
   async onUpdateMap(
     @ConnectedSocket() _client: Socket,
@@ -94,6 +99,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     return false;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('addNode')
   async addNode(
     @ConnectedSocket() client: Socket,
@@ -111,6 +117,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     return true;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('updateNode')
   async updateNode(
     @ConnectedSocket() client: Socket,
@@ -129,6 +136,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     return true;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('updateMap')
   async updateMap(
     @ConnectedSocket() client: Socket,
@@ -149,6 +157,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     return true;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('removeNode')
   async removeNode(
     @ConnectedSocket() client: Socket,
@@ -201,3 +210,4 @@ export class MapsGateway implements OnGatewayDisconnect {
     return color;
   }
 }
+

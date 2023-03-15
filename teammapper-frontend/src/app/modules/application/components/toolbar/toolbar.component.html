@@ -5,10 +5,10 @@
             <mat-icon>note_add</mat-icon>
         </button>
     </a>
-    <label for="json-upload" class="label-file-upload mat-icon-button mat-primary mat-focus-indicator" [title]="'TOOLTIPS.IMPORT_MAP' | translate">
+    <label for="json-upload" [ngClass]="{'mat-button-disabled': editDisabled}" class="label-file-upload mat-icon-button mat-primary mat-focus-indicator" [title]="'TOOLTIPS.IMPORT_MAP' | translate">
         <mat-icon>publish</mat-icon>
     </label>
-    <input id="json-upload" type="file" (input)="initJSONUpload($event)" accept="application/json"/>
+    <input id="json-upload" type="file" (input)="initJSONUpload($event)" accept="application/json" [disabled]="editDisabled" />
 
     <button [matMenuTriggerFor]="export_map" [title]="'TOOLTIPS.EXPORT_MAP' | translate"
             color="primary" mat-icon-button>
@@ -45,15 +45,15 @@
         <div></div>
     </div>
 
-    <button (click)="mmpService.copyNode()" [title]="'TOOLTIPS.COPY_NODE' | translate"
+    <button (click)="mmpService.copyNode()" [title]="'TOOLTIPS.COPY_NODE' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
         <mat-icon>content_copy</mat-icon>
     </button>
-    <button (click)="mmpService.cutNode()" [title]="'TOOLTIPS.CUT_NODE' | translate"
+    <button (click)="mmpService.cutNode()" [title]="'TOOLTIPS.CUT_NODE' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
         <mat-icon>content_cut</mat-icon>
     </button>
-    <button (click)="mmpService.pasteNode()" [title]="'TOOLTIPS.PASTE_NODE' | translate"
+    <button (click)="mmpService.pasteNode()" [title]="'TOOLTIPS.PASTE_NODE' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
         <mat-icon>content_paste</mat-icon>
     </button>
@@ -62,12 +62,12 @@
         <div></div>
     </div>
 
-    <button (click)="mmpService.undo()" [title]="'TOOLTIPS.UNDO_MAP' | translate"
+    <button (click)="mmpService.undo()" [title]="'TOOLTIPS.UNDO_MAP' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
         <mat-icon>undo</mat-icon>
     </button>
 
-    <button (click)="mmpService.redo()" [title]="'TOOLTIPS.REDO_MAP' | translate"
+    <button (click)="mmpService.redo()" [title]="'TOOLTIPS.REDO_MAP' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
     <mat-icon>redo</mat-icon>
     </button>
@@ -76,34 +76,34 @@
         <div></div>
     </div>
 
-    <button (click)="mmpService.updateNode('locked')" [title]="'TOOLTIPS.COUPLE_NODE' | translate"
+    <button (click)="mmpService.updateNode('locked')" [title]="'TOOLTIPS.COUPLE_NODE' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
         <mat-icon>{{ node?.locked ? "deselect" : "select_all" }}</mat-icon>
     </button>
 
     <div *ngIf="node?.image?.src; then renderRemove else renderInput"></div>
     <ng-template #renderRemove>
-        <button (click)="mmpService.removeNodeImage()" [title]="'TOOLTIPS.NODE_IMAGE' | translate"
+        <button (click)="mmpService.removeNodeImage()" [title]="'TOOLTIPS.NODE_IMAGE' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
         <mat-icon>broken_image</mat-icon>
     </button>
     </ng-template>
     <ng-template #renderInput>
-        <label for="image-upload" class="label-file-upload mat-icon-button mat-primary mat-focus-indicator" [title]="'TOOLTIPS.NODE_IMAGE' | translate">
+        <label for="image-upload" [ngClass]="{'mat-button-disabled': editDisabled}" class="label-file-upload mat-icon-button mat-primary mat-focus-indicator" [title]="'TOOLTIPS.NODE_IMAGE' | translate">
             <mat-icon>image</mat-icon>
         </label>
-        <input id="image-upload" type="file" (input)="initImageUpload($event)" accept="image/*" />
+        <input id="image-upload" type="file" (input)="initImageUpload($event)" accept="image/*" [disabled]="editDisabled" />
     </ng-template>
 
     <div class="vertical-line">
         <div></div>
     </div>
 
-    <button (click)="toogleNodeFontWeight()" [title]="'TOOLTIPS.BOLD_TEXT' | translate"
+    <button (click)="toogleNodeFontWeight()" [title]="'TOOLTIPS.BOLD_TEXT' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
         <mat-icon>format_bold</mat-icon>
     </button>
-    <button (click)="toogleNodeFontStyle()" [title]="'TOOLTIPS.ITALIC_TEXT' | translate"
+    <button (click)="toogleNodeFontStyle()" [title]="'TOOLTIPS.ITALIC_TEXT' | translate" [disabled]="editDisabled"
             color="primary" mat-icon-button>
         <mat-icon>format_italic</mat-icon>
     </button>

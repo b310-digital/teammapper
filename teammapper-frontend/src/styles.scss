@@ -87,4 +87,8 @@ snack-bar-container.snackbar {
     }
 }
 
-
+input:disabled {
+    color: rgba(0, 0, 0, 0.26);
+    background: rgba(0, 0, 0, 0.26) !important;
+}
+  

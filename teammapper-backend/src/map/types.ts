@@ -30,17 +30,10 @@ export interface IMmpClientMap {
   options: IMmpClientMapOptions;
 }
 
-export interface IMmpClientMapWithAdminId {
+export interface IMmpClientPrivateMap {
   map: IMmpClientMap;
   adminId: string;
-}
-
-export interface IMmpClientMapRequest {
-  map: IMmpClientMap;
-}
-
-export interface IMmpClientMapCreateRequest {
-  rootNode: IMmpClientNodeBasics
+  editingPassword: string;
 }
 
 export interface IMmpClientNodeBasics {
@@ -60,20 +53,19 @@ export interface IMmpClientNode extends IMmpClientNodeBasics {
   isRoot: boolean;
 }
 
-export interface IMmpClientNodeRequest {
-  mapId: string;
-  node: IMmpClientNode;
-  updatedProperty: string;
+export interface IMmpClientMapOptions {
+  fontMaxSize: number;
+  fontMinSize: number;
+  fontIncrement: number;
+}
+
+export interface IClientCache {
+  [clientId: string]: string;
 }
 
 export interface IMmpClientJoinRequest {
   mapId: string;
   color: string;
-}
-
-export interface IMmpClientDeleteRequest {
-  adminId: string;
-  mapId: string;
 }
 
 export interface IMmpClientNodeSelectionRequest {
@@ -82,17 +74,29 @@ export interface IMmpClientNodeSelectionRequest {
   selected: boolean;
 }
 
-export interface IMmpClientMapOptions {
-  fontMaxSize: number;
-  fontMinSize: number;
-  fontIncrement: number;
+export interface IMmpClientEditingRequest {
+  editingPassword: string;
+  mapId: string;
 }
 
-export interface IMmpClientUpdateMapOptionsRequest {
-  mapId: string;
+export interface IMmpClientNodeRequest extends IMmpClientEditingRequest {
+  node: IMmpClientNode;
+  updatedProperty: string;
+}
+
+export interface IMmpClientUpdateMapOptionsRequest extends IMmpClientEditingRequest {
   options: IMmpClientMapOptions;
 }
 
-export interface IClientCache {
-  [clientId: string]: string;
+export interface IMmpClientMapRequest extends IMmpClientEditingRequest {
+  map: IMmpClientMap;
+}
+
+export interface IMmpClientMapCreateRequest {
+  rootNode: IMmpClientNodeBasics
+}
+
+export interface IMmpClientDeleteRequest {
+  adminId: string;
+  mapId: string;
 }

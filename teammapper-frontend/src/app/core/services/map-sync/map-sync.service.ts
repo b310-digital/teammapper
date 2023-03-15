@@ -2,11 +2,10 @@ import { Injectable } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { BehaviorSubject, Observable } from 'rxjs'
 import { CachedMap, CachedMapEntry, CachedMapOptions } from '../../../shared/models/cached-map.model'
-import { v4 as uuidv4 } from 'uuid'
 import { io, Socket } from 'socket.io-client'
 import { NodePropertyMapping } from '@mmp/index'
 import { ExportNodeProperties, MapProperties, MapSnapshot, NodeUpdateEvent } from '@mmp/map/types'
-import { ResponseMapOptionsUpdated, ResponseMapUpdated, ResponseNodeAdded, ResponseNodeRemoved, ResponseNodeUpdated, ResponseSelectionUpdated, ServerMap, ServerMapWithAdminId } from './server-types'
+import { PrivateServerMap, ResponseMapOptionsUpdated, ResponseMapUpdated, ResponseNodeAdded, ResponseNodeRemoved, ResponseNodeUpdated, ResponseSelectionUpdated, ServerMap } from './server-types'
 import { API_URL, HttpService } from '../../http/http.service'
 import { DialogService } from '../../../shared/services/dialog/dialog.service'
 import { COLORS } from '../mmp/mmp-utils'
@@ -35,13 +34,13 @@ interface ServerClientList {
 })
 export class MapSyncService {
   // Observable of behavior subject with the attached map key.
-  public attachedMap: Observable<CachedMapEntry | null>
   public clientListChanged: BehaviorSubject<string[]>
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>
   private socket: Socket
   private colorMapping: ClientColorMapping
   private availableColors: string[]
   private clientColor: string
+  private editingPassword: string
 
   constructor (
     private mmpService: MmpService,
@@ -52,64 +51,37 @@ export class MapSyncService {
   ) {
     // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null)
-    this.attachedMap = this.attachedMapSubject.asObservable()
+
     this.colorMapping = {}
     this.clientListChanged = new BehaviorSubject<string[]>([])
-
     this.availableColors = COLORS
-
     this.clientColor = this.availableColors[Math.floor(Math.random() * this.availableColors.length)]
+    this.editingPassword = ''
   }
 
-  /**
-     * If there are cached maps, then attach the last cached map.
-     * Otherwise set the attached map status to `null`.
-     */
-  public async init (id: string): Promise<boolean> {
-
-    if (id) {
-      const result: boolean = await this.attachExistingMap(id)
-      return result
-    }
-
-    // with no id present, attach a new map
-    return await this.attachNewMap()
+  public async initNewMap (): Promise<PrivateServerMap> {
+    const privateServerMap: PrivateServerMap = await this.attachNewMap()
+    this.editingPassword = privateServerMap.editingPassword
+    return privateServerMap
   }
 
-  /**
-     * Adds a new node on the server
-     */
-  public async addNode (newNode: ExportNodeProperties) {
-    this.socket.emit('addNode', { mapId: this.getAttachedMap().cachedMap.uuid, node: newNode })
-  }
-
-  /**
-     * Exchanges the given node with a new one
-     */
-  public async updateNode (nodeUpdate: NodeUpdateEvent) {
-    this.socket.emit(
-      'updateNode',
-      { mapId: this.getAttachedMap().cachedMap.uuid, node: nodeUpdate.nodeProperties, updatedProperty: nodeUpdate.changedProperty }
-    )
-  }
-
-  /**
-     * Adds a new node on the server
-     */
-  public async removeNode (removedNode: ExportNodeProperties) {
-    this.socket.emit('removeNode', { mapId: this.getAttachedMap().cachedMap.uuid, node: removedNode })
+  public async initExistingMap (id: string, editingPassword: string): Promise<ServerMap> {
+    this.editingPassword = editingPassword
+    const serverMap: ServerMap = await this.attachExistingMap(id)
+    return serverMap
   }
 
   /**
      * Add current new application map to cache and attach it.
      */
-  public async attachNewMap (): Promise<boolean> {
-    const serverMapWithAdminId: ServerMapWithAdminId = await this.postMapToServer()
-    const serverMap = serverMapWithAdminId.map
-    const mmpMap: MapProperties = this.convertServerMapToMmp(serverMapWithAdminId.map)
+  public async attachNewMap (): Promise<PrivateServerMap> {
+    const privateServerMap: PrivateServerMap = await this.postMapToServer()
+    const serverMap = privateServerMap.map
+    const mmpMap: MapProperties = this.convertServerMapToMmp(privateServerMap.map)
     const key = this.createKey(mmpMap.uuid)
-    // store the admin id locally
-    this.storageService.set(mmpMap.uuid, { adminId: serverMapWithAdminId.adminId, ttl: mmpMap.deletedAt })
+    // store private map data locally
+    this.storageService.set(mmpMap.uuid, 
+      { adminId: privateServerMap.adminId, editingPassword: privateServerMap.editingPassword, ttl: mmpMap.deletedAt })
 
     // initialize mmp with initial map data from server
     this.mmpService.new(serverMap.data)
@@ -125,20 +97,21 @@ export class MapSyncService {
 
     // init data and other components from new map data
     this.attachMap({ key, cachedMap })
+    this.settingsService.setEditMode(true)
     this.listenServerEvents(mmpMap.uuid)
     this.mmpService.updateAdditionalMapOptions(serverMap.options)
 
-    return true
+    return privateServerMap
   }
 
   /**
      * Attach existing map.
      */
-  public async attachExistingMap (id: string): Promise<boolean> {
+  public async attachExistingMap (id: string): Promise<ServerMap> {
     const newServerMap = await this.fetchMapFromServer(id)
 
     if (!newServerMap) {
-      return false
+      return
     }
 
     const mapKey = this.createKey(newServerMap.uuid)
@@ -154,10 +127,11 @@ export class MapSyncService {
 
     // init data and other components from exisitng data
     this.listenServerEvents(mmpUuid)
+    this.checkEditingPassword()
     this.initColorMapping()
     this.mmpService.updateAdditionalMapOptions(newServerMap.options)
 
-    return true
+    return newServerMap
   }
 
   /**
@@ -185,6 +159,11 @@ export class MapSyncService {
     this.attachMap({ key: cachedMapEntry.key, cachedMap })
   }
 
+  public getAttachedMap (): CachedMapEntry {
+    return this.attachedMapSubject.getValue()
+  }
+
+  // TODO Make additional request to server to check if editing code is valid and it can be edited
   public async fetchMapFromServer (id: string): Promise<ServerMap> {
     const response = await this.httpService.get(API_URL.ROOT, '/maps/' + id)
     if (!response.ok) return null
@@ -193,7 +172,7 @@ export class MapSyncService {
     return json
   }
 
-  public async postMapToServer(): Promise<ServerMapWithAdminId> {
+  public async postMapToServer(): Promise<PrivateServerMap> {
     const response = await this.httpService.post(
       API_URL.ROOT, '/maps/',
       JSON.stringify({ rootNode: this.settingsService.getCachedSettings().mapOptions.rootNode })
@@ -213,31 +192,72 @@ export class MapSyncService {
     })
   }
 
-  public leaveMap (): void {
+  public leaveMap () {
     this.socket.emit('leave')
+  }
+
+  public async addNode (newNode: ExportNodeProperties) {
+    this.socket.emit(
+      'addNode',
+      { 
+        mapId: this.getAttachedMap().cachedMap.uuid,
+        node: newNode,
+        editingPassword: this.editingPassword
+      }
+    )
+  }
+
+  public async updateNode (nodeUpdate: NodeUpdateEvent) {
+    this.socket.emit(
+      'updateNode',
+      {
+        mapId: this.getAttachedMap().cachedMap.uuid,
+        node: nodeUpdate.nodeProperties,
+        updatedProperty: nodeUpdate.changedProperty,
+        editingPassword: this.editingPassword
+      }
+    )
+  }
+
+  public async removeNode (removedNode: ExportNodeProperties) {
+    this.socket.emit(
+      'removeNode',
+      {
+        mapId: this.getAttachedMap().cachedMap.uuid,
+        node: removedNode,
+        editingPassword: this.editingPassword
+      }
+    )
   }
 
   public async updateMap (_oldMapData?: MapSnapshot): Promise<void> {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
-    this.socket.emit('updateMap', { map: cachedMapEntry.cachedMap })
+    this.socket.emit(
+      'updateMap',
+      { 
+        mapId: cachedMapEntry.cachedMap.uuid,
+        map: cachedMapEntry.cachedMap,
+        editingPassword: this.editingPassword
+      }
+    )
   }
 
   public async updateMapOptions (options?: CachedMapOptions): Promise<void> {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
-    this.socket.emit('updateMapOptions', { mapId: cachedMapEntry.cachedMap.uuid, options: options })
+    this.socket.emit(
+      'updateMapOptions',
+      {
+        mapId: cachedMapEntry.cachedMap.uuid,
+        options,
+        editingPassword: this.editingPassword
+      }
+    )
   }
 
   public async deleteMap (adminId: string): Promise<any> {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap()
     const body: {adminId: string; mapId: string} = { adminId, mapId: cachedMapEntry.cachedMap.uuid }
     return await this.socket.emit('deleteMap', body)
-  }
-
-  /**
-     * Return the attached cached map key, otherwise if there is no attached maps return `null`.
-     */
-  public getAttachedMap (): CachedMapEntry {
-    return this.attachedMapSubject.getValue()
   }
 
   public async updateNodeSelection (id: string, selected: boolean) {
@@ -251,6 +271,14 @@ export class MapSyncService {
     }
 
     this.socket.emit('updateNodeSelection', { mapId: this.getAttachedMap().cachedMap.uuid, nodeId: id, selected })
+  }
+
+  private async checkEditingPassword () {
+    await this.socket.emit(
+      'checkEditingPassword',
+      { mapId: this.getAttachedMap().cachedMap.uuid, editingPassword: this.editingPassword },
+      (result: boolean) => this.settingsService.setEditMode(result)
+    )
   }
 
   /**

@@ -25,6 +25,13 @@ export class MmpService {
   constructor (public settingsService: SettingsService) {
     this.additionalOptions = null
     this.branchColors = COLORS
+
+    settingsService.getEditModeSubject().subscribe((result: boolean) => {
+      if(!this.currentMap) return
+
+      this.currentMap.options.update('drag', result)
+      this.currentMap.options.update('edit', result)
+    })
   }
 
   /**

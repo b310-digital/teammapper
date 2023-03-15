@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, Output, EventEmitter } from '@angular/core'
 import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
@@ -6,6 +6,7 @@ import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { ActivatedRoute, Router, NavigationStart, RouterEvent } from '@angular/router'
 import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent, OptionParameters } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
+import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 
 @Component({
   selector: 'teammapper-application',
@@ -14,6 +15,7 @@ import { StorageService } from 'src/app/core/services/storage/storage.service'
 })
 export class ApplicationComponent implements OnInit {
   public node: any
+  public editDisabled: boolean
 
   constructor (private mmpService: MmpService,
     private settingsService: SettingsService,
@@ -29,7 +31,9 @@ export class ApplicationComponent implements OnInit {
     this.storageService.cleanExpired()
 
     // Create the mind map.
-    this.initMap(settings.mapOptions)
+    // edit configuration is not supposed to be stored in local storage
+    const editMode = this.settingsService.getEditMode()
+    this.initMap({ ...settings.mapOptions, edit: editMode, drag: editMode })
 
     this.handleImageDropObservable()
 
@@ -38,6 +42,8 @@ export class ApplicationComponent implements OnInit {
         this.mapSyncService.leaveMap()
       }
     })
+
+    this.settingsService.getEditModeSubject().subscribe((result: boolean) => this.editDisabled = !result)
   }
 
   public handleImageDropObservable () {
@@ -55,19 +61,13 @@ export class ApplicationComponent implements OnInit {
 
     // Try to either load the given id from the server, or initialize a new map with empty data
     const givenId: string = this.route.snapshot.paramMap.get('id')
-    // Load existing map or create a new map if no id is present
-    const result: boolean = await this.mapSyncService.init(givenId)
+    const editingPassword: string = this.route.snapshot.fragment
+    const map: ServerMap = await this.loadAndPrepareWithMap(givenId, editingPassword);
 
     // not found, return to start page
-    if (!result) {
+    if (!map) {
       this.router.navigate([''])
       return
-    }
-
-    const attachedMap = this.mapSyncService.getAttachedMap()
-
-    if (!givenId) {
-      history.replaceState({}, '', `/map/${attachedMap.cachedMap.uuid}`)
     }
 
     this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)
@@ -124,5 +124,15 @@ export class ApplicationComponent implements OnInit {
       this.mapSyncService.removeNode(removedNode)
       this.mapSyncService.updateAttachedMap()
     })
+  }
+
+  private async loadAndPrepareWithMap(mapId: string, editingPassword: string): Promise<ServerMap> {
+    if(mapId) {
+      return await this.mapSyncService.initExistingMap(mapId, editingPassword)
+    } else {
+      const privateServerMap = await this.mapSyncService.initNewMap()
+      history.replaceState({}, '', `/map/${privateServerMap.map.uuid}#${privateServerMap.editingPassword}`)
+      return privateServerMap.map
+    }
   }
 }

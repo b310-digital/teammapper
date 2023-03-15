@@ -84,12 +84,8 @@ export class MapsService {
     return newMap;
   }
 
+  // updates map nodes
   async updateMap(clientMap: IMmpClientMap): Promise<MmpMap> {
-    const newMap: MmpMap = this.mapsRepository.create({
-      id: clientMap.uuid,
-    });
-    // if the map already exists, its only upldated here
-    await this.mapsRepository.save(newMap);
     // remove existing nodes, otherwise we will end up with multiple roots
     await this.nodesRepository.delete({ nodeMapId: clientMap.uuid });
 
@@ -101,7 +97,8 @@ export class MapsService {
       await this.nodesRepository.save(mapClientNodeToMmpNode(node, clientMap.uuid));
     }, Promise.resolve());
 
-    return newMap;
+    // reload map
+    return this.findMap(clientMap.uuid);
   }
 
   async updateMapOptions(mapId: string, clientOptions: IMmpClientMapOptions): Promise<MmpMap> {

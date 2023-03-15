@@ -8,6 +8,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 })
 export class ColorPanelsComponent implements OnInit {
   @Input() public node: any
+  @Input() public editDisabled: boolean
 
   @ViewChild('background') public background: ElementRef
 
