@@ -11,11 +11,18 @@ export class ShareDialogComponent implements OnInit {
   @ViewChild('sharedialog', { static: true }) shareDialog: ElementRef<HTMLElement>
   @ViewChild('inputlink', { static: true }) inputLink: ElementRef<HTMLInputElement>
 
-  public link: string = window.location.href
+  public editableLink: string = window.location.href
+  public nonEditableLinks: string = window.location.protocol + '//' + window.location.host + window.location.pathname + window.location.search
   public qrCode: QRCodeStyling
+  public showEditableLink: boolean = false
 
   ngOnInit () {
+    this.appendQrCode()
+  }
+
+  appendQrCode () {
     const size: number = window.innerWidth > 400 ? 300 : 200
+
     this.qrCode = new QRCodeStyling({
       width: size,
       height: size,
@@ -38,8 +45,9 @@ export class ShareDialogComponent implements OnInit {
         crossOrigin: 'anonymous',
         margin: 20
       },
-      data: window.location.href
+      data: this.getLink()
     })
+    this.qrCodeCanvas.nativeElement.innerHTML = ''
     this.qrCode.append(this.qrCodeCanvas.nativeElement)
   }
 
@@ -51,16 +59,25 @@ export class ShareDialogComponent implements OnInit {
     return !!(window.navigator as any)?.share
   }
 
+  getLink() {
+    return this.showEditableLink ? this.editableLink : this.nonEditableLinks
+  }
+
   copy () {
     this.inputLink.nativeElement.select()
-    navigator.clipboard.writeText(this.link)
+    navigator.clipboard.writeText(this.getLink())
+  }
+
+  setShowEditableLink(value: boolean) {
+    this.showEditableLink = value
+    this.appendQrCode()
   }
 
   async share () {
     if ((window.navigator as any)?.share) {
       await (window.navigator as any)?.share({
         title: 'TeamMapper',
-        url: window.location.href
+        url: this.getLink()
       })
     } else {
       this.shareDialog.nativeElement.style.display = 'block'

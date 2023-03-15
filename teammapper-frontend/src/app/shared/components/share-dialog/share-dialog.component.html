@@ -1,9 +1,11 @@
 <h2 mat-dialog-title>{{ "MODALS.SHARE.TITLE" | translate }}</h2>
 <mat-dialog-content>
   <div #sharedialog>
+    <mat-slide-toggle (change)="setShowEditableLink($event.checked)">{{ "MODALS.SHARE.SWITCH" | translate }}</mat-slide-toggle>
+    <br /><br />
     <mat-form-field appearance="fill">
-      <mat-label>{{ 'MODALS.SHARE.CONTENT' | translate }}</mat-label>
-      <input #inputlink matInput type="text" value="{{link}}" [readonly]="true" />
+      <mat-label>{{ 'MODALS.SHARE.CONTENT' | translate }}</mat-label>
+      <input #inputlink matInput type="text" value="{{getLink()}}" [readonly]="true" />
       <button mat-button matSuffix (click)="copy()"><mat-icon>content_copy</mat-icon></button>
     </mat-form-field>
   </div>
