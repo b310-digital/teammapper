@@ -1,5 +1,6 @@
 import { Component, ElementRef, ViewChild, OnInit } from '@angular/core'
 import QRCodeStyling from 'qr-code-styling'
+import { qrcodeStyling } from './qrcode-settings'
 
 @Component({
   selector: 'teammapper-share-dialog',
@@ -11,10 +12,10 @@ export class ShareDialogComponent implements OnInit {
   @ViewChild('sharedialog', { static: true }) shareDialog: ElementRef<HTMLElement>
   @ViewChild('inputlink', { static: true }) inputLink: ElementRef<HTMLInputElement>
 
-  public editableLink: string = window.location.href
-  public nonEditableLinks: string = window.location.protocol + '//' + window.location.host + window.location.pathname + window.location.search
-  public qrCode: QRCodeStyling
-  public showEditableLink: boolean = false
+  private showEditableLink: boolean = false
+  private editorLink: string = window.location.href
+  private viewerLink: string = window.location.protocol + '//' + window.location.host + window.location.pathname + window.location.search
+  private qrCode: QRCodeStyling
 
   ngOnInit () {
     this.appendQrCode()
@@ -24,48 +25,30 @@ export class ShareDialogComponent implements OnInit {
     const size: number = window.innerWidth > 400 ? 300 : 200
 
     this.qrCode = new QRCodeStyling({
+      ...qrcodeStyling,
       width: size,
       height: size,
-      type: 'svg',
-      image: '',
-      dotsOptions: {
-        color: '#000000',
-        type: 'dots'
-      },
-      cornersSquareOptions: {
-        type: 'square'
-      },
-      cornersDotOptions: {
-        type: 'dot'
-      },
-      backgroundOptions: {
-        color: '#fff'
-      },
-      imageOptions: {
-        crossOrigin: 'anonymous',
-        margin: 20
-      },
       data: this.getLink()
     })
     this.qrCodeCanvas.nativeElement.innerHTML = ''
     this.qrCode.append(this.qrCodeCanvas.nativeElement)
   }
 
+  copy () {
+    this.inputLink.nativeElement.select()
+    navigator.clipboard.writeText(this.getLink())
+  }
+
   downloadQrCode () {
     this.qrCode.download()
   }
 
+  getLink() {
+    return this.showEditableLink ? this.editorLink : this.viewerLink
+  }
+
   isShareable () {
     return !!(window.navigator as any)?.share
-  }
-
-  getLink() {
-    return this.showEditableLink ? this.editableLink : this.nonEditableLinks
-  }
-
-  copy () {
-    this.inputLink.nativeElement.select()
-    navigator.clipboard.writeText(this.getLink())
   }
 
   setShowEditableLink(value: boolean) {
