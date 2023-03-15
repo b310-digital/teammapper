@@ -31,9 +31,7 @@ export class ApplicationComponent implements OnInit {
     this.storageService.cleanExpired()
 
     // Create the mind map.
-    // edit configuration is not supposed to be stored in local storage
-    const editMode = this.settingsService.getEditMode()
-    this.initMap({ ...settings.mapOptions, edit: editMode, drag: editMode })
+    this.initMap({ ...settings.mapOptions})
 
     this.handleImageDropObservable()
 

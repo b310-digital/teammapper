@@ -58,10 +58,6 @@ export class SettingsService {
     return this.editModeSubject
   }
 
-  public getEditMode (): boolean {
-    return this.editModeSubject.getValue()
-  }
-
   public setEditMode (value: boolean) {
     return this.editModeSubject.next(value)
   }

@@ -2,15 +2,18 @@ import { Injectable } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { Router } from '@angular/router'
 import { Hotkey, HotkeysService } from 'angular2-hotkeys'
+import { SettingsService } from '../settings/settings.service'
 
 @Injectable({
   providedIn: 'root'
 })
 export class ShortcutsService {
   private hotKeys: Hotkey[]
+  private editMode: boolean
 
   constructor (private mmpService: MmpService,
     private hotkeysService: HotkeysService,
+    private settingsService: SettingsService,
     private router: Router) {
   }
 
@@ -18,32 +21,50 @@ export class ShortcutsService {
      * Add all global hot keys of the application.
      */
   public init () {
-    this.hotKeys = [{
-      keys: '?',
-      description: 'TOOLTIPS.SHORTCUTS',
-      callback: () => {
-        this.router.navigate(['app', 'shortcuts'])
+    this.settingsService.getEditModeSubject().subscribe((result: boolean) => {
+      this.editMode = result
+      this.registerHotKeys()
+    })
+  }
+
+  public registerHotKeys() {
+    const viewerHotkeys = [
+      {
+        keys: '?',
+        description: 'TOOLTIPS.SHORTCUTS',
+        callback: () => {
+          this.router.navigate(['app', 'shortcuts'])
+        }
+      }, {
+        keys: 'alt+s',
+        description: 'TOOLTIPS.SETTINGS',
+        callback: () => {
+          this.router.navigate(['app', 'settings'])
+        }
+      }, {
+        keys: 'alt+n',
+        description: 'TOOLTIPS.NEW_MAP',
+        callback: () => {
+          // use a full page reload here to reload all singleton services
+          window.location.replace('/map')
+        }
+      }, {
+        keys: 'c',
+        description: 'TOOLTIPS.CENTER_MAP',
+        callback: () => {
+          this.mmpService.center()
+        }
+      }, {
+        keys: 'ctrl+e',
+        description: 'TOOLTIPS.EXPORT_MAP',
+        callback: () => {
+          this.mmpService.exportMap()
+        }
       }
-    }, {
-      keys: 'alt+s',
-      description: 'TOOLTIPS.SETTINGS',
-      callback: () => {
-        this.router.navigate(['app', 'settings'])
-      }
-    }, {
-      keys: 'alt+n',
-      description: 'TOOLTIPS.NEW_MAP',
-      callback: () => {
-        // use a full page reload here to reload all singleton services
-        window.location.replace('/map')
-      }
-    }, {
-      keys: 'c',
-      description: 'TOOLTIPS.CENTER_MAP',
-      callback: () => {
-        this.mmpService.center()
-      }
-    }, {
+    ]
+    
+    const editHotkeys = [
+    {
       keys: '+',
       description: 'TOOLTIPS.ADD_NODE',
       callback: () => {
@@ -128,12 +149,6 @@ export class ShortcutsService {
         this.mmpService.moveNodeTo('down')
       }
     }, {
-      keys: 'ctrl+e',
-      description: 'TOOLTIPS.EXPORT_MAP',
-      callback: () => {
-        this.mmpService.exportMap()
-      }
-    }, {
       keys: 'alt+.',
       description: 'TOOLTIPS.FONT_INCREASE',
       callback: () => {
@@ -155,8 +170,14 @@ export class ShortcutsService {
         const increment = this.mmpService.getAdditionalMapOptions().fontIncrement
         this.mmpService.updateNode('fontSize', size - increment, false)
       }
-    }].map(this.getHotKey)
+    }]
 
+    if (this.editMode) {
+      this.hotKeys = [...viewerHotkeys, ...editHotkeys].map(this.getHotKey)
+    } else {
+      this.hotKeys = viewerHotkeys.map(this.getHotKey)
+    }
+  
     this.hotkeysService.add(this.hotKeys)
   }
 
