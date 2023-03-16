@@ -27,7 +27,7 @@ services:
       DELETE_AFTER_DAYS: ${DELETE_AFTER_DAYS:-30}
     ports:
       - "${APP_FRONTEND_PORT:-4200}:4200"
-      - "${APP_BACKTEND_PORT:-3000}:3000"
+      - "${APP_BACKEND_PORT:-3000}:3000"
     volumes:
       - .:/home/node/app
       - app_backend_node_modules:/home/node/app/teammapper-backend/node_modules
@@ -48,6 +48,21 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data/pgdata
+
+  # https://github.com/cypress-io/cypress-example-docker-compose/tree/master/e2e
+  cypress:
+    # see https://github.com/cypress-io/cypress-docker-images
+    image: "cypress/included:12.8.1"
+    build: ./e2e
+    container_name: cypress
+    depends_on:
+      - app
+    environment:
+      - CYPRESS_baseUrl=http://app:4200
+    command: npx cypress run
+    volumes:
+      - ./e2e/cypress:/app/cypress
+      - ./e2e/cypress.config.js:/app/cypress.config.js
 
 volumes:
   postgres_data:
