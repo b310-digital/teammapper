@@ -33,6 +33,33 @@ describe('MapsController', () => {
     mapsService = new MapsService(nodesRepo, mapsRepo);
   });
 
+  describe('updateNode', () => {
+    it('does update the lastModified value on update', async() => {
+      const map: MmpMap = await mapsRepo.save({
+        lastModified: new Date('2019-01-01'),
+      });
+
+      const oldDate = new Date('2019-01-01')
+      const node: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        lastModified: oldDate,
+      });
+
+      const clientNode = mapMmpNodeToClient(node);
+      clientNode.name = 'new';
+
+      // we save the time before the update to be able to compare the lastModified date and make sure it's newer than this:
+      const timeBeforeUpdate = new Date()
+      mapsService.updateNode(map.id, clientNode);
+      const updatedNode = (await nodesRepo.findOne({ where: { id: node.id } }));
+
+      expect(updatedNode.lastModified).not.toEqual(oldDate);
+      expect(updatedNode.lastModified.getTime()).toBeGreaterThan(timeBeforeUpdate.getTime());
+    });
+  });
+
   describe('deleteOutdatedMaps', () => {
     it('does not delete a new map', async () => {
 

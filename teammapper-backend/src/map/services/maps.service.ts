@@ -64,6 +64,7 @@ export class MapsService {
     return this.nodesRepository.save({
       ...existingNode,
       ...mapClientNodeToMmpNode(clientNode, mapId),
+      lastModified: new Date()
     });
   }
 
@@ -150,8 +151,7 @@ export class MapsService {
         .andWhere("(MmpMap.lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: today})
       }));
       
-      const outdatedMapsIds = deleteQuery.getRawMany()
-      const outdatedMapsIdsFlat = (await outdatedMapsIds).flatMap(id => id["MmpMap_id"]);
+      const outdatedMapsIdsFlat = (await deleteQuery.getRawMany()).flatMap(id => id["MmpMap_id"]);
 
       if (outdatedMapsIdsFlat.length > 0) {
         return (await this.mapsRepository
