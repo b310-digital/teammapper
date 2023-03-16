@@ -12,13 +12,17 @@ export class ShareDialogComponent implements OnInit {
   @ViewChild('sharedialog', { static: true }) shareDialog: ElementRef<HTMLElement>
   @ViewChild('inputlink', { static: true }) inputLink: ElementRef<HTMLInputElement>
 
-  private showEditableLink: boolean = false
+  public showEditableLink: boolean = true
   private editorLink: string = window.location.href
   private viewerLink: string = window.location.protocol + '//' + window.location.host + window.location.pathname + window.location.search
   private qrCode: QRCodeStyling
 
   ngOnInit () {
     this.appendQrCode()
+  }
+
+  areLinksEqual() {
+    return this.editorLink === this.viewerLink
   }
 
   appendQrCode () {

@@ -1,7 +1,10 @@
 <h2 mat-dialog-title>{{ "MODALS.SHARE.TITLE" | translate }}</h2>
 <mat-dialog-content>
   <div #sharedialog>
-    <mat-slide-toggle (change)="setShowEditableLink($event.checked)">{{ "MODALS.SHARE.SWITCH" | translate }}</mat-slide-toggle>
+    <mat-slide-toggle [(ngModel)]="showEditableLink" (change)="setShowEditableLink($event.checked)" [disabled]="areLinksEqual()">
+      <div *ngIf="showEditableLink">{{ "MODALS.SHARE.LINK_TYPE_EDIT" | translate }}</div>
+      <ng-template #viewBlock>{{ "MODALS.SHARE.LINK_TYPE_VIEW" | translate }}</ng-template>
+    </mat-slide-toggle>
     <br /><br />
     <mat-form-field appearance="fill">
       <mat-label>{{ 'MODALS.SHARE.CONTENT' | translate }}</mat-label>
