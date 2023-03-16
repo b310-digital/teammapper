@@ -10,6 +10,7 @@ import { io, Socket } from 'socket.io-client';
 import { IMmpClientMap } from 'src/map/types';
 import { createTestConfiguration } from './db';
 import AppModule from '../src/app.module';
+import { mapTo } from 'rxjs';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -73,9 +74,11 @@ describe('AppController (e2e)', () => {
       });
     });
 
-    it('lets a user create a map', async (done) => {
+    it('lets a user update a map', async (done) => {
+      const oldMap = await mapRepo.save({editingPassword: '51271bf2-81fa-477a-b0bd-10cecf8d6b65'});
+
       const map: IMmpClientMap = {
-        uuid: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+        uuid: oldMap.id,
         lastModified: new Date(),
         deleteAfterDays: 30,
         deletedAt: null,
@@ -96,17 +99,23 @@ describe('AppController (e2e)', () => {
           },
         ],
       };
-      socket.emit('createMap', map, async () => {
+      socket.emit('updateMap', 
+        {
+          map,
+          mapId: map.uuid,
+          editingPassword: '51271bf2-81fa-477a-b0bd-10cecf8d6b65'
+        },
+        async () => {
         const mapInDb = await mapRepo.findOne({
           where: { id: map.uuid },
         });
-        expect(mapInDb.id).toEqual('51271bf2-81fa-477a-b0bd-10cecf8d6b65');
+        expect(mapInDb.id).toEqual(map.uuid);
         done();
       });
     });
 
     it('notifies a user about a new node', async (done) => {
-      const map = await mapRepo.save({ id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65' });
+      const map = await mapRepo.save({ id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65', editingPassword: '51271bf2-81fa-477a-b0bd-10cecf8d6b65' });
       await new Promise<void>((resolve) => socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => resolve()));
       socket.on('nodeAdded', (result: any) => {
         expect(result.node.name).toEqual('test');
@@ -114,6 +123,7 @@ describe('AppController (e2e)', () => {
       });
       socket.emit('addNode', {
         mapId: map.id,
+        editingPassword: map.editingPassword,
         node: {
           name: 'test',
           coordinates: { x: 1, y: 2 },
@@ -127,6 +137,7 @@ describe('AppController (e2e)', () => {
     it('notifies a user about a node update', async (done) => {
       const map = await mapRepo.save({
         id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+        editingPassword: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
         nodes: [
           nodesRepo.create({
             id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
@@ -145,6 +156,7 @@ describe('AppController (e2e)', () => {
       });
       socket.emit('updateNode', {
         mapId: map.id,
+        editingPassword: map.editingPassword,
         updatedProperty: 'nodeName',
         node: {
           id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',

@@ -143,7 +143,6 @@ export class MapsGateway implements OnGatewayDisconnect {
     @MessageBody() request: IMmpClientMapRequest,
   ): Promise<boolean> {
     const mmpMap: IMmpClientMap = request.map;
-
     await this.mapsService.updateMap(
       mmpMap,
     );
