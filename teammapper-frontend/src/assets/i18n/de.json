@@ -80,7 +80,7 @@
       "SHARE": {
         "TITLE": "Map teilen",
         "CONTENT": "Kopiere und teile diesen Link",
-        "SWITCH": "Änderungsmodus aktivieren / deaktivieren"
+        "SWITCH": "Link für Beobachtermodus / Änderungsmodus"
       },
       "INFO": {
           "DELETED_AT": "Diese Mindmap wird gelöscht am:",
