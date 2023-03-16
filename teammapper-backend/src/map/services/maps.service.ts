@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeleteResult } from 'typeorm';
+import { Repository, DeleteResult, Brackets } from 'typeorm';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { IMmpClientMap, IMmpClientMapOptions, IMmpClientNode, IMmpClientNodeBasics } from '../types';
 import { mapClientBasicNodeToMmpRootNode, mapClientNodeToMmpNode, mapMmpMapToClient } from '../utils/clientServerMapping';
 import configService from '../../config.service';
+import { after } from 'node:test';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class MapsService {
@@ -28,7 +30,7 @@ export class MapsService {
 
     const nodes: MmpNode[] = await this.findNodes(map?.id);
     const days: number = configService.deleteAfterDays();
-    return mapMmpMapToClient(map, nodes, this.getDeletedAt(map.lastModified, days), days);
+    return mapMmpMapToClient(map, nodes, await this.getDeletedAt(map, days), days);
   }
 
   async addNode(mapId: string, clientNode: IMmpClientNode): Promise<MmpNode> {
@@ -107,20 +109,61 @@ export class MapsService {
     return await this.mapsRepository.findOne({ where: { id: mapId }} );
   }
 
-  getDeletedAt(lastModified: Date, afterDays: number): Date {
+  async getDeletedAt(map: MmpMap, afterDays: number): Promise<Date> {
+    // get newest node of this map:
+    const newestNodeQuery = this.nodesRepository
+                                .createQueryBuilder()
+                                .select("max(MmpNode.lastModified) AS lastModified")
+                                .where( { nodeMapId: map.id } )
+    const newestNode = newestNodeQuery.getRawOne()
+    const newestNodeLastModified = (await newestNode)["lastmodified"]
+    const lastModified = (newestNodeLastModified === null) ? map.lastModified : newestNodeLastModified;
+    
+    return this.calculcateDeletedAt(new Date(lastModified), afterDays)
+  }
+
+  calculcateDeletedAt(lastModified: Date, afterDays: number): Date {
     // dont modify original input as this might be used somewhere else
     const copyDate: Date = new Date(lastModified.getTime());
     copyDate.setDate(copyDate.getDate() + afterDays);
     return copyDate;
   }
 
-  async deleteOutdatedMaps(afterDays: number = 30): Promise<DeleteResult> {
-    return this.mapsRepository
+  async deleteOutdatedMaps(afterDays: number = 30): Promise<Number> {
+    const today = new Date();
+
+    const deleteQuery = this.mapsRepository
       .createQueryBuilder()
-      .where("(lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: new Date() })
-      .delete()
-      .from(MmpMap)
-      .execute();
+      .select("MmpMap.id")
+      .leftJoin(qb => 
+        // subquery to get the newest node and its lastModified date of this map:
+        qb
+        .select(["node.nodeMapId AS nodeMapId", "max(node.lastModified) AS lastUpdatedAt"])
+        .from("MmpNode", "node")
+        .groupBy("node.nodeMapId"), "lastmodifiednode", "lastmodifiednode.nodeMapid = MmpMap.id")
+      .where(
+        // delete all maps that have nodes that were last updated after afterDays
+        "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: today})
+      .orWhere(new Brackets((qb) => {
+        // also delete empty maps, use th emaps lastmodified date for this:
+        qb.where("lastmodifiednode.lastUpdatedAt IS NULL")
+        .andWhere("(MmpMap.lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: today})
+      }));
+      
+      const outdatedMapsIds = deleteQuery.getRawMany()
+      const outdatedMapsIdsFlat = (await outdatedMapsIds).flatMap(id => id["MmpMap_id"]);
+
+      if (outdatedMapsIdsFlat.length > 0) {
+        return (await this.mapsRepository
+          .createQueryBuilder()
+          .where("mmp_map.id IN (:...ids)", { ids: outdatedMapsIdsFlat })
+          .delete()
+          .execute())
+          .affected;
+      }
+      
+      // no maps found to be deleted:
+      return 0;
   }
 
   deleteMap(uuid: string) {

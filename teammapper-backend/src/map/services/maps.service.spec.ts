@@ -34,24 +34,7 @@ describe('MapsController', () => {
   });
 
   describe('deleteOutdatedMaps', () => {
-    it('deletes the old map and node', async () => {
-
-      const map: MmpMap = await mapsRepo.save({
-        lastModified: new Date('2019-01-01'),
-      });
-
-      const node: MmpNode = await nodesRepo.save({
-        nodeMapId: map.id,
-        coordinatesX: 3,
-        coordinatesY: 1,
-      });
-
-      await mapsService.deleteOutdatedMaps(30);
-      expect(await mapsService.findMap(map.id)).toEqual(null);
-      expect(await nodesRepo.findOne({ where: { id: node.id } })).toEqual(null);
-    });
-
-    it('does not delete the new map', async () => {
+    it('does not delete a new map', async () => {
 
       const map: MmpMap = await mapsRepo.save({
         lastModified: new Date(),
@@ -61,11 +44,107 @@ describe('MapsController', () => {
       const foundMap: MmpMap = await mapsService.findMap(map.id);
       expect(foundMap.id).toEqual(map.id);
     });
+
+    it ('does delete a map that contains only outdated nodes', async() => {
+      const map: MmpMap = await mapsRepo.save({
+        lastModified: new Date('2019-01-01'),
+      });
+
+      const node: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        lastModified: new Date('2019-01-01'),
+      });
+
+      await mapsService.deleteOutdatedMaps(30);
+      expect(await mapsService.findMap(map.id)).toEqual(null);
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).toEqual(null);
+    });
+    
+    it ('does not delete a map that contains a recent node', async() => {
+      // map itself is old, but node is not:
+      const map: MmpMap = await mapsRepo.save({
+        lastModified: new Date('2019-01-01'),
+      });
+
+      const node: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        lastModified: new Date(),
+      });
+
+      await mapsService.deleteOutdatedMaps(30);
+      expect(await mapsService.findMap(map.id)).not.toBeNull();
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).not.toBeNull();
+    });
+
+    it ('does not delete a map that contains outdated and recent nodes', async() => {
+      // map itself is old, but node is not:
+      const map: MmpMap = await mapsRepo.save({
+        lastModified: new Date('2019-01-01'),
+      });
+      
+      const outdatedNode: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        lastModified: new Date('2019-01-01'),
+      });
+
+      const recentNode: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        lastModified: new Date(),
+      });
+
+      await mapsService.deleteOutdatedMaps(30);
+      expect(await mapsService.findMap(map.id)).not.toBeNull();
+      expect(await nodesRepo.findOne({ where: { id: outdatedNode.id } })).not.toBeNull();
+      expect(await nodesRepo.findOne({ where: { id: recentNode.id } })).not.toBeNull();
+    });
+
+    it ('does delete outdated empty maps', async() => {
+      const map: MmpMap = await mapsRepo.save({
+        lastModified: new Date('2019-01-01'),
+      });
+
+      await mapsService.deleteOutdatedMaps(30);
+      expect(await mapsService.findMap(map.id)).toBeNull();
+    });
   });
 
   describe('getDeletedAt', () => {
-    it('calculates the correct date', async () => {
-      expect(mapsService.getDeletedAt(new Date('2022-01-01'), 5)).toEqual(new Date('2022-01-06'));
+    it('calculates the correct date based on the newest node', async () => {
+      const map: MmpMap = await mapsRepo.save({
+        lastModified: new Date('2018-02-02'),
+      });
+
+      const recentNode: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        lastModified: new Date('2022-01-01'),
+      });
+
+      const olderNode: MmpNode = await nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        lastModified: new Date('2020-02-05'),
+      });
+
+      expect(await mapsService.getDeletedAt(map, 5)).toEqual(new Date('2022-01-06'));
+    });
+
+      it('calculates the date based on the map when no node is present', async () => {
+      const map: MmpMap = await mapsRepo.save({
+        lastModified: new Date('2018-02-02'),
+      });
+
+      expect(await mapsService.getDeletedAt(map, 5)).toEqual(new Date('2018-02-07'));
     });
   });
 

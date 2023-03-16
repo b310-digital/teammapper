@@ -96,4 +96,7 @@ export class MmpNode {
   @Column({ nullable: false })
   @Generated('increment')
     orderNumber: number;
+
+  @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
+    lastModified: Date;
 }
