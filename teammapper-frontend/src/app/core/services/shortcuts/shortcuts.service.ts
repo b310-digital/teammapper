@@ -64,113 +64,113 @@ export class ShortcutsService {
     ]
     
     const editHotkeys = [
-    {
-      keys: '+',
-      description: 'TOOLTIPS.ADD_NODE',
-      callback: () => {
-        this.mmpService.addNode()
-      }
-    }, {
-      keys: ['-', 'backspace'],
-      description: 'TOOLTIPS.REMOVE_NODE',
-      callback: () => {
-        this.mmpService.removeNode()
-      }
-    }, {
-      keys: 'ctrl+c',
-      description: 'TOOLTIPS.COPY_NODE',
-      callback: () => {
-        this.mmpService.copyNode()
-      }
-    }, {
-      keys: 'ctrl+x',
-      description: 'TOOLTIPS.CUT_NODE',
-      callback: () => {
-        this.mmpService.cutNode()
-      }
-    }, {
-      keys: 'ctrl+v',
-      description: 'TOOLTIPS.PASTE_NODE',
-      callback: () => {
-        this.mmpService.pasteNode()
-      }
-    }, {
-      keys: 'left',
-      description: 'TOOLTIPS.SELECT_NODE_ON_THE_LEFT',
-      callback: () => {
-        this.mmpService.selectNode('left')
-      }
-    }, {
-      keys: 'right',
-      description: 'TOOLTIPS.SELECT_NODE_ON_THE_RIGHT',
-      callback: () => {
-        this.mmpService.selectNode('right')
-      }
-    }, {
-      keys: 'up',
-      description: 'TOOLTIPS.SELECT_NODE_BELOW',
-      callback: () => {
-        this.mmpService.selectNode('up')
-      }
-    }, {
-      keys: 'down',
-      description: 'TOOLTIPS.SELECT_NODE_ABOVE',
-      callback: () => {
-        this.mmpService.selectNode('down')
-      }
-    }, {
-      keys: 'enter',
-      description: 'TOOLTIPS.START_EDIT_NODE',
-      callback: () => {
-        this.mmpService.editNode()
-      }
-    }, {
-      keys: 'alt+left',
-      description: 'TOOLTIPS.MOVE_NODE_TO_THE_LEFT',
-      callback: () => {
-        this.mmpService.moveNodeTo('left')
-      }
-    }, {
-      keys: 'alt+right',
-      description: 'TOOLTIPS.MOVE_NODE_TO_THE_RIGHT',
-      callback: () => {
-        this.mmpService.moveNodeTo('right')
-      }
-    }, {
-      keys: 'alt+up',
-      description: 'TOOLTIPS.MOVE_NODE_UPWARD',
-      callback: () => {
-        this.mmpService.moveNodeTo('up')
-      }
-    }, {
-      keys: 'alt+down',
-      description: 'TOOLTIPS.MOVE_NODE_DOWN',
-      callback: () => {
-        this.mmpService.moveNodeTo('down')
-      }
-    }, {
-      keys: 'alt+.',
-      description: 'TOOLTIPS.FONT_INCREASE',
-      callback: () => {
-        const node = this.mmpService.selectNode()
-        const size: number = node.font.size
-        if(size >= this.mmpService.getAdditionalMapOptions().fontMaxSize) return
+      {
+        keys: '+',
+        description: 'TOOLTIPS.ADD_NODE',
+        callback: () => {
+          this.mmpService.addNode()
+        }
+      }, {
+        keys: ['-', 'backspace'],
+        description: 'TOOLTIPS.REMOVE_NODE',
+        callback: () => {
+          this.mmpService.removeNode()
+        }
+      }, {
+        keys: 'ctrl+c',
+        description: 'TOOLTIPS.COPY_NODE',
+        callback: () => {
+          this.mmpService.copyNode()
+        }
+      }, {
+        keys: 'ctrl+x',
+        description: 'TOOLTIPS.CUT_NODE',
+        callback: () => {
+          this.mmpService.cutNode()
+        }
+      }, {
+        keys: 'ctrl+v',
+        description: 'TOOLTIPS.PASTE_NODE',
+        callback: () => {
+          this.mmpService.pasteNode()
+        }
+      }, {
+        keys: 'left',
+        description: 'TOOLTIPS.SELECT_NODE_ON_THE_LEFT',
+        callback: () => {
+          this.mmpService.selectNode('left')
+        }
+      }, {
+        keys: 'right',
+        description: 'TOOLTIPS.SELECT_NODE_ON_THE_RIGHT',
+        callback: () => {
+          this.mmpService.selectNode('right')
+        }
+      }, {
+        keys: 'up',
+        description: 'TOOLTIPS.SELECT_NODE_BELOW',
+        callback: () => {
+          this.mmpService.selectNode('up')
+        }
+      }, {
+        keys: 'down',
+        description: 'TOOLTIPS.SELECT_NODE_ABOVE',
+        callback: () => {
+          this.mmpService.selectNode('down')
+        }
+      }, {
+        keys: 'enter',
+        description: 'TOOLTIPS.START_EDIT_NODE',
+        callback: () => {
+          this.mmpService.editNode()
+        }
+      }, {
+        keys: 'alt+left',
+        description: 'TOOLTIPS.MOVE_NODE_TO_THE_LEFT',
+        callback: () => {
+          this.mmpService.moveNodeTo('left')
+        }
+      }, {
+        keys: 'alt+right',
+        description: 'TOOLTIPS.MOVE_NODE_TO_THE_RIGHT',
+        callback: () => {
+          this.mmpService.moveNodeTo('right')
+        }
+      }, {
+        keys: 'alt+up',
+        description: 'TOOLTIPS.MOVE_NODE_UPWARD',
+        callback: () => {
+          this.mmpService.moveNodeTo('up')
+        }
+      }, {
+        keys: 'alt+down',
+        description: 'TOOLTIPS.MOVE_NODE_DOWN',
+        callback: () => {
+          this.mmpService.moveNodeTo('down')
+        }
+      }, {
+        keys: 'alt+.',
+        description: 'TOOLTIPS.FONT_INCREASE',
+        callback: () => {
+          const node = this.mmpService.selectNode()
+          const size: number = node.font.size
+          if(size >= this.mmpService.getAdditionalMapOptions().fontMaxSize) return
 
-        const increment = this.mmpService.getAdditionalMapOptions().fontIncrement
-        this.mmpService.updateNode('fontSize', size + increment, false)
-      }
-    }, {
-      keys: 'alt+-',
-      description: 'TOOLTIPS.FONT_DECREASE',
-      callback: () => {
-        const node = this.mmpService.selectNode()
-        const size: number = node.font.size
-        if(size <= this.mmpService.getAdditionalMapOptions().fontMinSize) return
+          const increment = this.mmpService.getAdditionalMapOptions().fontIncrement
+          this.mmpService.updateNode('fontSize', size + increment, false)
+        }
+      }, {
+        keys: 'alt+-',
+        description: 'TOOLTIPS.FONT_DECREASE',
+        callback: () => {
+          const node = this.mmpService.selectNode()
+          const size: number = node.font.size
+          if(size <= this.mmpService.getAdditionalMapOptions().fontMinSize) return
 
-        const increment = this.mmpService.getAdditionalMapOptions().fontIncrement
-        this.mmpService.updateNode('fontSize', size - increment, false)
-      }
-    }]
+          const increment = this.mmpService.getAdditionalMapOptions().fontIncrement
+          this.mmpService.updateNode('fontSize', size - increment, false)
+        }
+      }]
 
     if (this.editMode) {
       this.hotKeys = [...viewerHotkeys, ...editHotkeys].map(this.getHotKey)

@@ -21,4 +21,4 @@ export const qrcodeStyling: Options =
       crossOrigin: 'anonymous',
       margin: 20
     }
-}
+  }

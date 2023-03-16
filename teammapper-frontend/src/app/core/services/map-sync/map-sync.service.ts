@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
-import { BehaviorSubject, Observable } from 'rxjs'
+import { BehaviorSubject } from 'rxjs'
 import { CachedMap, CachedMapEntry, CachedMapOptions } from '../../../shared/models/cached-map.model'
 import { io, Socket } from 'socket.io-client'
 import { NodePropertyMapping } from '@mmp/index'
