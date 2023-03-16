@@ -2,8 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { MapsService } from './maps.service';
 import configService from '../../config.service';
-import { DeleteResult } from 'typeorm';
-
 
 /*
  * This service takes care of _very_ simple job scheduling. 

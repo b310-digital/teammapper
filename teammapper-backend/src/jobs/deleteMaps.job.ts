@@ -3,7 +3,6 @@ import { MapsService } from '../map/services/maps.service';
 import AppModule from '../app.module';
 import { Logger } from '@nestjs/common';
 import configService from '../config.service';
-import { DeleteResult } from 'typeorm';
 
 async function bootstrap() {
   const application = await NestFactory.createApplicationContext(

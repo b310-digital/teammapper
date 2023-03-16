@@ -149,14 +149,14 @@ describe('MapsController', () => {
         lastModified: new Date('2018-02-02'),
       });
 
-      const recentNode: MmpNode = await nodesRepo.save({
+      await nodesRepo.save({
         nodeMapId: map.id,
         coordinatesX: 3,
         coordinatesY: 1,
         lastModified: new Date('2022-01-01'),
       });
 
-      const olderNode: MmpNode = await nodesRepo.save({
+      await nodesRepo.save({
         nodeMapId: map.id,
         coordinatesX: 3,
         coordinatesY: 1,

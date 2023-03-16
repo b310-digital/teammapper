@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeleteResult, Brackets } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { IMmpClientMap, IMmpClientMapOptions, IMmpClientNode, IMmpClientNodeBasics } from '../types';
 import { mapClientBasicNodeToMmpRootNode, mapClientNodeToMmpNode, mapMmpMapToClient } from '../utils/clientServerMapping';
 import configService from '../../config.service';
-import { after } from 'node:test';
-import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class MapsService {
