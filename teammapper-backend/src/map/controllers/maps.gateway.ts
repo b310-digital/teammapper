@@ -64,6 +64,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     @MessageBody() request: IMmpClientEditingRequest,
   ): Promise<boolean> {
     const map = await this.mapsService.findMap(request.mapId)
+    console.log(map)
     if(!map.modificationSecret) return true
 
     return request.modificationSecret == map.modificationSecret;

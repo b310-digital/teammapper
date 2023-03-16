@@ -16,7 +16,7 @@ export class MmpMap {
   @Generated('uuid')
     adminId: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: null })
   @Generated('uuid')
     modificationSecret: string;
 
