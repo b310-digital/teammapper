@@ -86,8 +86,6 @@ export class MapsService {
 
   // updates map nodes
   async updateMap(clientMap: IMmpClientMap): Promise<MmpMap> {
-
-    console.log('test')
     // remove existing nodes, otherwise we will end up with multiple roots
     await this.nodesRepository.delete({ nodeMapId: clientMap.uuid });
 
