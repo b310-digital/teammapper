@@ -16,6 +16,8 @@ export class EditGuard implements CanActivate {
 
   async validateRequest(mapId: string, givenEditingPassword: string): Promise<boolean> {
     const map = await this.mapsService.findMap(mapId)
+    if(!map.editingPassword) return true
+    
     return givenEditingPassword === map.editingPassword;
   }
 }
