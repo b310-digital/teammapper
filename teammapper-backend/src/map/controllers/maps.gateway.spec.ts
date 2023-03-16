@@ -21,8 +21,8 @@ describe('WebSocketGateway', () => {
 
   beforeAll(async () => {
     mapsService = createMock<MapsService>({
-      findMap: (uuid: string) => new Promise((resolve, _reject) => {resolve(map)}),
-      removeNode: (clientNode: IMmpClientNode, mapId: string) => new Promise((resolve, _reject) => {resolve(new MmpNode())})
+      findMap: (_uuid: string) => new Promise((resolve, _reject) => {resolve(map)}),
+      removeNode: (_clientNode: IMmpClientNode, _mapId: string) => new Promise((resolve, _reject) => {resolve(new MmpNode())})
     });
     const testingModule = await Test.createTestingModule({
       providers: [

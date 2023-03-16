@@ -18,9 +18,9 @@ describe('EditGuard', () => {
 
   beforeAll(async () => {
     mapsService = createMock<MapsService>({
-      findMap: (uuid: string) => new Promise((resolve, _reject) => {resolve(map)})
+      findMap: (_uuid: string) => new Promise((resolve, _reject) => {resolve(map)})
     });
-    const testingModule = await Test.createTestingModule({
+    await Test.createTestingModule({
       providers: [
         { provide: MapsService, useValue: mapsService },
         { provide: getRepositoryToken(MmpMap), useValue: createMock<Repository<MmpMap>>() },

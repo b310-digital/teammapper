@@ -10,7 +10,6 @@ import { io, Socket } from 'socket.io-client';
 import { IMmpClientMap } from 'src/map/types';
 import { createTestConfiguration } from './db';
 import AppModule from '../src/app.module';
-import { mapTo } from 'rxjs';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
