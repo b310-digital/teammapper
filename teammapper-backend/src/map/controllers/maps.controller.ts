@@ -29,7 +29,7 @@ export default class MapsController {
     return { 
       map: await this.mapsService.exportMapToClient(newMap.id),
       adminId: newMap.adminId,
-      editingPassword: newMap.editingPassword
+      modificationSecret: newMap.modificationSecret
     };
   }
 }

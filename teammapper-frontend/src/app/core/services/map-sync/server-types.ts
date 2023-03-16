@@ -44,7 +44,7 @@ interface ServerMap {
 interface PrivateServerMap {
   map: ServerMap;
   adminId: string;
-  editingPassword: string;
+  modificationSecret: string;
 }
 
 export {

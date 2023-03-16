@@ -33,7 +33,7 @@ export interface IMmpClientMap {
 export interface IMmpClientPrivateMap {
   map: IMmpClientMap;
   adminId: string;
-  editingPassword: string;
+  modificationSecret: string;
 }
 
 export interface IMmpClientNodeBasics {
@@ -75,7 +75,7 @@ export interface IMmpClientNodeSelectionRequest {
 }
 
 export interface IMmpClientEditingRequest {
-  editingPassword: string;
+  modificationSecret: string;
   mapId: string;
 }
 

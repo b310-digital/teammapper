@@ -11,13 +11,13 @@ export class EditGuard implements CanActivate {
     context: ExecutionContext,
   ): Promise<boolean> {
     const request = context.switchToWs().getData<IMmpClientEditingRequest>()
-    return this.validateRequest(request.mapId, request.editingPassword)
+    return this.validateRequest(request.mapId, request.modificationSecret)
   }
 
-  async validateRequest(mapId: string, givenEditingPassword: string): Promise<boolean> {
+  async validateRequest(mapId: string, givenModificationSecret: string): Promise<boolean> {
     const map = await this.mapsService.findMap(mapId)
-    if(!map.editingPassword) return true
-    
-    return givenEditingPassword === map.editingPassword;
+    if(!map.modificationSecret) return true
+
+    return givenModificationSecret === map.modificationSecret;
   }
 }

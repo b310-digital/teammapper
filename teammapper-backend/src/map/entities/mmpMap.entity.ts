@@ -18,7 +18,7 @@ export class MmpMap {
 
   @Column({ nullable: true })
   @Generated('uuid')
-    editingPassword: string;
+    modificationSecret: string;
 
   @Column({ nullable: true })
     name: string;

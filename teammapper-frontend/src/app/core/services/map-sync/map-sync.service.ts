@@ -40,7 +40,7 @@ export class MapSyncService {
   private colorMapping: ClientColorMapping
   private availableColors: string[]
   private clientColor: string
-  private editingPassword: string
+  private modificationSecret: string
 
   constructor (
     private mmpService: MmpService,
@@ -56,17 +56,17 @@ export class MapSyncService {
     this.clientListChanged = new BehaviorSubject<string[]>([])
     this.availableColors = COLORS
     this.clientColor = this.availableColors[Math.floor(Math.random() * this.availableColors.length)]
-    this.editingPassword = ''
+    this.modificationSecret = ''
   }
 
   public async initNewMap (): Promise<PrivateServerMap> {
     const privateServerMap: PrivateServerMap = await this.attachNewMap()
-    this.editingPassword = privateServerMap.editingPassword
+    this.modificationSecret = privateServerMap.modificationSecret
     return privateServerMap
   }
 
-  public async initExistingMap (id: string, editingPassword: string): Promise<ServerMap> {
-    this.editingPassword = editingPassword
+  public async initExistingMap (id: string, modificationSecret: string): Promise<ServerMap> {
+    this.modificationSecret = modificationSecret
     const serverMap: ServerMap = await this.attachExistingMap(id)
     return serverMap
   }
@@ -81,7 +81,7 @@ export class MapSyncService {
     const key = this.createKey(mmpMap.uuid)
     // store private map data locally
     this.storageService.set(mmpMap.uuid, 
-      { adminId: privateServerMap.adminId, editingPassword: privateServerMap.editingPassword, ttl: mmpMap.deletedAt })
+      { adminId: privateServerMap.adminId, modificationSecret: privateServerMap.modificationSecret, ttl: mmpMap.deletedAt })
 
     // initialize mmp with initial map data from server
     this.mmpService.new(serverMap.data)
@@ -127,7 +127,7 @@ export class MapSyncService {
 
     // init data and other components from exisitng data
     this.listenServerEvents(mmpUuid)
-    this.checkEditingPassword()
+    this.checkModificationSecret()
     this.initColorMapping()
     this.mmpService.updateAdditionalMapOptions(newServerMap.options)
 
@@ -202,7 +202,7 @@ export class MapSyncService {
       { 
         mapId: this.getAttachedMap().cachedMap.uuid,
         node: newNode,
-        editingPassword: this.editingPassword
+        modificationSecret: this.modificationSecret
       }
     )
   }
@@ -214,7 +214,7 @@ export class MapSyncService {
         mapId: this.getAttachedMap().cachedMap.uuid,
         node: nodeUpdate.nodeProperties,
         updatedProperty: nodeUpdate.changedProperty,
-        editingPassword: this.editingPassword
+        modificationSecret: this.modificationSecret
       }
     )
   }
@@ -225,7 +225,7 @@ export class MapSyncService {
       {
         mapId: this.getAttachedMap().cachedMap.uuid,
         node: removedNode,
-        editingPassword: this.editingPassword
+        modificationSecret: this.modificationSecret
       }
     )
   }
@@ -237,7 +237,7 @@ export class MapSyncService {
       { 
         mapId: cachedMapEntry.cachedMap.uuid,
         map: cachedMapEntry.cachedMap,
-        editingPassword: this.editingPassword
+        modificationSecret: this.modificationSecret
       }
     )
   }
@@ -249,7 +249,7 @@ export class MapSyncService {
       {
         mapId: cachedMapEntry.cachedMap.uuid,
         options,
-        editingPassword: this.editingPassword
+        modificationSecret: this.modificationSecret
       }
     )
   }
@@ -273,10 +273,10 @@ export class MapSyncService {
     this.socket.emit('updateNodeSelection', { mapId: this.getAttachedMap().cachedMap.uuid, nodeId: id, selected })
   }
 
-  private async checkEditingPassword () {
+  private async checkModificationSecret () {
     await this.socket.emit(
-      'checkEditingPassword',
-      { mapId: this.getAttachedMap().cachedMap.uuid, editingPassword: this.editingPassword },
+      'checkModificationSecret',
+      { mapId: this.getAttachedMap().cachedMap.uuid, modificationSecret: this.modificationSecret },
       (result: boolean) => this.settingsService.setEditMode(result)
     )
   }

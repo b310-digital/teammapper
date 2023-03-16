@@ -17,7 +17,7 @@ describe('WebSocketGateway', () => {
 
   const map: MmpMap = new MmpMap()
   map.id = '123'
-  map.editingPassword = 'abc' 
+  map.modificationSecret = 'abc' 
 
   beforeAll(async () => {
     mapsService = createMock<MapsService>({
@@ -41,13 +41,13 @@ describe('WebSocketGateway', () => {
     await app.listen(3000);
   });
 
-  describe('checkEditingPassword', () => {
+  describe('checkModificationSecret', () => {
     it(`returns false if wrong`, async (done) => {    
       socket = io('http://localhost:3000');
   
-      socket.emit('checkEditingPassword', {
+      socket.emit('checkModificationSecret', {
         mapId: map.id,
-        editingPassword: 'wrong'
+        modificationSecret: 'wrong'
       }, (result: boolean) => {
         expect(result).toEqual(false)
         done()
@@ -57,9 +57,9 @@ describe('WebSocketGateway', () => {
     it(`returns true if correct`, async (done) => {    
       socket = io('http://localhost:3000');
   
-      socket.emit('checkEditingPassword', {
+      socket.emit('checkModificationSecret', {
         mapId: map.id,
-        editingPassword: map.editingPassword
+        modificationSecret: map.modificationSecret
       }, (result: boolean) => {
         expect(result).toEqual(true)
         done()
@@ -68,12 +68,12 @@ describe('WebSocketGateway', () => {
   });
 
   describe('addNode', () => {
-    it(`allows request when editing password is set`, async (done) => {    
+    it(`allows request when modification secret is set`, async (done) => {    
       socket = io('http://localhost:3000');
   
       socket.emit('addNode', {
         mapId: map.id,
-        editingPassword: map.editingPassword,
+        modificationSecret: map.modificationSecret,
         node: {}
       }, (result: boolean) => {
         expect(result).toEqual(true)
@@ -83,12 +83,12 @@ describe('WebSocketGateway', () => {
   });
 
   describe('updateNode', () => {
-    it(`allows request when editing password is set`, async (done) => {    
+    it(`allows request when modification secret is set`, async (done) => {    
       socket = io('http://localhost:3000');
   
       socket.emit('updateNode', {
         mapId: map.id,
-        editingPassword: map.editingPassword,
+        modificationSecret: map.modificationSecret,
         node: {}
       }, (result: boolean) => {
         expect(result).toEqual(true)
@@ -98,12 +98,12 @@ describe('WebSocketGateway', () => {
   });
 
   describe('removeNode', () => {
-    it(`allows request when editing password is set`, async (done) => {    
+    it(`allows request when modification secret is set`, async (done) => {    
       socket = io('http://localhost:3000');
   
       socket.emit('removeNode', {
         mapId: map.id,
-        editingPassword: map.editingPassword,
+        modificationSecret: map.modificationSecret,
         node: {}
       }, (result: MmpNode | undefined) => {
         expect(result).toEqual({})
@@ -113,12 +113,12 @@ describe('WebSocketGateway', () => {
   });
 
   describe('updateMap', () => {
-    it(`allows request when editing password is set`, async (done) => {    
+    it(`allows request when modification secret is set`, async (done) => {    
       socket = io('http://localhost:3000');
   
       socket.emit('updateMap', {
         mapId: map.id,
-        editingPassword: map.editingPassword,
+        modificationSecret: map.modificationSecret,
         map: {}
       }, (result: MmpNode | undefined) => {
         expect(result).toEqual(true)
@@ -128,12 +128,12 @@ describe('WebSocketGateway', () => {
   });
 
   describe('updateMapOptions', () => {
-    it(`allows request when editing password is set`, async (done) => {    
+    it(`allows request when modification secret is set`, async (done) => {    
       socket = io('http://localhost:3000');
   
       socket.emit('updateMapOptions', {
         mapId: map.id,
-        editingPassword: map.editingPassword,
+        modificationSecret: map.modificationSecret,
         options: {}
       }, (result: MmpNode | undefined) => {
         expect(result).toEqual(true)

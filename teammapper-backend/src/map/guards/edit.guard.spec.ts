@@ -14,10 +14,10 @@ describe('EditGuard', () => {
   });
 
   describe('canActivate', () => {
-    describe('with editingPassword', () => {
+    describe('with modificationSecret', () => {
       const map: MmpMap = new MmpMap()
       map.id = '123'
-      map.editingPassword = 'abc' 
+      map.modificationSecret = 'abc' 
     
       beforeAll(async () => {
         mapsService = createMock<MapsService>({
@@ -33,7 +33,7 @@ describe('EditGuard', () => {
       it('should return true when user provides correct credentials', async () => {
         const mockContext = createMock<ExecutionContext>({
           switchToWs: () => ({
-            getData: () => ({ editingPassword: 'abc', mapId: '123' }),
+            getData: () => ({ modificationSecret: 'abc', mapId: '123' }),
           }),
         });
         const canActivate = await guard.canActivate(mockContext);
@@ -44,7 +44,7 @@ describe('EditGuard', () => {
       it('should return false when user is not provided correct credentials', async () => {
         const mockContext = createMock<ExecutionContext>({
           switchToWs: () => ({
-            getData: () => ({ editingPassword: 'wrong', mapId: '123' }),
+            getData: () => ({ modificationSecret: 'wrong', mapId: '123' }),
           }),
         });
         const canActivate = await guard.canActivate(mockContext);
@@ -53,7 +53,7 @@ describe('EditGuard', () => {
       });
     });
 
-    describe('without editingPassword', () => {
+    describe('without modificationSecret', () => {
       const map: MmpMap = new MmpMap()
       map.id = '123'
     
@@ -68,7 +68,7 @@ describe('EditGuard', () => {
         }).compile();
       });
 
-      it('should return true when map has no editing password', async () => {
+      it('should return true when map has no modification secret', async () => {
         const mockContext = createMock<ExecutionContext>({
           switchToWs: () => ({
             getData: () => ({ mapId: '123' }),

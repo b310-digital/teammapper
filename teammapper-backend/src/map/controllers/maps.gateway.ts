@@ -58,15 +58,15 @@ export class MapsGateway implements OnGatewayDisconnect {
     return this.mapsService.exportMapToClient(request.mapId);
   }
 
-  @SubscribeMessage('checkEditingPassword')
-  async checkEditingPassword(
+  @SubscribeMessage('checkModificationSecret')
+  async checkmodificationSecret(
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientEditingRequest,
   ): Promise<boolean> {
     const map = await this.mapsService.findMap(request.mapId)
-    if(!map.editingPassword) return true
+    if(!map.modificationSecret) return true
 
-    return request.editingPassword == map.editingPassword;
+    return request.modificationSecret == map.modificationSecret;
   }
 
   @UseGuards(EditGuard)
