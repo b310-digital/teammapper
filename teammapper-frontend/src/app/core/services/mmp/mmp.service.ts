@@ -357,6 +357,20 @@ export class MmpService {
   }
 
   /**
+   * Inserts a link in the selected node.
+   */
+  public addNodeLink (href: string) {
+    this.updateNode('linkHref', href)
+  }
+
+  /**
+   * Removes a link in the selected node.
+   */
+  public removeNodeLink () {
+    this.updateNode('linkHref', '')
+  }
+
+  /**
      * Removes an image of the selected node.
      */
   public removeNodeImage () {

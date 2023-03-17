@@ -10,6 +10,9 @@
         "fontIncrement": 5,
         "defaultNode": {
             "name": "",
+            "link": {
+              "href": ""
+            },
             "image": {
                 "src": "",
                 "size": 60
@@ -28,6 +31,9 @@
         },
         "rootNode": {
             "name": "Root node",
+            "link": {
+                "href": ""
+            },
             "image": {
                 "src": "",
                 "size": 70

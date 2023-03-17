@@ -14,6 +14,9 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
     size: serverNode.fontSize || 12,
     weight: serverNode.fontWeight || '',
   },
+  link: {
+    href: serverNode.linkHref || ''
+  },
   id: serverNode.id,
   image: { src: serverNode.imageSrc || '', size: serverNode.imageSize || 0 },
   k: serverNode.k || 1,
@@ -47,6 +50,7 @@ const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Obje
   imageSrc: clientNode.image?.src,
   imageSize: clientNode.image?.size,
   k: clientNode.k,
+  linkHref: clientNode.link?.href,
   locked: clientNode.locked,
   name: clientNode.name,
   nodeParentId: clientNode.parent ? clientNode.parent : null,

@@ -1,4 +1,4 @@
-import {Colors, Font, Image, UserNodeProperties} from './models/node'
+import {Colors, Font, Image, Link} from './models/node'
 import Utils from '../utils/utils'
 import Map from './map'
 import * as d3 from 'd3'
@@ -33,45 +33,18 @@ export default class Options implements OptionParameters {
         this.zoom = parameters.zoom !== undefined ? parameters.zoom : true
 
         // Default node properties
-        this.defaultNode = Utils.mergeObjects({
-            name: '',
-            image: {
-                src: '',
-                size: 60
-            },
-            colors: {
-                name: '#787878',
-                background: '#f9f9f9',
-                branch: '#577a96'
-            },
-            font: {
-                size: 16,
-                style: 'normal',
-                weight: 'normal'
-            },
-            locked: true,
-            isRoot: false
-        }, parameters.defaultNode, true) as DefaultNodeProperties
+        this.defaultNode = Utils.mergeObjects(
+            DefaultNodeValues,
+            parameters.defaultNode,
+            true
+        ) as DefaultNodeProperties
 
         // Default root node properties
-        this.rootNode = Utils.mergeObjects({
-            name: 'Root node',
-            image: {
-                src: '',
-                size: 70
-            },
-            colors: {
-                name: '#787878',
-                background: '#f0f6f5',
-                branch: ''
-            },
-            font: {
-                size: 20,
-                style: 'normal',
-                weight: 'normal'
-            },
-            isRoot: true
-        }, parameters.rootNode, true) as DefaultNodeProperties
+        this.rootNode = Utils.mergeObjects(
+            DefaultRootNodeValues,
+            parameters.rootNode,
+            true
+        ) as DefaultNodeProperties
     }
 
     public update = (property: string, value: any) => {
@@ -187,12 +160,62 @@ export default class Options implements OptionParameters {
     }
 }
 
+export const DefaultNodeValues: DefaultNodeProperties = {
+    name: '',
+    link: {
+        href: ''
+    },
+    image: {
+        src: '',
+        size: 60
+    },
+    colors: {
+        name: '#787878',
+        background: '#f9f9f9',
+        branch: '#577a96'
+    },
+    font: {
+        size: 16,
+        style: 'normal',
+        weight: 'normal',
+        decoration: ''
+    },
+    locked: true,
+    isRoot: false
+}
+
+export const DefaultRootNodeValues: DefaultNodeProperties = {
+    name: 'Root node',
+    link: {
+        href: ''
+    },
+    image: {
+        src: '',
+        size: 70
+    },
+    colors: {
+        name: '#787878',
+        background: '#f0f6f5',
+        branch: ''
+    },
+    font: {
+        size: 20,
+        style: 'normal',
+        weight: 'normal',
+        decoration: ''
+    },
+    locked: true,
+    isRoot: true
+}
+
 export interface DefaultNodeProperties {
     name: string
     image: Image
+    link: Link
     colors: Colors
     font: Font
     locked: boolean
+    isRoot: boolean
 }
 
 export interface OptionParameters {

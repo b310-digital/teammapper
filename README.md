@@ -10,6 +10,7 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 
 -   Host and create your own mindmaps
 -   Set node images, colors and font properties.
+-   Add links to nodes
 -   Shortcuts
 -   Import and export functionality (JSON, SVG, PDF, PNG...)
 -   Redo / Undo

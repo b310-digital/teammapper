@@ -107,12 +107,21 @@
             color="primary" mat-icon-button>
         <mat-icon>format_italic</mat-icon>
     </button>
-    <!-- 
-    <button (click)="addLink()" [title]="'TOOLTIPS.LINK' | translate"
-            color="primary" mat-icon-button>
-        <mat-icon>insert_link</mat-icon>
-    </button>
-    -->
+    
+    <div *ngIf="node?.link?.href; then renderLinkRemove else renderLinkInput"></div>
+    <ng-template #renderLinkRemove>
+        <button (click)="removeLink()" [title]="'TOOLTIPS.LINK_REMOVE' | translate"
+                color="primary" mat-icon-button>
+            <mat-icon>link_off</mat-icon>
+        </button>
+    </ng-template>
+    <ng-template #renderLinkInput>
+        <button (click)="addLink()" [title]="'TOOLTIPS.LINK_ADD' | translate"
+                color="primary" mat-icon-button>
+            <mat-icon>insert_link</mat-icon>
+        </button>
+    </ng-template>
+    
     <span class="toolbar-spacer"></span>
 
     <button color="primary" mat-icon-button routerLink="/app/shortcuts">

@@ -4,6 +4,7 @@ import Node, {
     ExportNodeProperties,
     Font,
     Image,
+    Link,
     NodeProperties,
     UserNodeProperties
 } from '../models/node'
@@ -264,6 +265,9 @@ export default class Nodes {
             case 'imageSize':
                 updated = this.updateNodeImageSize(node, value, graphic)
                 break
+            case 'linkHref':
+                updated = this.updateNodeLinkHref(node, value)
+                break
             case 'backgroundColor':
                 updated = this.updateNodeBackgroundColor(node, value, graphic)
                 break
@@ -370,6 +374,7 @@ export default class Nodes {
             image: Utils.cloneObject(node.image) as Image,
             colors: Utils.cloneObject(node.colors) as Colors,
             font: Utils.cloneObject(node.font) as Font,
+            link:  Utils.cloneObject(node.link) as Link,
             locked: node.locked,
             isRoot: node.isRoot,
             k: node.k
@@ -863,6 +868,26 @@ export default class Nodes {
     }
 
     /**
+     * Update the node link href with a new value.
+     * @param {Node} node
+     * @param {string} href
+     * @returns {boolean}
+     */
+    private updateNodeLinkHref = (node: Node, href: string) => {
+        if (href && typeof href !== 'string') {
+            Log.error('The link href must be a string', 'type')
+        }
+
+        if (node.link.href !== href) {
+            node.link.href = href
+
+            this.map.draw.setLink(node)
+        } else {
+            return false
+        }
+    }
+
+    /**
      * Update the node font style.
      * @param {Node} node
      * @param {string} style
@@ -1021,6 +1046,7 @@ export const PropertyMapping = {
     coordinates: ['coordinates'],
     imageSrc: ['image', 'src'],
     imageSize: ['image', 'size'],
+    linkHref: ['link', 'href'],
     backgroundColor: ['colors', 'background'],
     branchColor: ['colors', 'branch'],
     fontWeight: ['font', 'weight'],

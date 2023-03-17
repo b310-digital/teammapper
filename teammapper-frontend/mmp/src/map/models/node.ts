@@ -15,6 +15,7 @@ export default class Node implements NodeProperties {
     public image: Image
     public colors: Colors
     public font: Font
+    public link: Link
     public locked: boolean
     public dom: SVGGElement
     public isRoot: boolean
@@ -31,6 +32,7 @@ export default class Node implements NodeProperties {
         this.colors = properties.colors
         this.image = properties.image
         this.font = properties.font
+        this.link = properties.link
         this.locked = properties.locked
         this.isRoot = properties.isRoot
 
@@ -80,12 +82,23 @@ export default class Node implements NodeProperties {
         return this.dom.querySelector('image')
     }
 
+    /**
+     * Return the SVG a of the node link.
+     * @returns {SVGIAElement} a
+     */
+    public getLinkDOM(): SVGAElement {
+        // Unfortunately typescript returns an html type as default - in this case its a SVG element
+        // https://github.com/microsoft/TypeScript/issues/51844
+        return this.dom.querySelector('a > text') as any
+    }
+
 }
 
 export interface UserNodeProperties {
     name?: string
     coordinates?: Coordinates
     image?: Image
+    link?: Link
     colors?: Colors
     font?: Font
     locked?: boolean
@@ -117,6 +130,10 @@ export interface Dimensions {
 export interface Image {
     src: string
     size: number
+}
+
+export interface Link {
+    href: string
 }
 
 export interface Colors {

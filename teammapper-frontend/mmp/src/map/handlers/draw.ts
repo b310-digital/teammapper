@@ -12,6 +12,7 @@ export default class Draw {
 
     private map: Map
     private base64regex: RegExp = /[^a-zA-Z0-9+\/;:,=]/i
+    private editing: boolean = false
 
     /**
      * Get the associated map instance.
@@ -61,6 +62,7 @@ export default class Draw {
 
         const outer = dom.nodes.enter().append('g')
             .style('cursor', 'pointer')
+            .style('touch-action', 'none')
             .attr('class', this.map.id + '_node')
             .attr('id', function (node: Node) {
                 node.dom = this
@@ -70,7 +72,14 @@ export default class Draw {
             .on('dblclick', (event: MouseEvent, node: Node) => {
                 event.stopPropagation()
                 this.enableNodeNameEditing(node)
-            }).on('touchstart', (_event: TouchEvent, node: Node) => {
+            }).on('touchstart', (event: TouchEvent, node: Node) => {
+                // When not clicking a link and not in edit mode, disable all mobile native touch events
+                // A single tap is supposed to move the node in this application
+                if(!this.isLinkTarget(event) && !this.editing) {
+                    event.preventDefault()
+                }
+
+                // a single tap should enter moving node mode - not a selection
                 if (!tapedTwice) {
                     tapedTwice = true
 
@@ -105,9 +114,10 @@ export default class Draw {
             .style('stroke-width', 3)
             .attr('d', (node: Node) => this.drawNodeBackground(node))
 
-        // Set image of the node
+        // Set image and link of the node
         outer.each((node: Node) => {
             this.setImage(node)
+            this.setLink(node)
         })
 
 
@@ -199,6 +209,7 @@ export default class Draw {
         d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => this.drawBranch(node) as any)
 
         this.updateImagePosition(node)
+        this.updateLinkPosition(node)
 
         this.updateNodeNameContainer(node)
     }
@@ -243,6 +254,35 @@ export default class Draw {
     }
 
     /**
+     * Set main properties of node image and create it if it does not exist.
+     * @param {Node} node
+     */
+    public setLink(node: Node) {
+        let domLink = node.getLinkDOM()
+
+        if (!domLink) {
+            domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
+            const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+            domText.textContent = 'link'
+            domText.classList.add('link-text')
+            domText.classList.add('material-icons')
+            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
+            domText.setAttribute('y', node.dimensions.height.toString())
+            domText.setAttribute('x', '-10')
+            node.dom.appendChild(domLink)
+            domLink.appendChild(domText)
+        }
+
+        if (DOMPurify.sanitize(node.link.href) !== '') {
+            domLink.setAttribute('href', DOMPurify.sanitize(node.link.href))
+            domLink.setAttribute('target', '_self')
+
+        } else {
+            domLink.remove()
+        }
+    }
+
+    /**
      * Update the node image position.
      * @param {Node} node
      */
@@ -255,10 +295,23 @@ export default class Draw {
     }
 
     /**
+     * Update the node link position.
+     * @param {Node} node
+     */
+    public updateLinkPosition(node: Node) {
+        if (DOMPurify.sanitize(node.link.href) !== '') {
+            const link = node.getLinkDOM(),
+                  y = node.dimensions.height
+            link.setAttribute('y', y.toString())
+        }
+    }
+
+    /**
      * Enable and manage all events for the name editing.
      * @param {Node} node
      */
     public enableNodeNameEditing(node: Node) {
+        this.editing = true
         const name = node.getNameDOM()
         name.innerHTML = DOMPurify.sanitize(node.name)
 
@@ -321,6 +374,8 @@ export default class Draw {
         }
 
         name.onblur = () => {
+            this.editing = false
+
             if (name.innerHTML !== node.name) {
                 this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML))
             }
@@ -383,6 +438,7 @@ export default class Draw {
         div.style.setProperty('font-weight', DOMPurify.sanitize(node.font.weight))
         div.style.setProperty('text-decoration', DOMPurify.sanitize(node.font.decoration))
 
+        div.style.setProperty('touch-action', 'none')
         div.style.setProperty('display', 'inline-block')
         div.style.setProperty('white-space', 'pre')
         div.style.setProperty('width', 'auto')
@@ -397,6 +453,15 @@ export default class Draw {
         div.innerHTML = DOMPurify.sanitize(node.name)
 
         return div.outerHTML
+    }
+
+    /**
+     * Checks if the target of the event is the link below the node
+     * @param {TouchEvent} event
+     * @returns {boolean}
+     */
+    private isLinkTarget(event: TouchEvent): boolean {
+        return event.target['classList'][0] === 'link-text'
     }
 
 }

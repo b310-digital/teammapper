@@ -60,7 +60,8 @@
         "MAP_ZOOM": "Zoomen der Mindmap erlauben",
         "AUTO_BRANCH_COLORS": "Automatische Auswahl von Zweigfarben erlauben",
         "SHARE": "Teilen",
-        "LINK": "Link hinzufügen",
+        "LINK_ADD": "Link hinzufügen",
+        "LINK_REMOVE": "Link entfernen",
         "FONT_MIN_SIZE": "Minimale Schriftgröße",
         "FONT_MAX_SIZE": "Maximale Schriftgröße",
         "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
@@ -87,8 +88,7 @@
           "CONFIRM_DELETE": "Wirklich löschen?"
       },
       "LINK": {
-          "URL": "Link URL (bitte mit http/https)",
-          "NAME": "Link Name"
+          "URL": "Link-URL (https://...)"
       }
     },
      "PAGES": {
