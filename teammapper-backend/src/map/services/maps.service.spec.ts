@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import AppModule from '../../app.module';
 import { createTestConfiguration } from '../../../test/db';
 import { mapMmpNodeToClient } from '../utils/clientServerMapping';
+import { truncateDatabase } from 'test/helper';
 
 describe('MapsController', () => {
   let mapsService: MapsService;
@@ -16,7 +17,7 @@ describe('MapsController', () => {
   let mapsRepo: Repository<MmpMap>;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule,
         TypeOrmModule.forRoot(createTestConfiguration()),
@@ -31,6 +32,10 @@ describe('MapsController', () => {
       getRepositoryToken(MmpNode),
     );
     mapsService = new MapsService(nodesRepo, mapsRepo);
+  });
+
+  beforeEach(() => {
+    return truncateDatabase(mapsRepo.manager.connection)
   });
 
   describe('updateNode', () => {
@@ -52,7 +57,7 @@ describe('MapsController', () => {
 
       // we save the time before the update to be able to compare the lastModified date and make sure it's newer than this:
       const timeBeforeUpdate = new Date()
-      mapsService.updateNode(map.id, clientNode);
+      await mapsService.updateNode(map.id, clientNode);
       const updatedNode = (await nodesRepo.findOne({ where: { id: node.id } }));
 
       expect(updatedNode.lastModified).not.toEqual(oldDate);
@@ -62,11 +67,10 @@ describe('MapsController', () => {
 
   describe('deleteOutdatedMaps', () => {
     it('does not delete a new map', async () => {
-
       const map: MmpMap = await mapsRepo.save({
         lastModified: new Date(),
       });
-
+      
       await mapsService.deleteOutdatedMaps(30);
       const foundMap: MmpMap = await mapsService.findMap(map.id);
       expect(foundMap.id).toEqual(map.id);
