@@ -13,7 +13,7 @@ async function bootstrap() {
   const mapsService = application.get(MapsService);
 
   logger.log('--- Deleting old maps ... ---');
-  const result: Number = await mapsService.deleteOutdatedMaps(configService.deleteAfterDays());
+  const result: number = await mapsService.deleteOutdatedMaps(configService.deleteAfterDays());
   logger.log('Deleted rows: ' + result);
   logger.log('--- Finished deleting maps ---');
 

@@ -20,7 +20,7 @@ export class TasksService {
   @Cron('0 0 * * *')
   async deleteOldMapsInInterval() {
     this.logger.log('--- Deleting old maps ... ---');
-    const affected: Number = await this.mapsService.deleteOutdatedMaps(configService.deleteAfterDays());
+    const affected: number = await this.mapsService.deleteOutdatedMaps(configService.deleteAfterDays());
     this.logger.log('Deleted rows: ' + affected);
     this.logger.log('--- Finished deleting maps ---');
   }

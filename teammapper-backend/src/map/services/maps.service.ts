@@ -111,8 +111,8 @@ export class MapsService {
   async getDeletedAt(map: MmpMap, afterDays: number): Promise<Date> {
     // get newest node of this map:
     const newestNodeQuery = this.nodesRepository
-                                .createQueryBuilder()
-                                .select("max(MmpNode.lastModified) AS lastModified")
+                                .createQueryBuilder("node")
+                                .select("max(node.lastModified) AS lastModified")
                                 .where( { nodeMapId: map.id } )
     const newestNode = newestNodeQuery.getRawOne()
     const newestNodeLastModified = (await newestNode)["lastmodified"]
@@ -128,33 +128,33 @@ export class MapsService {
     return copyDate;
   }
 
-  async deleteOutdatedMaps(afterDays: number = 30): Promise<Number> {
+  async deleteOutdatedMaps(afterDays: number = 30): Promise<number> {
     const today = new Date();
 
     const deleteQuery = this.mapsRepository
-      .createQueryBuilder()
-      .select("MmpMap.id")
+      .createQueryBuilder("map")
+      .select("map.id")
       .leftJoin(qb => 
         // subquery to get the newest node and its lastModified date of this map:
         qb
         .select(["node.nodeMapId AS nodeMapId", "max(node.lastModified) AS lastUpdatedAt"])
-        .from("MmpNode", "node")
-        .groupBy("node.nodeMapId"), "lastmodifiednode", "lastmodifiednode.nodeMapid = MmpMap.id")
+        .from(MmpNode, "node")
+        .groupBy("node.nodeMapId"), "lastmodifiednode", "lastmodifiednode.nodeMapid = map.id")
       .where(
         // delete all maps that have nodes that were last updated after afterDays
         "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: today})
       .orWhere(new Brackets((qb) => {
         // also delete empty maps, use th emaps lastmodified date for this:
         qb.where("lastmodifiednode.lastUpdatedAt IS NULL")
-        .andWhere("(MmpMap.lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: today})
+        .andWhere("(map.lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: today})
       }));
       
-      const outdatedMapsIdsFlat = (await deleteQuery.getRawMany()).flatMap(id => id["MmpMap_id"]);
+      const outdatedMapsIdsFlat = (await deleteQuery.getRawMany()).flatMap(id => id["map_id"]);
 
       if (outdatedMapsIdsFlat.length > 0) {
         return (await this.mapsRepository
           .createQueryBuilder()
-          .where("mmp_map.id IN (:...ids)", { ids: outdatedMapsIdsFlat })
+          .where("id IN (:...ids)", { ids: outdatedMapsIdsFlat })
           .delete()
           .execute())
           .affected;
