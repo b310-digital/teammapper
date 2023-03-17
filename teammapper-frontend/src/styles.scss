@@ -88,7 +88,8 @@ snack-bar-container.snackbar {
 }
 
 input:disabled {
-    color: rgba(0, 0, 0, 0.26);
-    background: rgba(0, 0, 0, 0.26) !important;
+    color: mat.get-color-from-palette($app-primary);
+    background: mat.get-color-from-palette($app-primary) !important;
+    opacity: .38;
 }
   
