@@ -75,7 +75,7 @@ export default class Draw {
                 event.stopPropagation()
                 this.enableNodeNameEditing(node)
             }).on('touchstart', (event: TouchEvent, node: Node) => {
-       if (!this.map.options.edit) return false
+                if (!this.map.options.edit) return false
        
                 // When not clicking a link and not in edit mode, disable all mobile native touch events
                 // A single tap is supposed to move the node in this application
