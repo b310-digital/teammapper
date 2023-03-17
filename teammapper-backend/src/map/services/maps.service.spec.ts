@@ -38,6 +38,15 @@ describe('MapsController', () => {
     return truncateDatabase(mapsRepo.manager.connection)
   });
 
+  const createNode = async (map: MmpMap, lastModified: Date) => {
+    return nodesRepo.save({
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        lastModified: lastModified,
+      });
+  }
+
   describe('updateNode', () => {
     it('does update the lastModified value on update', async() => {
       const map: MmpMap = await mapsRepo.save({
@@ -45,12 +54,7 @@ describe('MapsController', () => {
       });
 
       const oldDate = new Date('2019-01-01')
-      const node: MmpNode = await nodesRepo.save({
-        nodeMapId: map.id,
-        coordinatesX: 3,
-        coordinatesY: 1,
-        lastModified: oldDate,
-      });
+      const node: MmpNode = await createNode(map, oldDate);
 
       const clientNode = mapMmpNodeToClient(node);
       clientNode.name = 'new';
@@ -79,12 +83,7 @@ describe('MapsController', () => {
         lastModified: new Date('2019-01-01'),
       });
 
-      const node: MmpNode = await nodesRepo.save({
-        nodeMapId: map.id,
-        coordinatesX: 3,
-        coordinatesY: 1,
-        lastModified: new Date('2019-01-01'),
-      });
+      const node: MmpNode = await createNode(map, new Date('2019-01-01'));
 
       await mapsService.deleteOutdatedMaps(30);
       expect(await mapsService.findMap(map.id)).toEqual(null);
@@ -97,12 +96,7 @@ describe('MapsController', () => {
         lastModified: new Date('2019-01-01'),
       });
 
-      const node: MmpNode = await nodesRepo.save({
-        nodeMapId: map.id,
-        coordinatesX: 3,
-        coordinatesY: 1,
-        lastModified: new Date(),
-      });
+      const node: MmpNode = await createNode(map, new Date());
 
       await mapsService.deleteOutdatedMaps(30);
       expect(await mapsService.findMap(map.id)).not.toBeNull();
@@ -115,19 +109,8 @@ describe('MapsController', () => {
         lastModified: new Date('2019-01-01'),
       });
       
-      const outdatedNode: MmpNode = await nodesRepo.save({
-        nodeMapId: map.id,
-        coordinatesX: 3,
-        coordinatesY: 1,
-        lastModified: new Date('2019-01-01'),
-      });
-
-      const recentNode: MmpNode = await nodesRepo.save({
-        nodeMapId: map.id,
-        coordinatesX: 3,
-        coordinatesY: 1,
-        lastModified: new Date(),
-      });
+      const outdatedNode: MmpNode = await createNode(map, new Date('2019-01-01'));
+      const recentNode: MmpNode = await createNode(map, new Date());
 
       await mapsService.deleteOutdatedMaps(30);
       expect(await mapsService.findMap(map.id)).not.toBeNull();
@@ -150,20 +133,9 @@ describe('MapsController', () => {
       const map: MmpMap = await mapsRepo.save({
         lastModified: new Date('2018-02-02'),
       });
-
-      await nodesRepo.save({
-        nodeMapId: map.id,
-        coordinatesX: 3,
-        coordinatesY: 1,
-        lastModified: new Date('2022-01-01'),
-      });
-
-      await nodesRepo.save({
-        nodeMapId: map.id,
-        coordinatesX: 3,
-        coordinatesY: 1,
-        lastModified: new Date('2020-02-05'),
-      });
+      
+      await createNode(map, new Date('2022-01-01'));
+      await createNode(map, new Date('2020-02-05'));
 
       expect(await mapsService.getDeletedAt(map, 5)).toEqual(new Date('2022-01-06'));
     });

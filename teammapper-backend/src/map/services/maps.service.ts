@@ -142,11 +142,11 @@ export class MapsService {
         .groupBy("node.nodeMapId"), "lastmodifiednode", "lastmodifiednode.nodeMapid = map.id")
       .where(
         // delete all maps that have nodes that were last updated after afterDays
-        "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: today})
+        "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays, today})
       .orWhere(new Brackets((qb) => {
         // also delete empty maps, use th emaps lastmodified date for this:
         qb.where("lastmodifiednode.lastUpdatedAt IS NULL")
-        .andWhere("(map.lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays: afterDays, today: today})
+        .andWhere("(map.lastModified + (INTERVAL '1 day' * :afterDays)) < :today", { afterDays, today})
       }));
       
       const outdatedMapsIdsFlat = (await deleteQuery.getRawMany()).flatMap(id => id["map_id"]);
