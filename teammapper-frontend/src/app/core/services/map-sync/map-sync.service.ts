@@ -163,7 +163,6 @@ export class MapSyncService {
     return this.attachedMapSubject.getValue()
   }
 
-  // TODO Make additional request to server to check if editing code is valid and it can be edited
   public async fetchMapFromServer (id: string): Promise<ServerMap> {
     const response = await this.httpService.get(API_URL.ROOT, '/maps/' + id)
     if (!response.ok) return null
