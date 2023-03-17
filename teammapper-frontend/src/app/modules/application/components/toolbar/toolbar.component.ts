@@ -10,8 +10,11 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 })
 export class ToolbarComponent {
   @Input() public node: any
+  @Input() public editDisabled: boolean
 
-  constructor (public mmpService: MmpService, public dialogService: DialogService, public translationService: TranslateService) {
+  constructor (public mmpService: MmpService,
+    public dialogService: DialogService,
+    public translationService: TranslateService) {
   }
 
   public async exportMap (format: string) {

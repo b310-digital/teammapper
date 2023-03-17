@@ -87,4 +87,9 @@ snack-bar-container.snackbar {
     }
 }
 
-
+input:disabled {
+    color: mat.get-color-from-palette($app-primary);
+    background: mat.get-color-from-palette($app-primary) !important;
+    opacity: .38;
+}
+  

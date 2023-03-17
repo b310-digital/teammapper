@@ -70,9 +70,13 @@ export default class Draw {
             })
             .attr('transform', (node: Node) => 'translate(' + node.coordinates.x + ',' + node.coordinates.y + ')')
             .on('dblclick', (event: MouseEvent, node: Node) => {
+                if (!this.map.options.edit) return
+
                 event.stopPropagation()
                 this.enableNodeNameEditing(node)
             }).on('touchstart', (event: TouchEvent, node: Node) => {
+                if (!this.map.options.edit) return false
+       
                 // When not clicking a link and not in edit mode, disable all mobile native touch events
                 // A single tap is supposed to move the node in this application
                 if(!this.isLinkTarget(event) && !this.editing) {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { Component, Input } from '@angular/core'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 
 @Component({
@@ -7,6 +7,8 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
   styleUrls: ['./floating-buttons.component.scss']
 })
 export class FloatingButtonsComponent {
+  @Input() public editDisabled: boolean
+
   constructor (public mmpService: MmpService) {
   }
 }

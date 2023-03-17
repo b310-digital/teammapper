@@ -79,7 +79,9 @@
         },
         "SHARE": {
             "TITLE": "Share map",
-            "CONTENT": "Copy this link to share the map"
+            "CONTENT": "Copy this link to share the map",
+            "LINK_TYPE_VIEW": "Only observe",
+            "LINK_TYPE_EDIT": "Observe and modify"
           },
         "INFO": {
             "DELETED_AT": "Mindmap is going to be deleted at:",

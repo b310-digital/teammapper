@@ -10,6 +10,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 })
 export class SliderPanelsComponent {
   @Input() public node: any
+  @Input() public editDisabled: boolean
   public mapOptions: CachedMapOptions
 
   constructor (public mmpService: MmpService,

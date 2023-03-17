@@ -6,6 +6,7 @@ import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { ActivatedRoute, Router, NavigationStart, RouterEvent } from '@angular/router'
 import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent, OptionParameters } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
+import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 
 @Component({
   selector: 'teammapper-application',
@@ -14,6 +15,7 @@ import { StorageService } from 'src/app/core/services/storage/storage.service'
 })
 export class ApplicationComponent implements OnInit {
   public node: any
+  public editDisabled: boolean
 
   constructor (private mmpService: MmpService,
     private settingsService: SettingsService,
@@ -29,7 +31,7 @@ export class ApplicationComponent implements OnInit {
     this.storageService.cleanExpired()
 
     // Create the mind map.
-    this.initMap(settings.mapOptions)
+    this.initMap({ ...settings.mapOptions})
 
     this.handleImageDropObservable()
 
@@ -38,6 +40,8 @@ export class ApplicationComponent implements OnInit {
         this.mapSyncService.leaveMap()
       }
     })
+
+    this.settingsService.getEditModeSubject().subscribe((result: boolean) => this.editDisabled = !result)
   }
 
   public handleImageDropObservable () {
@@ -46,27 +50,22 @@ export class ApplicationComponent implements OnInit {
     })
   }
 
+  // Initializes the map by either loading an existing one or creating a new one
+  // Right now creation would be triggered with the /map route and forward to /map/ABC.
   public async initMap (options: OptionParameters) {
     // Initialize the mmpService component
     // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
-    // Map_1 is currently apparently hardcoded inside the map component...
     await this.mmpService.create('map_1', options)
 
     // Try to either load the given id from the server, or initialize a new map with empty data
     const givenId: string = this.route.snapshot.paramMap.get('id')
-    // Load existing map or create a new map if no id is present
-    const result: boolean = await this.mapSyncService.init(givenId)
+    const modificationSecret: string = this.route.snapshot.fragment
+    const map: ServerMap = await this.loadAndPrepareWithMap(givenId, modificationSecret);
 
     // not found, return to start page
-    if (!result) {
+    if (!map) {
       this.router.navigate([''])
       return
-    }
-
-    const attachedMap = this.mapSyncService.getAttachedMap()
-
-    if (!givenId) {
-      history.replaceState({}, '', `/map/${attachedMap.cachedMap.uuid}`)
     }
 
     this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)
@@ -76,7 +75,7 @@ export class ApplicationComponent implements OnInit {
   }
 
   public createMapListeners () {
-    // create is NOT called for initial map load / and call, but for imported maps
+    // create is NOT called by the mmp lib for initial map load / and call, but for _imported_ maps
     this.mmpService.on('create').subscribe((result: MapCreateEvent) => {
       Object.assign(this.node, this.mmpService.selectNode())
 
@@ -123,5 +122,15 @@ export class ApplicationComponent implements OnInit {
       this.mapSyncService.removeNode(removedNode)
       this.mapSyncService.updateAttachedMap()
     })
+  }
+
+  private async loadAndPrepareWithMap(mapId: string, modificationSecret: string): Promise<ServerMap> {
+    if(mapId) {
+      return await this.mapSyncService.initExistingMap(mapId, modificationSecret)
+    } else {
+      const privateServerMap = await this.mapSyncService.initNewMap()
+      history.replaceState({}, '', `/map/${privateServerMap.map.uuid}#${privateServerMap.modificationSecret}`)
+      return privateServerMap.map
+    }
   }
 }

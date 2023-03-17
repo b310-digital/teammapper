@@ -79,7 +79,9 @@
       },
       "SHARE": {
         "TITLE": "Map teilen",
-        "CONTENT": "Kopiere und teile diesen Link"
+        "CONTENT": "Kopiere und teile diesen Link",
+        "LINK_TYPE_VIEW": "Änderungen verbieten",
+        "LINK_TYPE_EDIT": "Änderungen erlauben"
       },
       "INFO": {
           "DELETED_AT": "Diese Mindmap wird gelöscht am:",

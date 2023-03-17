@@ -8,15 +8,13 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 
 ## Features:
 
--   Host and create your own mindmaps
--   Set node images, colors and font properties.
--   Add links to nodes
--   Shortcuts
--   Import and export functionality (JSON, SVG, PDF, PNG...)
--   Redo / Undo
--   Mutli user support: Share your mindmap with friends and collegues. Work at the same time on the same mindmap!
--   Use a QR Code or URL to share your maps
--   By default, mindmaps are deleted after 30 days to ensure GDPR compliancy.
+-   **Creation**: Host and create your own mindmaps
+-   **Customization**: Add images, colors, font properties and links to nodes
+-   **Collaboration**: Share your mindmap with friends and collegues, using either a view-only or modification invite!
+-   **Interoperability**: Import and export functionality (JSON, SVG, PDF, PNG...)
+-   **Shareability**: Use a QR Code or URL to share your maps
+-   **GDPR Compliancy**: By default, mindmaps are deleted after 30 days
+-   **Usability**: Redo / Undo, many Shortcuts
 
 ## Getting started
 

@@ -41,9 +41,10 @@ interface ServerMap {
   options: CachedMapOptions;
 }
 
-interface ServerMapWithAdminId {
+interface PrivateServerMap {
   map: ServerMap;
   adminId: string;
+  modificationSecret: string;
 }
 
 export {
@@ -54,5 +55,5 @@ export {
   ResponseNodeUpdated,
   ResponseSelectionUpdated,
   ServerMap,
-  ServerMapWithAdminId
+  PrivateServerMap
 }

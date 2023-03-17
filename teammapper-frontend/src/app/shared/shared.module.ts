@@ -15,6 +15,7 @@ import { MatToolbarModule } from '@angular/material/toolbar'
 import { MatSelectModule } from '@angular/material/select'
 import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { StripTags } from './pipes/striptags.pipe'
 import { ConnectionInfoDialogComponent } from './components/connection-info/connection-info-dialog.component'
 import { MatDialogModule } from '@angular/material/dialog'
@@ -43,7 +44,8 @@ const PIPES = [
     MatToolbarModule,
     MatDialogModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MatSlideToggleModule
   ],
   declarations: [...PIPES, ConnectionInfoDialogComponent, ShareDialogComponent, AboutDialogComponent],
   exports: [
