@@ -868,7 +868,7 @@ export default class Nodes {
     }
 
     /**
-     * Update the node link href and name with new values.
+     * Update the node link href with a new value.
      * @param {Node} node
      * @param {string} href
      * @returns {boolean}
