@@ -132,7 +132,7 @@ export class ApplicationComponent implements OnInit {
       return await this.mapSyncService.initExistingMap(mapId, modificationSecret)
     } else {
       const privateServerMap = await this.mapSyncService.initNewMap()
-      history.replaceState({}, '', `/map/${privateServerMap.map.uuid}#${privateServerMap.modificationSecret}`)
+      this.router.navigate([`/map/${privateServerMap.map.uuid}`], {fragment: privateServerMap.modificationSecret})
       return privateServerMap.map
     }
   }
