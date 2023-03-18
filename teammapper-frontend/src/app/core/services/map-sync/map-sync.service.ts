@@ -60,78 +60,30 @@ export class MapSyncService {
   }
 
   public async initNewMap (): Promise<PrivateServerMap> {
-    const privateServerMap: PrivateServerMap = await this.attachNewMap()
+    const privateServerMap: PrivateServerMap = await this.postMapToServer()
+    const serverMap = privateServerMap.map
+    // store private map data locally
+    this.storageService.set(serverMap.uuid, 
+      { adminId: privateServerMap.adminId, modificationSecret: privateServerMap.modificationSecret, ttl: serverMap.deletedAt })
+
+    this.initMap(serverMap)
+
+    this.settingsService.setEditMode(true)
     this.modificationSecret = privateServerMap.modificationSecret
     return privateServerMap
   }
 
   public async initExistingMap (id: string, modificationSecret: string): Promise<ServerMap> {
     this.modificationSecret = modificationSecret
-    const serverMap: ServerMap = await this.attachExistingMap(id)
-    return serverMap
-  }
+    const serverMap = await this.fetchMapFromServer(id)
 
-  /**
-     * Add current new application map to cache and attach it.
-     */
-  public async attachNewMap (): Promise<PrivateServerMap> {
-    const privateServerMap: PrivateServerMap = await this.postMapToServer()
-    const serverMap = privateServerMap.map
-    const mmpMap: MapProperties = this.convertServerMapToMmp(privateServerMap.map)
-    const key = this.createKey(mmpMap.uuid)
-    // store private map data locally
-    this.storageService.set(mmpMap.uuid, 
-      { adminId: privateServerMap.adminId, modificationSecret: privateServerMap.modificationSecret, ttl: mmpMap.deletedAt })
-
-    // initialize mmp with initial map data from server
-    this.mmpService.new(serverMap.data)
-
-    const cachedMap: CachedMap = {
-      data: serverMap.data,
-      lastModified: mmpMap.lastModified,
-      uuid: mmpMap.uuid,
-      deleteAfterDays: mmpMap.deleteAfterDays,
-      deletedAt: mmpMap.deletedAt,
-      options: serverMap.options
-    }
-
-    // init data and other components from new map data
-    this.attachMap({ key, cachedMap })
-    this.settingsService.setEditMode(true)
-    this.listenServerEvents(mmpMap.uuid)
-    this.mmpService.updateAdditionalMapOptions(serverMap.options)
-
-    return privateServerMap
-  }
-
-  /**
-     * Attach existing map.
-     */
-  public async attachExistingMap (id: string): Promise<ServerMap> {
-    const newServerMap = await this.fetchMapFromServer(id)
-
-    if (!newServerMap) {
+    if (!serverMap) {
       return
     }
-
-    const mapKey = this.createKey(newServerMap.uuid)
-
-    this.attachMap({
-      key: mapKey,
-      cachedMap: { ...this.convertServerMapToMmp(newServerMap), ...{ options: newServerMap.options } }
-    })
-
-    this.mmpService.new(newServerMap.data)
-
-    const mmpUuid = newServerMap.uuid
-
-    // init data and other components from exisitng data
-    this.listenServerEvents(mmpUuid)
+    this.initMap(serverMap)
     this.checkModificationSecret()
-    this.initColorMapping()
-    this.mmpService.updateAdditionalMapOptions(newServerMap.options)
 
-    return newServerMap
+    return serverMap
   }
 
   /**
@@ -412,5 +364,21 @@ export class MapSyncService {
 
   private extractClientListForSubscriber (): void {
     this.clientListChanged.next(Object.values(this.colorMapping).map((e: ClientColorMappingValue) => e?.color))
+  }
+
+  private initMap(serverMap: ServerMap) {
+    const mapKey = this.createKey(serverMap.uuid)
+    const mapProps = this.convertServerMapToMmp(serverMap)
+    this.attachMap({
+      key: mapKey,
+      cachedMap: { ...mapProps, ...{ options: serverMap.options } }
+    })
+
+    this.mmpService.new(mapProps.data)
+
+    // init data and other components from exisitng data
+    this.listenServerEvents(serverMap.uuid)
+    this.initColorMapping()
+    this.mmpService.updateAdditionalMapOptions(serverMap.options)
   }
 }

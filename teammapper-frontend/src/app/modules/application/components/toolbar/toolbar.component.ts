@@ -37,9 +37,8 @@ export class ToolbarComponent {
   }
 
   public addLink () {
-    const linkInput = prompt(this.translationService.instant('MODALS.LINK.URL')) || window.location.href
-    const validatedLink = this.isValidLink(linkInput) ? linkInput : window.location.href
-    this.mmpService.addNodeLink(validatedLink)
+    const linkInput = prompt(this.translationService.instant('MODALS.LINK.URL'))
+    if(this.isValidLink(linkInput)) this.mmpService.addNodeLink(linkInput)
   }
 
   public removeLink () {

@@ -30,6 +30,9 @@ export class ApplicationComponent implements OnInit {
     const settings = this.settingsService.getCachedSettings()
     this.storageService.cleanExpired()
 
+    // If the map was already initialized before, reload the page as otherwise mmp library gets into a broken state 
+    if(this.mmpService.getCurrentMap()) window.location.reload()
+
     // Create the mind map.
     this.initMap({ ...settings.mapOptions})
 
