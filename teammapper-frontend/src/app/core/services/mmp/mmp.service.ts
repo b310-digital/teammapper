@@ -38,8 +38,8 @@ export class MmpService {
      * Create a mindmap using mmp and save the instance with corresponding id.
      * All function below require the mmp id.
      */
-  public async create (id: string, options?: OptionParameters) {
-    const map: MmpMap = mmp.create(id, options)
+  public async create (id: string, ref: HTMLElement, options?: OptionParameters) {
+    const map: MmpMap = mmp.create(id, ref, options)
 
     // additional options do not include the standard mmp map options
     this.additionalOptions = await this.defaultAdditionalOptions()
@@ -51,7 +51,10 @@ export class MmpService {
      * Remove the mind mmp.
      */
   public remove () {
+    if(!this.currentMap) return
+
     this.currentMap.instance.remove()
+    this.currentMap = undefined
   }
 
   /**

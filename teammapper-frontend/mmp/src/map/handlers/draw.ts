@@ -13,20 +13,22 @@ export default class Draw {
     private map: Map
     private base64regex: RegExp = /[^a-zA-Z0-9+\/;:,=]/i
     private editing: boolean = false
+    private mapRef: HTMLElement
 
     /**
      * Get the associated map instance.
      * @param {Map} map
      */
-    constructor(map: Map) {
+    constructor(map: Map, ref: HTMLElement) {
         this.map = map
+        this.mapRef = ref
     }
 
     /**
      * Create svg and main css map properties.
      */
     public create() {
-        this.map.dom.container = d3.select('#' + this.map.id)
+        this.map.dom.container = d3.select(this.mapRef)
             .style('position', 'relative')
 
         this.map.dom.svg = this.map.dom.container.append('svg')

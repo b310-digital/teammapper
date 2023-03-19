@@ -30,9 +30,6 @@ export class ApplicationComponent implements OnInit {
     const settings = this.settingsService.getCachedSettings()
     this.storageService.cleanExpired()
 
-    // If the map was already initialized before, reload the page as otherwise mmp library gets into a broken state 
-    if(this.mmpService.getCurrentMap()) window.location.reload()
-
     // Create the mind map.
     this.initMap({ ...settings.mapOptions})
 
@@ -56,10 +53,6 @@ export class ApplicationComponent implements OnInit {
   // Initializes the map by either loading an existing one or creating a new one
   // Right now creation would be triggered with the /map route and forward to /map/ABC.
   public async initMap (options: OptionParameters) {
-    // Initialize the mmpService component
-    // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
-    await this.mmpService.create('map_1', options)
-
     // Try to either load the given id from the server, or initialize a new map with empty data
     const givenId: string = this.route.snapshot.paramMap.get('id')
     const modificationSecret: string = this.route.snapshot.fragment
@@ -70,61 +63,6 @@ export class ApplicationComponent implements OnInit {
       this.router.navigate([''])
       return
     }
-
-    this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)
-
-    // Initialize all listeners
-    this.createMapListeners()
-  }
-
-  public createMapListeners () {
-    // create is NOT called by the mmp lib for initial map load / and call, but for _imported_ maps
-    this.mmpService.on('create').subscribe((result: MapCreateEvent) => {
-      Object.assign(this.node, this.mmpService.selectNode())
-
-      this.mapSyncService.updateAttachedMap()
-      this.mapSyncService.updateMap(result.previousMapData)
-    })
-
-    this.mmpService.on('nodeSelect').subscribe((nodeProps: ExportNodeProperties) => {
-      this.mapSyncService.updateNodeSelection(nodeProps.id, true)
-      Object.assign(this.node, nodeProps)
-    })
-
-    this.mmpService.on('nodeDeselect').subscribe((nodeProps: ExportNodeProperties) => {
-      this.mapSyncService.updateNodeSelection(nodeProps.id, false)
-      Object.assign(this.node, this.mmpService.selectNode())
-    })
-
-    this.mmpService.on('nodeUpdate').subscribe((result: NodeUpdateEvent) => {
-      Object.assign(this.node, result.nodeProperties)
-      this.mapSyncService.updateNode(result)
-      this.mapSyncService.updateAttachedMap()
-    })
-
-    this.mmpService.on('undo').subscribe(() => {
-      Object.assign(this.node, this.mmpService.selectNode())
-      this.mapSyncService.updateAttachedMap()
-      this.mapSyncService.updateMap()
-    })
-
-    this.mmpService.on('redo').subscribe(() => {
-      Object.assign(this.node, this.mmpService.selectNode())
-      this.mapSyncService.updateAttachedMap()
-      this.mapSyncService.updateMap()
-    })
-
-    this.mmpService.on('nodeCreate').subscribe((newNode: ExportNodeProperties) => {
-      this.mapSyncService.addNode(newNode)
-      this.mapSyncService.updateAttachedMap()
-      this.mmpService.selectNode(newNode.id)
-      this.mmpService.editNode()
-    })
-
-    this.mmpService.on('nodeRemove').subscribe((removedNode: ExportNodeProperties) => {
-      this.mapSyncService.removeNode(removedNode)
-      this.mapSyncService.updateAttachedMap()
-    })
   }
 
   private async loadAndPrepareWithMap(mapId: string, modificationSecret: string): Promise<ServerMap> {
@@ -132,7 +70,7 @@ export class ApplicationComponent implements OnInit {
       return await this.mapSyncService.initExistingMap(mapId, modificationSecret)
     } else {
       const privateServerMap = await this.mapSyncService.initNewMap()
-      history.replaceState({}, '', `/map/${privateServerMap.map.uuid}#${privateServerMap.modificationSecret}`)
+      this.router.navigate([`/map/${privateServerMap.map.uuid}`], {fragment: privateServerMap.modificationSecret})
       return privateServerMap.map
     }
   }

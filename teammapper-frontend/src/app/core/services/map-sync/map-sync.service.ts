@@ -374,8 +374,6 @@ export class MapSyncService {
       cachedMap: { ...mapProps, ...{ options: serverMap.options } }
     })
 
-    this.mmpService.new(mapProps.data)
-
     // init data and other components from exisitng data
     this.listenServerEvents(serverMap.uuid)
     this.initColorMapping()

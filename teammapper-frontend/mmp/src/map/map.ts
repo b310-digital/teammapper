@@ -36,7 +36,7 @@ export default class MmpMap {
      * @param {OptionParameters} options
      * @returns {MmpInstance} mmpInstance
      */
-    constructor(id: string, options?: OptionParameters) {
+    constructor(id: string, ref: HTMLElement, options?: OptionParameters) {
         this.id = id
 
         this.dom = {}
@@ -45,7 +45,7 @@ export default class MmpMap {
         this.zoom = new Zoom(this)
         this.history = new History(this)
         this.drag = new Drag(this)
-        this.draw = new Draw(this)
+        this.draw = new Draw(this, ref)
         this.nodes = new Nodes(this)
         this.export = new Export(this)
         this.copyPaste = new CopyPaste(this)
