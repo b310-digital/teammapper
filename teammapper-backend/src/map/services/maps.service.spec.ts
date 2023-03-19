@@ -7,7 +7,7 @@ import { MmpNode } from '../entities/mmpNode.entity';
 import { Repository } from 'typeorm';
 import { ConfigModule } from '@nestjs/config';
 import AppModule from '../../app.module';
-import { createTestConfiguration } from '../../../test/db';
+import { createTestConfiguration, destroyWorkerDatabase } from '../../../test/db';
 import { mapMmpNodeToClient } from '../utils/clientServerMapping';
 import { truncateDatabase } from 'test/helper';
 
@@ -15,12 +15,13 @@ describe('MapsController', () => {
   let mapsService: MapsService;
   let nodesRepo: Repository<MmpNode>;
   let mapsRepo: Repository<MmpMap>;
+  let moduleFixture: TestingModule;
 
   beforeAll(async () => {
-     const moduleFixture: TestingModule = await Test.createTestingModule({
+    moduleFixture = await Test.createTestingModule({
       imports: [
         ConfigModule,
-        TypeOrmModule.forRoot(createTestConfiguration()),
+        TypeOrmModule.forRoot(await createTestConfiguration(process.env.JEST_WORKER_ID)),
         AppModule,
       ],
     }).compile();
@@ -33,9 +34,15 @@ describe('MapsController', () => {
     );
     mapsService = new MapsService(nodesRepo, mapsRepo);
   });
+  
+  afterAll(async () => {
+    // cose connection:
+    await destroyWorkerDatabase(mapsRepo.manager.connection, process.env.JEST_WORKER_ID);
+    await moduleFixture.close();
+  });
 
-  beforeEach(() => {
-    return truncateDatabase(mapsRepo.manager.connection)
+  beforeEach(async () => {
+    await truncateDatabase(mapsRepo.manager.connection)
   });
 
   const createNode = async (map: MmpMap, lastModified: Date) => {

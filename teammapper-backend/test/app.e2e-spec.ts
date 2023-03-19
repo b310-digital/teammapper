@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { io, Socket } from 'socket.io-client';
 import { IMmpClientMap } from 'src/map/types';
-import { createTestConfiguration } from './db';
+import { createTestConfiguration, destroyWorkerDatabase } from './db';
 import AppModule from '../src/app.module';
 
 describe('AppController (e2e)', () => {
@@ -21,7 +21,7 @@ describe('AppController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule,
-        TypeOrmModule.forRoot(createTestConfiguration()),
+        TypeOrmModule.forRoot(await createTestConfiguration(process.env.JEST_WORKER_ID)),
         AppModule,
       ],
     }).compile();
@@ -34,9 +34,11 @@ describe('AppController (e2e)', () => {
     server = app.getHttpServer();
     await app.init();
     await app.listen(3000);
-  });
+  })
 
   afterAll(async () => {
+    // close connection:
+    await destroyWorkerDatabase(mapRepo.manager.connection, process.env.JEST_WORKER_ID);
     await app.close();
   });
 
