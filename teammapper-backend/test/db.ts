@@ -1,5 +1,6 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 require('dotenv').config();
 
@@ -17,32 +18,20 @@ const setupWorkerDatabase = async (workerId: string): Promise<string> => {
 // this is the configuration for the main test database. this database is not used for actual tests.
 // it is the entrypoint for each worker to be able to create their own worker database
 const mainTestDataSource = async () => {
-  const connection = new DataSource({
-    type: 'postgres',
-    host: process.env.POSTGRES_TEST_HOST,
-    port: parseInt(process.env.POSTGRES_TEST_PORT),
-    username: process.env.POSTGRES_TEST_USER,
-    password: process.env.POSTGRES_TEST_PASSWORD,
-    database: process.env.POSTGRES_TEST_DATABASE,
-    // we don't need to synchronise the tables for the main test database - #
-    // we cannot use CREATE DATABASE ... TEMPLATE ...;, since this method does
-    // not work when multiple connections are accessing the template database.
-    // However, as soon as we have more than one worker, there are multiple 
-    // connections to the main database, concurrently trying to create their worker databases.
-    synchronize: false,
-  });
+  // we don't need to synchronise the tables for the main test database - #
+  // we cannot use CREATE DATABASE ... TEMPLATE ...;, since this method does
+  // not work when multiple connections are accessing the template database.
+  // However, as soon as we have more than one worker, there are multiple 
+  // connections to the main database, concurrently trying to create their worker databases.
+  const connection = new DataSource(createDataSourceConfig);
   await connection.initialize();
-
+  
   return connection;
 }
 
 const workerDataSourceConfig = (databaseName: string): TypeOrmModuleOptions => {
   return {
-    type: 'postgres',
-    host: process.env.POSTGRES_TEST_HOST,
-    port: parseInt(process.env.POSTGRES_TEST_PORT),
-    username: process.env.POSTGRES_TEST_USER,
-    password: process.env.POSTGRES_TEST_PASSWORD,
+   ... createDataSourceConfig,
     database: databaseName,
     synchronize: true,
     autoLoadEntities: true,
@@ -53,6 +42,16 @@ const workerDataSourceConfig = (databaseName: string): TypeOrmModuleOptions => {
       statement_timeout: 1000,
     },
   }
+}
+
+const createDataSourceConfig: PostgresConnectionOptions = {
+    type: 'postgres',
+    host: process.env.POSTGRES_TEST_HOST,
+    port: parseInt(process.env.POSTGRES_TEST_PORT),
+    username: process.env.POSTGRES_TEST_USER,
+    password: process.env.POSTGRES_TEST_PASSWORD,
+    database: process.env.POSTGRES_TEST_DATABASE,
+    synchronize: false,
 }
 
 export const destroyWorkerDatabase = async (workerDataSource: DataSource, workerId: string): Promise<void> => {
@@ -73,6 +72,6 @@ const buildDatabaseName = (workerId: string) : string => {
 
 export const createTestConfiguration = async (workerId: string): Promise<TypeOrmModuleOptions> => {
   const databaseName = await setupWorkerDatabase(workerId);
-
   return workerDataSourceConfig(databaseName);
 };
+
