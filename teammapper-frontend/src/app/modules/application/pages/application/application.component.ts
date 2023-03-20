@@ -67,9 +67,9 @@ export class ApplicationComponent implements OnInit {
 
   private async loadAndPrepareWithMap(mapId: string, modificationSecret: string): Promise<ServerMap> {
     if(mapId) {
-      return await this.mapSyncService.initExistingMap(mapId, modificationSecret)
+      return await this.mapSyncService.prepareExistingMap(mapId, modificationSecret)
     } else {
-      const privateServerMap = await this.mapSyncService.initNewMap()
+      const privateServerMap = await this.mapSyncService.prepareNewMap()
       this.router.navigate([`/map/${privateServerMap.map.uuid}`], {fragment: privateServerMap.modificationSecret})
       return privateServerMap.map
     }
