@@ -33,17 +33,14 @@ interface ServerClientList {
   providedIn: 'root'
 })
 export class MapSyncService {
-  // Observable of behavior subject with the attached map key.
   public clientListChanged: BehaviorSubject<string[]>
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>
-  // TODO
-  private readonly attachedNodeSubject: BehaviorSubject<NodeProperties | null>
+  private readonly attachedNodeSubject: BehaviorSubject<any | null>
   private socket: Socket
   private colorMapping: ClientColorMapping
   private availableColors: string[]
   private clientColor: string
   private modificationSecret: string
-  private node: NodeProperties
 
   constructor (
     private mmpService: MmpService,
@@ -54,7 +51,7 @@ export class MapSyncService {
   ) {
     // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null)
-    this.attachedNodeSubject = new BehaviorSubject<NodeProperties | null>(null)
+    this.attachedNodeSubject = new BehaviorSubject<any | null>({})
 
     this.colorMapping = {}
     this.clientListChanged = new BehaviorSubject<string[]>([])
@@ -85,17 +82,18 @@ export class MapSyncService {
       return
     }
     this.prepareMap(serverMap)
-    // TODO rewrite this as http
-    //this.checkModificationSecret()
 
     return serverMap
   }
 
   public async initMap() {
-    // init data and other components from exisitng data
+    this.mmpService.new(this.getAttachedMap().cachedMap.data)
+    this.attachedNodeSubject.next(this.mmpService.selectNode(this.mmpService.getRootNode().id))
+
+    this.checkModificationSecret()
+    this.createMapListeners()
     this.listenServerEvents(this.getAttachedMap().cachedMap.uuid)
     this.initColorMapping()
-    this.createMapListeners()
   }
 
   public attachMap (cachedMapEntry: CachedMapEntry): void {
@@ -104,6 +102,10 @@ export class MapSyncService {
 
   public getAttachedMapObservable (): Observable<CachedMapEntry | null> {
     return this.attachedMapSubject.asObservable()
+  }
+
+  public getAttachedNodeObservable (): Observable<NodeProperties | null> {
+    return this.attachedNodeSubject.asObservable()
   }
 
   public getAttachedMap (): CachedMapEntry {
@@ -371,6 +373,7 @@ export class MapSyncService {
     }).shift()
   }
 
+  /// TODO ???
   private extractClientListForSubscriber (): void {
     this.clientListChanged.next(Object.values(this.colorMapping).map((e: ClientColorMappingValue) => e?.color))
   }
@@ -388,7 +391,7 @@ export class MapSyncService {
   private createMapListeners () {
     // create is NOT called by the mmp lib for initial map load / and call, but for _imported_ maps
     this.mmpService.on('create').subscribe((result: MapCreateEvent) => {
-      Object.assign(this.node, this.mmpService.selectNode())
+      this.attachedNodeSubject.next(this.mmpService.selectNode())
 
       this.updateAttachedMap()
       this.updateMap(result.previousMapData)
@@ -396,28 +399,28 @@ export class MapSyncService {
 
     this.mmpService.on('nodeSelect').subscribe((nodeProps: ExportNodeProperties) => {
       this.updateNodeSelection(nodeProps.id, true)
-      Object.assign(this.node, nodeProps)
+      this.attachedNodeSubject.next(nodeProps)
     })
 
     this.mmpService.on('nodeDeselect').subscribe((nodeProps: ExportNodeProperties) => {
       this.updateNodeSelection(nodeProps.id, false)
-      Object.assign(this.node, this.mmpService.selectNode())
+      this.attachedNodeSubject.next(nodeProps)
     })
 
     this.mmpService.on('nodeUpdate').subscribe((result: NodeUpdateEvent) => {
-      Object.assign(this.node, result.nodeProperties)
+      this.attachedNodeSubject.next(result.nodeProperties)
       this.updateNode(result)
       this.updateAttachedMap()
     })
 
     this.mmpService.on('undo').subscribe(() => {
-      Object.assign(this.node, this.mmpService.selectNode())
+      this.attachedNodeSubject.next(this.mmpService.selectNode())
       this.updateAttachedMap()
       this.updateMap()
     })
 
     this.mmpService.on('redo').subscribe(() => {
-      Object.assign(this.node, this.mmpService.selectNode())
+      this.attachedNodeSubject.next(this.mmpService.selectNode())
       this.updateAttachedMap()
       this.updateMap()
     })

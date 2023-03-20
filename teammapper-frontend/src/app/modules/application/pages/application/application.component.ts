@@ -4,7 +4,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { ActivatedRoute, Router, NavigationStart, RouterEvent } from '@angular/router'
-import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent, OptionParameters } from '@mmp/map/types'
+import { ExportNodeProperties, MapCreateEvent, NodeProperties, NodeUpdateEvent, OptionParameters } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 
@@ -35,10 +35,15 @@ export class ApplicationComponent implements OnInit {
 
     this.handleImageDropObservable()
 
-    this.router.events.subscribe((event: RouterEvent) => {
-      if (event instanceof NavigationStart) {
-        this.mapSyncService.leaveMap()
-      }
+    // TODO check if we are really leaving teammapper!
+    // this.router.events.subscribe((event: RouterEvent) => {
+    //   if (event instanceof NavigationStart) {
+    //     this.mapSyncService.leaveMap()
+    //   }
+    // })
+
+    this.mapSyncService.getAttachedNodeObservable().subscribe((node: NodeProperties | null) => {
+      this.node = node
     })
 
     this.settingsService.getEditModeSubject().subscribe((result: boolean) => this.editDisabled = !result)

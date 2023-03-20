@@ -5,6 +5,8 @@ import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { CachedMapEntry } from 'src/app/shared/models/cached-map.model';
 
+import { first } from 'rxjs/operators';
+
 @Component({
   selector: 'teammapper-map',
   templateUrl: './map.component.html',
@@ -12,32 +14,24 @@ import { CachedMapEntry } from 'src/app/shared/models/cached-map.model';
 })
 export class MapComponent {
   @ViewChild('map') mapWrapper: ElementRef<HTMLElement>;
-  public node: any
 
   constructor (
     private settingsService: SettingsService,
     private mmpService: MmpService,
     private mapSyncService: MapSyncService
-  ) {
-    this.node = {}
-  }
+  ) {}
 
+  // Init process of a map:
+  // 1) Render the wrapper element inside the map angular html component 
+  // 2) Init mmp library with generating svg wrapper
+  // 3) Fill map with data
+  // 4) Register to server events
   public async ngAfterViewInit() {
-    this.mmpService.remove()
     const settings = this.settingsService.getCachedSettings()
 
-    this.mapSyncService.getattachedMapSubject().subscribe(async (result: CachedMapEntry | null) => {
-      if(result === null) return
-
-      // Initialize the mmpService component
-      // This does not mean that any data is loaded just yet. Its more like initializing a mindmapp tab
-      // TODO subscribe for attached map and load then?
+    this.mapSyncService.getAttachedMapObservable().pipe(first(val => val !== null)).subscribe(async (result: CachedMapEntry | null) => {
       await this.mmpService.create('map_1', this.mapWrapper.nativeElement, settings.mapOptions)
-        console.log('update')
-        console.log(result)
-        this.mmpService.new(result.cachedMap.data)
-        this.node = this.mmpService.selectNode(this.mmpService.getRootNode().id)
-        this.createMapListeners()
-      })
+      this.mapSyncService.initMap()
+    })
   }
 }
