@@ -62,6 +62,7 @@ export class MmpService implements OnDestroy {
   public remove () {
     if(!this.currentMap) return
 
+    this.currentMap.instance.unsubscribeAll()
     this.currentMap.instance.remove()
     this.currentMap = undefined
   }

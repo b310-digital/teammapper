@@ -45,10 +45,14 @@ export default class Events {
         this.dispatcher.on(Event[event], callback as any)
     }
 
-    public removeAll = () => {
-        // TODO
+    /**
+     * Removes / resets all callbacks
+     */
+    public unsubscribeAll = () => {
+        Object.values(Event).forEach((event: string) => {
+            this.dispatcher.on(event, null)
+        })
     }
-
 }
 
 export enum Event {

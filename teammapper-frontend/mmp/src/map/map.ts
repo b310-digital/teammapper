@@ -109,6 +109,7 @@ export default class MmpMap {
             removeNode: this.nodes.removeNode,
             selectNode: this.nodes.selectNode,
             undo: this.history.undo,
+            unsubscribeAll: this.events.unsubscribeAll,
             updateNode: this.nodes.updateNode,
             updateOptions: this.options.update,
             zoomIn: this.zoom.zoomIn,
@@ -128,7 +129,7 @@ export interface MmpInstance {
     existNode: Function
     exportAsImage: Function
     exportAsJSON: Function
-    exportNodeProperties: Function,
+    exportNodeProperties: Function
     exportRootProperties: Function
     exportSelectedNode: Function
     highlightNode: Function
@@ -142,8 +143,9 @@ export interface MmpInstance {
     removeNode: Function
     selectNode: Function
     undo: Function
+    unsubscribeAll: Function
     updateNode: Function
-    updateOptions: Function,
+    updateOptions: Function
     zoomIn: Function
     zoomOut: Function
 }
