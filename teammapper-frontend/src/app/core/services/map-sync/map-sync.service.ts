@@ -61,10 +61,10 @@ export class MapSyncService implements OnDestroy {
     this.clientColor = this.availableColors[Math.floor(Math.random() * this.availableColors.length)]
     this.modificationSecret = ''
     this.colorMapping = {}
+    this.socket = io()
   }
 
   ngOnDestroy () {
-    this.leaveMap()
     this.reset()
   }
 
@@ -95,8 +95,11 @@ export class MapSyncService implements OnDestroy {
   }
 
   public reset () {
+    if (this.socket) { 
+      this.socket.removeAllListeners()
+      this.leaveMap()
+    }
     this.colorMapping = {}
-    this.socket.removeAllListeners()
   }
 
   public initMap() {
@@ -275,7 +278,6 @@ export class MapSyncService implements OnDestroy {
   }
 
   private listenServerEvents (uuid: string): Promise<MapProperties> {
-    this.socket = io()
     this.checkModificationSecret()
 
     this.socket.io.on('reconnect', async () => {

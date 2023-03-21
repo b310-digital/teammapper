@@ -71,7 +71,9 @@ export default class Draw {
                 return node.id
             })
             .attr('transform', (node: Node) => 'translate(' + node.coordinates.x + ',' + node.coordinates.y + ')')
-            .on('dblclick', (event: MouseEvent, node: Node) => {
+            .on('click', (event: MouseEvent, node: Node) => {
+                event.stopPropagation()
+            }).on('dblclick', (event: MouseEvent, node: Node) => {
                 if (!this.map.options.edit) return
 
                 event.stopPropagation()
