@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core'
+import { Injectable, OnDestroy } from '@angular/core'
 import { Observable } from 'rxjs'
 import { SettingsService } from '../settings/settings.service'
 import { UtilsService } from '../utils/utils.service'
@@ -16,7 +16,7 @@ import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 @Injectable({
   providedIn: 'root'
 })
-export class MmpService {
+export class MmpService implements OnDestroy {
   private currentMap: MmpMap
 
   private readonly branchColors: Array<string>
@@ -30,12 +30,16 @@ export class MmpService {
     settingsService.getEditModeObservable()
       .pipe(first((val: boolean | null) => val !== null))
       .subscribe((result: boolean | null) => {
-      if(!this.currentMap) return
+        if(!this.currentMap) return
 
-      this.currentMap.options.update('drag', result)
-      this.currentMap.options.update('edit', result)
+        this.currentMap.options.update('drag', result)
+        this.currentMap.options.update('edit', result)
       }
     )
+  }
+
+  onDestroy () {
+    this.settingsService.getEditModeObservable().unsubscribe()
   }
 
   /**

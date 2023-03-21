@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, OnDestroy } from '@angular/core'
 import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
@@ -18,7 +18,7 @@ import { ServerMap } from 'src/app/core/services/map-sync/server-types'
   templateUrl: './application.component.html',
   styleUrls: ['./application.component.scss']
 })
-export class ApplicationComponent implements OnInit {
+export class ApplicationComponent implements OnInit, OnDestroy {
   public node: any
   public editDisabled: boolean
 
@@ -31,7 +31,7 @@ export class ApplicationComponent implements OnInit {
     this.node = {}
   }
 
-  public async ngOnInit () {
+  async ngOnInit () {
     const settings = this.settingsService.getCachedSettings()
     this.storageService.cleanExpired()
 
@@ -45,6 +45,12 @@ export class ApplicationComponent implements OnInit {
     })
 
     this.settingsService.getEditModeObservable().subscribe((result: boolean) => this.editDisabled = !result)
+  }
+
+  onDestroy () {
+    this.mapSyncService.getAttachedNodeObservable().unsubscribe()
+    this.settingsService.getEditModeObservable().unsubscribe()
+    UtilsService.observableDroppedImages().unsubscribe()
   }
 
   public handleImageDropObservable () {

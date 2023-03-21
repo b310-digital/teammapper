@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core'
+import { Injectable, OnDestroy } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { Router } from '@angular/router'
 import { Hotkey, HotkeysService } from 'angular2-hotkeys'
@@ -8,7 +8,7 @@ import { SettingsService } from '../settings/settings.service'
 @Injectable({
   providedIn: 'root'
 })
-export class ShortcutsService {
+export class ShortcutsService implements OnDestroy {
   private hotKeys: Hotkey[]
   private editMode: boolean
 
@@ -29,6 +29,10 @@ export class ShortcutsService {
         this.registerHotKeys()
       }
     )
+  }
+
+  onDestroy () {
+    this.settingsService.getEditModeObservable().unsubscribe()
   }
 
   public registerHotKeys() {
