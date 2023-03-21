@@ -36,7 +36,7 @@ describe('MapsController', () => {
   });
   
   afterAll(async () => {
-    // cose connection:
+    // close connection:
     await destroyWorkerDatabase(mapsRepo.manager.connection, process.env.JEST_WORKER_ID);
     await moduleFixture.close();
   });
