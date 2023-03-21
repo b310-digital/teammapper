@@ -45,6 +45,10 @@ export default class Events {
         this.dispatcher.on(Event[event], callback as any)
     }
 
+    public removeAll = () => {
+        // TODO
+    }
+
 }
 
 export enum Event {
