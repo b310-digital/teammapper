@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core'
-import { Observable } from 'rxjs'
+import { Observable, Subscription } from 'rxjs'
 import { SettingsService } from '../settings/settings.service'
 import { UtilsService } from '../utils/utils.service'
 import { jsPDF } from 'jspdf'
@@ -22,12 +22,13 @@ export class MmpService implements OnDestroy {
   private readonly branchColors: Array<string>
   // additional options that are not handled within mmp, like fontMaxSize etc.
   private additionalOptions: CachedMapOptions;
+  private settingsSubscription: Subscription;
 
   constructor (public settingsService: SettingsService) {
     this.additionalOptions = null
     this.branchColors = COLORS
 
-    settingsService.getEditModeObservable()
+    this.settingsSubscription = settingsService.getEditModeObservable()
       .pipe(first((val: boolean | null) => val !== null))
       .subscribe((result: boolean | null) => {
         if(!this.currentMap) return
@@ -38,8 +39,8 @@ export class MmpService implements OnDestroy {
     )
   }
 
-  onDestroy () {
-    this.settingsService.getEditModeObservable().unsubscribe()
+  ngOnDestroy () {
+    this.settingsSubscription.unsubscribe()
   }
 
   /**

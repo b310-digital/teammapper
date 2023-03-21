@@ -35,9 +35,9 @@ interface ServerClientList {
 export class MapSyncService implements OnDestroy {
   // needed in color panel to show all clients
   private readonly clientListSubject: BehaviorSubject<string[]>
-  // needed in map component to initialize if map is rendered and data present
+  // needed in map component to initialize when map is rendered and data present
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>
-  // the current node is needed in the application component for UI related tasks
+  // needed in the application component for UI related tasks
   private readonly attachedNodeSubject: BehaviorSubject<any | null>
   private socket: Socket
   private colorMapping: ClientColorMapping

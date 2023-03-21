@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core'
+import { first, Subscription } from 'rxjs';
 import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
-import { ActivatedRoute, Router, NavigationStart, RouterEvent } from '@angular/router'
-import { ExportNodeProperties, MapCreateEvent, NodeProperties, NodeUpdateEvent, OptionParameters } from '@mmp/map/types'
+import { ActivatedRoute, Router } from '@angular/router'
+import { NodeProperties, OptionParameters } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 
@@ -21,6 +22,10 @@ import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 export class ApplicationComponent implements OnInit, OnDestroy {
   public node: any
   public editDisabled: boolean
+
+  private settingsServiceSubscription: Subscription;
+  private mapSyncServiceSubscription: Subscription;
+  private imageDropSubscription: Subscription;
 
   constructor (private mmpService: MmpService,
     private settingsService: SettingsService,
@@ -40,21 +45,23 @@ export class ApplicationComponent implements OnInit, OnDestroy {
 
     this.handleImageDropObservable()
 
-    this.mapSyncService.getAttachedNodeObservable().subscribe((node: NodeProperties | null) => {
+    this.mapSyncServiceSubscription = this.mapSyncService.getAttachedNodeObservable().subscribe((node: NodeProperties | null) => {
       this.node = node
     })
 
-    this.settingsService.getEditModeObservable().subscribe((result: boolean) => this.editDisabled = !result)
+    this.settingsServiceSubscription = this.settingsService.getEditModeObservable()
+      .pipe(first((val: boolean | null) => val !== null))
+      .subscribe((result: boolean | null) => this.editDisabled = !result)
   }
 
-  onDestroy () {
-    this.mapSyncService.getAttachedNodeObservable().unsubscribe()
-    this.settingsService.getEditModeObservable().unsubscribe()
-    UtilsService.observableDroppedImages().unsubscribe()
+  ngOnDestroy () {
+    this.mapSyncServiceSubscription.unsubscribe()
+    this.settingsServiceSubscription.unsubscribe()
+    this.imageDropSubscription.unsubscribe()
   }
 
   public handleImageDropObservable () {
-    UtilsService.observableDroppedImages().subscribe((image: string) => {
+    this.imageDropSubscription = UtilsService.observableDroppedImages().subscribe((image: string) => {
       this.mmpService.updateNode('imageSrc', image)
     })
   }

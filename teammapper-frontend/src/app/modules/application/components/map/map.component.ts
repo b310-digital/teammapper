@@ -4,7 +4,7 @@ import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { CachedMapEntry } from 'src/app/shared/models/cached-map.model';
 
-import { first } from 'rxjs/operators';
+import { first, Subscription } from 'rxjs';
 
 @Component({
   selector: 'teammapper-map',
@@ -13,6 +13,8 @@ import { first } from 'rxjs/operators';
 })
 export class MapComponent implements OnDestroy {
   @ViewChild('map') mapWrapper: ElementRef<HTMLElement>;
+
+  private mapSyncServiceSubscription: Subscription;
 
   constructor (
     private settingsService: SettingsService,
@@ -23,7 +25,7 @@ export class MapComponent implements OnDestroy {
   public async ngAfterViewInit() {
     const settings = this.settingsService.getCachedSettings()
 
-    this.mapSyncService.getAttachedMapObservable()
+    this.mapSyncServiceSubscription = this.mapSyncService.getAttachedMapObservable()
       .pipe(first((val: CachedMapEntry | null) => val !== null))
       .subscribe(async (_result: CachedMapEntry | null) => {
         await this.mmpService.create('map_1', this.mapWrapper.nativeElement, settings.mapOptions)
@@ -33,6 +35,6 @@ export class MapComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.mapSyncService.getAttachedMapObservable().unsubscribe()
+    this.mapSyncServiceSubscription.unsubscribe()
   }
 }
