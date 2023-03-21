@@ -1,10 +1,10 @@
 <div class="teammapper-application">
-    <teammapper-colors-panel [node]="node" [editDisabled]="editDisabled"></teammapper-colors-panel>
+    <teammapper-colors-panel [node]="node | async" [editDisabled]="editDisabled | async | inverseBool"></teammapper-colors-panel>
     <teammapper-client-colors-panel></teammapper-client-colors-panel>
-    <teammapper-sliders-panel [node]="node" [editDisabled]="editDisabled"></teammapper-sliders-panel>
-    <teammapper-floating-buttons [editDisabled]="editDisabled"></teammapper-floating-buttons>
+    <teammapper-sliders-panel [node]="node | async" [editDisabled]="editDisabled | async | inverseBool"></teammapper-sliders-panel>
+    <teammapper-floating-buttons [editDisabled]="editDisabled | async | inverseBool"></teammapper-floating-buttons>
 
-    <teammapper-toolbar [node]="node" [editDisabled]="editDisabled"></teammapper-toolbar>
+    <teammapper-toolbar [node]="node | async" [editDisabled]="editDisabled | async | inverseBool"></teammapper-toolbar>
 
     <teammapper-map></teammapper-map>
 </div>

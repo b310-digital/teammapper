@@ -56,15 +56,16 @@ export class MapSyncService implements OnDestroy {
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null)
     this.attachedNodeSubject = new BehaviorSubject<any | null>({})
 
-    this.colorMapping = {}
     this.clientListSubject = new BehaviorSubject<string[]>([])
     this.availableColors = COLORS
     this.clientColor = this.availableColors[Math.floor(Math.random() * this.availableColors.length)]
     this.modificationSecret = ''
+    this.colorMapping = {}
   }
 
   ngOnDestroy () {
     this.leaveMap()
+    this.reset()
   }
 
   public async prepareNewMap (): Promise<PrivateServerMap> {
@@ -93,14 +94,17 @@ export class MapSyncService implements OnDestroy {
     return serverMap
   }
 
-  public async initMap() {
+  public reset () {
+    this.colorMapping = {}
+    this.socket.removeAllListeners()
+  }
+
+  public initMap() {
     this.mmpService.new(this.getAttachedMap().cachedMap.data)
     this.attachedNodeSubject.next(this.mmpService.selectNode(this.mmpService.getRootNode().id))
 
     this.createMapListeners()
     this.listenServerEvents(this.getAttachedMap().cachedMap.uuid)
-    this.checkModificationSecret()
-    this.initColorMapping()
   }
 
   public attachMap (cachedMapEntry: CachedMapEntry): void {
@@ -270,8 +274,9 @@ export class MapSyncService implements OnDestroy {
     return Object.assign({}, serverMap, { lastModified: Date.parse(serverMap.lastModified), deletedAt: Date.parse(serverMap.deletedAt) })
   }
 
-  private listenServerEvents (uuid: string): void {
+  private listenServerEvents (uuid: string): Promise<MapProperties> {
     this.socket = io()
+    this.checkModificationSecret()
 
     this.socket.io.on('reconnect', async () => {
       const serverMap: MapProperties = await this.joinMap(uuid, this.clientColor)
@@ -361,16 +366,7 @@ export class MapSyncService implements OnDestroy {
       window.location.reload()
     })
 
-    this.joinMap(uuid, this.clientColor)
-  }
-
-  private initColorMapping (): void {
-    if (!this.socket?.id) return
-
-    this.colorMapping = {
-      [this.socket.id]: { nodeId: this.mmpService.exportSelectedNode().id, color: DEFAULT_SELF_COLOR }
-    }
-    this.extractClientListForSubscriber()
+    return this.joinMap(uuid, this.clientColor)
   }
 
   private colorForNode (nodeId: string): string {
@@ -384,7 +380,6 @@ export class MapSyncService implements OnDestroy {
     }).shift()
   }
 
-  /// TODO ???
   private extractClientListForSubscriber (): void {
     this.clientListSubject.next(Object.values(this.colorMapping).map((e: ClientColorMappingValue) => e?.color))
   }

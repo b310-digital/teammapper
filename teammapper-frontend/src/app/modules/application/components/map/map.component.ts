@@ -35,6 +35,7 @@ export class MapComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+    this.mapSyncService.reset()
     this.mmpService.remove()
     this.mapSyncServiceSubscription.unsubscribe()
   }

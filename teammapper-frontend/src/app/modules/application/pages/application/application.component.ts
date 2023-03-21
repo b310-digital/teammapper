@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core'
-import { first, Subscription } from 'rxjs';
+import { Subscription, Observable } from 'rxjs';
 import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { ActivatedRoute, Router } from '@angular/router'
-import { NodeProperties, OptionParameters } from '@mmp/map/types'
+import { OptionParameters } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 
@@ -20,11 +20,9 @@ import { ServerMap } from 'src/app/core/services/map-sync/server-types'
   styleUrls: ['./application.component.scss']
 })
 export class ApplicationComponent implements OnInit, OnDestroy {
-  public node: any
-  public editDisabled: boolean
+  public node: Observable<any>
+  public editDisabled: Observable<boolean>
 
-  private settingsServiceSubscription: Subscription;
-  private mapSyncServiceSubscription: Subscription;
   private imageDropSubscription: Subscription;
 
   constructor (private mmpService: MmpService,
@@ -33,30 +31,21 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     private storageService: StorageService,
     private route: ActivatedRoute,
     private router: Router) {
-    this.node = {}
   }
 
   async ngOnInit () {
     const settings = this.settingsService.getCachedSettings()
     this.storageService.cleanExpired()
 
-    // Create the mind map.
     this.initMap({ ...settings.mapOptions})
 
     this.handleImageDropObservable()
 
-    this.mapSyncServiceSubscription = this.mapSyncService.getAttachedNodeObservable().subscribe((node: NodeProperties | null) => {
-      this.node = node
-    })
-
-    this.settingsServiceSubscription = this.settingsService.getEditModeObservable()
-      .pipe(first((val: boolean | null) => val !== null))
-      .subscribe((result: boolean | null) => this.editDisabled = !result)
+    this.node = this.mapSyncService.getAttachedNodeObservable()
+    this.editDisabled = this.settingsService.getEditModeObservable()
   }
 
   ngOnDestroy () {
-    this.mapSyncServiceSubscription.unsubscribe()
-    this.settingsServiceSubscription.unsubscribe()
     this.imageDropSubscription.unsubscribe()
   }
 
