@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { Router } from '@angular/router'
 import { Hotkey, HotkeysService } from 'angular2-hotkeys'
+import { first } from 'rxjs/operators';
 import { SettingsService } from '../settings/settings.service'
 
 @Injectable({
@@ -21,10 +22,13 @@ export class ShortcutsService {
      * Add all global hot keys of the application.
      */
   public init () {
-    this.settingsService.getEditModeSubject().subscribe((result: boolean) => {
-      this.editMode = result
-      this.registerHotKeys()
-    })
+    this.settingsService.getEditModeObservable()
+      .pipe(first((val: boolean | null) => val !== null))
+      .subscribe((result: boolean | null) => {
+        this.editMode = result
+        this.registerHotKeys()
+      }
+    )
   }
 
   public registerHotKeys() {

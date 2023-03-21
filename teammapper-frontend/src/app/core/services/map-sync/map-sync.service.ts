@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core'
+import { Injectable, OnDestroy } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { BehaviorSubject, Observable } from 'rxjs'
 import { CachedMap, CachedMapEntry, CachedMapOptions } from '../../../shared/models/cached-map.model'
@@ -32,9 +32,11 @@ interface ServerClientList {
 @Injectable({
   providedIn: 'root'
 })
-export class MapSyncService {
+export class MapSyncService implements OnDestroy {
   public clientListChanged: BehaviorSubject<string[]>
+  // needed in map component to initialize if map is rendered and data present
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>
+  // the node is primarily needed  in the application component for UI related tasks
   private readonly attachedNodeSubject: BehaviorSubject<any | null>
   private socket: Socket
   private colorMapping: ClientColorMapping
@@ -58,6 +60,10 @@ export class MapSyncService {
     this.availableColors = COLORS
     this.clientColor = this.availableColors[Math.floor(Math.random() * this.availableColors.length)]
     this.modificationSecret = ''
+  }
+
+  ngOnDestroy () {
+    this.leaveMap()
   }
 
   public async prepareNewMap (): Promise<PrivateServerMap> {
@@ -90,9 +96,9 @@ export class MapSyncService {
     this.mmpService.new(this.getAttachedMap().cachedMap.data)
     this.attachedNodeSubject.next(this.mmpService.selectNode(this.mmpService.getRootNode().id))
 
-    this.checkModificationSecret()
     this.createMapListeners()
     this.listenServerEvents(this.getAttachedMap().cachedMap.uuid)
+    this.checkModificationSecret()
     this.initColorMapping()
   }
 

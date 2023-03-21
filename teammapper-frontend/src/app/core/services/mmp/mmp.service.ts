@@ -26,7 +26,7 @@ export class MmpService {
     this.additionalOptions = null
     this.branchColors = COLORS
 
-    settingsService.getEditModeSubject().subscribe((result: boolean) => {
+    settingsService.getEditModeObservable().subscribe((result: boolean) => {
       if(!this.currentMap) return
 
       this.currentMap.options.update('drag', result)

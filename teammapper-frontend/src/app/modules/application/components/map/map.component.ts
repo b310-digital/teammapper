@@ -1,5 +1,4 @@
 import { Component, ElementRef, ViewChild } from '@angular/core'
-import { ExportNodeProperties, MapCreateEvent, NodeUpdateEvent } from '@mmp/map/types';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
@@ -21,17 +20,15 @@ export class MapComponent {
     private mapSyncService: MapSyncService
   ) {}
 
-  // Init process of a map:
-  // 1) Render the wrapper element inside the map angular html component 
-  // 2) Init mmp library with generating svg wrapper
-  // 3) Fill map with data
-  // 4) Register to server events
   public async ngAfterViewInit() {
     const settings = this.settingsService.getCachedSettings()
 
-    this.mapSyncService.getAttachedMapObservable().pipe(first(val => val !== null)).subscribe(async (result: CachedMapEntry | null) => {
-      await this.mmpService.create('map_1', this.mapWrapper.nativeElement, settings.mapOptions)
-      this.mapSyncService.initMap()
-    })
+    this.mapSyncService.getAttachedMapObservable()
+      .pipe(first((val: CachedMapEntry | null) => val !== null))
+      .subscribe(async (_result: CachedMapEntry | null) => {
+        await this.mmpService.create('map_1', this.mapWrapper.nativeElement, settings.mapOptions)
+        this.mapSyncService.initMap()
+      }
+    )
   }
 }

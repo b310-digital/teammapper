@@ -8,6 +8,11 @@ import { ExportNodeProperties, MapCreateEvent, NodeProperties, NodeUpdateEvent, 
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 
+// Initialization process of a map:
+// 1) Render the wrapper element inside the map angular html component 
+// 2) Wait for data fetching completion (triggered within application component) 
+// 3) Init mmp library and fill map with data when available
+// 4) Register to server events
 @Component({
   selector: 'teammapper-application',
   templateUrl: './application.component.html',
@@ -35,18 +40,11 @@ export class ApplicationComponent implements OnInit {
 
     this.handleImageDropObservable()
 
-    // TODO check if we are really leaving teammapper!
-    // this.router.events.subscribe((event: RouterEvent) => {
-    //   if (event instanceof NavigationStart) {
-    //     this.mapSyncService.leaveMap()
-    //   }
-    // })
-
     this.mapSyncService.getAttachedNodeObservable().subscribe((node: NodeProperties | null) => {
       this.node = node
     })
 
-    this.settingsService.getEditModeSubject().subscribe((result: boolean) => this.editDisabled = !result)
+    this.settingsService.getEditModeObservable().subscribe((result: boolean) => this.editDisabled = !result)
   }
 
   public handleImageDropObservable () {
@@ -56,9 +54,7 @@ export class ApplicationComponent implements OnInit {
   }
 
   // Initializes the map by either loading an existing one or creating a new one
-  // Right now creation would be triggered with the /map route and forward to /map/ABC.
   public async initMap (options: OptionParameters) {
-    // Try to either load the given id from the server, or initialize a new map with empty data
     const givenId: string = this.route.snapshot.paramMap.get('id')
     const modificationSecret: string = this.route.snapshot.fragment
     const map: ServerMap = await this.loadAndPrepareWithMap(givenId, modificationSecret);
