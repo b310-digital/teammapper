@@ -12,7 +12,7 @@ export class ClientColorPanelsComponent {
   public clientColors: string[]
 
   constructor (public mapSyncService: MapSyncService) {
-    mapSyncService.clientListChanged.subscribe((clients: string[]) => {
+    mapSyncService.getClientListObservable().subscribe((clients: string[]) => {
       this.clientColors = clients
     })
   }

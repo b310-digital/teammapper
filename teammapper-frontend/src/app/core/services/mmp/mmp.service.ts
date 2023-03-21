@@ -3,6 +3,7 @@ import { Observable } from 'rxjs'
 import { SettingsService } from '../settings/settings.service'
 import { UtilsService } from '../utils/utils.service'
 import { jsPDF } from 'jspdf'
+import { first } from 'rxjs/operators';
 import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
 import { ExportHistory, ExportNodeProperties, MapSnapshot, OptionParameters, UserNodeProperties } from '@mmp/map/types'
@@ -26,12 +27,15 @@ export class MmpService {
     this.additionalOptions = null
     this.branchColors = COLORS
 
-    settingsService.getEditModeObservable().subscribe((result: boolean) => {
+    settingsService.getEditModeObservable()
+      .pipe(first((val: boolean | null) => val !== null))
+      .subscribe((result: boolean | null) => {
       if(!this.currentMap) return
 
       this.currentMap.options.update('drag', result)
       this.currentMap.options.update('edit', result)
-    })
+      }
+    )
   }
 
   /**

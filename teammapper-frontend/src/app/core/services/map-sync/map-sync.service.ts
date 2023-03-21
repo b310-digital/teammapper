@@ -33,10 +33,11 @@ interface ServerClientList {
   providedIn: 'root'
 })
 export class MapSyncService implements OnDestroy {
-  public clientListChanged: BehaviorSubject<string[]>
+  // needed in color panel to show all clients
+  private readonly clientListSubject: BehaviorSubject<string[]>
   // needed in map component to initialize if map is rendered and data present
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>
-  // the node is primarily needed  in the application component for UI related tasks
+  // the current node is needed in the application component for UI related tasks
   private readonly attachedNodeSubject: BehaviorSubject<any | null>
   private socket: Socket
   private colorMapping: ClientColorMapping
@@ -56,7 +57,7 @@ export class MapSyncService implements OnDestroy {
     this.attachedNodeSubject = new BehaviorSubject<any | null>({})
 
     this.colorMapping = {}
-    this.clientListChanged = new BehaviorSubject<string[]>([])
+    this.clientListSubject = new BehaviorSubject<string[]>([])
     this.availableColors = COLORS
     this.clientColor = this.availableColors[Math.floor(Math.random() * this.availableColors.length)]
     this.modificationSecret = ''
@@ -108,6 +109,10 @@ export class MapSyncService implements OnDestroy {
 
   public getAttachedMapObservable (): Observable<CachedMapEntry | null> {
     return this.attachedMapSubject.asObservable()
+  }
+
+  public getClientListObservable (): Observable<string[] | null> {
+    return this.clientListSubject.asObservable()
   }
 
   public getAttachedNodeObservable (): Observable<NodeProperties | null> {
@@ -381,7 +386,7 @@ export class MapSyncService implements OnDestroy {
 
   /// TODO ???
   private extractClientListForSubscriber (): void {
-    this.clientListChanged.next(Object.values(this.colorMapping).map((e: ClientColorMappingValue) => e?.color))
+    this.clientListSubject.next(Object.values(this.colorMapping).map((e: ClientColorMappingValue) => e?.color))
   }
 
   private prepareMap(serverMap: ServerMap) {
