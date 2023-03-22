@@ -91,7 +91,7 @@ export default class Utils {
      * @param {HTMLElement} element
      * @return {string} css
      */
-    static cssRules(element: HTMLElement) {
+    static async cssRules(element: HTMLElement): Promise<string> {
         let css = '', sheets = document.styleSheets
 
         for (let i = 0; i < sheets.length; i++) {
@@ -104,9 +104,19 @@ export default class Utils {
 
                         // Fix: Safari does not accept double colon as selector, e.g. abc::placeholder
                         const sanitizedSelector: string = rule.selectorText?.replace(/::.*/, '')
+                        // Replace relative font paths with inlined base64 data, otherwise fonts might not be displayed when opened
+                        const fontRegex = /url\("(.*\.(woff2|ttf))/
+                        const fontUrl = fontFace !== null ? fontFace?.input?.match(fontRegex) : null
+                        const inlinedFontText = await (async (): Promise<string | null> => {
+                            if(fontUrl !== null) {
+                                const fontFile = await (await fetch(fontUrl[1])).blob()
+                                const base64Font = await this.blobToBase64(fontFile)
+                                return rule.cssText.replace(fontRegex, base64Font)
+                            }
+                        })()
 
                     if ((sanitizedSelector && element.querySelector(sanitizedSelector)) || fontFace) {
-                        css += rule.cssText
+                        css += inlinedFontText || rule.cssText
                     }
                 }
             }
@@ -156,6 +166,15 @@ export default class Utils {
         range.collapse(false)
         sel.removeAllRanges()
         sel.addRange(range)
+    }
+
+    static blobToBase64(blob: Blob): Promise<string | ArrayBuffer> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.readAsDataURL(blob)
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = error => reject(error)
+        })
     }
 
     /**

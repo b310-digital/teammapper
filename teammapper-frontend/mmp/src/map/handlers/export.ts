@@ -85,16 +85,18 @@ export default class Export {
      * Convert the mind map svg in the data URI.
      * @param {Function} callback
      */
-    private dataURI(callback: Function) {
+    private async dataURI(callback: Function) {
         const element = this.map.dom.g.node(),
             clone = element.cloneNode(true),
             svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
             box = element.getBBox(),
-            css = Utils.cssRules(element),
+            css = await Utils.cssRules(element),
             xmlns = 'http://www.w3.org/2000/xmlns/',
             padding = 15,
             x = box.x - padding, y = box.y - padding,
             w = box.width + padding * 2, h = box.height + padding * 2
+
+            console.log(css)
 
         svg.setAttributeNS(xmlns, 'xmlns', 'http://www.w3.org/2000/svg')
         svg.setAttributeNS(xmlns, 'xmlns:xlink', 'http://www.w3.org/1999/xlink')
