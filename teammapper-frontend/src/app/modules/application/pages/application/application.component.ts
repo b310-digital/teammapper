@@ -5,7 +5,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { ActivatedRoute, Router } from '@angular/router'
-import { ExportNodeProperties, OptionParameters } from '@mmp/map/types'
+import { ExportNodeProperties } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 
@@ -34,10 +34,9 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit () {
-    const settings = this.settingsService.getCachedSettings()
     this.storageService.cleanExpired()
 
-    this.initMap({ ...settings.mapOptions})
+    this.initMap()
 
     this.handleImageDropObservable()
 
@@ -56,7 +55,7 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   }
 
   // Initializes the map by either loading an existing one or creating a new one
-  public async initMap (options: OptionParameters) {
+  private async initMap () {
     const givenId: string = this.route.snapshot.paramMap.get('id')
     const modificationSecret: string = this.route.snapshot.fragment
     const map: ServerMap = await this.loadAndPrepareWithMap(givenId, modificationSecret);

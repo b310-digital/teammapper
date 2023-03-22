@@ -36,7 +36,7 @@ export class MmpService implements OnDestroy {
         this.currentMap.options.update('drag', result)
         this.currentMap.options.update('edit', result)
       }
-    )
+      )
   }
 
   ngOnDestroy () {

@@ -29,7 +29,7 @@ export class ShortcutsService implements OnDestroy {
         this.editMode = result
         this.registerHotKeys()
       }
-    )
+      )
   }
 
   ngOnDestroy () {
