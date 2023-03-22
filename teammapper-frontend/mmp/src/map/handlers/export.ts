@@ -96,8 +96,6 @@ export default class Export {
             x = box.x - padding, y = box.y - padding,
             w = box.width + padding * 2, h = box.height + padding * 2
 
-            console.log(css)
-
         svg.setAttributeNS(xmlns, 'xmlns', 'http://www.w3.org/2000/svg')
         svg.setAttributeNS(xmlns, 'xmlns:xlink', 'http://www.w3.org/1999/xlink')
         svg.setAttribute('version', '1.1')
