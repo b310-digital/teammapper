@@ -126,11 +126,11 @@
                         <hr />
                         <mat-card-content>
                             <mat-list>
-                                <mat-list-item *ngFor="let cachedMap of cachedAdminMaps">
+                                <mat-list-item *ngFor="let cachedMapEntry of cachedAdminMapEntries">
                                     <span matLine>
-                                        <a href="{{ getMapUrl(cachedMap) }}">{{ getMapTitle(cachedMap) }}</a>
+                                        <a href="{{ getMapUrl(cachedMapEntry) }}">{{ getMapTitle(cachedMapEntry) }}</a>
                                     </span>
-                                    <span matLine>TTL: {{cachedMap.cachedMapReference.ttl | date: 'YYYY-MM-dd' }}</span>
+                                    <span matLine> {{ "PAGES.SETTINGS.TTL" | translate }}: {{cachedMapEntry.cachedAdminMapValue.ttl | date: 'YYYY-MM-dd' }}</span>
                                 </mat-list-item>
                             </mat-list>
                         </mat-card-content>

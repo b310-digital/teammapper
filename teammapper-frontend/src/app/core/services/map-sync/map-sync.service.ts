@@ -404,7 +404,7 @@ export class MapSyncService implements OnDestroy {
     const map: CachedAdminMapValue | null = await this.storageService.get(serverMap.uuid) as CachedAdminMapValue | null
     if (map) {
       map.ttl = new Date(serverMap.deletedAt)
-      map.rootName = serverMap.data[0].name
+      map.rootName = serverMap.data?.[0]?.name
       this.storageService.set(serverMap.uuid, map)
     }
   }

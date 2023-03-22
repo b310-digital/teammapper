@@ -150,16 +150,17 @@
         "SETTINGS": {
             "AUTO_BRANCH_COLORS": "Automatische Zweigfarben",
             "CENTER_ON_RESIZING": "Zentrieren bei Größenänderung",
-            "TITLE": "Einstellungen",
-            "MAP_OPTIONS": "Mindmap Optionen",
-            "FONT_MIN_SIZE": "Minimale Schriftgröße",
-            "FONT_MAX_SIZE": "Maximale Schriftgröße",
             "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
-            "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
-            "NODE_NAME": "Bezeichnung von Knoten",
-            "MAIN": "Grundeinstellungen",
+            "FONT_MAX_SIZE": "Maximale Schriftgröße",
+            "FONT_MIN_SIZE": "Minimale Schriftgröße",
             "GENERAL": "Allgemein",
-            "MAP_LIST": "Liste der Mindmaps"
+            "MAIN": "Grundeinstellungen",
+            "MAP_LIST": "Liste erstellter Mindmaps",
+            "MAP_OPTIONS": "Mindmap Optionen",
+            "NODE_NAME": "Bezeichnung von Knoten",
+            "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
+            "TITLE": "Einstellungen",
+            "TTL": "Letztes bekannte Datum der Löschung"
         },
         "SHORTCUTS": {
             "TITLE": "Shortcuts"

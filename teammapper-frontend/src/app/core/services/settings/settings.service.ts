@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import { BehaviorSubject, Observable } from 'rxjs'
-import { CachedAdminMapValue } from 'src/app/shared/models/cached-map.model'
+import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model'
 import { Settings } from '../../../shared/models/settings.model'
 import { API_URL, HttpService } from '../../http/http.service'
 import { StorageService, STORAGE_KEYS } from '../storage/storage.service'
@@ -48,16 +48,16 @@ export class SettingsService {
     this.settingsSubject.next(settings)
   }
 
-  public async getCachedAdminMaps (): Promise<{id: string, cachedMapReference: CachedAdminMapValue}[]> {
+  public async getCachedAdminMapEntries (): Promise<CachedAdminMapEntry[]> {
     return (await this.storageService.getAllCreatedMapsFromStorage())
       .map((result) => {
         return {
           id: result[0],
-          cachedMapReference: result[1]
+          cachedAdminMapValue: result[1]
         }
       })
-      .filter((result) => new Date(result.cachedMapReference.ttl).getTime() > Date.now())
-      .sort((a, b) => new Date(b.cachedMapReference.ttl).getTime() - new Date(a.cachedMapReference.ttl).getTime())
+      .filter((result: CachedAdminMapEntry) => new Date(result.cachedAdminMapValue.ttl).getTime() > Date.now())
+      .sort((a, b) => new Date(b.cachedAdminMapValue.ttl).getTime() - new Date(a.cachedAdminMapValue.ttl).getTime())
       .slice(0, 100)
   }
 

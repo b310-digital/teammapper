@@ -7,7 +7,7 @@ import { Location } from '@angular/common'
 import { Router } from '@angular/router'
 import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
-import { CachedAdminMapValue, CachedMapOptions } from 'src/app/shared/models/cached-map.model'
+import { CachedAdminMapEntry, CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 
 @Component({
   selector: 'teammapper-settings',
@@ -19,7 +19,7 @@ export class SettingsComponent implements OnInit {
   public settings: Settings
   public mapOptions: CachedMapOptions
   public editMode: Observable<boolean>
-  public cachedAdminMaps: {id: string, cachedMapReference: CachedAdminMapValue}[]
+  public cachedAdminMapEntries: CachedAdminMapEntry[]
 
   constructor (
     private settingsService: SettingsService,
@@ -32,7 +32,7 @@ export class SettingsComponent implements OnInit {
     this.settings = this.settingsService.getCachedSettings()
     this.mapOptions = this.mmpService.getAdditionalMapOptions()
     this.editMode = this.settingsService.getEditModeObservable()
-    this.cachedAdminMaps = []
+    this.cachedAdminMapEntries = []
   }
 
   public async updateGeneralMapOptions() {
@@ -40,7 +40,7 @@ export class SettingsComponent implements OnInit {
   }
 
   public async ngOnInit () {
-    this.cachedAdminMaps = await this.settingsService.getCachedAdminMaps()
+    this.cachedAdminMapEntries = await this.settingsService.getCachedAdminMapEntries()
   }
 
   public async updateMapOptions () {
@@ -58,12 +58,12 @@ export class SettingsComponent implements OnInit {
     this.location.back()
   }
 
-  public getMapUrl (value: {id: string, cachedMapReference: CachedAdminMapValue}): string {
-    return this.router.createUrlTree([`/map/${value.id}`], {fragment: value.cachedMapReference.modificationSecret}).toString()
+  public getMapUrl (entry: CachedAdminMapEntry): string {
+    return this.router.createUrlTree([`/map/${entry.id}`], {fragment: entry.cachedAdminMapValue.modificationSecret}).toString()
   }
 
-  public getMapTitle (value: {id: string, cachedMapReference: CachedAdminMapValue}) {
-    return value.cachedMapReference.rootName || value.id
+  public getMapTitle (entry: CachedAdminMapEntry): string {
+    return entry.cachedAdminMapValue.rootName || entry.id
   }
 
   private async validateMapOptionsInput() {
