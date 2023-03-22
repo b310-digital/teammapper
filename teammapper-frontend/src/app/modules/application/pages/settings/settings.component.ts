@@ -30,17 +30,10 @@ export class SettingsComponent {
 
   public async updateGeneralMapOptions() {
     await this.settingsService.updateCachedSettings(this.settings)
-
-    this.mmpService.updateOptions('rootNode', this.settings.mapOptions.rootNode)
-    this.mmpService.updateOptions('defaultNode', this.settings.mapOptions.defaultNode)
-    this.mmpService.updateOptions('centerOnResize', this.settings.mapOptions.centerOnResize)
   }
 
   public async updateMapOptions () {
     await this.validateMapOptionsInput()
-    // Update locally
-    this.mmpService.updateAdditionalMapOptions(this.mapOptions)
-    // Sync to other users
     this.mapSyncService.updateMapOptions(this.mapOptions)
   }
 

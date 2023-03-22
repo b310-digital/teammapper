@@ -94,6 +94,9 @@ export class MapSyncService implements OnDestroy {
     return serverMap
   }
 
+  // In case the component is destroyed or will be reinitialized it is important to reset state
+  // that might cause problems or performance issues, e.g. removing listeners, cleanup state.
+  // The current map is used inside the settings component and should stay therefore as it was.
   public reset () {
     if (this.socket) { 
       this.socket.removeAllListeners()
