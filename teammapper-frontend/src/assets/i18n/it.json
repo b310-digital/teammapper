@@ -148,7 +148,19 @@
             ]
         },
         "SETTINGS": {
-            "TITLE": "Impostazioni"
+            "AUTO_BRANCH_COLORS": "Colori automatici per i rami",
+            "CENTER_ON_RESIZING": "Centra al ridimensionamento",
+            "FONT_MIN_SIZE": "Minimal font size",
+            "FONT_MAX_SIZE": "Maximal font size",
+            "FONT_INCREMENT": "Font size step",
+            "GENERAL": "Generali",
+            "MAIN": "Principali",
+            "MAP_LIST": "List of created maps",
+            "MAP_OPTIONS": "Opzioni mappa",
+            "ROOT_NODE_NAME": "Nome nodo radice",
+            "NODE_NAME": "Nome nodo",
+            "TITLE": "Impostazioni",
+            "TTL": "Last known date of deletion"
         },
         "SHORTCUTS": {
             "TITLE": "Scorciatoie da tastiera"
@@ -167,8 +179,6 @@
         "REPOSITORY": "Repository",
         "APPLICATION": "Applicazione",
         "TRY_IT": "Provala",
-        "GENERAL": "Generali",
-        "MAP_OPTIONS": "Opzioni mappa",
         "DISMISS": "Chiudi",
         "SAVED_MAPS": "Mappe salvate",
         "JSON": "File (.json)",
@@ -183,17 +193,12 @@
         "SAVE": "Salva",
         "OPEN": "Apri",
         "CANCEL": "Annulla",
-        "MAIN": "Principali",
-        "CENTER_ON_RESIZING": "Centra al ridimensionamento",
         "NODE_DRAGGING": "Trascinamento dei nodi",
         "MAP_ZOOM": "Zoom della mappa",
-        "AUTO_BRANCH_COLORS": "Colori automatici per i rami",
         "MAP": "Mappa",
         "NODES": "Nodi",
         "SAVED": "Salvato",
         "NOT_SAVED": "Non salvato",
-        "ROOT_NODE_NAME": "Nome nodo radice",
-        "NODE_NAME": "Nome nodo",
         "FONT_MIN_SIZE": "Minimal font size",
         "FONT_MAX_SIZE": "Maximal font size",
         "FONT_INCREMENT": "Font size step"
