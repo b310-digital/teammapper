@@ -13,20 +13,22 @@ export default class Draw {
     private map: Map
     private base64regex: RegExp = /[^a-zA-Z0-9+\/;:,=]/i
     private editing: boolean = false
+    private mapRef: HTMLElement
 
     /**
      * Get the associated map instance.
      * @param {Map} map
      */
-    constructor(map: Map) {
+    constructor(map: Map, ref: HTMLElement) {
         this.map = map
+        this.mapRef = ref
     }
 
     /**
      * Create svg and main css map properties.
      */
     public create() {
-        this.map.dom.container = d3.select('#' + this.map.id)
+        this.map.dom.container = d3.select(this.mapRef)
             .style('position', 'relative')
 
         this.map.dom.svg = this.map.dom.container.append('svg')
@@ -76,7 +78,6 @@ export default class Draw {
                 this.enableNodeNameEditing(node)
             }).on('touchstart', (event: TouchEvent, node: Node) => {
                 if (!this.map.options.edit) return false
-       
                 // When not clicking a link and not in edit mode, disable all mobile native touch events
                 // A single tap is supposed to move the node in this application
                 if(!this.isLinkTarget(event) && !this.editing) {
@@ -317,6 +318,7 @@ export default class Draw {
     public enableNodeNameEditing(node: Node) {
         this.editing = true
         const name = node.getNameDOM()
+        name.setAttribute('contenteditable', 'true')
         name.innerHTML = DOMPurify.sanitize(node.name)
 
         Utils.focusWithCaretAtEnd(name)
@@ -389,6 +391,7 @@ export default class Draw {
             name.ondblclick = name.onmousedown = name.onblur =
                 name.onkeydown = name.oninput = name.onpaste = null
 
+            name.setAttribute('contenteditable', 'false')
             name.style.setProperty('cursor', 'pointer')
 
             name.blur()
@@ -451,8 +454,6 @@ export default class Draw {
         div.style.setProperty('text-align', 'center')
         // fix against cursor jumping out of nodes on firefox if empty
         div.style.setProperty('min-width', '20px')
-
-        div.setAttribute('contenteditable', 'true')
 
         div.innerHTML = DOMPurify.sanitize(node.name)
 

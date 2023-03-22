@@ -54,8 +54,8 @@ export class SettingsService {
     return this.settingsSubject.getValue()
   }
 
-  public getEditModeSubject (): BehaviorSubject<boolean | null> {
-    return this.editModeSubject
+  public getEditModeObservable (): Observable<boolean | null> {
+    return this.editModeSubject.asObservable()
   }
 
   public setEditMode (value: boolean) {

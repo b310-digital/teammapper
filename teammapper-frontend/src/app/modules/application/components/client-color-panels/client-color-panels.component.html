@@ -2,7 +2,7 @@
     <div #background class="background"></div>
 
     <div class="panel">
-        <span *ngFor="let clientColor of clientColors">
+        <span *ngFor="let clientColor of clientColors | async">
             <mat-icon aria-label="user color" [ngStyle]="{'color': clientColor}">account_circle</mat-icon>
         </span>
     </div>

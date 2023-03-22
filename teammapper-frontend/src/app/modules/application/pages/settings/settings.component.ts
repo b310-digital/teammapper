@@ -4,6 +4,7 @@ import { SettingsService } from '../../../../core/services/settings/settings.ser
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { TranslateService } from '@ngx-translate/core'
 import { Location } from '@angular/common'
+import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 
@@ -16,6 +17,7 @@ export class SettingsComponent {
   public readonly languages: string[]
   public settings: Settings
   public mapOptions: CachedMapOptions
+  public editMode: Observable<boolean>
 
   constructor (
     private settingsService: SettingsService,
@@ -26,21 +28,15 @@ export class SettingsComponent {
     this.languages = SettingsService.LANGUAGES
     this.settings = this.settingsService.getCachedSettings()
     this.mapOptions = this.mmpService.getAdditionalMapOptions()
+    this.editMode = this.settingsService.getEditModeObservable()
   }
 
   public async updateGeneralMapOptions() {
     await this.settingsService.updateCachedSettings(this.settings)
-
-    this.mmpService.updateOptions('rootNode', this.settings.mapOptions.rootNode)
-    this.mmpService.updateOptions('defaultNode', this.settings.mapOptions.defaultNode)
-    this.mmpService.updateOptions('centerOnResize', this.settings.mapOptions.centerOnResize)
   }
 
   public async updateMapOptions () {
     await this.validateMapOptionsInput()
-    // Update locally
-    this.mmpService.updateAdditionalMapOptions(this.mapOptions)
-    // Sync to other users
     this.mapSyncService.updateMapOptions(this.mapOptions)
   }
 

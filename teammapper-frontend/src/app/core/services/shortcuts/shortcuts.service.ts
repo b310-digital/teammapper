@@ -1,15 +1,17 @@
-import { Injectable } from '@angular/core'
+import { Injectable, OnDestroy } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { Router } from '@angular/router'
 import { Hotkey, HotkeysService } from 'angular2-hotkeys'
+import { first, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service'
 
 @Injectable({
   providedIn: 'root'
 })
-export class ShortcutsService {
+export class ShortcutsService implements OnDestroy {
   private hotKeys: Hotkey[]
   private editMode: boolean
+  private settingsSubscription: Subscription
 
   constructor (private mmpService: MmpService,
     private hotkeysService: HotkeysService,
@@ -21,10 +23,17 @@ export class ShortcutsService {
      * Add all global hot keys of the application.
      */
   public init () {
-    this.settingsService.getEditModeSubject().subscribe((result: boolean) => {
-      this.editMode = result
-      this.registerHotKeys()
-    })
+    this.settingsSubscription = this.settingsService.getEditModeObservable()
+      .pipe(first((val: boolean | null) => val !== null))
+      .subscribe((result: boolean | null) => {
+        this.editMode = result
+        this.registerHotKeys()
+      }
+      )
+  }
+
+  ngOnDestroy () {
+    this.settingsSubscription.unsubscribe()
   }
 
   public registerHotKeys() {

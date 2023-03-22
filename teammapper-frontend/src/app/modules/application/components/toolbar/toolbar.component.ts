@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core'
+import { ExportNodeProperties } from '@mmp/map/types'
 import { TranslateService } from '@ngx-translate/core'
 import { DialogService } from 'src/app/shared/services/dialog/dialog.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
@@ -9,7 +10,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
   styleUrls: ['./toolbar.component.scss']
 })
 export class ToolbarComponent {
-  @Input() public node: any
+  @Input() public node: ExportNodeProperties
   @Input() public editDisabled: boolean
 
   constructor (public mmpService: MmpService,

@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core'
-import { Observable } from 'rxjs'
+import { Injectable, OnDestroy } from '@angular/core'
+import { Observable, Subscription } from 'rxjs'
 import { SettingsService } from '../settings/settings.service'
 import { UtilsService } from '../utils/utils.service'
 import { jsPDF } from 'jspdf'
+import { first } from 'rxjs/operators';
 import * as mmp from '@mmp/index'
 import MmpMap from '@mmp/map/map'
 import { ExportHistory, ExportNodeProperties, MapSnapshot, OptionParameters, UserNodeProperties } from '@mmp/map/types'
@@ -15,31 +16,39 @@ import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 @Injectable({
   providedIn: 'root'
 })
-export class MmpService {
+export class MmpService implements OnDestroy {
   private currentMap: MmpMap
 
   private readonly branchColors: Array<string>
   // additional options that are not handled within mmp, like fontMaxSize etc.
   private additionalOptions: CachedMapOptions;
+  private settingsSubscription: Subscription;
 
   constructor (public settingsService: SettingsService) {
     this.additionalOptions = null
     this.branchColors = COLORS
 
-    settingsService.getEditModeSubject().subscribe((result: boolean) => {
-      if(!this.currentMap) return
+    this.settingsSubscription = settingsService.getEditModeObservable()
+      .pipe(first((val: boolean | null) => val !== null))
+      .subscribe((result: boolean | null) => {
+        if(!this.currentMap) return
 
-      this.currentMap.options.update('drag', result)
-      this.currentMap.options.update('edit', result)
-    })
+        this.currentMap.options.update('drag', result)
+        this.currentMap.options.update('edit', result)
+      }
+      )
+  }
+
+  ngOnDestroy () {
+    this.settingsSubscription.unsubscribe()
   }
 
   /**
      * Create a mindmap using mmp and save the instance with corresponding id.
      * All function below require the mmp id.
      */
-  public async create (id: string, options?: OptionParameters) {
-    const map: MmpMap = mmp.create(id, options)
+  public async create (id: string, ref: HTMLElement, options?: OptionParameters) {
+    const map: MmpMap = mmp.create(id, ref, options)
 
     // additional options do not include the standard mmp map options
     this.additionalOptions = await this.defaultAdditionalOptions()
@@ -51,7 +60,11 @@ export class MmpService {
      * Remove the mind mmp.
      */
   public remove () {
+    if(!this.currentMap) return
+
+    this.currentMap.instance.unsubscribeAll()
     this.currentMap.instance.remove()
+    this.currentMap = undefined
   }
 
   /**
