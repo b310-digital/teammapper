@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { Component, OnInit } from '@angular/core'
 import { Settings } from '../../../../shared/models/settings.model'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
@@ -6,18 +6,19 @@ import { TranslateService } from '@ngx-translate/core'
 import { Location } from '@angular/common'
 import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
-import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
+import { CachedAdminMapValue, CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 
 @Component({
   selector: 'teammapper-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
   public readonly languages: string[]
   public settings: Settings
   public mapOptions: CachedMapOptions
   public editMode: Observable<boolean>
+ public cachedAdminMaps: {id: string, cachedMapReference: CachedAdminMapValue}[]
 
   constructor (
     private settingsService: SettingsService,
@@ -29,10 +30,15 @@ export class SettingsComponent {
     this.settings = this.settingsService.getCachedSettings()
     this.mapOptions = this.mmpService.getAdditionalMapOptions()
     this.editMode = this.settingsService.getEditModeObservable()
+  this.cachedAdminMaps = []
   }
 
   public async updateGeneralMapOptions() {
     await this.settingsService.updateCachedSettings(this.settings)
+  }
+
+  public async ngOnInit () {
+    this.cachedAdminMaps = await this.settingsService.getCachedAdminMaps()
   }
 
   public async updateMapOptions () {

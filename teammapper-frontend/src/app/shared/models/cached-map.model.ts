@@ -17,3 +17,9 @@ export interface CachedMapOptions {
   fontMinSize: number;
   fontIncrement: number;
 }
+
+export interface CachedAdminMapValue {
+  adminId: string;
+  modificationSecret: string;
+  ttl: Date;
+}

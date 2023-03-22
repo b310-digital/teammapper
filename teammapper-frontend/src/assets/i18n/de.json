@@ -148,7 +148,18 @@
             ]
         },
         "SETTINGS": {
-            "TITLE": "Einstellungen"
+            "AUTO_BRANCH_COLORS": "Automatische Zweigfarben",
+            "CENTER_ON_RESIZING": "Zentrieren bei Größenänderung",
+            "TITLE": "Einstellungen",
+            "MAP_OPTIONS": "Mindmap Optionen",
+            "FONT_MIN_SIZE": "Minimale Schriftgröße",
+            "FONT_MAX_SIZE": "Maximale Schriftgröße",
+            "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
+            "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
+            "NODE_NAME": "Bezeichnung von Knoten",
+            "MAIN": "Grundeinstellungen",
+            "GENERAL": "Allgemein",
+            "MAP_LIST": "Liste der Mindmaps"
         },
         "SHORTCUTS": {
             "TITLE": "Shortcuts"
@@ -168,8 +179,6 @@
         "REPOSITORY": "Repository",
         "APPLICATION": "Anwendung",
         "TRY_IT": "Try it!",
-        "GENERAL": "Allgemein",
-        "MAP_OPTIONS": "Mindmap-Optionen",
         "DISMISS": "Verwerfen",
         "SAVED_MAPS": "Gespeicherte Mindmaps",
         "JSON": "Datei (.json)",
@@ -184,19 +193,11 @@
         "SAVE": "Speichern",
         "OPEN": "Öffnen",
         "CANCEL": "Abbrechen",
-        "MAIN": "Grundeinstellungen",
-        "CENTER_ON_RESIZING": "Zentrieren bei Größenänderung",
         "NODE_DRAGGING": "Verschieben von Knoten",
         "MAP_ZOOM": "Zoom",
-        "AUTO_BRANCH_COLORS": "Automatische Zweigfarben",
         "MAP": "Mindmap",
         "NODES": "Knoten",
         "SAVED": "Gespeichert",
-        "NOT_SAVED": "Nicht gespeichert",
-        "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
-        "NODE_NAME": "Bezeichnung von Knoten",
-        "FONT_MIN_SIZE": "Minimale Schriftgröße",
-        "FONT_MAX_SIZE": "Maximale Schriftgröße",
-        "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße"
+        "NOT_SAVED": "Nicht gespeichert"
     }
 }
