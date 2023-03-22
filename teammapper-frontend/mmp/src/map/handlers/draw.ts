@@ -320,6 +320,7 @@ export default class Draw {
     public enableNodeNameEditing(node: Node) {
         this.editing = true
         const name = node.getNameDOM()
+        name.setAttribute('contenteditable', 'true')
         name.innerHTML = DOMPurify.sanitize(node.name)
 
         Utils.focusWithCaretAtEnd(name)
@@ -392,6 +393,7 @@ export default class Draw {
             name.ondblclick = name.onmousedown = name.onblur =
                 name.onkeydown = name.oninput = name.onpaste = null
 
+            name.setAttribute('contenteditable', 'false')
             name.style.setProperty('cursor', 'pointer')
 
             name.blur()
@@ -454,8 +456,6 @@ export default class Draw {
         div.style.setProperty('text-align', 'center')
         // fix against cursor jumping out of nodes on firefox if empty
         div.style.setProperty('min-width', '20px')
-
-        div.setAttribute('contenteditable', 'true')
 
         div.innerHTML = DOMPurify.sanitize(node.name)
 
