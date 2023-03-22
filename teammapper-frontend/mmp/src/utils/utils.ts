@@ -111,7 +111,7 @@ export default class Utils {
                             if(fontUrl !== null) {
                                 const fontFile = await (await fetch(fontUrl[1])).blob()
                                 const base64Font = await this.blobToBase64(fontFile)
-                                return rule.cssText.replace(fontRegex, base64Font)
+                                return rule.cssText.replace(fontRegex, `url(${base64Font})`)
                             }
                         })()
 
