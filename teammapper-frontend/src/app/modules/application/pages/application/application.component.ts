@@ -21,7 +21,7 @@ import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 })
 export class ApplicationComponent implements OnInit, OnDestroy {
   public node: Observable<ExportNodeProperties>
-  public editDisabled: Observable<boolean>
+  public editMode: Observable<boolean>
 
   private imageDropSubscription: Subscription;
 
@@ -41,7 +41,7 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     this.handleImageDropObservable()
 
     this.node = this.mapSyncService.getAttachedNodeObservable()
-    this.editDisabled = this.settingsService.getEditModeObservable()
+    this.editMode = this.settingsService.getEditModeObservable()
   }
 
   ngOnDestroy () {
