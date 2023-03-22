@@ -22,4 +22,5 @@ export interface CachedAdminMapValue {
   adminId: string;
   modificationSecret: string;
   ttl: Date;
+  rootName?: string;
 }

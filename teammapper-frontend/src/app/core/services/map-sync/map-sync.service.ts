@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { BehaviorSubject, Observable } from 'rxjs'
-import { CachedMap, CachedMapEntry, CachedMapOptions } from '../../../shared/models/cached-map.model'
+import { CachedAdminMapValue, CachedMap, CachedMapEntry, CachedMapOptions } from '../../../shared/models/cached-map.model'
 import { io, Socket } from 'socket.io-client'
 import { NodePropertyMapping } from '@mmp/index'
 import { ExportNodeProperties, MapCreateEvent, MapProperties, MapSnapshot, NodeUpdateEvent } from '@mmp/map/types'
@@ -73,7 +73,7 @@ export class MapSyncService implements OnDestroy {
     const serverMap = privateServerMap.map
     // store private map data locally
     this.storageService.set(serverMap.uuid, 
-      { adminId: privateServerMap.adminId, modificationSecret: privateServerMap.modificationSecret, ttl: serverMap.deletedAt })
+      { adminId: privateServerMap.adminId, modificationSecret: privateServerMap.modificationSecret, ttl: serverMap.deletedAt, rootName: serverMap.data[0].name })
 
     this.prepareMap(serverMap)
 
@@ -85,6 +85,7 @@ export class MapSyncService implements OnDestroy {
   public async prepareExistingMap (id: string, modificationSecret: string): Promise<ServerMap> {
     this.modificationSecret = modificationSecret
     const serverMap = await this.fetchMapFromServer(id)
+    this.updateCachedMapForAdmin(serverMap)
 
     if (!serverMap) {
       return
@@ -397,6 +398,15 @@ export class MapSyncService implements OnDestroy {
       cachedMap: { ...mapProps, ...{ options: serverMap.options } }
     })
     this.mmpService.updateAdditionalMapOptions(serverMap.options)
+  }
+
+  private async updateCachedMapForAdmin (serverMap: ServerMap) {
+    const map: CachedAdminMapValue | null = await this.storageService.get(serverMap.uuid) as CachedAdminMapValue | null
+    if (map) {
+      map.ttl = new Date(serverMap.deletedAt)
+      map.rootName = serverMap.data[0].name
+      this.storageService.set(serverMap.uuid, map)
+    }
   }
 
   private createMapListeners () {

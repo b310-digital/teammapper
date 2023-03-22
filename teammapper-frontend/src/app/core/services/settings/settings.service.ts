@@ -49,12 +49,16 @@ export class SettingsService {
   }
 
   public async getCachedAdminMaps (): Promise<{id: string, cachedMapReference: CachedAdminMapValue}[]> {
-    return (await this.storageService.getAllCreatedMapsFromStorage()).map((result) => {
-      return {
-        id: result[0],
-        cachedMapReference: result[1]
-      }
-    })
+    return (await this.storageService.getAllCreatedMapsFromStorage())
+      .map((result) => {
+        return {
+          id: result[0],
+          cachedMapReference: result[1]
+        }
+      })
+      .filter((result) => new Date(result.cachedMapReference.ttl).getTime() > Date.now())
+      .sort((a, b) => new Date(b.cachedMapReference.ttl).getTime() - new Date(a.cachedMapReference.ttl).getTime())
+      .slice(0, 100)
   }
 
   /**

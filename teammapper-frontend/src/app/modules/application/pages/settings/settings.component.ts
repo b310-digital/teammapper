@@ -4,6 +4,7 @@ import { SettingsService } from '../../../../core/services/settings/settings.ser
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { TranslateService } from '@ngx-translate/core'
 import { Location } from '@angular/common'
+import { Router } from '@angular/router'
 import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
 import { CachedAdminMapValue, CachedMapOptions } from 'src/app/shared/models/cached-map.model'
@@ -18,19 +19,20 @@ export class SettingsComponent implements OnInit {
   public settings: Settings
   public mapOptions: CachedMapOptions
   public editMode: Observable<boolean>
- public cachedAdminMaps: {id: string, cachedMapReference: CachedAdminMapValue}[]
+  public cachedAdminMaps: {id: string, cachedMapReference: CachedAdminMapValue}[]
 
   constructor (
     private settingsService: SettingsService,
     private mmpService: MmpService,
     private mapSyncService: MapSyncService,
     private translateService: TranslateService,
+    private router: Router,
     private location: Location) {
     this.languages = SettingsService.LANGUAGES
     this.settings = this.settingsService.getCachedSettings()
     this.mapOptions = this.mmpService.getAdditionalMapOptions()
     this.editMode = this.settingsService.getEditModeObservable()
-  this.cachedAdminMaps = []
+    this.cachedAdminMaps = []
   }
 
   public async updateGeneralMapOptions() {
@@ -54,6 +56,14 @@ export class SettingsComponent implements OnInit {
 
   public back () {
     this.location.back()
+  }
+
+  public getMapUrl (value: {id: string, cachedMapReference: CachedAdminMapValue}): string {
+    return this.router.createUrlTree([`/map/${value.id}`], {fragment: value.cachedMapReference.modificationSecret}).toString()
+  }
+
+  public getMapTitle (value: {id: string, cachedMapReference: CachedAdminMapValue}) {
+    return value.cachedMapReference.rootName || value.id
   }
 
   private async validateMapOptionsInput() {
