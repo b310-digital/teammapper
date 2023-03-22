@@ -5,7 +5,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
 import { ActivatedRoute, Router } from '@angular/router'
-import { OptionParameters } from '@mmp/map/types'
+import { ExportNodeProperties, OptionParameters } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 import { ServerMap } from 'src/app/core/services/map-sync/server-types'
 
@@ -20,7 +20,7 @@ import { ServerMap } from 'src/app/core/services/map-sync/server-types'
   styleUrls: ['./application.component.scss']
 })
 export class ApplicationComponent implements OnInit, OnDestroy {
-  public node: Observable<any>
+  public node: Observable<ExportNodeProperties>
   public editDisabled: Observable<boolean>
 
   private imageDropSubscription: Subscription;
@@ -73,7 +73,9 @@ export class ApplicationComponent implements OnInit, OnDestroy {
       return await this.mapSyncService.prepareExistingMap(mapId, modificationSecret)
     } else {
       const privateServerMap = await this.mapSyncService.prepareNewMap()
-      this.router.navigate([`/map/${privateServerMap.map.uuid}`], {fragment: privateServerMap.modificationSecret})
+      const newUrl = this.router.createUrlTree([`/map/${privateServerMap.map.uuid}`], {fragment: privateServerMap.modificationSecret}).toString()
+      // router navigate would work as well, but it will trigger a component rerender which is not required
+      history.replaceState({}, '', newUrl)
       return privateServerMap.map
     }
   }

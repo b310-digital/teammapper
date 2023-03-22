@@ -22,7 +22,7 @@ import { MatDialogModule } from '@angular/material/dialog'
 import { DialogService } from './services/dialog/dialog.service'
 import { ShareDialogComponent } from './components/share-dialog/share-dialog.component'
 import { AboutDialogComponent } from './components/about-modal/about-dialog.component'
-import { InverseBoolPipe } from './pipes/inverseBool.pipe'
+import { InverseBoolPipe } from './pipes/inverse-bool.pipe'
 
 const PIPES = [
   StripTags,

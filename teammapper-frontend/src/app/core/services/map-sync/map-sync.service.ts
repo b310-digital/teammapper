@@ -38,7 +38,7 @@ export class MapSyncService implements OnDestroy {
   // needed in map component to initialize when map is rendered and data present
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>
   // needed in the application component for UI related tasks
-  private readonly attachedNodeSubject: BehaviorSubject<any | null>
+  private readonly attachedNodeSubject: BehaviorSubject<ExportNodeProperties | null>
   private socket: Socket
   private colorMapping: ClientColorMapping
   private availableColors: string[]
@@ -54,7 +54,7 @@ export class MapSyncService implements OnDestroy {
   ) {
     // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null)
-    this.attachedNodeSubject = new BehaviorSubject<any | null>({})
+    this.attachedNodeSubject = new BehaviorSubject<ExportNodeProperties | null>(null)
 
     this.clientListSubject = new BehaviorSubject<string[]>([])
     this.availableColors = COLORS
@@ -122,7 +122,7 @@ export class MapSyncService implements OnDestroy {
     return this.clientListSubject.asObservable()
   }
 
-  public getAttachedNodeObservable (): Observable<NodeProperties | null> {
+  public getAttachedNodeObservable (): Observable<ExportNodeProperties | null> {
     return this.attachedNodeSubject.asObservable()
   }
 
