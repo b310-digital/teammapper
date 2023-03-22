@@ -96,8 +96,6 @@ export default class Draw {
                 }
 
                 this.enableNodeNameEditing(node)
-            }).on('click', (event: MouseEvent, node: Node) => {
-                event.stopPropagation()
             })
 
         if (this.map.options.drag === true) {
@@ -456,6 +454,7 @@ export default class Draw {
         div.style.setProperty('text-align', 'center')
         // fix against cursor jumping out of nodes on firefox if empty
         div.style.setProperty('min-width', '20px')
+        //div.setAttribute('contenteditable', 'false')
 
         div.innerHTML = DOMPurify.sanitize(node.name)
 
