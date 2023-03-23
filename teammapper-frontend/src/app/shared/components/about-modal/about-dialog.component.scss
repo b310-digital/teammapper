@@ -2,11 +2,11 @@
     img {
         padding-right: 2rem;
         margin-bottom: 2rem;
+        margin-right: auto;
+        margin-left: auto;
         display: block;
     }
-    margin-bottom: 2rem;
-    white-space: pre-line;
-    max-width: 40rem;
+
 
     a {
         text-decoration: none;
@@ -14,7 +14,6 @@
     }
 }
 
-.border-top {
-    border-top: 1px solid lightgray;
-    padding-top: 2rem;
+.mat-list-item {
+    font-family: 'Fira Sans';
 }

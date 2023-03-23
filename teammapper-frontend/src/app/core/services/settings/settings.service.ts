@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import { BehaviorSubject, Observable } from 'rxjs'
+import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model'
 import { Settings } from '../../../shared/models/settings.model'
 import { API_URL, HttpService } from '../../http/http.service'
 import { StorageService, STORAGE_KEYS } from '../storage/storage.service'
@@ -13,6 +14,7 @@ export class SettingsService {
 
   public settings: Observable<Settings | null>
   private settingsSubject: BehaviorSubject<Settings | null>
+  private readonly editModeSubject: BehaviorSubject<boolean | null>
 
   constructor (
     private storageService: StorageService,
@@ -20,6 +22,7 @@ export class SettingsService {
 
     // Initialization of the behavior subjects.
     this.settingsSubject = new BehaviorSubject(null)
+    this.editModeSubject = new BehaviorSubject(null)
     this.settings = this.settingsSubject.asObservable()
   }
 
@@ -45,11 +48,32 @@ export class SettingsService {
     this.settingsSubject.next(settings)
   }
 
+  public async getCachedAdminMapEntries (): Promise<CachedAdminMapEntry[]> {
+    return (await this.storageService.getAllCreatedMapsFromStorage())
+      .map((result) => {
+        return {
+          id: result[0],
+          cachedAdminMapValue: result[1]
+        }
+      })
+      .filter((result: CachedAdminMapEntry) => new Date(result.cachedAdminMapValue.ttl).getTime() > Date.now())
+      .sort((a, b) => new Date(b.cachedAdminMapValue.ttl).getTime() - new Date(a.cachedAdminMapValue.ttl).getTime())
+      .slice(0, 100)
+  }
+
   /**
      * Return the current settings.
      */
   public getCachedSettings (): Settings | null {
     return this.settingsSubject.getValue()
+  }
+
+  public getEditModeObservable (): Observable<boolean | null> {
+    return this.editModeSubject.asObservable()
+  }
+
+  public setEditMode (value: boolean) {
+    return this.editModeSubject.next(value)
   }
 
   /**

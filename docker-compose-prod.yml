@@ -2,6 +2,8 @@ version: "3.8"
 
 services:
   app_prod:
+    tty: true
+    stdin_open: true
     build:
       context: .
       dockerfile: Dockerfile

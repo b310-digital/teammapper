@@ -39,11 +39,6 @@ body {
     padding: 0 15px;
 }
 
-::selection {
-    color: whitesmoke;
-    background: mat.get-color-from-palette($app-primary);
-}
-
 *:focus {
     outline: none;
 }
@@ -59,6 +54,10 @@ mat-dialog-content.mat-dialog-content {
 
 .mat-button, .mat-raised-button, .mat-icon-button, .mat-stroked-button, .mat-flat-button, .mat-fab, .mat-mini-fab {
     font-family: FiraSans, sans !important;
+}
+
+.mat-dialog-actions {
+    gap: 10px;
 }
 
 // Color picker override
@@ -91,4 +90,9 @@ snack-bar-container.snackbar {
     }
 }
 
-
+input:disabled {
+    color: mat.get-color-from-palette($app-primary);
+    background: mat.get-color-from-palette($app-primary) !important;
+    opacity: .38;
+}
+  

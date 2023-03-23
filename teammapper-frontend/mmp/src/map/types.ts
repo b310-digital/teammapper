@@ -15,7 +15,7 @@ interface MapProperties {
 }
 
 interface NodeUpdateEvent {
-    nodeProperties: NodeProperties,
+    nodeProperties: ExportNodeProperties,
     previousValue: any,
     changedProperty: string
 }

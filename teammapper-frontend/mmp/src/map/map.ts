@@ -36,7 +36,7 @@ export default class MmpMap {
      * @param {OptionParameters} options
      * @returns {MmpInstance} mmpInstance
      */
-    constructor(id: string, options?: OptionParameters) {
+    constructor(id: string, ref: HTMLElement, options?: OptionParameters) {
         this.id = id
 
         this.dom = {}
@@ -45,7 +45,7 @@ export default class MmpMap {
         this.zoom = new Zoom(this)
         this.history = new History(this)
         this.drag = new Drag(this)
-        this.draw = new Draw(this)
+        this.draw = new Draw(this, ref)
         this.nodes = new Nodes(this)
         this.export = new Export(this)
         this.copyPaste = new CopyPaste(this)
@@ -109,6 +109,7 @@ export default class MmpMap {
             removeNode: this.nodes.removeNode,
             selectNode: this.nodes.selectNode,
             undo: this.history.undo,
+            unsubscribeAll: this.events.unsubscribeAll,
             updateNode: this.nodes.updateNode,
             updateOptions: this.options.update,
             zoomIn: this.zoom.zoomIn,
@@ -128,7 +129,7 @@ export interface MmpInstance {
     existNode: Function
     exportAsImage: Function
     exportAsJSON: Function
-    exportNodeProperties: Function,
+    exportNodeProperties: Function
     exportRootProperties: Function
     exportSelectedNode: Function
     highlightNode: Function
@@ -142,8 +143,9 @@ export interface MmpInstance {
     removeNode: Function
     selectNode: Function
     undo: Function
+    unsubscribeAll: Function
     updateNode: Function
-    updateOptions: Function,
+    updateOptions: Function
     zoomIn: Function
     zoomOut: Function
 }

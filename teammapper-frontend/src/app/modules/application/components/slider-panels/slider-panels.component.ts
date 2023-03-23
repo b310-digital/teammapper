@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core'
+import { ExportNodeProperties } from '@mmp/map/types'
 import { SettingsService } from 'src/app/core/services/settings/settings.service'
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
@@ -9,7 +10,8 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
   styleUrls: ['./slider-panels.component.scss']
 })
 export class SliderPanelsComponent {
-  @Input() public node: any
+  @Input() public node: ExportNodeProperties
+  @Input() public editDisabled: boolean
   public mapOptions: CachedMapOptions
 
   constructor (public mmpService: MmpService,

@@ -12,7 +12,7 @@ ENV APP_FRONTEND_PATH=${APP_PATH}/teammapper-frontend
 RUN mkdir -p $APP_PATH
 WORKDIR $APP_PATH
 
-FROM base as production_buildstage
+FROM base as production
 USER node
 
 COPY --chown=node:node teammapper-backend/package.json teammapper-backend/package-lock.json $APP_BACKEND_PATH/
@@ -29,16 +29,7 @@ RUN npm run build:backend:prod
 COPY --chown=node:node teammapper-frontend $APP_FRONTEND_PATH/
 RUN GENERATE_SOURCEMAP=false npm run build:frontend:prod
 
-FROM base as production
-USER node
-
-COPY --chown=node:node package.json $APP_PATH/
-
-COPY --chown=node:node teammapper-backend/package.json teammapper-backend/package-lock.json $APP_BACKEND_PATH/
-RUN npm --prefix teammapper-backend install --production
-
-COPY --chown=node:node --from=production_buildstage $APP_BACKEND_PATH/dist $APP_BACKEND_PATH/dist
-COPY --chown=node:node --from=production_buildstage $APP_FRONTEND_PATH/dist $APP_BACKEND_PATH/client
+RUN mv $APP_FRONTEND_PATH/dist $APP_BACKEND_PATH/client
 
 COPY --chown=node:node entrypoint.prod.sh $APP_PATH/
 CMD ["./entrypoint.prod.sh"]

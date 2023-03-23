@@ -58,7 +58,7 @@ async function bootstrap() {
   const fourthChildNode: IMmpClientNode = createNode(false, childNode.id, 450, 450);
   const fifthChildNode: IMmpClientNode = createNode(false, childNode.id, 550, 550);
   const mapData: IMmpClientMap = createMap([rootNode, childNode, secondChildNode, thirdChildNode, fourthChildNode, fifthChildNode]);
-  await mapsService.createMap(mapData);
+  await mapsService.updateMap(mapData);
 
   logger.log(`--- Map created with id ${mapData.uuid} ---`);
 

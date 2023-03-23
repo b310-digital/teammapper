@@ -76,7 +76,7 @@ jobs:
 
             - run: npm --prefix teammapper-backend ci
 
-            - run: npm --prefix teammapper-backend run test:e2e
+            - run: npm --prefix teammapper-backend run test
               env:
                   POSTGRES_DATABASE: "teammapper-backend-test"
                   POSTGRES_HOST: "localhost"

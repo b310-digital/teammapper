@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core'
+import { ExportNodeProperties } from '@mmp/map/types'
 import { TranslateService } from '@ngx-translate/core'
 import { DialogService } from 'src/app/shared/services/dialog/dialog.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
@@ -9,9 +10,12 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
   styleUrls: ['./toolbar.component.scss']
 })
 export class ToolbarComponent {
-  @Input() public node: any
+  @Input() public node: ExportNodeProperties
+  @Input() public editDisabled: boolean
 
-  constructor (public mmpService: MmpService, public dialogService: DialogService, public translationService: TranslateService) {
+  constructor (public mmpService: MmpService,
+    public dialogService: DialogService,
+    public translationService: TranslateService) {
   }
 
   public async exportMap (format: string) {
@@ -34,13 +38,12 @@ export class ToolbarComponent {
   }
 
   public addLink () {
-    const linkInput = prompt(this.translationService.instant('MODALS.LINK.URL')) || window.location.href
-    const validatedLink = this.isValidLink(linkInput) ? linkInput : window.location.href
-    const linkName = prompt(this.translationService.instant('MODALS.LINK.NAME')) || 'Link'
-    this.mmpService.updateNode(
-      'name',
-      `<a href="${validatedLink}" target="_blank" contenteditable="false" style="color:#00a3d3;"><mat-icon role="img" class="mat-icon notranslate material-icons mat-icon-no-color" style="vertical-align: middle;">insert_link</mat-icon>${linkName}</a>`
-    )
+    const linkInput = prompt(this.translationService.instant('MODALS.LINK.URL'))
+    if(this.isValidLink(linkInput)) this.mmpService.addNodeLink(linkInput)
+  }
+
+  public removeLink () {
+    this.mmpService.removeNodeLink()
   }
 
   public toogleNodeFontWeight () {

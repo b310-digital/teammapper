@@ -60,7 +60,8 @@
         "MAP_ZOOM": "允許縮放地圖",
         "AUTO_BRANCH_COLORS": "允許自動分配分支的顏色",
         "SHARE": "Share",
-        "LINK": "Adds a link",
+        "LINK_ADD": "Adds a link",
+        "LINK_REMOVE": "Removes a link",
         "FONT_MIN_SIZE": "Minimal font size",
         "FONT_MAX_SIZE": "Maximal font size",
         "FONT_INCREMENT": "Font size step",
@@ -78,7 +79,9 @@
         },
         "SHARE": {
             "TITLE": "Share map",
-            "CONTENT": "Copy this link to share the map"
+            "CONTENT": "Copy this link to share the map",
+            "LINK_TYPE_VIEW": "Only observe",
+            "LINK_TYPE_EDIT": "Observe and modify"
           },
         "INFO": {
             "DELETED_AT": "Mindmap is going to be deleted at:",
@@ -87,8 +90,7 @@
             "CONFIRM_DELETE": "Delete?"
         },
         "LINK": {
-            "URL": "Link URL",
-            "NAME": "Link name"
+            "URL": "Link URL (https://...)"
         }
     },
     "PAGES": {
@@ -146,7 +148,19 @@
             ]
         },
         "SETTINGS": {
-            "TITLE": "設定"
+            "AUTO_BRANCH_COLORS": "自動分配分支顏色",
+            "CENTER_ON_RESIZING": "視窗縮放後置中",
+            "FONT_MIN_SIZE": "Minimal font size",
+            "FONT_MAX_SIZE": "Maximal font size",
+            "FONT_INCREMENT": "Font size step",
+            "GENERAL": "一般",
+            "MAIN": "主畫面",
+            "MAP_LIST": "List of created maps",
+            "MAP_OPTIONS": "地圖選項",
+            "ROOT_NODE_NAME": "根節點名稱",
+            "NODE_NAME": "節點名稱",
+            "TITLE": "設定",
+            "TTL": "Last known date of deletion"
         },
         "SHORTCUTS": {
             "TITLE": "快捷鍵"
@@ -165,8 +179,6 @@
         "REPOSITORY": "Repository",
         "APPLICATION": "Application",
         "TRY_IT": "Try it",
-        "GENERAL": "一般",
-        "MAP_OPTIONS": "地圖選項",
         "DISMISS": "解除",
         "SAVED_MAPS": "Saved maps",
         "JSON": "File (.json)",
@@ -181,17 +193,12 @@
         "SAVE": "儲存",
         "OPEN": "開啟",
         "CANCEL": "取消",
-        "MAIN": "主畫面",
-        "CENTER_ON_RESIZING": "視窗縮放後置中",
         "NODE_DRAGGING": "拖曳節點",
         "MAP_ZOOM": "地圖縮放",
-        "AUTO_BRANCH_COLORS": "自動分配分支顏色",
         "MAP": "地圖",
         "NODES": "節點",
         "SAVED": "已儲存",
         "NOT_SAVED": "尚未儲存",
-        "ROOT_NODE_NAME": "根節點名稱",
-        "NODE_NAME": "節點名稱",
         "FONT_MIN_SIZE": "Minimal font size",
         "FONT_MAX_SIZE": "Maximal font size",
         "FONT_INCREMENT": "Font size step"

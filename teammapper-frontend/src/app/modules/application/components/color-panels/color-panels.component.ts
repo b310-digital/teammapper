@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core'
+import { ExportNodeProperties } from '@mmp/map/types'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 
 @Component({
@@ -7,7 +8,8 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service'
   styleUrls: ['./color-panels.component.scss']
 })
 export class ColorPanelsComponent implements OnInit {
-  @Input() public node: any
+  @Input() public node: ExportNodeProperties
+  @Input() public editDisabled: boolean
 
   @ViewChild('background') public background: ElementRef
 

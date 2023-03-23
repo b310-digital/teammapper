@@ -14,9 +14,6 @@ const routes: Routes = [{
   path: 'app',
   loadChildren: () => import('./modules/application/application.module').then(m => m.ApplicationModule)
 }, {
-  path: 'mmp/:id',
-  loadChildren: () => import('./modules/application/application.module').then(m => m.ApplicationModule)
-}, {
   path: '**',
   redirectTo: ''
 }]

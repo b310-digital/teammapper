@@ -57,13 +57,13 @@ Some useful commands include:
 Drop schema
 
 ```bash
-npm run typeorm schema:drop
+npm run dev:typeorm schema:drop
 ```
 
 For development, sync db structure
 
 ```bash
-npm run typeorm schema:sync
+npm run dev:typeorm schema:sync
 ```
 
 For pruction environments, run migrations, see https://github.com/typeorm/typeorm/blob/master/docs/migrations.md
@@ -75,7 +75,7 @@ npm run prod:typeorm:migrate
 or run migrations on dev:
 
 ```bash
-npm run typeorm migration:run
+npm run dev:typeorm migration:run
 ```
 
 Generate new migration based on current changes

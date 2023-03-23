@@ -1,4 +1,4 @@
-import { CACHE_MANAGER, Inject } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, UseGuards } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { randomBytes } from 'crypto';
 import {
@@ -14,12 +14,14 @@ import { MapsService } from '../services/maps.service';
 import {
   IClientCache,
   IMmpClientDeleteRequest,
+  IMmpClientEditingRequest,
   IMmpClientJoinRequest,
   IMmpClientMap, IMmpClientMapRequest, IMmpClientNodeRequest, IMmpClientNodeSelectionRequest, IMmpClientUpdateMapOptionsRequest,
 } from '../types';
 import { mapMmpNodeToClient } from '../utils/clientServerMapping';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { MmpNode } from '../entities/mmpNode.entity';
+import { EditGuard } from '../guards/edit.guard';
 
 // For possible configuration options please see:
 // https://socket.io/docs/v4/server-initialization/
@@ -56,15 +58,18 @@ export class MapsGateway implements OnGatewayDisconnect {
     return this.mapsService.exportMapToClient(request.mapId);
   }
 
-  @SubscribeMessage('createMap')
-  async onCreateMap(
-    @ConnectedSocket() _client: Socket,
-    @MessageBody() mmpMap: IMmpClientMap,
+  @SubscribeMessage('checkModificationSecret')
+  async checkmodificationSecret(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() request: IMmpClientEditingRequest,
   ): Promise<boolean> {
-    await this.mapsService.createMap(mmpMap);
-    return true;
+    const map = await this.mapsService.findMap(request.mapId)
+    if(!map.modificationSecret) return true
+
+    return request.modificationSecret == map.modificationSecret;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('updateMapOptions')
   async onUpdateMap(
     @ConnectedSocket() _client: Socket,
@@ -94,6 +99,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     return false;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('addNode')
   async addNode(
     @ConnectedSocket() client: Socket,
@@ -111,6 +117,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     return true;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('updateNode')
   async updateNode(
     @ConnectedSocket() client: Socket,
@@ -129,14 +136,14 @@ export class MapsGateway implements OnGatewayDisconnect {
     return true;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('updateMap')
   async updateMap(
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientMapRequest,
   ): Promise<boolean> {
     const mmpMap: IMmpClientMap = request.map;
-
-    await this.mapsService.createMap(
+    await this.mapsService.updateMap(
       mmpMap,
     );
     
@@ -149,12 +156,13 @@ export class MapsGateway implements OnGatewayDisconnect {
     return true;
   }
 
+  @UseGuards(EditGuard)
   @SubscribeMessage('removeNode')
   async removeNode(
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientNodeRequest,
   ): Promise<MmpNode | undefined> {
-    const removedNodes: MmpNode | undefined = await this.mapsService.removeNode(
+    const removedNode: MmpNode | undefined = await this.mapsService.removeNode(
       request.node,
       request.mapId,
     );
@@ -163,7 +171,7 @@ export class MapsGateway implements OnGatewayDisconnect {
       .to(request.mapId)
       .emit('nodeRemoved', { clientId: client.id, nodeId: request?.node?.id });
 
-    return removedNodes;
+    return removedNode;
   }
 
   @SubscribeMessage('updateNodeSelection')
@@ -201,3 +209,4 @@ export class MapsGateway implements OnGatewayDisconnect {
     return color;
   }
 }
+

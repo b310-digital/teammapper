@@ -1,8 +1,9 @@
 import Map from '../map'
-import Node, {Colors, Coordinates, ExportNodeProperties, Font, Image, NodeProperties} from '../models/node'
+import Node, {Colors, Coordinates, ExportNodeProperties, Font, Image, Link, NodeProperties} from '../models/node'
 import {Event} from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
+import { DefaultNodeValues } from '../options'
 
 /**
  * Manage map history, for each change save a snapshot.
@@ -120,23 +121,26 @@ export default class History {
         this.map.nodes.clear()
 
         snapshot.forEach((property: ExportNodeProperties) => {
+            // in case the data model changes this makes sure all properties are at least present using defaults
+            const mergedProperty = { ...DefaultNodeValues, ...property } as ExportNodeProperties
             const properties: NodeProperties = {
-                id: property.id,
-                parent: this.map.nodes.getNode(property.parent),
-                k: property.k,
-                name: property.name,
-                coordinates: Utils.cloneObject(property.coordinates) as Coordinates,
-                image: Utils.cloneObject(property.image) as Image,
-                colors: Utils.cloneObject(property.colors) as Colors,
-                font: Utils.cloneObject(property.font) as Font,
-                locked: property.locked,
-                isRoot: property.isRoot
+                id: mergedProperty.id,
+                parent: this.map.nodes.getNode(mergedProperty.parent),
+                k: mergedProperty.k,
+                name: mergedProperty.name,
+                coordinates: Utils.cloneObject(mergedProperty.coordinates) as Coordinates,
+                image: Utils.cloneObject(mergedProperty.image) as Image,
+                colors: Utils.cloneObject(mergedProperty.colors) as Colors,
+                font: Utils.cloneObject(mergedProperty.font) as Font,
+                link: Utils.cloneObject(mergedProperty.link) as Link,
+                locked: mergedProperty.locked,
+                isRoot: mergedProperty.isRoot
             }
 
             const node: Node = new Node(properties)
             this.map.nodes.setNode(node.id, node)
 
-            if(property.isRoot) this.map.rootId = property.id
+            if(mergedProperty.isRoot) this.map.rootId = mergedProperty.id
         })
 
         this.map.draw.clear()
@@ -203,6 +207,8 @@ export default class History {
             typeof node.k === 'number',
             typeof node.name === 'string',
             typeof node.locked === 'boolean',
+            // older maps do not include the link prop yet
+            (node.link === undefined || typeof node.link.href === 'string'),
             node.coordinates
             && typeof node.coordinates.x === 'number'
             && typeof node.coordinates.y === 'number',

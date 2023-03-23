@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import * as localforage from 'localforage'
+import { CachedAdminMapValue } from 'src/app/shared/models/cached-map.model'
 
 /**
  * Enumerative of the possible keys present in the storage
@@ -67,6 +68,13 @@ export class StorageService {
     }))
 
     return entries || null
+  }
+
+  /**
+     * Return all maps from storage.
+     */
+  public async getAllCreatedMapsFromStorage (): Promise<[string, CachedAdminMapValue][]> {
+    return (await this.getAllEntries()).filter(([key, _value]) => key !== 'settings') as [string, CachedAdminMapValue][]
   }
 
   /**

@@ -1,46 +1,50 @@
-import { Component } from '@angular/core'
+import { Component, OnInit } from '@angular/core'
 import { Settings } from '../../../../shared/models/settings.model'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { TranslateService } from '@ngx-translate/core'
 import { Location } from '@angular/common'
+import { Router } from '@angular/router'
+import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
-import { CachedMapOptions } from 'src/app/shared/models/cached-map.model'
+import { CachedAdminMapEntry, CachedMapOptions } from 'src/app/shared/models/cached-map.model'
 
 @Component({
   selector: 'teammapper-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
   public readonly languages: string[]
   public settings: Settings
   public mapOptions: CachedMapOptions
+  public editMode: Observable<boolean>
+  public cachedAdminMapEntries: CachedAdminMapEntry[]
 
   constructor (
     private settingsService: SettingsService,
     private mmpService: MmpService,
     private mapSyncService: MapSyncService,
     private translateService: TranslateService,
+    private router: Router,
     private location: Location) {
     this.languages = SettingsService.LANGUAGES
     this.settings = this.settingsService.getCachedSettings()
     this.mapOptions = this.mmpService.getAdditionalMapOptions()
+    this.editMode = this.settingsService.getEditModeObservable()
+    this.cachedAdminMapEntries = []
   }
 
   public async updateGeneralMapOptions() {
     await this.settingsService.updateCachedSettings(this.settings)
+  }
 
-    this.mmpService.updateOptions('rootNode', this.settings.mapOptions.rootNode)
-    this.mmpService.updateOptions('defaultNode', this.settings.mapOptions.defaultNode)
-    this.mmpService.updateOptions('centerOnResize', this.settings.mapOptions.centerOnResize)
+  public async ngOnInit () {
+    this.cachedAdminMapEntries = await this.settingsService.getCachedAdminMapEntries()
   }
 
   public async updateMapOptions () {
     await this.validateMapOptionsInput()
-    // Update locally
-    this.mmpService.updateAdditionalMapOptions(this.mapOptions)
-    // Sync to other users
     this.mapSyncService.updateMapOptions(this.mapOptions)
   }
 
@@ -52,6 +56,14 @@ export class SettingsComponent {
 
   public back () {
     this.location.back()
+  }
+
+  public getMapUrl (entry: CachedAdminMapEntry): string {
+    return this.router.createUrlTree([`/map/${entry.id}`], {fragment: entry.cachedAdminMapValue.modificationSecret}).toString()
+  }
+
+  public getMapTitle (entry: CachedAdminMapEntry): string {
+    return entry.cachedAdminMapValue.rootName || entry.id
   }
 
   private async validateMapOptionsInput() {

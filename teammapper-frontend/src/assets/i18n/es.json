@@ -60,7 +60,8 @@
         "MAP_ZOOM": "Permitir acercar el mapa",
         "AUTO_BRANCH_COLORS": "Permitir elegir automáticamente los colores de las ramificaciones",
         "SHARE": "Share",
-        "LINK": "Adds a link",
+        "LINK_ADD": "Adds a link",
+        "LINK_REMOVE": "Removes a link",
         "FONT_MIN_SIZE": "Minimal font size",
         "FONT_MAX_SIZE": "Maximal font size",
         "FONT_INCREMENT": "Font size step",
@@ -78,7 +79,9 @@
         },
         "SHARE": {
             "TITLE": "Share map",
-            "CONTENT": "Copy this link to share the map"
+            "CONTENT": "Copy this link to share the map",
+            "LINK_TYPE_VIEW": "Only observe",
+            "LINK_TYPE_EDIT": "Observe and modify"
           },
         "INFO": {
             "DELETED_AT": "Mindmap is going to be deleted at:",
@@ -87,8 +90,7 @@
             "CONFIRM_DELETE": "Delete?"
         },
         "LINK": {
-            "URL": "Link URL",
-            "NAME": "Link name"
+            "URL": "Link URL (https://...)"
         }
     },
     "PAGES": {
@@ -146,7 +148,19 @@
             ]
         },
         "SETTINGS": {
-            "TITLE": "Ajustes"
+            "AUTO_BRANCH_COLORS": "Colores automáticos de las ramificaciones",
+            "CENTER_ON_RESIZING": "Centrar cuando se redimensiona",
+            "FONT_MIN_SIZE": "Minimal font size",
+            "FONT_MAX_SIZE": "Maximal font size",
+            "FONT_INCREMENT": "Font size step",
+            "GENERAL": "General",
+            "MAIN": "Principal",
+            "MAP_LIST": "List of created maps",
+            "MAP_OPTIONS": "Opciones del mapa",
+            "ROOT_NODE_NAME": "Nombre del nodo raíz",
+            "NODE_NAME": "Nombre del nodo",
+            "TITLE": "Ajustes",
+            "TTL": "Last known date of deletion"
         },
         "SHORTCUTS": {
             "TITLE": "Atajos"
@@ -166,7 +180,6 @@
         "APPLICATION": "Application",
         "TRY_IT": "Try it",
         "GENERAL": "General",
-        "MAP_OPTIONS": "Opciones del mapa",
         "DISMISS": "Desestimar",
         "SAVED_MAPS": "Saved maps",
         "JSON": "File (.json)",
@@ -181,17 +194,12 @@
         "SAVE": "Guardar",
         "OPEN": "Abrir",
         "CANCEL": "Cancelar",
-        "MAIN": "Principal",
-        "CENTER_ON_RESIZING": "Centrar cuando se redimensiona",
         "NODE_DRAGGING": "Arrastrar nodo",
         "MAP_ZOOM": "Zoom del mapa",
-        "AUTO_BRANCH_COLORS": "Colores automáticos de las ramificaciones",
         "MAP": "Mapa",
         "NODES": "Nodos",
         "SAVED": "Guardado",
         "NOT_SAVED": "No guardado",
-        "ROOT_NODE_NAME": "Nombre del nodo raíz",
-        "NODE_NAME": "Nombre del nodo",
         "FONT_MIN_SIZE": "Minimal font size",
         "FONT_MAX_SIZE": "Maximal font size",
         "FONT_INCREMENT": "Font size step"

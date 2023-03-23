@@ -23,6 +23,11 @@ div.floating-buttons {
     .add-node button, .remove-node button {
         background-color: $secondary;
         color: #FFFFFF;
+
+        &:disabled {
+            color: rgba(0, 0, 0, 0.26);
+            background: rgba(0, 0, 0, 0.26) !important;
+        }
     }
 
     .add-node {

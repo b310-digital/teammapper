@@ -60,7 +60,8 @@
         "MAP_ZOOM": "Zoomen der Mindmap erlauben",
         "AUTO_BRANCH_COLORS": "Automatische Auswahl von Zweigfarben erlauben",
         "SHARE": "Teilen",
-        "LINK": "Link hinzufügen",
+        "LINK_ADD": "Link hinzufügen",
+        "LINK_REMOVE": "Link entfernen",
         "FONT_MIN_SIZE": "Minimale Schriftgröße",
         "FONT_MAX_SIZE": "Maximale Schriftgröße",
         "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
@@ -78,7 +79,9 @@
       },
       "SHARE": {
         "TITLE": "Map teilen",
-        "CONTENT": "Kopiere und teile diesen Link"
+        "CONTENT": "Kopiere und teile diesen Link",
+        "LINK_TYPE_VIEW": "Änderungen verbieten",
+        "LINK_TYPE_EDIT": "Änderungen erlauben"
       },
       "INFO": {
           "DELETED_AT": "Diese Mindmap wird gelöscht am:",
@@ -87,8 +90,7 @@
           "CONFIRM_DELETE": "Wirklich löschen?"
       },
       "LINK": {
-          "URL": "Link URL (bitte mit http/https)",
-          "NAME": "Link Name"
+          "URL": "Link-URL (https://...)"
       }
     },
      "PAGES": {
@@ -146,7 +148,19 @@
             ]
         },
         "SETTINGS": {
-            "TITLE": "Einstellungen"
+            "AUTO_BRANCH_COLORS": "Automatische Zweigfarben",
+            "CENTER_ON_RESIZING": "Zentrieren bei Größenänderung",
+            "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
+            "FONT_MAX_SIZE": "Maximale Schriftgröße",
+            "FONT_MIN_SIZE": "Minimale Schriftgröße",
+            "GENERAL": "Allgemein",
+            "MAIN": "Grundeinstellungen",
+            "MAP_LIST": "Liste erstellter Mindmaps",
+            "MAP_OPTIONS": "Mindmap Optionen",
+            "NODE_NAME": "Bezeichnung von Knoten",
+            "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
+            "TITLE": "Einstellungen",
+            "TTL": "Letztes bekannte Datum der Löschung"
         },
         "SHORTCUTS": {
             "TITLE": "Shortcuts"
@@ -166,8 +180,6 @@
         "REPOSITORY": "Repository",
         "APPLICATION": "Anwendung",
         "TRY_IT": "Try it!",
-        "GENERAL": "Allgemein",
-        "MAP_OPTIONS": "Mindmap-Optionen",
         "DISMISS": "Verwerfen",
         "SAVED_MAPS": "Gespeicherte Mindmaps",
         "JSON": "Datei (.json)",
@@ -182,19 +194,11 @@
         "SAVE": "Speichern",
         "OPEN": "Öffnen",
         "CANCEL": "Abbrechen",
-        "MAIN": "Grundeinstellungen",
-        "CENTER_ON_RESIZING": "Zentrieren bei Größenänderung",
         "NODE_DRAGGING": "Verschieben von Knoten",
         "MAP_ZOOM": "Zoom",
-        "AUTO_BRANCH_COLORS": "Automatische Zweigfarben",
         "MAP": "Mindmap",
         "NODES": "Knoten",
         "SAVED": "Gespeichert",
-        "NOT_SAVED": "Nicht gespeichert",
-        "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
-        "NODE_NAME": "Bezeichnung von Knoten",
-        "FONT_MIN_SIZE": "Minimale Schriftgröße",
-        "FONT_MAX_SIZE": "Maximale Schriftgröße",
-        "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße"
+        "NOT_SAVED": "Nicht gespeichert"
     }
 }
