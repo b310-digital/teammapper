@@ -1,18 +1,18 @@
 <h2 mat-dialog-title>{{ applicationName }} {{ version }}</h2>
 <mat-dialog-content>
     <div class="about-modal-section">
-        <img src="./assets/images/teammapper-logo-blue.svg" style="max-width: 100%"/>
         {{ "PAGES.ABOUT.INTRODUCTION.APPLICATION_DESCRIPTION" | translate }}
         <br /><br />
+        <a href="https://github.com/kitsteam/teammapper" class="link" target="_blank">
+            GitHub
+        </a>  · 
         <a href="https://kits.blog/impressum/" target="_blank">Impressum</a> · <a href="https://kits.blog/datenschutzerklaerung/" target="_blank">Datenschutz</a>
     </div>
+    <br />
     <div class="about-modal-section border-top">
         {{ "MODALS.INFO.DELETE_AFTER_DAYS" | translate: { deleteAfterDays: map.deleteAfterDays } }} <br /><br />
         {{ "MODALS.INFO.DELETED_AT" | translate }} {{map.deletedAt | date: 'YYYY-MM-dd' }} <br />
         <br />
-        <a href="https://github.com/kitsteam/teammapper" class="link" target="_blank">
-            {{ applicationName }} <fa-icon [icon]="faGithub" size="lg"></fa-icon>
-        </a>
     </div>
 </mat-dialog-content>
 <mat-dialog-actions>

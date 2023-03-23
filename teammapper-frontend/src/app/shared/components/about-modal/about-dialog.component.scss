@@ -1,4 +1,8 @@
+@import "~src/colors.scss";
+
 .about-modal-section {
+    max-width: 500px;
+    hyphens: auto;
     img {
         padding-right: 2rem;
         margin-bottom: 2rem;
@@ -10,7 +14,7 @@
 
     a {
         text-decoration: none;
-        color: #00a3d3;
+        color: $font-grey;
     }
 }
 
