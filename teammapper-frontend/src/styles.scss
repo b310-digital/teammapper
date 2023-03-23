@@ -57,6 +57,10 @@ mat-dialog-content.mat-dialog-content {
     font-family: "Fira Sans", sans !important;
 }
 
+.mat-dialog-actions {
+    gap: 10px;
+}
+
 // Color picker override
 div.color-picker {
     border-radius: 2px;
