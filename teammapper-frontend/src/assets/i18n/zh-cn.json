@@ -148,7 +148,19 @@
             ]
         },
         "SETTINGS": {
-            "TITLE": "设置"
+            "AUTO_BRANCH_COLORS": "自动分配分支颜色",
+            "CENTER_ON_RESIZING": "缩放之后居中",
+            "FONT_MIN_SIZE": "Minimal font size",
+            "FONT_MAX_SIZE": "Maximal font size",
+            "FONT_INCREMENT": "Font size step",
+            "GENERAL": "一般",
+            "MAIN": "主界面",
+            "MAP_LIST": "List of created maps",
+            "MAP_OPTIONS": "思维导图选项",
+            "ROOT_NODE_NAME": "根节点名称",
+            "NODE_NAME": "节点名称",
+            "TITLE": "设置",
+            "TTL": "Last known date of deletion"
         },
         "SHORTCUTS": {
             "TITLE": "快捷键"
@@ -167,8 +179,6 @@
         "REPOSITORY": "Repository",
         "APPLICATION": "Application",
         "TRY_IT": "Try it",
-        "GENERAL": "一般",
-        "MAP_OPTIONS": "思维导图选项",
         "DISMISS": "解除",
         "SAVED_MAPS": "Saved maps",
         "JSON": "File (.json)",
@@ -183,17 +193,12 @@
         "SAVE": "保存",
         "OPEN": "打开",
         "CANCEL": "取消",
-        "MAIN": "主界面",
-        "CENTER_ON_RESIZING": "缩放之后居中",
         "NODE_DRAGGING": "拖拽节点",
         "MAP_ZOOM": "缩放",
-        "AUTO_BRANCH_COLORS": "自动分配分支颜色",
         "MAP": "思维导图",
         "NODES": "节点",
         "SAVED": "已保存",
         "NOT_SAVED": "未保存",
-        "ROOT_NODE_NAME": "根节点名称",
-        "NODE_NAME": "节点名称",
         "FONT_MIN_SIZE": "Minimal font size",
         "FONT_MAX_SIZE": "Maximal font size",
         "FONT_INCREMENT": "Font size step"

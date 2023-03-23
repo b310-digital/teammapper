@@ -148,7 +148,19 @@
             ]
         },
         "SETTINGS": {
-            "TITLE": "Paramètres"
+            "AUTO_BRANCH_COLORS": "Automatic branch colors",
+            "CENTER_ON_RESIZING": "Centrer sur le redimensionnement",
+            "FONT_MIN_SIZE": "Minimal font size",
+            "FONT_MAX_SIZE": "Maximal font size",
+            "FONT_INCREMENT": "Font size step",
+            "GENERAL": "Général",
+            "MAIN": "Principale",
+            "MAP_LIST": "List of created maps",
+            "MAP_OPTIONS": "Options de carte",
+            "ROOT_NODE_NAME": "Nom du noeud racine",
+            "NODE_NAME": "Nom du noeud",
+            "TITLE": "Paramètres",
+            "TTL": "Last known date of deletion"
         },
         "SHORTCUTS": {
             "TITLE": "Raccourcis"
@@ -167,8 +179,6 @@
         "REPOSITORY": "Repository",
         "APPLICATION": "Application",
         "TRY_IT": "Try it",
-        "GENERAL": "Général",
-        "MAP_OPTIONS": "Options de carte",
         "DISMISS": "Rejeter",
         "SAVED_MAPS": "Saved maps",
         "JSON": "File (.json)",
@@ -183,17 +193,12 @@
         "SAVE": "Save",
         "OPEN": "Open",
         "CANCEL": "Annuler",
-        "MAIN": "Principale",
-        "CENTER_ON_RESIZING": "Centrer sur le redimensionnement",
         "NODE_DRAGGING": "Noeud faisant glisser",
         "MAP_ZOOM": "Map zoom",
-        "AUTO_BRANCH_COLORS": "Automatic branch colors",
         "MAP": "Carte",
         "NODES": "Noeuds",
         "SAVED": "Enregistré",
         "NOT_SAVED": "Non enregistré",
-        "ROOT_NODE_NAME": "Nom du noeud racine",
-        "NODE_NAME": "Nom du noeud",
         "FONT_MIN_SIZE": "Minimal font size",
         "FONT_MAX_SIZE": "Maximal font size",
         "FONT_INCREMENT": "Font size step"

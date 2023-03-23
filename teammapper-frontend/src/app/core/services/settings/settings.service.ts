@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import { BehaviorSubject, Observable } from 'rxjs'
+import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model'
 import { Settings } from '../../../shared/models/settings.model'
 import { API_URL, HttpService } from '../../http/http.service'
 import { StorageService, STORAGE_KEYS } from '../storage/storage.service'
@@ -45,6 +46,19 @@ export class SettingsService {
   public async updateCachedSettings (settings: Settings): Promise<void> {
     await this.storageService.set(STORAGE_KEYS.SETTINGS, settings)
     this.settingsSubject.next(settings)
+  }
+
+  public async getCachedAdminMapEntries (): Promise<CachedAdminMapEntry[]> {
+    return (await this.storageService.getAllCreatedMapsFromStorage())
+      .map((result) => {
+        return {
+          id: result[0],
+          cachedAdminMapValue: result[1]
+        }
+      })
+      .filter((result: CachedAdminMapEntry) => new Date(result.cachedAdminMapValue.ttl).getTime() > Date.now())
+      .sort((a, b) => new Date(b.cachedAdminMapValue.ttl).getTime() - new Date(a.cachedAdminMapValue.ttl).getTime())
+      .slice(0, 100)
   }
 
   /**
