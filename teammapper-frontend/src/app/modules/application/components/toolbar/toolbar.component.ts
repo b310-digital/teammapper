@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core'
 import { ExportNodeProperties } from '@mmp/map/types'
 import { TranslateService } from '@ngx-translate/core'
+import { MmpService } from 'src/app/core/services/mmp/mmp.service'
 import { DialogService } from 'src/app/shared/services/dialog/dialog.service'
-import { MmpService } from '../../../../core/services/mmp/mmp.service'
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -13,10 +13,14 @@ export class ToolbarComponent {
   @Input() public node: ExportNodeProperties
   @Input() public editDisabled: boolean
 
-  constructor (public mmpService: MmpService,
-    public dialogService: DialogService,
-    public translationService: TranslateService) {
+  constructor (
+    private translationService: TranslateService,
+    private mmpService: MmpService
+   ) {
   }
+  //  private dialogService: DialogService,
+   // 
+  //,
 
   public async exportMap (format: string) {
     const result = await this.mmpService.exportMap(format)
@@ -24,7 +28,7 @@ export class ToolbarComponent {
   }
 
   public async share () {
-    this.dialogService.openShareDialog()
+    //this.dialogService.openShareDialog()
   }
 
   public toogleNodeFontStyle () {
@@ -57,7 +61,7 @@ export class ToolbarComponent {
   }
 
   public async openAbout () {
-    this.dialogService.openAboutDialog()
+    //this.dialogService.openAboutDialog()
   }
 
   public initImageUpload (event: InputEvent) {

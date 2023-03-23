@@ -1,4 +1,8 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing'
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing'
+import { MatIconModule } from '@angular/material/icon'
+import { MatListModule } from '@angular/material/list'
+import { TranslateModule } from '@ngx-translate/core'
+import { SettingsService } from 'src/app/core/services/settings/settings.service'
 
 import { FooterComponent } from './footer.component'
 
@@ -6,9 +10,18 @@ describe('FooterComponent', () => {
   let component: FooterComponent
   let fixture: ComponentFixture<FooterComponent>
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
+    const mockSettingsService: jasmine.SpyObj<SettingsService> = jasmine.createSpyObj(SettingsService, ['getCachedSettings']);
+    mockSettingsService.getCachedSettings.and.returnValue(jasmine.createSpyObj('settings', ['general']));
+
     TestBed.configureTestingModule({
-      declarations: [FooterComponent]
+      declarations: [FooterComponent],
+      providers: [{ provide: SettingsService, useValue: mockSettingsService } ],
+      imports: [
+        TranslateModule.forRoot(),
+        MatIconModule,
+        MatListModule
+      ]
     })
       .compileComponents()
   }))
