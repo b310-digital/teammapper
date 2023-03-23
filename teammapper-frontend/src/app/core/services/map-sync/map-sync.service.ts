@@ -1,3 +1,4 @@
+import { DialogService } from '../dialog/dialog.service'
 import { Injectable, OnDestroy } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { BehaviorSubject, Observable } from 'rxjs'
@@ -7,7 +8,6 @@ import { NodePropertyMapping } from '@mmp/index'
 import { ExportNodeProperties, MapCreateEvent, MapProperties, MapSnapshot, NodeUpdateEvent } from '@mmp/map/types'
 import { PrivateServerMap, ResponseMapOptionsUpdated, ResponseMapUpdated, ResponseNodeAdded, ResponseNodeRemoved, ResponseNodeUpdated, ResponseSelectionUpdated, ServerMap } from './server-types'
 import { API_URL, HttpService } from '../../http/http.service'
-import { DialogService } from '../../../shared/services/dialog/dialog.service'
 import { COLORS } from '../mmp/mmp-utils'
 import { UtilsService } from '../utils/utils.service'
 import { StorageService } from '../storage/storage.service'
@@ -46,9 +46,9 @@ export class MapSyncService implements OnDestroy {
   private modificationSecret: string
 
   constructor (
+    //private dialogService: DialogService,
     private mmpService: MmpService,
     private httpService: HttpService,
-    private dialogService: DialogService,
     private storageService: StorageService,
     private settingsService: SettingsService
   ) {
@@ -287,7 +287,7 @@ export class MapSyncService implements OnDestroy {
     this.socket.io.on('reconnect', async () => {
       const serverMap: MapProperties = await this.joinMap(uuid, this.clientColor)
 
-      this.dialogService.closeDisconnectDialog()
+      //this.dialogService.closeDisconnectDialog()
       this.mmpService.new(serverMap.data, false)
     })
 
@@ -365,7 +365,7 @@ export class MapSyncService implements OnDestroy {
     })
 
     this.socket.on('disconnect', () => {
-      this.dialogService.openDisconnectDialog()
+      //this.dialogService.openDisconnectDialog()
     })
 
     this.socket.on('mapDeleted', () => {

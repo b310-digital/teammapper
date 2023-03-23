@@ -19,7 +19,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { StripTags } from './pipes/striptags.pipe'
 import { ConnectionInfoDialogComponent } from './components/connection-info/connection-info-dialog.component'
 import { MatDialogModule } from '@angular/material/dialog'
-import { DialogService } from './services/dialog/dialog.service'
+import { DialogService } from '../core/services/dialog/dialog.service'
 import { ShareDialogComponent } from './components/share-dialog/share-dialog.component'
 import { AboutDialogComponent } from './components/about-modal/about-dialog.component'
 import { InverseBoolPipe } from './pipes/inverse-bool.pipe'
@@ -65,8 +65,7 @@ const PIPES = [
     MatListModule,
     MatToolbarModule,
     ...PIPES
-  ],
-  providers: [DialogService]
+  ]
 })
 export class SharedModule {
 }

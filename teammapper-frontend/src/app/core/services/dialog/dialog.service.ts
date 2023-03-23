@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core'
 import { MatDialog, MatDialogRef } from '@angular/material/dialog'
 import { ConnectionInfoDialogComponent } from 'src/app/shared/components/connection-info/connection-info-dialog.component'
-import { AboutDialogComponent } from '../../components/about-modal/about-dialog.component'
-import { ShareDialogComponent } from '../../components/share-dialog/share-dialog.component'
+import { AboutDialogComponent } from '../../../shared/components/about-modal/about-dialog.component'
+import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component'
 
 @Injectable({
   providedIn: 'root'
