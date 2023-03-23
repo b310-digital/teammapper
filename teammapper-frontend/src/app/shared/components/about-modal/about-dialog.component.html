@@ -4,21 +4,20 @@
         <img src="./assets/icons/icon-128x128.png" />
         {{ "PAGES.ABOUT.INTRODUCTION.APPLICATION_DESCRIPTION" | translate }}
     </div>
-    <div class="about-modal-section border-top">
-        <mat-list>
-            <mat-list-item>{{ "MODALS.INFO.DELETE_AFTER_DAYS" | translate: { deleteAfterDays: map.deleteAfterDays } }}</mat-list-item>
-            <mat-list-item>{{ "MODALS.INFO.DELETED_AT" | translate }} {{map.deletedAt | date: 'YYYY-MM-dd' }}</mat-list-item>
-            <mat-list-item>
-                <a href="https://github.com/b310-digital/teammapper" class="link" target="_blank">
-                    {{ applicationName }} <fa-icon [icon]="faGithub" size="lg"></fa-icon>
-                </a>
-            </mat-list-item>
-           </mat-list>
+    <br />
+    <div class="about-modal-section">
+        {{ "MODALS.INFO.DELETE_AFTER_DAYS" | translate: { deleteAfterDays: map.deleteAfterDays } }} <br />
+        {{ "MODALS.INFO.DELETED_AT" | translate }} {{map.deletedAt | date: 'YYYY-MM-dd' }}<br />
+
+        <br />
+        <a href="https://github.com/b310-digital/teammapper" class="link" target="_blank">
+            {{ applicationName }} <fa-icon [icon]="faGithub" size="lg"></fa-icon>
+        </a>
     </div>
 </mat-dialog-content>
 <mat-dialog-actions>
-    <button mat-button [mat-dialog-close]="true">{{ "MODALS.GENERAL.BUTTON_CLOSE" | translate }}</button>
+    <button mat-raised-button [mat-dialog-close]="true">{{ "MODALS.GENERAL.BUTTON_CLOSE" | translate }}</button>
     <div *ngIf="mapAdminId | async">
-        <button mat-button (click)="deleteMap()" color="warn">{{ "MODALS.INFO.DELETE" | translate }}</button>
+        <button mat-raised-button (click)="deleteMap()" color="warn">{{ "MODALS.INFO.DELETE" | translate }}</button>
     </div>
 </mat-dialog-actions>
