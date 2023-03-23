@@ -28,6 +28,8 @@ services:
     ports:
       - "${APP_FRONTEND_PORT:-4200}:4200"
       - "${APP_BACKTEND_PORT:-3000}:3000"
+      # karma server
+      - 9876:9876
     volumes:
       - .:/home/node/app
       - app_backend_node_modules:/home/node/app/teammapper-backend/node_modules
