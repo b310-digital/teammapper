@@ -2,7 +2,6 @@ import { TranslateModule } from '@ngx-translate/core'
 import { CommonModule } from '@angular/common'
 import { NgModule } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { ColorPickerModule } from 'ngx-color-picker'
 import { RouterModule } from '@angular/router'
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome'
 import { MatSliderModule } from '@angular/material/slider'
@@ -17,10 +16,7 @@ import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input'
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { StripTags } from './pipes/striptags.pipe'
-import { ConnectionInfoDialogComponent } from './components/connection-info/connection-info-dialog.component'
 import { MatDialogModule } from '@angular/material/dialog'
-import { ShareDialogComponent } from './components/share-dialog/share-dialog.component'
-import { AboutDialogComponent } from './components/about-modal/about-dialog.component'
 import { InverseBoolPipe } from './pipes/inverse-bool.pipe'
 
 const PIPES = [
@@ -38,7 +34,6 @@ const PIPES = [
     TranslateModule,
     MatIconModule,
     MatSnackBarModule,
-    ColorPickerModule,
     MatButtonModule,
     MatCardModule,
     MatListModule,
@@ -46,23 +41,28 @@ const PIPES = [
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatSlideToggleModule
   ],
-  declarations: [...PIPES, ConnectionInfoDialogComponent, ShareDialogComponent, AboutDialogComponent],
+  declarations: [...PIPES],
   exports: [
     CommonModule,
     FormsModule,
     FontAwesomeModule,
     MatSliderModule,
+    RouterModule,
     TranslateModule,
     MatIconModule,
-    MatSelectModule,
     MatSnackBarModule,
-    ColorPickerModule,
     MatButtonModule,
     MatCardModule,
     MatListModule,
     MatToolbarModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatSlideToggleModule,
     ...PIPES
   ]
 })

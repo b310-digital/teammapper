@@ -6,14 +6,14 @@ import { MapProperties } from '@mmp/map/types'
 import { SettingsService } from 'src/app/core/services/settings/settings.service'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
-import { environment } from '../../../../environments/environment'
+import { environment } from 'src/environments/environment'
 
 @Component({
-  selector: 'teammapper-about-dialog',
-  templateUrl: 'about-dialog.component.html',
-  styleUrls: ['./about-dialog.component.scss']
+  selector: 'teammapper-dialog-about',
+  templateUrl: 'dialog-about.component.html',
+  styleUrls: ['./dialog-about.component.scss']
 })
-export class AboutDialogComponent {
+export class DialogAboutComponent {
   public faGithub = faGithub
   public version: string
   public applicationName: string
@@ -21,7 +21,7 @@ export class AboutDialogComponent {
   public mapAdminId: Promise<string>
 
   constructor (
-    public dialogRef: MatDialogRef<AboutDialogComponent>,
+    public dialogRef: MatDialogRef<DialogAboutComponent>,
     private translateService: TranslateService,
     private settingsService: SettingsService,
     private storageService: StorageService,

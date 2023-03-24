@@ -50,7 +50,6 @@ export class MapSyncService implements OnDestroy {
   private modificationSecret: string
 
   constructor (
-    //private dialogService: DialogService,
     private mmpService: MmpService,
     private httpService: HttpService,
     private storageService: StorageService,

@@ -3,11 +3,11 @@ import QRCodeStyling from 'qr-code-styling'
 import { qrcodeStyling } from './qrcode-settings'
 
 @Component({
-  selector: 'teammapper-share-dialog',
-  templateUrl: 'share-dialog.component.html',
-  styleUrls: ['share-dialog.component.scss']
+  selector: 'teammapper-dialog-share',
+  templateUrl: 'dialog-share.component.html',
+  styleUrls: ['dialog-share.component.scss']
 })
-export class ShareDialogComponent implements OnInit {
+export class DialogShareComponent implements OnInit {
   @ViewChild('qrcodecanvas', { static: true }) qrCodeCanvas: ElementRef<HTMLCanvasElement>
   @ViewChild('sharedialog', { static: true }) shareDialog: ElementRef<HTMLElement>
   @ViewChild('inputlink', { static: true }) inputLink: ElementRef<HTMLInputElement>

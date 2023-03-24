@@ -91,3 +91,10 @@ jobs:
                   POSTGRES_USER: "teammapper-user"
                   POSTGRES_QUERY_TIMEOUT: 10000
                   POSTGRES_STATEMENT_TIMEOUT: 10000
+
+    teammapper-frontend-test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - run: npm --prefix teammapper-frontend ci
+            - run: npm --prefix teammapper-frontend run test

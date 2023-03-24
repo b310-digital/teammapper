@@ -1,25 +1,25 @@
 import { Injectable } from '@angular/core'
 import { MatDialog, MatDialogRef } from '@angular/material/dialog'
-import { ConnectionInfoDialogComponent } from 'src/app/shared/components/connection-info/connection-info-dialog.component'
-import { AboutDialogComponent } from '../../../shared/components/about-modal/about-dialog.component'
-import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component'
+import { DialogAboutComponent } from 'src/app/modules/application/components/dialog-about/dialog-about.component'
+import { DialogConnectionInfoComponent } from 'src/app/modules/application/components/dialog-connection-info/dialog-connection-info.component'
+import { DialogShareComponent } from 'src/app/modules/application/components/dialog-share/dialog-share.component'
 
 @Injectable({
   providedIn: 'root'
 })
 export class DialogService {
-  private disconnectModalRef: MatDialogRef<ConnectionInfoDialogComponent>
-  private shareModalRef: MatDialogRef<ShareDialogComponent>
-  private aboutModalRef: MatDialogRef<AboutDialogComponent>
+  private disconnectModalRef: MatDialogRef<DialogConnectionInfoComponent>
+  private shareModalRef: MatDialogRef<DialogShareComponent>
+  private aboutModalRef: MatDialogRef<DialogAboutComponent>
 
   constructor (public dialog: MatDialog) {}
 
   openDisconnectDialog () {
-    this.disconnectModalRef = this.dialog.open(ConnectionInfoDialogComponent)
+    this.disconnectModalRef = this.dialog.open(DialogConnectionInfoComponent)
   }
 
   openShareDialog () {
-    this.shareModalRef = this.dialog.open(ShareDialogComponent)
+    this.shareModalRef = this.dialog.open(DialogShareComponent)
   }
 
   closeDisconnectDialog () {
@@ -29,7 +29,7 @@ export class DialogService {
   }
 
   openAboutDialog () {
-    this.aboutModalRef = this.dialog.open(AboutDialogComponent, { maxHeight: '90vh' })
+    this.aboutModalRef = this.dialog.open(DialogAboutComponent, { maxHeight: '90vh' })
   }
 
   closeAboutDialog () {
