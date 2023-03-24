@@ -1,11 +1,9 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core'
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing'
-import { MatDialog, MatDialogModule } from '@angular/material/dialog'
 import { MatMenuModule } from '@angular/material/menu'
-import { TranslateModule, TranslateService } from '@ngx-translate/core'
+import { TranslateModule } from '@ngx-translate/core'
 import { DialogService } from 'src/app/core/services/dialog/dialog.service'
 import { MmpService } from 'src/app/core/services/mmp/mmp.service'
-import { SharedModule } from 'src/app/shared/shared.module'
 
 import { ToolbarComponent } from './toolbar.component'
 

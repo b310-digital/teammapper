@@ -17,7 +17,7 @@ export class ToolbarComponent {
     private translationService: TranslateService,
     public mmpService: MmpService,
     private dialogService: DialogService
-   ) {
+  ) {
   }
 
   public async exportMap (format: string) {
