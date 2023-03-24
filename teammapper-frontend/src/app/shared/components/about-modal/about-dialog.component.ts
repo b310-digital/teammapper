@@ -25,17 +25,17 @@ export class AboutDialogComponent {
     private translateService: TranslateService,
     private settingsService: SettingsService,
     private storageService: StorageService,
-    private mapSyncService: MapSyncService
+    // private mapSyncService: MapSyncService
   ) {
     this.version = environment.version
     this.applicationName = environment.name
-    this.map = this.mapSyncService.getAttachedMap().cachedMap
+    // this.map = this.mapSyncService.getAttachedMap().cachedMap
     this.mapAdminId = this.getMapAdminId()
   }
 
   async deleteMap () {
     if (confirm(this.translateService.instant('MODALS.INFO.CONFIRM_DELETE'))) {
-      await this.mapSyncService.deleteMap(await this.mapAdminId)
+      // await this.mapSyncService.deleteMap(await this.mapAdminId)
       await this.storageService.remove(this.map.uuid)
       window.location.reload()
     }

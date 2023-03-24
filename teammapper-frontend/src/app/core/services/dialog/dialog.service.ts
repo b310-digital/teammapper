@@ -12,9 +12,7 @@ export class DialogService {
   private shareModalRef: MatDialogRef<ShareDialogComponent>
   private aboutModalRef: MatDialogRef<AboutDialogComponent>
 
-  constructor (
-    public dialog: MatDialog) {
-  }
+  constructor (public dialog: MatDialog) {}
 
   openDisconnectDialog () {
     this.disconnectModalRef = this.dialog.open(ConnectionInfoDialogComponent)

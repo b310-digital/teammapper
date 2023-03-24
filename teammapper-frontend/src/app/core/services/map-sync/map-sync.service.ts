@@ -46,7 +46,7 @@ export class MapSyncService implements OnDestroy {
   private modificationSecret: string
 
   constructor (
-    //private dialogService: DialogService,
+    private dialogService: DialogService,
     private mmpService: MmpService,
     private httpService: HttpService,
     private storageService: StorageService,
@@ -287,7 +287,7 @@ export class MapSyncService implements OnDestroy {
     this.socket.io.on('reconnect', async () => {
       const serverMap: MapProperties = await this.joinMap(uuid, this.clientColor)
 
-      //this.dialogService.closeDisconnectDialog()
+      this.dialogService.closeDisconnectDialog()
       this.mmpService.new(serverMap.data, false)
     })
 
@@ -365,7 +365,7 @@ export class MapSyncService implements OnDestroy {
     })
 
     this.socket.on('disconnect', () => {
-      //this.dialogService.openDisconnectDialog()
+      this.dialogService.openDisconnectDialog()
     })
 
     this.socket.on('mapDeleted', () => {
