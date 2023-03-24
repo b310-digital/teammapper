@@ -28,6 +28,8 @@ interface ServerClientList {
   [clientId: string]: string;
 }
 
+export type ConnectionStatus = 'connected' | 'disconnected' | null
+
 @Injectable({
   providedIn: 'root'
 })
@@ -39,7 +41,7 @@ export class MapSyncService implements OnDestroy {
   // needed in the application component for UI related tasks
   private readonly attachedNodeSubject: BehaviorSubject<ExportNodeProperties | null>
   // inform other parts of the app about the connection state
-  private readonly connectionStatusSubject: BehaviorSubject<string>
+  private readonly connectionStatusSubject: BehaviorSubject<ConnectionStatus>
 
   private socket: Socket
   private colorMapping: ClientColorMapping
@@ -57,7 +59,7 @@ export class MapSyncService implements OnDestroy {
     // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null)
     this.attachedNodeSubject = new BehaviorSubject<ExportNodeProperties | null>(null)
-    this.connectionStatusSubject = new BehaviorSubject<string | null>(null)
+    this.connectionStatusSubject = new BehaviorSubject<ConnectionStatus>(null)
 
     this.clientListSubject = new BehaviorSubject<string[]>([])
     this.availableColors = COLORS
@@ -133,7 +135,7 @@ export class MapSyncService implements OnDestroy {
     return this.attachedNodeSubject.asObservable()
   }
 
-  public getConnectionStatusObservable(): Observable<string | null> {
+  public getConnectionStatusObservable(): Observable<ConnectionStatus> {
     return this.connectionStatusSubject.asObservable()
   }
 
@@ -141,11 +143,11 @@ export class MapSyncService implements OnDestroy {
     return this.attachedMapSubject.getValue()
   }
 
-  public getConnectionStatusSubject (): string {
+  public getConnectionStatus (): ConnectionStatus {
     return this.connectionStatusSubject.getValue()
   }
 
-  private setConnectionStatusSubject (value: string) {
+  private setConnectionStatusSubject (value: ConnectionStatus) {
     this.connectionStatusSubject.next(value)
   }
 

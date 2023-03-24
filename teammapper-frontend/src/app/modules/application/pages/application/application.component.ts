@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core'
 import { Subscription, Observable } from 'rxjs';
-import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service'
+import { ConnectionStatus, MapSyncService } from '../../../../core/services/map-sync/map-sync.service'
 import { MmpService } from '../../../../core/services/mmp/mmp.service'
 import { SettingsService } from '../../../../core/services/settings/settings.service'
 import { UtilsService } from '../../../../core/services/utils/utils.service'
@@ -44,8 +44,7 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     this.handleImageDropObservable()
 
     this.node = this.mapSyncService.getAttachedNodeObservable()
-    this.connectionStatusSubscription = this.mapSyncService.getConnectionStatusObservable().subscribe((status: string) => {
-      console.log(status)
+    this.connectionStatusSubscription = this.mapSyncService.getConnectionStatusObservable().subscribe((status: ConnectionStatus) => {
       if(status === 'connected') this.dialogService.closeDisconnectDialog()
       if(status === 'disconnected') this.dialogService.openDisconnectDialog()
     })
