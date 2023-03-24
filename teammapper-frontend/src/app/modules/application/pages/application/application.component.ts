@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router'
 import { ExportNodeProperties } from '@mmp/map/types'
 import { StorageService } from 'src/app/core/services/storage/storage.service'
 import { ServerMap } from 'src/app/core/services/map-sync/server-types'
+import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 
 // Initialization process of a map:
 // 1) Render the wrapper element inside the map angular html component 
@@ -24,11 +25,13 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   public editMode: Observable<boolean>
 
   private imageDropSubscription: Subscription;
+  private connectionStatusSubscription: Subscription;
 
   constructor (private mmpService: MmpService,
     private settingsService: SettingsService,
     private mapSyncService: MapSyncService,
     private storageService: StorageService,
+    private dialogService: DialogService,
     private route: ActivatedRoute,
     private router: Router) {
   }
@@ -41,11 +44,17 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     this.handleImageDropObservable()
 
     this.node = this.mapSyncService.getAttachedNodeObservable()
+    this.connectionStatusSubscription = this.mapSyncService.getConnectionStatusObservable().subscribe((status: string) => {
+      console.log(status)
+      if(status === 'connected') this.dialogService.closeDisconnectDialog()
+      if(status === 'disconnected') this.dialogService.openDisconnectDialog()
+    })
     this.editMode = this.settingsService.getEditModeObservable()
   }
 
   ngOnDestroy () {
     this.imageDropSubscription.unsubscribe()
+    this.connectionStatusSubscription.unsubscribe()
   }
 
   public handleImageDropObservable () {

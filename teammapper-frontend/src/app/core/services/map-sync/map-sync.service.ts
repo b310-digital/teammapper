@@ -1,4 +1,3 @@
-import { DialogService } from '../dialog/dialog.service'
 import { Injectable, OnDestroy } from '@angular/core'
 import { MmpService } from '../mmp/mmp.service'
 import { BehaviorSubject, Observable } from 'rxjs'
@@ -39,6 +38,9 @@ export class MapSyncService implements OnDestroy {
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>
   // needed in the application component for UI related tasks
   private readonly attachedNodeSubject: BehaviorSubject<ExportNodeProperties | null>
+  // inform other parts of the app about the connection state
+  private readonly connectionStatusSubject: BehaviorSubject<string>
+
   private socket: Socket
   private colorMapping: ClientColorMapping
   private availableColors: string[]
@@ -46,7 +48,7 @@ export class MapSyncService implements OnDestroy {
   private modificationSecret: string
 
   constructor (
-    private dialogService: DialogService,
+    //private dialogService: DialogService,
     private mmpService: MmpService,
     private httpService: HttpService,
     private storageService: StorageService,
@@ -55,6 +57,7 @@ export class MapSyncService implements OnDestroy {
     // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null)
     this.attachedNodeSubject = new BehaviorSubject<ExportNodeProperties | null>(null)
+    this.connectionStatusSubject = new BehaviorSubject<string | null>(null)
 
     this.clientListSubject = new BehaviorSubject<string[]>([])
     this.availableColors = COLORS
@@ -130,8 +133,20 @@ export class MapSyncService implements OnDestroy {
     return this.attachedNodeSubject.asObservable()
   }
 
+  public getConnectionStatusObservable(): Observable<string | null> {
+    return this.connectionStatusSubject.asObservable()
+  }
+
   public getAttachedMap (): CachedMapEntry {
     return this.attachedMapSubject.getValue()
+  }
+
+  public getConnectionStatusSubject (): string {
+    return this.connectionStatusSubject.getValue()
+  }
+
+  private setConnectionStatusSubject (value: string) {
+    this.connectionStatusSubject.next(value)
   }
 
   // update the attached map from outside control flow
@@ -287,7 +302,7 @@ export class MapSyncService implements OnDestroy {
     this.socket.io.on('reconnect', async () => {
       const serverMap: MapProperties = await this.joinMap(uuid, this.clientColor)
 
-      this.dialogService.closeDisconnectDialog()
+      this.setConnectionStatusSubject('connected')
       this.mmpService.new(serverMap.data, false)
     })
 
@@ -365,7 +380,7 @@ export class MapSyncService implements OnDestroy {
     })
 
     this.socket.on('disconnect', () => {
-      this.dialogService.openDisconnectDialog()
+      this.setConnectionStatusSubject('disconnected')
     })
 
     this.socket.on('mapDeleted', () => {

@@ -15,7 +15,7 @@ export class ToolbarComponent {
 
   constructor (
     private translationService: TranslateService,
-    private mmpService: MmpService,
+    public mmpService: MmpService,
     private dialogService: DialogService
    ) {
   }
