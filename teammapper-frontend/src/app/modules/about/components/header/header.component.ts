@@ -10,8 +10,6 @@ export class HeaderComponent {
   public faGithub = faGithub;
   public faGitter = faGitter;
 
-  constructor() {}
-
   public slide(selector: string, event: Event) {
     if (selector) {
       event.preventDefault();

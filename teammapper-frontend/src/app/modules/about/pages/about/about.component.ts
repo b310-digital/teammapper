@@ -20,6 +20,4 @@ export class AboutComponent {
   public faChartLine = faChartLine;
   public faCogs = faCogs;
   public faCheck = faCheck;
-
-  constructor() {}
 }

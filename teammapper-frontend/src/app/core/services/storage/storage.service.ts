@@ -14,11 +14,6 @@ export enum STORAGE_KEYS {
 })
 export class StorageService {
   /**
-   * Initialize the storage service setting the default storage.
-   */
-  constructor() {}
-
-  /**
    * Return the value or the values based on the keys passed as parameters.
    */
   public async get(keys: string | string[]): Promise<any | any[] | null> {
