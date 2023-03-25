@@ -47,4 +47,4 @@ describe('SettingsService', () => {
       ]
     );
   });
-})
+});
