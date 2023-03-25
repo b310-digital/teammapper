@@ -1,43 +1,40 @@
 div.colors-panel {
+  div.background {
+    z-index: 2;
+    position: absolute;
+    visibility: hidden;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+  }
 
-    div.background {
-        z-index: 2;
-        position: absolute;
-        visibility: hidden;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
+  div.panel {
+    z-index: 3;
+    position: absolute;
+    right: 20px;
+    top: 44%;
+
+    input {
+      touch-action: manipulation;
+      cursor: pointer;
+      box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.3),
+        0 2px 2px 0 rgba(0, 0, 0, 0.18), 0 1px 5px 0 rgba(0, 0, 0, 0.16);
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0;
+      padding: 16px;
+      border: 0;
+      border-radius: 30px;
+      user-select: none;
+
+      &:disabled {
+        cursor: default;
+      }
     }
 
-    div.panel {
-        z-index: 3;
-        position: absolute;
-        right: 20px;
-        top: 44%;
-
-        input {
-            touch-action: manipulation;
-            cursor: pointer;
-            box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .3),
-            0 2px 2px 0 rgba(0, 0, 0, .18),
-            0 1px 5px 0 rgba(0, 0, 0, .16);
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0;
-            padding: 16px;
-            border: 0;
-            border-radius: 30px;
-            user-select: none;
-
-            &:disabled {
-                cursor: default;
-            }
-        }
-
-        input:focus {
-            outline: none;
-        }
+    input:focus {
+      outline: none;
     }
-
+  }
 }

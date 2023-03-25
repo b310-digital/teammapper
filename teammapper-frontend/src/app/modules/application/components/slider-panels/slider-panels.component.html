@@ -1,27 +1,33 @@
 <div class="sliders-panel">
-    <mat-slider (change)="updateNodeFontSize($event)" (input)="updateNodeFontSize($event, true)"
-                *ngIf="node?.font" [title]="'TOOLTIPS.TEXT_SIZE' | translate"
-                [value]="node.font.size"
-                [disabled]="editDisabled"
-                class="font-size"
-                color="primary"
-                [max]="getSettingsFontMaxSize()"
-                [min]="getSettingsFontMinSize()"
-                [tickInterval]="getSettingsFontIncrement()"
-                [step]="getSettingsFontIncrement()"
-                thumbLabel
-                vertical>
-    </mat-slider>
-    <mat-slider (change)="updateNodeImageSize($event)" (input)="updateNodeImageSize($event, true)"
-                *ngIf="node?.image && node?.image?.src" [title]="'TOOLTIPS.IMAGE_SIZE' | translate"
-                [value]="node.image.size"
-                [disabled]="editDisabled"
-                class="image-size"
-                color="primary"
-                max="350"
-                min="50"
-                tickInterval="1"
-                thumbLabel
-                vertical>
-    </mat-slider>
+  <mat-slider
+    (change)="updateNodeFontSize($event)"
+    (input)="updateNodeFontSize($event, true)"
+    *ngIf="node?.font"
+    [title]="'TOOLTIPS.TEXT_SIZE' | translate"
+    [value]="node.font.size"
+    [disabled]="editDisabled"
+    class="font-size"
+    color="primary"
+    [max]="getSettingsFontMaxSize()"
+    [min]="getSettingsFontMinSize()"
+    [tickInterval]="getSettingsFontIncrement()"
+    [step]="getSettingsFontIncrement()"
+    thumbLabel
+    vertical>
+  </mat-slider>
+  <mat-slider
+    (change)="updateNodeImageSize($event)"
+    (input)="updateNodeImageSize($event, true)"
+    *ngIf="node?.image && node?.image?.src"
+    [title]="'TOOLTIPS.IMAGE_SIZE' | translate"
+    [value]="node.image.size"
+    [disabled]="editDisabled"
+    class="image-size"
+    color="primary"
+    max="350"
+    min="50"
+    tickInterval="1"
+    thumbLabel
+    vertical>
+  </mat-slider>
 </div>

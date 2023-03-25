@@ -6,6 +6,6 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class InverseBoolPipe implements PipeTransform {
   transform(value: boolean | null): boolean {
-    return !value
+    return !value;
   }
 }

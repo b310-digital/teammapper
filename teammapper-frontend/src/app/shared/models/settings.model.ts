@@ -1,4 +1,4 @@
-import { OptionParameters } from '@mmp/map/types'
+import { OptionParameters } from '@mmp/map/types';
 
 // Options for the service
 // Mmp itself only takes the options parameters. The service can be sugered with additonal options though.

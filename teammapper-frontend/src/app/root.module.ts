@@ -1,17 +1,20 @@
-import { HttpClient, HttpClientModule } from '@angular/common/http'
-import { APP_INITIALIZER, NgModule } from '@angular/core'
-import { BrowserModule } from '@angular/platform-browser'
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core'
-import { TranslateHttpLoader } from '@ngx-translate/http-loader'
-import { HotkeyModule } from 'angular2-hotkeys'
-import { appSettingsFactory, SettingsService } from './core/services/settings/settings.service'
-import { RootRoutingModule } from './root-routing.module'
-import { RootComponent } from './root.component'
-import { SharedModule } from './shared/shared.module'
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HotkeyModule } from 'angular2-hotkeys';
+import {
+  appSettingsFactory,
+  SettingsService,
+} from './core/services/settings/settings.service';
+import { RootRoutingModule } from './root-routing.module';
+import { RootComponent } from './root.component';
+import { SharedModule } from './shared/shared.module';
 
-export function createTranslateLoader (http: HttpClient) {
-  return new TranslateHttpLoader(http, './assets/i18n/', '.json')
+export function createTranslateLoader(http: HttpClient) {
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 @NgModule({
@@ -24,19 +27,21 @@ export function createTranslateLoader (http: HttpClient) {
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
-        useFactory: (createTranslateLoader),
-        deps: [HttpClient]
-      }
+        useFactory: createTranslateLoader,
+        deps: [HttpClient],
+      },
     }),
-    HotkeyModule.forRoot()
+    HotkeyModule.forRoot(),
   ],
-  declarations: [
-    RootComponent
-  ],
+  declarations: [RootComponent],
   providers: [
-    { provide: APP_INITIALIZER, useFactory: appSettingsFactory, deps: [SettingsService], multi: true }
+    {
+      provide: APP_INITIALIZER,
+      useFactory: appSettingsFactory,
+      deps: [SettingsService],
+      multi: true,
+    },
   ],
-  bootstrap: [RootComponent]
+  bootstrap: [RootComponent],
 })
-export class RootModule {
-}
+export class RootModule {}

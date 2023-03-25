@@ -1,38 +1,36 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing'
-import { MatIconModule } from '@angular/material/icon'
-import { MatListModule } from '@angular/material/list'
-import { TranslateModule } from '@ngx-translate/core'
-import { SettingsService } from 'src/app/core/services/settings/settings.service'
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { TranslateModule } from '@ngx-translate/core';
+import { SettingsService } from 'src/app/core/services/settings/settings.service';
 
-import { FooterComponent } from './footer.component'
+import { FooterComponent } from './footer.component';
 
 describe('FooterComponent', () => {
-  let component: FooterComponent
-  let fixture: ComponentFixture<FooterComponent>
+  let component: FooterComponent;
+  let fixture: ComponentFixture<FooterComponent>;
 
   beforeEach(waitForAsync(() => {
-    const mockSettingsService: jasmine.SpyObj<SettingsService> = jasmine.createSpyObj(SettingsService, ['getCachedSettings']);
-    mockSettingsService.getCachedSettings.and.returnValue(jasmine.createSpyObj('settings', ['general']));
+    const mockSettingsService: jasmine.SpyObj<SettingsService> =
+      jasmine.createSpyObj(SettingsService, ['getCachedSettings']);
+    mockSettingsService.getCachedSettings.and.returnValue(
+      jasmine.createSpyObj('settings', ['general'])
+    );
 
     TestBed.configureTestingModule({
       declarations: [FooterComponent],
-      providers: [{ provide: SettingsService, useValue: mockSettingsService } ],
-      imports: [
-        TranslateModule.forRoot(),
-        MatIconModule,
-        MatListModule
-      ]
-    })
-      .compileComponents()
-  }))
+      providers: [{ provide: SettingsService, useValue: mockSettingsService }],
+      imports: [TranslateModule.forRoot(), MatIconModule, MatListModule],
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FooterComponent)
-    component = fixture.componentInstance
-    fixture.detectChanges()
-  })
+    fixture = TestBed.createComponent(FooterComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
 
   it('should create', () => {
-    expect(component).toBeTruthy()
-  })
-})
+    expect(component).toBeTruthy();
+  });
+});
