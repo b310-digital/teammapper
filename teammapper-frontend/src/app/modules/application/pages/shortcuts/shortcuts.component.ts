@@ -3,13 +3,19 @@ import { ShortcutsService } from '../../../../core/services/shortcuts/shortcuts.
 import { Hotkey } from 'angular2-hotkeys';
 import { Location } from '@angular/common';
 
+interface Shortcut {
+  keys: string[];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  description: string | Function;
+}
+
 @Component({
   selector: 'teammapper-shortcuts',
   templateUrl: './shortcuts.component.html',
   styleUrls: ['./shortcuts.component.scss'],
 })
 export class ShortcutsComponent implements OnInit {
-  public shortcuts: any[];
+  public shortcuts: Shortcut[];
 
   constructor(
     private shortcutsService: ShortcutsService,

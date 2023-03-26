@@ -69,25 +69,24 @@ export class ToolbarComponent {
   public initImageUpload(event: InputEvent) {
     const fileReader = new FileReader();
 
-    fileReader.onload = (fileEvent: any) => {
+    fileReader.onload = (_fileEvent: Event) => {
       // in case file is an image resize it
       const img = new Image(); // create a image
-      img.src = fileEvent.target.result; // result is base64-encoded Data URI
-      img.onload = (el: any) => {
+      img.src = fileReader.result.toString(); // result is base64-encoded Data URI
+      img.onload = (el: Event) => {
         const resizeWidth = 360; // without px
         const elem = document.createElement('canvas'); // create a canvas
 
+        const target = el.target as HTMLImageElement;
         // scale the image to 360 (width) and keep aspect ratio
-        const scaleFactor = resizeWidth / el.target.width;
+        const scaleFactor = resizeWidth / target.width;
         elem.width = resizeWidth;
-        elem.height = el.target.height * scaleFactor;
+        elem.height = target.height * scaleFactor;
 
         // draw in canvas
         const ctx = elem.getContext('2d');
-        ctx.drawImage(el.target, 0, 0, elem.width, elem.height);
+        ctx.drawImage(target, 0, 0, elem.width, elem.height);
 
-        // set target value to empty string, otherwise new uploads are not triggered
-        fileEvent.target.value = '';
         // get the base64-encoded Data URI from the resize image
         this.mmpService.addNodeImage(ctx.canvas.toDataURL('image/jpeg', 0.5));
       };
@@ -99,7 +98,7 @@ export class ToolbarComponent {
   public initJSONUpload(event: InputEvent) {
     const fileReader = new FileReader();
 
-    fileReader.onload = (_fileEvent: any) => {
+    fileReader.onload = (_fileEvent: Event) => {
       this.mmpService.importMap(fileReader.result.toString());
     };
 
