@@ -1,56 +1,56 @@
 @use '@angular/material' as mat;
-@import "~src/theme.scss";
+@import '~src/theme.scss';
 
 mat-toolbar {
-    overflow-x: auto;
-    touch-action: manipulation;
-    height: 60px;
-    padding: 0 8px;
-    border-bottom: 1px solid lightgray;
-    background-color: white !important;
+  overflow-x: auto;
+  touch-action: manipulation;
+  height: 60px;
+  padding: 0 8px;
+  border-bottom: 1px solid lightgray;
+  background-color: white !important;
 
-    div.vertical-line {
-        height: 100%;
-        margin: 0 10px;
+  div.vertical-line {
+    height: 100%;
+    margin: 0 10px;
 
-        > div {
-            width: 1px;
-            background-color: #c2c2c2;
-            height: 100%;
-        }
+    > div {
+      width: 1px;
+      background-color: #c2c2c2;
+      height: 100%;
     }
+  }
 
-    span.toolbar-spacer {
-        flex: 1 1 auto;
-        min-width: 50px;
-    }
+  span.toolbar-spacer {
+    flex: 1 1 auto;
+    min-width: 50px;
+  }
 }
 
 // Scrollbar properties.
 mat-toolbar::-webkit-scrollbar {
-    height: 6px;
+  height: 6px;
 }
 
 mat-toolbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
+  background: #f1f1f1;
 }
 
 mat-toolbar::-webkit-scrollbar-thumb {
-    background: mat.get-color-from-palette($app-primary, .7);
+  background: mat.get-color-from-palette($app-primary, 0.7);
 }
 
 mat-toolbar::-webkit-scrollbar-thumb:hover {
-    background: mat.get-color-from-palette($app-primary, .8);
+  background: mat.get-color-from-palette($app-primary, 0.8);
 }
 
 .label-file-upload {
-    cursor: pointer;
-    display: flex;
-    flex-flow: row wrap;
-    align-items: center;
-    justify-content: center;
+  cursor: pointer;
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: center;
 }
 
-input[type="file"] {
-    display: none;
+input[type='file'] {
+  display: none;
 }

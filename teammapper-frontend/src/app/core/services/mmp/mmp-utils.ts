@@ -16,7 +16,7 @@ const COLORS: string[] = [
   '#00BCD4',
   '#607D8B',
   '#FFEB3B',
-  '#FF5722'
-]
+  '#FF5722',
+];
 
-export { COLORS }
+export { COLORS };

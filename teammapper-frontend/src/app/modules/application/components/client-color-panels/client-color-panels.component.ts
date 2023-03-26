@@ -1,18 +1,18 @@
-import { Component, ElementRef, ViewChild } from '@angular/core'
-import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
+import { Component, ElementRef, ViewChild } from '@angular/core';
+import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { Observable } from 'rxjs';
 
 @Component({
   selector: 'teammapper-client-colors-panel',
   templateUrl: './client-color-panels.component.html',
-  styleUrls: ['./client-color-panels.component.scss']
+  styleUrls: ['./client-color-panels.component.scss'],
 })
 export class ClientColorPanelsComponent {
-  @ViewChild('background') public background: ElementRef
+  @ViewChild('background') public background: ElementRef;
 
-  public clientColors: Observable<string[]>
+  public clientColors: Observable<string[]>;
 
-  constructor (public mapSyncService: MapSyncService) {
-    this.clientColors = mapSyncService.getClientListObservable()
+  constructor(public mapSyncService: MapSyncService) {
+    this.clientColors = mapSyncService.getClientListObservable();
   }
 }

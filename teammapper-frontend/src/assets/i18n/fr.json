@@ -1,206 +1,206 @@
 {
-    "LANGUAGES": {
-        "EN": "Anglais",
-        "FR": "Français",
-        "IT": "Italien",
-        "ZH-TW": "Chinois traditionnel",
-        "ZH-CN": "Chinois simplifié",
-        "PT-BR": "Portuguese Brazil",
-        "ES": "Espagnol",
-        "DE": "Allemand"
-    },
-    "TOOLTIPS": {
-        "IMPORT_MAP": "Imports the map",
-        "EXPORT_MAP": "Exports the map",
-        "ESC": "Ferme la fenêtre de dialogue",
-        "FULLSCREEN": "Mettre en plein écran",
-        "CLOSE_MENU": "Ferme le menu latéral",
-        "OPEN_MENU": "Ouvre le menu latéral",
-        "SHORTCUTS": "Affiche les raccourcis",
-        "MENU": "Ouvre le menu",
-        "NEW_MAP": "Nettoie la carte",
-        "OPEN_MAP": "Charge une carte existante",
-        "SAVE_MAP": "Enregistre la carte",
-        "SAVE_MAP_WITH_NAME": "Enregistre la carte avec son nom",
-        "COPY_NODE": "Copie le nœud actuel",
-        "CUT_NODE": "Coupe le nœud actuel",
-        "PASTE_NODE": "Collez le noeud copié",
-        "MOVE_NODE_TO_THE_LEFT": "Déplace le nœud vers la gauche",
-        "MOVE_NODE_TO_THE_RIGHT": "Déplace le noeud vers la droite",
-        "MOVE_NODE_DOWN": "Déplace le nœud vers le bas",
-        "MOVE_NODE_UPWARD": "Déplace le nœud vers le haut",
-        "SELECT_NODE_ON_THE_LEFT": "Sélectionne le nœud à gauche",
-        "SELECT_NODE_ON_THE_RIGHT": "Sélectionne le noeud à droite",
-        "SELECT_NODE_BELOW": "Sélectionne le nœud ci-dessous",
-        "SELECT_NODE_ABOVE": "Sélectionne le nœud ci-dessus",
-        "EDIT_NODE": "Allows to edit the text of the node",
-        "COUPLE_NODE": "Verrouille ou déverrouille le nœud",
-        "NODE_IMAGE": "Ajoute une image au noeud",
-        "START_EDIT_NODE": "Edit node text",
-        "BOLD_TEXT": "Change la taille du texte",
-        "ITALIC_TEXT": "Change le style du texte",
-        "TEXT_SIZE": "Change la taille du texte et du noeud",
-        "IMAGE_SIZE": "Change la taille de l'image du noeud",
-        "ADD_NODE": "Ajoute un noeud",
-        "REMOVE_NODE": "Supprime un noeud",
-        "ZOOM_IN_MAP": "Zoom sur la carte",
-        "ZOOM_OUT_MAP": "Dézoom la carte",
-        "CENTER_MAP": "Centre la carte",
-        "UNDO_MAP": "Défait le dernier changement",
-        "REDO_MAP": "Répète un changement précédemment annulé",
-        "NODE_COLOR": "Change la couleur du noeud",
-        "BRANCH_COLOR": "Change la couleur de la branche",
-        "TEXT_COLOR": "Change la couleur du texte",
-        "ROOT_NODE_NAME_INPUT": "Modifie le nom du noeud racine par défaut",
-        "NODE_NAME_INPUT": "Modifie le nom de noeud par défaut",
-        "LANGUAGE": "Change la langue",
-        "SETTINGS": "Ouvre les paramètres",
-        "CENTER_ON_RESIZING": "Centre la carte sur le redimensionnement de la fenêtre",
-        "NODE_DRAGGING": "Permet de faire glisser les nœuds dans la carte",
-        "MAP_ZOOM": "Permet de zoomer sur la carte",
-        "AUTO_BRANCH_COLORS": "Allows to choose automatically the colors of the branches",
-        "SHARE": "Share",
-        "LINK_ADD": "Adds a link",
-        "LINK_REMOVE": "Removes a link",
-        "FONT_MIN_SIZE": "Minimal font size",
-        "FONT_MAX_SIZE": "Maximal font size",
-        "FONT_INCREMENT": "Font size step",
-        "FONT_INCREASE": "Increase font ",
-        "FONT_DECREASE": "Decrease font"
-    },
-    "MODALS": {
-        "GENERAL": {
-            "BUTTON_CLOSE": "Close"
-        },
-        "CONNECTION_INFO": {
-            "TITLE": "Connection lost",
-            "CONTENT": "Connection to server was lost. Retrying...",
-            "BUTTON_RECONNECT": "Reconnect"
-        },
-        "SHARE": {
-            "TITLE": "Share map",
-            "CONTENT": "Copy this link to share the map",
-            "LINK_TYPE_VIEW": "Only observe",
-            "LINK_TYPE_EDIT": "Observe and modify"
-          },
-        "INFO": {
-            "DELETED_AT": "Mindmap is going to be deleted at:",
-            "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-            "DELETE": "Delete mindmap",
-            "CONFIRM_DELETE": "Delete?"
-        },
-        "LINK": {
-            "URL": "Link URL (https://...)"
-        }
-    },
-    "PAGES": {
-        "ABOUT": {
-            "INTRODUCTION": {
-                "APPLICATION_DESCRIPTION": "Web application to collaboratively draw mind maps. Forked from mindmapp by cedoor.",
-                "APPLICATION_PROPERTIES": [
-                    "Effective mind maps",
-                    "Modern web application",
-                    "Simple interface",
-                    "Open source software"
-                ]
-            },
-            "SECTIONS": [
-                {
-                    "TITLE": "Mind maps",
-                    "SUBTITLE": "TeamMapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
-                    "CARDS": [
-                        {
-                            "TITLE": "Colors and images",
-                            "CONTENT": "Colors and images of mind maps exploit brain characteristics to express concepts in a more effective and lasting way."
-                        },
-                        {
-                            "TITLE": "Radial tree",
-                            "CONTENT": "Hierarchical structure of mind maps exploits the radial geometry, which is divided on several levels and facilitates concept expressiveness."
-                        },
-                        {
-                            "TITLE": "Uses",
-                            "CONTENT": "Mind maps are particularly effective to learn or organize ideas, for example in educational or business contexts."
-                        }
-                    ]
-                },
-                {
-                    "TITLE": "Goals",
-                    "SUBTITLE": "TeamMapper is based on the simplicity and adaptability principles, and according to these principles it grows following the user's needs and future technologies, but always ensuring an intuitive application.",
-                    "CARDS": [
-                        {
-                            "TITLE": "Minimal design",
-                            "CONTENT": "The application offers all the essential tools to create mind maps quickly, but maintaining a simple and intuitive design."
-                        },
-                        {
-                            "TITLE": "Future-oriented",
-                            "CONTENT": "Web technologies are constantly evolving, and with them the way they are used. TeamMapper follows and eventually adopts the latest technologies to ensure a better service."
-                        },
-                        {
-                            "TITLE": "Customizable",
-                            "CONTENT": "A compact but adaptable and extensible system makes it easier to meet the user's individual needs. The application will grow giving particular importance to this aspect."
-                        }
-                    ]
-                },
-                {
-                    "TITLE": "Donations",
-                    "SUBTITLE": "TeamMapper is free and its code is public, every contribution is very helpful to maintain and improve the application!"
-                }
-            ]
-        },
-        "SETTINGS": {
-            "AUTO_BRANCH_COLORS": "Automatic branch colors",
-            "CENTER_ON_RESIZING": "Centrer sur le redimensionnement",
-            "FONT_MIN_SIZE": "Minimal font size",
-            "FONT_MAX_SIZE": "Maximal font size",
-            "FONT_INCREMENT": "Font size step",
-            "GENERAL": "Général",
-            "MAIN": "Principale",
-            "MAP_LIST": "List of created maps",
-            "MAP_OPTIONS": "Options de carte",
-            "ROOT_NODE_NAME": "Nom du noeud racine",
-            "NODE_NAME": "Nom du noeud",
-            "TITLE": "Paramètres",
-            "TTL": "Last known date of deletion"
-        },
-        "SHORTCUTS": {
-            "TITLE": "Raccourcis"
-        }
-    },
-    "MESSAGES": {
-        "NO_SAVED_MAPS": "No saved maps!",
-        "INITIAL_INFORMATION": "TeamMapper est prêt ☺",
-        "WELCOME_MESSAGE": "Welcome to the TeamMapper app ☺",
-        "MAP_DELETION_CONFIRM": "Are you sure you want to delete the map?",
-        "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
-    },
+  "LANGUAGES": {
+    "EN": "Anglais",
+    "FR": "Français",
+    "IT": "Italien",
+    "ZH-TW": "Chinois traditionnel",
+    "ZH-CN": "Chinois simplifié",
+    "PT-BR": "Portuguese Brazil",
+    "ES": "Espagnol",
+    "DE": "Allemand"
+  },
+  "TOOLTIPS": {
+    "IMPORT_MAP": "Imports the map",
+    "EXPORT_MAP": "Exports the map",
+    "ESC": "Ferme la fenêtre de dialogue",
+    "FULLSCREEN": "Mettre en plein écran",
+    "CLOSE_MENU": "Ferme le menu latéral",
+    "OPEN_MENU": "Ouvre le menu latéral",
+    "SHORTCUTS": "Affiche les raccourcis",
+    "MENU": "Ouvre le menu",
+    "NEW_MAP": "Nettoie la carte",
+    "OPEN_MAP": "Charge une carte existante",
+    "SAVE_MAP": "Enregistre la carte",
+    "SAVE_MAP_WITH_NAME": "Enregistre la carte avec son nom",
+    "COPY_NODE": "Copie le nœud actuel",
+    "CUT_NODE": "Coupe le nœud actuel",
+    "PASTE_NODE": "Collez le noeud copié",
+    "MOVE_NODE_TO_THE_LEFT": "Déplace le nœud vers la gauche",
+    "MOVE_NODE_TO_THE_RIGHT": "Déplace le noeud vers la droite",
+    "MOVE_NODE_DOWN": "Déplace le nœud vers le bas",
+    "MOVE_NODE_UPWARD": "Déplace le nœud vers le haut",
+    "SELECT_NODE_ON_THE_LEFT": "Sélectionne le nœud à gauche",
+    "SELECT_NODE_ON_THE_RIGHT": "Sélectionne le noeud à droite",
+    "SELECT_NODE_BELOW": "Sélectionne le nœud ci-dessous",
+    "SELECT_NODE_ABOVE": "Sélectionne le nœud ci-dessus",
+    "EDIT_NODE": "Allows to edit the text of the node",
+    "COUPLE_NODE": "Verrouille ou déverrouille le nœud",
+    "NODE_IMAGE": "Ajoute une image au noeud",
+    "START_EDIT_NODE": "Edit node text",
+    "BOLD_TEXT": "Change la taille du texte",
+    "ITALIC_TEXT": "Change le style du texte",
+    "TEXT_SIZE": "Change la taille du texte et du noeud",
+    "IMAGE_SIZE": "Change la taille de l'image du noeud",
+    "ADD_NODE": "Ajoute un noeud",
+    "REMOVE_NODE": "Supprime un noeud",
+    "ZOOM_IN_MAP": "Zoom sur la carte",
+    "ZOOM_OUT_MAP": "Dézoom la carte",
+    "CENTER_MAP": "Centre la carte",
+    "UNDO_MAP": "Défait le dernier changement",
+    "REDO_MAP": "Répète un changement précédemment annulé",
+    "NODE_COLOR": "Change la couleur du noeud",
+    "BRANCH_COLOR": "Change la couleur de la branche",
+    "TEXT_COLOR": "Change la couleur du texte",
+    "ROOT_NODE_NAME_INPUT": "Modifie le nom du noeud racine par défaut",
+    "NODE_NAME_INPUT": "Modifie le nom de noeud par défaut",
+    "LANGUAGE": "Change la langue",
+    "SETTINGS": "Ouvre les paramètres",
+    "CENTER_ON_RESIZING": "Centre la carte sur le redimensionnement de la fenêtre",
+    "NODE_DRAGGING": "Permet de faire glisser les nœuds dans la carte",
+    "MAP_ZOOM": "Permet de zoomer sur la carte",
+    "AUTO_BRANCH_COLORS": "Allows to choose automatically the colors of the branches",
+    "SHARE": "Share",
+    "LINK_ADD": "Adds a link",
+    "LINK_REMOVE": "Removes a link",
+    "FONT_MIN_SIZE": "Minimal font size",
+    "FONT_MAX_SIZE": "Maximal font size",
+    "FONT_INCREMENT": "Font size step",
+    "FONT_INCREASE": "Increase font ",
+    "FONT_DECREASE": "Decrease font"
+  },
+  "MODALS": {
     "GENERAL": {
-        "ORGANIZATION": "Organization",
-        "LIBRARY": "Library",
-        "REPOSITORY": "Repository",
-        "APPLICATION": "Application",
-        "TRY_IT": "Try it",
-        "DISMISS": "Rejeter",
-        "SAVED_MAPS": "Saved maps",
-        "JSON": "File (.json)",
-        "PNG": "Image (.png)",
-        "SVG": "Image (.svg)",
-        "JPG": "Image (.jpg)",
-        "PDF": "Document (.pdf)",
-        "LANGUAGE": "Language",
-        "YES": "Oui",
-        "NO": "Non",
-        "OK": "Ok",
-        "SAVE": "Save",
-        "OPEN": "Open",
-        "CANCEL": "Annuler",
-        "NODE_DRAGGING": "Noeud faisant glisser",
-        "MAP_ZOOM": "Map zoom",
-        "MAP": "Carte",
-        "NODES": "Noeuds",
-        "SAVED": "Enregistré",
-        "NOT_SAVED": "Non enregistré",
-        "FONT_MIN_SIZE": "Minimal font size",
-        "FONT_MAX_SIZE": "Maximal font size",
-        "FONT_INCREMENT": "Font size step"
+      "BUTTON_CLOSE": "Close"
+    },
+    "CONNECTION_INFO": {
+      "TITLE": "Connection lost",
+      "CONTENT": "Connection to server was lost. Retrying...",
+      "BUTTON_RECONNECT": "Reconnect"
+    },
+    "SHARE": {
+      "TITLE": "Share map",
+      "CONTENT": "Copy this link to share the map",
+      "LINK_TYPE_VIEW": "Only observe",
+      "LINK_TYPE_EDIT": "Observe and modify"
+    },
+    "INFO": {
+      "DELETED_AT": "Mindmap is going to be deleted at:",
+      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
+      "DELETE": "Delete mindmap",
+      "CONFIRM_DELETE": "Delete?"
+    },
+    "LINK": {
+      "URL": "Link URL (https://...)"
     }
+  },
+  "PAGES": {
+    "ABOUT": {
+      "INTRODUCTION": {
+        "APPLICATION_DESCRIPTION": "Web application to collaboratively draw mind maps. Forked from mindmapp by cedoor.",
+        "APPLICATION_PROPERTIES": [
+          "Effective mind maps",
+          "Modern web application",
+          "Simple interface",
+          "Open source software"
+        ]
+      },
+      "SECTIONS": [
+        {
+          "TITLE": "Mind maps",
+          "SUBTITLE": "TeamMapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
+          "CARDS": [
+            {
+              "TITLE": "Colors and images",
+              "CONTENT": "Colors and images of mind maps exploit brain characteristics to express concepts in a more effective and lasting way."
+            },
+            {
+              "TITLE": "Radial tree",
+              "CONTENT": "Hierarchical structure of mind maps exploits the radial geometry, which is divided on several levels and facilitates concept expressiveness."
+            },
+            {
+              "TITLE": "Uses",
+              "CONTENT": "Mind maps are particularly effective to learn or organize ideas, for example in educational or business contexts."
+            }
+          ]
+        },
+        {
+          "TITLE": "Goals",
+          "SUBTITLE": "TeamMapper is based on the simplicity and adaptability principles, and according to these principles it grows following the user's needs and future technologies, but always ensuring an intuitive application.",
+          "CARDS": [
+            {
+              "TITLE": "Minimal design",
+              "CONTENT": "The application offers all the essential tools to create mind maps quickly, but maintaining a simple and intuitive design."
+            },
+            {
+              "TITLE": "Future-oriented",
+              "CONTENT": "Web technologies are constantly evolving, and with them the way they are used. TeamMapper follows and eventually adopts the latest technologies to ensure a better service."
+            },
+            {
+              "TITLE": "Customizable",
+              "CONTENT": "A compact but adaptable and extensible system makes it easier to meet the user's individual needs. The application will grow giving particular importance to this aspect."
+            }
+          ]
+        },
+        {
+          "TITLE": "Donations",
+          "SUBTITLE": "TeamMapper is free and its code is public, every contribution is very helpful to maintain and improve the application!"
+        }
+      ]
+    },
+    "SETTINGS": {
+      "AUTO_BRANCH_COLORS": "Automatic branch colors",
+      "CENTER_ON_RESIZING": "Centrer sur le redimensionnement",
+      "FONT_MIN_SIZE": "Minimal font size",
+      "FONT_MAX_SIZE": "Maximal font size",
+      "FONT_INCREMENT": "Font size step",
+      "GENERAL": "Général",
+      "MAIN": "Principale",
+      "MAP_LIST": "List of created maps",
+      "MAP_OPTIONS": "Options de carte",
+      "ROOT_NODE_NAME": "Nom du noeud racine",
+      "NODE_NAME": "Nom du noeud",
+      "TITLE": "Paramètres",
+      "TTL": "Last known date of deletion"
+    },
+    "SHORTCUTS": {
+      "TITLE": "Raccourcis"
+    }
+  },
+  "MESSAGES": {
+    "NO_SAVED_MAPS": "No saved maps!",
+    "INITIAL_INFORMATION": "TeamMapper est prêt ☺",
+    "WELCOME_MESSAGE": "Welcome to the TeamMapper app ☺",
+    "MAP_DELETION_CONFIRM": "Are you sure you want to delete the map?",
+    "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
+  },
+  "GENERAL": {
+    "ORGANIZATION": "Organization",
+    "LIBRARY": "Library",
+    "REPOSITORY": "Repository",
+    "APPLICATION": "Application",
+    "TRY_IT": "Try it",
+    "DISMISS": "Rejeter",
+    "SAVED_MAPS": "Saved maps",
+    "JSON": "File (.json)",
+    "PNG": "Image (.png)",
+    "SVG": "Image (.svg)",
+    "JPG": "Image (.jpg)",
+    "PDF": "Document (.pdf)",
+    "LANGUAGE": "Language",
+    "YES": "Oui",
+    "NO": "Non",
+    "OK": "Ok",
+    "SAVE": "Save",
+    "OPEN": "Open",
+    "CANCEL": "Annuler",
+    "NODE_DRAGGING": "Noeud faisant glisser",
+    "MAP_ZOOM": "Map zoom",
+    "MAP": "Carte",
+    "NODES": "Noeuds",
+    "SAVED": "Enregistré",
+    "NOT_SAVED": "Non enregistré",
+    "FONT_MIN_SIZE": "Minimal font size",
+    "FONT_MAX_SIZE": "Maximal font size",
+    "FONT_INCREMENT": "Font size step"
+  }
 }

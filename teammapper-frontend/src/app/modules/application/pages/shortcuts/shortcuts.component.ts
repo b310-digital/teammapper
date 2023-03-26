@@ -1,32 +1,40 @@
-import { Component, OnInit } from '@angular/core'
-import { ShortcutsService } from '../../../../core/services/shortcuts/shortcuts.service'
-import { Hotkey } from 'angular2-hotkeys'
-import { Location } from '@angular/common'
+import { Component, OnInit } from '@angular/core';
+import { ShortcutsService } from '../../../../core/services/shortcuts/shortcuts.service';
+import { Hotkey } from 'angular2-hotkeys';
+import { Location } from '@angular/common';
+
+interface Shortcut {
+  keys: string[];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  description: string | Function;
+}
 
 @Component({
   selector: 'teammapper-shortcuts',
   templateUrl: './shortcuts.component.html',
-  styleUrls: ['./shortcuts.component.scss']
+  styleUrls: ['./shortcuts.component.scss'],
 })
 export class ShortcutsComponent implements OnInit {
-  public shortcuts: any[]
+  public shortcuts: Shortcut[];
 
-  constructor (private shortcutsService: ShortcutsService, private location: Location) {
-  }
+  constructor(
+    private shortcutsService: ShortcutsService,
+    private location: Location
+  ) {}
 
-  public ngOnInit () {
-    const hotKeys: Hotkey[] = this.shortcutsService.getHotKeys()
+  public ngOnInit() {
+    const hotKeys: Hotkey[] = this.shortcutsService.getHotKeys();
     this.shortcuts = hotKeys.map((hotKey: Hotkey) => {
-      const keys = hotKey.combo[0]
+      const keys = hotKey.combo[0];
 
       return {
         keys: keys === '+' ? [keys] : keys.split('+'),
-        description: hotKey.description
-      }
-    })
+        description: hotKey.description,
+      };
+    });
   }
 
-  public back () {
-    this.location.back()
+  public back() {
+    this.location.back();
   }
 }

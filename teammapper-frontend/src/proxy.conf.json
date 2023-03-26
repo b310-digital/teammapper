@@ -1,14 +1,13 @@
 {
-    "/socket.io": {
-        "target": "http://localhost:3000",
-        "secure": false,
-        "changeOrigin": true,
-        "ws": true
-    },
-    "/api/*": {
-        "target": "http://localhost:3000",
-        "secure": false,
-        "changeOrigin": true
-    }
-
+  "/socket.io": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "ws": true
+  },
+  "/api/*": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true
+  }
 }

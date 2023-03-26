@@ -1,62 +1,62 @@
 footer.footer {
-    padding: 20px 0;
-    background-color: #2c2c2c;
-    color: whitesmoke;
+  padding: 20px 0;
+  background-color: #2c2c2c;
+  color: whitesmoke;
 
-    div.container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        font-size: 16px;
+  div.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 16px;
 
-        a {
-            text-decoration: none;
-            color: whitesmoke;
-        }
-
-        a:hover {
-            opacity: .8;
-        }
-
-        div.spacer {
-            flex: 1 1 auto;
-        }
-
-        div.license {
-            display: inline-block;
-            white-space: nowrap;
-            padding: 8px 30px 8px 0;
-        }
-
-        div.links {
-            padding: 8px 0;
-
-            > a {
-                display: inline-block;
-                white-space: nowrap;
-                padding-right: 15px;
-            }
-        }
-
-        div.languages {
-            padding: 8px 0;
-
-            mat-select::ng-deep {
-                width: fit-content !important;
-                min-width: 100%;
-
-                .mat-select-value {
-                    width: fit-content;
-                    min-width: 2ch;
-                    max-width: 25ch;
-                    color: whitesmoke;
-                }
-
-                .mat-select-arrow {
-                    color: whitesmoke;
-                }
-            }
-        }
+    a {
+      text-decoration: none;
+      color: whitesmoke;
     }
+
+    a:hover {
+      opacity: 0.8;
+    }
+
+    div.spacer {
+      flex: 1 1 auto;
+    }
+
+    div.license {
+      display: inline-block;
+      white-space: nowrap;
+      padding: 8px 30px 8px 0;
+    }
+
+    div.links {
+      padding: 8px 0;
+
+      > a {
+        display: inline-block;
+        white-space: nowrap;
+        padding-right: 15px;
+      }
+    }
+
+    div.languages {
+      padding: 8px 0;
+
+      mat-select::ng-deep {
+        width: fit-content !important;
+        min-width: 100%;
+
+        .mat-select-value {
+          width: fit-content;
+          min-width: 2ch;
+          max-width: 25ch;
+          color: whitesmoke;
+        }
+
+        .mat-select-arrow {
+          color: whitesmoke;
+        }
+      }
+    }
+  }
 }

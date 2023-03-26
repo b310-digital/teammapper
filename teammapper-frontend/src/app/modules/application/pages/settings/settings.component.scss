@@ -1,62 +1,62 @@
 div.settings {
-    mat-toolbar {
-        background-color: transparent;
+  mat-toolbar {
+    background-color: transparent;
 
-        div.container {
-            width: 100%;
-            text-align: center;
-            position: relative;
+    div.container {
+      width: 100%;
+      text-align: center;
+      position: relative;
 
-            button.close-button {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-            }
-        }
+      button.close-button {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+      }
+    }
+  }
+
+  div.content {
+    mat-card {
+      margin-bottom: 20px;
+
+      hr {
+        margin-top: 0;
+        margin-bottom: 20px;
+        border: 0;
+        height: 1px;
+        background-color: lightgray;
+      }
     }
 
-    div.content {
-        mat-card {
-            margin-bottom: 20px;
-
-            hr {
-                margin-top: 0;
-                margin-bottom: 20px;
-                border: 0;
-                height: 1px;
-                background-color: lightgray;
-            }
-        }
-
-        mat-card:last-child {
-            margin-bottom: 0;
-        }
-
-        div.general-options {
-            mat-card.general-options-main {
-                padding-bottom: 15px;
-            }
-        }
-
-        div.map-options {
-            mat-card.map-options-map {
-                mat-slide-toggle {
-                    display: block;
-                    margin-bottom: 20px;
-                }
-
-                mat-slide-toggle:last-child {
-                    margin-bottom: 0;
-                }
-            }
-
-            mat-card.map-options-nodes {
-                padding-bottom: 15px;
-
-                mat-form-field {
-                    margin-right: 20px;
-                }
-            }
-        }
+    mat-card:last-child {
+      margin-bottom: 0;
     }
+
+    div.general-options {
+      mat-card.general-options-main {
+        padding-bottom: 15px;
+      }
+    }
+
+    div.map-options {
+      mat-card.map-options-map {
+        mat-slide-toggle {
+          display: block;
+          margin-bottom: 20px;
+        }
+
+        mat-slide-toggle:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      mat-card.map-options-nodes {
+        padding-bottom: 15px;
+
+        mat-form-field {
+          margin-right: 20px;
+        }
+      }
+    }
+  }
 }

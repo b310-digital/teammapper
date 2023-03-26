@@ -1,4 +1,4 @@
-import { MapSnapshot, ExportNodeProperties } from '@mmp/map/types'
+import { MapSnapshot, ExportNodeProperties } from '@mmp/map/types';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 
 interface ResponseServer {
@@ -55,5 +55,5 @@ export {
   ResponseNodeUpdated,
   ResponseSelectionUpdated,
   ServerMap,
-  PrivateServerMap
-}
+  PrivateServerMap,
+};

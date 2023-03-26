@@ -1,63 +1,67 @@
 div.floating-buttons {
-    .no-touch {
-        width: 50px;
-        height: 50px;
-        z-index: 2;
-        position: absolute;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+  .no-touch {
+    width: 50px;
+    height: 50px;
+    z-index: 2;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+
+  .add-node,
+  .remove-node,
+  .undo,
+  .redo {
+    top: 80px;
+  }
+
+  .add-node button,
+  .remove-node button {
+    background-color: #00a3d3;
+    color: #fff;
+
+    &:disabled {
+      color: rgba(0, 0, 0, 0.26);
+      background: rgba(0, 0, 0, 0.26) !important;
     }
+  }
 
-    button {
-        touch-action: manipulation;
-    }
+  .add-node {
+    left: 15px;
+  }
 
-    .add-node, .remove-node,
-    .undo, .redo {
-        top: 80px;
-    }
+  .remove-node {
+    left: 65px;
+  }
 
-    .add-node button, .remove-node button {
-        background-color: #00a3d3;
-        color: #fff;
+  .undo {
+    right: 65px;
+  }
 
-        &:disabled {
-            color: rgba(0, 0, 0, 0.26);
-            background: rgba(0, 0, 0, 0.26) !important;
-        }
-    }
+  .redo {
+    right: 15px;
+  }
 
-    .add-node {
-        left: 15px;
-    }
+  .zoom-in,
+  .zoom-out,
+  .center {
+    right: 15px;
+  }
 
-    .remove-node {
-        left: 65px;
-    }
+  .zoom-out {
+    bottom: 60px;
+  }
 
-    .undo {
-        right: 65px;
-    }
+  .zoom-in {
+    bottom: 110px;
+  }
 
-    .redo {
-        right: 15px;
-    }
-
-    .zoom-in, .zoom-out, .center {
-        right: 15px;
-    }
-
-    .zoom-out {
-        bottom: 60px;
-    }
-
-    .zoom-in {
-        bottom: 110px;
-    }
-
-    .center {
-        bottom: 5px;
-    }
-
+  .center {
+    bottom: 5px;
+  }
 }
