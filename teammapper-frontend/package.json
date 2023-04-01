@@ -44,6 +44,7 @@
     "@angular/compiler": "^14.2.4",
     "@angular/compiler-cli": "^14.2.4",
     "@angular/core": "^14.2.4",
+    "@angular-devkit/build-angular": "^14.2.4",
     "@angular/forms": "^14.2.4",
     "@angular/material": "^14.2.3",
     "@angular/platform-browser": "^14.2.4",
@@ -72,7 +73,6 @@
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1402.4",
-    "@angular-devkit/build-angular": "^14.2.4",
     "@angular-devkit/core": "^14.2.4",
     "@angular-devkit/schematics": "^14.2.4",
     "@angular-eslint/builder": "14.1.2",
