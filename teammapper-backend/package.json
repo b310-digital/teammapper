@@ -33,6 +33,7 @@
     "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {
+    "@nestjs/cli": "^9.2.0",
     "@nestjs/common": "^9.3.9",
     "@nestjs/config": "2.3.1",
     "@nestjs/core": "^9.3.9",
@@ -55,7 +56,6 @@
   },
   "devDependencies": {
     "@golevelup/ts-jest": "^0.3.5",
-    "@nestjs/cli": "^9.2.0",
     "@nestjs/schematics": "^9.0.3",
     "@nestjs/testing": "^9.3.9",
     "@types/cache-manager": "3.4.2",
