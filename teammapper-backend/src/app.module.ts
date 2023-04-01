@@ -8,9 +8,7 @@ import { MapModule } from './map/map.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      ignoreEnvFile: true,
-    }),
+    ConfigModule.forRoot(),
     TypeOrmModule.forRoot(configService.getTypeOrmConfig()),
     MapModule,
     ServeStaticModule.forRoot({
