@@ -17,8 +17,5 @@
       "start:prod": "npm --prefix teammapper-backend run start:prod",
       "build": "npm run build:prod",
       "start": "npm run start:prod"
-    },
-    "dependencies": {
-      "@angular-devkit/build-angular": "^14.2.4"
     }
 }
