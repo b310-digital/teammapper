@@ -1,6 +1,6 @@
 {
   "name": "teammapper-backend",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "teammapper backend to work online as a team on mindmaps",
   "author": "b310 digital gmbh",
   "private": true,
