@@ -8,11 +8,13 @@ import { MapModule } from './map/map.module';
 
 @Module({
   imports: [
-  ConfigModule.forRoot(),
-  TypeOrmModule.forRoot(configService.getTypeOrmConfig()),
-  MapModule,
-  ServeStaticModule.forRoot({
-    rootPath: join(__dirname, '..', 'client'),
+    ConfigModule.forRoot({
+      ignoreEnvFile: true,
+    }),
+    TypeOrmModule.forRoot(configService.getTypeOrmConfig()),
+    MapModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client'),
     }),
   ],
   })

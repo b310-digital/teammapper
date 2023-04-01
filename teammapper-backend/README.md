@@ -11,14 +11,6 @@ Backend for TeamMapper, build with [Nest](https://github.com/nestjs/nest)
 $ npm install
 ```
 
-- Duplicate and rename `.env.default`
-
-```bash
-cp .env.default .env
-```
-
-Change variables according to your preference
-
 ## Running the app
 
 ```bash
