@@ -14,8 +14,9 @@
       "build:backend:prod": "npm --prefix teammapper-backend ci && npm --prefix teammapper-backend run build",
       "build:frontend:prod": "npm --prefix teammapper-frontend ci && GENERATE_SOURCEMAP=false npm --prefix teammapper-frontend run build:prod",
       "clear": "rm teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist",
+      "migrate:prod": "npm --prefix teammapper-backend run prod:typeorm:migrate",
       "start:prod": "npm --prefix teammapper-backend run start:prod",
-      "build": "npm run build:prod",
+      "build": "npm run build:prod && npm run migrate:prod",
       "start": "npm run start:prod"
     }
 }
