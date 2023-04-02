@@ -1,6 +1,6 @@
 {
   "name": "teammapper-frontend",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Web application to draw mind maps, based on mindmapp.",
   "homepage": "",
   "repository": {
@@ -40,8 +40,11 @@
     "@angular/animations": "^14.2.4",
     "@angular/cdk": "^14.2.3",
     "@angular/common": "^14.2.4",
+    "@angular/cli": "^14.2.4",
     "@angular/compiler": "^14.2.4",
+    "@angular/compiler-cli": "^14.2.4",
     "@angular/core": "^14.2.4",
+    "@angular-devkit/build-angular": "^14.2.4",
     "@angular/forms": "^14.2.4",
     "@angular/material": "^14.2.3",
     "@angular/platform-browser": "^14.2.4",
@@ -70,7 +73,6 @@
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1402.4",
-    "@angular-devkit/build-angular": "^14.2.4",
     "@angular-devkit/core": "^14.2.4",
     "@angular-devkit/schematics": "^14.2.4",
     "@angular-eslint/builder": "14.1.2",
@@ -78,8 +80,6 @@
     "@angular-eslint/eslint-plugin-template": "14.1.2",
     "@angular-eslint/schematics": "14.1.2",
     "@angular-eslint/template-parser": "14.1.2",
-    "@angular/cli": "^14.2.4",
-    "@angular/compiler-cli": "^14.2.4",
     "@angular/language-service": "^14.2.4",
     "@compodoc/compodoc": "^1.1.16",
     "@schematics/angular": "^14.2.4",

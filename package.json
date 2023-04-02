@@ -1,19 +1,23 @@
 {
     "name": "teammapper",
-    "version": "0.0.1",
+    "version": "0.0.4",
     "description": "Web application to create and work on mindmaps with multiple users.",
     "author": "b310 digital gmbh",
     "private": false,
     "license": "MIT",
     "engines": {
-      "npm": "~8.15.0",
-      "node": "~16.17.1"
+      "npm": "~9.5.0",
+      "node": "~18.14.2"
     },
     "scripts": {
       "build:prod": "npm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && npm run build:backend:prod",
+      "prepare:prod": "npm --prefix teammapper-backend ci && npm --prefix teammapper-frontend ci",
       "build:backend:prod": "npm --prefix teammapper-backend run build",
       "build:frontend:prod": "GENERATE_SOURCEMAP=false npm --prefix teammapper-frontend run build:prod",
       "clear": "rm teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist",
-      "start:prod": "npm --prefix teammapper-backend run start:prod"
+      "migrate:prod": "npm --prefix teammapper-backend run prod:typeorm:migrate",
+      "start:prod": "npm --prefix teammapper-backend run start:prod",
+      "build": "npm run prepare:prod && npm run build:prod && npm run migrate:prod",
+      "start": "npm run start:prod"
     }
 }
