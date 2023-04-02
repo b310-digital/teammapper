@@ -30,8 +30,8 @@ class ConfigService {
     return this;
   }
 
-  public getPort() {
-    return this.getValue('PORT', false) || 3000;
+  public getPort(): number {
+    return parseInt(this.getValue('PORT', false), 10) || 3000;
   }
 
   public isProduction() {
