@@ -5,11 +5,15 @@ import { AboutComponent } from './pages/about/about.component';
 import { JumbotronComponent } from './components/jumbotron/jumbotron.component';
 import { HeaderComponent } from './components/header/header.component';
 import { FooterComponent } from './components/footer/footer.component';
+import { PrivacyComponent } from './pages/privacy/privacy.component';
+import { LegalComponent } from './pages/legal/legal.component';
 
 @NgModule({
   imports: [SharedModule, AboutRoutingModule],
   declarations: [
     AboutComponent,
+    LegalComponent,
+    PrivacyComponent,
     JumbotronComponent,
     HeaderComponent,
     FooterComponent,

@@ -180,6 +180,8 @@
     "REPOSITORY": "Repository",
     "APPLICATION": "Anwendung",
     "TRY_IT": "Try it!",
+    "DATAPROTECTION": "Datenschutz",
+    "LEGAL": "Impressum",
     "DISMISS": "Verwerfen",
     "SAVED_MAPS": "Gespeicherte Mindmaps",
     "JSON": "Datei (.json)",

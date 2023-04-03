@@ -179,6 +179,8 @@
     "REPOSITORY": "Repository",
     "APPLICATION": "Application",
     "TRY_IT": "Try it",
+    "DATAPROTECTION": "Privacy",
+    "LEGAL": "Legal Disclosure",
     "DISMISS": "解除",
     "SAVED_MAPS": "Saved maps",
     "JSON": "File (.json)",

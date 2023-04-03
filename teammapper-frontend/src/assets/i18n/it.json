@@ -179,6 +179,8 @@
     "REPOSITORY": "Repository",
     "APPLICATION": "Applicazione",
     "TRY_IT": "Provala",
+    "DATAPROTECTION": "Privacy",
+    "LEGAL": "Legal Disclosure",
     "DISMISS": "Chiudi",
     "SAVED_MAPS": "Mappe salvate",
     "JSON": "File (.json)",
