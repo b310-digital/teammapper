@@ -96,7 +96,7 @@
   "PAGES": {
     "ABOUT": {
       "INTRODUCTION": {
-        "APPLICATION_DESCRIPTION": "The web application to draw mind maps within teams.",
+        "APPLICATION_DESCRIPTION": "The web application to draw mind maps together.",
         "APPLICATION_PROPERTIES": [
           "Collaborate together on mind maps",
           "Share mind maps with others - either by a QR code or by providing the link.",
