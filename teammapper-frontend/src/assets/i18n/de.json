@@ -96,9 +96,9 @@
   "PAGES": {
     "ABOUT": {
       "INTRODUCTION": {
-        "APPLICATION_DESCRIPTION": "Die Open Source Webapplikation, um Mindmaps im Team zu erstellen.",
+        "APPLICATION_DESCRIPTION": "Die Open Source Webapplikation, um Mindmaps im Team zu verwenden.",
         "APPLICATION_PROPERTIES": [
-          "Zusammen und gleichzeitig an Mindmaps arbeiten",
+          "Gleichzeitig an Mindmaps arbeiten",
           "Einfaches Teilen der Mindmap über einen QR-Code oder Link",
           "Erweitern von Knoten mit Bildern, Farben oder Links",
           "Import und Export Möglichkeiten"
@@ -107,7 +107,7 @@
       "SECTIONS": [
         {
           "TITLE": "Mindmaps",
-          "SUBTITLE": "TeamMapper folgt dem Tony Buzan Ansatz, welcher die Kraft von Bildern und Farben nutzt, um sich Konzepte einfacher zu merken und die Kreativität anzuregen.",
+          "SUBTITLE": "TeamMapper folgt dem Tony Buzan Ansatz, welcher die Kraft von Bildern und Farben nutzt, um die Merkfähigkeit zu verbessern und die Kreativität anzuregen.",
           "CARDS": [
             {
               "TITLE": "Farben und Bilder",
