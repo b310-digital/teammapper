@@ -96,30 +96,30 @@
   "PAGES": {
     "ABOUT": {
       "INTRODUCTION": {
-        "APPLICATION_DESCRIPTION": "Web application to collaboratively draw mindmaps. Forked from mindmapp by cedoor.",
+        "APPLICATION_DESCRIPTION": "The web application to draw mind maps in teams.",
         "APPLICATION_PROPERTIES": [
-          "Collaborate together on mindmaps",
-          "Share mindmaps with others - either by a QR code or by providing the link.",
+          "Collaborate together on mind maps",
+          "Share mind maps with others - either by a QR code or by providing the link.",
           "Add images, colors, font properties and links to nodes",
-          "Import and export functionality (JSON, SVG, PDF, PNG...)"
+          "Import and export functionality"
         ]
       },
       "SECTIONS": [
         {
-          "TITLE": "Mindmaps",
+          "TITLE": "Mind maps",
           "SUBTITLE": "teammapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
           "CARDS": [
             {
               "TITLE": "Colors and images",
-              "CONTENT": "Colors and images of mindmaps exploit brain characteristics to express concepts in a more effective and lasting way."
+              "CONTENT": "Colors and images of mind maps exploit brain characteristics to express concepts in a more effective and lasting way."
             },
             {
               "TITLE": "Radial tree",
-              "CONTENT": "Hierarchical structure of mindmaps exploits the radial geometry, which is divided on several levels and facilitates concept expressiveness."
+              "CONTENT": "Hierarchical structure of mind maps exploits the radial geometry, which is divided on several levels and facilitates concept expressiveness."
             },
             {
               "TITLE": "Uses",
-              "CONTENT": "Mindmaps are particularly effective to learn or organize ideas, for example in educational or business contexts."
+              "CONTENT": "Mind maps are particularly effective to learn or organize ideas, for example in educational or business contexts."
             }
           ]
         }
@@ -152,9 +152,8 @@
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
   "GENERAL": {
-    "REPOSITORY": "Repository",
-    "APPLICATION": "Application",
-    "TRY_IT": "Try it",
+    "REPOSITORY": "Source Code",
+    "CREATE": "Create mind map",
     "DISMISS": "Dismiss",
     "SAVED_MAPS": "Saved maps",
     "JSON": "File (.json)",
