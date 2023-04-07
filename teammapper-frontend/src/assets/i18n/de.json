@@ -96,54 +96,32 @@
   "PAGES": {
     "ABOUT": {
       "INTRODUCTION": {
-        "APPLICATION_DESCRIPTION": "Webapplikation, um Mindmaps zu erstellen. Basiert auf mindmapp von cedoor.",
+        "APPLICATION_DESCRIPTION": "Die Open Source Webapplikation, um Mindmaps im Team zu erstellen.",
         "APPLICATION_PROPERTIES": [
-          "Effektive Mindmaps",
-          "Moderne Webapplication",
-          "Simples Interface",
-          "Open source Software"
+          "Zusammen und gleichzeitig an Mindmaps arbeiten",
+          "Einfaches Teilen der Mindmap über einen QR-Code oder Link",
+          "Erweitern von Knoten mit Bildern, Farben oder Links",
+          "Import und Export Möglichkeiten"
         ]
       },
       "SECTIONS": [
         {
-          "TITLE": "Mind maps",
-          "SUBTITLE": "TeamMapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
+          "TITLE": "Mindmaps",
+          "SUBTITLE": "TeamMapper folgt dem Tony Buzan Ansatz, welcher die Kraft von Bildern und Farben nutzt, um sich Konzepte einfacher zu merken und die Kreativität anzuregen.",
           "CARDS": [
             {
-              "TITLE": "Colors and images",
-              "CONTENT": "Colors and images of mind maps exploit brain characteristics to express concepts in a more effective and lasting way."
+              "TITLE": "Farben und Bilder",
+              "CONTENT": "Farben und Bilder in Mindmaps unterstützen die Merkfähigkeit, um Konzepte verständlicher und nachhaltiger auszudrücken."
             },
             {
-              "TITLE": "Radial tree",
-              "CONTENT": "Hierarchical structure of mind maps exploits the radial geometry, which is divided on several levels and facilitates concept expressiveness."
+              "TITLE": "Sternenförmiger Baum",
+              "CONTENT": "Die hierarchischen Strukturen von Mindmaps verwenden die radiale Geometrie, welche auf verschiedene Weise die Ausdrucksfähigkeit steigert."
             },
             {
-              "TITLE": "Uses",
-              "CONTENT": "Mind maps are particularly effective to learn or organize ideas, for example in educational or business contexts."
+              "TITLE": "Nutzen",
+              "CONTENT": "Mindmaps sind besonders effektiv, um Ideen zu organisieren, beispielsweise in der Lehre oder im Business."
             }
           ]
-        },
-        {
-          "TITLE": "Goals",
-          "SUBTITLE": "TeamMapper is based on the simplicity and adaptability principles, and according to these principles it grows following the user's needs and future technologies, but always ensuring an intuitive application.",
-          "CARDS": [
-            {
-              "TITLE": "Minimal design",
-              "CONTENT": "The application offers all the essential tools to create mind maps quickly, but maintaining a simple and intuitive design."
-            },
-            {
-              "TITLE": "Future-oriented",
-              "CONTENT": "Web technologies are constantly evolving, and with them the way they are used. TeamMapper follows and eventually adopts the latest technologies to ensure a better service."
-            },
-            {
-              "TITLE": "Customizable",
-              "CONTENT": "A compact but adaptable and extensible system makes it easier to meet the user's individual needs. The application will grow giving particular importance to this aspect."
-            }
-          ]
-        },
-        {
-          "TITLE": "Donations",
-          "SUBTITLE": "TeamMapper is free and its code is public, every contribution is very helpful to maintain and improve the application!"
         }
       ]
     },
@@ -175,11 +153,8 @@
     "JSON_FILE_SIZE_TOO_LARGE": "Die Datei ist größer als 1 MB und kann möglicherweise später nicht importiert werden. Bitte Datei verkleinern (z.B. Bilder entfernen)."
   },
   "GENERAL": {
-    "ORGANIZATION": "Organisation",
-    "LIBRARY": "Library",
-    "REPOSITORY": "Repository",
-    "APPLICATION": "Anwendung",
-    "TRY_IT": "Try it!",
+    "CREATE": "Mindmap erstellen",
+    "REPOSITORY": "Source Code",
     "DISMISS": "Verwerfen",
     "SAVED_MAPS": "Gespeicherte Mindmaps",
     "JSON": "Datei (.json)",

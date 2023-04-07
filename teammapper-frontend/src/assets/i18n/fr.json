@@ -96,18 +96,18 @@
   "PAGES": {
     "ABOUT": {
       "INTRODUCTION": {
-        "APPLICATION_DESCRIPTION": "Web application to collaboratively draw mind maps. Forked from mindmapp by cedoor.",
+        "APPLICATION_DESCRIPTION": "The web application to draw mind maps in teams.",
         "APPLICATION_PROPERTIES": [
-          "Effective mind maps",
-          "Modern web application",
-          "Simple interface",
-          "Open source software"
+          "Collaborate together on mind maps",
+          "Share mind maps with others - either by a QR code or by providing the link.",
+          "Add images, colors, font properties and links to nodes",
+          "Import and export functionality"
         ]
       },
       "SECTIONS": [
         {
           "TITLE": "Mind maps",
-          "SUBTITLE": "TeamMapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
+          "SUBTITLE": "teammapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
           "CARDS": [
             {
               "TITLE": "Colors and images",
@@ -122,28 +122,6 @@
               "CONTENT": "Mind maps are particularly effective to learn or organize ideas, for example in educational or business contexts."
             }
           ]
-        },
-        {
-          "TITLE": "Goals",
-          "SUBTITLE": "TeamMapper is based on the simplicity and adaptability principles, and according to these principles it grows following the user's needs and future technologies, but always ensuring an intuitive application.",
-          "CARDS": [
-            {
-              "TITLE": "Minimal design",
-              "CONTENT": "The application offers all the essential tools to create mind maps quickly, but maintaining a simple and intuitive design."
-            },
-            {
-              "TITLE": "Future-oriented",
-              "CONTENT": "Web technologies are constantly evolving, and with them the way they are used. TeamMapper follows and eventually adopts the latest technologies to ensure a better service."
-            },
-            {
-              "TITLE": "Customizable",
-              "CONTENT": "A compact but adaptable and extensible system makes it easier to meet the user's individual needs. The application will grow giving particular importance to this aspect."
-            }
-          ]
-        },
-        {
-          "TITLE": "Donations",
-          "SUBTITLE": "TeamMapper is free and its code is public, every contribution is very helpful to maintain and improve the application!"
         }
       ]
     },
@@ -174,11 +152,8 @@
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
   "GENERAL": {
-    "ORGANIZATION": "Organization",
-    "LIBRARY": "Library",
-    "REPOSITORY": "Repository",
-    "APPLICATION": "Application",
-    "TRY_IT": "Try it",
+    "REPOSITORY": "Source Code",
+    "CREATE": "Create mind map",
     "DISMISS": "Rejeter",
     "SAVED_MAPS": "Saved maps",
     "JSON": "File (.json)",
