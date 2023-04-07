@@ -96,54 +96,32 @@
   "PAGES": {
     "ABOUT": {
       "INTRODUCTION": {
-        "APPLICATION_DESCRIPTION": "Applicazione web per creare mappe mentali. Forked from mindmapp by cedoor.",
+        "APPLICATION_DESCRIPTION": "The web application to draw mind maps in teams.",
         "APPLICATION_PROPERTIES": [
-          "Mappe mentali efficaci",
-          "Applicazione web moderna",
-          "Semplice interfaccia",
-          "Software open source"
+          "Collaborate together on mind maps",
+          "Share mind maps with others - either by a QR code or by providing the link.",
+          "Add images, colors, font properties and links to nodes",
+          "Import and export functionality"
         ]
       },
       "SECTIONS": [
         {
-          "TITLE": "Mappe mentali",
-          "SUBTITLE": "TeamMapper segue l'approccio delle mappe mentali di Tony Buzan, che sfruttano l'evocatività delle immagini e dei colori per facilitare la memorizzazione di concetti, stimolando la creatività e le associazioni mentali.",
+          "TITLE": "Mind maps",
+          "SUBTITLE": "teammapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
           "CARDS": [
             {
-              "TITLE": "Colori e immagini",
-              "CONTENT": "I colori e le immagini delle mappe sfruttano le caratteristiche del nostro cervello per esprimere i concetti in modo più efficace e duraturo."
+              "TITLE": "Colors and images",
+              "CONTENT": "Colors and images of mind maps exploit brain characteristics to express concepts in a more effective and lasting way."
             },
             {
-              "TITLE": "Geometria radiale",
-              "CONTENT": "La struttura gerarchica delle mappe mentali sfrutta una geometria radiale, la quale viene suddivisa su più livelli e facilità l'espressività dei concetti."
+              "TITLE": "Radial tree",
+              "CONTENT": "Hierarchical structure of mind maps exploits the radial geometry, which is divided on several levels and facilitates concept expressiveness."
             },
             {
-              "TITLE": "Utilizzi",
-              "CONTENT": "Le mappe mentali sono particolarmente efficaci nelle fasi di apprendimento e nell'organizzazione di idee, per esempio in contesti educativi o aziendali."
+              "TITLE": "Uses",
+              "CONTENT": "Mind maps are particularly effective to learn or organize ideas, for example in educational or business contexts."
             }
           ]
-        },
-        {
-          "TITLE": "Obiettivi",
-          "SUBTITLE": "TeamMapper si pone come principi cardine la semplicità e l'adattabilità, e sulla base di tali principi cresce secondo le esigenze dell'utente e le tecnologie future, ma assicurando sempre un'applicazione intuitiva.",
-          "CARDS": [
-            {
-              "TITLE": "Design minimale",
-              "CONTENT": "L'applicazione offre tutti gli strumenti essenziali per la creazione di mappe mentali in modo rapido, ma mantenendo un design semplice ed intuitivo."
-            },
-            {
-              "TITLE": "Orientata al futuro",
-              "CONTENT": "Le tecnologie web si evolvono continuamente, e con esse il modo in cui vengono utilizzate. TeamMapper segue ed eventualmente adotta le ultime tecnologie per garantire un servizio sempre migliore."
-            },
-            {
-              "TITLE": "Personalizzabile",
-              "CONTENT": "Un sistema compatto ma adattabile ed estendibile rende più semplice raggiungere le singole esigenze dell'utente. L'applicazione crescerà dando particolare importanza a quest'aspetto."
-            }
-          ]
-        },
-        {
-          "TITLE": "Donazioni",
-          "SUBTITLE": "TeamMapper è gratuita ed il suo codice è pubblico, ogni contributo sarà di grande aiuto per mantenere e migliorare l'applicazione!"
         }
       ]
     },
@@ -174,13 +152,11 @@
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
   "GENERAL": {
-    "ORGANIZATION": "Organizzazione",
-    "LIBRARY": "Libreria",
-    "REPOSITORY": "Repository",
+    "REPOSITORY": "Source Code",
     "APPLICATION": "Applicazione",
-    "TRY_IT": "Provala",
     "DATAPROTECTION": "Privacy",
     "LEGAL": "Legal Disclosure",
+    "CREATE": "Provala",
     "DISMISS": "Chiudi",
     "SAVED_MAPS": "Mappe salvate",
     "JSON": "File (.json)",
