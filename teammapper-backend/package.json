@@ -52,7 +52,7 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "socket.io": "4.6.1",
-    "typeorm": "0.3.12"
+    "typeorm": "^0.3.14"
   },
   "devDependencies": {
     "@golevelup/ts-jest": "^0.3.5",
@@ -101,7 +101,9 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "modulePaths": ["<rootDir>"],
+    "modulePaths": [
+      "<rootDir>"
+    ],
     "testRunner": "jest-jasmine2",
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
