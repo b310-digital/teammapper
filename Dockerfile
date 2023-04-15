@@ -35,6 +35,7 @@ COPY --chown=node:node entrypoint.prod.sh $APP_PATH/
 CMD ["./entrypoint.prod.sh"]
 
 FROM base as development
+
 USER node
 
 COPY --chown=node:node teammapper-frontend/package.json teammapper-frontend/package-lock.json $APP_FRONTEND_PATH/

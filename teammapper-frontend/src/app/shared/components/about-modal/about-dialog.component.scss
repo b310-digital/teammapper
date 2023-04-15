@@ -3,14 +3,7 @@
 .about-modal-section {
     max-width: 500px;
     hyphens: auto;
-    img {
-        padding-right: 2rem;
-        margin-bottom: 2rem;
-        margin-right: auto;
-        margin-left: auto;
-        display: block;
-    }
-
+    margin-top: 20px;
 
     a {
         text-decoration: none;
@@ -20,4 +13,8 @@
 
 .mat-list-item {
     font-family: 'Fira Sans';
+}
+
+.about-kits-logo {
+    float: right;
 }
