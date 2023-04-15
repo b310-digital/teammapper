@@ -15,7 +15,6 @@ $typography: mat.define-typography-config(
 $app-primary: mat.define-palette(mat.$blue-gray-palette, 700);
 $app-accent: mat.define-palette(mat.$gray-palette, 50);
 
-
 // The warn palette is optional (defaults to red).
 $app-warn: mat.define-palette(mat.$red-palette);
 

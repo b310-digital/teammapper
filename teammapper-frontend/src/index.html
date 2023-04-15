@@ -1,21 +1,29 @@
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
-
-<head>
-    <meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
     <title>TeamMapper</title>
-    <base href="/">
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" name="viewport">
-    <meta content="yes" name="mobile-web-app-capable">
-    <meta content="Web application to draw mind maps." name="description">
-    <meta content="Web application to draw mind maps." property="og:description">
-    <meta content="TeamMapper" property="og:title">
-    <meta content="https://kits.blog" property="og:url">
-    <link href="./assets/icons/web/icons/icon-72x72.png" rel="icon" type="image/png" />
-    <meta content="#37474f" name="theme-color">
+    <base href="/" />
+    <meta
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+      name="viewport" />
+    <meta content="yes" name="mobile-web-app-capable" />
+    <meta content="Web application to draw mind maps." name="description" />
+    <meta
+      content="Web application to draw mind maps."
+      property="og:description" />
+    <meta content="TeamMapper" property="og:title" />
+    <meta content="https://kits.blog" property="og:url" />
+    <link
+      href="./assets/icons/web/icons/icon-72x72.png"
+      rel="icon"
+      type="image/png" />
+    <meta content="#37474f" name="theme-color" />
 
-    <meta http-equiv="Content-Security-Policy" content="
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
         default-src 'self' *.kits.blog;
         connect-src 'self' *.kits.blog ws: wss:;
         style-src 'self' *.kits.blog 'unsafe-inline';
@@ -26,75 +34,107 @@
     <meta name="apple-mobile-web-app-capable" />
     <meta name="apple-mobile-web-app-title" content="TeamMapper" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="apple-touch-icon" href="./assets/icons/ios/icons/apple-touch-icon.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="./assets/icons/ios/icons/apple-touch-icon_152x152.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="./assets/icons/ios/icons/apple-touch-icon_167x167.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/ios/icons/apple-touch-icon_180x180.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_1136x640.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_2436x1125.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_1792x828.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_828x1792.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_1334x750.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_1242x2688.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_2208x1242.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_1125x2436.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_1242x2208.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_2732x2048.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_2688x1242.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_2224x1668.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_750x1334.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_2048x2732.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_2388x1668.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_1668x2224.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_640x1136.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_1668x2388.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-        href="./assets/icons/ios/splash/splash_2048x1536.png" />
-    <link rel="apple-touch-startup-image"
-        media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        href="./assets/icons/ios/splash/splash_1536x2048.png" />
-</head>
+    <link
+      rel="apple-touch-icon"
+      href="./assets/icons/ios/icons/apple-touch-icon.png" />
+    <link
+      rel="apple-touch-icon"
+      sizes="152x152"
+      href="./assets/icons/ios/icons/apple-touch-icon_152x152.png" />
+    <link
+      rel="apple-touch-icon"
+      sizes="167x167"
+      href="./assets/icons/ios/icons/apple-touch-icon_167x167.png" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="./assets/icons/ios/icons/apple-touch-icon_180x180.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_1136x640.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_2436x1125.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_1792x828.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_828x1792.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_1334x750.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_1242x2688.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_2208x1242.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_1125x2436.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_1242x2208.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_2732x2048.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_2688x1242.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_2224x1668.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_750x1334.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_2048x2732.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_2388x1668.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_1668x2224.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_640x1136.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_1668x2388.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+      href="./assets/icons/ios/splash/splash_2048x1536.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="./assets/icons/ios/splash/splash_1536x2048.png" />
+  </head>
 
-<body>
+  <body>
     <teammapper-root></teammapper-root>
-    <noscript>Please enable JavaScript to continue using this application.</noscript>
-</body>
-
+    <noscript
+      >Please enable JavaScript to continue using this application.</noscript
+    >
+  </body>
 </html>

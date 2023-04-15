@@ -1,36 +1,37 @@
 @use '@angular/material' as mat;
 @import '@material-design-icons/font';
-@import "~src/theme.scss";
+@import '~src/theme.scss';
 
 @font-face {
-    font-family: FiraSans;
-    src: url("/assets/font/firasans/FiraSans-Regular.otf") format("opentype");
-  }
-  
-  @font-face {
-    font-family: FiraSans;
-    font-weight: light;
-    src: url("/assets/font/firasans/FiraSans-Light.otf") format("opentype");
-  }
-  
-  @font-face {
-    font-family: FiraSans;
-    font-weight: bold;
-    src: url("/assets/font/firasans/FiraSans-Bold.otf") format("opentype");
-  }
-  
-  // Set bootstrap font:
-  $font-family-base: FiraSans;
+  font-family: FiraSans;
+  src: url('/assets/font/firasans/FiraSans-Regular.otf') format('opentype');
+}
 
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
+@font-face {
+  font-family: FiraSans;
+  font-weight: light;
+  src: url('/assets/font/firasans/FiraSans-Light.otf') format('opentype');
+}
+
+@font-face {
+  font-family: FiraSans;
+  font-weight: bold;
+  src: url('/assets/font/firasans/FiraSans-Bold.otf') format('opentype');
+}
+
+// Set bootstrap font:
+$font-family-base: FiraSans;
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
 body {
-    font-family: $font-family-base, sans;
-    font-size: 17px;
+  font-family: $font-family-base, sans;
+  font-size: 17px;
 }
 
 .container {

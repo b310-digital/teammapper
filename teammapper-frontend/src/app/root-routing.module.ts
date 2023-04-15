@@ -5,7 +5,7 @@ const routes: Routes = [
   {
     path: '',
     loadChildren: () =>
-     import('./modules/start/start.module').then(m => m.StartModule),
+      import('./modules/start/start.module').then(m => m.StartModule),
   },
   {
     path: 'map',

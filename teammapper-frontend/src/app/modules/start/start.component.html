@@ -1,14 +1,27 @@
-<mat-grid-list rowHeight="fit" [ngStyle]="{'min-height': height + 'px'}" [cols]="breakpoint" (window:resize)="onResize($event)" *ngIf="breakpoint === 2">
+<mat-grid-list
+  rowHeight="fit"
+  [ngStyle]="{ 'min-height': height + 'px' }"
+  [cols]="breakpoint"
+  (window:resize)="onResize($event)"
+  *ngIf="breakpoint === 2">
   <mat-grid-tile class="gradient">
-    <img src="/assets/images/teammapper-logo.svg" class="img-fluid d-block" alt="TeamMapper Logo" />
+    <img
+      src="/assets/images/teammapper-logo.svg"
+      class="img-fluid d-block"
+      alt="TeamMapper Logo" />
     <mat-grid-tile-footer class="center">
       <div class="kits-footer-text-right">
-
-        <a class="padding-8 font-white" href="https://github.com/kitsteam/teammapper"
+        <a
+          class="padding-8 font-white"
+          href="https://github.com/kitsteam/teammapper"
           >GitHub</a
         >
-        <a class="padding-8 font-white" href="https://kits.blog/impressum/">Impressum</a>
-        <a class="padding-8 font-white" href="https://kits.blog/datenschutzerklaerung/"
+        <a class="padding-8 font-white" href="https://kits.blog/impressum/"
+          >Impressum</a
+        >
+        <a
+          class="padding-8 font-white"
+          href="https://kits.blog/datenschutzerklaerung/"
           >Datenschutz</a
         >
       </div>
@@ -17,8 +30,8 @@
   <mat-grid-tile>
     <mat-grid-tile-header class="header">
       <a href="https://kits.blog/tools/"
-                ><img src="/assets/images/kits-logo.svg"  alt="Kits Logo"
-              /></a>
+        ><img src="/assets/images/kits-logo.svg" alt="Kits Logo"
+      /></a>
     </mat-grid-tile-header>
     <div class="container">
       <a href="/"><h1 class="fw-bold">TeamMapper</h1></a>
@@ -31,11 +44,14 @@
       <br />
 
       <a href="/map">
-        <button mat-raised-button color="primary" class="kits-primary-button">Mindmap erstellen</button>
+        <button mat-raised-button color="primary" class="kits-primary-button">
+          Mindmap erstellen
+        </button>
       </a>
-      <div style="margin-top: 10px;">
+      <div style="margin-top: 10px">
         <small class="muted">
-          Dieses Tool darf nur in Bildungskontexten genutzt werden. Die Eingabe personenbezogener Daten ist nicht gestattet.
+          Dieses Tool darf nur in Bildungskontexten genutzt werden. Die Eingabe
+          personenbezogener Daten ist nicht gestattet.
           <br /><br />
           Achtung: Mindmaps werden nach 30 Tagen gelöscht.
         </small>
@@ -44,13 +60,12 @@
   </mat-grid-tile>
 </mat-grid-list>
 
-
 <div *ngIf="breakpoint === 1" (window:resize)="onResize($event)">
   <div class="container">
     <div class="header">
       <a href="https://kits.blog/tools/"
-                ><img src="/assets/images/kits-logo.svg"  alt="Kits Logo"
-              /></a>
+        ><img src="/assets/images/kits-logo.svg" alt="Kits Logo"
+      /></a>
     </div>
     <a href="/"><h1 class="fw-bold">TeamMapper</h1></a>
 
@@ -62,11 +77,14 @@
     <br />
 
     <a href="/map">
-      <button mat-raised-button color="primary" class="kits-primary-button">Mindmap erstellen</button>
+      <button mat-raised-button color="primary" class="kits-primary-button">
+        Mindmap erstellen
+      </button>
     </a>
-    <div style="margin-top: 10px;">
+    <div style="margin-top: 10px">
       <small class="muted">
-        Dieses Tool darf nur in Bildungskontexten genutzt werden. Die Eingabe personenbezogener Daten ist nicht gestattet.
+        Dieses Tool darf nur in Bildungskontexten genutzt werden. Die Eingabe
+        personenbezogener Daten ist nicht gestattet.
         <br /><br />
         Achtung: Mindmaps werden nach 30 Tagen gelöscht.
       </small>
@@ -78,11 +96,17 @@
         <img src="/assets/images/teammapper-logo.svg" alt="TeamMapper Logo" />
       </div>
       <div class="kits-footer-text">
-        <a class="padding-8 font-white" href="https://github.com/kitsteam/teammapper"
+        <a
+          class="padding-8 font-white"
+          href="https://github.com/kitsteam/teammapper"
           >GitHub</a
         >
-        <a class="padding-8 font-white" href="https://kits.blog/impressum/">Impressum</a>
-        <a class="padding-8 font-white" href="https://kits.blog/datenschutzerklaerung/"
+        <a class="padding-8 font-white" href="https://kits.blog/impressum/"
+          >Impressum</a
+        >
+        <a
+          class="padding-8 font-white"
+          href="https://kits.blog/datenschutzerklaerung/"
           >Datenschutz</a
         >
       </div>

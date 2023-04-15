@@ -1,4 +1,4 @@
-@import "~src/colors.scss";
+@import '~src/colors.scss';
 
 div.floating-buttons {
   .no-touch {
@@ -25,7 +25,7 @@ div.floating-buttons {
   .add-node button,
   .remove-node button {
     background-color: $secondary;
-    color: #FFFFFF;
+    color: #ffffff;
 
     &:disabled {
       color: rgba(0, 0, 0, 0.26);
