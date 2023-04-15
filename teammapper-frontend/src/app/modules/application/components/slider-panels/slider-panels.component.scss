@@ -1,19 +1,16 @@
 div.sliders-panel {
+  .mat-slider-vertical {
+    z-index: 2;
+    position: absolute;
+    height: 180px;
+    top: 40%;
+  }
 
-    .mat-slider-vertical {
-        z-index: 2;
-        position: absolute;
-        height: 180px;
-        top: 40%;
-    }
+  .font-size {
+    left: 15px;
+  }
 
-    .font-size {
-        left: 15px;
-    }
-
-    .image-size {
-        left: 45px;
-    }
-
+  .image-size {
+    left: 45px;
+  }
 }
-

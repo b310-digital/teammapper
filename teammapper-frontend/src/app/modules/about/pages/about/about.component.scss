@@ -1,62 +1,62 @@
 @use '@angular/material' as mat;
-@import "~src/theme.scss";
+@import '~src/theme.scss';
 
 div.about {
-    height: 100%;
+  height: 100%;
 
-    section {
-        position: relative;
-    }
+  section {
+    position: relative;
+  }
 
-    section:nth-child(odd) {
-        background-color: white;
-    }
+  section:nth-child(odd) {
+    background-color: white;
+  }
 
-    section:nth-child(even) {
-        background-color: #fafafa;
-    }
+  section:nth-child(even) {
+    background-color: #fafafa;
+  }
 
-    section.about-section {
-        > div {
-            padding: 20px 15px 40px 15px;
+  section.about-section {
+    > div {
+      padding: 20px 15px 40px 15px;
 
-            h1 {
-                color: mat.get-color-from-palette($app-primary);
-            }
+      h1 {
+        color: mat.get-color-from-palette($app-primary);
+      }
 
-            div.cards {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
+      div.cards {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
 
-                mat-card {
-                    flex: 1;
-                    min-width: 200px;
-                    margin: 10px;
+        mat-card {
+          flex: 1;
+          min-width: 200px;
+          margin: 10px;
 
-                    fa-icon {
-                        color: #565656;
-                    }
+          fa-icon {
+            color: #565656;
+          }
 
-                    ::ng-deep mat-card-header > div {
-                        margin-left: 0 !important;
-                    }
-                }
-            }
-
-            mat-list {
-                margin-top: -10px;
-
-                mat-list-item {
-                    height: 40px;
-
-                    a {
-                        color: mat.get-color-from-palette($app-primary);
-                        text-decoration: none;
-                        padding-left: 10px;
-                    }
-                }
-            }
+          ::ng-deep mat-card-header > div {
+            margin-left: 0 !important;
+          }
         }
+      }
+
+      mat-list {
+        margin-top: -10px;
+
+        mat-list-item {
+          height: 40px;
+
+          a {
+            color: mat.get-color-from-palette($app-primary);
+            text-decoration: none;
+            padding-left: 10px;
+          }
+        }
+      }
     }
+  }
 }

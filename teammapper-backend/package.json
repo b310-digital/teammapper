@@ -1,6 +1,6 @@
 {
   "name": "teammapper-backend",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "teammapper backend to work online as a team on mindmaps",
   "author": "b310 digital gmbh",
   "private": true,
@@ -33,6 +33,7 @@
     "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {
+    "@nestjs/cli": "^9.2.0",
     "@nestjs/common": "^9.3.9",
     "@nestjs/config": "2.3.1",
     "@nestjs/core": "^9.3.9",
@@ -51,11 +52,10 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "socket.io": "4.6.1",
-    "typeorm": "0.3.12"
+    "typeorm": "^0.3.14"
   },
   "devDependencies": {
     "@golevelup/ts-jest": "^0.3.5",
-    "@nestjs/cli": "^9.2.0",
     "@nestjs/schematics": "^9.0.3",
     "@nestjs/testing": "^9.3.9",
     "@types/cache-manager": "3.4.2",
@@ -101,7 +101,9 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "modulePaths": ["<rootDir>"],
+    "modulePaths": [
+      "<rootDir>"
+    ],
     "testRunner": "jest-jasmine2",
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>{{ 'MODALS.SHARE.TITLE' | translate }}</h2>
+<mat-dialog-content>
+  <div #sharedialog>
+    <mat-slide-toggle
+      [(ngModel)]="showEditableLink"
+      (change)="setShowEditableLink($event.checked)"
+      [disabled]="areLinksEqual()">
+      <div *ngIf="showEditableLink; else viewBlock">
+        {{ 'MODALS.SHARE.LINK_TYPE_EDIT' | translate }}
+      </div>
+      <ng-template #viewBlock>{{
+        'MODALS.SHARE.LINK_TYPE_VIEW' | translate
+      }}</ng-template>
+    </mat-slide-toggle>
+    <br /><br />
+    <mat-form-field appearance="fill">
+      <mat-label>{{ 'MODALS.SHARE.CONTENT' | translate }}</mat-label>
+      <input
+        #inputlink
+        matInput
+        type="text"
+        value="{{ getLink() }}"
+        [readonly]="true" />
+      <button mat-button matSuffix (click)="copy()">
+        <mat-icon>content_copy</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+  <mat-divider class="divider-margin"></mat-divider>
+  <div #qrcodecanvas id="qr-code-canvas"></div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button [mat-dialog-close]="true">
+    {{ 'MODALS.GENERAL.BUTTON_CLOSE' | translate }}
+  </button>
+  <div *ngIf="isShareable()">
+    <button mat-button matSuffix (click)="share()">
+      <mat-icon>share</mat-icon>
+    </button>
+  </div>
+  <button mat-button (click)="downloadQrCode()">
+    <mat-icon>file_download</mat-icon>
+  </button>
+</mat-dialog-actions>

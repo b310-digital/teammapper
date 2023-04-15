@@ -1,39 +1,39 @@
 div.shortcuts {
-    mat-toolbar {
-        background-color: transparent;
+  mat-toolbar {
+    background-color: transparent;
 
-        div.container {
-            width: 100%;
-            text-align: center;
-            position: relative;
+    div.container {
+      width: 100%;
+      text-align: center;
+      position: relative;
 
-            button.close-button {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-            }
-        }
+      button.close-button {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+      }
+    }
+  }
+
+  div.content {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+
+    mat-list-item {
+      color: #555555;
     }
 
-    div.content {
-        display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        padding-bottom: 10px;
-
-        mat-list-item {
-            color: #555555;
-        }
-
-        .key {
-            padding: 6px 12px;
-            background: gainsboro;
-            border-radius: 3px;
-            font-size: 15px;
-        }
-
-        .description {
-            padding-left: 10px;
-        }
+    .key {
+      padding: 6px 12px;
+      background: gainsboro;
+      border-radius: 3px;
+      font-size: 15px;
     }
+
+    .description {
+      padding-left: 10px;
+    }
+  }
 }

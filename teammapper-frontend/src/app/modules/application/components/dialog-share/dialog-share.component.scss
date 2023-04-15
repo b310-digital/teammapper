@@ -1,11 +1,11 @@
 @use '@angular/material' as mat;
-@import "~src/theme.scss";
+@import '~src/theme.scss';
 
 #qr-code-canvas {
   display: flex;
   justify-content: center;
 }
-    
+
 mat-form-field {
   width: 100%;
 }
@@ -18,7 +18,10 @@ mat-form-field {
   display: none;
 }
 
-:host ::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-bar {
+:host
+  ::ng-deep
+  .mat-slide-toggle.mat-checked:not(.mat-disabled)
+  .mat-slide-toggle-bar {
   background-color: mat.get-color-from-palette($app-primary);
 }
 

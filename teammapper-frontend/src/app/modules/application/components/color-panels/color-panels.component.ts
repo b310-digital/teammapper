@@ -1,24 +1,23 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core'
-import { ExportNodeProperties } from '@mmp/map/types'
-import { MmpService } from '../../../../core/services/mmp/mmp.service'
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { ExportNodeProperties } from '@mmp/map/types';
+import { MmpService } from '../../../../core/services/mmp/mmp.service';
 
 @Component({
   selector: 'teammapper-colors-panel',
   templateUrl: './color-panels.component.html',
-  styleUrls: ['./color-panels.component.scss']
+  styleUrls: ['./color-panels.component.scss'],
 })
 export class ColorPanelsComponent implements OnInit {
-  @Input() public node: ExportNodeProperties
-  @Input() public editDisabled: boolean
+  @Input() public node: ExportNodeProperties;
+  @Input() public editDisabled: boolean;
 
-  @ViewChild('background') public background: ElementRef
+  @ViewChild('background') public background: ElementRef;
 
-  public options: any
+  public options: any;
 
-  constructor (public mmpService: MmpService) {
-  }
+  constructor(public mmpService: MmpService) {}
 
-  ngOnInit () {
+  ngOnInit() {
     this.options = {
       width: '250px',
       presetColors: [
@@ -42,20 +41,22 @@ export class ColorPanelsComponent implements OnInit {
         '#FF5722',
         '#795548',
         '#9E9E9E',
-        '#607D8B'
-      ]
-    }
+        '#607D8B',
+      ],
+    };
   }
 
-  public colorPickerChange (property, value) {
-    this.mmpService.updateNode(property, value, true)
+  public colorPickerChange(property, value) {
+    this.mmpService.updateNode(property, value, true);
   }
 
-  public colorPickerToggleChange (opening, property, value) {
-    this.background.nativeElement.style.visibility = opening ? 'visible' : 'hidden'
+  public colorPickerToggleChange(opening, property, value) {
+    this.background.nativeElement.style.visibility = opening
+      ? 'visible'
+      : 'hidden';
 
     if (!opening) {
-      this.mmpService.updateNode(property, value)
+      this.mmpService.updateNode(property, value);
     }
   }
 }

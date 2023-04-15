@@ -11,3 +11,12 @@ npm install
 
 npm run start
 ```
+
+## Dev
+
+### Lint
+
+```
+npx prettier --write src
+npm run lint -- --fix
+```

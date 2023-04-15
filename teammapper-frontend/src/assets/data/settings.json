@@ -1,52 +1,52 @@
 {
-    "general": {
-        "language": "de"
+  "general": {
+    "language": "de"
+  },
+  "mapOptions": {
+    "centerOnResize": false,
+    "autoBranchColors": true,
+    "fontMaxSize": 70,
+    "fontMinSize": 15,
+    "fontIncrement": 5,
+    "defaultNode": {
+      "name": "",
+      "link": {
+        "href": ""
+      },
+      "image": {
+        "src": "",
+        "size": 60
+      },
+      "colors": {
+        "name": "#666666",
+        "background": "#f5f5f5",
+        "branch": "#546e7a"
+      },
+      "font": {
+        "size": 22,
+        "style": "normal",
+        "weight": "normal"
+      },
+      "locked": true
     },
-    "mapOptions": {
-        "centerOnResize": false,
-        "autoBranchColors": true,
-        "fontMaxSize": 70,
-        "fontMinSize": 15,
-        "fontIncrement": 5,
-        "defaultNode": {
-            "name": "",
-            "link": {
-              "href": ""
-            },
-            "image": {
-                "src": "",
-                "size": 60
-            },
-            "colors": {
-                "name": "#666666",
-                "background": "#f5f5f5",
-                "branch": "#546e7a"
-            },
-            "font": {
-                "size": 22,
-                "style": "normal",
-                "weight": "normal"
-            },
-            "locked": true
-        },
-        "rootNode": {
-            "name": "Thema",
-            "link": {
-                "href": ""
-            },
-            "image": {
-                "src": "",
-                "size": 70
-            },
-            "colors": {
-                "name": "#666666",
-                "background": "#f5f5f5"
-            },
-            "font": {
-                "size": 26,
-                "style": "normal",
-                "weight": "normal"
-            }
-        }
+    "rootNode": {
+      "name": "Thema",
+      "link": {
+        "href": ""
+      },
+      "image": {
+        "src": "",
+        "size": 70
+      },
+      "colors": {
+        "name": "#666666",
+        "background": "#f5f5f5"
+      },
+      "font": {
+        "size": 26,
+        "style": "normal",
+        "weight": "normal"
+      }
     }
+  }
 }

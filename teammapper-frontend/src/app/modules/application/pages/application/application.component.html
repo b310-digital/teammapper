@@ -1,10 +1,19 @@
 <div class="teammapper-application">
-    <teammapper-colors-panel [node]="node | async" [editDisabled]="editMode | async | inverseBool"></teammapper-colors-panel>
-    <teammapper-client-colors-panel></teammapper-client-colors-panel>
-    <teammapper-sliders-panel [node]="node | async" [editDisabled]="editMode | async | inverseBool"></teammapper-sliders-panel>
-    <teammapper-floating-buttons [editDisabled]="editMode | async | inverseBool"></teammapper-floating-buttons>
+  <teammapper-colors-panel
+    [node]="node | async"
+    [editDisabled]="editMode | async | inverseBool"></teammapper-colors-panel>
+  <teammapper-client-colors-panel></teammapper-client-colors-panel>
+  <teammapper-sliders-panel
+    [node]="node | async"
+    [editDisabled]="editMode | async | inverseBool"></teammapper-sliders-panel>
+  <teammapper-floating-buttons
+    [editDisabled]="
+      editMode | async | inverseBool
+    "></teammapper-floating-buttons>
 
-    <teammapper-toolbar [node]="node | async" [editDisabled]="editMode | async | inverseBool"></teammapper-toolbar>
+  <teammapper-toolbar
+    [node]="node | async"
+    [editDisabled]="editMode | async | inverseBool"></teammapper-toolbar>
 
-    <teammapper-map></teammapper-map>
+  <teammapper-map></teammapper-map>
 </div>
