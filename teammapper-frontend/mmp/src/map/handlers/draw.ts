@@ -421,13 +421,13 @@ export default class Draw {
               name.style.setProperty('height', '100%')
               // split by line break
               const linesByLineBreaks = name.textContent.split(/\r?\n|\r|\n/g)
-              // take longest line as width
-              const width = Math.max(...linesByLineBreaks.map((line: string) => line.length))
+              // take longest line as width, when no lines are present use 1 as length
+              const width = Math.max(...linesByLineBreaks.map((line: string) => line.length), 1)
               // take number of lines as height factor
               const height = linesByLineBreaks.length
-              return [width * node.font.size / 1.9, height * node.font.size * 1.2]
+              return [width * node.font.size / 1.2, height * node.font.size * 1.2]
             }
-        })()
+        })().map((value: number) => Math.max(value, 25))
 
         foreignObject.setAttribute('x', (-width / 2).toString())
         foreignObject.setAttribute('y', (-height / 2).toString())
@@ -459,7 +459,6 @@ export default class Draw {
         div.style.setProperty('text-align', 'center')
         // fix against cursor jumping out of nodes on firefox if empty
         div.style.setProperty('min-width', '20px')
-        div.style.setProperty('min-height', '20px')
 
         div.innerHTML = DOMPurify.sanitize(node.name)
 
@@ -480,6 +479,6 @@ export default class Draw {
      * @returns {boolean}
      */
     private browserIsFirefox(): boolean {
-        return navigator.userAgent.toLowerCase().indexOf('firefox') >= -1
+        return navigator.userAgent.toLowerCase().indexOf('firefox') > -1
     }
 }
