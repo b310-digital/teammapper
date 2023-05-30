@@ -415,17 +415,17 @@ export default class Draw {
               name.style.setProperty('height', 'auto')
               return [name.clientWidth, name.clientHeight]
             } else {
-                // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
-                // In these cases, try to approximate height and width before rendering.
-                name.style.setProperty('width', '100%')
-                name.style.setProperty('height', '100%')
-                // split by line break
-                const linesByLineBreaks = name.textContent.split(/\r?\n|\r|\n/g)
-                // take longest line as width
-                const width = Math.max(...linesByLineBreaks.map((line: string) => line.length))
-                // take number of lines as height factor
-                const height = linesByLineBreaks.length
-                return [width * node.font.size / 1.9, height * node.font.size * 1.2]
+              // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
+              // In these cases, try to approximate height and width before rendering.
+              name.style.setProperty('width', '100%')
+              name.style.setProperty('height', '100%')
+              // split by line break
+              const linesByLineBreaks = name.textContent.split(/\r?\n|\r|\n/g)
+              // take longest line as width
+              const width = Math.max(...linesByLineBreaks.map((line: string) => line.length))
+              // take number of lines as height factor
+              const height = linesByLineBreaks.length
+              return [width * node.font.size / 1.9, height * node.font.size * 1.2]
             }
         })()
 
