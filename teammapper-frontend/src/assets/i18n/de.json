@@ -85,7 +85,7 @@
     },
     "INFO": {
       "DELETED_AT": "Diese Mindmap wird gelöscht am:",
-      "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
+      "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server {{deleteAfterDays}} Tage nach der letzten Bearbeitung gelöscht.",
       "DELETE": "Mindmap löschen",
       "CONFIRM_DELETE": "Wirklich löschen?"
     },
