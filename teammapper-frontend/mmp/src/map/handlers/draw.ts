@@ -407,23 +407,27 @@ export default class Draw {
               foreignObject: SVGForeignObjectElement = name?.parentNode as SVGForeignObjectElement
         
         const [width, height]: number[] = (() => {
-            if (name?.offsetWidth !== 0) {
+            if (!this.browserIsFirefox()) {
               // Default case
               // Text is rendered based on needed width and height
+              // works well at least for chrome and safari
               name.style.setProperty('width', 'auto')
               name.style.setProperty('height', 'auto')
               return [name.clientWidth, name.clientHeight]
-            } else if(node?.name?.length > 0) {
+            } else {
               // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
               // In these cases, try to approximate height and width before rendering.
               name.style.setProperty('width', '100%')
               name.style.setProperty('height', '100%')
-              return [node.name.length * node.font.size / 1.9, node.font.size * 1.2]
-            } else {
-              // Default values if empty
-              return [20, 20]
+              // split by line break
+              const linesByLineBreaks = name.textContent.split(/\r?\n|\r|\n/g)
+              // take longest line as width, when no lines are present use 1 as length
+              const width = Math.max(...linesByLineBreaks.map((line: string) => line.length), 1)
+              // take number of lines as height factor
+              const height = linesByLineBreaks.length
+              return [width * node.font.size / 1.2, height * node.font.size * 1.2]
             }
-        })()
+        })().map((value: number) => Math.max(value, 25))
 
         foreignObject.setAttribute('x', (-width / 2).toString())
         foreignObject.setAttribute('y', (-height / 2).toString())
@@ -469,4 +473,11 @@ export default class Draw {
         return event.target['classList'][0] === 'link-text'
     }
 
+    /**
+     * Checks if the browser is firefox
+     * @returns {boolean}
+     */
+    private browserIsFirefox(): boolean {
+        return navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+    }
 }
