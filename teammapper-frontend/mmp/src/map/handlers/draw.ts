@@ -407,21 +407,25 @@ export default class Draw {
               foreignObject: SVGForeignObjectElement = name?.parentNode as SVGForeignObjectElement
         
         const [width, height]: number[] = (() => {
-            if (name?.offsetWidth !== 0) {
+            if (!this.browserIsFirefox()) {
               // Default case
               // Text is rendered based on needed width and height
+              // works well at least for chrome and safari
               name.style.setProperty('width', 'auto')
               name.style.setProperty('height', 'auto')
               return [name.clientWidth, name.clientHeight]
-            } else if(node?.name?.length > 0) {
-              // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
-              // In these cases, try to approximate height and width before rendering.
-              name.style.setProperty('width', '100%')
-              name.style.setProperty('height', '100%')
-              return [node.name.length * node.font.size / 1.9, node.font.size * 1.2]
             } else {
-              // Default values if empty
-              return [20, 20]
+                // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
+                // In these cases, try to approximate height and width before rendering.
+                name.style.setProperty('width', '100%')
+                name.style.setProperty('height', '100%')
+                // split by line break
+                const linesByLineBreaks = name.textContent.split(/\r?\n|\r|\n/g)
+                // take longest line as width
+                const width = Math.max(...linesByLineBreaks.map((line: string) => line.length))
+                // take number of lines as height factor
+                const height = linesByLineBreaks.length
+                return [width * node.font.size / 1.9, height * node.font.size * 1.2]
             }
         })()
 
@@ -450,10 +454,12 @@ export default class Draw {
         div.style.setProperty('white-space', 'pre')
         div.style.setProperty('width', 'auto')
         div.style.setProperty('height', 'auto')
+        div.style.setProperty('overflow', 'visible')
         div.style.setProperty('font-family', this.map.options.fontFamily)
         div.style.setProperty('text-align', 'center')
         // fix against cursor jumping out of nodes on firefox if empty
         div.style.setProperty('min-width', '20px')
+        div.style.setProperty('min-height', '20px')
 
         div.innerHTML = DOMPurify.sanitize(node.name)
 
@@ -469,4 +475,11 @@ export default class Draw {
         return event.target['classList'][0] === 'link-text'
     }
 
+    /**
+     * Checks if the browser is firefox
+     * @returns {boolean}
+     */
+    private browserIsFirefox(): boolean {
+        return navigator.userAgent.toLowerCase().indexOf('firefox') >= -1
+    }
 }
