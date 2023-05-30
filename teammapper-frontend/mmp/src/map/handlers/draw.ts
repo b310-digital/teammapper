@@ -454,7 +454,6 @@ export default class Draw {
         div.style.setProperty('white-space', 'pre')
         div.style.setProperty('width', 'auto')
         div.style.setProperty('height', 'auto')
-        div.style.setProperty('overflow', 'visible')
         div.style.setProperty('font-family', this.map.options.fontFamily)
         div.style.setProperty('text-align', 'center')
         // fix against cursor jumping out of nodes on firefox if empty
