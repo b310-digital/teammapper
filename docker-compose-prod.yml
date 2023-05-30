@@ -23,6 +23,7 @@ services:
       DELETE_AFTER_DAYS: ${DELETE_AFTER_DAYS:-30}
     ports:
       - "${APP_PROD_PORT:-80}:3000"
+    restart: always
     depends_on:
       - postgres_prod
 
@@ -30,13 +31,14 @@ services:
     image: postgres:12-alpine
     # Pass config parameters to the postgres server.
     # Find more information below when you need to generate the ssl-relevant file your self
-    # command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
+    command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_DB: ${POSTGRES_PROD_DB}
       POSTGRES_PASSWORD: ${POSTGRES_PROD_PASSWORD}
       POSTGRES_PORT: ${POSTGRES_PROD_PORT:-5432}
       POSTGRES_USER: ${POSTGRES_PROD_USER}
+    restart: always
     volumes:
       # To setup an ssl-enabled postgres server locally, you need to generate a self-signed ssl certificate.
       # See README.md for more information.
