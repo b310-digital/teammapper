@@ -1,4 +1,6 @@
+
 # TeamMapper
+![TeamMapper Screenshot](docs/teammapper-logo.png "TeamMapper Logo")
 
 Mindmapping made simple: Host and create your own mindmaps. Share your mindmap sessions with your team and collaborate on mindmaps.
 
