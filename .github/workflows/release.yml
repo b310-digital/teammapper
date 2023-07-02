@@ -44,8 +44,9 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v4
         with:
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
           target: production
           push: true
           tags: ${{ steps.meta.outputs.tags }}
