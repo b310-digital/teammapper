@@ -29,7 +29,7 @@
               "src/styles.scss",
               "src/theme.scss"
             ],
-            "scripts": [],
+            "scripts": ["src/mtm.js"],
             "serviceWorker": false
           },
           "configurations": {
