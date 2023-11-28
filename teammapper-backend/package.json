@@ -30,8 +30,7 @@
     "dev:data:maps:cleanup": "ts-node ./src/jobs/deleteMaps.job.ts",
     "dev:data:maps:seed": "ts-node ./src/jobs/seedMapData.job.ts",
     "prod:data:maps:cleanup": "node ./dist/jobs/deleteMaps.job.js",
-    "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js",
-    "nest:update": "nest update"
+    "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {
     "@nestjs/cli": "^9.5.0",
