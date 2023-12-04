@@ -71,7 +71,9 @@ export default class Export {
                 if (typeof type === 'string') {
                     type = 'image/' + type
                 }
-
+                // Safari seems to have an issue with loading all included images on time during the download of the data url.
+                // This is a small workaround, as calling toBlob before seems to solve the problem most of the times.
+                if (navigator.userAgent.search("Safari") >= 0 && navigator.userAgent.search("Chrome") < 0) canvas.toBlob(() => {})
                 callback(canvas.toDataURL(type))
                 this.map.events.call(Event.exportImage)
             }
