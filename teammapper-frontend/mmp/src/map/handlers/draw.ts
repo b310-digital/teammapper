@@ -247,6 +247,7 @@ export default class Draw {
                 domImage.setAttribute('width', w.toString())
                 domImage.setAttribute('y', y.toString())
                 domImage.setAttribute('x', x.toString())
+                domImage.setAttribute('clip-path', 'inset(0% round 15px)')
             }
 
             image.onerror = function () {
