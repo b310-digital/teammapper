@@ -3,6 +3,7 @@ import Log from '../../utils/log'
 import {MapSnapshot} from './history'
 import Utils from '../../utils/utils'
 import {Event} from './events'
+import * as d3 from 'd3'
 
 /**
  * Manage map image exports.
@@ -116,6 +117,19 @@ export default class Export {
 
         clone.setAttribute('transform', 'translate(0,0)')
         svg.appendChild(clone)
+
+        // convert all foreignObjects to native svg text to ensure better compatibility with svg readers
+        d3.select(clone).selectAll("foreignObject").nodes().forEach((fo: HTMLElement) => {
+            const parent = fo.parentElement
+            d3.select(parent).append("text")
+                .text(fo.firstChild.textContent)
+                .attr("y", parseInt(fo.getAttribute('y'), 10) + parseInt((fo.firstElementChild as HTMLElement).style.fontSize, 10))
+                .attr("x", fo.getAttribute('x'))
+                .attr("font-family", (fo.firstElementChild as HTMLElement).style.fontFamily)
+                .attr("font-size", (fo.firstElementChild as HTMLElement).style.fontSize)
+                .attr("fill", (fo.firstElementChild as HTMLElement).style.color);
+            fo.remove()
+        })
 
         this.convertImages(clone, () => {
             const xmls = new XMLSerializer(),
