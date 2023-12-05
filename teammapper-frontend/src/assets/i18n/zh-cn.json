@@ -42,6 +42,7 @@
     "IMAGE_SIZE": "图片大小",
     "START_EDIT_NODE": "Edit node text",
     "ADD_NODE": "新增节点",
+    "ADD_DETACHED_NODE": "Add a detached node",
     "REMOVE_NODE": "删除节点",
     "ZOOM_IN_MAP": "放大",
     "ZOOM_OUT_MAP": "缩小",

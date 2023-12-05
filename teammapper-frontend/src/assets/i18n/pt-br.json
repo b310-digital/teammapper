@@ -42,6 +42,7 @@
     "IMAGE_SIZE": "Alterar o tamanho da imagem do nó",
     "START_EDIT_NODE": "Edit node text",
     "ADD_NODE": "Adicionar um nó",
+    "ADD_DETACHED_NODE": "Add a detached node",
     "REMOVE_NODE": "Remover um nó",
     "ZOOM_IN_MAP": "Ampliar o mapa",
     "ZOOM_OUT_MAP": "Diminuir o mapa",

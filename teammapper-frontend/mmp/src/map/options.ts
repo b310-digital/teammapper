@@ -1,4 +1,4 @@
-import {Colors, Font, Image, Link} from './models/node'
+import {Colors, Coordinates, Font, Image, Link} from './models/node'
 import Utils from '../utils/utils'
 import Map from './map'
 import * as d3 from 'd3'
@@ -187,6 +187,10 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     link: {
         href: ''
     },
+    coordinates: {
+      x: 0,
+      y: 0
+    },
     image: {
         src: '',
         size: 60
@@ -203,13 +207,18 @@ export const DefaultNodeValues: DefaultNodeProperties = {
         decoration: ''
     },
     locked: true,
-    isRoot: false
+    detached: false,
+    isRoot: false,
 }
 
 export const DefaultRootNodeValues: DefaultNodeProperties = {
     name: 'Root node',
     link: {
         href: ''
+    },
+    coordinates: {
+      x: 0,
+      y: 0
     },
     image: {
         src: '',
@@ -227,16 +236,19 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
         decoration: ''
     },
     locked: true,
+    detached: false,
     isRoot: true
 }
 
 export interface DefaultNodeProperties {
     name: string
     image: Image
+    coordinates: Coordinates
     link: Link
     colors: Colors
     font: Font
     locked: boolean
+    detached: boolean
     isRoot: boolean
 }
 

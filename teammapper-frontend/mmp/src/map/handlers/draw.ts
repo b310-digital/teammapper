@@ -176,7 +176,7 @@ export default class Draw {
      * @returns {Path} path
      */
     public drawBranch(node: Node): Path {
-        if(node.parent === undefined) return
+        if(node.parent === undefined || node.parent === null) return
 
         const parent = node.parent,
             path = d3.path(),

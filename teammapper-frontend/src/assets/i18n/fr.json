@@ -42,6 +42,7 @@
     "TEXT_SIZE": "Change la taille du texte et du noeud",
     "IMAGE_SIZE": "Change la taille de l'image du noeud",
     "ADD_NODE": "Ajoute un noeud",
+    "ADD_DETACHED_NODE": "Add a detached node",
     "REMOVE_NODE": "Supprime un noeud",
     "ZOOM_IN_MAP": "Zoom sur la carte",
     "ZOOM_OUT_MAP": "Dézoom la carte",
