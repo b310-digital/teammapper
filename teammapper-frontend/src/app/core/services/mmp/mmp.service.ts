@@ -187,7 +187,7 @@ export class MmpService implements OnDestroy {
     const parent = !properties?.detached ? this.selectNode() : null;
 
     // detached nodes are not available as parent
-    if (parent?.detached) {
+    if (this.selectNode()?.detached) {
       return;
     }
 
