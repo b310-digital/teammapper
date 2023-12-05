@@ -55,7 +55,7 @@ export default class Nodes {
             locked: false,
             id: rootId,
             parent: null,
-            isDetached: false,
+            detached: false,
             isRoot: true
         }) as NodeProperties
 
@@ -84,7 +84,7 @@ export default class Nodes {
      * @param {string} overwriteId
      */
     public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string) => {
-        const parentNode: Node = userProperties.isDetached ? null :
+        const parentNode: Node = userProperties.detached ? null :
           parentId ? this.getNode(parentId) : this.getSelectedNode()
     
         const properties: NodeProperties = Utils.mergeObjects(this.map.options.defaultNode, userProperties, true) as NodeProperties
@@ -371,7 +371,7 @@ export default class Nodes {
             link:  Utils.cloneObject(node.link) as Link,
             locked: node.locked,
             isRoot: node.isRoot,
-            isDetached: node.isDetached,
+            detached: node.detached,
             k: node.k
         }
     }
@@ -565,7 +565,7 @@ export default class Nodes {
      * @returns {Array<Node>} siblings
      */
     private getSiblings(node: Node): Array<Node> {
-        if (!node.isRoot && !node.isDetached) {
+        if (!node.isRoot && !node.detached) {
             const parentChildren: Array<Node> = this.getChildren(node.parent)
 
             if (parentChildren.length > 1) {
@@ -606,7 +606,7 @@ export default class Nodes {
                 coordinates.x += 200
                 siblings = rightNodes
             }
-        } else if(!node.isDetached) {
+        } else if(!node.detached) {
             if (node.parent && this.getOrientation(node.parent)) {
                 coordinates.x -= 200
             } else {
@@ -617,7 +617,7 @@ export default class Nodes {
         if (siblings.length > 0) {
             const lowerNode = this.getLowerNode(siblings)
             coordinates.y = lowerNode.coordinates.y + 60
-        } else if(node.isDetached) {
+        } else if(node.detached) {
           coordinates.y -= 80
         } else {
           coordinates.y -= 120

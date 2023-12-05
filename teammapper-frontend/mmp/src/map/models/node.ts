@@ -19,7 +19,7 @@ export default class Node implements NodeProperties {
     public locked: boolean
     public dom: SVGGElement
     public isRoot: boolean
-    public isDetached: boolean
+    public detached: boolean
 
     /**
      * Initialize the node properties, the dimensions and the k coefficient.
@@ -36,7 +36,7 @@ export default class Node implements NodeProperties {
         this.link = properties.link
         this.locked = properties.locked
         this.isRoot = properties.isRoot
-        this.isDetached = properties.isDetached
+        this.detached = properties.detached
 
         this.dimensions = {
             width: 0,
@@ -105,7 +105,7 @@ export interface UserNodeProperties {
     font?: Font
     locked?: boolean
     isRoot?: boolean
-    isDetached?: boolean
+    detached?: boolean
 }
 
 export interface NodeProperties extends UserNodeProperties {

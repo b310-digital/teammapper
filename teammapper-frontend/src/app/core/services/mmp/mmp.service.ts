@@ -165,7 +165,7 @@ export class MmpService implements OnDestroy {
 
   /**
    * Adds an already created node on the server
-   * 
+   *
    * @param properties Given node properties as synced from the server
    */
   public addNodeFromServer(properties?: ExportNodeProperties) {
@@ -179,16 +179,16 @@ export class MmpService implements OnDestroy {
 
   /**
    * Add a node in the mind mmp triggered by the user.
-   * 
+   *
    * Detached nodes can be used as comments and are not assigned to a parent node
    */
   public addNode(properties?: UserNodeProperties, notifyWithEvent = true) {
     const newProps: UserNodeProperties = properties || { name: '' };
-    const parent = !properties?.isDetached ? this.selectNode() : null;
-    
+    const parent = !properties?.detached ? this.selectNode() : null;
+
     // detached nodes are not available as parent
-    if(parent?.isDetached) {
-      return
+    if (parent?.detached) {
+      return;
     }
 
     const settings = this.settingsService.getCachedSettings();
@@ -213,15 +213,15 @@ export class MmpService implements OnDestroy {
       };
     }
 
-    if (properties?.isDetached) {
-      const currentNode = this.selectNode()
-      newProps.coordinates = { x: currentNode.coordinates.x, y: currentNode.coordinates.y }
+    if (properties?.detached) {
+      const currentNode = this.selectNode();
+      newProps.coordinates = {
+        x: currentNode.coordinates.x,
+        y: currentNode.coordinates.y,
+      };
     }
 
-    this.currentMap.instance.addNode(
-      newProps,
-      notifyWithEvent
-    );
+    this.currentMap.instance.addNode(newProps, notifyWithEvent);
   }
 
   /**

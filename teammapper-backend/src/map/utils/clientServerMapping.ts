@@ -25,13 +25,13 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
     href: serverNode.linkHref || ''
   },
   id: serverNode.id,
+  detached: serverNode.detached || false,
   image: { src: serverNode.imageSrc || '', size: serverNode.imageSize || 0 },
   k: serverNode.k || 1,
   locked: serverNode.locked || false,
   name: serverNode.name || '',
   parent: serverNode.nodeParentId || null,
   isRoot: serverNode.root || false,
-  isDetached: serverNode.detached || false,
 });
 
 const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt: Date, deleteAfterDays: number): IMmpClientMap => {
@@ -60,7 +60,7 @@ const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Obje
   k: clientNode.k,
   linkHref: clientNode.link?.href,
   locked: clientNode.locked,
-  detached: clientNode.isDetached,
+  detached: clientNode.detached,
   name: clientNode.name,
   nodeParentId: clientNode.parent ? clientNode.parent : null,
   root: clientNode.isRoot,

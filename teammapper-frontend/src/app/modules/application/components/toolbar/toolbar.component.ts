@@ -49,7 +49,7 @@ export class ToolbarComponent {
   }
 
   public addDetachedNode() {
-    this.mmpService.addNode({isDetached: true, name: ''});
+    this.mmpService.addNode({ detached: true, name: '' });
   }
 
   public removeLink() {
