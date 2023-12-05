@@ -12,9 +12,6 @@
 name: Create and publish a Docker image
 
 on:
-  push:
-    branches:
-      - '207-reset-release-action'
   release:
     types: [published]
 
