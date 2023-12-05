@@ -42,7 +42,7 @@
     "IMAGE_SIZE": "Bildgröße",
     "START_EDIT_NODE": "Knoten Text bearbeiten",
     "ADD_NODE": "Knoten hinzufügen",
-    "ADD_DETACHED_NODE": "Kommentarknoten hinzufügen",
+    "ADD_DETACHED_NODE": "Freien Knoten hinzufügen (z.b. für Kommentare)",
     "REMOVE_NODE": "Knoten löschen",
     "ZOOM_IN_MAP": "Mindmap vergrößern",
     "ZOOM_OUT_MAP": "Mindmap verkleinern",
