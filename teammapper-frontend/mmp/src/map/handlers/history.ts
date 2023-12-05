@@ -125,7 +125,7 @@ export default class History {
             const mergedProperty = { ...DefaultNodeValues, ...property } as ExportNodeProperties
             const properties: NodeProperties = {
                 id: mergedProperty.id,
-                parent: this.map.nodes.getNode(mergedProperty.parent),
+                parent: mergedProperty.parent ? this.map.nodes.getNode(mergedProperty.parent) : null,
                 k: mergedProperty.k,
                 name: mergedProperty.name,
                 coordinates: Utils.cloneObject(mergedProperty.coordinates) as Coordinates,
@@ -203,7 +203,7 @@ export default class History {
     private checkNodeProperties(node: ExportNodeProperties) {
         const conditions: boolean[] = [
             typeof node.id === 'string',
-            typeof node.parent === 'string',
+            typeof node.parent === 'string' || node.parent === null,
             typeof node.k === 'number',
             typeof node.name === 'string',
             typeof node.locked === 'boolean',

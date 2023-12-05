@@ -48,6 +48,10 @@ export class ToolbarComponent {
     if (this.isValidLink(linkInput)) this.mmpService.addNodeLink(linkInput);
   }
 
+  public addDetachedNode() {
+    this.mmpService.addNode({isDetached: true, name: ''});
+  }
+
   public removeLink() {
     this.mmpService.removeNodeLink();
   }

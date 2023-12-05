@@ -63,6 +63,14 @@
   </div>
 
   <button
+    (click)="addDetachedNode()"
+    [title]="'TOOLTIPS.ADD_DETACHED_NODE' | translate"
+    [disabled]="editDisabled"
+    color="primary"
+    mat-icon-button>
+    <mat-icon>add_comment</mat-icon>
+  </button>
+  <button
     (click)="mmpService.copyNode()"
     [title]="'TOOLTIPS.COPY_NODE' | translate"
     [disabled]="editDisabled"

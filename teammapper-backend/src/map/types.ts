@@ -51,6 +51,7 @@ export interface IMmpClientNode extends IMmpClientNodeBasics {
   locked: boolean;
   parent: string;
   isRoot: boolean;
+  isDetached: boolean;
 }
 
 export interface IMmpClientMapOptions {
