@@ -45,6 +45,7 @@ export interface IMmpClientNodeBasics {
 
 export interface IMmpClientNode extends IMmpClientNodeBasics {
   coordinates: IMmpClientCoordinates;
+  detached: boolean;
   id: string;
   k: number;
   link: { href: string }

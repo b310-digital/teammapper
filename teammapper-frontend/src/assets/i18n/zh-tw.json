@@ -42,6 +42,7 @@
     "TEXT_SIZE": "變更節點文字大小",
     "IMAGE_SIZE": "變更節點圖片大小",
     "ADD_NODE": "新增節點",
+    "ADD_DETACHED_NODE": "Add a detached node",
     "REMOVE_NODE": "移除節點",
     "ZOOM_IN_MAP": "放大地圖",
     "ZOOM_OUT_MAP": "縮小地圖",

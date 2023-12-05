@@ -42,6 +42,7 @@
     "TEXT_SIZE": "Cambia la dimensione del testo e del nodo",
     "IMAGE_SIZE": "Cambia la dimensione dell'immage del nodo",
     "ADD_NODE": "Aggiunge un nodo",
+    "ADD_DETACHED_NODE": "Add a detached node",
     "REMOVE_NODE": "Rimuove un nodo",
     "ZOOM_IN_MAP": "Esegue uno zoom-in",
     "ZOOM_OUT_MAP": "Esegue uno zoom-out",
