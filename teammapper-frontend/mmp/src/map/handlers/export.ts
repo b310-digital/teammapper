@@ -59,10 +59,18 @@ export default class Export {
 
             image.onload = () => {
                 const canvas = document.createElement('canvas'),
-                      context = canvas.getContext('2d')
+                      context = canvas.getContext('2d'),
+                      pixelRatio = window.devicePixelRatio || 1
 
                 canvas.width = image.width
                 canvas.height = image.height
+
+                canvas.style.width = canvas.width +'px'
+                canvas.style.height = canvas.height +'px'
+                canvas.width *= pixelRatio
+                canvas.height *= pixelRatio
+                context.setTransform(pixelRatio,0,0,pixelRatio,0,0)
+
                 context.drawImage(image, 0, 0)
                 context.globalCompositeOperation = 'destination-over'
                 context.fillStyle = '#ffffff'
