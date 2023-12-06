@@ -131,13 +131,16 @@ export default class Export {
         // convert all foreignObjects to native svg text to ensure better compatibility with svg readers
         d3.select(clone).selectAll("foreignObject").nodes().forEach((fo: HTMLElement) => {
             const parent = fo.parentElement
-            d3.select(parent).append("text")
-                .text(fo.firstChild.textContent)
-                .attr("y", parseInt(fo.getAttribute('y'), 10) + parseInt((fo.firstElementChild as HTMLElement).style.fontSize, 10))
-                .attr("x", fo.getAttribute('x'))
-                .attr("font-family", (fo.firstElementChild as HTMLElement).style.fontFamily)
-                .attr("font-size", (fo.firstElementChild as HTMLElement).style.fontSize)
-                .attr("fill", (fo.firstElementChild as HTMLElement).style.color);
+            d3.select(parent)
+              .attr("width", fo.getAttribute("width"))
+              .append("text")
+              .text(fo.firstChild.textContent)
+              .attr("y", parseInt(fo.getAttribute('y'), 10) + parseInt((fo.firstElementChild as HTMLElement).style.fontSize, 10))
+              .attr("x", parseInt(fo.getAttribute('x'), 10) + Math.floor(parseInt(fo.getAttribute('width'), 10) / 2))
+              .attr("text-anchor", "middle")
+              .attr("font-family", (fo.firstElementChild as HTMLElement).style.fontFamily)
+              .attr("font-size", (fo.firstElementChild as HTMLElement).style.fontSize)
+              .attr("fill", (fo.firstElementChild as HTMLElement).style.color);
             fo.remove()
         })
 
