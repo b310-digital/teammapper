@@ -9,8 +9,8 @@ import { ApplicationComponent } from './pages/application/application.component'
 import { SettingsComponent } from './pages/settings/settings.component';
 import { ShortcutsComponent } from './pages/shortcuts/shortcuts.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatLegacyMenuModule as MatMenuModule } from '@angular/material/legacy-menu';
+import { MatLegacyTabsModule as MatTabsModule } from '@angular/material/legacy-tabs';
 import { ClientColorPanelsComponent } from './components/client-color-panels/client-color-panels.component';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { DialogAboutComponent } from './components/dialog-about/dialog-about.component';
