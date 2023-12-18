@@ -4,10 +4,11 @@ services:
   app_prod:
     tty: true
     stdin_open: true
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
+    image: ghcr.io/b310-digital/teammapper:v0.0.9
+    #build:
+     # context: .
+    #  dockerfile: Dockerfile
+   #   target: production
     environment:
       MODE: ${PROD_MODE:-DEV}
       BINDING: "0.0.0.0"

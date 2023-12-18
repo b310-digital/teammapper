@@ -8,6 +8,7 @@ USER node
 ENV APP_PATH=/home/node/app
 ENV APP_BACKEND_PATH=${APP_PATH}/teammapper-backend
 ENV APP_FRONTEND_PATH=${APP_PATH}/teammapper-frontend
+ENV npm_config_cache /tmp/npm
 
 RUN mkdir -p $APP_PATH
 WORKDIR $APP_PATH
