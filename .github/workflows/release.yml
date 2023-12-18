@@ -14,9 +14,6 @@ name: Create and publish a Docker image
 on:
   release:
     types: [published]
-  push:
-    branches:
-      - 218-fix-prod-image-npm-bug
 
 env:
   REGISTRY: ghcr.io
