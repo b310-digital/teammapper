@@ -4,7 +4,7 @@ services:
   app_prod:
     tty: true
     stdin_open: true
-    image: ghcr.io/b310-digital/teammapper:v0.0.9
+    image: ghcr.io/b310-digital/teammapper:218-fix-prod-image-npm-bug
     #build:
      # context: .
     #  dockerfile: Dockerfile
