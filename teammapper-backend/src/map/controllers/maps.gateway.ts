@@ -1,4 +1,5 @@
-import { CACHE_MANAGER, Inject, UseGuards } from '@nestjs/common';
+import { Inject, UseGuards } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { randomBytes } from 'crypto';
 import {
@@ -48,7 +49,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     @MessageBody() request: IMmpClientJoinRequest,
   ): Promise<IMmpClientMap> {
     client.join(request.mapId);
-    this.cacheManager.set(client.id, request.mapId, { ttl: 10000 });
+    this.cacheManager.set(client.id, request.mapId, 10000);
     const updatedClientCache: IClientCache = await this.addClientForMap(request.mapId, client.id, request.color);
 
     this.server
@@ -191,14 +192,14 @@ export class MapsGateway implements OnGatewayDisconnect {
     const overwriteColor = this.chooseColor(currentClientCache, color);
 
     const newClientCache: IClientCache = { ...currentClientCache, [clientId]: overwriteColor };
-    await this.cacheManager.set(mapId, newClientCache, { ttl: 10000 });
+    await this.cacheManager.set(mapId, newClientCache, 10000);
     return newClientCache;
   }
 
   private async removeClientForMap(mapId: string, clientId: string) {
     const currentClientCache: IClientCache = await this.cacheManager.get(mapId) || {};
     delete currentClientCache[clientId];
-    this.cacheManager.set(mapId, currentClientCache, { ttl: 10000 });
+    this.cacheManager.set(mapId, currentClientCache, 10000);
   }
 
   private chooseColor(currentClientCache: IClientCache, color: string): string {

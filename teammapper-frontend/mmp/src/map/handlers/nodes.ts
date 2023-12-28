@@ -55,6 +55,7 @@ export default class Nodes {
             locked: false,
             id: rootId,
             parent: null,
+            detached: false,
             isRoot: true
         }) as NodeProperties
 
@@ -83,16 +84,9 @@ export default class Nodes {
      * @param {string} overwriteId
      */
     public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string) => {
-        if (parentId && typeof parentId !== 'string') {
-            Log.error('The node id must be a string', 'type')
-        }
-
-        const parentNode: Node = parentId ? this.getNode(parentId) : this.selectedNode
-
-        if (parentNode === undefined) {
-            Log.error('There are no nodes with id "' + parentId + '"')
-        }
-
+        const parentNode: Node = userProperties.detached ? null :
+          parentId ? this.getNode(parentId) : this.getSelectedNode()
+    
         const properties: NodeProperties = Utils.mergeObjects(this.map.options.defaultNode, userProperties, true) as NodeProperties
 
         properties.id = overwriteId || uuidv4()
@@ -377,6 +371,7 @@ export default class Nodes {
             link:  Utils.cloneObject(node.link) as Link,
             locked: node.locked,
             isRoot: node.isRoot,
+            detached: node.detached,
             k: node.k
         }
     }
@@ -570,7 +565,7 @@ export default class Nodes {
      * @returns {Array<Node>} siblings
      */
     private getSiblings(node: Node): Array<Node> {
-        if (!node.isRoot) {
+        if (!node.isRoot && !node.detached) {
             const parentChildren: Array<Node> = this.getChildren(node.parent)
 
             if (parentChildren.length > 1) {
@@ -591,12 +586,12 @@ export default class Nodes {
      */
     private calculateCoordinates(node: Node): Coordinates {
         let coordinates: Coordinates = {
-                x: node.parent.coordinates.x,
-                y: node.parent.coordinates.y
+                x: node.parent ? node.parent.coordinates.x : node.coordinates.x || 0,
+                y: node.parent ? node.parent.coordinates.y : node.coordinates.y || 0
             },
             siblings: Array<Node> = this.getSiblings(node)
 
-        if (node.parent.isRoot) {
+        if (node.parent && node.parent.isRoot) {
             const rightNodes: Array<Node> = [],
                 leftNodes: Array<Node> = []
 
@@ -611,8 +606,8 @@ export default class Nodes {
                 coordinates.x += 200
                 siblings = rightNodes
             }
-        } else {
-            if (this.getOrientation(node.parent)) {
+        } else if(!node.detached) {
+            if (node.parent && this.getOrientation(node.parent)) {
                 coordinates.x -= 200
             } else {
                 coordinates.x += 200
@@ -622,8 +617,10 @@ export default class Nodes {
         if (siblings.length > 0) {
             const lowerNode = this.getLowerNode(siblings)
             coordinates.y = lowerNode.coordinates.y + 60
+        } else if(node.detached) {
+          coordinates.y -= 80
         } else {
-            coordinates.y -= 120
+          coordinates.y -= 120
         }
 
         return coordinates

@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+  MatLegacyDialog as MatDialog,
+  MatLegacyDialogRef as MatDialogRef,
+} from '@angular/material/legacy-dialog';
 import { DialogAboutComponent } from 'src/app/modules/application/components/dialog-about/dialog-about.component';
 import { DialogConnectionInfoComponent } from 'src/app/modules/application/components/dialog-connection-info/dialog-connection-info.component';
 import { DialogShareComponent } from 'src/app/modules/application/components/dialog-share/dialog-share.component';

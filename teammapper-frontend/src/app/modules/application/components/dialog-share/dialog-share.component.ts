@@ -34,7 +34,7 @@ export class DialogShareComponent implements OnInit {
   }
 
   appendQrCode() {
-    const size: number = window.innerWidth > 400 ? 300 : 200;
+    const size: number = window.innerWidth > 500 ? 300 : 200;
 
     this.qrCode = new QRCodeStyling({
       ...qrcodeStyling,

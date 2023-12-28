@@ -1,4 +1,6 @@
+
 # TeamMapper
+![TeamMapper Screenshot](docs/teammapper-logo.png "TeamMapper Logo")
 
 Mindmapping made simple: Host and create your own mindmaps. Share your mindmap sessions with your team and collaborate on mindmaps.
 
@@ -53,7 +55,7 @@ services:
       - postgres_prod
 
   postgres_prod:
-    image: postgres:12-alpine
+    image: postgres:15-alpine
     # Pass config parameters to the postgres server.
     # Find more information below when you need to generate the ssl-relevant file your self
     # command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key

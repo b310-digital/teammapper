@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { MapProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';

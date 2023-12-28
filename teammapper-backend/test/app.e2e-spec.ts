@@ -88,6 +88,7 @@ describe('AppController (e2e)', () => {
           {
             name: 'test',
             coordinates: { x: 1.1, y: 2.2 },
+            detached: false,
             font: { style: '', size: 5, weight: '' },
             colors: { branch: '', background: '', name: '' },
             image: { size: 60, src: '' },

@@ -362,7 +362,7 @@ export class MapSyncService implements OnDestroy {
       if (result.clientId === this.socket.id) return;
 
       if (!this.mmpService.existNode(result?.node?.id)) {
-        this.mmpService.addNode(result.node, false);
+        this.mmpService.addNodeFromServer(result.node);
       }
     });
 

@@ -83,6 +83,9 @@ export class MmpNode {
   @Column({ nullable: true })
     locked: boolean;
 
+  @Column({ default: false })
+    detached: boolean;
+
   @Column({ nullable: true, type: 'float' })
     k: number;
 

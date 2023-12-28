@@ -3,6 +3,7 @@ import Log from '../../utils/log'
 import {MapSnapshot} from './history'
 import Utils from '../../utils/utils'
 import {Event} from './events'
+import * as d3 from 'd3'
 
 /**
  * Manage map image exports.
@@ -58,10 +59,17 @@ export default class Export {
 
             image.onload = () => {
                 const canvas = document.createElement('canvas'),
-                      context = canvas.getContext('2d')
+                      context = canvas.getContext('2d'),
+                      scale = window.devicePixelRatio || 1
 
-                canvas.width = image.width
-                canvas.height = image.height
+                // need to adjust scale of the image
+                // see https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio
+                canvas.style.width = image.width +'px'
+                canvas.style.height = image.height +'px'
+                canvas.width = Math.floor(image.width * scale);
+                canvas.height = Math.floor(image.height * scale);
+                context.scale(scale, scale);
+
                 context.drawImage(image, 0, 0)
                 context.globalCompositeOperation = 'destination-over'
                 context.fillStyle = '#ffffff'
@@ -70,7 +78,10 @@ export default class Export {
                 if (typeof type === 'string') {
                     type = 'image/' + type
                 }
-
+                // Safari seems to have an issue with loading all included images on time during the download of the data url.
+                // This is a small workaround, as calling toBlob before seems to solve the problem most of the times.
+                canvas.toBlob(() => {})
+                
                 callback(canvas.toDataURL(type))
                 this.map.events.call(Event.exportImage)
             }
@@ -116,6 +127,22 @@ export default class Export {
 
         clone.setAttribute('transform', 'translate(0,0)')
         svg.appendChild(clone)
+
+        // convert all foreignObjects to native svg text to ensure better compatibility with svg readers
+        d3.select(clone).selectAll("foreignObject").nodes().forEach((fo: HTMLElement) => {
+            const parent = fo.parentElement
+            d3.select(parent)
+              .attr("width", fo.getAttribute("width"))
+              .append("text")
+              .text(fo.firstChild.textContent)
+              .attr("y", parseInt(fo.getAttribute('y'), 10) + parseInt((fo.firstElementChild as HTMLElement).style.fontSize, 10))
+              .attr("x", parseInt(fo.getAttribute('x'), 10) + Math.floor(parseInt(fo.getAttribute('width'), 10) / 2))
+              .attr("text-anchor", "middle")
+              .attr("font-family", (fo.firstElementChild as HTMLElement).style.fontFamily)
+              .attr("font-size", (fo.firstElementChild as HTMLElement).style.fontSize)
+              .attr("fill", (fo.firstElementChild as HTMLElement).style.color);
+            fo.remove()
+        })
 
         this.convertImages(clone, () => {
             const xmls = new XMLSerializer(),

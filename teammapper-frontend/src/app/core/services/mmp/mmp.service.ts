@@ -164,14 +164,33 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Add a node in the mind mmp.
+   * Adds an already created node on the server
+   *
+   * @param properties Given node properties as synced from the server
    */
-  public addNode(properties?: ExportNodeProperties, notifyWithEvent = true) {
+  public addNodeFromServer(properties?: ExportNodeProperties) {
+    this.currentMap.instance.addNode(
+      properties,
+      false,
+      properties?.parent,
+      properties?.id
+    );
+  }
+
+  /**
+   * Add a node in the mind mmp triggered by the user.
+   *
+   * Detached nodes can be used as comments and are not assigned to a parent node
+   */
+  public addNode(properties?: UserNodeProperties, notifyWithEvent = true) {
     const newProps: UserNodeProperties = properties || { name: '' };
-    // when the method is called with no params (from shortcut service), use the current selected node as parent
-    const parent = properties?.parent
-      ? this.getNode(properties.parent)
-      : this.selectNode();
+    const parent = !properties?.detached ? this.selectNode() : null;
+
+    // detached nodes are not available as parent
+    if (this.selectNode()?.detached) {
+      return;
+    }
+
     const settings = this.settingsService.getCachedSettings();
 
     if (properties?.colors?.branch) {
@@ -194,12 +213,15 @@ export class MmpService implements OnDestroy {
       };
     }
 
-    this.currentMap.instance.addNode(
-      newProps,
-      notifyWithEvent,
-      properties?.parent,
-      properties?.id
-    );
+    if (properties?.detached) {
+      const currentNode = this.selectNode();
+      newProps.coordinates = {
+        x: currentNode.coordinates.x,
+        y: currentNode.coordinates.y,
+      };
+    }
+
+    this.currentMap.instance.addNode(newProps, notifyWithEvent);
   }
 
   /**
