@@ -134,6 +134,7 @@ export default class History {
                 font: Utils.cloneObject(mergedProperty.font) as Font,
                 link: Utils.cloneObject(mergedProperty.link) as Link,
                 locked: mergedProperty.locked,
+                detached: mergedProperty.detached,
                 isRoot: mergedProperty.isRoot
             }
 
