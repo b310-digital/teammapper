@@ -27,7 +27,7 @@ services:
       - postgres_prod
 
   postgres_prod:
-    image: postgres:15-alpine
+    image: postgres:12-alpine
     # Pass config parameters to the postgres server.
     # Find more information below when you need to generate the ssl-relevant file your self
     # command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
