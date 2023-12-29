@@ -190,7 +190,6 @@ export class MmpService implements OnDestroy {
     if (this.selectNode()?.detached) {
       return;
     }
-
     const settings = this.settingsService.getCachedSettings();
 
     if (properties?.colors?.branch) {
