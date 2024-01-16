@@ -38,7 +38,7 @@ services:
       - postgres
 
   postgres:
-    image: postgres:12-alpine
+    image: postgres:15-alpine
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_DB: ${POSTGRES_DB:-teammapper-backend-dev}
