@@ -42,7 +42,7 @@ USER node
 RUN export CHROME_BIN=/usr/bin/chromium-browser
 
 COPY --chown=node:node teammapper-frontend/package.json teammapper-frontend/package-lock.json $APP_FRONTEND_PATH/
-RUN npm --prefix teammapper-frontend install
+# RUN npm --prefix teammapper-frontend install
 
 COPY --chown=node:node teammapper-backend/package.json teammapper-backend/package-lock.json $APP_BACKEND_PATH/
 RUN npm --prefix teammapper-backend install
