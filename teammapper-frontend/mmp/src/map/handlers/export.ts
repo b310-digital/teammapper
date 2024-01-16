@@ -4,6 +4,7 @@ import {MapSnapshot} from './history'
 import Utils from '../../utils/utils'
 import {Event} from './events'
 import * as d3 from 'd3'
+import DOMPurify from 'dompurify'
 
 /**
  * Manage map image exports.
@@ -143,7 +144,7 @@ export default class Export {
               .attr('font-family', (fo.firstElementChild as HTMLElement).style.fontFamily)
               .attr('font-size', (fo.firstElementChild as HTMLElement).style.fontSize)
               .attr('fill', (fo.firstElementChild as HTMLElement).style.color)
-              .html(svgTextWithLineBreaks.join(''))
+              .html(DOMPurify.sanitize(svgTextWithLineBreaks.join('')))
             fo.remove()
         })
 
