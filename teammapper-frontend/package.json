@@ -59,7 +59,7 @@
     "@ngx-translate/http-loader": "^7.0.0",
     "angular2-hotkeys": "^13.1.0",
     "d3": "7.6.1",
-    "dompurify": "2.4.0",
+    "dompurify": "3.0.6",
     "eslint-config-standard": "^17.0.0",
     "jspdf": "^2.5.1",
     "localforage": "1.10.0",
