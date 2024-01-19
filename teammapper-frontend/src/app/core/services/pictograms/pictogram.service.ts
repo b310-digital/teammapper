@@ -27,4 +27,9 @@ export class PictogramService implements OnDestroy {
   getPictoImageUrl(id: number, size: number = 300, fileType: string = 'png') {
     return `${this.staticAssetUrl}/${id}/${id}_${size}.${fileType}`
   }
+
+  getPictoImage(id: number): Observable<Blob> {
+    const url = this.getPictoImageUrl(id)
+    return this.http.get(url, { responseType: 'blob' })
+  }
 }

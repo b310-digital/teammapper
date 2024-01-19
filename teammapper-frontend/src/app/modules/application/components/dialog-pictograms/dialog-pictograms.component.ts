@@ -3,6 +3,7 @@ import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
 import { map } from 'rxjs/operators';
+import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 
 @Component({
   selector: 'teammapper-dialog-pictograms',
@@ -11,6 +12,7 @@ import { map } from 'rxjs/operators';
 })
 export class DialogPictogramsComponent {
   public pictos: IPictogramResponse[] 
+  public searchTerm: string = ""
   public cardLayout = this.breakpointObserver
   .observe([Breakpoints.Handset])
   .pipe(
@@ -29,15 +31,32 @@ export class DialogPictogramsComponent {
     })
   );
 
-  constructor(private pictoService: PictogramService, private breakpointObserver: BreakpointObserver) {}
+  constructor(private pictoService: PictogramService, private breakpointObserver: BreakpointObserver, private mmpService: MmpService) {}
 
   async search() {
-    this.pictoService.getPictos('Haus').subscribe(pictos => {
+    this.pictoService.getPictos(this.searchTerm).subscribe(pictos => {
       this.pictos = pictos
+    });
+  }
+
+  async getImageFileOfId(id: number) {
+    const image = this.pictoService.getPictoImage(id).subscribe(async img => {
+      console.log(URL.createObjectURL(img))
+      this.mmpService.addNodeImage(await this.blobToBase64(img));
     });
   }
 
   getImageUrlOfId(id: number): string {
     return this.pictoService.getPictoImageUrl(id)
   }
+
+  blobToBase64(blob: Blob): Promise<string | ArrayBuffer> {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    return new Promise(resolve => {
+      reader.onloadend = () => {
+        resolve(reader.result);
+      };
+    });
+  };
 }

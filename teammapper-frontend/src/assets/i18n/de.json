@@ -82,7 +82,8 @@
     "PICTOGRAMS": {
       "TITLE": "Piktogramme einfügen",
       "CONTENT": "Füge Piktrogramme ein",
-      "BUTTON_SEARCH": "Suchen"
+      "BUTTON_SEARCH": "Suchen",
+      "FORM_INPUT_LABEL_SEARCH": "Suchwort"
     },
     "SHARE": {
       "TITLE": "Map teilen",
