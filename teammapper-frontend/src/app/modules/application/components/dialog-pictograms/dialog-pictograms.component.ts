@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
@@ -35,6 +35,7 @@ export class DialogPictogramsComponent {
 
   constructor(private pictoService: PictogramService, private breakpointObserver: BreakpointObserver, private mmpService: MmpService, private utilsService: UtilsService, private dialogService: DialogService) {}
 
+  @HostListener('document:keydown.enter')
   async search() {
     this.pictoService.getPictos(this.searchTerm).subscribe(pictos => {
       this.pictos = pictos

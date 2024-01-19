@@ -1,13 +1,19 @@
 <h2 mat-dialog-title>{{ 'MODALS.PICTOGRAMS.TITLE' | translate }}</h2>
+<img ngSrc="/assets/images/logo_ARASAAC.png" width="200" height="50">
 <mat-dialog-content>
   <mat-form-field>
     <mat-label>{{ 'MODALS.PICTOGRAMS.FORM_INPUT_LABEL_SEARCH' | translate }}</mat-label>
     <input matInput [(ngModel)]="searchTerm" required>
+    <button matSuffix mat-flat-button (click)="search()">
+      <mat-icon>search</mat-icon>
+    </button>
   </mat-form-field>
   <ng-container *ngIf="cardLayout | async as layout">
   <mat-grid-list cols="2" rowHeight="2:1" [cols]="layout.columns">
-    <mat-grid-tile *ngFor="let picto of pictos;" [colspan]="layout.miniCard.cols" [rowspan]="layout.miniCard.rows">
-      <img ngSrc="{{getImageUrlOfId(picto._id)}}" width="150" height="150" (click)="getImageFileOfId(picto._id)">
+    <mat-grid-tile *ngFor="let picto of pictos;" [colspan]="layout.miniCard.cols" [rowspan]="layout.miniCard.rows" class="image-wrapper">
+      <button mat-button (click)="getImageFileOfId(picto._id)">
+        <img ngSrc="{{getImageUrlOfId(picto._id)}}" width="150" height="150" >
+      </button>
     </mat-grid-tile>
   </mat-grid-list>
 </ng-container>
@@ -16,7 +22,5 @@
   <button mat-raised-button [mat-dialog-close]="true">
     {{ 'MODALS.GENERAL.BUTTON_CLOSE' | translate }}
   </button>
-  <button mat-flat-button color="primary" (click)="search()">
-    {{ 'MODALS.PICTOGRAMS.BUTTON_SEARCH' | translate }}
-  </button>
+
 </mat-dialog-actions>
