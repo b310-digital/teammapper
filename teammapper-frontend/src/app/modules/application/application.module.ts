@@ -16,6 +16,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 import { DialogAboutComponent } from './components/dialog-about/dialog-about.component';
 import { DialogShareComponent } from './components/dialog-share/dialog-share.component';
 import { DialogConnectionInfoComponent } from './components/dialog-connection-info/dialog-connection-info.component';
+import { DialogPictogramsComponent } from './components/dialog-pictograms/dialog-pictograms.component';
 
 @NgModule({
   imports: [
@@ -23,7 +24,7 @@ import { DialogConnectionInfoComponent } from './components/dialog-connection-in
     MatMenuModule,
     MatTabsModule,
     ApplicationRoutingModule,
-    ColorPickerModule,
+    ColorPickerModule
   ],
   declarations: [
     ApplicationComponent,
@@ -37,6 +38,7 @@ import { DialogConnectionInfoComponent } from './components/dialog-connection-in
     ToolbarComponent,
     DialogConnectionInfoComponent,
     DialogShareComponent,
+    DialogPictogramsComponent,
     DialogAboutComponent,
   ],
 })

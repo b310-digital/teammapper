@@ -31,7 +31,7 @@ export function createTranslateLoader(http: HttpClient) {
         deps: [HttpClient],
       },
     }),
-    HotkeyModule.forRoot(),
+    HotkeyModule.forRoot()
   ],
   declarations: [RootComponent],
   providers: [

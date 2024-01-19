@@ -31,6 +31,10 @@ export class ToolbarComponent {
     this.dialogService.openShareDialog();
   }
 
+  public async pictogram() {
+    this.dialogService.openPictogramDialog();
+  }
+
   public toogleNodeFontStyle() {
     const currentStyle = this.mmpService.selectNode().font.style;
 

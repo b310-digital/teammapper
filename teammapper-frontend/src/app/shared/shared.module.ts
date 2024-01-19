@@ -16,8 +16,8 @@ import { MatLegacyFormFieldModule as MatFormFieldModule } from '@angular/materia
 import { MatLegacyInputModule as MatInputModule } from '@angular/material/legacy-input';
 import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/material/legacy-slide-toggle';
 import { StripTags } from './pipes/striptags.pipe';
-import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
 import { InverseBoolPipe } from './pipes/inverse-bool.pipe';
+import { MatDialogModule } from '@angular/material/dialog';
 
 const PIPES = [StripTags, InverseBoolPipe];
 

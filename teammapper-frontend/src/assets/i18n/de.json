@@ -36,6 +36,7 @@
     "EDIT_NODE": "Änderungen am Text eines Knotens erlauben",
     "COUPLE_NODE": "Knoten koppeln oder entkoppeln",
     "NODE_IMAGE": "Bild zum Knoten hinzufügen oder entfernen",
+    "PICTOGRAM": "Piktrogramm",
     "BOLD_TEXT": "Fett",
     "ITALIC_TEXT": "Kursiv",
     "TEXT_SIZE": "Textgröße",
@@ -77,6 +78,11 @@
       "TITLE": "Verbindung verloren",
       "CONTENT": "Leider ist die Verbindung zum Server verloren gegangen. Versuche erneut zu verbinden...",
       "BUTTON_RECONNECT": "Neu verbinden"
+    },
+    "PICTOGRAMS": {
+      "TITLE": "Piktogramme einfügen",
+      "CONTENT": "Füge Piktrogramme ein",
+      "BUTTON_SEARCH": "Suchen"
     },
     "SHARE": {
       "TITLE": "Map teilen",
