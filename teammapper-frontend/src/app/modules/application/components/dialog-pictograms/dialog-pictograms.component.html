@@ -1,7 +1,13 @@
 <h2 mat-dialog-title>{{ 'MODALS.PICTOGRAMS.TITLE' | translate }}</h2>
-<mat-dialog-content>{{
-  'MODALS.PICTOGRAMS.CONTENT' | translate
-}}</mat-dialog-content>
+<mat-dialog-content>
+  <ng-container *ngIf="cardLayout | async as layout">
+  <mat-grid-list cols="2" rowHeight="2:1" [cols]="layout.columns">
+    <mat-grid-tile *ngFor="let picto of pictos;" [colspan]="layout.miniCard.cols" [rowspan]="layout.miniCard.rows">
+      <img ngSrc="{{getImageUrlOfId(picto._id)}}" width="150" height="150">
+    </mat-grid-tile>
+  </mat-grid-list>
+</ng-container>
+</mat-dialog-content>
 <mat-dialog-actions>
   <button mat-flat-button color="primary" (click)="search()">
     {{ 'MODALS.PICTOGRAMS.BUTTON_SEARCH' | translate }}

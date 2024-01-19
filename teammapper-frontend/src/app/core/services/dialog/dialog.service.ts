@@ -17,7 +17,7 @@ export class DialogService {
   constructor(private dialog: MatDialog) {}
 
   openPictogramDialog() {
-    this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent);
+    this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent, { width: '100%' });
   }
 
   closePictogramDialog() {
