@@ -55,7 +55,9 @@ section.jumbotron {
       }
     }
 
-    > button {
+    > a {
+      font-family: Fira Sans;
+      width: 170px;
       font-weight: bold;
       color: mat.get-color-from-palette($app-primary);
       margin-bottom: 10px;

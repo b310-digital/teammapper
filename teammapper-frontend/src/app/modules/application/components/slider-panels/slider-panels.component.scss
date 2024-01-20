@@ -1,16 +1,15 @@
 div.sliders-panel {
-  .mat-slider-vertical {
+  .slider-vertical {
     z-index: 2;
     position: absolute;
-    height: 180px;
-    top: 40%;
-  }
-
-  .font-size {
     left: 15px;
   }
 
+  .font-size {
+    top: 150px
+  }
+
   .image-size {
-    left: 45px;
+    top: calc(150px + 50px);
   }
 }
