@@ -145,4 +145,17 @@ export class UtilsService {
 
     return confirm(message);
   }
+
+  /**
+   * Converts a blob to a data url
+   */
+  public blobToBase64(blob: Blob): Promise<string | ArrayBuffer> {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    return new Promise(resolve => {
+      reader.onloadend = () => {
+        resolve(reader.result);
+      };
+    });
+  }
 }
