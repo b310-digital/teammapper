@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
 import { IPictogramResponse } from './picto-types';
 import { environment } from 'src/environments/environment';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,10 +15,14 @@ export class PictogramService {
     environment.pictogramStaticUrl || 'https://static.arasaac.org/pictograms';
   private apiResource = 'bestsearch';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private settingsSerivce: SettingsService
+  ) {}
 
   getPictos(seachTerm: string): Observable<IPictogramResponse[]> {
-    const language = 'de';
+    const language =
+      this.settingsSerivce.getCachedSettings()?.general?.language || 'en';
     const url = `${this.apirUrl}/${language}/${this.apiResource}/${seachTerm}`;
     return this.http.get<IPictogramResponse[]>(url);
   }

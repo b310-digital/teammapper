@@ -80,9 +80,11 @@
       "BUTTON_RECONNECT": "Reconnect"
     },
     "PICTOGRAMS": {
-      "TITLE": "Add Pictograms",
-      "CONTENT": "Add pictograms",
-      "BUTTON_SEARCH": "Search"
+      "TITLE": "Add a pictogram",
+      "BUTTON_SEARCH": "Search",
+      "FORM_INPUT_LABEL_SEARCH": "Search term",
+      "TERMS_TEXT": "Pictograms author: Sergio Palao. Origin: ARASAAC (http://www.arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain)",
+      "EMPTY": "No result"
     },
     "SHARE": {
       "TITLE": "Share map",

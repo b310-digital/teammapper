@@ -6,6 +6,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { IPictogramResponse } from './picto-types';
+import { SettingsService } from '../settings/settings.service';
 
 const testData: IPictogramResponse = {
   schematic: false,
@@ -28,6 +29,7 @@ const testData: IPictogramResponse = {
 describe('PictogramService', () => {
   let httpClient: HttpClient;
   let httpTestingController: HttpTestingController;
+  let settingsService: SettingsService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -37,14 +39,19 @@ describe('PictogramService', () => {
     // Inject the http service and test controller for each test
     httpClient = TestBed.inject(HttpClient);
     httpTestingController = TestBed.inject(HttpTestingController);
+    settingsService = jasmine.createSpyObj('storageService', [
+      'getCachedSettings',
+    ]);
   });
 
   it('fetches pictos', () => {
-    new PictogramService(httpClient).getPictos('House').subscribe(data => {
-      expect(data).toEqual([testData]);
-    });
+    new PictogramService(httpClient, settingsService)
+      .getPictos('House')
+      .subscribe(data => {
+        expect(data).toEqual([testData]);
+      });
     const httpRequest = httpTestingController.expectOne(
-      'https://api.arasaac.org/v1/pictograms/de/bestsearch/House'
+      'https://api.arasaac.org/v1/pictograms/en/bestsearch/House'
     );
     expect(httpRequest.request.method).toBe('GET');
     httpRequest.flush([testData]);
@@ -52,7 +59,10 @@ describe('PictogramService', () => {
   });
 
   it('constructs the asset url', () => {
-    const imageUrl = new PictogramService(httpClient).getPictoImageUrl(3);
+    const imageUrl = new PictogramService(
+      httpClient,
+      settingsService
+    ).getPictoImageUrl(3);
     expect(imageUrl).toEqual(
       'https://static.arasaac.org/pictograms/3/3_300.png'
     );
@@ -60,9 +70,11 @@ describe('PictogramService', () => {
 
   it('gets the image', () => {
     const blob: Blob = new Blob();
-    new PictogramService(httpClient).getPictoImage(3).subscribe(data => {
-      expect(data).toEqual(blob);
-    });
+    new PictogramService(httpClient, settingsService)
+      .getPictoImage(3)
+      .subscribe(data => {
+        expect(data).toEqual(blob);
+      });
     const httpRequest = httpTestingController.expectOne(
       'https://static.arasaac.org/pictograms/3/3_300.png'
     );
