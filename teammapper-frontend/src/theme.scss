@@ -22,7 +22,7 @@ $app-theme: mat.define-light-theme((
     accent: $app-accent,
     warn: $app-warn
   ),
-  typography: mat.define-typography-config(),
+  typography: mat.define-typography-config($font-family: 'Fira Sans'),
   density: 0,
 ));
 
