@@ -20,7 +20,7 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 
 
 <sup>
-*Note for pictogram support:
+*Pictogram note:
 
 Pictograms author: Sergio Palao. Origin: ARASAAC (http://www.arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain)
 </sup>
