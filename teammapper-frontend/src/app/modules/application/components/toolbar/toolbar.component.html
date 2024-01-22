@@ -1,12 +1,11 @@
 <mat-toolbar>
-  <a href="/map" target="_blank">
-    <button
-      [title]="'TOOLTIPS.NEW_MAP' | translate"
-      color="primary"
-      mat-icon-button>
-      <mat-icon>note_add</mat-icon>
-    </button>
-  </a>
+  <button
+    [title]="'TOOLTIPS.NEW_MAP' | translate"
+    color="accent"
+    (click)="newMap()"
+    mat-icon-button>
+    <mat-icon>note_add</mat-icon>
+  </button>
   <label
     for="json-upload"
     [ngClass]="{ 'mat-button-disabled': editDisabled }"

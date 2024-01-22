@@ -1,4 +1,4 @@
-@use '@angular/material' as mat;
+//@import '@angular/material' as mat;
 @import '@material-design-icons/font';
 @import 'theme.scss';
 
@@ -95,8 +95,8 @@ snack-bar-container.snackbar {
   }
 }
 
-input:disabled {
-  color: mat.get-color-from-palette($app-primary);
-  background: mat.get-color-from-palette($app-primary) !important;
-  opacity: 0.38;
-}
+// input:disabled {
+//   color: mat.get-color-from-palette($app-primary);
+//   background: mat.get-color-from-palette($app-primary) !important;
+//   opacity: 0.38;
+// }

@@ -62,6 +62,10 @@ export class ToolbarComponent {
     this.mmpService.removeNodeLink();
   }
 
+  public newMap() {
+    window.open('/map', '_blank').focus();
+  }
+
   public toogleNodeFontWeight() {
     const currentWeight = this.mmpService.selectNode().font.weight;
 
