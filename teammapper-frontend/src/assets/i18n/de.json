@@ -80,10 +80,11 @@
       "BUTTON_RECONNECT": "Neu verbinden"
     },
     "PICTOGRAMS": {
-      "TITLE": "Piktogramme einfügen",
-      "CONTENT": "Füge Piktrogramme ein",
+      "TITLE": "Piktogramm einfügen",
       "BUTTON_SEARCH": "Suchen",
-      "FORM_INPUT_LABEL_SEARCH": "Suchwort"
+      "FORM_INPUT_LABEL_SEARCH": "Suchwort",
+      "TERMS_TEXT": "Piktogramme von Sergio Palao (Urheber), ARASAAC (arasaac.org), Regierung von Aragón in Spanien (Eigentümer), CC BY-SA-NC 4.0",
+      "EMPTY": "Aktuell keine Ergebnisse"
     },
     "SHARE": {
       "TITLE": "Map teilen",
