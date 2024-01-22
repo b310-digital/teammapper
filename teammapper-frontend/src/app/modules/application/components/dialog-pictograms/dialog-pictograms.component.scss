@@ -1,7 +1,14 @@
+@use '@angular/material' as mat;
+@import 'src/theme.scss';
+
 .my-1 {
   margin: 1em 0 1em 0;
 }
 
 .text-sm {
   font-size: small;
+}
+
+.image-wrapper:hover {
+  background: mat.get-color-from-palette($app-primary, 0.05);
 }
