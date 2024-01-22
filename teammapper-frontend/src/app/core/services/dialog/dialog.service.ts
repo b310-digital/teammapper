@@ -21,7 +21,7 @@ export class DialogService {
       width: '100%',
     });
     this.pictogramsModalRef.componentInstance.onPictogramAdd.subscribe(() => {
-      this.closePictogramDialog()
+      this.closePictogramDialog();
     });
   }
 

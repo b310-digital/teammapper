@@ -5,7 +5,6 @@ import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
 import { map } from 'rxjs/operators';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
-import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 
 @Component({
   selector: 'teammapper-dialog-pictograms',
@@ -51,7 +50,7 @@ export class DialogPictogramsComponent {
   async getImageFileOfId(id: number) {
     this.pictoService.getPictoImage(id).subscribe(async img => {
       this.mmpService.addNodeImage(await this.utilsService.blobToBase64(img));
-      this.onPictogramAdd.emit()
+      this.onPictogramAdd.emit();
     });
   }
 
