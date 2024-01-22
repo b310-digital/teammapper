@@ -157,5 +157,5 @@ export class UtilsService {
         resolve(reader.result);
       };
     });
-  };
+  }
 }

@@ -24,7 +24,7 @@ import { DialogPictogramsComponent } from './components/dialog-pictograms/dialog
     MatMenuModule,
     MatTabsModule,
     ApplicationRoutingModule,
-    ColorPickerModule
+    ColorPickerModule,
   ],
   declarations: [
     ApplicationComponent,

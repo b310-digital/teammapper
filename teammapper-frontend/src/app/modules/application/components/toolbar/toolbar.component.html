@@ -141,13 +141,6 @@
       <mat-icon>broken_image</mat-icon>
     </button>
   </ng-template>
-  <button
-    (click)="pictogram()"
-    [title]="'TOOLTIPS.PICTOGRAM' | translate"
-    color="primary"
-    mat-icon-button>
-    <mat-icon>nature_people</mat-icon>
-  </button>
   <ng-template #renderInput>
     <label
       for="image-upload"
@@ -163,6 +156,15 @@
       accept="image/*"
       [disabled]="editDisabled" />
   </ng-template>
+  <div *ngIf="featureFlagPictograms">
+    <button
+      (click)="pictogram()"
+      [title]="'TOOLTIPS.PICTOGRAM' | translate"
+      color="primary"
+      mat-icon-button>
+      <mat-icon>nature_people</mat-icon>
+    </button>
+  </div>
 
   <div class="vertical-line">
     <div></div>

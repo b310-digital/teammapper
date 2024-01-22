@@ -18,8 +18,8 @@ import { MatLegacySlideToggleModule as MatSlideToggleModule } from '@angular/mat
 import { StripTags } from './pipes/striptags.pipe';
 import { InverseBoolPipe } from './pipes/inverse-bool.pipe';
 import { MatDialogModule } from '@angular/material/dialog';
-import {MatGridListModule} from '@angular/material/grid-list';
-import { NgOptimizedImage } from '@angular/common'
+import { MatGridListModule } from '@angular/material/grid-list';
+import { NgOptimizedImage } from '@angular/common';
 
 const PIPES = [StripTags, InverseBoolPipe];
 
@@ -43,7 +43,7 @@ const PIPES = [StripTags, InverseBoolPipe];
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
-    NgOptimizedImage
+    NgOptimizedImage,
   ],
   declarations: [...PIPES],
   exports: [

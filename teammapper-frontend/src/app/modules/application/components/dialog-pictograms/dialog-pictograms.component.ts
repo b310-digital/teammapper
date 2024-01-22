@@ -10,46 +10,52 @@ import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 @Component({
   selector: 'teammapper-dialog-pictograms',
   templateUrl: 'dialog-pictograms.component.html',
-  styleUrls: ['./dialog-pictograms.component.scss']
+  styleUrls: ['./dialog-pictograms.component.scss'],
 })
 export class DialogPictogramsComponent {
-  public pictos: IPictogramResponse[] 
-  public searchTerm: string = ""
+  public pictos: IPictogramResponse[];
+  public searchTerm = '';
   public cardLayout = this.breakpointObserver
-  .observe([Breakpoints.Handset])
-  .pipe(
-    map(({ matches }) => {
-      if (matches) {
+    .observe([Breakpoints.Handset])
+    .pipe(
+      map(({ matches }) => {
+        if (matches) {
+          return {
+            columns: 1,
+            miniCard: { cols: 1, rows: 1 },
+          };
+        }
+
         return {
-          columns: 1,
-          miniCard: { cols: 1, rows: 1 }
+          columns: 4,
+          miniCard: { cols: 1, rows: 1 },
         };
-      }
+      })
+    );
 
-      return {
-        columns: 4,
-        miniCard: { cols: 1, rows: 1 }
-      };
-    })
-  );
-
-  constructor(private pictoService: PictogramService, private breakpointObserver: BreakpointObserver, private mmpService: MmpService, private utilsService: UtilsService, private dialogService: DialogService) {}
+  constructor(
+    private pictoService: PictogramService,
+    private breakpointObserver: BreakpointObserver,
+    private mmpService: MmpService,
+    private utilsService: UtilsService,
+    private dialogService: DialogService
+  ) {}
 
   @HostListener('document:keydown.enter')
   async search() {
     this.pictoService.getPictos(this.searchTerm).subscribe(pictos => {
-      this.pictos = pictos
+      this.pictos = pictos;
     });
   }
 
   async getImageFileOfId(id: number) {
     this.pictoService.getPictoImage(id).subscribe(async img => {
       this.mmpService.addNodeImage(await this.utilsService.blobToBase64(img));
-      this.dialogService.closePictogramDialog()
+      this.dialogService.closePictogramDialog();
     });
   }
 
   getImageUrlOfId(id: number): string {
-    return this.pictoService.getPictoImageUrl(id)
+    return this.pictoService.getPictoImageUrl(id);
   }
 }

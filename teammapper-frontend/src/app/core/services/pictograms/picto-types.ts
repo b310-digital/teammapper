@@ -1,61 +1,22 @@
 export type IPictogramResponse = {
-  schematic: boolean,
-  sex: boolean,
-  violence: boolean,
-  aac: boolean,
-  aacColor: boolean,
-  skin: boolean,
-  hair: boolean,
-  downloads: number,
-  categories: string[],
-  synsets: string[],
-  tags: string[],
-  _id: number,
+  schematic: boolean;
+  sex: boolean;
+  violence: boolean;
+  aac: boolean;
+  aacColor: boolean;
+  skin: boolean;
+  hair: boolean;
+  downloads: number;
+  categories: string[];
+  synsets: string[];
+  tags: string[];
+  _id: number;
   keywords: {
-      keyword: string,
-      type: number,
-      plural: string,
-      hasLocution: boolean
-  }[],
-  created: Date,
-  lastUpdated: Date,
-}
-
-export type ISearchResultResponse = {
-  _id: number,
-  tags: string[],
-  synsets: string[],
-  sex: boolean,
-  schematic: boolean,
-  keywords: {
-      type: number,
-      meaning: string,
-      plural: string,
-      keyword: string,
-      hasLocation: boolean,
-  }[],
-  desc: string,
-  categories: string[],
-  violence: boolean,
-  hair: false,
-  skin: false,
-  aac: false,
-  aacColor: false,
-  score: number,
-}[]
-
-export type IPictogramNewResponse = {
-  aac: boolean,
-  aacColor: boolean,
-  categories: string[],
-  downloads: number,
-  hair: boolean,
-  keywords: string[],
-  schematic: boolean,
-  sex: boolean,
-  skin: boolean,
-  synsets: string[],
-  tags: string[],
-  violence: boolean,
-  _id: number,
-}[];
+    keyword: string;
+    type: number;
+    plural: string;
+    hasLocution: boolean;
+  }[];
+  created: Date;
+  lastUpdated: Date;
+};
