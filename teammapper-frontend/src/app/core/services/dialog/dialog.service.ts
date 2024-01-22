@@ -20,6 +20,9 @@ export class DialogService {
     this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent, {
       width: '100%',
     });
+    const sub = this.pictogramsModalRef.componentInstance.onPictogramAdd.subscribe(() => {
+      this.closePictogramDialog()
+    });
   }
 
   closePictogramDialog() {

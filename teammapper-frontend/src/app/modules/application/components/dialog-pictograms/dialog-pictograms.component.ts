@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, EventEmitter, HostListener } from '@angular/core';
 import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
@@ -14,6 +14,7 @@ import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 })
 export class DialogPictogramsComponent {
   public pictos: IPictogramResponse[];
+  public onPictogramAdd = new EventEmitter();
   public searchTerm = '';
   public cardLayout = this.breakpointObserver
     .observe([Breakpoints.Handset])
@@ -37,8 +38,7 @@ export class DialogPictogramsComponent {
     private pictoService: PictogramService,
     private breakpointObserver: BreakpointObserver,
     private mmpService: MmpService,
-    private utilsService: UtilsService,
-    private dialogService: DialogService
+    private utilsService: UtilsService
   ) {}
 
   @HostListener('document:keydown.enter')
@@ -51,7 +51,7 @@ export class DialogPictogramsComponent {
   async getImageFileOfId(id: number) {
     this.pictoService.getPictoImage(id).subscribe(async img => {
       this.mmpService.addNodeImage(await this.utilsService.blobToBase64(img));
-      this.dialogService.closePictogramDialog();
+      this.onPictogramAdd.emit()
     });
   }
 

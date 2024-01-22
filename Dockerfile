@@ -39,7 +39,7 @@ USER root
 RUN apk add --no-cache chromium
 USER node
 
-RUN export CHROME_BIN=/usr/bin/chromium-browser
+ENV CHROME_BIN=/usr/bin/chromium-browser
 
 COPY --chown=node:node teammapper-frontend/package.json teammapper-frontend/package-lock.json $APP_FRONTEND_PATH/
 RUN npm --prefix teammapper-frontend install
