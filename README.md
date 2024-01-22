@@ -18,12 +18,9 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 -   **GDPR Compliancy**: By default, mindmaps are deleted after 30 days
 -   **Usability**: Redo / Undo, many Shortcuts
 
-
-<sup>
 *Pictogram note:
 
 Pictograms author: Sergio Palao. Origin: ARASAAC (http://www.arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain)
-</sup>
 
 ## Getting started
 
