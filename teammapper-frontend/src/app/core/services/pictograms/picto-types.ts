@@ -15,7 +15,7 @@ export type IPictogramResponse = {
     keyword: string;
     type: number;
     plural: string;
-    hasLocution: boolean;
+    hasLocation: boolean;
   }[];
   created: Date;
   lastUpdated: Date;
