@@ -1,16 +1,15 @@
 <mat-toolbar>
-  <a href="/map" target="_blank">
-    <button
-      [title]="'TOOLTIPS.NEW_MAP' | translate"
-      color="primary"
-      mat-icon-button>
-      <mat-icon>note_add</mat-icon>
-    </button>
-  </a>
+  <button
+    [title]="'TOOLTIPS.NEW_MAP' | translate"
+    color="primary"
+    (click)="newMap()"
+    mat-icon-button>
+    <mat-icon>note_add</mat-icon>
+  </button>
   <label
     for="json-upload"
     [ngClass]="{ 'mat-button-disabled': editDisabled }"
-    class="label-file-upload mat-icon-button mat-primary mat-focus-indicator"
+    class="label-file-upload mat-mdc-menu-trigger mdc-icon-button mat-mdc-icon-button mat-primary mat-mdc-button-base"
     [title]="'TOOLTIPS.IMPORT_MAP' | translate">
     <mat-icon>publish</mat-icon>
   </label>
@@ -20,7 +19,6 @@
     (input)="initJSONUpload($event)"
     accept="application/json"
     [disabled]="editDisabled" />
-
   <button
     [matMenuTriggerFor]="export_map"
     [title]="'TOOLTIPS.EXPORT_MAP' | translate"
@@ -37,23 +35,23 @@
   </button>
   <mat-menu #export_map="matMenu">
     <button (click)="exportMap('json')" mat-menu-item>
-      <mat-icon>insert_drive_file</mat-icon>
+      <mat-icon color="primary">insert_drive_file</mat-icon>
       <span>{{ 'GENERAL.JSON' | translate }}</span>
     </button>
     <button (click)="exportMap('svg')" mat-menu-item>
-      <mat-icon>image</mat-icon>
+      <mat-icon color="primary">image</mat-icon>
       <span>{{ 'GENERAL.SVG' | translate }}</span>
     </button>
     <button (click)="exportMap('png')" mat-menu-item>
-      <mat-icon>image</mat-icon>
+      <mat-icon color="primary">image</mat-icon>
       <span>{{ 'GENERAL.PNG' | translate }}</span>
     </button>
     <button (click)="exportMap('jpeg')" mat-menu-item>
-      <mat-icon>image</mat-icon>
+      <mat-icon color="primary">image</mat-icon>
       <span>{{ 'GENERAL.JPG' | translate }}</span>
     </button>
     <button (click)="exportMap('pdf')" mat-menu-item>
-      <mat-icon>picture_as_pdf</mat-icon>
+      <mat-icon color="primary">picture_as_pdf</mat-icon>
       <span>{{ 'GENERAL.PDF' | translate }}</span>
     </button>
   </mat-menu>
@@ -145,7 +143,7 @@
     <label
       for="image-upload"
       [ngClass]="{ 'mat-button-disabled': editDisabled }"
-      class="label-file-upload mat-icon-button mat-primary mat-focus-indicator"
+      class="label-file-upload mat-mdc-menu-trigger mdc-icon-button mat-mdc-icon-button mat-primary mat-mdc-button-base"
       [title]="'TOOLTIPS.NODE_IMAGE' | translate">
       <mat-icon>image</mat-icon>
     </label>
@@ -156,6 +154,15 @@
       accept="image/*"
       [disabled]="editDisabled" />
   </ng-template>
+  <div *ngIf="featureFlagPictograms">
+    <button
+      (click)="pictogram()"
+      [title]="'TOOLTIPS.PICTOGRAM' | translate"
+      color="primary"
+      mat-icon-button>
+      <mat-icon>nature_people</mat-icon>
+    </button>
+  </div>
 
   <div class="vertical-line">
     <div></div>

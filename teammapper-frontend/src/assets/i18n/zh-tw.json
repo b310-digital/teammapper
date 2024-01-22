@@ -36,6 +36,7 @@
     "EDIT_NODE": "編輯選取的節點文字",
     "COUPLE_NODE": "鎖定選取的節點",
     "NODE_IMAGE": "新增圖片於當前節點",
+    "PICTOGRAM": "Pictrogram",
     "START_EDIT_NODE": "Edit node text",
     "BOLD_TEXT": "將文字變成粗體",
     "ITALIC_TEXT": "將文字變為斜體",
@@ -77,6 +78,13 @@
       "TITLE": "Connection lost",
       "CONTENT": "Connection to server was lost. Retrying...",
       "BUTTON_RECONNECT": "Reconnect"
+    },
+    "PICTOGRAMS": {
+      "TITLE": "Add a pictogram",
+      "BUTTON_SEARCH": "Search",
+      "FORM_INPUT_LABEL_SEARCH": "Search term",
+      "TERMS_TEXT": "Pictograms author: Sergio Palao. Origin: ARASAAC (http://www.arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain)",
+      "EMPTY": "No result"
     },
     "SHARE": {
       "TITLE": "Share map",

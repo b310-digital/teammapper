@@ -55,8 +55,7 @@ section.jumbotron {
       }
     }
 
-    > a {
-      width: 150px;
+    > button {
       font-weight: bold;
       color: mat.get-color-from-palette($app-primary);
       margin-bottom: 10px;
@@ -76,9 +75,8 @@ section.jumbotron {
     font-size: 0.7em;
   }
 
-  .mat-list-item {
+  .white-list {
     font-family: Fira Sans;
-    height: initial !important;
-    margin: 5px 0;
+    color: white;
   }
 }

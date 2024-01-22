@@ -1,4 +1,4 @@
-@use '@angular/material' as mat;
+//@import '@angular/material' as mat;
 @import '@material-design-icons/font';
 @import 'theme.scss';
 
@@ -42,29 +42,6 @@ body {
   outline: none;
 }
 
-// Material override
-.mat-form-field-appearance-legacy .mat-form-field-underline {
-  background-color: lightgray !important;
-}
-
-mat-dialog-content.mat-dialog-content {
-  max-height: none;
-}
-
-.mat-button,
-.mat-raised-button,
-.mat-icon-button,
-.mat-stroked-button,
-.mat-flat-button,
-.mat-fab,
-.mat-mini-fab {
-  font-family: 'Fira Sans', sans !important;
-}
-
-.mat-dialog-actions {
-  gap: 10px;
-}
-
 // Color picker override
 div.color-picker {
   border-radius: 2px;
@@ -93,10 +70,4 @@ snack-bar-container.snackbar {
       color: #555555;
     }
   }
-}
-
-input:disabled {
-  color: mat.get-color-from-palette($app-primary);
-  background: mat.get-color-from-palette($app-primary) !important;
-  opacity: 0.38;
 }

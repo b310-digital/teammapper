@@ -468,7 +468,7 @@ export class MmpService implements OnDestroy {
   /**
    * Insert an image in the selected node.
    */
-  public addNodeImage(image: string) {
+  public addNodeImage(image: string | ArrayBuffer) {
     this.updateNode('imageSrc', image);
   }
 

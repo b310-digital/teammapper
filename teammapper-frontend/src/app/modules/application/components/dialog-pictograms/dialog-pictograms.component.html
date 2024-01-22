@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>{{ 'MODALS.PICTOGRAMS.TITLE' | translate }}</h2>
+<mat-dialog-content>
+  <mat-form-field>
+    <mat-label>{{ 'MODALS.PICTOGRAMS.FORM_INPUT_LABEL_SEARCH' | translate }}</mat-label>
+    <input matInput [(ngModel)]="searchTerm" required>
+    <button matSuffix mat-button (click)="search()">
+      <mat-icon>search</mat-icon>
+    </button>
+  </mat-form-field>
+  <ng-container *ngIf="cardLayout | async as layout">
+  <mat-grid-list cols="2" rowHeight="2:1" [cols]="layout.columns">
+    <div *ngIf="!pictos">{{ 'MODALS.PICTOGRAMS.EMPTY' | translate }}</div>
+    <mat-grid-tile *ngFor="let picto of pictos;" [colspan]="layout.miniCard.cols" [rowspan]="layout.miniCard.rows" class="image-wrapper">
+      <img ngSrc="{{getImageUrlOfId(picto._id)}}" (click)="getImageFileOfId(picto._id)" width="150" height="150">
+    </mat-grid-tile>
+  </mat-grid-list>
+</ng-container>
+<mat-divider class="my-1"></mat-divider>
+<span class="text-sm">{{ 'MODALS.PICTOGRAMS.TERMS_TEXT' | translate }}</span>
+<br />
+<a href="https://arasaac.org/"><img ngSrc="/assets/images/logo_ARASAAC.png" width="200" height="50"></a><br />
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button [mat-dialog-close]="true">
+    {{ 'MODALS.GENERAL.BUTTON_CLOSE' | translate }}
+  </button>
+</mat-dialog-actions>
