@@ -15,8 +15,8 @@ import { DialogAboutComponent } from './components/dialog-about/dialog-about.com
 import { DialogShareComponent } from './components/dialog-share/dialog-share.component';
 import { DialogConnectionInfoComponent } from './components/dialog-connection-info/dialog-connection-info.component';
 import { DialogPictogramsComponent } from './components/dialog-pictograms/dialog-pictograms.component';
-import {MatMenuModule} from '@angular/material/menu';
-import {MatTabsModule} from '@angular/material/tabs';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @NgModule({
   imports: [
