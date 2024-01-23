@@ -16,7 +16,11 @@
   </mat-grid-list>
 </ng-container>
 <mat-divider class="my-1"></mat-divider>
-<span class="text-sm">{{ 'MODALS.PICTOGRAMS.TERMS_TEXT' | translate }}</span>
+<span class="text-sm">
+  {{ 'MODALS.PICTOGRAMS.TERMS_TEXT.0' | translate }}
+  <a href="{{ 'MODALS.PICTOGRAMS.TERMS_TEXT.1' | translate }}">{{ 'MODALS.PICTOGRAMS.TERMS_TEXT.1' | translate }}</a>
+  {{ 'MODALS.PICTOGRAMS.TERMS_TEXT.2' | translate }}
+</span>
 <br />
 <a href="https://arasaac.org/"><img ngSrc="/assets/images/logo_ARASAAC.png" width="200" height="50"></a><br />
 </mat-dialog-content>

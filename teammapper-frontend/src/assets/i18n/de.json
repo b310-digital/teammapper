@@ -83,7 +83,7 @@
       "TITLE": "Piktogramm einfügen",
       "BUTTON_SEARCH": "Suchen",
       "FORM_INPUT_LABEL_SEARCH": "Suchwort",
-      "TERMS_TEXT": "Piktogramm-Urheber Sergio Palao. Herkunft: ARASAAC (http://www.arasaac.org). Lizenz: CC (BY-NC-SA). Eigentümer: Regierung von Aragon (Spanien)",
+      "TERMS_TEXT": ["Sergio Palao (Urheber), ARASAAC (", "https://arasaac.org", "), Regierung von Aragón in Spanien (Eigentümer), CC BY-SA-NC 4.0"],
       "EMPTY": "Aktuell keine Ergebnisse"
     },
     "SHARE": {

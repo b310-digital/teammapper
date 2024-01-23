@@ -13,7 +13,7 @@ export class PictogramService {
     environment.pictogramApiUrl || 'https://api.arasaac.org/v1/pictograms';
   private staticAssetUrl =
     environment.pictogramStaticUrl || 'https://static.arasaac.org/pictograms';
-  private apiResource = 'bestsearch';
+  private apiResource = 'search';
 
   constructor(
     private http: HttpClient,
