@@ -11,12 +11,16 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 ## Features:
 
 -   **Creation**: Host and create your own mindmaps
--   **Customization**: Add images, colors, font properties and links to nodes
+-   **Customization**: Add images, pictograms*, colors, font properties and links to nodes
 -   **Collaboration**: Share your mindmap with friends and collegues, using either a view-only or modification invite!
 -   **Interoperability**: Import and export functionality (JSON, SVG, PDF, PNG...)
 -   **Shareability**: Use a QR Code or URL to share your maps
 -   **GDPR Compliancy**: By default, mindmaps are deleted after 30 days
 -   **Usability**: Redo / Undo, many Shortcuts
+
+*Pictogram note:
+
+Pictograms author: Sergio Palao. Origin: ARASAAC (http://www.arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain)
 
 ## Getting started
 
@@ -198,6 +202,10 @@ Example of running sql via typeorm:
 docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npx --prefix teammapper-backend typeorm query "select * from mmp_node" --dataSource ./teammapper-backend/dist/data-source.js
 ```
 
+### Frontend feature flags
+See file /teammapper-frontend/src/envrionments/environment.prod.ts to configure feature flags:
+-   featureFlagPictograms: Disables/Enables the pictogram feature (default: enabled). Note: You have to set this flag before build time!
+
 ### Further details
 
 -   Once this docker volume is initialized after the first `docker-compose up`, the database-related variables in `.env.prod` will not have any effect; please have this in mind => you will then need to setup your database manually
@@ -229,6 +237,7 @@ The TeamMapper[logo](https://thenounproject.com/icon/188125/) in this repo – c
 
 ## Acknowledgements
 
+-   Pictograms: https://arasaac.org/
 -   Mindmapp: https://github.com/cedoor/mindmapp (discontinued)
 -   mmp: https://github.com/cedoor/mmp (discontinued)
 -   D3: https://github.com/d3/d3

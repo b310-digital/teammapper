@@ -36,6 +36,7 @@
     "EDIT_NODE": "Allows to edit the text of the node",
     "COUPLE_NODE": "Groups or ungroups the node",
     "NODE_IMAGE": "Adds an image to the node",
+    "PICTOGRAM": "Pictrogram",
     "BOLD_TEXT": "Changes the weight of the text",
     "ITALIC_TEXT": "Changes the style of the text",
     "TEXT_SIZE": "Changes the size of the text and the node",
@@ -77,6 +78,13 @@
       "TITLE": "Connection lost",
       "CONTENT": "Connection to server was lost. Retrying...",
       "BUTTON_RECONNECT": "Reconnect"
+    },
+    "PICTOGRAMS": {
+      "TITLE": "Add a pictogram",
+      "BUTTON_SEARCH": "Search",
+      "FORM_INPUT_LABEL_SEARCH": "Search term",
+      "TERMS_TEXT": ["Pictograms author: Sergio Palao. Origin: ARASAAC (", "https://arasaac.org", "). License: ", "CC (BY-NC-SA)", "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en", ". Owner: Government of Aragon (Spain)"],
+      "EMPTY": "No result"
     },
     "SHARE": {
       "TITLE": "Share map",

@@ -1,11 +1,11 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { MatLegacyMenuModule as MatMenuModule } from '@angular/material/legacy-menu';
 import { TranslateModule } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 
 import { ToolbarComponent } from './toolbar.component';
+import { MatMenuModule } from '@angular/material/menu';
 
 describe('ToolbarComponent', () => {
   let component: ToolbarComponent;

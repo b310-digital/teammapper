@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { MapProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
@@ -21,7 +20,6 @@ export class DialogAboutComponent {
   public mapAdminId: Promise<string>;
 
   constructor(
-    public dialogRef: MatDialogRef<DialogAboutComponent>,
     private translateService: TranslateService,
     private settingsService: SettingsService,
     private storageService: StorageService,

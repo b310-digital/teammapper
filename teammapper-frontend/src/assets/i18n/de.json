@@ -36,13 +36,14 @@
     "EDIT_NODE": "Änderungen am Text eines Knotens erlauben",
     "COUPLE_NODE": "Knoten koppeln oder entkoppeln",
     "NODE_IMAGE": "Bild zum Knoten hinzufügen oder entfernen",
+    "PICTOGRAM": "Piktrogramm",
     "BOLD_TEXT": "Fett",
     "ITALIC_TEXT": "Kursiv",
     "TEXT_SIZE": "Textgröße",
     "IMAGE_SIZE": "Bildgröße",
     "START_EDIT_NODE": "Knoten Text bearbeiten",
     "ADD_NODE": "Knoten hinzufügen",
-    "ADD_DETACHED_NODE": "Freien Knoten hinzufügen (z.b. für Kommentare)",
+    "ADD_DETACHED_NODE": "Freien Knoten hinzufügen (z.B. für Kommentare)",
     "REMOVE_NODE": "Knoten löschen",
     "ZOOM_IN_MAP": "Mindmap vergrößern",
     "ZOOM_OUT_MAP": "Mindmap verkleinern",
@@ -77,6 +78,13 @@
       "TITLE": "Verbindung verloren",
       "CONTENT": "Leider ist die Verbindung zum Server verloren gegangen. Versuche erneut zu verbinden...",
       "BUTTON_RECONNECT": "Neu verbinden"
+    },
+    "PICTOGRAMS": {
+      "TITLE": "Piktogramm einfügen",
+      "BUTTON_SEARCH": "Suchen",
+      "FORM_INPUT_LABEL_SEARCH": "Suchwort",
+      "TERMS_TEXT": ["Sergio Palao (Urheber), ARASAAC (", "https://arasaac.org", "), ", "CC BY-SA-NC 4.0", "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de", ", Regierung von Aragón in Spanien (Eigentümer)."],
+      "EMPTY": "Aktuell keine Ergebnisse"
     },
     "SHARE": {
       "TITLE": "Map teilen",

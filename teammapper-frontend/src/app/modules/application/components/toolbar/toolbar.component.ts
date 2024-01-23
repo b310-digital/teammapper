@@ -3,6 +3,7 @@ import { ExportNodeProperties } from '@mmp/map/types';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -12,6 +13,7 @@ import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 export class ToolbarComponent {
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
+  public featureFlagPictograms: boolean = environment.featureFlagPictograms;
 
   constructor(
     private translationService: TranslateService,
@@ -29,6 +31,10 @@ export class ToolbarComponent {
 
   public async share() {
     this.dialogService.openShareDialog();
+  }
+
+  public async pictogram() {
+    this.dialogService.openPictogramDialog();
   }
 
   public toogleNodeFontStyle() {
@@ -54,6 +60,10 @@ export class ToolbarComponent {
 
   public removeLink() {
     this.mmpService.removeNodeLink();
+  }
+
+  public newMap() {
+    window.open('/map', '_blank').focus();
   }
 
   public toogleNodeFontWeight() {
