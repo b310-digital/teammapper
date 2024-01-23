@@ -43,7 +43,7 @@
     "IMAGE_SIZE": "Bildgröße",
     "START_EDIT_NODE": "Knoten Text bearbeiten",
     "ADD_NODE": "Knoten hinzufügen",
-    "ADD_DETACHED_NODE": "Freien Knoten hinzufügen (z.b. für Kommentare)",
+    "ADD_DETACHED_NODE": "Freien Knoten hinzufügen (z.B. für Kommentare)",
     "REMOVE_NODE": "Knoten löschen",
     "ZOOM_IN_MAP": "Mindmap vergrößern",
     "ZOOM_OUT_MAP": "Mindmap verkleinern",
@@ -83,7 +83,7 @@
       "TITLE": "Piktogramm einfügen",
       "BUTTON_SEARCH": "Suchen",
       "FORM_INPUT_LABEL_SEARCH": "Suchwort",
-      "TERMS_TEXT": ["Sergio Palao (Urheber), ARASAAC (", "https://arasaac.org", "), Regierung von Aragón in Spanien (Eigentümer), CC BY-SA-NC 4.0"],
+      "TERMS_TEXT": ["Sergio Palao (Urheber), ARASAAC (", "https://arasaac.org", "), ", "CC BY-SA-NC 4.0", "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de", ", Regierung von Aragón in Spanien (Eigentümer), "],
       "EMPTY": "Aktuell keine Ergebnisse"
     },
     "SHARE": {
