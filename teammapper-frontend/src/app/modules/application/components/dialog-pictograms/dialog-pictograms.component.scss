@@ -11,4 +11,5 @@
 
 .image-wrapper:hover {
   background: mat.get-color-from-palette($app-primary, 0.05);
+  cursor: pointer;
 }

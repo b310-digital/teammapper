@@ -51,7 +51,7 @@ describe('PictogramService', () => {
         expect(data).toEqual([testData]);
       });
     const httpRequest = httpTestingController.expectOne(
-      'https://api.arasaac.org/v1/pictograms/en/bestsearch/House'
+      'https://api.arasaac.org/v1/pictograms/en/search/House'
     );
     expect(httpRequest.request.method).toBe('GET');
     httpRequest.flush([testData]);
