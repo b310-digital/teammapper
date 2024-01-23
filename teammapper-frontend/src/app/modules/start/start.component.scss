@@ -20,10 +20,11 @@ a {
 }
 
 .kits-primary-button {
-  background-color: $primary;
+  background-color: $primary !important;
   font-family: FiraSans !important;
   font-size: large;
   box-shadow: none !important;
+  letter-spacing: normal;
 
   &:hover {
     background-color: $primary-hover;
@@ -148,7 +149,11 @@ h1 {
 
 .kits-list .mat-list-item {
   height: 35px;
-  font-family: FiraSans;
+  font-family: FiraSans !important;
+}
+
+.kits-font {
+  font-family: FiraSans !important;
 }
 
 .fw-bold {
