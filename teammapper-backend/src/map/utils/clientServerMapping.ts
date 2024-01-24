@@ -1,13 +1,13 @@
-import { MmpMap } from '../entities/mmpMap.entity';
-import { MmpNode } from '../entities/mmpNode.entity';
-import { IMmpClientMap, IMmpClientNode, IMmpClientNodeBasics } from '../types';
+import { MmpMap } from '../entities/mmpMap.entity'
+import { MmpNode } from '../entities/mmpNode.entity'
+import { IMmpClientMap, IMmpClientNode, IMmpClientNodeBasics } from '../types'
 
-const DEFAULT_COLOR_NAME = '#787878';
-const DEFAULT_COLOR_BACKGROUND = '#f0f6f5';
-const DEFAULT_FONT_SIZE = 20;
-const DEFAULT_FONT_STYLE = 'normal';
-const DEFAULT_FONT_WEIGHT = 'normal';
-const DEFAULT_NAME = 'Root node';
+const DEFAULT_COLOR_NAME = '#787878'
+const DEFAULT_COLOR_BACKGROUND = '#f0f6f5'
+const DEFAULT_FONT_SIZE = 20
+const DEFAULT_FONT_STYLE = 'normal'
+const DEFAULT_FONT_WEIGHT = 'normal'
+const DEFAULT_NAME = 'Root node'
 
 const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   colors: {
@@ -15,14 +15,17 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
     background: serverNode.colorsBackground || '',
     branch: serverNode.colorsBranch || '',
   },
-  coordinates: { x: serverNode.coordinatesX || 0, y: serverNode.coordinatesY || 0 },
+  coordinates: {
+    x: serverNode.coordinatesX || 0,
+    y: serverNode.coordinatesY || 0,
+  },
   font: {
     style: serverNode.fontStyle || '',
     size: serverNode.fontSize || 12,
     weight: serverNode.fontWeight || '',
   },
   link: {
-    href: serverNode.linkHref || ''
+    href: serverNode.linkHref || '',
   },
   id: serverNode.id,
   detached: serverNode.detached || false,
@@ -32,20 +35,28 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   name: serverNode.name || '',
   parent: serverNode.nodeParentId || null,
   isRoot: serverNode.root || false,
-});
+})
 
-const mapMmpMapToClient = (serverMap: MmpMap, serverNodes: MmpNode[], deletedAt: Date, deleteAfterDays: number): IMmpClientMap => {
+const mapMmpMapToClient = (
+  serverMap: MmpMap,
+  serverNodes: MmpNode[],
+  deletedAt: Date,
+  deleteAfterDays: number
+): IMmpClientMap => {
   return {
     uuid: serverMap.id,
     data: serverNodes.map((node) => mapMmpNodeToClient(node)),
     deleteAfterDays,
     deletedAt,
     lastModified: serverMap.lastModified,
-    options: serverMap?.options
+    options: serverMap?.options,
   }
-};
+}
 
-const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Object => ({
+const mapClientNodeToMmpNode = (
+  clientNode: IMmpClientNode,
+  mapId: string
+): Object => ({
   id: clientNode.id,
   colorsBackground: clientNode.colors.background,
   colorsBranch: clientNode.colors.branch,
@@ -65,11 +76,15 @@ const mapClientNodeToMmpNode = (clientNode: IMmpClientNode, mapId: string): Obje
   nodeParentId: clientNode.parent ? clientNode.parent : null,
   root: clientNode.isRoot,
   nodeMapId: mapId,
-});
+})
 
 // Maps and enhances given properties to a valid root node
-const mapClientBasicNodeToMmpRootNode = (clientRootNodeBasics: IMmpClientNodeBasics, mapId: string): Object => ({
-  colorsBackground: clientRootNodeBasics.colors.background || DEFAULT_COLOR_BACKGROUND,
+const mapClientBasicNodeToMmpRootNode = (
+  clientRootNodeBasics: IMmpClientNodeBasics,
+  mapId: string
+): Object => ({
+  colorsBackground:
+    clientRootNodeBasics.colors.background || DEFAULT_COLOR_BACKGROUND,
   colorsBranch: clientRootNodeBasics.colors.branch,
   colorsName: clientRootNodeBasics.colors.name || DEFAULT_COLOR_NAME,
   coordinatesX: 0,
@@ -84,6 +99,11 @@ const mapClientBasicNodeToMmpRootNode = (clientRootNodeBasics: IMmpClientNodeBas
   root: true,
   detached: false,
   nodeMapId: mapId,
-});
+})
 
-export { mapMmpNodeToClient, mapClientNodeToMmpNode, mapClientBasicNodeToMmpRootNode, mapMmpMapToClient };
+export {
+  mapMmpNodeToClient,
+  mapClientNodeToMmpNode,
+  mapClientBasicNodeToMmpRootNode,
+  mapMmpMapToClient,
+}
