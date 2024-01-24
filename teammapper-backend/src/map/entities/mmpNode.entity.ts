@@ -1,105 +1,105 @@
 import {
-  Entity,
-  Column,
-  Index,
-  PrimaryGeneratedColumn,
-  PrimaryColumn,
-  ManyToOne,
-  JoinColumn,
-  Generated,
-  OneToMany,
-} from 'typeorm';
-import { MmpMap } from './mmpMap.entity';
+    Entity,
+    Column,
+    Index,
+    PrimaryGeneratedColumn,
+    PrimaryColumn,
+    ManyToOne,
+    JoinColumn,
+    Generated,
+    OneToMany,
+} from "typeorm";
+import { MmpMap } from "./mmpMap.entity";
 
 @Entity()
 export class MmpNode {
-  @PrimaryGeneratedColumn('uuid')
+    @PrimaryGeneratedColumn("uuid")
     id: string;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     name: string;
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @ManyToOne(type => MmpMap, (map) => map.nodes, {
-    onDelete: 'CASCADE',
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    @ManyToOne((type) => MmpMap, (map) => map.nodes, {
+        onDelete: "CASCADE",
     })
-  @JoinColumn()
+    @JoinColumn()
     nodeMap: MmpMap;
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @ManyToOne(type => MmpNode, (node) => node.children, {
-    onDelete: 'CASCADE',
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    @ManyToOne((type) => MmpNode, (node) => node.children, {
+        onDelete: "CASCADE",
     })
-  @JoinColumn([
-    { name: 'nodeMapId', referencedColumnName: 'nodeMapId' },
-    { name: 'nodeParentId', referencedColumnName: 'id' },
+    @JoinColumn([
+        { name: "nodeMapId", referencedColumnName: "nodeMapId" },
+        { name: "nodeParentId", referencedColumnName: "id" },
     ])
-  @Index()
+    @Index()
     nodeParent: MmpNode;
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @OneToMany(type => MmpNode, (node) => node.nodeParent)
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    @OneToMany((type) => MmpNode, (node) => node.nodeParent)
     children: MmpNode[];
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+    /* eslint-enable @typescript-eslint/no-unused-vars */
 
-  @Column({ default: false })
+    @Column({ default: false })
     root: boolean;
 
-  @Column({ type: 'float' })
+    @Column({ type: "float" })
     coordinatesX: number;
 
-  @Column({ type: 'float' })
+    @Column({ type: "float" })
     coordinatesY: number;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     colorsName: string;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     colorsBackground: string;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     colorsBranch: string;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     fontSize: number;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     fontStyle: string;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     fontWeight: string;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     imageSrc: string;
 
-  @Column({ nullable: true, default: 60 })
+    @Column({ nullable: true, default: 60 })
     imageSize: number;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     linkHref: string;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     locked: boolean;
 
-  @Column({ default: false })
+    @Column({ default: false })
     detached: boolean;
 
-  @Column({ nullable: true, type: 'float' })
+    @Column({ nullable: true, type: "float" })
     k: number;
 
-  @PrimaryColumn('uuid')
-  @Index()
+    @PrimaryColumn("uuid")
+    @Index()
     nodeMapId: string;
 
-  @Column({ nullable: true })
+    @Column({ nullable: true })
     nodeParentId: string;
 
-  @Column({ nullable: false })
-  @Generated('increment')
+    @Column({ nullable: false })
+    @Generated("increment")
     orderNumber: number;
 
-  @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
+    @Column({ type: "timestamptz", nullable: true, default: () => "now()" })
     lastModified: Date;
 }
