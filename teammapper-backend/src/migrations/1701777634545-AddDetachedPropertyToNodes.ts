@@ -1,19 +1,17 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddDetachedPropertyToNodes1701777634545
-    implements MigrationInterface
+  implements MigrationInterface
 {
-    name = "AddDetachedPropertyToNodes1701777634545";
+  name = 'AddDetachedPropertyToNodes1701777634545'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            `ALTER TABLE "mmp_node" ADD "detached" boolean NOT NULL DEFAULT false`,
-        );
-    }
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE "mmp_node" ADD "detached" boolean NOT NULL DEFAULT false`
+    )
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(
-            `ALTER TABLE "mmp_node" DROP COLUMN "detached"`,
-        );
-    }
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE "mmp_node" DROP COLUMN "detached"`)
+  }
 }
