@@ -1,82 +1,93 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { MmpMap } from 'src/map/entities/mmpMap.entity';
-import { MmpNode } from 'src/map/entities/mmpNode.entity';
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ConfigModule } from '@nestjs/config';
-import { io, Socket } from 'socket.io-client';
-import { IMmpClientMap } from 'src/map/types';
-import { createTestConfiguration, destroyWorkerDatabase } from './db';
-import AppModule from '../src/app.module';
+import { Test, TestingModule } from '@nestjs/testing'
+import { INestApplication } from '@nestjs/common'
+import * as request from 'supertest'
+import { MmpMap } from 'src/map/entities/mmpMap.entity'
+import { MmpNode } from 'src/map/entities/mmpNode.entity'
+import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { ConfigModule } from '@nestjs/config'
+import { io, Socket } from 'socket.io-client'
+import { IMmpClientMap } from 'src/map/types'
+import { createTestConfiguration, destroyWorkerDatabase } from './db'
+import AppModule from '../src/app.module'
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication;
-  let server: any;
-  let nodesRepo: Repository<MmpNode>;
-  let mapRepo: Repository<MmpMap>;
+  let app: INestApplication
+  let server: any
+  let nodesRepo: Repository<MmpNode>
+  let mapRepo: Repository<MmpMap>
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule,
-        TypeOrmModule.forRoot(await createTestConfiguration(process.env.JEST_WORKER_ID)),
+        TypeOrmModule.forRoot(
+          await createTestConfiguration(process.env.JEST_WORKER_ID)
+        ),
         AppModule,
       ],
-    }).compile();
+    }).compile()
 
     nodesRepo = moduleFixture.get<Repository<MmpNode>>(
-      getRepositoryToken(MmpNode),
-    );
-    mapRepo = moduleFixture.get<Repository<MmpMap>>(getRepositoryToken(MmpMap));
-    app = moduleFixture.createNestApplication();
-    server = app.getHttpServer();
-    await app.init();
-    await app.listen(3000);
+      getRepositoryToken(MmpNode)
+    )
+    mapRepo = moduleFixture.get<Repository<MmpMap>>(getRepositoryToken(MmpMap))
+    app = moduleFixture.createNestApplication()
+    server = app.getHttpServer()
+    await app.init()
+    await app.listen(3000)
   })
 
   afterAll(async () => {
     // close connection:
-    await destroyWorkerDatabase(mapRepo.manager.connection, process.env.JEST_WORKER_ID);
-    await app.close();
-  });
+    await destroyWorkerDatabase(
+      mapRepo.manager.connection,
+      process.env.JEST_WORKER_ID
+    )
+    await app.close()
+  })
 
   it('/api/maps/:id(GET)', async () => {
-    const map: MmpMap = await mapRepo.save({ name: 'test' });
+    const map: MmpMap = await mapRepo.save({ name: 'test' })
     await nodesRepo.save({
       nodeMapId: map.id,
       coordinatesX: 3,
       coordinatesY: 1,
-    });
+    })
     const response: request.Response = await request(server).get(
-      `/api/maps/${map.id}`,
-    );
-    expect(response.body.uuid).toEqual(map.id);
-  });
+      `/api/maps/${map.id}`
+    )
+    expect(response.body.uuid).toEqual(map.id)
+  })
 
   describe('WebSocketGateway', () => {
-    let socket: Socket;
+    let socket: Socket
 
     beforeEach(async () => {
-      socket = io('http://localhost:3000');
-    });
+      socket = io('http://localhost:3000')
+    })
 
     afterEach(async () => {
-      socket.close();
-    });
+      socket.close()
+    })
 
     it('lets a user join a map session', async (done) => {
-      const map = await mapRepo.save({});
+      const map = await mapRepo.save({})
 
-      socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, (result: IMmpClientMap) => {
-        expect(result).toBeInstanceOf(Object);
-        done();
-      });
-    });
+      socket.emit(
+        'join',
+        { mapId: map.id, color: '#FFFFFF' },
+        (result: IMmpClientMap) => {
+          expect(result).toBeInstanceOf(Object)
+          done()
+        }
+      )
+    })
 
     it('lets a user update a map', async (done) => {
-      const oldMap = await mapRepo.save({modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65'});
+      const oldMap = await mapRepo.save({
+        modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+      })
 
       const map: IMmpClientMap = {
         uuid: oldMap.id,
@@ -100,29 +111,38 @@ describe('AppController (e2e)', () => {
             isRoot: true,
           },
         ],
-      };
-      socket.emit('updateMap', 
+      }
+      socket.emit(
+        'updateMap',
         {
           map,
           mapId: map.uuid,
-          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65'
+          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
         },
         async () => {
-        const mapInDb = await mapRepo.findOne({
-          where: { id: map.uuid },
-        });
-        expect(mapInDb.id).toEqual(map.uuid);
-        done();
-      });
-    });
+          const mapInDb = await mapRepo.findOne({
+            where: { id: map.uuid },
+          })
+          expect(mapInDb.id).toEqual(map.uuid)
+          done()
+        }
+      )
+    })
 
     it('notifies a user about a new node', async (done) => {
-      const map = await mapRepo.save({ id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65', modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65' });
-      await new Promise<void>((resolve) => socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => resolve()));
+      const map = await mapRepo.save({
+        id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+        modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+      })
+      await new Promise<void>((resolve) =>
+        socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () =>
+          resolve()
+        )
+      )
       socket.on('nodeAdded', (result: any) => {
-        expect(result.node.name).toEqual('test');
-        done();
-      });
+        expect(result.node.name).toEqual('test')
+        done()
+      })
       socket.emit('addNode', {
         mapId: map.id,
         modificationSecret: map.modificationSecret,
@@ -131,10 +151,10 @@ describe('AppController (e2e)', () => {
           coordinates: { x: 1, y: 2 },
           font: {},
           colors: {},
-          link: {}
+          link: {},
         },
-      });
-    });
+      })
+    })
 
     it('notifies a user about a node update', async (done) => {
       const map = await mapRepo.save({
@@ -148,14 +168,18 @@ describe('AppController (e2e)', () => {
             nodeMapId: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
           }),
         ],
-      });
-      await new Promise<void>((resolve) => socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => resolve()));
+      })
+      await new Promise<void>((resolve) =>
+        socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () =>
+          resolve()
+        )
+      )
       socket.on('nodeUpdated', (result: any) => {
-        expect(result.property).toEqual('nodeName');
-        expect(result.node.id).toEqual('51271bf2-81fa-477a-b0bd-10cecf8d6b65');
-        expect(result.node.coordinates.x).toEqual(3);
-        done();
-      });
+        expect(result.property).toEqual('nodeName')
+        expect(result.node.id).toEqual('51271bf2-81fa-477a-b0bd-10cecf8d6b65')
+        expect(result.node.coordinates.x).toEqual(3)
+        done()
+      })
       socket.emit('updateNode', {
         mapId: map.id,
         modificationSecret: map.modificationSecret,
@@ -166,9 +190,9 @@ describe('AppController (e2e)', () => {
           coordinates: { x: 3, y: 4 },
           font: {},
           colors: {},
-          link: {}
+          link: {},
         },
-      });
-    });
-  });
-});
+      })
+    })
+  })
+})
