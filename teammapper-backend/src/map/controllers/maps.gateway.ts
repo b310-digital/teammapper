@@ -142,6 +142,9 @@ export class MapsGateway implements OnGatewayDisconnect {
       request.mapId,
       request.node
     )
+
+    if (!updatedNode) return false
+
     this.server.to(request.mapId).emit('nodeUpdated', {
       clientId: client.id,
       property: request.updatedProperty,

@@ -33,7 +33,7 @@ export class MapsService {
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
     const map: MmpMap = await this.findMap(uuid)
-    if (!map) return Promise.resolve(null)
+    if (!map) return null
 
     const nodes: MmpNode[] = await this.findNodes(map?.id)
     const days: number = configService.deleteAfterDays()
@@ -76,6 +76,8 @@ export class MapsService {
     const existingNode = await this.nodesRepository.findOne({
       where: { nodeMapId: mapId, id: clientNode.id },
     })
+
+    if (!existingNode) return
 
     return this.nodesRepository.save({
       ...existingNode,
@@ -143,7 +145,7 @@ export class MapsService {
   }
 
   async getDeletedAt(map: MmpMap, afterDays: number): Promise<Date> {
-    if (!map) return Promise.resolve(null)
+    if (!map) return null
 
     // get newest node of this map:
     const newestNodeQuery = this.nodesRepository
