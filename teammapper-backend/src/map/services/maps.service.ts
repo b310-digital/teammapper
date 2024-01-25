@@ -48,6 +48,7 @@ export class MapsService {
   async addNode(mapId: string, clientNode: IMmpClientNode): Promise<MmpNode> {
     // detached nodes are not allowed to have a parent
     if (clientNode.detached && clientNode.parent) return
+    if (!mapId || !clientNode) return
 
     const existingNode = await this.nodesRepository.findOne({
       where: { id: clientNode.id, nodeMapId: mapId },
