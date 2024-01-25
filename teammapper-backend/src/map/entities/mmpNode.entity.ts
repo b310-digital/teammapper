@@ -8,98 +8,98 @@ import {
   JoinColumn,
   Generated,
   OneToMany,
-} from 'typeorm';
-import { MmpMap } from './mmpMap.entity';
+} from 'typeorm'
+import { MmpMap } from './mmpMap.entity'
 
 @Entity()
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
-    id: string;
+  id: string
 
   @Column({ nullable: true })
-    name: string;
+  name: string
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  @ManyToOne(type => MmpMap, (map) => map.nodes, {
+  @ManyToOne((type) => MmpMap, (map) => map.nodes, {
     onDelete: 'CASCADE',
-    })
+  })
   @JoinColumn()
-    nodeMap: MmpMap;
+  nodeMap: MmpMap
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  @ManyToOne(type => MmpNode, (node) => node.children, {
+  @ManyToOne((type) => MmpNode, (node) => node.children, {
     onDelete: 'CASCADE',
-    })
+  })
   @JoinColumn([
     { name: 'nodeMapId', referencedColumnName: 'nodeMapId' },
     { name: 'nodeParentId', referencedColumnName: 'id' },
-    ])
+  ])
   @Index()
-    nodeParent: MmpNode;
+  nodeParent: MmpNode
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  @OneToMany(type => MmpNode, (node) => node.nodeParent)
-    children: MmpNode[];
+  @OneToMany((type) => MmpNode, (node) => node.nodeParent)
+  children: MmpNode[]
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
   @Column({ default: false })
-    root: boolean;
+  root: boolean
 
   @Column({ type: 'float' })
-    coordinatesX: number;
+  coordinatesX: number
 
   @Column({ type: 'float' })
-    coordinatesY: number;
+  coordinatesY: number
 
   @Column({ nullable: true })
-    colorsName: string;
+  colorsName: string
 
   @Column({ nullable: true })
-    colorsBackground: string;
+  colorsBackground: string
 
   @Column({ nullable: true })
-    colorsBranch: string;
+  colorsBranch: string
 
   @Column({ nullable: true })
-    fontSize: number;
+  fontSize: number
 
   @Column({ nullable: true })
-    fontStyle: string;
+  fontStyle: string
 
   @Column({ nullable: true })
-    fontWeight: string;
+  fontWeight: string
 
   @Column({ nullable: true })
-    imageSrc: string;
+  imageSrc: string
 
   @Column({ nullable: true, default: 60 })
-    imageSize: number;
+  imageSize: number
 
   @Column({ nullable: true })
-    linkHref: string;
+  linkHref: string
 
   @Column({ nullable: true })
-    locked: boolean;
+  locked: boolean
 
   @Column({ default: false })
-    detached: boolean;
+  detached: boolean
 
   @Column({ nullable: true, type: 'float' })
-    k: number;
+  k: number
 
   @PrimaryColumn('uuid')
   @Index()
-    nodeMapId: string;
+  nodeMapId: string
 
   @Column({ nullable: true })
-    nodeParentId: string;
+  nodeParentId: string
 
   @Column({ nullable: false })
   @Generated('increment')
-    orderNumber: number;
+  orderNumber: number
 
   @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
-    lastModified: Date;
+  lastModified: Date
 }
