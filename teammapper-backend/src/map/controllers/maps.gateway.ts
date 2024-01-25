@@ -116,6 +116,9 @@ export class MapsGateway implements OnGatewayDisconnect {
     @MessageBody() request: IMmpClientNodeRequest
   ): Promise<boolean> {
     const newNode = await this.mapsService.addNode(request.mapId, request.node)
+
+    if (!newNode) return false
+
     this.server.to(request.mapId).emit('nodeAdded', {
       clientId: client.id,
       node: mapMmpNodeToClient(newNode),
@@ -142,6 +145,9 @@ export class MapsGateway implements OnGatewayDisconnect {
       request.mapId,
       request.node
     )
+
+    if (!updatedNode) return false
+
     this.server.to(request.mapId).emit('nodeUpdated', {
       clientId: client.id,
       property: request.updatedProperty,
