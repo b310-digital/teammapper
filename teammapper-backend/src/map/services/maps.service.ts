@@ -55,6 +55,9 @@ export class MapsService {
     })
     if (existingNode) return existingNode
 
+    console.log('---add Node')
+    console.log(clientNode)
+
     const newNode = this.nodesRepository.create({
       ...mapClientNodeToMmpNode(clientNode, mapId),
       nodeMapId: mapId,
