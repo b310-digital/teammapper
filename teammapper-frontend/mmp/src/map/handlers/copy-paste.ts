@@ -2,6 +2,7 @@ import Map from '../map'
 import Node, {Colors, Coordinates, ExportNodeProperties} from '../models/node'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
+import {Event} from './events'
 
 /**
  * Manage the drag events of the nodes.
@@ -97,6 +98,7 @@ export default class CopyPaste {
         }
 
         const rootNode = this.map.nodes.getRoot()
+        let newNodes = new Array<Node>();
 
         const addNodes = (nodeProperties: ExportNodeProperties, newParentNode: Node) => {
             let coordinates: Coordinates
@@ -137,7 +139,9 @@ export default class CopyPaste {
                 font: nodePropertiesCopy.font,
                 locked: nodePropertiesCopy.locked,
                 isRoot: nodePropertiesCopy.isRoot,
-            }, true, newParentNode.id)
+            }, false, newParentNode.id)
+
+            newNodes.push(createdNode)
 
             // get children on first level of the copiedNodes (that are no longer exisiting on the map)
             const children = this.getChildrenInCopiedNodes(nodeProperties.id)
@@ -151,6 +155,7 @@ export default class CopyPaste {
         }
 
         addNodes(this.copiedNodes[0], node)
+        this.map.events.call(Event.nodePaste, node.dom, newNodes)
     }
 
     private findInCopiedNodes = (id: string): ExportNodeProperties => {

@@ -540,10 +540,17 @@ export class MapSyncService implements OnDestroy {
     this.mmpService
       .on('nodeCreate')
       .subscribe((newNode: ExportNodeProperties) => {
+        console.log(newNode.id)
         this.addNode(newNode);
         this.updateAttachedMap();
         this.mmpService.selectNode(newNode.id);
         this.mmpService.editNode();
+      });
+
+      this.mmpService
+      .on('nodePaste')
+      .subscribe((newNodes: ExportNodeProperties[]) => {
+        console.log(newNodes)
       });
 
     this.mmpService
