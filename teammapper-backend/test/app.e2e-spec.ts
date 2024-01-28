@@ -139,8 +139,8 @@ describe('AppController (e2e)', () => {
           resolve()
         )
       )
-      socket.on('nodeAdded', (result: any) => {
-        expect(result.node.name).toEqual('test')
+      socket.on('nodesAdded', (result: any) => {
+        expect(result.nodes[0].name).toEqual('test')
         done()
       })
       socket.emit('addNodes', {

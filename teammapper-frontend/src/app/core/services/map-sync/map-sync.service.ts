@@ -369,11 +369,11 @@ export class MapSyncService implements OnDestroy {
     this.socket.on('nodesAdded', (result: ResponseNodesAdded) => {
       if (result.clientId === this.socket.id) return;
 
-      result.nodes.forEach((node) => {
+      result.nodes.forEach(node => {
         if (!this.mmpService.existNode(node?.id)) {
           this.mmpService.addNodeFromServer(node);
         }
-      })
+      });
     });
 
     this.socket.on('nodeUpdated', (result: ResponseNodeUpdated) => {
