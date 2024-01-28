@@ -19,8 +19,8 @@ interface ResponseNodeUpdated extends ResponseServer {
   property: string;
 }
 
-interface ResponseNodeAdded extends ResponseServer {
-  node: ExportNodeProperties;
+interface ResponseNodesAdded extends ResponseServer {
+  nodes: ExportNodeProperties[];
 }
 
 interface ResponseNodeRemoved extends ResponseServer {
@@ -50,7 +50,7 @@ interface PrivateServerMap {
 export {
   ResponseMapUpdated,
   ResponseMapOptionsUpdated,
-  ResponseNodeAdded,
+  ResponseNodesAdded,
   ResponseNodeRemoved,
   ResponseNodeUpdated,
   ResponseSelectionUpdated,

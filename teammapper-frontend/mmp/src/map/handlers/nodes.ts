@@ -83,7 +83,7 @@ export default class Nodes {
      * @param {string} parentId
      * @param {string} overwriteId
      */
-    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string) => {
+    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string): Node => {
         const parentNode: Node = userProperties.detached ? null :
           parentId ? this.getNode(parentId) : this.getSelectedNode()
     
@@ -105,6 +105,7 @@ export default class Nodes {
         this.map.history.save()
 
         if(notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
+        return node
     }
 
     /**
