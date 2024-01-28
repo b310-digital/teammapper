@@ -369,8 +369,6 @@ export class MapSyncService implements OnDestroy {
     this.socket.on('nodeAdded', (result: ResponseNodeAdded) => {
       if (result.clientId === this.socket.id) return;
 
-      console.log(result)
-
       if (!this.mmpService.existNode(result?.node?.id)) {
         this.mmpService.addNodeFromServer(result.node);
       }
