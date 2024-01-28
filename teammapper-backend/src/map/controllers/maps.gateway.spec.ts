@@ -93,11 +93,11 @@ describe('WebSocketGateway', () => {
       socket = io('http://localhost:3000')
 
       socket.emit(
-        'addNode',
+        'addNodes',
         {
           mapId: map.id,
           modificationSecret: map.modificationSecret,
-          node: {},
+          nodes: [{}],
         },
         (result: boolean) => {
           expect(result).toEqual(true)

@@ -19,6 +19,7 @@ import {
   IMmpClientJoinRequest,
   IMmpClientMap,
   IMmpClientMapRequest,
+  IMmpClientNodeAddRequest,
   IMmpClientNodeRequest,
   IMmpClientNodeSelectionRequest,
   IMmpClientUpdateMapOptionsRequest,
@@ -110,25 +111,30 @@ export class MapsGateway implements OnGatewayDisconnect {
   }
 
   @UseGuards(EditGuard)
-  @SubscribeMessage('addNode')
+  @SubscribeMessage('addNodes')
   async addNode(
     @ConnectedSocket() client: Socket,
-    @MessageBody() request: IMmpClientNodeRequest
+    @MessageBody() request: IMmpClientNodeAddRequest
   ): Promise<boolean> {
-    const newNode = await this.mapsService.addNode(request.mapId, request.node)
+    const newNodes = await this.mapsService.addNodes(
+      request.mapId,
+      request.nodes
+    )
+    if (newNodes.length === 0) return false
 
-    if (!newNode) return false
-
-    this.server.to(request.mapId).emit('nodeAdded', {
+    this.server.to(request.mapId).emit('nodesAdded', {
       clientId: client.id,
-      node: mapMmpNodeToClient(newNode),
+      nodes: newNodes.map((newNode) => mapMmpNodeToClient(newNode)),
     })
 
-    this.server.to(request.mapId).emit('selectionUpdated', {
-      clientId: client.id,
-      nodeId: newNode.id,
-      selected: true,
-    })
+    // when pasting (inserting multiple nodes), do not update selection
+    if (newNodes.length === 1) {
+      this.server.to(request.mapId).emit('selectionUpdated', {
+        clientId: client.id,
+        nodeId: newNodes[newNodes.length - 1]?.id,
+        selected: true,
+      })
+    }
 
     return true
   }
