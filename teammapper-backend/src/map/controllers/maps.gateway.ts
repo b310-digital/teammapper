@@ -120,14 +120,11 @@ export class MapsGateway implements OnGatewayDisconnect {
       request.mapId,
       request.nodes
     )
-
     if (newNodes.length === 0) return false
 
-    newNodes.forEach((newNode) => {
-      this.server.to(request.mapId).emit('nodeAdded', {
-        clientId: client.id,
-        node: mapMmpNodeToClient(newNode),
-      })
+    this.server.to(request.mapId).emit('nodesAdded', {
+      clientId: client.id,
+      nodes: newNodes.map((newNode) => mapMmpNodeToClient(newNode)),
     })
 
     // when pasting (inserting multiple nodes), do not update selection

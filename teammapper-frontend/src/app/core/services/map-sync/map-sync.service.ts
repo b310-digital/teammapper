@@ -20,9 +20,9 @@ import {
   PrivateServerMap,
   ResponseMapOptionsUpdated,
   ResponseMapUpdated,
-  ResponseNodeAdded,
   ResponseNodeRemoved,
   ResponseNodeUpdated,
+  ResponseNodesAdded,
   ResponseSelectionUpdated,
   ServerMap,
 } from './server-types';
@@ -366,12 +366,14 @@ export class MapSyncService implements OnDestroy {
       this.mmpService.new(serverMap.data, false);
     });
 
-    this.socket.on('nodeAdded', (result: ResponseNodeAdded) => {
+    this.socket.on('nodesAdded', (result: ResponseNodesAdded) => {
       if (result.clientId === this.socket.id) return;
 
-      if (!this.mmpService.existNode(result?.node?.id)) {
-        this.mmpService.addNodeFromServer(result.node);
-      }
+      result.nodes.forEach((node) => {
+        if (!this.mmpService.existNode(node?.id)) {
+          this.mmpService.addNodeFromServer(node);
+        }
+      })
     });
 
     this.socket.on('nodeUpdated', (result: ResponseNodeUpdated) => {
