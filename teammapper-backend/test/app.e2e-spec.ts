@@ -143,16 +143,18 @@ describe('AppController (e2e)', () => {
         expect(result.node.name).toEqual('test')
         done()
       })
-      socket.emit('addNode', {
+      socket.emit('addNodes', {
         mapId: map.id,
         modificationSecret: map.modificationSecret,
-        node: {
-          name: 'test',
-          coordinates: { x: 1, y: 2 },
-          font: {},
-          colors: {},
-          link: {},
-        },
+        nodes: [
+          {
+            name: 'test',
+            coordinates: { x: 1, y: 2 },
+            font: {},
+            colors: {},
+            link: {},
+          },
+        ],
       })
     })
 

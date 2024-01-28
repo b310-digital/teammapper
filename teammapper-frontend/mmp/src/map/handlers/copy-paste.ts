@@ -155,7 +155,8 @@ export default class CopyPaste {
         }
 
         addNodes(this.copiedNodes[0], node)
-        this.map.events.call(Event.nodePaste, node.dom, newNodes)
+
+        this.map.events.call(Event.nodePaste, node.dom, newNodes.map((node) => this.map.nodes.getNodeProperties(node)))
     }
 
     private findInCopiedNodes = (id: string): ExportNodeProperties => {

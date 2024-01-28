@@ -55,14 +55,28 @@ export class MapsService {
     })
     if (existingNode) return existingNode
 
-    console.log('---add Node')
-    console.log(clientNode)
-
     const newNode = this.nodesRepository.create({
       ...mapClientNodeToMmpNode(clientNode, mapId),
       nodeMapId: mapId,
     })
     return this.nodesRepository.save(newNode)
+  }
+
+  async addNodes(
+    mapId: string,
+    clientNodes: IMmpClientNode[]
+  ): Promise<MmpNode[]> {
+    if (!mapId || clientNodes.length === 0) return
+
+    const reducer = async (
+      previousPromise: Promise<MmpNode[]>,
+      clientNode: IMmpClientNode
+    ): Promise<MmpNode[]> => {
+      const accCreatedNodes = await previousPromise
+      return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
+    }
+
+    return clientNodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
   }
 
   async findNodes(mapId: string): Promise<MmpNode[]> {

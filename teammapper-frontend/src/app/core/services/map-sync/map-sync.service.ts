@@ -222,15 +222,23 @@ export class MapSyncService implements OnDestroy {
     this.socket.emit('leave');
   }
 
-  public async addNode(newNode: ExportNodeProperties) {
-    this.socket.emit('addNode', {
+  public addNode(newNode: ExportNodeProperties) {
+    this.socket.emit('addNodes', {
       mapId: this.getAttachedMap().cachedMap.uuid,
-      node: newNode,
+      nodes: [newNode],
       modificationSecret: this.modificationSecret,
     });
   }
 
-  public async updateNode(nodeUpdate: NodeUpdateEvent) {
+  public addNodes(newNodes: ExportNodeProperties[]) {
+    this.socket.emit('addNodes', {
+      mapId: this.getAttachedMap().cachedMap.uuid,
+      nodes: newNodes,
+      modificationSecret: this.modificationSecret,
+    });
+  }
+
+  public updateNode(nodeUpdate: NodeUpdateEvent) {
     this.socket.emit('updateNode', {
       mapId: this.getAttachedMap().cachedMap.uuid,
       node: nodeUpdate.nodeProperties,
@@ -239,7 +247,7 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  public async removeNode(removedNode: ExportNodeProperties) {
+  public removeNode(removedNode: ExportNodeProperties) {
     this.socket.emit('removeNode', {
       mapId: this.getAttachedMap().cachedMap.uuid,
       node: removedNode,
@@ -247,7 +255,7 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  public async updateMap(_oldMapData?: MapSnapshot): Promise<void> {
+  public updateMap(_oldMapData?: MapSnapshot) {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
     this.socket.emit('updateMap', {
       mapId: cachedMapEntry.cachedMap.uuid,
@@ -256,7 +264,7 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  public async updateMapOptions(options?: CachedMapOptions): Promise<void> {
+  public updateMapOptions(options?: CachedMapOptions) {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
     this.socket.emit('updateMapOptions', {
       mapId: cachedMapEntry.cachedMap.uuid,
@@ -271,7 +279,7 @@ export class MapSyncService implements OnDestroy {
       adminId,
       mapId: cachedMapEntry.cachedMap.uuid,
     };
-    return await this.socket.emit('deleteMap', body);
+    return this.socket.emit('deleteMap', body);
   }
 
   public async updateNodeSelection(id: string, selected: boolean) {
@@ -360,6 +368,8 @@ export class MapSyncService implements OnDestroy {
 
     this.socket.on('nodeAdded', (result: ResponseNodeAdded) => {
       if (result.clientId === this.socket.id) return;
+
+      console.log(result)
 
       if (!this.mmpService.existNode(result?.node?.id)) {
         this.mmpService.addNodeFromServer(result.node);
@@ -540,17 +550,17 @@ export class MapSyncService implements OnDestroy {
     this.mmpService
       .on('nodeCreate')
       .subscribe((newNode: ExportNodeProperties) => {
-        console.log(newNode.id)
         this.addNode(newNode);
         this.updateAttachedMap();
         this.mmpService.selectNode(newNode.id);
         this.mmpService.editNode();
       });
 
-      this.mmpService
+    this.mmpService
       .on('nodePaste')
       .subscribe((newNodes: ExportNodeProperties[]) => {
-        console.log(newNodes)
+        this.addNodes(newNodes);
+        this.updateAttachedMap();
       });
 
     this.mmpService
