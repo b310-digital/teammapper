@@ -60,6 +60,27 @@ describe('MapsController', () => {
     })
   }
 
+  describe('addNodes', () => {
+    it('adds a node', async () => {
+      const map: MmpMap = await mapsRepo.save({})
+
+      const node: MmpNode = await nodesRepo.create({
+        id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+      })
+
+      await mapsService.addNodes(map.id, [mapMmpNodeToClient(node)])
+
+      const createdNode = await nodesRepo.findOne({
+        where: { id: node.id },
+      })
+
+      expect(createdNode).not.toBeUndefined()
+    })
+  })
+
   describe('updateNode', () => {
     it('does update the lastModified value on update', async () => {
       const map: MmpMap = await mapsRepo.save({

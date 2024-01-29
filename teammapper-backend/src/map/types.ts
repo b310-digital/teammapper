@@ -85,6 +85,10 @@ export interface IMmpClientNodeRequest extends IMmpClientEditingRequest {
   updatedProperty: string
 }
 
+export interface IMmpClientNodeAddRequest extends IMmpClientEditingRequest {
+  nodes: IMmpClientNode[]
+}
+
 export interface IMmpClientUpdateMapOptionsRequest
   extends IMmpClientEditingRequest {
   options: IMmpClientMapOptions

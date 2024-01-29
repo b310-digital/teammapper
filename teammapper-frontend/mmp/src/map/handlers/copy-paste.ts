@@ -2,6 +2,7 @@ import Map from '../map'
 import Node, {Colors, Coordinates, ExportNodeProperties} from '../models/node'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
+import {Event} from './events'
 
 /**
  * Manage the drag events of the nodes.
@@ -97,16 +98,17 @@ export default class CopyPaste {
         }
 
         const rootNode = this.map.nodes.getRoot()
+        let newNodes = new Array<Node>();
 
         const addNodes = (nodeProperties: ExportNodeProperties, newParentNode: Node) => {
             let coordinates: Coordinates
 
+            // first run, skipped for initial node
             if (nodeProperties.id !== this.copiedNodes[0].id) {
                 coordinates = {x: 0, y: 0}
 
-                const oldParentNode = (this.copiedNodes as any).find((np) => {
-                    return np.id === nodeProperties.parent
-                })
+                // get old parent that was cut and does not exist on the map anymore
+                const oldParentNode = this.findInCopiedNodes(nodeProperties.parent)
 
                 let dx = oldParentNode.coordinates.x - nodeProperties.coordinates.x
                 const dy = oldParentNode.coordinates.y - nodeProperties.coordinates.y
@@ -129,7 +131,7 @@ export default class CopyPaste {
             const branch = !newParentNode?.colors?.branch ? this.map.options.defaultNode.colors.branch : newParentNode.colors.branch
             const fixedColors: Colors = Object.assign({}, nodePropertiesCopy.color, { branch })
 
-            this.map.nodes.addNode({
+            const createdNode = this.map.nodes.addNode({
                 name: nodePropertiesCopy.name,
                 coordinates,
                 image: nodePropertiesCopy.image,
@@ -137,25 +139,35 @@ export default class CopyPaste {
                 font: nodePropertiesCopy.font,
                 locked: nodePropertiesCopy.locked,
                 isRoot: nodePropertiesCopy.isRoot,
-            }, true, newParentNode.id)
+            }, false, newParentNode.id)
 
-            const children = this.copiedNodes.filter((np: ExportNodeProperties) => {
-                return np.parent === nodeProperties.id
-            })
+            newNodes.push(createdNode)
+
+            // get children on first level of the copiedNodes (that are no longer exisiting on the map)
+            const children = this.getChildrenInCopiedNodes(nodeProperties.id)
 
             // If there are children add them.
             if (children.length > 0) {
-                const nodes = this.map.nodes.getNodes()
-
-                newParentNode = nodes[nodes.length - 1]
-
                 children.forEach((np: ExportNodeProperties) => {
-                    addNodes(np, newParentNode)
+                    addNodes(np, createdNode)
                 })
             }
         }
 
         addNodes(this.copiedNodes[0], node)
+
+        this.map.events.call(Event.nodePaste, node.dom, newNodes.map((node) => this.map.nodes.getNodeProperties(node)))
     }
 
+    private findInCopiedNodes = (id: string): ExportNodeProperties => {
+        return this.copiedNodes.find((copiedNode) => {
+            return copiedNode.id === id
+        })
+    }
+
+    private getChildrenInCopiedNodes = (id: string): ExportNodeProperties[] => {
+        return this.copiedNodes.filter((copiedNode) => {
+            return copiedNode.parent === id
+        })
+    }
 }
