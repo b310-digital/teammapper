@@ -13,7 +13,6 @@ import {
   ExportNodeProperties,
   MapCreateEvent,
   MapProperties,
-  MapSnapshot,
   NodeUpdateEvent,
 } from '@mmp/map/types';
 import {
