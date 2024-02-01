@@ -78,11 +78,11 @@ export class MapsService {
       if (
         clientNode.parent &&
         !(await this.nodesRepository.exist({
-          where: { nodeParentId: clientNode.parent },
+          where: { id: clientNode.parent, nodeMapId: mapId },
         }))
       ) {
         this.logger.warn(
-          `Warning: Parent with id ${clientNode.parent} does not exist for node ${clientNode.id} and map ${mapId}`
+          `Parent with id ${clientNode.parent} does not exist for node ${clientNode.id} and map ${mapId}`
         )
         return accCreatedNodes
       }
@@ -158,11 +158,11 @@ export class MapsService {
         if (
           node.parent &&
           !(await this.nodesRepository.exist({
-            where: { nodeParentId: node.parent },
+            where: { id: node.parent, nodeMapId: clientMap.uuid },
           }))
         ) {
           this.logger.warn(
-            `Warning: Parent with id ${node.parent} does not exist for node ${node.id} and map ${clientMap.uuid}`
+            `Parent with id ${node.parent} does not exist for node ${node.id} and map ${clientMap.uuid}`
           )
           return
         }
