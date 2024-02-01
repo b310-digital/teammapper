@@ -8,14 +8,13 @@ import Node, {
     NodeProperties,
     UserNodeProperties
 } from '../models/node'
-import MmpMap, { DomElements } from '../map'
+import MmpMap from '../map'
 import * as d3 from 'd3'
 import DOMPurify from 'dompurify'
 import { v4 as uuidv4 } from 'uuid'
 import {Event} from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
-import Export from './export'
 
 /**
  * Manage the nodes of the map.

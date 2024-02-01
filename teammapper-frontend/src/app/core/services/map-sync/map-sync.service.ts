@@ -13,7 +13,6 @@ import {
   ExportNodeProperties,
   MapCreateEvent,
   MapProperties,
-  MapSnapshot,
   NodeUpdateEvent,
 } from '@mmp/map/types';
 import {
@@ -255,7 +254,7 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  public updateMap(_oldMapData?: MapSnapshot) {
+  public updateMap() {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
     this.socket.emit('updateMap', {
       mapId: cachedMapEntry.cachedMap.uuid,
@@ -306,8 +305,8 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  private async checkModificationSecret() {
-    await this.socket.emit(
+  private checkModificationSecret() {
+    this.socket.emit(
       'checkModificationSecret',
       {
         mapId: this.getAttachedMap().cachedMap.uuid,
@@ -508,11 +507,11 @@ export class MapSyncService implements OnDestroy {
 
   private createMapListeners() {
     // create is NOT called by the mmp lib for initial map load / and call, but for _imported_ maps
-    this.mmpService.on('create').subscribe((result: MapCreateEvent) => {
+    this.mmpService.on('create').subscribe((_result: MapCreateEvent) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
 
       this.updateAttachedMap();
-      this.updateMap(result.previousMapData);
+      this.updateMap();
     });
 
     this.mmpService
