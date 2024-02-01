@@ -140,13 +140,13 @@ export class MapsService {
     // Reduce is used in conjunction with a promise to keep the order of creation.
     // Otherwise there will be FK violations
     await clientMap.data.reduce(
-      async (promise: Promise<any>, node: IMmpClientNode) => {
+      async (promise: Promise<MmpNode>, node: IMmpClientNode) => {
         await promise
-        await this.nodesRepository.save(
+        return this.nodesRepository.save(
           mapClientNodeToMmpNode(node, clientMap.uuid)
         )
       },
-      Promise.resolve()
+      Promise.resolve(new MmpNode())
     )
 
     // reload map

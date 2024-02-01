@@ -306,8 +306,8 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  private async checkModificationSecret() {
-    await this.socket.emit(
+  private checkModificationSecret() {
+    this.socket.emit(
       'checkModificationSecret',
       {
         mapId: this.getAttachedMap().cachedMap.uuid,
