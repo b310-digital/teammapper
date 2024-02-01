@@ -142,6 +142,10 @@ export class MapsService {
     await clientMap.data.reduce(
       async (promise: Promise<MmpNode>, node: IMmpClientNode) => {
         await promise
+        // check if parent actually exists - if not skip node, otherwise FK violations will be thrown
+        if(node.parent && !(await this.nodesRepository.exist({ where: {nodeParentId: node.parent }}))) {
+          return Promise.resolve(new MmpNode())
+        }
         return this.nodesRepository.save(
           mapClientNodeToMmpNode(node, clientMap.uuid)
         )
