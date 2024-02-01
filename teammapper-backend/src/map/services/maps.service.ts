@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository, Brackets } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
@@ -18,6 +18,8 @@ import configService from '../../config.service'
 
 @Injectable()
 export class MapsService {
+  private readonly logger = new Logger(MapsService.name)
+
   constructor(
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
@@ -73,6 +75,17 @@ export class MapsService {
       clientNode: IMmpClientNode
     ): Promise<MmpNode[]> => {
       const accCreatedNodes = await previousPromise
+      if (
+        clientNode.parent &&
+        !(await this.nodesRepository.exist({
+          where: { nodeParentId: clientNode.parent },
+        }))
+      ) {
+        this.logger.warn(
+          `Warning: Parent with id ${clientNode.parent} does not exist for node ${clientNode.id} and map ${mapId}`
+        )
+        return accCreatedNodes
+      }
       return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
     }
 
@@ -135,7 +148,6 @@ export class MapsService {
   async updateMap(clientMap: IMmpClientMap): Promise<MmpMap> {
     // remove existing nodes, otherwise we will end up with multiple roots
     await this.nodesRepository.delete({ nodeMapId: clientMap.uuid })
-
     // Add new nodes from given map
     // Reduce is used in conjunction with a promise to keep the order of creation.
     // Otherwise there will be FK violations
@@ -143,10 +155,18 @@ export class MapsService {
       async (promise: Promise<MmpNode>, node: IMmpClientNode) => {
         await promise
         // check if parent actually exists - if not skip node, otherwise FK violations will be thrown
-        if(node.parent && !(await this.nodesRepository.exist({ where: {nodeParentId: node.parent }}))) {
-          return Promise.resolve(new MmpNode())
+        if (
+          node.parent &&
+          !(await this.nodesRepository.exist({
+            where: { nodeParentId: node.parent },
+          }))
+        ) {
+          this.logger.warn(
+            `Warning: Parent with id ${node.parent} does not exist for node ${node.id} and map ${clientMap.uuid}`
+          )
+          return
         }
-        return this.nodesRepository.save(
+        return await this.nodesRepository.save(
           mapClientNodeToMmpNode(node, clientMap.uuid)
         )
       },
