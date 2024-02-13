@@ -78,11 +78,10 @@ export class MapsService {
 
       // either the parent node exists already in the created list and if not, check in database
       if (
-        !clientNode.parent ||
-        accCreatedNodes.find((node) => node.id === clientNode.parent) ||
-        (await this.nodesRepository.exist({
-          where: { id: clientNode.parent, nodeMapId: mapId },
-        }))
+        clientNode.isRoot ||
+        (clientNode.parent &&
+          (accCreatedNodes.find((node) => node.id === clientNode.parent) ||
+            this.existsNode(mapId, clientNode.parent)))
       ) {
         return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
       }
@@ -103,6 +102,14 @@ export class MapsService {
       .where('mmpNode.nodeMapId = :mapId', { mapId })
       .orderBy('mmpNode.orderNumber', 'ASC')
       .getMany()
+  }
+
+  async existsNode(mapId: string, parentId: string): Promise<boolean> {
+    if (!mapId || !parentId) return false
+
+    return await this.nodesRepository.exist({
+      where: { id: parentId, nodeMapId: mapId },
+    })
   }
 
   async updateNode(
