@@ -77,12 +77,7 @@ export class MapsService {
       const accCreatedNodes = await previousPromise
 
       // either the parent node exists already in the created list and if not, check in database
-      if (
-        clientNode.isRoot ||
-        (clientNode.parent &&
-          (accCreatedNodes.find((node) => node.id === clientNode.parent) ||
-            this.existsNode(mapId, clientNode.parent)))
-      ) {
+      if (await this.checkNodeParentForClientNode(mapId, clientNode)) {
         return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
       }
 
@@ -254,5 +249,16 @@ export class MapsService {
 
   deleteMap(uuid: string) {
     this.mapsRepository.delete({ id: uuid })
+  }
+
+  async checkNodeParentForClientNode(
+    mapId: string,
+    node: IMmpClientNode
+  ): Promise<boolean> {
+    return (
+      node.isRoot ||
+      node.detached ||
+      (node.parent && (await this.existsNode(mapId, node.parent)))
+    )
   }
 }
