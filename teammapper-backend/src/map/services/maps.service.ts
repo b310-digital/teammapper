@@ -75,18 +75,23 @@ export class MapsService {
       clientNode: IMmpClientNode
     ): Promise<MmpNode[]> => {
       const accCreatedNodes = await previousPromise
+
+      // either the parent node exists already in the created list and if not, check in database
       if (
-        clientNode.parent &&
-        !(await this.nodesRepository.exist({
+        !clientNode.parent ||
+        accCreatedNodes.find((node) => node.id === clientNode.parent) ||
+        (await this.nodesRepository.exist({
           where: { id: clientNode.parent, nodeMapId: mapId },
         }))
       ) {
-        this.logger.warn(
-          `Parent with id ${clientNode.parent} does not exist for node ${clientNode.id} and map ${mapId}`
-        )
-        return accCreatedNodes
+        return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
       }
-      return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
+
+      this.logger.warn(
+        `Parent with id ${clientNode.parent} does not exist for node ${clientNode.id} and map ${mapId}`
+      )
+      this.logger.warn(clientNodes.map((node) => [node.id, node.parent]))
+      return accCreatedNodes
     }
 
     return clientNodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
@@ -149,30 +154,7 @@ export class MapsService {
     // remove existing nodes, otherwise we will end up with multiple roots
     await this.nodesRepository.delete({ nodeMapId: clientMap.uuid })
     // Add new nodes from given map
-    // Reduce is used in conjunction with a promise to keep the order of creation.
-    // Otherwise there will be FK violations
-    await clientMap.data.reduce(
-      async (promise: Promise<MmpNode>, node: IMmpClientNode) => {
-        await promise
-        // check if parent actually exists - if not skip node, otherwise FK violations will be thrown
-        if (
-          node.parent &&
-          !(await this.nodesRepository.exist({
-            where: { id: node.parent, nodeMapId: clientMap.uuid },
-          }))
-        ) {
-          this.logger.warn(
-            `Parent with id ${node.parent} does not exist for node ${node.id} and map ${clientMap.uuid}`
-          )
-          return
-        }
-        return await this.nodesRepository.save(
-          mapClientNodeToMmpNode(node, clientMap.uuid)
-        )
-      },
-      Promise.resolve(new MmpNode())
-    )
-
+    await this.addNodes(clientMap.uuid, clientMap.data)
     // reload map
     return this.findMap(clientMap.uuid)
   }
