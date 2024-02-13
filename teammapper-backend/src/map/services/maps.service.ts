@@ -76,8 +76,7 @@ export class MapsService {
     ): Promise<MmpNode[]> => {
       const accCreatedNodes = await previousPromise
 
-      // either the parent node exists already in the created list and if not, check in database
-      if (await this.checkNodeParentForClientNode(mapId, clientNode)) {
+      if (await this.validatesNodeParentForClientNode(mapId, clientNode)) {
         return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
       }
 
@@ -251,7 +250,7 @@ export class MapsService {
     this.mapsRepository.delete({ id: uuid })
   }
 
-  async checkNodeParentForClientNode(
+  async validatesNodeParentForClientNode(
     mapId: string,
     node: IMmpClientNode
   ): Promise<boolean> {
