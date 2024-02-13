@@ -392,7 +392,7 @@ export class MmpService implements OnDestroy {
           orientation:
             htmlImageElement.width > htmlImageElement.height ? 'l' : 'p',
           unit: 'pt',
-          format: 'A4',
+          format: 'A4'
         });
         const pdfWidth: number = pdf.internal.pageSize.getWidth();
         const pdfHeight: number = pdf.internal.pageSize.getHeight();
@@ -412,7 +412,7 @@ export class MmpService implements OnDestroy {
             htmlImageElement.width * 0.75,
             htmlImageElement.height * 0.75,
             '',
-            'NONE',
+            'MEDIUM',
             0
           );
         } else if (scaleFactorWidth < scaleFactorHeight) {
@@ -423,7 +423,7 @@ export class MmpService implements OnDestroy {
             htmlImageElement.width * scaleFactorWidth,
             htmlImageElement.height * scaleFactorWidth,
             '',
-            'NONE',
+            'MEDIUM',
             0
           );
         } else {
@@ -434,7 +434,7 @@ export class MmpService implements OnDestroy {
             htmlImageElement.width * scaleFactorHeight,
             htmlImageElement.height * scaleFactorHeight,
             '',
-            'NONE',
+            'MEDIUM',
             0
           );
         }
