@@ -392,7 +392,7 @@ export class MmpService implements OnDestroy {
           orientation:
             htmlImageElement.width > htmlImageElement.height ? 'l' : 'p',
           unit: 'pt',
-          format: 'A4'
+          format: 'A4',
         });
         const pdfWidth: number = pdf.internal.pageSize.getWidth();
         const pdfHeight: number = pdf.internal.pageSize.getHeight();
