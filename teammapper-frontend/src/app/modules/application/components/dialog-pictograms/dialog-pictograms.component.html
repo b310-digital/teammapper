@@ -8,7 +8,7 @@
     </button>
   </mat-form-field>
   <ng-container *ngIf="cardLayout | async as layout">
-  <mat-grid-list cols="2" rowHeight="2:1" [cols]="layout.columns">
+  <mat-grid-list rowHeight="2:1" [cols]="layout.columns">
     <div *ngIf="!pictos">{{ 'MODALS.PICTOGRAMS.EMPTY' | translate }}</div>
     <mat-grid-tile *ngFor="let picto of pictos;" [colspan]="layout.miniCard.cols" [rowspan]="layout.miniCard.rows" class="image-wrapper">
       <img ngSrc="{{getImageUrlOfId(picto._id)}}" (click)="getImageFileOfId(picto._id)" width="150" height="150">
