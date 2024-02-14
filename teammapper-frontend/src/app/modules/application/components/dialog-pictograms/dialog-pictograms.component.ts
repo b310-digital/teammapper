@@ -1,7 +1,11 @@
 import { Component, EventEmitter, HostListener } from '@angular/core';
 import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
-import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
+import {
+  Breakpoints,
+  BreakpointObserver,
+  BreakpointState,
+} from '@angular/cdk/layout';
 import { map } from 'rxjs/operators';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
@@ -16,18 +20,25 @@ export class DialogPictogramsComponent {
   public onPictogramAdd = new EventEmitter();
   public searchTerm = '';
   public cardLayout = this.breakpointObserver
-    .observe([Breakpoints.Handset])
+    .observe([Breakpoints.WebLandscape, Breakpoints.TabletLandscape])
     .pipe(
-      map(({ matches }) => {
-        if (matches) {
+      map((state: BreakpointState) => {
+        if (state.breakpoints[Breakpoints.TabletLandscape]) {
           return {
-            columns: 1,
+            columns: 2,
+            miniCard: { cols: 1, rows: 1 },
+          };
+        }
+
+        if (state.breakpoints[Breakpoints.WebLandscape]) {
+          return {
+            columns: 4,
             miniCard: { cols: 1, rows: 1 },
           };
         }
 
         return {
-          columns: 4,
+          columns: 1,
           miniCard: { cols: 1, rows: 1 },
         };
       })

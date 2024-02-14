@@ -83,7 +83,6 @@ export class MapsService {
       this.logger.warn(
         `Parent with id ${clientNode.parent} does not exist for node ${clientNode.id} and map ${mapId}`
       )
-      this.logger.warn(clientNodes.map((node) => [node.id, node.parent]))
       return accCreatedNodes
     }
 
