@@ -6,7 +6,6 @@ import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { StripTags } from './pipes/striptags.pipe';
 import { InverseBoolPipe } from './pipes/inverse-bool.pipe';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatGridListModule } from '@angular/material/grid-list';
@@ -21,7 +20,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
-const PIPES = [StripTags, InverseBoolPipe];
+const PIPES = [InverseBoolPipe];
 
 @NgModule({
   imports: [

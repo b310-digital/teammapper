@@ -6,6 +6,7 @@ import { jsPDF } from 'jspdf';
 import { first } from 'rxjs/operators';
 import * as mmp from '@mmp/index';
 import MmpMap from '@mmp/map/map';
+import DOMPurify from 'dompurify';
 import {
   ExportHistory,
   ExportNodeProperties,
@@ -369,10 +370,9 @@ export class MmpService implements OnDestroy {
    * Export the current mind map with the format passed as parameter.
    */
   public async exportMap(format = 'json') {
-    const name = this.getRootNode()
-      .name.replace(/\n/g, ' ')
-      .replace(/\s+/g, ' ')
-      .replace(/<[^>]*>?/gm, '');
+    const name = DOMPurify.sanitize(
+      this.getRootNode().name.replace(/\n/g, ' ').replace(/\s+/g, ' ')
+    );
 
     switch (format) {
       case 'json': {
@@ -412,7 +412,7 @@ export class MmpService implements OnDestroy {
             htmlImageElement.width * 0.75,
             htmlImageElement.height * 0.75,
             '',
-            'NONE',
+            'MEDIUM',
             0
           );
         } else if (scaleFactorWidth < scaleFactorHeight) {
@@ -423,7 +423,7 @@ export class MmpService implements OnDestroy {
             htmlImageElement.width * scaleFactorWidth,
             htmlImageElement.height * scaleFactorWidth,
             '',
-            'NONE',
+            'MEDIUM',
             0
           );
         } else {
@@ -434,7 +434,7 @@ export class MmpService implements OnDestroy {
             htmlImageElement.width * scaleFactorHeight,
             htmlImageElement.height * scaleFactorHeight,
             '',
-            'NONE',
+            'MEDIUM',
             0
           );
         }

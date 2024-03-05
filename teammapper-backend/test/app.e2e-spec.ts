@@ -153,6 +153,7 @@ describe('AppController (e2e)', () => {
             font: {},
             colors: {},
             link: {},
+            detached: true
           },
         ],
       })
