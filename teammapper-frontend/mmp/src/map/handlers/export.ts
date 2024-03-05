@@ -135,7 +135,7 @@ export default class Export {
             const x = parseInt(fo.getAttribute('x'), 10) + Math.floor(parseInt(fo.getAttribute('width'), 10) / 2)
             const splittedText = fo.firstChild.textContent.split('\n')
             // line breaks are created via tspan elements that are relatively positioned using dy property
-            const svgTextWithLineBreaks = splittedText.map((text, i) => `<tspan dy="${(i === 0 || i === splittedText.length - 1) ? '0' : '1.2em'}" x="${x}">${text}</tspan>`)
+            const svgTextWithLineBreaks = splittedText.map((text, i) => `<tspan dy="${(i === 0) ? '0' : '1.2em'}" x="${x}">${text}</tspan>`)
             const textSVG = DOMPurify.sanitize(svgTextWithLineBreaks.join(''), { USE_PROFILES: { svg: true }, NAMESPACE: 'http://www.w3.org/2000/svg'})
             d3.select(parent)
               .attr('width', fo.getAttribute('width'))
