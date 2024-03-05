@@ -371,9 +371,8 @@ export class MmpService implements OnDestroy {
    */
   public async exportMap(format = 'json') {
     const name = DOMPurify.sanitize(
-      this.getRootNode()
-      .name.replace(/\n/g, ' ')
-      .replace(/\s+/g, ' '))
+      this.getRootNode().name.replace(/\n/g, ' ').replace(/\s+/g, ' ')
+    );
 
     switch (format) {
       case 'json': {
