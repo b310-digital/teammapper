@@ -6,6 +6,7 @@ import { jsPDF } from 'jspdf';
 import { first } from 'rxjs/operators';
 import * as mmp from '@mmp/index';
 import MmpMap from '@mmp/map/map';
+import DOMPurify from 'dompurify';
 import {
   ExportHistory,
   ExportNodeProperties,
@@ -369,10 +370,10 @@ export class MmpService implements OnDestroy {
    * Export the current mind map with the format passed as parameter.
    */
   public async exportMap(format = 'json') {
-    const name = this.getRootNode()
+    const name = DOMPurify.sanitize(
+      this.getRootNode()
       .name.replace(/\n/g, ' ')
-      .replace(/\s+/g, ' ')
-      .replace(/<[^>]*>?/gm, '');
+      .replace(/\s+/g, ' '))
 
     switch (format) {
       case 'json': {
