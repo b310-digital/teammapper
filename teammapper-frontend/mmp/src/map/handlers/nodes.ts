@@ -286,7 +286,6 @@ export default class Nodes {
             default:
                 Log.error('The property does not exist')
         }
-
         if (graphic === false && updated !== false) {
             this.map.history.save()
             if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
@@ -804,6 +803,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.font.size = size
             }
+            return true
         } else {
             return false
         }

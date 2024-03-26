@@ -6,6 +6,7 @@ import { SettingsService } from 'src/app/core/services/settings/settings.service
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { environment } from 'src/environments/environment';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'teammapper-dialog-about',

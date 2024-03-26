@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, SimpleChanges } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
@@ -21,16 +21,16 @@ export class SliderPanelsComponent {
     this.mapOptions = this.mmpService.getAdditionalMapOptions();
   }
 
-  public updateNodeFontSize(event: any, graphic?: boolean) {
-    const value = parseInt(event.source.value, 10);
+  public updateNodeFontSize(event: any) {
+    const value = parseInt(event.target.value, 10);
 
-    this.mmpService.updateNode('fontSize', value, graphic);
+    this.mmpService.updateNode('fontSize', value, true);
   }
 
-  public updateNodeImageSize(event: any, graphic?: boolean) {
-    const value = parseInt(event.source.value, 10);
+  public updateNodeImageSize(event: any) {
+    const value = parseInt(event.target.value, 10);
 
-    this.mmpService.updateNode('imageSize', value, graphic);
+    this.mmpService.updateNode('imageSize', value, true);
   }
 
   public getSettingsFontMaxSize() {

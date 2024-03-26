@@ -7,18 +7,16 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { InverseBoolPipe } from './pipes/inverse-bool.pipe';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatGridListModule } from '@angular/material/grid-list';
-import { NgOptimizedImage } from '@angular/common';
-import { MatListModule } from '@angular/material/list';
-import { MatLegacySliderModule as MatSliderModule } from '@angular/material/legacy-slider';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
+import {MatButtonModule} from '@angular/material/button';
+import {MatCardModule} from '@angular/material/card';
+import {MatListModule} from '@angular/material/list';
+import {MatDialogModule} from '@angular/material/dialog';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatSelectModule} from '@angular/material/select';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatSliderModule} from '@angular/material/slider';
 
 const PIPES = [InverseBoolPipe];
 
@@ -37,12 +35,10 @@ const PIPES = [InverseBoolPipe];
     MatListModule,
     MatToolbarModule,
     MatDialogModule,
-    MatGridListModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
-    NgOptimizedImage,
   ],
   declarations: [...PIPES],
   exports: [
@@ -59,12 +55,10 @@ const PIPES = [InverseBoolPipe];
     MatListModule,
     MatToolbarModule,
     MatDialogModule,
-    MatGridListModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
-    NgOptimizedImage,
     ...PIPES,
   ],
 })
