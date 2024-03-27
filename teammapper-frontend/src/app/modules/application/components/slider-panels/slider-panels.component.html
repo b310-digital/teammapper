@@ -1,33 +1,33 @@
 <div class="sliders-panel">
   <mat-slider
-    (change)="updateNodeFontSize($event)"
-    (input)="updateNodeFontSize($event, true)"
     *ngIf="node?.font"
-    [title]="'TOOLTIPS.TEXT_SIZE' | translate"
     [value]="node.font.size"
+    [title]="'TOOLTIPS.TEXT_SIZE' | translate"
     [disabled]="editDisabled"
-    class="font-size"
+    class="font-size slider-vertical"
     color="primary"
     [max]="getSettingsFontMaxSize()"
     [min]="getSettingsFontMinSize()"
     [tickInterval]="getSettingsFontIncrement()"
     [step]="getSettingsFontIncrement()"
-    thumbLabel
-    vertical>
+    discrete
+    showTickMarks
+    >
+    <input matSliderThumb (input)="updateNodeFontSize($event, false)" [(ngModel)]="node.font.size" #textSlider>
   </mat-slider>
   <mat-slider
-    (change)="updateNodeImageSize($event)"
-    (input)="updateNodeImageSize($event, true)"
     *ngIf="node?.image && node?.image?.src"
-    [title]="'TOOLTIPS.IMAGE_SIZE' | translate"
     [value]="node.image.size"
+    [title]="'TOOLTIPS.IMAGE_SIZE' | translate"
     [disabled]="editDisabled"
-    class="image-size"
+    class="image-size slider-vertical"
     color="primary"
     max="350"
     min="50"
     tickInterval="1"
-    thumbLabel
-    vertical>
+    discrete
+    showTickMarks
+    >
+    <input matSliderThumb (input)="updateNodeImageSize($event, true)" [(ngModel)]="node.image.size" #imageSlider>
   </mat-slider>
 </div>
