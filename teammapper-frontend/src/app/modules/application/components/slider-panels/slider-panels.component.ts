@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
