@@ -48,6 +48,7 @@ export class DialogShareComponent implements OnInit {
 
   copy() {
     this.inputLink.nativeElement.select();
+    // requires a secure origin (https) to work
     navigator.clipboard.writeText(this.getLink());
   }
 

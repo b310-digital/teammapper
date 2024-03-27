@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { ApplicationRoutingModule } from './application-routing.module';
 import { SharedModule } from '../../shared/shared.module';
+import { MatTabsModule } from '@angular/material/tabs';
 import { ColorPanelsComponent } from './components/color-panels/color-panels.component';
 import { SliderPanelsComponent } from './components/slider-panels/slider-panels.component';
 import { FloatingButtonsComponent } from './components/floating-buttons/floating-buttons.component';
@@ -16,7 +17,6 @@ import { DialogShareComponent } from './components/dialog-share/dialog-share.com
 import { DialogConnectionInfoComponent } from './components/dialog-connection-info/dialog-connection-info.component';
 import { DialogPictogramsComponent } from './components/dialog-pictograms/dialog-pictograms.component';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTabsModule } from '@angular/material/tabs';
 
 @NgModule({
   imports: [
