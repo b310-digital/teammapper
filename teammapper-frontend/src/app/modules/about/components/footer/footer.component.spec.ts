@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material/icon';
-import { MatLegacyListModule as MatListModule } from '@angular/material/legacy-list';
 import { TranslateModule } from '@ngx-translate/core';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 
@@ -20,7 +19,7 @@ describe('FooterComponent', () => {
     TestBed.configureTestingModule({
       declarations: [FooterComponent],
       providers: [{ provide: SettingsService, useValue: mockSettingsService }],
-      imports: [TranslateModule.forRoot(), MatIconModule, MatListModule],
+      imports: [TranslateModule.forRoot(), MatIconModule],
     }).compileComponents();
   }));
 

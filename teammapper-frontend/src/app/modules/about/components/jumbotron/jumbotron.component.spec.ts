@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material/icon';
-import { MatLegacyListModule as MatListModule } from '@angular/material/legacy-list';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { JumbotronComponent } from './jumbotron.component';
@@ -12,7 +11,7 @@ describe('JumbotronComponent', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [JumbotronComponent],
-      imports: [TranslateModule.forRoot(), MatIconModule, MatListModule],
+      imports: [TranslateModule.forRoot(), MatIconModule],
     }).compileComponents();
   }));
 
