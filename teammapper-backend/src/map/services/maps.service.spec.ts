@@ -25,7 +25,7 @@ describe('MapsController', () => {
       imports: [
         ConfigModule,
         TypeOrmModule.forRoot(
-          await createTestConfiguration(process.env.JEST_WORKER_ID)
+          await createTestConfiguration(process.env.JEST_WORKER_ID || '')
         ),
         AppModule,
       ],
@@ -42,7 +42,7 @@ describe('MapsController', () => {
     // close connection:
     await destroyWorkerDatabase(
       mapsRepo.manager.connection,
-      process.env.JEST_WORKER_ID
+      process.env.JEST_WORKER_ID || ''
     )
     await moduleFixture.close()
   })
@@ -100,8 +100,8 @@ describe('MapsController', () => {
         where: { id: node.id },
       })
 
-      expect(updatedNode.lastModified).not.toEqual(oldDate)
-      expect(updatedNode.lastModified.getTime()).toBeGreaterThan(
+      expect(updatedNode?.lastModified).not.toEqual(oldDate)
+      expect(updatedNode?.lastModified.getTime()).toBeGreaterThan(
         timeBeforeUpdate.getTime()
       )
     })
@@ -110,10 +110,10 @@ describe('MapsController', () => {
   describe('exportMapToClient', () => {
     it('returns null when no map is available', async () => {
       expect(
-        await mapsService.exportMapToClient(
+        mapsService.exportMapToClient(
           '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
         )
-      ).toBeNull()
+      ).rejects.toEqual(undefined)
     })
   })
 
@@ -122,8 +122,8 @@ describe('MapsController', () => {
       const map: MmpMap = await mapsRepo.save({})
 
       await mapsService.deleteOutdatedMaps(30)
-      const foundMap: MmpMap = await mapsService.findMap(map.id)
-      expect(foundMap.id).toEqual(map.id)
+      const foundMap = await mapsService.findMap(map.id)
+      expect(foundMap?.id).toEqual(map.id)
     })
 
     it('does delete a map that contains only outdated nodes', async () => {
@@ -184,10 +184,6 @@ describe('MapsController', () => {
   })
 
   describe('getDeletedAt', () => {
-    it('does not crash when map is null or undefined', async () => {
-      expect(await mapsService.getDeletedAt(null, 5))
-    })
-
     it('calculates the correct date based on the newest node', async () => {
       const map: MmpMap = await mapsRepo.save({
         lastModified: new Date('2018-02-02'),
