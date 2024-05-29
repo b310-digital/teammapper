@@ -43,7 +43,9 @@ export class MapsGateway implements OnGatewayDisconnect {
 
   @SubscribeMessage('leave')
   async handleDisconnect(client: Socket) {
-    const mapId: string = await this.cacheManager.get(client.id)
+    const mapId: string | undefined = await this.cacheManager.get(client.id)
+    if(!mapId) return Promise.reject()
+
     this.server.to(mapId).emit('clientDisconnect', client.id)
     this.removeClientForMap(mapId, client.id)
     this.cacheManager.del(client.id)
@@ -55,7 +57,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     @MessageBody() request: IMmpClientJoinRequest
   ): Promise<IMmpClientMap> {
     if (!(await this.mapsService.findMap(request.mapId)))
-      return Promise.resolve(null)
+      return Promise.reject()
 
     client.join(request.mapId)
     this.cacheManager.set(client.id, request.mapId, 10000)
@@ -76,9 +78,9 @@ export class MapsGateway implements OnGatewayDisconnect {
     @MessageBody() request: IMmpClientEditingRequest
   ): Promise<boolean> {
     const map = await this.mapsService.findMap(request.mapId)
-    if (!map.modificationSecret) return true
+    if (!map || !map.modificationSecret) return true
 
-    return request.modificationSecret == map.modificationSecret
+    return request.modificationSecret === map?.modificationSecret
   }
 
   @UseGuards(EditGuard)
@@ -87,7 +89,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() _client: Socket,
     @MessageBody() request: IMmpClientUpdateMapOptionsRequest
   ): Promise<boolean> {
-    const updatedMap: MmpMap = await this.mapsService.updateMapOptions(
+    const updatedMap: MmpMap | null = await this.mapsService.updateMapOptions(
       request.mapId,
       request.options
     )
@@ -101,8 +103,8 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() _client: Socket,
     @MessageBody() request: IMmpClientDeleteRequest
   ): Promise<boolean> {
-    const mmpMap: MmpMap = await this.mapsService.findMap(request.mapId)
-    if (mmpMap.adminId === request.adminId) {
+    const mmpMap: MmpMap | null = await this.mapsService.findMap(request.mapId)
+    if (mmpMap && mmpMap.adminId === request.adminId) {
       this.mapsService.deleteMap(request.mapId)
       this.server.to(request.mapId).emit('mapDeleted')
       return true

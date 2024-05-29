@@ -11,7 +11,7 @@ async function bootstrap() {
   const mapsService = application.get(MapsService)
 
   logger.log('--- Deleting old maps ... ---')
-  const result: number = await mapsService.deleteOutdatedMaps(
+  const result = await mapsService.deleteOutdatedMaps(
     configService.deleteAfterDays()
   )
   logger.log('Deleted rows: ' + result)

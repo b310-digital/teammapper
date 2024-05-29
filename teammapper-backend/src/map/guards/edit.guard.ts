@@ -16,7 +16,7 @@ export class EditGuard implements CanActivate {
     givenModificationSecret: string
   ): Promise<boolean> {
     const map = await this.mapsService.findMap(mapId)
-    if (!map.modificationSecret) return true
+    if (!map || !map.modificationSecret) return true
 
     return givenModificationSecret === map.modificationSecret
   }
