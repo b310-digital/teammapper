@@ -33,8 +33,8 @@ export default class MapsController {
     @Param('id') mapId: string,
     @Body() body: IMmpClientDeleteRequest
   ): Promise<void> {
-    const mmpMap: MmpMap = await this.mapsService.findMap(mapId)
-    if (mmpMap.adminId === body.adminId) this.mapsService.deleteMap(mapId)
+    const mmpMap: MmpMap | null = await this.mapsService.findMap(mapId)
+    if (mmpMap && mmpMap.adminId === body.adminId) this.mapsService.deleteMap(mapId)
   }
 
   @Post()
