@@ -27,15 +27,15 @@ export class MapsService {
     private mapsRepository: Repository<MmpMap>
   ) {}
 
-  findMap(uuid: string): Promise<MmpMap> {
+  findMap(uuid: string): Promise<MmpMap | null> {
     return this.mapsRepository.findOne({
       where: { id: uuid },
     })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
-    const map: MmpMap = await this.findMap(uuid)
-    if (!map) return null
+    const map: MmpMap | null = await this.findMap(uuid)
+    if (!map) return Promise.reject()
 
     const nodes: MmpNode[] = await this.findNodes(map?.id)
     const days: number = configService.deleteAfterDays()
@@ -49,8 +49,8 @@ export class MapsService {
 
   async addNode(mapId: string, clientNode: IMmpClientNode): Promise<MmpNode> {
     // detached nodes are not allowed to have a parent
-    if (clientNode.detached && clientNode.parent) return
-    if (!mapId || !clientNode) return
+    if (clientNode.detached && clientNode.parent) return Promise.reject()
+    if (!mapId || !clientNode) return Promise.reject()
 
     const existingNode = await this.nodesRepository.findOne({
       where: { id: clientNode.id, nodeMapId: mapId },
@@ -68,7 +68,7 @@ export class MapsService {
     mapId: string,
     clientNodes: IMmpClientNode[]
   ): Promise<MmpNode[]> {
-    if (!mapId || clientNodes.length === 0) return
+    if (!mapId || clientNodes.length === 0) Promise.reject()
 
     const reducer = async (
       previousPromise: Promise<MmpNode[]>,
@@ -113,7 +113,7 @@ export class MapsService {
       where: { nodeMapId: mapId, id: clientNode.id },
     })
 
-    if (!existingNode) return
+    if (!existingNode) return Promise.reject()
 
     return this.nodesRepository.save({
       ...existingNode,
@@ -150,7 +150,7 @@ export class MapsService {
   }
 
   // updates map nodes
-  async updateMap(clientMap: IMmpClientMap): Promise<MmpMap> {
+  async updateMap(clientMap: IMmpClientMap): Promise<MmpMap | null> {
     // remove existing nodes, otherwise we will end up with multiple roots
     await this.nodesRepository.delete({ nodeMapId: clientMap.uuid })
     // Add new nodes from given map
@@ -162,14 +162,14 @@ export class MapsService {
   async updateMapOptions(
     mapId: string,
     clientOptions: IMmpClientMapOptions
-  ): Promise<MmpMap> {
+  ): Promise<MmpMap | null> {
     await this.mapsRepository.update(mapId, { options: clientOptions })
 
     return await this.mapsRepository.findOne({ where: { id: mapId } })
   }
 
   async getDeletedAt(map: MmpMap, afterDays: number): Promise<Date> {
-    if (!map) return null
+    if (!map) return Promise.reject()
 
     // get newest node of this map:
     const newestNodeQuery = this.nodesRepository
@@ -193,7 +193,7 @@ export class MapsService {
     return copyDate
   }
 
-  async deleteOutdatedMaps(afterDays: number = 30): Promise<number> {
+  async deleteOutdatedMaps(afterDays: number = 30): Promise<number | null | undefined>  {
     const today = new Date()
 
     const deleteQuery = this.mapsRepository
@@ -256,7 +256,7 @@ export class MapsService {
     return (
       node.isRoot ||
       node.detached ||
-      (node.parent && (await this.existsNode(mapId, node.parent)))
+      (!!node.parent && (await this.existsNode(mapId, node.parent)))
     )
   }
 }
