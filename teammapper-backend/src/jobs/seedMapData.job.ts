@@ -36,13 +36,14 @@ const createNode: any = (
   }
 }
 
-const createMap: any = (nodes: IMmpClientNode[]) => {
+const createMap = (nodes: IMmpClientNode[]): IMmpClientMap => {
   return {
     uuid: crypto.randomUUID(),
     lastModified: new Date(),
     deleteAfterDays: 30,
     data: nodes,
-    deletedAt: undefined,
+    deletedAt: new Date(),
+    options: { fontMaxSize: 10, fontIncrement: 5, fontMinSize: 10 }
   }
 }
 

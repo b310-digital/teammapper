@@ -16,7 +16,7 @@ class ConfigService {
     this.env = env
   }
 
-  private getValue(key: string, throwOnMissing = true): string {
+  private getValue(key: string, throwOnMissing = true): string | undefined {
     const value = this.env[key]
     if (!value && throwOnMissing) {
       throw new Error(`config error - missing env.${key}`)
@@ -31,7 +31,7 @@ class ConfigService {
   }
 
   public getPort(): number {
-    return parseInt(this.getValue('PORT', false), 10) || 3000
+    return parseInt(this.getValue('PORT', false) || '3000', 10)
   }
 
   public isProduction() {

@@ -17,6 +17,8 @@ import { DialogShareComponent } from './components/dialog-share/dialog-share.com
 import { DialogConnectionInfoComponent } from './components/dialog-connection-info/dialog-connection-info.component';
 import { DialogPictogramsComponent } from './components/dialog-pictograms/dialog-pictograms.component';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatGridListModule } from '@angular/material/grid-list';
 
 @NgModule({
   imports: [
@@ -25,6 +27,8 @@ import { MatMenuModule } from '@angular/material/menu';
     MatTabsModule,
     ApplicationRoutingModule,
     ColorPickerModule,
+    MatDialogModule,
+    MatGridListModule,
   ],
   declarations: [
     ApplicationComponent,

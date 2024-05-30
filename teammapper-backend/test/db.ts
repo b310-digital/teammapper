@@ -47,7 +47,7 @@ const workerDataSourceConfig = (databaseName: string): TypeOrmModuleOptions => {
 const createDataSourceConfig: PostgresConnectionOptions = {
   type: 'postgres',
   host: process.env.POSTGRES_TEST_HOST,
-  port: parseInt(process.env.POSTGRES_TEST_PORT),
+  port: parseInt(process.env.POSTGRES_TEST_PORT || '3000', 10),
   username: process.env.POSTGRES_TEST_USER,
   password: process.env.POSTGRES_TEST_PASSWORD,
   database: process.env.POSTGRES_TEST_DATABASE,

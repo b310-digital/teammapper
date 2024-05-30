@@ -55,7 +55,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('checkModificationSecret', () => {
-    it(`returns false if wrong`, async (done) => {
+    it(`returns false if wrong`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
@@ -71,7 +71,7 @@ describe('WebSocketGateway', () => {
       )
     })
 
-    it(`returns true if correct`, async (done) => {
+    it(`returns true if correct`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
@@ -89,7 +89,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('addNode', () => {
-    it(`allows request when modification secret is set`, async (done) => {
+    it(`allows request when modification secret is set`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
@@ -108,7 +108,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('updateNode', () => {
-    it(`allows request when modification secret is set`, async (done) => {
+    it(`allows request when modification secret is set`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
@@ -127,7 +127,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('removeNode', () => {
-    it(`allows request when modification secret is set`, async (done) => {
+    it(`allows request when modification secret is set`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
@@ -146,7 +146,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('updateMap', () => {
-    it(`allows request when modification secret is set`, async (done) => {
+    it(`allows request when modification secret is set`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
@@ -165,7 +165,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('updateMapOptions', () => {
-    it(`allows request when modification secret is set`, async (done) => {
+    it(`allows request when modification secret is set`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
