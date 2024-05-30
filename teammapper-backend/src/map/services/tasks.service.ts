@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { Cron } from '@nestjs/schedule'
+import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule'
 import { MapsService } from './maps.service'
 import configService from '../../config.service'
 
@@ -12,11 +12,11 @@ import configService from '../../config.service'
 export class TasksService {
   private readonly logger = new Logger(TasksService.name)
 
-  constructor(private mapsService: MapsService) {}
+  constructor(private mapsService: MapsService, private schedulerRegistry: SchedulerRegistry) {}
 
   // every day midnight
   @Cron('0 0 * * *')
-  async deleteOldMapsInInterval() {
+  async handleCron() {
     this.logger.log('--- Deleting old maps ... ---')
     const affected = await this.mapsService.deleteOutdatedMaps(
       configService.deleteAfterDays()
