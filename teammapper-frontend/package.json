@@ -81,7 +81,7 @@
     "@angular-eslint/schematics": "17.3.0",
     "@angular-eslint/template-parser": "17.3.0",
     "@angular/language-service": "^17.3.1",
-    "@compodoc/compodoc": "^1.1.16",
+    "@compodoc/compodoc": "^1.1.25",
     "@schematics/angular": "^17.3.2",
     "@types/d3": "7.1.0",
     "@types/jasmine": "~4.0.0",
