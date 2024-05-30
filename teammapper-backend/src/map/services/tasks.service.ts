@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule'
+import { Cron } from '@nestjs/schedule'
 import { MapsService } from './maps.service'
 import configService from '../../config.service'
 
@@ -12,7 +12,7 @@ import configService from '../../config.service'
 export class TasksService {
   private readonly logger = new Logger(TasksService.name)
 
-  constructor(private mapsService: MapsService, private schedulerRegistry: SchedulerRegistry) {}
+  constructor(private mapsService: MapsService) {}
 
   // every day midnight
   @Cron('0 0 * * *')
