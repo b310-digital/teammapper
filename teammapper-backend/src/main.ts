@@ -5,7 +5,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn'],
+    logger: ['log', 'error', 'warn'],
   })
 
   app.use(
