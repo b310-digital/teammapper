@@ -16,7 +16,7 @@ export class TasksService {
 
   // every day midnight
   @Cron('0 0 * * *')
-  async deleteOldMapsInInterval() {
+  async handleCron() {
     this.logger.log('--- Deleting old maps ... ---')
     const affected = await this.mapsService.deleteOutdatedMaps(
       configService.deleteAfterDays()
