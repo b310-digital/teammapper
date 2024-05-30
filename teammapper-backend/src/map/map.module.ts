@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 import { CacheModule } from '@nestjs/cache-manager'
-import { ScheduleModule } from '@nestjs/schedule';
+import { ScheduleModule } from '@nestjs/schedule'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import MapsController from './controllers/maps.controller'
 import { MapsGateway } from './controllers/maps.gateway'
