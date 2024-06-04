@@ -7,7 +7,6 @@ import {
   Param,
   Post,
 } from '@nestjs/common'
-import { MmpMap } from '../entities/mmpMap.entity'
 import { MapsService } from '../services/maps.service'
 import {
   IMmpClientDeleteRequest,
@@ -21,9 +20,11 @@ export default class MapsController {
   constructor(private mapsService: MapsService) {}
 
   @Get(':id')
-  async findOne(@Param('id') mapId: string): Promise<IMmpClientMap> {
-    const map: IMmpClientMap = await this.mapsService.exportMapToClient(mapId)
-    if (map === null) throw new NotFoundException()
+  async findOne(@Param('id') mapId: string): Promise<IMmpClientMap | void> {
+    const map = await this.mapsService.exportMapToClient(mapId).catch((e: Error) => {
+      if (e.name === 'MalformedUUIDError') throw new NotFoundException()
+    })
+    if (!map) throw new NotFoundException()
 
     return map
   }
@@ -33,7 +34,7 @@ export default class MapsController {
     @Param('id') mapId: string,
     @Body() body: IMmpClientDeleteRequest
   ): Promise<void> {
-    const mmpMap: MmpMap | null = await this.mapsService.findMap(mapId)
+    const mmpMap = await this.mapsService.findMap(mapId)
     if (mmpMap && mmpMap.adminId === body.adminId) this.mapsService.deleteMap(mapId)
   }
 
@@ -41,7 +42,7 @@ export default class MapsController {
   async create(
     @Body() body: IMmpClientMapCreateRequest
   ): Promise<IMmpClientPrivateMap> {
-    const newMap: MmpMap = await this.mapsService.createEmptyMap(body.rootNode)
+    const newMap = await this.mapsService.createEmptyMap(body.rootNode)
     return {
       map: await this.mapsService.exportMapToClient(newMap.id),
       adminId: newMap.adminId,

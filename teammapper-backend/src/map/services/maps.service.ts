@@ -15,6 +15,8 @@ import {
   mapMmpMapToClient,
 } from '../utils/clientServerMapping'
 import configService from '../../config.service'
+import { validate as uuidValidate } from 'uuid';
+import MalformedUUIDError from './uuid.error'
 
 @Injectable()
 export class MapsService {
@@ -28,13 +30,18 @@ export class MapsService {
   ) {}
 
   findMap(uuid: string): Promise<MmpMap | null> {
+    if(!uuidValidate(uuid)) return Promise.reject(new MalformedUUIDError('Invalid UUID'))
+
     return this.mapsRepository.findOne({
       where: { id: uuid },
     })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
-    const map: MmpMap | null = await this.findMap(uuid)
+    const map = await this.findMap(uuid).catch((e: Error) => {
+      return Promise.reject(e)
+    })
+
     if (!map) return Promise.reject()
 
     const nodes: MmpNode[] = await this.findNodes(map?.id)
