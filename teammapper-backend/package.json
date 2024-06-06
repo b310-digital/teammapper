@@ -33,6 +33,7 @@
     "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {
+    "@types/uuid": "^9.0.8",
     "@nestjs/cache-manager": "^2.2.2",
     "@nestjs/cli": "^10.3.2",
     "@nestjs/common": "^10.3.8",
@@ -68,7 +69,6 @@
     "@types/jest": "29.5.11",
     "@types/node": "^20.10.4",
     "@types/supertest": "^2.0.16",
-    "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "concurrently": "8.2.2",
