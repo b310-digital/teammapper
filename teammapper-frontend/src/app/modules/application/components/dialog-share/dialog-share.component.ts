@@ -52,6 +52,10 @@ export class DialogShareComponent implements OnInit {
     navigator.clipboard.writeText(this.getLink());
   }
 
+  duplicateMindMap() {
+    
+  }
+
   downloadQrCode() {
     this.qrCode.download();
   }
