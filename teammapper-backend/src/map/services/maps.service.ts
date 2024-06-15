@@ -54,9 +54,10 @@ export class MapsService {
     )
   }
 
-  async addNode(mapId: string, clientNode: IMmpClientNode): Promise<MmpNode> {
+  async addNode(mapId: string, clientNode: IMmpClientNode | MmpNode): Promise<MmpNode> {
     // detached nodes are not allowed to have a parent
-    if (clientNode.detached && clientNode.parent) return Promise.reject()
+    const hasParentNode = 'parent' in clientNode ? clientNode.parent : clientNode.nodeParentId
+    if (clientNode.detached && hasParentNode) return Promise.reject()
     if (!mapId || !clientNode) return Promise.reject()
 
     const existingNode = await this.nodesRepository.findOne({
@@ -64,34 +65,44 @@ export class MapsService {
     })
     if (existingNode) return existingNode
 
-    const newNode = this.nodesRepository.create({
-      ...mapClientNodeToMmpNode(clientNode, mapId),
-      nodeMapId: mapId,
-    })
+    let newNode;
+    // Type guard: IMmpClientNode
+    if ('parent' in clientNode) {
+      newNode = this.nodesRepository.create({
+        ...mapClientNodeToMmpNode(clientNode, mapId),
+        nodeMapId: mapId,
+      })
+    } else {
+      newNode = this.nodesRepository.create({
+        ...clientNode,
+        nodeMapId: mapId,
+      })
+    }
+
     return this.nodesRepository.save(newNode)
   }
 
   async addNodes(
     mapId: string,
-    clientNodes: IMmpClientNode[]
+    clientNodes: IMmpClientNode[] | MmpNode[]
   ): Promise<MmpNode[]> {
     if (!mapId || clientNodes.length === 0) Promise.reject()
 
     const reducer = async (
       previousPromise: Promise<MmpNode[]>,
-      clientNode: IMmpClientNode
+      clientNode: IMmpClientNode | MmpNode
     ): Promise<MmpNode[]> => {
       const accCreatedNodes = await previousPromise
-
-      if (await this.validatesNodeParentForClientNode(mapId, clientNode)) {
+      if (await this.validatesNodeParentForNode(mapId, clientNode)) {
         return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
       }
 
       this.logger.warn(
-        `Parent with id ${clientNode.parent} does not exist for node ${clientNode.id} and map ${mapId}`
+        `Parent with id ${'parent' in clientNode ? clientNode.parent : clientNode.nodeParentId} does not exist for node ${clientNode.id} and map ${mapId}`
       )
       return accCreatedNodes
     }
+
 
     return clientNodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
   }
@@ -145,13 +156,16 @@ export class MapsService {
     return this.nodesRepository.remove(existingNode)
   }
 
-  async createEmptyMap(rootNode: IMmpClientNodeBasics): Promise<MmpMap> {
+  async createEmptyMap(rootNode?: IMmpClientNodeBasics): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create()
     const savedNewMap: MmpMap = await this.mapsRepository.save(newMap)
-    const newRootNode = this.nodesRepository.create(
-      mapClientBasicNodeToMmpRootNode(rootNode, savedNewMap.id)
-    )
-    await this.nodesRepository.save(newRootNode)
+
+    if (rootNode) {
+      const newRootNode = this.nodesRepository.create(
+        mapClientBasicNodeToMmpRootNode(rootNode, savedNewMap.id)
+      )
+      await this.nodesRepository.save(newRootNode)
+    }
 
     return newMap
   }
@@ -256,14 +270,26 @@ export class MapsService {
     this.mapsRepository.delete({ id: uuid })
   }
 
-  async validatesNodeParentForClientNode(
+  async validatesNodeParentForNode(
     mapId: string,
-    node: IMmpClientNode
+    node: IMmpClientNode | MmpNode
   ): Promise<boolean> {
-    return (
-      node.isRoot ||
-      node.detached ||
-      (!!node.parent && (await this.existsNode(mapId, node.parent)))
-    )
+    if ('isRoot' in node) {
+      // Type guard: IMmpClientNode
+      return (
+        node.isRoot ||
+        node.detached ||
+        (!!node.parent && (await this.existsNode(mapId, node.parent)))
+      )
+    } else if ('root' in node) {
+      // Type guard: MmpNode
+      return (
+        node.root ||
+        node.detached ||
+        (!!node.nodeParentId && (await this.existsNode(mapId, node.nodeParentId)))
+      )
+    }
+
+    return false
   }
 }

@@ -80,6 +80,7 @@
           "options": {
             "proxyConfig": "src/proxy.conf.json",
             "buildTarget": "teammapper:build",
+            "disableHostCheck": true
           },
           "configurations": {
             "production": {
