@@ -1,6 +1,7 @@
 import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
 import QRCodeStyling from 'qr-code-styling';
 import { qrcodeStyling } from './qrcode-settings';
+import { API_URL, HttpService } from 'src/app/core/http/http.service';
 
 @Component({
   selector: 'teammapper-dialog-share',
@@ -24,6 +25,10 @@ export class DialogShareComponent implements OnInit {
     window.location.pathname +
     window.location.search;
   private qrCode: QRCodeStyling;
+
+  constructor(
+    private httpService: HttpService
+  ) {}
 
   ngOnInit() {
     this.appendQrCode();
@@ -52,8 +57,17 @@ export class DialogShareComponent implements OnInit {
     navigator.clipboard.writeText(this.getLink());
   }
 
-  duplicateMindMap() {
-    
+  async duplicateMindMap() {
+    // getCurrentMap from the MmpService doesn't give us the UUID of the map, only a legacy id and the root note ID, so we'll have to use the URL params.
+    const id = window.location.pathname.split('/')[2];
+    const response = await this.httpService.post(API_URL.ROOT, '/maps/' + id + '/share');
+    if (!response.ok) return null;
+
+    const newMap = await response.json();
+    if (newMap && newMap.map.uuid) {
+      // The reason we're doing a client-side replace and not server-side redirect is to make sure all client-side data is refreshed
+      window.location.replace(`/map/${newMap.map.uuid}#${newMap.modificationSecret}`);
+    }
   }
 
   downloadQrCode() {
