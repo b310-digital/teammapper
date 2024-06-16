@@ -58,7 +58,7 @@ export default class MapsController {
       if (e.name === 'MalformedUUIDError') throw new NotFoundException()
     })
 
-    if (!oldMap) return Promise.reject()
+    if (!oldMap) throw new NotFoundException()
 
     const newMap = await this.mapsService.createEmptyMap()
 
