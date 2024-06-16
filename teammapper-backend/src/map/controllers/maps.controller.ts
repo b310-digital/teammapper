@@ -50,7 +50,7 @@ export default class MapsController {
     }
   }
 
-  @Post(':id/share')
+  @Post(':id/duplicate')
   async duplicate(
     @Param('id') mapId: string,
   ): Promise<IMmpClientPrivateMap> {
