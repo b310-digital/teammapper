@@ -29,7 +29,8 @@
             ],
             "styles": [
               "src/styles.scss",
-              "src/theme.scss"
+              "src/theme.scss",
+              "node_modules/ngx-toastr/toastr.css"
             ],
             "scripts": [],
             "serviceWorker": false
@@ -79,7 +80,8 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "proxyConfig": "src/proxy.conf.json",
-            "buildTarget": "teammapper:build"
+            "buildTarget": "teammapper:build",
+            "disableHostCheck": true
           },
           "configurations": {
             "production": {

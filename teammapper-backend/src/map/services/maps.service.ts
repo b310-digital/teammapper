@@ -54,10 +54,9 @@ export class MapsService {
     )
   }
 
-  async addNode(mapId: string, clientNode: IMmpClientNode | MmpNode): Promise<MmpNode> {
+  async addNode(mapId: string, clientNode: MmpNode): Promise<MmpNode> {
     // detached nodes are not allowed to have a parent
-    const hasParentNode = 'parent' in clientNode ? clientNode.parent : clientNode.nodeParentId
-    if (clientNode.detached && hasParentNode) return Promise.reject()
+    if (clientNode.detached && clientNode.nodeParentId) return Promise.reject()
     if (!mapId || !clientNode) return Promise.reject()
 
     const existingNode = await this.nodesRepository.findOne({
@@ -65,46 +64,45 @@ export class MapsService {
     })
     if (existingNode) return existingNode
 
-    let newNode;
-    // Type guard: IMmpClientNode
-    if ('parent' in clientNode) {
-      newNode = this.nodesRepository.create({
-        ...mapClientNodeToMmpNode(clientNode, mapId),
-        nodeMapId: mapId,
-      })
-    } else {
-      newNode = this.nodesRepository.create({
-        ...clientNode,
-        nodeMapId: mapId,
-      })
-    }
+    const newNode = this.nodesRepository.create({
+      ...clientNode,
+      nodeMapId: mapId,
+    })
 
     return this.nodesRepository.save(newNode)
   }
 
+  async addNodesFromClient(
+    mapId: string,
+    clientNodes: IMmpClientNode[]
+  ): Promise<MmpNode[]> {
+    const mmpNodes = clientNodes.map(x => mapClientNodeToMmpNode(x, mapId))
+    return await this.addNodes(mapId, mmpNodes)
+  }
+
   async addNodes(
     mapId: string,
-    clientNodes: IMmpClientNode[] | MmpNode[]
+    nodes: Partial<MmpNode>[]
   ): Promise<MmpNode[]> {
-    if (!mapId || clientNodes.length === 0) Promise.reject()
+    if (!mapId || nodes.length === 0) Promise.reject()
 
     const reducer = async (
       previousPromise: Promise<MmpNode[]>,
-      clientNode: IMmpClientNode | MmpNode
+      node: MmpNode
     ): Promise<MmpNode[]> => {
       const accCreatedNodes = await previousPromise
-      if (await this.validatesNodeParentForNode(mapId, clientNode)) {
-        return accCreatedNodes.concat([await this.addNode(mapId, clientNode)])
+      if (await this.validatesNodeParentForNode(mapId, node)) {
+        return accCreatedNodes.concat([await this.addNode(mapId, node)])
       }
 
       this.logger.warn(
-        `Parent with id ${'parent' in clientNode ? clientNode.parent : clientNode.nodeParentId} does not exist for node ${clientNode.id} and map ${mapId}`
+        `Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`
       )
       return accCreatedNodes
     }
 
 
-    return clientNodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
+    return nodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
   }
 
   async findNodes(mapId: string): Promise<MmpNode[]> {
@@ -175,7 +173,7 @@ export class MapsService {
     // remove existing nodes, otherwise we will end up with multiple roots
     await this.nodesRepository.delete({ nodeMapId: clientMap.uuid })
     // Add new nodes from given map
-    await this.addNodes(clientMap.uuid, clientMap.data)
+    await this.addNodesFromClient(clientMap.uuid, clientMap.data)
     // reload map
     return this.findMap(clientMap.uuid)
   }
@@ -272,24 +270,12 @@ export class MapsService {
 
   async validatesNodeParentForNode(
     mapId: string,
-    node: IMmpClientNode | MmpNode
+    node:  MmpNode
   ): Promise<boolean> {
-    if ('isRoot' in node) {
-      // Type guard: IMmpClientNode
-      return (
-        node.isRoot ||
-        node.detached ||
-        (!!node.parent && (await this.existsNode(mapId, node.parent)))
-      )
-    } else if ('root' in node) {
-      // Type guard: MmpNode
-      return (
-        node.root ||
-        node.detached ||
-        (!!node.nodeParentId && (await this.existsNode(mapId, node.nodeParentId)))
-      )
-    }
-
-    return false
+    return (
+      node.root ||
+      node.detached ||
+      (!!node.nodeParentId && (await this.existsNode(mapId, node.nodeParentId)))
+    )
   }
 }

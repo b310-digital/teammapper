@@ -161,6 +161,9 @@
     "UNLOAD_WARN": "Seite wirklich verlassen?",
     "JSON_FILE_SIZE_TOO_LARGE": "Die Datei ist größer als 1 MB und kann möglicherweise später nicht importiert werden. Bitte Datei verkleinern (z.B. Bilder entfernen)."
   },
+  "TOASTS": {
+    "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert! Leite weiter..."
+  },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",
     "REPOSITORY": "Source Code",
