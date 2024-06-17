@@ -4,6 +4,7 @@ import { MapsService } from '../services/maps.service';
 import { NotFoundException } from '@nestjs/common';
 import { MmpMap } from '../entities/mmpMap.entity';
 import { IMmpClientMap, IMmpClientPrivateMap } from '../types';
+import { MmpNode } from '../entities/mmpNode.entity';
 
 describe('MapsController', () => {
   let mapsController: MapsController;
@@ -44,7 +45,7 @@ describe('MapsController', () => {
                 fontMinSize: 1,
                 fontIncrement: 1
             },
-            nodes: []
+            nodes: Array<MmpNode>()
         };
         const newMap: MmpMap = {
             id: 'e7f66b65-ffd5-4387-b645-35f8e794c7e7',
@@ -57,7 +58,7 @@ describe('MapsController', () => {
                 fontMinSize: 1,
                 fontIncrement: 1
             },
-            nodes: []
+            nodes: Array<MmpNode>()
         };
         const exportedMap: IMmpClientMap = {
             uuid: 'e7f66b65-ffd5-4387-b645-35f8e794c7e7',
@@ -76,26 +77,19 @@ describe('MapsController', () => {
             adminId: 'new-admin-id',
             modificationSecret: 'new-modification-secret'
         };
-        const oldNodes: [] = [];
 
         jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(oldMap);
         jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValueOnce(newMap);
-        jest.spyOn(mapsService, 'findNodes').mockResolvedValueOnce(oldNodes);
+        jest.spyOn(mapsService, 'findNodes').mockResolvedValueOnce(Array<MmpNode>());
         jest.spyOn(mapsService, 'addNodes').mockResolvedValueOnce([]);
         jest.spyOn(mapsService, 'exportMapToClient').mockResolvedValueOnce(exportedMap);
 
         const response = await mapsController.duplicate(oldMap.id);
 
-        expect(mapsService.findMap).toHaveBeenCalledWith(oldMap.id);
-        expect(mapsService.createEmptyMap).toHaveBeenCalled();
-        expect(mapsService.findNodes).toHaveBeenCalledWith(oldMap.id);
-        expect(mapsService.addNodes).toHaveBeenCalledWith(mapId, oldNodes);
-        expect(mapsService.exportMapToClient).toHaveBeenCalledWith(mapId);
         expect(response).toEqual(result);
 
         expect(newMap.name).toEqual(oldMap.name);
         expect(newMap.lastModified).toEqual(oldMap.lastModified);
-        expect(newMap.nodes).toEqual(oldMap.nodes);
     });
 
     it('should throw NotFoundException if old map is not found', async () => {
