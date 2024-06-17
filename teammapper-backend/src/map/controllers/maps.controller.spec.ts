@@ -33,7 +33,6 @@ describe('MapsController', () => {
 
   describe('duplicate', () => {
     it('should duplicate a map correctly', async () => {
-        const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7';
         const oldMap: MmpMap = {
             id: '6357cedd-2621-4033-8958-c50061306cb9',
             adminId: 'old-admin-id',

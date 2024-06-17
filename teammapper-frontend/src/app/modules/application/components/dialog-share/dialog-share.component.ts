@@ -64,17 +64,28 @@ export class DialogShareComponent implements OnInit {
   async duplicateMindMap() {
     // getCurrentMap from the MmpService doesn't give us the UUID of the map, only a legacy id and the root note ID, so we'll have to use the URL params.
     const id = window.location.pathname.split('/')[2];
-    const response = await this.httpService.post(API_URL.ROOT, '/maps/' + id + '/duplicate');
+    const response = await this.httpService.post(
+      API_URL.ROOT,
+      '/maps/' + id + '/duplicate'
+    );
     if (!response.ok) return null;
 
     const newMap = await response.json();
     if (newMap && newMap.map.uuid) {
-      const sucessMessage = await this.utilsService.translate('TOASTS.SUCCESSFULLY_DUPLICATED')
-      this.toastrService.success(sucessMessage)
+      const sucessMessage = await this.utilsService.translate(
+        'TOASTS.SUCCESSFULLY_DUPLICATED'
+      );
+      this.toastrService.success(sucessMessage);
 
       // Built in delay to allow users to read the toast (if we redirect immediately the toast gets swallowed up)
       // The reason we're doing a client-side replace and not server-side redirect is to make sure all client-side data is refreshed
-      setTimeout(() => window.location.replace(`/map/${newMap.map.uuid}#${newMap.modificationSecret}`), 750)
+      setTimeout(
+        () =>
+          window.location.replace(
+            `/map/${newMap.map.uuid}#${newMap.modificationSecret}`
+          ),
+        750
+      );
     }
   }
 
