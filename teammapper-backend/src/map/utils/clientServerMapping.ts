@@ -73,7 +73,7 @@ const mapClientNodeToMmpNode = (
   locked: clientNode.locked,
   detached: clientNode.detached,
   name: clientNode.name,
-  nodeParentId: clientNode.parent ? clientNode.parent : undefined,
+  nodeParentId: clientNode.parent,
   root: clientNode.isRoot,
   nodeMapId: mapId,
 })
@@ -95,7 +95,6 @@ const mapClientBasicNodeToMmpRootNode = (
   imageSrc: clientRootNodeBasics.image?.src,
   imageSize: clientRootNodeBasics.image?.size,
   name: clientRootNodeBasics.name || DEFAULT_NAME,
-  nodeParentId: undefined,
   root: true,
   detached: false,
   nodeMapId: mapId,
