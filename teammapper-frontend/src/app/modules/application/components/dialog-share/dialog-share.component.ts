@@ -4,6 +4,7 @@ import { qrcodeStyling } from './qrcode-settings';
 import { API_URL, HttpService } from 'src/app/core/http/http.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
+import { StorageService } from 'src/app/core/services/storage/storage.service';
 
 @Component({
   selector: 'teammapper-dialog-share',
@@ -31,7 +32,8 @@ export class DialogShareComponent implements OnInit {
   constructor(
     private httpService: HttpService,
     private toastrService: ToastrService,
-    private utilsService: UtilsService
+    private utilsService: UtilsService,
+    private storageService: StorageService
   ) {}
 
   ngOnInit() {
@@ -76,6 +78,13 @@ export class DialogShareComponent implements OnInit {
         'TOASTS.SUCCESSFULLY_DUPLICATED'
       );
       this.toastrService.success(sucessMessage);
+
+      await this.storageService.set(newMap.map.uuid, {
+        adminId: newMap.adminId,
+        modificationSecret: newMap.modificationSecret,
+        ttl: newMap.map.deletedAt,
+        rootName: newMap.map.data[0].name,
+      });
 
       // Built in delay to allow users to read the toast (if we redirect immediately the toast gets swallowed up)
       // The reason we're doing a client-side replace and not server-side redirect is to make sure all client-side data is refreshed
