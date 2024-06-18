@@ -118,7 +118,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientNodeAddRequest
   ): Promise<boolean> {
-    const newNodes = await this.mapsService.addNodes(
+    const newNodes = await this.mapsService.addNodesFromClient(
       request.mapId,
       request.nodes
     )

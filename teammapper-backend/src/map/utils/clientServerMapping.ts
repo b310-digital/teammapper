@@ -56,7 +56,7 @@ const mapMmpMapToClient = (
 const mapClientNodeToMmpNode = (
   clientNode: IMmpClientNode,
   mapId: string
-): Object => ({
+): Partial<MmpNode> => ({
   id: clientNode.id,
   colorsBackground: clientNode.colors.background,
   colorsBranch: clientNode.colors.branch,
@@ -73,7 +73,7 @@ const mapClientNodeToMmpNode = (
   locked: clientNode.locked,
   detached: clientNode.detached,
   name: clientNode.name,
-  nodeParentId: clientNode.parent ? clientNode.parent : null,
+  nodeParentId: clientNode.parent || undefined, // This is needed because a client root node defines its parent as an empty string, which is an invalid UUID format
   root: clientNode.isRoot,
   nodeMapId: mapId,
 })
@@ -82,7 +82,7 @@ const mapClientNodeToMmpNode = (
 const mapClientBasicNodeToMmpRootNode = (
   clientRootNodeBasics: IMmpClientNodeBasics,
   mapId: string
-): Object => ({
+): Partial<MmpNode> => ({
   colorsBackground:
     clientRootNodeBasics.colors.background || DEFAULT_COLOR_BACKGROUND,
   colorsBranch: clientRootNodeBasics.colors.branch,
@@ -95,7 +95,6 @@ const mapClientBasicNodeToMmpRootNode = (
   imageSrc: clientRootNodeBasics.image?.src,
   imageSize: clientRootNodeBasics.image?.size,
   name: clientRootNodeBasics.name || DEFAULT_NAME,
-  nodeParentId: null,
   root: true,
   detached: false,
   nodeMapId: mapId,

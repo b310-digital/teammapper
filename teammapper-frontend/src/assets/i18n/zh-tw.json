@@ -161,6 +161,9 @@
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images.",
     "DELETE_WARNING": "Attention: Mind maps are deleted automatically when inactive after a couple of days."
   },
+  "TOASTS": {
+    "SUCCESSFULLY_DUPLICATED": "Mindmap successfully duplicated! Redirecting..."
+  },
   "GENERAL": {
     "REPOSITORY": "Source Code",
     "CREATE": "Create mind map",

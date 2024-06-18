@@ -162,6 +162,9 @@
     "JSON_FILE_SIZE_TOO_LARGE": "Die Datei ist größer als 1 MB und kann möglicherweise später nicht importiert werden. Bitte Datei verkleinern (z.B. Bilder entfernen).",
     "DELETE_WARNING": "Achtung: Mindmaps werden auf diesem Server automatisch bei Inaktivität nach einiger Zeit gelöscht."
   },
+  "TOASTS": {
+    "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert! Leite weiter..."
+  },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",
     "REPOSITORY": "Source Code",

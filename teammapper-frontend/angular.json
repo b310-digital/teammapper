@@ -29,7 +29,8 @@
             ],
             "styles": [
               "src/styles.scss",
-              "src/theme.scss"
+              "src/theme.scss",
+              "node_modules/ngx-toastr/toastr.css"
             ],
             "scripts": ["src/mtm.js"],
             "serviceWorker": false
