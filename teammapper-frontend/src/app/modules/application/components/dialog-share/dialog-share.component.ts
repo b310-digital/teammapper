@@ -84,7 +84,7 @@ export class DialogShareComponent implements OnInit {
         modificationSecret: newMap.modificationSecret,
         ttl: newMap.map.deletedAt,
         rootName: newMap.map.data[0].name,
-      })
+      });
 
       // Built in delay to allow users to read the toast (if we redirect immediately the toast gets swallowed up)
       // The reason we're doing a client-side replace and not server-side redirect is to make sure all client-side data is refreshed
