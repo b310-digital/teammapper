@@ -54,18 +54,18 @@ export class MapsService {
     )
   }
 
-  async addNode(mapId: string, clientNode: MmpNode): Promise<MmpNode> {
+  async addNode(mapId: string, node: MmpNode): Promise<MmpNode> {
     // detached nodes are not allowed to have a parent
-    if (clientNode.detached && clientNode.nodeParentId) return Promise.reject()
-    if (!mapId || !clientNode) return Promise.reject()
+    if (node.detached && node.nodeParentId) return Promise.reject()
+    if (!mapId || !node) return Promise.reject()
 
     const existingNode = await this.nodesRepository.findOne({
-      where: { id: clientNode.id, nodeMapId: mapId },
+      where: { id: node.id, nodeMapId: mapId },
     })
     if (existingNode) return existingNode
 
     const newNode = this.nodesRepository.create({
-      ...clientNode,
+      ...node,
       nodeMapId: mapId,
     })
 

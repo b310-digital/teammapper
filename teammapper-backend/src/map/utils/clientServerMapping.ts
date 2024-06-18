@@ -73,7 +73,7 @@ const mapClientNodeToMmpNode = (
   locked: clientNode.locked,
   detached: clientNode.detached,
   name: clientNode.name,
-  nodeParentId: clientNode.parent,
+  nodeParentId: clientNode.parent || undefined,
   root: clientNode.isRoot,
   nodeMapId: mapId,
 })
