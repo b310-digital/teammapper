@@ -73,7 +73,7 @@ const mapClientNodeToMmpNode = (
   locked: clientNode.locked,
   detached: clientNode.detached,
   name: clientNode.name,
-  nodeParentId: clientNode.parent || undefined,
+  nodeParentId: clientNode.parent || undefined, // This is needed because a client root node defines its parent as an empty string, which is an invalid UUID format
   root: clientNode.isRoot,
   nodeMapId: mapId,
 })
