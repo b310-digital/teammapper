@@ -160,6 +160,9 @@
     "MAP_DELETION_CONFIRM": "Are you sure you want to delete the map?",
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
+  "TOASTS": {
+    "SUCCESSFULLY_DUPLICATED": "Mindmap dupliquée avec succès ! Redirection..."
+  },
   "GENERAL": {
     "REPOSITORY": "Source Code",
     "CREATE": "Create mind map",

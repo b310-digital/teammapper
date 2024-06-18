@@ -12,6 +12,7 @@ import {
 import { RootRoutingModule } from './root-routing.module';
 import { RootComponent } from './root.component';
 import { SharedModule } from './shared/shared.module';
+import { ToastrModule } from 'ngx-toastr';
 
 export function createTranslateLoader(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -22,6 +23,7 @@ export function createTranslateLoader(http: HttpClient) {
     BrowserModule,
     SharedModule,
     BrowserAnimationsModule,
+    ToastrModule.forRoot(),
     RootRoutingModule,
     HttpClientModule,
     TranslateModule.forRoot({
