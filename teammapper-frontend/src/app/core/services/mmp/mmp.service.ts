@@ -32,7 +32,11 @@ export class MmpService implements OnDestroy {
   private additionalOptions: CachedMapOptions;
   private settingsSubscription: Subscription;
 
-  constructor(public settingsService: SettingsService, public utilsService: UtilsService, public toastrService: ToastrService) {
+  constructor(
+    public settingsService: SettingsService,
+    public utilsService: UtilsService,
+    public toastrService: ToastrService
+  ) {
     this.additionalOptions = null;
     this.branchColors = COLORS;
 
@@ -319,14 +323,20 @@ export class MmpService implements OnDestroy {
     try {
       this.currentMap.instance.copyNode(nodeId);
 
-      const successMessage = await this.utilsService.translate('TOASTS.NODE_COPIED');
+      const successMessage = await this.utilsService.translate(
+        'TOASTS.NODE_COPIED'
+      );
       this.toastrService.success(successMessage);
     } catch (e) {
       if (e.message == 'The root node can not be copied') {
-        const rootNodeFailureMessage = await this.utilsService.translate('TOASTS.ERRORS.ROOT_NODE_COPIED');
+        const rootNodeFailureMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.ROOT_NODE_COPIED'
+        );
         this.toastrService.error(rootNodeFailureMessage);
       } else {
-        const genericErrorMessage = await this.utilsService.translate('TOASTS.ERRORS.GENERIC_NODE_COPY_ERROR');
+        const genericErrorMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.GENERIC_NODE_COPY_ERROR'
+        );
         this.toastrService.error(genericErrorMessage);
       }
     }

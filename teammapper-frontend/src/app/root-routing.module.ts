@@ -7,7 +7,7 @@ const routes: Routes = [
     path: '',
     loadChildren: () =>
       import('./modules/about/about.module').then(m => m.AboutModule),
-    canActivate: [ToastGuard]
+    canActivate: [ToastGuard],
   },
   {
     path: 'map',
@@ -15,7 +15,7 @@ const routes: Routes = [
       import('./modules/application/application.module').then(
         m => m.ApplicationModule
       ),
-    canActivate: [ToastGuard]
+    canActivate: [ToastGuard],
   },
   {
     path: 'map/:id',
@@ -23,7 +23,7 @@ const routes: Routes = [
       import('./modules/application/application.module').then(
         m => m.ApplicationModule
       ),
-    canActivate: [ToastGuard]
+    canActivate: [ToastGuard],
   },
   {
     path: 'app',
@@ -34,7 +34,7 @@ const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: ''
+    redirectTo: '',
   },
 ];
 
