@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
+import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
 import { jsPDF } from 'jspdf';
 import { first } from 'rxjs/operators';
@@ -31,7 +32,7 @@ export class MmpService implements OnDestroy {
   private additionalOptions: CachedMapOptions;
   private settingsSubscription: Subscription;
 
-  constructor(public settingsService: SettingsService) {
+  constructor(public settingsService: SettingsService, public utilsService: UtilsService, public toastrService: ToastrService) {
     this.additionalOptions = null;
     this.branchColors = COLORS;
 
@@ -314,8 +315,21 @@ export class MmpService implements OnDestroy {
    * Copy a node with his children in the mmp clipboard.
    * If id is not specified, copy the selected node.
    */
-  public copyNode(nodeId?: string) {
-    this.currentMap.instance.copyNode(nodeId);
+  public async copyNode(nodeId?: string) {
+    try {
+      this.currentMap.instance.copyNode(nodeId);
+
+      const successMessage = await this.utilsService.translate('TOASTS.NODE_COPIED');
+      this.toastrService.success(successMessage);
+    } catch (e) {
+      if (e.message == 'The root node can not be copied') {
+        const rootNodeFailureMessage = await this.utilsService.translate('TOASTS.ERRORS.ROOT_NODE_COPIED');
+        this.toastrService.error(rootNodeFailureMessage);
+      } else {
+        const genericErrorMessage = await this.utilsService.translate('TOASTS.ERRORS.GENERIC_NODE_COPY_ERROR');
+        this.toastrService.error(genericErrorMessage);
+      }
+    }
   }
 
   /**

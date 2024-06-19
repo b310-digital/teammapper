@@ -162,7 +162,12 @@
   },
   "TOASTS": {
     "SUCCESSFULLY_DUPLICATED": "¡Mapa mental duplicado con éxito! Redirigiendo...",
-    "URL_COPIED": "URL copiada correctamente"
+    "URL_COPIED": "URL copiada correctamente",
+    "NODE_COPIED": "¡Nodo copiado con éxito!",
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "No es posible copiar el nodo raíz.",
+      "GENERIC_NODE_COPY_ERROR": "Se ha producido un error al intentar copiar el nodo raíz."
+    }
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",

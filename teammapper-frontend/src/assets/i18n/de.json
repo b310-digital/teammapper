@@ -163,7 +163,12 @@
   },
   "TOASTS": {
     "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert! Leite weiter...",
-    "URL_COPIED": "URL erfolgreich kopiert!"
+    "URL_COPIED": "URL erfolgreich kopiert!",
+    "NODE_COPIED": "Knoten erfolgreich kopiert!",
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
+      "GENERIC_NODE_COPY_ERROR": "Beim kopieren des Knoten ist ein Fehler aufgetreten."
+    }
   },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",

@@ -59,10 +59,10 @@ export class DialogShareComponent implements OnInit {
     this.inputLink.nativeElement.select();
     // requires a secure origin (https) to work
     navigator.clipboard.writeText(this.getLink());
-    const sucessMessage = await this.utilsService.translate(
+    const successMessage = await this.utilsService.translate(
       'TOASTS.URL_COPIED'
     );
-    this.toastrService.success(sucessMessage);
+    this.toastrService.success(successMessage);
   }
 
   async duplicateMindMap() {
@@ -76,10 +76,10 @@ export class DialogShareComponent implements OnInit {
 
     const newMap = await response.json();
     if (newMap && newMap.map.uuid) {
-      const sucessMessage = await this.utilsService.translate(
+      const successMessage = await this.utilsService.translate(
         'TOASTS.SUCCESSFULLY_DUPLICATED'
       );
-      this.toastrService.success(sucessMessage);
+      this.toastrService.success(successMessage);
 
       // Built in delay to allow users to read the toast (if we redirect immediately the toast gets swallowed up)
       // The reason we're doing a client-side replace and not server-side redirect is to make sure all client-side data is refreshed
