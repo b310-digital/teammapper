@@ -4,6 +4,7 @@ import { qrcodeStyling } from './qrcode-settings';
 import { API_URL, HttpService } from 'src/app/core/http/http.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
+import { StorageService } from 'src/app/core/services/storage/storage.service';
 
 @Component({
   selector: 'teammapper-dialog-share',
@@ -31,7 +32,8 @@ export class DialogShareComponent implements OnInit {
   constructor(
     private httpService: HttpService,
     private toastrService: ToastrService,
-    private utilsService: UtilsService
+    private utilsService: UtilsService,
+    private storageService: StorageService
   ) {}
 
   ngOnInit() {
@@ -79,6 +81,13 @@ export class DialogShareComponent implements OnInit {
       const successMessage = await this.utilsService.translate(
         'TOASTS.SUCCESSFULLY_DUPLICATED'
       );
+
+      await this.storageService.set(newMap.map.uuid, {
+        adminId: newMap.adminId,
+        modificationSecret: newMap.modificationSecret,
+        ttl: newMap.map.deletedAt,
+        rootName: newMap.map.data[0].name,
+      });
 
       const baseUrl = `/map/${newMap.map.uuid}`;
       const fragment = newMap.modificationSecret;
