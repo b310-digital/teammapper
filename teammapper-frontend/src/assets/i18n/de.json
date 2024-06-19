@@ -168,7 +168,8 @@
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
       "GENERIC_NODE_COPY_ERROR": "Beim kopieren des Knoten ist ein Fehler aufgetreten."
-    }
+    },
+    "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!"
   },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",

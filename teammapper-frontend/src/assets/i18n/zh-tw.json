@@ -167,7 +167,8 @@
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",
       "GENERIC_NODE_COPY_ERROR": "An error occurred whilst trying to copy the root node."
-    }
+    },
+    "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",

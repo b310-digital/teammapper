@@ -1,11 +1,13 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { ToastGuard } from './guards/toast.guard';
 
 const routes: Routes = [
   {
     path: '',
     loadChildren: () =>
       import('./modules/about/about.module').then(m => m.AboutModule),
+    canActivate: [ToastGuard]
   },
   {
     path: 'map',
@@ -13,6 +15,7 @@ const routes: Routes = [
       import('./modules/application/application.module').then(
         m => m.ApplicationModule
       ),
+    canActivate: [ToastGuard]
   },
   {
     path: 'map/:id',
@@ -20,6 +23,7 @@ const routes: Routes = [
       import('./modules/application/application.module').then(
         m => m.ApplicationModule
       ),
+    canActivate: [ToastGuard]
   },
   {
     path: 'app',
@@ -30,7 +34,7 @@ const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '',
+    redirectTo: ''
   },
 ];
 

@@ -35,7 +35,15 @@ export class DialogAboutComponent {
     if (confirm(this.translateService.instant('MODALS.INFO.CONFIRM_DELETE'))) {
       await this.mapSyncService.deleteMap(await this.mapAdminId);
       await this.storageService.remove(this.map.uuid);
-      window.location.reload();
+      
+      const url = new URL(window.location.href);
+
+      // Set the query parameters
+      url.searchParams.set('showToast', 'true');
+      url.searchParams.set('toastMessage', this.translateService.instant('TOASTS.DELETE_MAP_SUCCESS'));
+
+      // Reload the page with the new URL
+      window.location.href = url.toString();
     }
   }
 
