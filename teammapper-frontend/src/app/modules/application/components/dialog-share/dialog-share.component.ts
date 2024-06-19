@@ -55,10 +55,14 @@ export class DialogShareComponent implements OnInit {
     this.qrCode.append(this.qrCodeCanvas.nativeElement);
   }
 
-  copy() {
+  async copy() {
     this.inputLink.nativeElement.select();
     // requires a secure origin (https) to work
     navigator.clipboard.writeText(this.getLink());
+    const sucessMessage = await this.utilsService.translate(
+      'TOASTS.URL_COPIED'
+    );
+    this.toastrService.success(sucessMessage);
   }
 
   async duplicateMindMap() {

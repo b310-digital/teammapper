@@ -161,7 +161,8 @@
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
   "TOASTS": {
-    "SUCCESSFULLY_DUPLICATED": "Mindmap duplicado com sucesso! Redirecionando..."
+    "SUCCESSFULLY_DUPLICATED": "Mindmap duplicado com sucesso! Redirecionando...",
+    "URL_COPIED": "URL copiado com sucesso"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",
