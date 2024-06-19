@@ -79,17 +79,18 @@ export class DialogShareComponent implements OnInit {
       const successMessage = await this.utilsService.translate(
         'TOASTS.SUCCESSFULLY_DUPLICATED'
       );
-      this.toastrService.success(successMessage);
 
-      // Built in delay to allow users to read the toast (if we redirect immediately the toast gets swallowed up)
-      // The reason we're doing a client-side replace and not server-side redirect is to make sure all client-side data is refreshed
-      setTimeout(
-        () =>
-          window.location.replace(
-            `/map/${newMap.map.uuid}#${newMap.modificationSecret}`
-          ),
-        750
-      );
+      const baseUrl = `/map/${newMap.map.uuid}`;
+      const fragment = newMap.modificationSecret;
+
+      const url = new URL(baseUrl, window.location.origin);
+
+      url.searchParams.set('showToast', 'true');
+      url.searchParams.set('toastMessage', successMessage);
+
+      url.hash = fragment;
+
+      window.location.replace(url.toString());
     }
   }
 
