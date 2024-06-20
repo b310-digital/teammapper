@@ -26,6 +26,8 @@ export default class MapsController {
     })
     if (!map) throw new NotFoundException()
 
+    await this.mapsService.updateLastAccessed(mapId)
+
     return map
   }
 
