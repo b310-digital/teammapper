@@ -38,8 +38,6 @@ export class DialogAboutComponent {
 
       const url = new URL(window.location.href);
 
-      // Set the query parameters
-      url.searchParams.set('showToast', 'true');
       url.searchParams.set(
         'toastMessage',
         this.translateService.instant('TOASTS.DELETE_MAP_SUCCESS')

@@ -94,7 +94,6 @@ export class DialogShareComponent implements OnInit {
 
       const url = new URL(baseUrl, window.location.origin);
 
-      url.searchParams.set('showToast', 'true');
       url.searchParams.set('toastMessage', successMessage);
 
       url.hash = fragment;
