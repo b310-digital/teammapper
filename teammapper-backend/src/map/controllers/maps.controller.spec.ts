@@ -22,6 +22,7 @@ describe('MapsController', () => {
             findNodes: jest.fn(),
             addNodes: jest.fn(),
             exportMapToClient: jest.fn(),
+            deleteMap: jest.fn()
           },
         },
       ],
@@ -99,6 +100,155 @@ describe('MapsController', () => {
         jest.spyOn(mapsService, 'findMap').mockRejectedValueOnce(new Error('MalformedUUIDError'));
 
         await expect(mapsController.duplicate(mapId)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findOne', () => {
+    it('should find the correct map', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7';
+      const exportedMap: IMmpClientMap = {
+          uuid: 'e7f66b65-ffd5-4387-b645-35f8e794c7e7',
+          data: [],
+          deleteAfterDays: 30,
+          deletedAt: new Date('1970-01-01'),
+          lastModified: new Date('1970-01-01'),
+          options: {
+              fontMaxSize: 1,
+              fontMinSize: 1,
+              fontIncrement: 1
+          },
+      };
+
+      jest.spyOn(mapsService, 'exportMapToClient').mockResolvedValueOnce(exportedMap);
+
+      const response = await mapsController.findOne(mapId);
+
+      expect(response).toEqual(exportedMap);
+    });
+
+    it('should throw a NotFoundException if the map wasn\'t found', async () => {
+      const invalidMapId = 'map_id';
+
+      jest.spyOn(mapsService, 'exportMapToClient').mockRejectedValueOnce(new Error('MalformedUUIDError'));
+
+      await expect(mapsController.findOne(invalidMapId)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete an existing map successfully', async () => {
+      const existingMap: MmpMap = {
+          id: '6357cedd-2621-4033-8958-c50061306cb9',
+          adminId: 'old-admin-id',
+          modificationSecret: 'old-modification-secret',
+          name: 'Test Map',
+          lastModified: new Date('1970-01-01'),
+          options: {
+              fontMaxSize: 1,
+              fontMinSize: 1,
+              fontIncrement: 1
+          },
+          nodes: Array<MmpNode>()
+      };
+
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(existingMap);
+      // We're not interested in testing the repository at this stage, only if the request gets past the admin ID check
+      jest.spyOn(mapsService, 'deleteMap').mockImplementation(() => {});
+      
+      await mapsController.delete(existingMap.id, {
+        adminId: existingMap.adminId,
+        mapId: existingMap.id,
+      });
+
+      expect(mapsService.deleteMap).toHaveBeenCalledWith(existingMap.id);
+    });
+
+    it('should not delete a map if the wrong admin ID is given', async () => {
+      const existingMap: MmpMap = {
+          id: '6357cedd-2621-4033-8958-c50061306cb9',
+          adminId: 'old-admin-id',
+          modificationSecret: 'old-modification-secret',
+          name: 'Test Map',
+          lastModified: new Date('1970-01-01'),
+          options: {
+              fontMaxSize: 1,
+              fontMinSize: 1,
+              fontIncrement: 1
+          },
+          nodes: Array<MmpNode>()
+      };
+
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(existingMap);
+      
+      await mapsController.delete(existingMap.id, {
+        adminId: 'wrong-admin-id',
+        mapId: existingMap.id,
+      });
+
+      expect(mapsService.deleteMap).not.toHaveBeenCalledWith(existingMap.id);
+    });
+  });
+
+  describe('create', () => {
+    it('should create a new map if given a root node', async () => {
+      const newMap: MmpMap = {
+          id: '6357cedd-2621-4033-8958-c50061306cb9',
+          adminId: 'admin-id',
+          modificationSecret: 'modification-secret',
+          name: 'Test Map',
+          lastModified: new Date('1970-01-01'),
+          options: {
+              fontMaxSize: 1,
+              fontMinSize: 1,
+              fontIncrement: 1
+          },
+          nodes: Array<MmpNode>()
+      };
+      const exportedMap: IMmpClientMap = {
+          uuid: '6357cedd-2621-4033-8958-c50061306cb9',
+          data: [],
+          deleteAfterDays: 30,
+          deletedAt: new Date('1970-01-01'),
+          lastModified: new Date('1970-01-01'),
+          options: {
+              fontMaxSize: 1,
+              fontMinSize: 1,
+              fontIncrement: 1
+          },
+      };
+      const result: IMmpClientPrivateMap = {
+          map: exportedMap,
+          adminId: 'admin-id',
+          modificationSecret: 'modification-secret'
+      };
+
+      const rootNode = {
+        colors: {
+          name: '',
+          background: '',
+          branch: '',
+        },
+        font: {
+          style: '',
+          size: 0,
+          weight: ''
+        },
+        name: 'Root node',
+        image: {
+          src: '',
+          size: 0
+        }
+      };
+
+      jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValueOnce(newMap);
+      jest.spyOn(mapsService, 'exportMapToClient').mockResolvedValueOnce(exportedMap);
+
+      const response = await mapsController.create({
+        rootNode
+      });
+
+      expect(mapsService.createEmptyMap).toHaveBeenCalledWith(rootNode);
+      expect(response).toEqual(result);
     });
   });
 });
