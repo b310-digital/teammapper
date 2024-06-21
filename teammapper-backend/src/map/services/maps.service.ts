@@ -236,13 +236,22 @@ export class MapsService {
         'lastmodifiednode.nodeMapid = map.id'
       )
       .where(
-        // delete all maps that have nodes that were last updated after afterDays
-        "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today",
+        // delete maps based off of map.lastAccessed
+        "(map.lastAccessed + (INTERVAL '1 day' * :afterDays)) < :today",
         { afterDays, today }
       )
       .orWhere(
         new Brackets((qb) => {
-          // also delete empty maps, use th emaps lastmodified date for this:
+          qb.where('map.lastAccessed IS NULL').andWhere(
+            // if lastModified is not defined, we use the last updated node as a fallback
+            "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today",
+            { afterDays, today }
+          )
+        })
+      )
+      .orWhere(
+        new Brackets((qb) => {
+          // if the last node has never been modified, we'll fall back to the lastModified timestamp of the map (which is always set on creation)
           qb.where('lastmodifiednode.lastUpdatedAt IS NULL').andWhere(
             "(map.lastModified + (INTERVAL '1 day' * :afterDays)) < :today",
             { afterDays, today }

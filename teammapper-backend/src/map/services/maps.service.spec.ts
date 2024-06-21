@@ -118,6 +118,15 @@ describe('MapsController', () => {
   })
 
   describe('deleteOutdatedMaps', () => {
+    it('deletes a map based off of lastAccessed', async () => {
+      const map: MmpMap = await mapsRepo.save({
+        lastAccessed: new Date('2019-01-01'),
+      })
+
+      await mapsService.deleteOutdatedMaps(30)
+      expect(await mapsService.findMap(map.id)).toEqual(null)
+    })
+
     it('does not delete a new map', async () => {
       const map: MmpMap = await mapsRepo.save({})
 
