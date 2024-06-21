@@ -5,6 +5,8 @@ import { API_URL, HttpService } from 'src/app/core/http/http.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
+import { Router } from '@angular/router';
+import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 
 @Component({
   selector: 'teammapper-dialog-share',
@@ -33,7 +35,9 @@ export class DialogShareComponent implements OnInit {
     private httpService: HttpService,
     private toastrService: ToastrService,
     private utilsService: UtilsService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private dialogService: DialogService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -89,16 +93,17 @@ export class DialogShareComponent implements OnInit {
         rootName: newMap.map.data[0].name,
       });
 
-      const baseUrl = `/map/${newMap.map.uuid}`;
-      const fragment = newMap.modificationSecret;
+      this.dialogService.closeShareDialog();
 
-      const url = new URL(baseUrl, window.location.origin);
-
-      url.searchParams.set('toastMessage', successMessage);
-
-      url.hash = fragment;
-
-      window.location.replace(url.toString());
+      this.router.navigate(
+        ['/map', newMap.map.uuid],
+        {
+          queryParams: {
+            toastMessage: successMessage
+          },
+          fragment: newMap.modificationSecret,
+        }
+      )
     }
   }
 

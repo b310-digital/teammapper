@@ -6,6 +6,8 @@ import { SettingsService } from 'src/app/core/services/settings/settings.service
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { environment } from 'src/environments/environment';
+import { Router } from '@angular/router';
+import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 
 @Component({
   selector: 'teammapper-dialog-about',
@@ -23,7 +25,9 @@ export class DialogAboutComponent {
     private translateService: TranslateService,
     private settingsService: SettingsService,
     private storageService: StorageService,
-    private mapSyncService: MapSyncService
+    private mapSyncService: MapSyncService,
+    private dialogService: DialogService,
+    private router: Router
   ) {
     this.version = environment.version;
     this.applicationName = environment.name;
@@ -36,15 +40,16 @@ export class DialogAboutComponent {
       await this.mapSyncService.deleteMap(await this.mapAdminId);
       await this.storageService.remove(this.map.uuid);
 
-      const url = new URL(window.location.href);
+      this.dialogService.closeAboutDialog();
 
-      url.searchParams.set(
-        'toastMessage',
-        this.translateService.instant('TOASTS.DELETE_MAP_SUCCESS')
+      this.router.navigate(
+        [''],
+        {
+          queryParams: {
+            toastMessage: this.translateService.instant('TOASTS.DELETE_MAP_SUCCESS')
+          }
+        }
       );
-
-      // Reload the page with the new URL
-      window.location.href = url.toString();
     }
   }
 
