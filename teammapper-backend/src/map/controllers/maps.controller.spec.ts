@@ -143,6 +143,7 @@ describe('MapsController', () => {
           modificationSecret: 'old-modification-secret',
           name: 'Test Map',
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('2024-06-21'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
@@ -170,6 +171,7 @@ describe('MapsController', () => {
           modificationSecret: 'old-modification-secret',
           name: 'Test Map',
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('2024-06-21'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
@@ -197,6 +199,7 @@ describe('MapsController', () => {
           modificationSecret: 'modification-secret',
           name: 'Test Map',
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('2024-06-21'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
