@@ -6,7 +6,7 @@ import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { Router } from '@angular/router';
-import { DialogService } from 'src/app/core/services/dialog/dialog.service';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'teammapper-dialog-share',
@@ -36,7 +36,7 @@ export class DialogShareComponent implements OnInit {
     private toastrService: ToastrService,
     private utilsService: UtilsService,
     private storageService: StorageService,
-    private dialogService: DialogService,
+    private dialogRef: MatDialogRef<DialogShareComponent>,
     private router: Router
   ) {}
 
@@ -93,7 +93,7 @@ export class DialogShareComponent implements OnInit {
         rootName: newMap.map.data[0].name,
       });
 
-      this.dialogService.closeShareDialog();
+      this.dialogRef.close();
 
       this.router.navigate(['/map', newMap.map.uuid], {
         queryParams: {

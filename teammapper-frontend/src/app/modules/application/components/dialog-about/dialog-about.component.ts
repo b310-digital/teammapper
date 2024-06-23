@@ -7,7 +7,7 @@ import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { environment } from 'src/environments/environment';
 import { Router } from '@angular/router';
-import { DialogService } from 'src/app/core/services/dialog/dialog.service';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'teammapper-dialog-about',
@@ -26,7 +26,7 @@ export class DialogAboutComponent {
     private settingsService: SettingsService,
     private storageService: StorageService,
     private mapSyncService: MapSyncService,
-    private dialogService: DialogService,
+    private dialogRef: MatDialogRef<DialogAboutComponent>,
     private router: Router
   ) {
     this.version = environment.version;
@@ -40,7 +40,7 @@ export class DialogAboutComponent {
       await this.mapSyncService.deleteMap(await this.mapAdminId);
       await this.storageService.remove(this.map.uuid);
 
-      this.dialogService.closeAboutDialog();
+      this.dialogRef.close();
 
       this.router.navigate([''], {
         queryParams: {
