@@ -95,15 +95,12 @@ export class DialogShareComponent implements OnInit {
 
       this.dialogService.closeShareDialog();
 
-      this.router.navigate(
-        ['/map', newMap.map.uuid],
-        {
-          queryParams: {
-            toastMessage: successMessage
-          },
-          fragment: newMap.modificationSecret,
-        }
-      )
+      this.router.navigate(['/map', newMap.map.uuid], {
+        queryParams: {
+          toastMessage: successMessage,
+        },
+        fragment: newMap.modificationSecret,
+      });
     }
   }
 

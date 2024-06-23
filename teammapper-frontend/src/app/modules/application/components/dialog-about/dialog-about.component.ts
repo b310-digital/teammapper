@@ -42,14 +42,13 @@ export class DialogAboutComponent {
 
       this.dialogService.closeAboutDialog();
 
-      this.router.navigate(
-        [''],
-        {
-          queryParams: {
-            toastMessage: this.translateService.instant('TOASTS.DELETE_MAP_SUCCESS')
-          }
-        }
-      );
+      this.router.navigate([''], {
+        queryParams: {
+          toastMessage: this.translateService.instant(
+            'TOASTS.DELETE_MAP_SUCCESS'
+          ),
+        },
+      });
     }
   }
 
