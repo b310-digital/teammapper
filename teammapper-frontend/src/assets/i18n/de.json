@@ -163,7 +163,14 @@
     "DELETE_WARNING": "Achtung: Mindmaps werden auf diesem Server automatisch bei Inaktivität nach einiger Zeit gelöscht."
   },
   "TOASTS": {
-    "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert! Leite weiter..."
+    "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert!",
+    "URL_COPIED": "URL erfolgreich kopiert!",
+    "NODE_COPIED": "Knoten erfolgreich kopiert!",
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
+      "GENERIC_NODE_COPY_ERROR": "Beim Kopieren des Knotens ist ein Fehler aufgetreten."
+    },
+    "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!"
   },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",

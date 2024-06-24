@@ -5,6 +5,8 @@ import { API_URL, HttpService } from 'src/app/core/http/http.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
+import { Router } from '@angular/router';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'teammapper-dialog-share',
@@ -33,7 +35,9 @@ export class DialogShareComponent implements OnInit {
     private httpService: HttpService,
     private toastrService: ToastrService,
     private utilsService: UtilsService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private dialogRef: MatDialogRef<DialogShareComponent>,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -57,10 +61,14 @@ export class DialogShareComponent implements OnInit {
     this.qrCode.append(this.qrCodeCanvas.nativeElement);
   }
 
-  copy() {
+  async copy() {
     this.inputLink.nativeElement.select();
     // requires a secure origin (https) to work
     navigator.clipboard.writeText(this.getLink());
+    const successMessage = await this.utilsService.translate(
+      'TOASTS.URL_COPIED'
+    );
+    this.toastrService.success(successMessage);
   }
 
   async duplicateMindMap() {
@@ -74,10 +82,9 @@ export class DialogShareComponent implements OnInit {
 
     const newMap = await response.json();
     if (newMap && newMap.map.uuid) {
-      const sucessMessage = await this.utilsService.translate(
+      const successMessage = await this.utilsService.translate(
         'TOASTS.SUCCESSFULLY_DUPLICATED'
       );
-      this.toastrService.success(sucessMessage);
 
       await this.storageService.set(newMap.map.uuid, {
         adminId: newMap.adminId,
@@ -86,15 +93,14 @@ export class DialogShareComponent implements OnInit {
         rootName: newMap.map.data[0].name,
       });
 
-      // Built in delay to allow users to read the toast (if we redirect immediately the toast gets swallowed up)
-      // The reason we're doing a client-side replace and not server-side redirect is to make sure all client-side data is refreshed
-      setTimeout(
-        () =>
-          window.location.replace(
-            `/map/${newMap.map.uuid}#${newMap.modificationSecret}`
-          ),
-        750
-      );
+      this.dialogRef.close();
+
+      this.router.navigate(['/map', newMap.map.uuid], {
+        queryParams: {
+          toastMessage: successMessage,
+        },
+        fragment: newMap.modificationSecret,
+      });
     }
   }
 

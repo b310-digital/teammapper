@@ -162,7 +162,14 @@
     "DELETE_WARNING": "Attention: Mind maps are deleted automatically when inactive after a couple of days."
   },
   "TOASTS": {
-    "SUCCESSFULLY_DUPLICATED": "Mappa mentale duplicata con successo! Reindirizzamento..."
+    "SUCCESSFULLY_DUPLICATED": "Mappa mentale duplicata con successo!",
+    "URL_COPIED": "URL copiato con successo",
+    "NODE_COPIED": "Nodo copiato con successo!",
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "Non è possibile copiare il nodo radice!",
+      "GENERIC_NODE_COPY_ERROR": "Si è verificato un errore durante il tentativo di copiare il nodo radice."
+    },
+    "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",
