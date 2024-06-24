@@ -471,12 +471,20 @@ export class MmpService implements OnDestroy {
       case 'png': {
         const image = await this.exportAsImage(format);
 
-        UtilsService.downloadFile(
-          `${name}.${format === 'jpeg' ? 'jpg' : format}`,
-          image
-        );
+        if (image === 'data:,') {
+          const exportImageFailureMessage = await this.utilsService.translate(
+            'TOASTS.ERRORS.EXPORT_IMAGE_ERROR'
+          );
+          this.toastrService.error(exportImageFailureMessage);
+          return { success: false };
+        } else {
+          UtilsService.downloadFile(
+            `${name}.${format === 'jpeg' ? 'jpg' : format}`,
+            image
+          );
 
-        return { success: true, size: image.length / 1024 };
+          return { success: true, size: image.length / 1024 };
+        }
       }
     }
   }
