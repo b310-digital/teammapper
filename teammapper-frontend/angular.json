@@ -80,8 +80,7 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "proxyConfig": "src/proxy.conf.json",
-            "buildTarget": "teammapper:build",
-            "disableHostCheck": true
+            "buildTarget": "teammapper:build"
           },
           "configurations": {
             "production": {
