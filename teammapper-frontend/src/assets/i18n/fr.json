@@ -161,7 +161,14 @@
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
   "TOASTS": {
-    "SUCCESSFULLY_DUPLICATED": "Mindmap dupliquée avec succès ! Redirection..."
+    "SUCCESSFULLY_DUPLICATED": "Mindmap dupliquée avec succès !",
+    "URL_COPIED": "URL copié avec succès",
+    "NODE_COPIED": "Nœud copié avec succès !",
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "Il n'est pas possible de copier le noeud racine !",
+      "GENERIC_NODE_COPY_ERROR": "Une erreur s'est produite lors de la copie du nœud racine."
+    },
+    "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",

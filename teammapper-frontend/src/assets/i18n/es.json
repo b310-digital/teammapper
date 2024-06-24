@@ -161,7 +161,14 @@
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
   "TOASTS": {
-    "SUCCESSFULLY_DUPLICATED": "¡Mapa mental duplicado con éxito! Redirigiendo..."
+    "SUCCESSFULLY_DUPLICATED": "¡Mapa mental duplicado con éxito!",
+    "URL_COPIED": "URL copiada correctamente",
+    "NODE_COPIED": "¡Nodo copiado con éxito!",
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "No es posible copiar el nodo raíz.",
+      "GENERIC_NODE_COPY_ERROR": "Se ha producido un error al intentar copiar el nodo raíz."
+    },
+    "DELETE_MAP_SUCCESS": "¡Mapa mental borrado con éxito!"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",
