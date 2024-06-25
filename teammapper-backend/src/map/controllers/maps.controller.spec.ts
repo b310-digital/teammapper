@@ -22,7 +22,8 @@ describe('MapsController', () => {
             findNodes: jest.fn(),
             addNodes: jest.fn(),
             exportMapToClient: jest.fn(),
-            deleteMap: jest.fn()
+            deleteMap: jest.fn(),
+            updateLastAccessed: jest.fn(),
           },
         },
       ],
