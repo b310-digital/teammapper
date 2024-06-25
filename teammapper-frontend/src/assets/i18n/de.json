@@ -162,7 +162,14 @@
     "JSON_FILE_SIZE_TOO_LARGE": "Die Datei ist größer als 1 MB und kann möglicherweise später nicht importiert werden. Bitte Datei verkleinern (z.B. Bilder entfernen)."
   },
   "TOASTS": {
-    "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert! Leite weiter..."
+    "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert!",
+    "URL_COPIED": "URL erfolgreich kopiert!",
+    "NODE_COPIED": "Knoten erfolgreich kopiert!",
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
+      "GENERIC_NODE_COPY_ERROR": "Beim Kopieren des Knotens ist ein Fehler aufgetreten."
+    },
+    "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!"
   },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",
