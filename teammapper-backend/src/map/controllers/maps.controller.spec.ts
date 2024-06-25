@@ -68,6 +68,7 @@ describe('MapsController', () => {
             deleteAfterDays: 30,
             deletedAt: new Date('1970-01-01'),
             lastModified: new Date('1970-01-01'),
+            lastAccessed: new Date('1970-01-01'),
             options: {
                 fontMaxSize: 1,
                 fontMinSize: 1,
@@ -112,6 +113,7 @@ describe('MapsController', () => {
           deleteAfterDays: 30,
           deletedAt: new Date('1970-01-01'),
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('1970-01-01'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
@@ -213,6 +215,7 @@ describe('MapsController', () => {
           deleteAfterDays: 30,
           deletedAt: new Date('1970-01-01'),
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('1970-01-01'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
