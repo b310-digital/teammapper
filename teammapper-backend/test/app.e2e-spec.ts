@@ -92,6 +92,7 @@ describe('AppController (e2e)', () => {
       const map: IMmpClientMap = {
         uuid: oldMap.id,
         lastModified: new Date(),
+        lastAccessed: new Date(),
         deleteAfterDays: 30,
         deletedAt: new Date(),
         options: { fontMaxSize: 10, fontMinSize: 15, fontIncrement: 2 },

@@ -40,6 +40,7 @@ const createMap = (nodes: IMmpClientNode[]): IMmpClientMap => {
   return {
     uuid: crypto.randomUUID(),
     lastModified: new Date(),
+    lastAccessed: new Date(), // Do we really want to set this here? Without it there's an error
     deleteAfterDays: 30,
     data: nodes,
     deletedAt: new Date(),

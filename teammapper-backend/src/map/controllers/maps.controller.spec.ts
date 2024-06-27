@@ -22,7 +22,8 @@ describe('MapsController', () => {
             findNodes: jest.fn(),
             addNodes: jest.fn(),
             exportMapToClient: jest.fn(),
-            deleteMap: jest.fn()
+            deleteMap: jest.fn(),
+            updateLastAccessed: jest.fn(),
           },
         },
       ],
@@ -40,6 +41,7 @@ describe('MapsController', () => {
             modificationSecret: 'old-modification-secret',
             name: 'Test Map',
             lastModified: new Date('1970-01-01'),
+            lastAccessed: new Date('2024-06-21'),
             options: {
                 fontMaxSize: 1,
                 fontMinSize: 1,
@@ -53,6 +55,7 @@ describe('MapsController', () => {
             modificationSecret: 'new-modification-secret',
             name: 'Test Map',
             lastModified: new Date('1970-01-01'),
+            lastAccessed: new Date('2024-06-21'),
             options: {
                 fontMaxSize: 1,
                 fontMinSize: 1,
@@ -66,6 +69,7 @@ describe('MapsController', () => {
             deleteAfterDays: 30,
             deletedAt: new Date('1970-01-01'),
             lastModified: new Date('1970-01-01'),
+            lastAccessed: new Date('1970-01-01'),
             options: {
                 fontMaxSize: 1,
                 fontMinSize: 1,
@@ -110,6 +114,7 @@ describe('MapsController', () => {
           deleteAfterDays: 30,
           deletedAt: new Date('1970-01-01'),
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('1970-01-01'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
@@ -141,6 +146,7 @@ describe('MapsController', () => {
           modificationSecret: 'old-modification-secret',
           name: 'Test Map',
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('2024-06-21'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
@@ -168,6 +174,7 @@ describe('MapsController', () => {
           modificationSecret: 'old-modification-secret',
           name: 'Test Map',
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('2024-06-21'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
@@ -195,6 +202,7 @@ describe('MapsController', () => {
           modificationSecret: 'modification-secret',
           name: 'Test Map',
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('2024-06-21'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
@@ -208,6 +216,7 @@ describe('MapsController', () => {
           deleteAfterDays: 30,
           deletedAt: new Date('1970-01-01'),
           lastModified: new Date('1970-01-01'),
+          lastAccessed: new Date('1970-01-01'),
           options: {
               fontMaxSize: 1,
               fontMinSize: 1,
