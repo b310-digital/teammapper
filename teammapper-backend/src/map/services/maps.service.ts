@@ -206,7 +206,9 @@ export class MapsService {
         ? map.lastModified
         : newestNodeLastModified
 
-    return this.calculcateDeletedAt(new Date(lastModified), afterDays)
+    const lastAccessed = map.lastAccessed
+
+    return this.calculcateDeletedAt(lastAccessed ? new Date(lastAccessed) : new Date(lastModified), afterDays)
   }
 
   calculcateDeletedAt(lastModified: Date, afterDays: number): Date {
@@ -236,24 +238,13 @@ export class MapsService {
         'lastmodifiednode.nodeMapid = map.id'
       )
       .where(
-        // delete maps based off of map.lastAccessed
-        "(map.lastAccessed + (INTERVAL '1 day' * :afterDays)) < :today",
+        "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today",
         { afterDays, today }
       )
       .orWhere(
         new Brackets((qb) => {
-          qb.where('map.lastAccessed IS NULL').andWhere(
-            // if lastModified is not defined, we use the last updated node as a fallback
-            "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today",
-            { afterDays, today }
-          )
-        })
-      )
-      .orWhere(
-        new Brackets((qb) => {
-          // if the last node has never been modified, we'll fall back to the lastModified timestamp of the map (which is always set on creation)
-          qb.where('lastmodifiednode.lastUpdatedAt IS NULL').andWhere(
-            "(map.lastModified + (INTERVAL '1 day' * :afterDays)) < :today",
+          qb.where("lastmodifiednode.lastUpdatedAt IS NULL").andWhere(
+            "(GREATEST(map.lastAccessed, map.lastModified) + (INTERVAL '1 day' * :afterDays)) < :today",
             { afterDays, today }
           )
         })
