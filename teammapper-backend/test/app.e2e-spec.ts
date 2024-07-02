@@ -35,7 +35,7 @@ describe('AppController (e2e)', () => {
     app = moduleFixture.createNestApplication()
     server = app.getHttpServer()
     await app.init()
-    await app.listen(3000)
+    await app.listen(3001)
   })
 
   afterAll(async () => {
@@ -64,7 +64,7 @@ describe('AppController (e2e)', () => {
     let socket: Socket
 
     beforeEach(async () => {
-      socket = io('http://localhost:3000')
+      socket = io('http://localhost:3001')
     })
 
     afterEach(async () => {
