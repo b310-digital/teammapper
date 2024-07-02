@@ -392,7 +392,9 @@ export class MmpService implements OnDestroy {
   /**
    * Export the current mind map with the format passed as parameter.
    */
-  public async exportMap(format = 'json'): Promise<{ success: boolean, size?: number }> {
+  public async exportMap(
+    format = 'json'
+  ): Promise<{ success: boolean; size?: number }> {
     const name = DOMPurify.sanitize(
       this.getRootNode().name.replace(/\n/g, ' ').replace(/\s+/g, ' ')
     );
@@ -498,7 +500,10 @@ export class MmpService implements OnDestroy {
   /**
    * Export map to image (png, jpg, svg)
    */
-  private async exportToImage(format: string, name: string): Promise<{ success: boolean, size?: number }> {
+  private async exportToImage(
+    format: string,
+    name: string
+  ): Promise<{ success: boolean; size?: number }> {
     const image = await this.exportAsImage(format);
 
     if (image === EMPTY_IMAGE_DATA) {
@@ -520,7 +525,10 @@ export class MmpService implements OnDestroy {
   /**
    * Export map to PDF
    */
-  private async exportToPDF(format: string, name: string): Promise<{ success: boolean, size?: number }> {
+  private async exportToPDF(
+    format: string,
+    name: string
+  ): Promise<{ success: boolean; size?: number }> {
     const imageUri = await this.exportAsImage('png');
     const htmlImageElement = await UtilsService.imageFromUri(imageUri);
     const pdf = new jsPDF({
@@ -581,7 +589,10 @@ export class MmpService implements OnDestroy {
   /**
    * Export map to JSON
    */
-  private async exportToJSON(format: string, name: string): Promise<{ success: boolean, size?: number }> {
+  private async exportToJSON(
+    format: string,
+    name: string
+  ): Promise<{ success: boolean; size?: number }> {
     const json = JSON.stringify(this.exportAsJSON());
     const uri = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`;
 
