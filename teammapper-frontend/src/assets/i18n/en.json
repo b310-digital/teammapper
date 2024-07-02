@@ -166,7 +166,8 @@
     "NODE_COPIED": "Node successfully copied!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",
-      "GENERIC_NODE_COPY_ERROR": "An error occurred whilst trying to copy the root node."
+      "GENERIC_NODE_COPY_ERROR": "An error occurred whilst trying to copy the root node.",
+      "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!"
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!"
   },

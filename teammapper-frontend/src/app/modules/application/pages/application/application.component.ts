@@ -36,6 +36,7 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     private mapSyncService: MapSyncService,
     private storageService: StorageService,
     private dialogService: DialogService,
+    private utilsService: UtilsService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -91,10 +92,25 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     modificationSecret: string
   ): Promise<ServerMap> {
     if (mapId) {
-      return await this.mapSyncService.prepareExistingMap(
+      const existingMap = await this.mapSyncService.prepareExistingMap(
         mapId,
         modificationSecret
       );
+
+      if (!existingMap) {
+        const errorMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.MAP_COULD_NOT_BE_FOUND'
+        );
+
+        this.router.navigate(['/'], {
+          queryParams: {
+            toastMessage: errorMessage,
+            toastIsError: 1,
+          },
+        });
+      }
+
+      return existingMap;
     } else {
       const privateServerMap = await this.mapSyncService.prepareNewMap();
       const newUrl = this.router

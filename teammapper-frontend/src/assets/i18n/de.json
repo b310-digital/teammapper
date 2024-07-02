@@ -167,7 +167,8 @@
     "NODE_COPIED": "Knoten erfolgreich kopiert!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
-      "GENERIC_NODE_COPY_ERROR": "Beim Kopieren des Knotens ist ein Fehler aufgetreten."
+      "GENERIC_NODE_COPY_ERROR": "Beim Kopieren des Knotens ist ein Fehler aufgetreten.",
+      "MAP_COULD_NOT_BE_FOUND": "Mindmap konnte nicht gefunden werden!"
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!"
   },

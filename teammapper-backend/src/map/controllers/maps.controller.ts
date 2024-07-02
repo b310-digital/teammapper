@@ -22,7 +22,7 @@ export default class MapsController {
   @Get(':id')
   async findOne(@Param('id') mapId: string): Promise<IMmpClientMap | void> {
     const map = await this.mapsService.exportMapToClient(mapId).catch((e: Error) => {
-      if (e.name === 'MalformedUUIDError') throw new NotFoundException()
+      if (e?.name === 'MalformedUUIDError') throw new NotFoundException()
     })
     if (!map) throw new NotFoundException()
 
