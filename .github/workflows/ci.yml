@@ -13,7 +13,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v1
@@ -39,7 +39,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - run: npm --prefix teammapper-backend ci
 
@@ -49,7 +49,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - run: npm --prefix teammapper-frontend ci
 
@@ -72,7 +72,7 @@ jobs:
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
 
             - run: npm --prefix teammapper-backend ci
 
@@ -95,6 +95,6 @@ jobs:
     teammapper-frontend-test:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
             - run: npm --prefix teammapper-frontend ci
             - run: npm --prefix teammapper-frontend run test -- --progress=false --watch=false --code-coverage --source-map=false
