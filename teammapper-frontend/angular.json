@@ -80,15 +80,15 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "proxyConfig": "src/proxy.conf.json",
-            "buildTarget": "teammapper:build",
-            "disableHostCheck": true
+            "buildTarget": "teammapper:build"
           },
           "configurations": {
             "production": {
               "buildTarget": "teammapper:build:production"
             },
             "development": {
-              "buildTarget": "teammapper:build:development"
+              "buildTarget": "teammapper:build:development",
+              "disableHostCheck": true
             }
           },
           "defaultConfiguration": "development"
