@@ -209,11 +209,13 @@ export default class Nodes {
      */
     public toggleBranch = () => {
         if (this.selectedNode) {
-            const children = this.nodeChildren(this.selectedNode.id);
+            const children = this.getDescendants(this.selectedNode);
             if (children) {
                 children.forEach(x => {
                     this.updateNode('hidden', !x.hidden, false, true, x.id)
                 })
+
+                this.map.draw.update()
             }
         }
     }
@@ -485,7 +487,7 @@ export default class Nodes {
      * Return an array of all nodes.
      */
     public getNodes(): Node[] {
-        return Array.from(this.nodes.values())
+        return Array.from(this.nodes.values()).filter(x => !x.hidden)
     }
 
     /**
