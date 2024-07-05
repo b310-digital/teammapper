@@ -87,7 +87,8 @@
               "buildTarget": "teammapper:build:production"
             },
             "development": {
-              "buildTarget": "teammapper:build:development"
+              "buildTarget": "teammapper:build:development",
+              "disableHostCheck": true
             }
           },
           "defaultConfiguration": "development"

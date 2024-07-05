@@ -135,6 +135,7 @@ export default class History {
                 link: Utils.cloneObject(mergedProperty.link) as Link,
                 locked: mergedProperty.locked,
                 detached: mergedProperty.detached,
+                hidden: mergedProperty.hidden,
                 isRoot: mergedProperty.isRoot
             }
 

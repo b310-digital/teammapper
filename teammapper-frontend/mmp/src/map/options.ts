@@ -208,6 +208,7 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     },
     locked: true,
     detached: false,
+    hidden: false,
     isRoot: false,
 }
 
@@ -237,6 +238,7 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     },
     locked: true,
     detached: false,
+    hidden: false,
     isRoot: true
 }
 
@@ -249,6 +251,7 @@ export interface DefaultNodeProperties {
     font: Font
     locked: boolean
     detached: boolean
+    hidden: boolean
     isRoot: boolean
 }
 

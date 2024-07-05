@@ -95,6 +95,14 @@
     mat-icon-button>
     <mat-icon>content_paste</mat-icon>
   </button>
+  <button
+    (click)="mmpService.toggleBranch()"
+    [title]="''"
+    [disabled]="editDisabled"
+    color="primary"
+    mat-icon-button>
+    <mat-icon>{{ node?.hidden ? 'visibility_off' : 'visibility' }}</mat-icon>
+  </button>
 
   <div class="vertical-line">
     <div></div>

@@ -55,6 +55,7 @@ export default class Nodes {
             id: rootId,
             parent: null,
             detached: false,
+            hidden: false,
             isRoot: true
         }) as NodeProperties
 
@@ -204,6 +205,20 @@ export default class Nodes {
     }
 
     /**
+     * Toggle (hide/show) all child nodes of selected node
+     */
+    public toggleBranch = () => {
+        if (this.selectedNode) {
+            const children = this.nodeChildren(this.selectedNode.id);
+            if (children) {
+                children.forEach(x => {
+                    this.updateNode('hidden', !x.hidden, false, true, x.id)
+                })
+            }
+        }
+    }
+
+    /**
      * Deselect the current selected node.
      */
     public deselectNode = () => {
@@ -282,6 +297,9 @@ export default class Nodes {
                 break
             case 'nameColor':
                 updated = this.updateNodeNameColor(node, value, graphic)
+                break
+            case 'hidden':
+                updated = this.updateNodeHidden(node, value)
                 break
             default:
                 Log.error('The property does not exist')
@@ -371,6 +389,7 @@ export default class Nodes {
             locked: node.locked,
             isRoot: node.isRoot,
             detached: node.detached,
+            hidden: node.hidden,
             k: node.k
         }
     }
@@ -885,6 +904,24 @@ export default class Nodes {
     }
 
     /**
+     * Update the node hidden value
+     * @param {Node} node
+     * @param {boolean} hidden
+     * @returns {boolean}
+     */
+    private updateNodeHidden = (node: Node, hidden: boolean) => {
+        if (hidden && typeof hidden !== 'boolean') {
+            Log.error('The hidden value must be boolean', 'type')
+        }
+
+        if (node.hidden !== hidden) {
+            node.hidden = hidden;
+        } else {
+            return false
+        }
+    }
+
+    /**
      * Update the node font style.
      * @param {Node} node
      * @param {string} style
@@ -1050,5 +1087,6 @@ export const PropertyMapping = {
     textDecoration: [],
     fontStyle: ['font', 'style'],
     fontSize: ['font', 'size'],
-    nameColor: ['colors', 'name']
+    nameColor: ['colors', 'name'],
+    hidden: ['hidden']
 } as const
