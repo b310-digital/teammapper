@@ -25,6 +25,7 @@
     "COPY_NODE": "Copia il nodo selezionato",
     "CUT_NODE": "Taglia il nodo selezionato",
     "PASTE_NODE": "Incolla il nodo copiato",
+    "HIDE_CHILD_NODES": "Nascondere i nodi figli",
     "MOVE_NODE_TO_THE_LEFT": "Muove il nodo a sinistra",
     "MOVE_NODE_TO_THE_RIGHT": "Muove il nodo a destra",
     "MOVE_NODE_DOWN": "Muove il nodo in basso",

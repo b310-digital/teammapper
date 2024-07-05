@@ -25,6 +25,7 @@
     "COPY_NODE": "Copies the current node",
     "CUT_NODE": "Cuts the current node",
     "PASTE_NODE": "Paste the copied node",
+    "HIDE_CHILD_NODES": "Hide child nodes",
     "MOVE_NODE_TO_THE_LEFT": "Moves the node to the left",
     "MOVE_NODE_TO_THE_RIGHT": "Moves the node to the right",
     "MOVE_NODE_DOWN": "Moves the node down",
