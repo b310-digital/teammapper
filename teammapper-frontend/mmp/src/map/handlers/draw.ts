@@ -55,11 +55,23 @@ export default class Draw {
      * Update the dom of the map with the (new) nodes.
      */
     public update() {
-        const nodes = this.map.nodes.getNodes(),
-            dom = {
-                nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes),
-                branches: this.map.dom.g.selectAll('.' + this.map.id + '_branch').data(nodes.slice(1))
+        let nodes = this.map.nodes.getNodes();
+        
+        const hiddenChildren = new Set()
+
+        // We need to exclude hidden nodes - this cannot be done in getNodes() because we want to preserve copy-paste history independently of hidden/unhidden nodes
+        nodes.forEach(node => {
+            if (node.hasHiddenChildNodes) {
+                this.map.nodes.getChildren(node).forEach(child => hiddenChildren.add(child.id))
             }
+        })
+
+        nodes = nodes.filter(node => !hiddenChildren.has(node.id))
+
+        const dom = {
+            nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes),
+            branches: this.map.dom.g.selectAll('.' + this.map.id + '_branch').data(nodes.slice(1))
+        }
         let tapedTwice = false
 
         const outer = dom.nodes.enter().append('g')

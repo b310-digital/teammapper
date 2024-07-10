@@ -104,5 +104,5 @@ export class MmpNode {
   lastModified: Date
 
   @Column({ default: false })
-  hidden: boolean
+  hasHiddenChildNodes: boolean
 }
