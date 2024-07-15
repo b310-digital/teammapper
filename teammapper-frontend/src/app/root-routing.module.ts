@@ -6,9 +6,8 @@ const routes: Routes = [
   {
     path: '',
     loadChildren: () =>
-      import('./modules/about/about.module').then(m => m.AboutModule),
+      import('./modules/start/start.module').then(m => m.StartModule),
     canActivate: [ToastGuard],
->>>>>>> upstream/main
   },
   {
     path: 'map',
