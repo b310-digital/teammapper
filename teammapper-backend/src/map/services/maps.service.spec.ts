@@ -71,7 +71,7 @@ describe('MapsController', () => {
         coordinatesY: 1,
       })
 
-      await mapsService.addNodes(map.id, [mapMmpNodeToClient(node)])
+      await mapsService.addNodes(map.id, [node])
 
       const createdNode = await nodesRepo.findOne({
         where: { id: node.id },

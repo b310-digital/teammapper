@@ -1,6 +1,12 @@
 import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
 import QRCodeStyling from 'qr-code-styling';
 import { qrcodeStyling } from './qrcode-settings';
+import { API_URL, HttpService } from 'src/app/core/http/http.service';
+import { UtilsService } from 'src/app/core/services/utils/utils.service';
+import { ToastrService } from 'ngx-toastr';
+import { StorageService } from 'src/app/core/services/storage/storage.service';
+import { Router } from '@angular/router';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'teammapper-dialog-share',
@@ -25,6 +31,15 @@ export class DialogShareComponent implements OnInit {
     window.location.search;
   private qrCode: QRCodeStyling;
 
+  constructor(
+    private httpService: HttpService,
+    private toastrService: ToastrService,
+    private utilsService: UtilsService,
+    private storageService: StorageService,
+    private dialogRef: MatDialogRef<DialogShareComponent>,
+    private router: Router
+  ) {}
+
   ngOnInit() {
     this.appendQrCode();
   }
@@ -46,10 +61,47 @@ export class DialogShareComponent implements OnInit {
     this.qrCode.append(this.qrCodeCanvas.nativeElement);
   }
 
-  copy() {
+  async copy() {
     this.inputLink.nativeElement.select();
     // requires a secure origin (https) to work
     navigator.clipboard.writeText(this.getLink());
+    const successMessage = await this.utilsService.translate(
+      'TOASTS.URL_COPIED'
+    );
+    this.toastrService.success(successMessage);
+  }
+
+  async duplicateMindMap() {
+    // getCurrentMap from the MmpService doesn't give us the UUID of the map, only a legacy id and the root note ID, so we'll have to use the URL params.
+    const id = window.location.pathname.split('/')[2];
+    const response = await this.httpService.post(
+      API_URL.ROOT,
+      '/maps/' + id + '/duplicate'
+    );
+    if (!response.ok) return null;
+
+    const newMap = await response.json();
+    if (newMap && newMap.map.uuid) {
+      const successMessage = await this.utilsService.translate(
+        'TOASTS.SUCCESSFULLY_DUPLICATED'
+      );
+
+      await this.storageService.set(newMap.map.uuid, {
+        adminId: newMap.adminId,
+        modificationSecret: newMap.modificationSecret,
+        ttl: newMap.map.deletedAt,
+        rootName: newMap.map.data[0].name,
+      });
+
+      this.dialogRef.close();
+
+      this.router.navigate(['/map', newMap.map.uuid], {
+        queryParams: {
+          toastMessage: successMessage,
+        },
+        fragment: newMap.modificationSecret,
+      });
+    }
   }
 
   downloadQrCode() {

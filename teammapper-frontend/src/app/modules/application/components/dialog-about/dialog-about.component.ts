@@ -6,6 +6,8 @@ import { SettingsService } from 'src/app/core/services/settings/settings.service
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { environment } from 'src/environments/environment';
+import { Router } from '@angular/router';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'teammapper-dialog-about',
@@ -23,7 +25,9 @@ export class DialogAboutComponent {
     private translateService: TranslateService,
     private settingsService: SettingsService,
     private storageService: StorageService,
-    private mapSyncService: MapSyncService
+    private mapSyncService: MapSyncService,
+    private dialogRef: MatDialogRef<DialogAboutComponent>,
+    private router: Router
   ) {
     this.version = environment.version;
     this.applicationName = environment.name;
@@ -35,7 +39,16 @@ export class DialogAboutComponent {
     if (confirm(this.translateService.instant('MODALS.INFO.CONFIRM_DELETE'))) {
       await this.mapSyncService.deleteMap(await this.mapAdminId);
       await this.storageService.remove(this.map.uuid);
-      window.location.reload();
+
+      this.dialogRef.close();
+
+      this.router.navigate([''], {
+        queryParams: {
+          toastMessage: this.translateService.instant(
+            'TOASTS.DELETE_MAP_SUCCESS'
+          ),
+        },
+      });
     }
   }
 

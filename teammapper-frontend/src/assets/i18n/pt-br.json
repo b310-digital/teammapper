@@ -160,6 +160,16 @@
     "MAP_DELETION_CONFIRM": "Are you sure you want to delete the map?",
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
+  "TOASTS": {
+    "SUCCESSFULLY_DUPLICATED": "Mindmap duplicado com sucesso!",
+    "URL_COPIED": "URL copiado com sucesso",
+    "NODE_COPIED": "Nó copiado com sucesso!",
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "Não é possível copiar o nó raiz!",
+      "GENERIC_NODE_COPY_ERROR": "Ocorreu um erro ao tentar copiar o nó raiz."
+    },
+    "DELETE_MAP_SUCCESS": "Mapa mental excluído com sucesso!"
+  },
   "GENERAL": {
     "REPOSITORY": "Source Code",
     "CREATE": "Create mind map",
