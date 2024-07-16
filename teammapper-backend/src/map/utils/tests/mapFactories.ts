@@ -9,6 +9,7 @@ export const createMmpMap = (overrides = {}): MmpMap => ({
     modificationSecret: 'modification-secret',
     name: 'Test Map',
     lastModified: new Date('1970-01-01'),
+    lastAccessed: new Date('1970-01-01'),
     options: {
         fontMaxSize: 1,
         fontMinSize: 1,
@@ -24,6 +25,7 @@ export const createMmpClientMap = (overrides = {}): IMmpClientMap => ({
     deleteAfterDays: 30,
     deletedAt: new Date('1970-01-01'),
     lastModified: new Date('1970-01-01'),
+    lastAccessed: new Date('1970-01-01'),
     options: {
         fontMaxSize: 1,
         fontMinSize: 1,
