@@ -222,7 +222,7 @@ export class MmpService implements OnDestroy {
       const currentNode = this.selectNode();
       newProps.coordinates = {
         x: currentNode.coordinates.x,
-        y: currentNode.coordinates.y,
+        y: currentNode.coordinates.y - 80,
       };
     }
 
