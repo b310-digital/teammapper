@@ -166,12 +166,9 @@
     "NODE_COPIED": "节点复制成功!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "无法复制根节点！",
-<<<<<<< HEAD
-      "NODE_COPY_GENERIC": "在尝试复制根节点时发生错误"
-=======
-      "GENERIC_NODE_COPY_ERROR": "在尝试复制根节点时发生错误",
+      "ROOT_NODE_CUT": "不可能切断根节点！",
+      "NODE_COPY_GENERIC": "在尝试复制根节点时发生错误",
       "EXPORT_IMAGE_ERROR": "导出图像时发生错误。思维导图可能过大。"
->>>>>>> main
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！",
     "MAP_COULD_NOT_BE_FOUND": "找不到思维导图！"
