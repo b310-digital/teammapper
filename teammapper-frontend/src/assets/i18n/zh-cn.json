@@ -166,7 +166,7 @@
     "NODE_COPIED": "节点复制成功!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "无法复制根节点！",
-      "GENERIC_NODE_COPY_ERROR": "在尝试复制根节点时发生错误"
+      "NODE_COPY_GENERIC": "在尝试复制根节点时发生错误"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！"
   },

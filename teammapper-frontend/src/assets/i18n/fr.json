@@ -166,7 +166,7 @@
     "NODE_COPIED": "Nœud copié avec succès !",
     "ERRORS": {
       "ROOT_NODE_COPIED": "Il n'est pas possible de copier le noeud racine !",
-      "GENERIC_NODE_COPY_ERROR": "Une erreur s'est produite lors de la copie du nœud racine."
+      "NODE_COPY_GENERIC": "Une erreur s'est produite lors de la copie du nœud racine."
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !"
   },

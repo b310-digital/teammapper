@@ -335,7 +335,7 @@ export class MmpService implements OnDestroy {
         this.toastrService.error(rootNodeFailureMessage);
       } else {
         const genericErrorMessage = await this.utilsService.translate(
-          'TOASTS.ERRORS.GENERIC_NODE_COPY_ERROR'
+          'TOASTS.ERRORS.NODE_COPY_GENERIC'
         );
         this.toastrService.error(genericErrorMessage);
       }

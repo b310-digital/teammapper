@@ -166,7 +166,7 @@
     "NODE_COPIED": "Nodo copiato con successo!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "Non è possibile copiare il nodo radice!",
-      "GENERIC_NODE_COPY_ERROR": "Si è verificato un errore durante il tentativo di copiare il nodo radice."
+      "NODE_COPY_GENERIC": "Si è verificato un errore durante il tentativo di copiare il nodo radice."
     },
     "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!"
   },
