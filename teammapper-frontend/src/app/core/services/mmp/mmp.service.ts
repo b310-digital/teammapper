@@ -15,7 +15,7 @@ import {
   OptionParameters,
   UserNodeProperties,
 } from '@mmp/map/types';
-import { COLORS } from './mmp-utils';
+import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 
 /**
@@ -222,7 +222,7 @@ export class MmpService implements OnDestroy {
       const currentNode = this.selectNode();
       newProps.coordinates = {
         x: currentNode.coordinates.x,
-        y: currentNode.coordinates.y,
+        y: currentNode.coordinates.y - 80,
       };
     }
 
@@ -335,7 +335,7 @@ export class MmpService implements OnDestroy {
         this.toastrService.error(rootNodeFailureMessage);
       } else {
         const genericErrorMessage = await this.utilsService.translate(
-          'TOASTS.ERRORS.GENERIC_NODE_COPY_ERROR'
+          'TOASTS.ERRORS.NODE_COPY_GENERIC'
         );
         this.toastrService.error(genericErrorMessage);
       }
@@ -392,91 +392,24 @@ export class MmpService implements OnDestroy {
   /**
    * Export the current mind map with the format passed as parameter.
    */
-  public async exportMap(format = 'json') {
+  public async exportMap(
+    format = 'json'
+  ): Promise<{ success: boolean; size?: number }> {
     const name = DOMPurify.sanitize(
       this.getRootNode().name.replace(/\n/g, ' ').replace(/\s+/g, ' ')
     );
 
     switch (format) {
       case 'json': {
-        const json = JSON.stringify(this.exportAsJSON());
-        const uri = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`;
-
-        const fileSizeKb = uri.length / 1024;
-
-        UtilsService.downloadFile(`${name}.${format}`, uri);
-
-        return { success: true, size: fileSizeKb };
+        return this.exportToJSON(format, name);
       }
       case 'pdf': {
-        const imageUri = await this.exportAsImage('png');
-        const htmlImageElement = await UtilsService.imageFromUri(imageUri);
-        const pdf = new jsPDF({
-          orientation:
-            htmlImageElement.width > htmlImageElement.height ? 'l' : 'p',
-          unit: 'pt',
-          format: 'A4',
-        });
-        const pdfWidth: number = pdf.internal.pageSize.getWidth();
-        const pdfHeight: number = pdf.internal.pageSize.getHeight();
-
-        const scaleFactorWidth: number = pdfWidth / htmlImageElement.width;
-        const scaleFactorHeight: number = pdfHeight / htmlImageElement.height;
-
-        if (
-          pdfWidth > htmlImageElement.width &&
-          pdfHeight > htmlImageElement.height
-        ) {
-          // 0.75 to convert px to pt
-          pdf.addImage(
-            imageUri,
-            0,
-            0,
-            htmlImageElement.width * 0.75,
-            htmlImageElement.height * 0.75,
-            '',
-            'MEDIUM',
-            0
-          );
-        } else if (scaleFactorWidth < scaleFactorHeight) {
-          pdf.addImage(
-            imageUri,
-            0,
-            0,
-            htmlImageElement.width * scaleFactorWidth,
-            htmlImageElement.height * scaleFactorWidth,
-            '',
-            'MEDIUM',
-            0
-          );
-        } else {
-          pdf.addImage(
-            imageUri,
-            0,
-            0,
-            htmlImageElement.width * scaleFactorHeight,
-            htmlImageElement.height * scaleFactorHeight,
-            '',
-            'MEDIUM',
-            0
-          );
-        }
-
-        pdf.save(`${name}.${format}`);
-
-        return { success: true, size: pdf.output().length };
+        return this.exportToPDF(format, name);
       }
       case 'svg':
       case 'jpeg':
       case 'png': {
-        const image = await this.exportAsImage(format);
-
-        UtilsService.downloadFile(
-          `${name}.${format === 'jpeg' ? 'jpg' : format}`,
-          image
-        );
-
-        return { success: true, size: image.length / 1024 };
+        return this.exportToImage(format, name);
       }
     }
   }
@@ -562,5 +495,111 @@ export class MmpService implements OnDestroy {
       fontMaxSize: defaultSettings.mapOptions.fontMaxSize,
       fontIncrement: defaultSettings.mapOptions.fontIncrement,
     };
+  }
+
+  /**
+   * Export map to image (png, jpg, svg)
+   */
+  private async exportToImage(
+    format: string,
+    name: string
+  ): Promise<{ success: boolean; size?: number }> {
+    const image = await this.exportAsImage(format);
+
+    if (image === EMPTY_IMAGE_DATA) {
+      const exportImageFailureMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.EXPORT_IMAGE_ERROR'
+      );
+      this.toastrService.error(exportImageFailureMessage);
+      return { success: false };
+    } else {
+      UtilsService.downloadFile(
+        `${name}.${format === 'jpeg' ? 'jpg' : format}`,
+        image
+      );
+
+      return { success: true, size: image.length / 1024 };
+    }
+  }
+
+  /**
+   * Export map to PDF
+   */
+  private async exportToPDF(
+    format: string,
+    name: string
+  ): Promise<{ success: boolean; size?: number }> {
+    const imageUri = await this.exportAsImage('png');
+    const htmlImageElement = await UtilsService.imageFromUri(imageUri);
+    const pdf = new jsPDF({
+      orientation: htmlImageElement.width > htmlImageElement.height ? 'l' : 'p',
+      unit: 'pt',
+      format: 'A4',
+    });
+    const pdfWidth: number = pdf.internal.pageSize.getWidth();
+    const pdfHeight: number = pdf.internal.pageSize.getHeight();
+
+    const scaleFactorWidth: number = pdfWidth / htmlImageElement.width;
+    const scaleFactorHeight: number = pdfHeight / htmlImageElement.height;
+
+    if (
+      pdfWidth > htmlImageElement.width &&
+      pdfHeight > htmlImageElement.height
+    ) {
+      // 0.75 to convert px to pt
+      pdf.addImage(
+        imageUri,
+        0,
+        0,
+        htmlImageElement.width * 0.75,
+        htmlImageElement.height * 0.75,
+        '',
+        'MEDIUM',
+        0
+      );
+    } else if (scaleFactorWidth < scaleFactorHeight) {
+      pdf.addImage(
+        imageUri,
+        0,
+        0,
+        htmlImageElement.width * scaleFactorWidth,
+        htmlImageElement.height * scaleFactorWidth,
+        '',
+        'MEDIUM',
+        0
+      );
+    } else {
+      pdf.addImage(
+        imageUri,
+        0,
+        0,
+        htmlImageElement.width * scaleFactorHeight,
+        htmlImageElement.height * scaleFactorHeight,
+        '',
+        'MEDIUM',
+        0
+      );
+    }
+
+    pdf.save(`${name}.${format}`);
+
+    return { success: true, size: pdf.output().length };
+  }
+
+  /**
+   * Export map to JSON
+   */
+  private async exportToJSON(
+    format: string,
+    name: string
+  ): Promise<{ success: boolean; size?: number }> {
+    const json = JSON.stringify(this.exportAsJSON());
+    const uri = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`;
+
+    const fileSizeKb = uri.length / 1024;
+
+    UtilsService.downloadFile(`${name}.${format}`, uri);
+
+    return { success: true, size: fileSizeKb };
   }
 }

@@ -81,14 +81,14 @@
           "options": {
             "proxyConfig": "src/proxy.conf.json",
             "buildTarget": "teammapper:build",
-            "disableHostCheck": true
           },
           "configurations": {
             "production": {
               "buildTarget": "teammapper:build:production"
             },
             "development": {
-              "buildTarget": "teammapper:build:development"
+              "buildTarget": "teammapper:build:development",
+              "disableHostCheck": true
             }
           },
           "defaultConfiguration": "development"
