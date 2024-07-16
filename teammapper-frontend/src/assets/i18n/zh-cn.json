@@ -167,7 +167,7 @@
     "ERRORS": {
       "ROOT_NODE_COPIED": "无法复制根节点！",
       "GENERIC_NODE_COPY_ERROR": "在尝试复制根节点时发生错误",
-      "EXPORT_IMAGE_ERROR": "图像导出过程中发生错误。"
+      "EXPORT_IMAGE_ERROR": "导出图像时发生错误。思维导图可能过大。"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！"
   },

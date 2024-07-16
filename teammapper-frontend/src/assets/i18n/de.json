@@ -168,7 +168,7 @@
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
       "GENERIC_NODE_COPY_ERROR": "Beim Kopieren des Knotens ist ein Fehler aufgetreten.",
-      "EXPORT_IMAGE_ERROR": "Beim Bild-Export ist ein Fehler aufgetreten."
+      "EXPORT_IMAGE_ERROR": "Beim Bild-Export ist ein Fehler aufgetreten. Womöglich ist die Mindmap zu groß."
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!"
   },
