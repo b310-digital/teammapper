@@ -616,9 +616,7 @@ export default class Nodes {
         if (siblings.length > 0) {
             const lowerNode = this.getLowerNode(siblings)
             coordinates.y = lowerNode.coordinates.y + 60
-        } else if(node.detached) {
-          coordinates.y -= 80
-        } else {
+        } else if (!node.detached) {
           coordinates.y -= 120
         }
 
