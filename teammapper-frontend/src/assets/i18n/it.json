@@ -167,7 +167,8 @@
     "ERRORS": {
       "ROOT_NODE_COPIED": "Non è possibile copiare il nodo radice!",
       "GENERIC_NODE_COPY_ERROR": "Si è verificato un errore durante il tentativo di copiare il nodo radice.",
-      "EXPORT_IMAGE_ERROR": "Si è verificato un errore durante l'esportazione dell'immagine. La mappa mentale potrebbe essere troppo grande."
+      "EXPORT_IMAGE_ERROR": "Si è verificato un errore durante l'esportazione dell'immagine. La mappa mentale potrebbe essere troppo grande.",
+      "MAP_COULD_NOT_BE_FOUND": "Impossibile trovare la mappa mentale!"
     },
     "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!"
   },

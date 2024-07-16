@@ -169,7 +169,8 @@
       "GENERIC_NODE_COPY_ERROR": "在尝试复制根节点时发生错误",
       "EXPORT_IMAGE_ERROR": "导出图像时发生错误。思维导图可能过大。"
     },
-    "DELETE_MAP_SUCCESS": "思维导图已成功删除！"
+    "DELETE_MAP_SUCCESS": "思维导图已成功删除！",
+    "MAP_COULD_NOT_BE_FOUND": "找不到思维导图！"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",

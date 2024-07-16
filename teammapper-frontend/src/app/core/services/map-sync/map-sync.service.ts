@@ -120,11 +120,12 @@ export class MapSyncService implements OnDestroy {
   ): Promise<ServerMap> {
     this.modificationSecret = modificationSecret;
     const serverMap = await this.fetchMapFromServer(id);
-    this.updateCachedMapForAdmin(serverMap);
 
     if (!serverMap) {
       return;
     }
+
+    this.updateCachedMapForAdmin(serverMap);
     this.prepareMap(serverMap);
 
     return serverMap;
