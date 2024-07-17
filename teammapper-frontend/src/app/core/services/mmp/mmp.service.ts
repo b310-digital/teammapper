@@ -346,8 +346,27 @@ export class MmpService implements OnDestroy {
    * Remove and copy a node with his children in the mmp clipboard.
    * If id is not specified, copy the selected node.
    */
-  public cutNode(nodeId?: string) {
-    this.currentMap.instance.cutNode(nodeId);
+  public async cutNode(nodeId?: string) {
+    try {
+      this.currentMap.instance.cutNode(nodeId);
+
+      const successMessage = await this.utilsService.translate(
+        'TOASTS.NODE_CUT'
+      );
+      this.toastrService.success(successMessage);
+    } catch (e) {
+      if (e.message == 'The root node can not be cut') {
+        const rootNodeFailureMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.ROOT_NODE_CUT'
+        );
+        this.toastrService.error(rootNodeFailureMessage);
+      } else {
+        const genericErrorMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.NODE_CUT_GENERIC'
+        );
+        this.toastrService.error(genericErrorMessage);
+      }
+    }
   }
 
   /**

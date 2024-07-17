@@ -167,7 +167,9 @@
     "NODE_COPIED": "Knoten erfolgreich kopiert!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
+      "ROOT_NODE_CUT": "Es ist nicht möglich, den Hauptknoten zu auszuschneiden!",
       "NODE_COPY_GENERIC": "Beim Kopieren des Knotens ist ein Fehler aufgetreten.",
+      "NODE_CUT_GENERIC": "Beim Ausschneiden des Knotens ist ein Fehler aufgetreten.",
       "EXPORT_IMAGE_ERROR": "Beim Bild-Export ist ein Fehler aufgetreten. Womöglich ist die Mindmap zu groß.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap konnte nicht gefunden werden!"
     },
