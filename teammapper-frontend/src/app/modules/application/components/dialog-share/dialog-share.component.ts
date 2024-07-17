@@ -94,8 +94,8 @@ export class DialogShareComponent implements OnInit {
       });
 
       this.dialogRef.close();
-      
-      window.location.replace(
+
+      window.location.assign(
         `/map/${newMap.map.uuid}?toastMessage=${successMessage}#${newMap.modificationSecret}`
       );
     }
