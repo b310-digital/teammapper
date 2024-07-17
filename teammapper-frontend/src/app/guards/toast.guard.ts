@@ -29,7 +29,6 @@ export class ToastGuard implements CanActivate {
 
       // This preserves both map UUID and the all important fragment whilst deleting anything toast-related.
       const urlTree = this.router.parseUrl(state.url);
-      console.log(urlTree);
       delete urlTree.queryParams['toastMessage'];
       this.router.navigateByUrl(urlTree, { replaceUrl: true });
 
