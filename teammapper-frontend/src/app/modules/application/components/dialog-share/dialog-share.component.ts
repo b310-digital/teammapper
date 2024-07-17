@@ -95,12 +95,14 @@ export class DialogShareComponent implements OnInit {
 
       this.dialogRef.close();
 
-      this.router.navigate(['/map', newMap.map.uuid], {
-        queryParams: {
-          toastMessage: successMessage,
-        },
-        fragment: newMap.modificationSecret,
-      });
+      this.router
+        .navigate(['/map', newMap.map.uuid], {
+          queryParams: {
+            toastMessage: successMessage,
+          },
+          fragment: newMap.modificationSecret,
+        })
+        .then(() => window.location.reload());
     }
   }
 
