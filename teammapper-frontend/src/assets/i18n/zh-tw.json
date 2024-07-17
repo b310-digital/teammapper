@@ -169,10 +169,10 @@
       "ROOT_NODE_CUT": "It's not possible to cut the root node!",
       "NODE_COPY_GENERIC": "An error occurred whilst trying to copy the node.",
       "NODE_CUT_GENERIC": "An error occurred whilst trying to cut the node.",
-      "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large."
+      "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
+      "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!"
     },
-    "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
-    "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!"
+    "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",
