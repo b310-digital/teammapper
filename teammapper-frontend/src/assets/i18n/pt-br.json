@@ -167,7 +167,9 @@
     "NODE_COPIED": "Nó copiado com sucesso!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "Não é possível copiar o nó raiz!",
-      "NODE_COPY_GENERIC": "Ocorreu um erro ao tentar copiar o nó raiz.",
+      "ROOT_NODE_CUT": "Não é possível cortar o nó da raiz!",
+      "NODE_COPY_GENERIC": "Ocorreu um erro ao tentar copiar o nó.",
+      "NODE_CUT_GENERIC": "Ocorreu um erro ao tentar cortar o nó.",
       "EXPORT_IMAGE_ERROR": "Ocorreu um erro durante a exportação da imagem. O mapa mental pode ser muito grande.",
       "MAP_COULD_NOT_BE_FOUND": "Não foi possível encontrar o mapa mental!"
     },
