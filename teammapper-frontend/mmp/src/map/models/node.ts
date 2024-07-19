@@ -20,7 +20,7 @@ export default class Node implements NodeProperties {
     public dom: SVGGElement
     public isRoot: boolean
     public detached: boolean
-    public hasHiddenChildNodes: boolean
+    public hidden: boolean
 
     /**
      * Initialize the node properties, the dimensions and the k coefficient.
@@ -38,7 +38,7 @@ export default class Node implements NodeProperties {
         this.locked = properties.locked
         this.isRoot = properties.isRoot
         this.detached = properties.detached
-        this.hasHiddenChildNodes = properties.hasHiddenChildNodes
+        this.hidden = properties.hidden
 
         this.dimensions = {
             width: 0,
@@ -108,7 +108,7 @@ export interface UserNodeProperties {
     locked?: boolean
     isRoot?: boolean
     detached?: boolean
-    hasHiddenChildNodes?: boolean
+    hidden?: boolean
 }
 
 export interface NodeProperties extends UserNodeProperties {

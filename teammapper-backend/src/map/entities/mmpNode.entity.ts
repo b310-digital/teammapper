@@ -102,7 +102,4 @@ export class MmpNode {
 
   @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
   lastModified: Date
-
-  @Column({ default: false })
-  hasHiddenChildNodes: boolean
 }

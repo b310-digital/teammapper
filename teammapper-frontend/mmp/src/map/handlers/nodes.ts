@@ -55,7 +55,7 @@ export default class Nodes {
             id: rootId,
             parent: null,
             detached: false,
-            hasHiddenChildNodes: false,
+            hidden: false,
             isRoot: true
         }) as NodeProperties
 
@@ -211,10 +211,10 @@ export default class Nodes {
         if (this.selectedNode) {
             const children = this.getDescendants(this.selectedNode);
             if (children) {
-                this.updateNode('hidden', !this.selectedNode.hasHiddenChildNodes, false, true, this.selectedNode.id)
-
-                this.map.draw.update()
+                children.forEach(x => this.updateNode('hidden', !x.hidden, false, true, x.id))
             }
+
+            this.map.draw.update()
         }
     }
 
@@ -299,7 +299,7 @@ export default class Nodes {
                 updated = this.updateNodeNameColor(node, value, graphic)
                 break
             case 'hidden':
-                updated = this.updateNodeHasHiddenChildNodes(node, value)
+                updated = this.updateNodeHidden(node, value)
                 break
             default:
                 Log.error('The property does not exist')
@@ -389,7 +389,7 @@ export default class Nodes {
             locked: node.locked,
             isRoot: node.isRoot,
             detached: node.detached,
-            hasHiddenChildNodes: node.hasHiddenChildNodes,
+            hidden: node.hidden,
             k: node.k
         }
     }
@@ -907,13 +907,13 @@ export default class Nodes {
      * @param {boolean} hidden
      * @returns {boolean}
      */
-    private updateNodeHasHiddenChildNodes = (node: Node, hidden: boolean) => {
+    private updateNodeHidden = (node: Node, hidden: boolean) => {
         if (hidden && typeof hidden !== 'boolean') {
             Log.error('The hidden value must be boolean', 'type')
         }
 
-        if (node.hasHiddenChildNodes !== hidden) {
-            node.hasHiddenChildNodes = hidden;
+        if (node.hidden !== hidden) {
+            node.hidden = hidden;
         } else {
             return false
         }
