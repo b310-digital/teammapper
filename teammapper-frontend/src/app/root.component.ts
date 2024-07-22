@@ -40,6 +40,15 @@ export class RootComponent implements OnInit {
         replaceUrl: true,
       });
     }
+
+    // Fix for #347: Force a reload of mindmaps, even when they are persisted in bfcache
+    if (window.location.pathname.includes('/map')) {
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+    }
   }
 
   private async initTranslations(language: string): Promise<void> {
