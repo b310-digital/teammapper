@@ -45,7 +45,7 @@ export class RootComponent implements OnInit {
     if (window.location.pathname.includes('/map')) {
       window.addEventListener('pageshow', function (event) {
         if (event.persisted) {
-          window.location.reload();
+          window.location = window.location;
         }
       });
     }
