@@ -211,7 +211,7 @@ export default class Nodes {
         if (this.selectedNode) {
             const children = this.getDescendants(this.selectedNode);
             if (children) {
-                children.forEach(x => this.updateNode('hidden', !x.hidden, false, true, x.id))
+                children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, x.id))
             }
 
             this.map.draw.update()
