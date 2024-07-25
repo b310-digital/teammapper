@@ -209,7 +209,7 @@ export default class Nodes {
      */
     public toggleBranch = () => {
         if (this.selectedNode) {
-            const children = this.getDescendants(this.selectedNode);
+            const children = this.getChildren(this.selectedNode);
             if (children) {
                 children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, x.id))
             }
