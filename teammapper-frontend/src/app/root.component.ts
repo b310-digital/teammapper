@@ -42,13 +42,11 @@ export class RootComponent implements OnInit {
     }
 
     // Fix for #347: Force reload of pages in bfcache to prevent broken sync states on macOS where URL and internal state don't match
-    if (window.location.pathname.includes('/map')) {
-      window.addEventListener('pageshow', function (event) {
-        if (event.persisted) {
-          window.location = window.location;
-        }
-      });
-    }
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted && window.location.pathname.includes('/map')) {
+        window.location.reload();
+      }
+    });
   }
 
   private async initTranslations(language: string): Promise<void> {
