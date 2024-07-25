@@ -388,7 +388,7 @@ export class MmpService implements OnDestroy {
    * Return the children of the current node.
    */
   public nodeChildren(): ExportNodeProperties[] {
-    return this.currentMap.instance.nodeChildren();
+    return this.currentMap?.instance.nodeChildren();
   }
 
   /**

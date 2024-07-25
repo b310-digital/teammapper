@@ -109,6 +109,7 @@ export interface UserNodeProperties {
     isRoot?: boolean
     detached?: boolean
     hidden?: boolean
+    hasHiddenChildNodes?: boolean
 }
 
 export interface NodeProperties extends UserNodeProperties {

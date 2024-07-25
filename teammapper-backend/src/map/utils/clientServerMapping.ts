@@ -34,7 +34,6 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   locked: serverNode.locked || false,
   name: serverNode.name || '',
   parent: serverNode.nodeParentId,
-  hidden: false,
   isRoot: serverNode.root || false,
 })
 

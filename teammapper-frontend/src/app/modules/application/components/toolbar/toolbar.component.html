@@ -101,7 +101,7 @@
     [disabled]="editDisabled"
     color="primary"
     mat-icon-button>
-    <mat-icon>visibility</mat-icon>
+    <mat-icon>{{ hasHiddenNodes ? 'visibility_off' : 'visibility' }}</mat-icon>
   </button>
 
   <div class="vertical-line">

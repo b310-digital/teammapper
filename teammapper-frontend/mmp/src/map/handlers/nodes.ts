@@ -375,6 +375,12 @@ export default class Nodes {
      * @returns {ExportNodeProperties} properties
      */
     public getNodeProperties(node: Node, fixedCoordinates: boolean = false): ExportNodeProperties {
+        const children = this.getChildren(node);
+        let hasHiddenChildNodes = false;
+        if (children) {
+            hasHiddenChildNodes = children.filter(x => x.hidden).length > 0;
+        }
+
         return {
             id: node.id,
             parent: node.parent ? node.parent.id : '',
@@ -390,6 +396,7 @@ export default class Nodes {
             isRoot: node.isRoot,
             detached: node.detached,
             hidden: node.hidden,
+            hasHiddenChildNodes,
             k: node.k
         }
     }

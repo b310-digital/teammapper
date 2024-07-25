@@ -29,6 +29,10 @@ export class ToolbarComponent {
       );
   }
 
+  get hasHiddenNodes() {
+    return this.mmpService.nodeChildren()?.filter(x => x.hidden).length > 0
+  }
+
   public async share() {
     this.dialogService.openShareDialog();
   }
