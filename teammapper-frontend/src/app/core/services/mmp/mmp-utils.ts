@@ -18,5 +18,6 @@ const COLORS: string[] = [
   '#FFEB3B',
   '#FF5722',
 ];
+const EMPTY_IMAGE_DATA = 'data:,';
 
-export { COLORS };
+export { COLORS, EMPTY_IMAGE_DATA };

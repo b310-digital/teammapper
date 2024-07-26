@@ -83,7 +83,14 @@
       "TITLE": "Add a pictogram",
       "BUTTON_SEARCH": "Search",
       "FORM_INPUT_LABEL_SEARCH": "Search term",
-      "TERMS_TEXT": ["Pictograms author: Sergio Palao. Origin: ARASAAC (", "https://arasaac.org", "). License: ", "CC (BY-NC-SA)", "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en", ". Owner: Government of Aragon (Spain)"],
+      "TERMS_TEXT": [
+        "Pictograms author: Sergio Palao. Origin: ARASAAC (",
+        "https://arasaac.org",
+        "). License: ",
+        "CC (BY-NC-SA)",
+        "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
+        ". Owner: Government of Aragon (Spain)"
+      ],
       "EMPTY": "No result"
     },
     "SHARE": {
@@ -166,7 +173,11 @@
     "NODE_COPIED": "Nœud copié avec succès !",
     "ERRORS": {
       "ROOT_NODE_COPIED": "Il n'est pas possible de copier le noeud racine !",
-      "GENERIC_NODE_COPY_ERROR": "Une erreur s'est produite lors de la copie du nœud racine."
+      "ROOT_NODE_CUT": "Il n'est pas possible de couper le nœud racine !",
+      "NODE_COPY_GENERIC": "Une erreur s'est produite lors de la copie du nœud.",
+      "NODE_CUT_GENERIC": "Une erreur s'est produite lors de la découpe du nœud.",
+      "EXPORT_IMAGE_ERROR": "Une erreur s'est produite lors de l'exportation de l'image. Il se peut que la mind map soit trop grande.",
+      "MAP_COULD_NOT_BE_FOUND": "La carte heuristique est introuvable !"
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !"
   },

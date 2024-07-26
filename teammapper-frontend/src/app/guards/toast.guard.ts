@@ -18,14 +18,19 @@ export class ToastGuard implements CanActivate {
     state: RouterStateSnapshot
   ): boolean {
     const toastMessage = next.queryParamMap.get('toastMessage');
+    const toastError = next.queryParamMap.get('toastIsError');
 
     if (toastMessage) {
-      this.toastrService.success(toastMessage);
+      if (!toastError) {
+        this.toastrService.success(toastMessage);
+      } else {
+        this.toastrService.error(toastMessage);
+      }
 
       // This preserves both map UUID and the all important fragment whilst deleting anything toast-related.
       const urlTree = this.router.parseUrl(state.url);
       delete urlTree.queryParams['toastMessage'];
-      this.router.navigateByUrl(urlTree);
+      this.router.navigateByUrl(urlTree, { replaceUrl: true });
 
       return true;
     }

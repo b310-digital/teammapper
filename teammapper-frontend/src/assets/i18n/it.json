@@ -83,7 +83,14 @@
       "TITLE": "Add a pictogram",
       "BUTTON_SEARCH": "Search",
       "FORM_INPUT_LABEL_SEARCH": "Search term",
-      "TERMS_TEXT": ["Pictograms author: Sergio Palao. Origin: ARASAAC (", "https://arasaac.org", "). License: ", "CC (BY-NC-SA)", "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en", ". Owner: Government of Aragon (Spain)"],
+      "TERMS_TEXT": [
+        "Pictograms author: Sergio Palao. Origin: ARASAAC (",
+        "https://arasaac.org",
+        "). License: ",
+        "CC (BY-NC-SA)",
+        "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
+        ". Owner: Government of Aragon (Spain)"
+      ],
       "EMPTY": "No result"
     },
     "SHARE": {
@@ -166,7 +173,11 @@
     "NODE_COPIED": "Nodo copiato con successo!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "Non è possibile copiare il nodo radice!",
-      "GENERIC_NODE_COPY_ERROR": "Si è verificato un errore durante il tentativo di copiare il nodo radice."
+      "ROOT_NODE_CUT": "Non è possibile tagliare il nodo radice!",
+      "NODE_COPY_GENERIC": "Si è verificato un errore durante il tentativo di copiare il nodo.",
+      "NODE_CUT_GENERIC": "Si è verificato un errore durante il tentativo di tagliare il nodo.",
+      "EXPORT_IMAGE_ERROR": "Si è verificato un errore durante l'esportazione dell'immagine. La mappa mentale potrebbe essere troppo grande.",
+      "MAP_COULD_NOT_BE_FOUND": "Impossibile trovare la mappa mentale!"
     },
     "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!"
   },
