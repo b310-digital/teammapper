@@ -96,6 +96,14 @@ export default class Node implements NodeProperties {
         return this.dom.querySelector('a > text') as any
     }
 
+    /**
+     * Returns the SVG text of the hidden child icon.
+     * @returns {SVGITextElement} text
+     */
+    public getHiddenChildIconDOM(): SVGTextElement {
+        return this.dom.querySelector('text') as any
+    }
+
 }
 
 export interface UserNodeProperties {
