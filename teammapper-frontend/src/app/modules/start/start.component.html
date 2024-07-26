@@ -67,24 +67,7 @@
           gelöscht!
         </small>
 
-        <h4 class="lastMaps">Letzte Maps</h4>
-        <mat-list>
-          <mat-list-item
-            class="item-startpage"
-            *ngFor="let cachedMapEntry of cachedAdminMapEntries">
-            <span matLine>
-              <a href="{{ getMapUrl(cachedMapEntry) }}">{{
-                getMapTitle(cachedMapEntry)
-              }}</a>
-            </span>
-            <span matLine>
-              Löschdatum:
-              {{
-                cachedMapEntry.cachedAdminMapValue.ttl | date : 'dd.MM.YYYY'
-              }}</span
-            >
-          </mat-list-item>
-        </mat-list>
+        <map-list />
       </div>
     </div>
   </mat-grid-tile>
@@ -129,6 +112,8 @@
         Achtung: Mindmaps werden 24 Monate nach der letzten Bearbeitung
         gelöscht!
       </small>
+
+      <map-list />
     </div>
   </div>
   <div class="center font-grey font-sm kits-mobile-footer-wrapper">
