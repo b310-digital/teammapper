@@ -19,7 +19,10 @@ $app-theme: mat.define-light-theme(
       accent: $app-accent,
       warn: $app-warn,
     ),
-    typography: mat.define-typography-config($font-family: 'FiraSans'),
+    typography:
+      mat.define-typography-config(
+        $font-family: 'FiraSans',
+      ),
     density: 0,
   )
 );

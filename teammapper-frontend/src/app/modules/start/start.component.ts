@@ -1,9 +1,7 @@
 import { Component } from '@angular/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
-import {
-  CachedAdminMapEntry,
-} from 'src/app/shared/models/cached-map.model';
+import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
 import { Router } from '@angular/router';
 
 @Component({
@@ -18,15 +16,20 @@ export class StartComponent {
   public height: number;
   public cachedAdminMapEntries: CachedAdminMapEntry[];
 
-  constructor(private settingsService: SettingsService, private router: Router) {
+  constructor(
+    private settingsService: SettingsService,
+    private router: Router
+  ) {
     this.breakpoint = 1;
     this.cachedAdminMapEntries = [];
   }
-  
+
   async ngOnInit() {
     this.breakpoint = window.innerWidth <= 990 ? 1 : 2;
     this.height = window.innerHeight;
-    this.cachedAdminMapEntries = (await this.settingsService.getCachedAdminMapEntries()).splice(0, 3);
+    this.cachedAdminMapEntries = (
+      await this.settingsService.getCachedAdminMapEntries()
+    ).splice(0, 3);
   }
 
   public getMapUrl(entry: CachedAdminMapEntry): string {
