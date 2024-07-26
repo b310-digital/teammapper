@@ -33,6 +33,11 @@ export class ToolbarComponent {
     return this.mmpService.nodeChildren()?.filter(x => x.hidden).length > 0
   }
 
+  get canHideNodes() {
+    const selectedNode = this.mmpService.getSelectedNode()
+    return (selectedNode && !selectedNode.isRoot)
+  }
+
   public async share() {
     this.dialogService.openShareDialog();
   }

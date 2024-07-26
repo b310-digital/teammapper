@@ -283,6 +283,13 @@ export class MmpService implements OnDestroy {
   }
 
   /**
+   * Get the currently selected node
+   */
+  public getSelectedNode() {
+    return this.currentMap.instance.getSelectedNode();
+  }
+
+  /**
    * Deselect the current node.
    */
   public deselectNode() {

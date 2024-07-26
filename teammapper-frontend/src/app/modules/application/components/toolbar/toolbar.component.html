@@ -98,7 +98,7 @@
   <button
     (click)="mmpService.toggleBranch()"
     [title]="'TOOLTIPS.HIDE_CHILD_NODES' | translate"
-    [disabled]="editDisabled"
+    [disabled]="editDisabled || !canHideNodes"
     color="primary"
     mat-icon-button>
     <mat-icon>{{ hasHiddenNodes ? 'visibility_off' : 'visibility' }}</mat-icon>
