@@ -210,8 +210,23 @@ export default class Nodes {
     public toggleBranch = () => {
         if (this.selectedNode) {
             const children = this.getChildren(this.selectedNode);
+            
+            const descendants = this.getDescendants(this.selectedNode).filter(x => !children.includes(x));
+
             if (children) {
                 children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, x.id))
+            }
+
+            if (descendants) {
+                descendants.forEach(x => {
+                    if (x.parent.hidden && !x.hidden) {
+                        this.updateNode('hidden', true, false, false, x.id)
+                    }
+                    
+                    if (!x.parent.hidden && x.hidden) {
+                        this.updateNode('hidden', false, false, false, x.id)
+                    }
+                })
             }
 
             this.map.draw.update()
