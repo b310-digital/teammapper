@@ -11,9 +11,12 @@
     [tickInterval]="getSettingsFontIncrement()"
     [step]="getSettingsFontIncrement()"
     discrete
-    showTickMarks
-    >
-    <input matSliderThumb (input)="updateNodeFontSize($event, false)" [(ngModel)]="node.font.size" #textSlider>
+    showTickMarks>
+    <input
+      matSliderThumb
+      (input)="updateNodeFontSize($event, false)"
+      [(ngModel)]="node.font.size"
+      #textSlider />
   </mat-slider>
   <mat-slider
     *ngIf="node?.image && node?.image?.src"
@@ -26,8 +29,11 @@
     min="50"
     tickInterval="1"
     discrete
-    showTickMarks
-    >
-    <input matSliderThumb (input)="updateNodeImageSize($event, true)" [(ngModel)]="node.image.size" #imageSlider>
+    showTickMarks>
+    <input
+      matSliderThumb
+      (input)="updateNodeImageSize($event, true)"
+      [(ngModel)]="node.image.size"
+      #imageSlider />
   </mat-slider>
 </div>
