@@ -85,7 +85,7 @@
     "@compodoc/compodoc": "^1.1.25",
     "@schematics/angular": "^17.3.2",
     "@types/d3": "7.1.0",
-    "@types/jasmine": "~4.0.0",
+    "@types/jasmine": "~5.1.4",
     "@types/mousetrap": "1.6.8",
     "@types/node": "^13.7.7",
     "@types/uuid": "8.3.1",
