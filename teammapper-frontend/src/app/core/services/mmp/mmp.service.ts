@@ -387,8 +387,8 @@ export class MmpService implements OnDestroy {
   /**
    * Toggle (hide/show) all child nodes of the selected node
    */
-  public toggleBranch() {
-    this.currentMap.instance.toggleBranch();
+  public toggleBranchVisibility() {
+    this.currentMap.instance.toggleBranchVisibility();
   }
 
   /**

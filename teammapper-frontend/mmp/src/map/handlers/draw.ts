@@ -55,7 +55,7 @@ export default class Draw {
      * Update the dom of the map with the (new) nodes.
      */
     public update() {
-        let nodes = this.map.nodes.getNodes().filter(x => !x.hidden)
+        let nodes = this.map.nodes.getNodes().filter(node => !node.hidden)
 
         const dom = {
             nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes, (d) => d.id),

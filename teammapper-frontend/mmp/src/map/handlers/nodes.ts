@@ -207,7 +207,7 @@ export default class Nodes {
     /**
      * Toggle (hide/show) all child nodes of selected node
      */
-    public toggleBranch = () => {
+    public toggleBranchVisibility = () => {
         if (this.selectedNode) {
             const children = this.getChildren(this.selectedNode);
             
