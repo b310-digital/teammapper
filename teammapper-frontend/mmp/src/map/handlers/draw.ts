@@ -307,7 +307,6 @@ export default class Draw {
         if (!domText) {
             domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
             domText.textContent = 'visibility_off'
-            domText.classList.add('link-text')
             domText.classList.add('material-icons')
             domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
             domText.setAttribute('y', (-node.dimensions.height + 30).toString())
