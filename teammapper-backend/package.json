@@ -44,7 +44,7 @@
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/typeorm": "^10.0.2",
     "@nestjs/websockets": "^10.3.10",
-    "cache-manager": "^5.5.3",
+    "cache-manager": "^5.7.4",
     "dotenv": "16.3.1",
     "http-proxy-middleware": "2.0.6",
     "npm-check-updates": "^16.14.11",
