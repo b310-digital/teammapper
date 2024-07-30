@@ -63,7 +63,7 @@
     "eslint-config-standard": "^17.0.0",
     "jspdf": "^2.5.1",
     "localforage": "1.10.0",
-    "ngx-color-picker": "^16.0.0",
+    "ngx-color-picker": "^17.0.0",
     "ngx-toastr": "^19.0.0",
     "qr-code-styling": "1.5.0",
     "rxjs": "~7.4.0",
