@@ -1,7 +1,14 @@
 import { PictogramService } from './pictogram.service';
 import { TestBed } from '@angular/core/testing';
-import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpClient,
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { IPictogramResponse } from './picto-types';
 import { SettingsService } from '../settings/settings.service';
 
@@ -30,9 +37,12 @@ describe('PictogramService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-    imports: [],
-    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-});
+      imports: [],
+      providers: [
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting(),
+      ],
+    });
 
     // Inject the http service and test controller for each test
     httpClient = TestBed.inject(HttpClient);

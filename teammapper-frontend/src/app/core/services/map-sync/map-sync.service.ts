@@ -120,6 +120,7 @@ export class MapSyncService implements OnDestroy {
   ): Promise<ServerMap> {
     this.modificationSecret = modificationSecret;
     const serverMap = await this.fetchMapFromServer(id);
+    console.log("server map: ", serverMap)
 
     if (!serverMap) {
       return;
@@ -201,6 +202,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   public async joinMap(mmpUuid: string, color: string): Promise<MapProperties> {
+    console.log("Joining: ", mmpUuid)
     return await new Promise<MapProperties>(
       (resolve: (reason: any) => void, reject: (reason: any) => void) => {
         this.socket.emit(
@@ -319,6 +321,7 @@ export class MapSyncService implements OnDestroy {
 
   private async fetchMapFromServer(id: string): Promise<ServerMap> {
     const response = await this.httpService.get(API_URL.ROOT, '/maps/' + id);
+    console.log(response)
     if (!response.ok) return null;
 
     const json: ServerMap = await response.json();
@@ -333,6 +336,7 @@ export class MapSyncService implements OnDestroy {
         rootNode: this.settingsService.getCachedSettings().mapOptions.rootNode,
       })
     );
+    console.log("Posted to server: ", response)
     return response.json();
   }
 

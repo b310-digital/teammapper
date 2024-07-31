@@ -1,4 +1,8 @@
-import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import {
+  HttpClient,
+  provideHttpClient,
+  withFetch,
+} from '@angular/common/http';
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -18,26 +22,32 @@ export function createTranslateLoader(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-@NgModule({ declarations: [RootComponent],
-    bootstrap: [RootComponent], imports: [BrowserModule,
-        SharedModule,
-        BrowserAnimationsModule,
-        ToastrModule.forRoot(),
-        RootRoutingModule,
-        TranslateModule.forRoot({
-            loader: {
-                provide: TranslateLoader,
-                useFactory: createTranslateLoader,
-                deps: [HttpClient],
-            },
-        }),
-        HotkeyModule.forRoot()], providers: [
-        {
-            provide: APP_INITIALIZER,
-            useFactory: appSettingsFactory,
-            deps: [SettingsService],
-            multi: true,
-        },
-        provideHttpClient(withInterceptorsFromDi()),
-    ] })
+@NgModule({
+  declarations: [RootComponent],
+  bootstrap: [RootComponent],
+  imports: [
+    BrowserModule,
+    SharedModule,
+    BrowserAnimationsModule,
+    ToastrModule.forRoot(),
+    RootRoutingModule,
+    TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useFactory: createTranslateLoader,
+        deps: [HttpClient],
+      },
+    }),
+    HotkeyModule.forRoot(),
+  ],
+  providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: appSettingsFactory,
+      deps: [SettingsService],
+      multi: true,
+    },
+    provideHttpClient(withFetch()),
+  ],
+})
 export class RootModule {}
