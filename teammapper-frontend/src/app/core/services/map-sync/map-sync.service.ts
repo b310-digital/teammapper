@@ -120,7 +120,6 @@ export class MapSyncService implements OnDestroy {
   ): Promise<ServerMap> {
     this.modificationSecret = modificationSecret;
     const serverMap = await this.fetchMapFromServer(id);
-    console.log("server map: ", serverMap)
 
     if (!serverMap) {
       return;
@@ -321,9 +320,7 @@ export class MapSyncService implements OnDestroy {
 
   private async fetchMapFromServer(id: string): Promise<ServerMap> {
     const response = await this.httpService.get(API_URL.ROOT, '/maps/' + id);
-    console.log(response)
     if (!response.ok) return null;
-
     const json: ServerMap = await response.json();
     return json;
   }

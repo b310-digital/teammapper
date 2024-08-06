@@ -1,7 +1,7 @@
 import {
   HttpClient,
   provideHttpClient,
-  withFetch,
+  withInterceptorsFromDi
 } from '@angular/common/http';
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
@@ -47,7 +47,7 @@ export function createTranslateLoader(http: HttpClient) {
       deps: [SettingsService],
       multi: true,
     },
-    provideHttpClient(withFetch()),
+    provideHttpClient(withInterceptorsFromDi()),
   ],
 })
 export class RootModule {}
