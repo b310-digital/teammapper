@@ -1,4 +1,4 @@
-import { Inject, UseGuards } from '@nestjs/common'
+import { Inject, UseFilters, UseGuards } from '@nestjs/common'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Cache } from 'cache-manager'
 import { randomBytes } from 'crypto'
@@ -56,7 +56,10 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientJoinRequest
   ): Promise<IMmpClientMap> {
-    if (!(await this.mapsService.findMap(request.mapId)))
+    console.log("Joining: ", request)
+    const map = await this.mapsService.findMap(request.mapId)
+    console.log("Joining, map: ", map)
+    if (!map)
       return Promise.reject()
 
     client.join(request.mapId)
@@ -77,6 +80,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientEditingRequest
   ): Promise<boolean> {
+    console.log("Checking secret: ", request)
     const map = await this.mapsService.findMap(request.mapId)
     if (!map || !map.modificationSecret) return true
 
@@ -103,6 +107,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() _client: Socket,
     @MessageBody() request: IMmpClientDeleteRequest
   ): Promise<boolean> {
+    console.log("Deleting map: ", request)
     const mmpMap: MmpMap | null = await this.mapsService.findMap(request.mapId)
     if (mmpMap && mmpMap.adminId === request.adminId) {
       this.mapsService.deleteMap(request.mapId)

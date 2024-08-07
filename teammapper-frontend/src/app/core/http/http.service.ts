@@ -16,6 +16,7 @@ export class HttpService {
    * Constructs a `GET` request that returns the response body as a JSON object.
    */
   public async get(apiUrl: API_URL, endpoint: string): Promise<any> {
+    console.log(endpoint)
     return fetch(`${apiUrl}${endpoint}`);
   }
 
