@@ -387,6 +387,7 @@ export class MapSyncService implements OnDestroy {
         result.property,
         changedValue,
         false,
+        true,
         existingNode.id
       );
     });

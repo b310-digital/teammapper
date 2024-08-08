@@ -225,7 +225,7 @@ export default class Nodes {
     /**
      * Update the properties of the selected node.
      */
-    public updateNode = (property: string, value: any, graphic: boolean = false, notifyWithEvent: boolean = true, id?: string) => {
+    public updateNode = (property: string, value: any, graphic: boolean = false, notifyWithEvent: boolean = true, updateHistory: boolean = true, id?: string) => {
         if (id && typeof id !== 'string') {
             Log.error('The node id must be a string', 'type')
         }
@@ -287,7 +287,9 @@ export default class Nodes {
                 Log.error('The property does not exist')
         }
         if (graphic === false && updated !== false) {
-            this.map.history.save()
+            if (updateHistory) {
+                this.map.history.save()
+            }
             if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
         }
     }
