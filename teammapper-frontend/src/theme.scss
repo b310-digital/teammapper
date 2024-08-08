@@ -6,7 +6,7 @@
 // (imported above). For each palette, you can optionally specify a default, lighter, and darker
 // hue. Available color palettes: https://www.google.com/design/spec/style/color.html
 $app-primary: mat.m2-define-palette(mat.$m2-blue-gray-palette, 700);
-$app-accent: mat.m2-define-palette(mat.$m2-gray-palette, 50);
+$app-accent: mat.m2-define-palette(mat.$gray-palette, 50);
 
 // The warn palette is optional (defaults to red).
 $app-warn: mat.m2-define-palette(mat.$m2-red-palette);

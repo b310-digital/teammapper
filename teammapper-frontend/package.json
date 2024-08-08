@@ -83,7 +83,7 @@
     "@angular-eslint/template-parser": "18.1.0",
     "@angular/language-service": "^18.1.2",
     "@compodoc/compodoc": "^1.1.25",
-    "@schematics/angular": "^17.3.2",
+    "@schematics/angular": "^18.1.4",
     "@types/d3": "7.1.0",
     "@types/jasmine": "~5.1.4",
     "@types/mousetrap": "1.6.8",

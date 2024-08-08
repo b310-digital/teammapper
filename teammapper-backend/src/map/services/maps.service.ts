@@ -46,8 +46,6 @@ export class MapsService {
 
     const nodes: MmpNode[] = await this.findNodes(map?.id)
     const days: number = configService.deleteAfterDays()
-
-    console.log("Exporting map: ", map)
     
     return mapMmpMapToClient(
       map,
