@@ -178,6 +178,7 @@ export class MmpService implements OnDestroy {
     this.currentMap.instance.addNode(
       properties,
       false,
+      true,
       properties?.parent,
       properties?.id
     );

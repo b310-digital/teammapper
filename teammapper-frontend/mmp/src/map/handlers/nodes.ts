@@ -82,7 +82,7 @@ export default class Nodes {
      * @param {string} parentId
      * @param {string} overwriteId
      */
-    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string): Node => {
+    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, updateHistory: boolean = true, parentId?: string, overwriteId?: string): Node => {
         const parentNode: Node = userProperties.detached ? null :
           parentId ? this.getNode(parentId) : this.getSelectedNode()
     
@@ -101,7 +101,9 @@ export default class Nodes {
 
         this.map.draw.update()
 
-        this.map.history.save()
+        if (updateHistory) {
+            this.map.history.save()
+        }
 
         if(notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
         return node
@@ -222,6 +224,8 @@ export default class Nodes {
         this.map.events.call(Event.nodeDeselect, oldDom, oldNodeProps)
     }
 
+
+
     /**
      * Update the properties of the selected node.
      */
@@ -286,11 +290,12 @@ export default class Nodes {
             default:
                 Log.error('The property does not exist')
         }
-        if (graphic === false && updated !== false) {
-            if (updateHistory) {
-                this.map.history.save()
-            }
-            if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
+        if (graphic === false && updated !== false && updateHistory) {
+            this.map.history.save()
+        }
+          
+        if (graphic === false && updated !== false && notifyWithEvent) {
+            this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
         }
     }
 
