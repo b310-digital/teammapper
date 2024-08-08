@@ -56,7 +56,8 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientJoinRequest
   ): Promise<IMmpClientMap> {
-    if (!(await this.mapsService.findMap(request.mapId)))
+    const map = await this.mapsService.findMap(request.mapId)
+    if (!map)
       return Promise.reject()
 
     client.join(request.mapId)
