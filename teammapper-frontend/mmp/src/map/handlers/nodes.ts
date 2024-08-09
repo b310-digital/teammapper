@@ -215,18 +215,25 @@ export default class Nodes {
             
             const descendants = this.getDescendants(this.selectedNode).filter(x => !children.includes(x));
 
+            /**
+             * We need to hide direct children and descendants separately, because if we just use getDescendants() and set !x.hidden, we'd inadvertently show already hidden children of children.
+             * This is why we have two separate checks for children of children: 
+             * 1) If the parent is hidden but they're not, hide them.
+             * 2) If the parent is not hidden but they are, show them.
+             */
+
             if (children) {
-                children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, x.id))
+                children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, false, x.id))
             }
 
             if (descendants) {
                 descendants.forEach(x => {
                     if (x.parent.hidden && !x.hidden) {
-                        this.updateNode('hidden', true, false, false, x.id)
+                        this.updateNode('hidden', true, false, false, false, x.id)
                     }
                     
                     if (!x.parent.hidden && x.hidden) {
-                        this.updateNode('hidden', false, false, false, x.id)
+                        this.updateNode('hidden', false, false, false, false, x.id)
                     }
                 })
             }
