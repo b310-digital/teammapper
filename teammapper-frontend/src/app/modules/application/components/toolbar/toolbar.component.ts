@@ -30,12 +30,14 @@ export class ToolbarComponent {
   }
 
   get hasHiddenNodes() {
-    return this.mmpService.nodeChildren()?.filter(node => node.hidden).length > 0
+    return (
+      this.mmpService.nodeChildren()?.filter(node => node.hidden).length > 0
+    );
   }
 
   get canHideNodes() {
-    const selectedNode = this.mmpService.getSelectedNode()
-    return (selectedNode && !selectedNode.isRoot)
+    const selectedNode = this.mmpService.getSelectedNode();
+    return selectedNode && !selectedNode.isRoot;
   }
 
   public async share() {
