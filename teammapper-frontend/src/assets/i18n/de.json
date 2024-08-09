@@ -25,6 +25,7 @@
     "COPY_NODE": "Aktuellen Knoten kopieren",
     "CUT_NODE": "Aktuellen Knoten ausschneiden",
     "PASTE_NODE": "Kopierten Knoten einfügen",
+    "HIDE_CHILD_NODES": "Untergeordnete Knoten ausblenden",
     "MOVE_NODE_TO_THE_LEFT": "Knoten nach links verschieben",
     "MOVE_NODE_TO_THE_RIGHT": "Knoten nach rechts verschieben",
     "MOVE_NODE_DOWN": "Knoten nach unten verschieben",

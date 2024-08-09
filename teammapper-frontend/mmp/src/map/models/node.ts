@@ -20,6 +20,7 @@ export default class Node implements NodeProperties {
     public dom: SVGGElement
     public isRoot: boolean
     public detached: boolean
+    public hidden: boolean
 
     /**
      * Initialize the node properties, the dimensions and the k coefficient.
@@ -37,6 +38,7 @@ export default class Node implements NodeProperties {
         this.locked = properties.locked
         this.isRoot = properties.isRoot
         this.detached = properties.detached
+        this.hidden = properties.hidden
 
         this.dimensions = {
             width: 0,
@@ -94,6 +96,14 @@ export default class Node implements NodeProperties {
         return this.dom.querySelector('a > text') as any
     }
 
+    /**
+     * Returns the SVG text of the hidden child icon.
+     * @returns {SVGITextElement} text
+     */
+    public getHiddenChildIconDOM(): SVGTextElement {
+        return this.dom.querySelector('text') as any
+    }
+
 }
 
 export interface UserNodeProperties {
@@ -106,6 +116,8 @@ export interface UserNodeProperties {
     locked?: boolean
     isRoot?: boolean
     detached?: boolean
+    hidden?: boolean
+    hasHiddenChildNodes?: boolean
 }
 
 export interface NodeProperties extends UserNodeProperties {

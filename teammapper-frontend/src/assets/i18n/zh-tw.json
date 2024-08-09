@@ -25,6 +25,7 @@
     "COPY_NODE": "複製選取的節點",
     "CUT_NODE": "剪下選取的節點",
     "PASTE_NODE": "貼上已複製的節點",
+    "HIDE_CHILD_NODES": "Hide child nodes",
     "MOVE_NODE_TO_THE_LEFT": "將節點向左移動",
     "MOVE_NODE_TO_THE_RIGHT": "將節點向右移動",
     "MOVE_NODE_DOWN": "將節點向下移動",

@@ -91,7 +91,9 @@ export default class MmpMap {
             copyNode: this.copyPaste.copy,
             cutNode: this.copyPaste.cut,
             deselectNode: this.nodes.deselectNode,
+            getSelectedNode: this.nodes.getSelectedNode,
             editNode: this.nodes.editNode,
+            toggleBranchVisibility: this.nodes.toggleBranchVisibility,
             existNode: this.nodes.existNode,
             exportAsImage: this.export.asImage,
             exportAsJSON: this.export.asJSON,
@@ -125,7 +127,9 @@ export interface MmpInstance {
     copyNode: Function
     cutNode: Function
     deselectNode: Function
+    getSelectedNode: Function
     editNode: Function
+    toggleBranchVisibility: Function
     existNode: Function
     exportAsImage: Function
     exportAsJSON: Function

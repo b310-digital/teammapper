@@ -55,12 +55,22 @@ export default class Draw {
      * Update the dom of the map with the (new) nodes.
      */
     public update() {
-        const nodes = this.map.nodes.getNodes(),
-            dom = {
-                nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes),
-                branches: this.map.dom.g.selectAll('.' + this.map.id + '_branch').data(nodes.slice(1))
-            }
+        let nodes = this.map.nodes.getNodes().filter(node => !node.hidden)
+
+        const dom = {
+            nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes, (d) => d.id),
+            branches: this.map.dom.g.selectAll('.' + this.map.id + '_branch').data(nodes.slice(1), (d) => d.id)
+        }
         let tapedTwice = false
+
+        dom.nodes.each((node: Node) => {
+            const hasHiddenChildren = this.map.nodes.nodeChildren(node.id)?.filter(x => x.hidden).length > 0
+            if (hasHiddenChildren) {
+                this.setHiddenChildrenIcon(node)
+            } else {
+                this.removeHiddenChildrenIcon(node)
+            }
+        })
 
         const outer = dom.nodes.enter().append('g')
             .style('cursor', 'pointer')
@@ -97,7 +107,6 @@ export default class Draw {
 
                 this.enableNodeNameEditing(node)
             })
-
         if (this.map.options.drag === true) {
             outer.call(this.map.drag.getDragBehavior())
         } else {
@@ -119,6 +128,7 @@ export default class Draw {
             .style('stroke-width', 3)
             .attr('d', (node: Node) => this.drawNodeBackground(node))
 
+        
         // Set image and link of the node
         outer.each((node: Node) => {
             this.setImage(node)
@@ -285,6 +295,34 @@ export default class Draw {
 
         } else {
             domLink.remove()
+        }
+    }
+
+    /**
+     * Set a hidden eye icon if child nodes are hidden.
+     * @param {Node} node
+     */
+    public setHiddenChildrenIcon(node: Node) {
+        let domText = node.getHiddenChildIconDOM()
+        if (!domText) {
+            domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+            domText.textContent = 'visibility_off'
+            domText.classList.add('material-icons')
+            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
+            domText.setAttribute('y', (-node.dimensions.height + 30).toString())
+            domText.setAttribute('x', '-60')
+            node.dom.appendChild(domText)
+        }
+    }
+
+    /**
+     * Explicitly remove the hidden eye icon even if not set
+     * @param {Node} node
+     */
+    public removeHiddenChildrenIcon(node) {
+        const domText = node.getHiddenChildIconDOM()
+        if (domText) {
+            domText.remove()
         }
     }
 

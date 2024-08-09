@@ -25,6 +25,7 @@
     "COPY_NODE": "Copiar o nó atual",
     "CUT_NODE": "Recortar o nó atual",
     "PASTE_NODE": "Colar o nó copiado",
+    "HIDE_CHILD_NODES": "Ocultar nós filhos",
     "MOVE_NODE_TO_THE_LEFT": "Mover o nó para a esquerda",
     "MOVE_NODE_TO_THE_RIGHT": "Mover o nó para a direita",
     "MOVE_NODE_DOWN": "Mover o nó para baixo",

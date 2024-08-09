@@ -17,7 +17,7 @@ describe('ToolbarComponent', () => {
     ]);
     const mockMmpService: jasmine.SpyObj<MmpService> = jasmine.createSpyObj(
       MmpService,
-      ['new']
+      ['new', 'getSelectedNode', 'nodeChildren']
     );
 
     TestBed.configureTestingModule({

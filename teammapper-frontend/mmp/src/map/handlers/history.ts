@@ -99,6 +99,7 @@ export default class History {
         }
 
         this.snapshots.push(this.getSnapshot())
+
         this.index++
     }
 
@@ -135,6 +136,7 @@ export default class History {
                 link: Utils.cloneObject(mergedProperty.link) as Link,
                 locked: mergedProperty.locked,
                 detached: mergedProperty.detached,
+                hidden: mergedProperty.hidden,
                 isRoot: mergedProperty.isRoot
             }
 

@@ -55,6 +55,7 @@ export default class Nodes {
             id: rootId,
             parent: null,
             detached: false,
+            hidden: false,
             isRoot: true
         }) as NodeProperties
 
@@ -206,6 +207,42 @@ export default class Nodes {
     }
 
     /**
+     * Toggle (hide/show) all child nodes of selected node
+     */
+    public toggleBranchVisibility = () => {
+        if (this.selectedNode) {
+            const children = this.getChildren(this.selectedNode);
+            
+            const descendants = this.getDescendants(this.selectedNode).filter(x => !children.includes(x));
+
+            /**
+             * We need to hide direct children and descendants separately, because if we just use getDescendants() and set !x.hidden, we'd inadvertently show already hidden children of children.
+             * This is why we have two separate checks for children of children: 
+             * 1) If the parent is hidden but they're not, hide them.
+             * 2) If the parent is not hidden but they are, show them.
+             */
+
+            if (children) {
+                children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, false, x.id))
+            }
+
+            if (descendants) {
+                descendants.forEach(x => {
+                    if (x.parent.hidden && !x.hidden) {
+                        this.updateNode('hidden', true, false, false, false, x.id)
+                    }
+                    
+                    if (!x.parent.hidden && x.hidden) {
+                        this.updateNode('hidden', false, false, false, false, x.id)
+                    }
+                })
+            }
+
+            this.map.draw.update()
+        }
+    }
+
+    /**
      * Deselect the current selected node.
      */
     public deselectNode = () => {
@@ -286,6 +323,9 @@ export default class Nodes {
                 break
             case 'nameColor':
                 updated = this.updateNodeNameColor(node, value, graphic)
+                break
+            case 'hidden':
+                updated = this.updateNodeHidden(node, value)
                 break
             default:
                 Log.error('The property does not exist')
@@ -378,6 +418,7 @@ export default class Nodes {
             locked: node.locked,
             isRoot: node.isRoot,
             detached: node.detached,
+            hidden: node.hidden,
             k: node.k
         }
     }
@@ -890,6 +931,24 @@ export default class Nodes {
     }
 
     /**
+     * Update the node hidden value
+     * @param {Node} node
+     * @param {boolean} hidden
+     * @returns {boolean}
+     */
+    private updateNodeHidden = (node: Node, hidden: boolean) => {
+        if (hidden && typeof hidden !== 'boolean') {
+            Log.error('The hidden value must be boolean', 'type')
+        }
+
+        if (node.hidden !== hidden) {
+            node.hidden = hidden;
+        } else {
+            return false
+        }
+    }
+
+    /**
      * Update the node font style.
      * @param {Node} node
      * @param {string} style
@@ -1055,5 +1114,6 @@ export const PropertyMapping = {
     textDecoration: [],
     fontStyle: ['font', 'style'],
     fontSize: ['font', 'size'],
-    nameColor: ['colors', 'name']
+    nameColor: ['colors', 'name'],
+    hidden: ['hidden']
 } as const
