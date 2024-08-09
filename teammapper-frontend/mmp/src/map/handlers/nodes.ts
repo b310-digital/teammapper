@@ -83,7 +83,7 @@ export default class Nodes {
      * @param {string} parentId
      * @param {string} overwriteId
      */
-    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string): Node => {
+    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, updateHistory: boolean = true, parentId?: string, overwriteId?: string): Node => {
         const parentNode: Node = userProperties.detached ? null :
           parentId ? this.getNode(parentId) : this.getSelectedNode()
     
@@ -102,7 +102,9 @@ export default class Nodes {
 
         this.map.draw.update()
 
-        this.map.history.save()
+        if (updateHistory) {
+            this.map.history.save()
+        }
 
         if(notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
         return node
@@ -252,10 +254,12 @@ export default class Nodes {
         this.map.events.call(Event.nodeDeselect, oldDom, oldNodeProps)
     }
 
+
+
     /**
      * Update the properties of the selected node.
      */
-    public updateNode = (property: string, value: any, graphic: boolean = false, notifyWithEvent: boolean = true, id?: string) => {
+    public updateNode = (property: string, value: any, graphic: boolean = false, notifyWithEvent: boolean = true, updateHistory: boolean = true, id?: string) => {
         if (id && typeof id !== 'string') {
             Log.error('The node id must be a string', 'type')
         }
@@ -319,9 +323,12 @@ export default class Nodes {
             default:
                 Log.error('The property does not exist')
         }
-        if (graphic === false && updated !== false) {
+        if (graphic === false && updated !== false && updateHistory) {
             this.map.history.save()
-            if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
+        }
+          
+        if (graphic === false && updated !== false && notifyWithEvent) {
+            this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
         }
     }
 

@@ -20,7 +20,7 @@
     type="file"
     (input)="initJSONUpload($event)"
     accept="application/json"
-    [disabled]="editDisabled" 
+    [disabled]="editDisabled"
     #upload />
   <button
     [matMenuTriggerFor]="export_map"
@@ -152,11 +152,11 @@
   </ng-template>
   <ng-template #renderInput>
     <button
-    (click)="imageUpload.click()"
-    class="label-file-upload mat-icon-button mat-primary mat-focus-indicator"
-    mat-icon-button>
-    <mat-icon>image</mat-icon>
-  </button>
+      (click)="imageUpload.click()"
+      class="label-file-upload mat-icon-button mat-primary mat-focus-indicator"
+      mat-icon-button>
+      <mat-icon>image</mat-icon>
+    </button>
     <input
       id="image-upload"
       type="file"

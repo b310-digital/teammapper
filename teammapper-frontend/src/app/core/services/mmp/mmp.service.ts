@@ -178,6 +178,7 @@ export class MmpService implements OnDestroy {
     this.currentMap.instance.addNode(
       properties,
       false,
+      true,
       properties?.parent,
       properties?.id
     );
@@ -303,6 +304,7 @@ export class MmpService implements OnDestroy {
     property: string,
     value?: any,
     notifyWithEvent?: boolean,
+    updateHistory?: boolean,
     id?: string
   ) {
     this.currentMap.instance.updateNode(
@@ -310,6 +312,7 @@ export class MmpService implements OnDestroy {
       value,
       false,
       notifyWithEvent,
+      updateHistory,
       id
     );
   }

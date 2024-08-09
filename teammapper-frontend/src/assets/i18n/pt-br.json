@@ -84,7 +84,14 @@
       "TITLE": "Add a pictogram",
       "BUTTON_SEARCH": "Search",
       "FORM_INPUT_LABEL_SEARCH": "Search term",
-      "TERMS_TEXT": ["Pictograms author: Sergio Palao. Origin: ARASAAC (", "https://arasaac.org", "). License: ", "CC (BY-NC-SA)", "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en", ". Owner: Government of Aragon (Spain)"],
+      "TERMS_TEXT": [
+        "Pictograms author: Sergio Palao. Origin: ARASAAC (",
+        "https://arasaac.org",
+        "). License: ",
+        "CC (BY-NC-SA)",
+        "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
+        ". Owner: Government of Aragon (Spain)"
+      ],
       "EMPTY": "No result"
     },
     "SHARE": {

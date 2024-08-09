@@ -320,7 +320,6 @@ export class MapSyncService implements OnDestroy {
   private async fetchMapFromServer(id: string): Promise<ServerMap> {
     const response = await this.httpService.get(API_URL.ROOT, '/maps/' + id);
     if (!response.ok) return null;
-
     const json: ServerMap = await response.json();
     return json;
   }
@@ -333,6 +332,7 @@ export class MapSyncService implements OnDestroy {
         rootNode: this.settingsService.getCachedSettings().mapOptions.rootNode,
       })
     );
+
     return response.json();
   }
 
@@ -388,6 +388,7 @@ export class MapSyncService implements OnDestroy {
         result.property,
         changedValue,
         false,
+        true,
         existingNode.id
       );
     });
