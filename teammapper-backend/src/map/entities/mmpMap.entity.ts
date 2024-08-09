@@ -16,6 +16,9 @@ export class MmpMap {
   @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
   lastModified: Date
 
+  @Column({ type: 'timestamptz', nullable: true })
+  lastAccessed: Date
+
   @Column({ nullable: true })
   @Generated('uuid')
   adminId: string
