@@ -225,7 +225,7 @@ export default class Nodes {
     /**
      * Update the properties of the selected node.
      */
-    public updateNode = (property: string, value: any, graphic: boolean = false, notifyWithEvent: boolean = true, id?: string) => {
+    public updateNode = (property: string, value: any, notifyWithEvent: boolean = true, id?: string) => {
         if (id && typeof id !== 'string') {
             Log.error('The node id must be a string', 'type')
         }
@@ -245,7 +245,7 @@ export default class Nodes {
 
         switch (property) {
             case 'name':
-                updated = this.updateNodeName(node, value, graphic)
+                updated = this.updateNodeName(node, value)
                 break
             case 'locked':
                 updated = this.updateNodeLockedStatus(node, value)
@@ -257,36 +257,36 @@ export default class Nodes {
                 updated = this.updateNodeImageSrc(node, value)
                 break
             case 'imageSize':
-                updated = this.updateNodeImageSize(node, value, graphic)
+                updated = this.updateNodeImageSize(node, value)
                 break
             case 'linkHref':
                 updated = this.updateNodeLinkHref(node, value)
                 break
             case 'backgroundColor':
-                updated = this.updateNodeBackgroundColor(node, value, graphic)
+                updated = this.updateNodeBackgroundColor(node, value)
                 break
             case 'branchColor':
-                updated = this.updateNodeBranchColor(node, value, graphic)
+                updated = this.updateNodeBranchColor(node, value)
                 break
             case 'fontWeight':
-                updated = this.updateNodeFontWeight(node, value, graphic)
+                updated = this.updateNodeFontWeight(node, value)
                 break
             case 'textDecoration':
-                updated = this.updateNodeTextDecoration(node, value, graphic)
+                updated = this.updateNodeTextDecoration(node, value)
                 break
             case 'fontStyle':
-                updated = this.updateNodeFontStyle(node, value, graphic)
+                updated = this.updateNodeFontStyle(node, value)
                 break
             case 'fontSize':
-                updated = this.updateNodeFontSize(node, value, graphic)
+                updated = this.updateNodeFontSize(node, value)
                 break
             case 'nameColor':
-                updated = this.updateNodeNameColor(node, value, graphic)
+                updated = this.updateNodeNameColor(node, value)
                 break
             default:
                 Log.error('The property does not exist')
         }
-        if (graphic === false && updated !== false) {
+        if (updated !== false) {
             this.map.history.save()
             if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
         }
@@ -647,22 +647,19 @@ export default class Nodes {
      * Update the node name with a new value.
      * @param {Node} node
      * @param {string} name
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeName = (node: Node, name: string, graphic: boolean = false) => {
+    private updateNodeName = (node: Node, name: string) => {
         if (name && typeof name !== 'string') {
             Log.error('The name must be a string', 'type')
         }
 
-        if (node.name != name || graphic) {
+        if (node.name != name) {
             node.getNameDOM().innerHTML = DOMPurify.sanitize(name)
 
             this.map.draw.updateNodeShapes(node)
 
-            if (graphic === false) {
-                node.name = name
-            }
+            node.name = name
         } else {
             return false
         }
@@ -698,17 +695,16 @@ export default class Nodes {
      * Update the node background color with a new value.
      * @param {Node} node
      * @param {string} color
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeBackgroundColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeBackgroundColor = (node: Node, color: string) => {
         if (color && typeof color !== 'string') {
             Log.error('The background color must be a string', 'type')
         }
 
         const sanitizedColor = DOMPurify.sanitize(color)
 
-        if (node.colors.background !== color || graphic) {
+        if (node.colors.background !== color) {
             const background = node.getBackgroundDOM()
 
             background.style.fill = sanitizedColor
@@ -717,9 +713,7 @@ export default class Nodes {
                 background.style.stroke = d3.color(sanitizedColor).darker(.5).toString()
             }
 
-            if (graphic === false) {
-                node.colors.background = sanitizedColor
-            }
+            node.colors.background = sanitizedColor
         } else {
             return false
         }
@@ -729,22 +723,19 @@ export default class Nodes {
      * Update the node text color with a new value.
      * @param {Node} node
      * @param {string} color
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeNameColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeNameColor = (node: Node, color: string) => {
         if (color && typeof color !== 'string') {
             Log.error('The text color must be a string', 'type')
         }
 
         const sanitizedColor = DOMPurify.sanitize(color)
 
-        if (node.colors.name !== color || graphic) {
+        if (node.colors.name !== color) {
             node.getNameDOM().style.color = sanitizedColor
 
-            if (graphic === false) {
-                node.colors.name = sanitizedColor
-            }
+            node.colors.name = sanitizedColor
         } else {
             return false
         }
@@ -754,10 +745,9 @@ export default class Nodes {
      * Update the node branch color with a new value.
      * @param {Node} node
      * @param {string} color
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeBranchColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeBranchColor = (node: Node, color: string) => {
         if (color && typeof color !== 'string') {
             Log.error('The branch color must be a string', 'type')
         }
@@ -765,14 +755,12 @@ export default class Nodes {
         const sanitizedColor = DOMPurify.sanitize(color)
 
         if (!node.isRoot) {
-            if (node.colors.name !== color || graphic) {
+            if (node.colors.name !== color) {
                 const branch = document.getElementById(node.id + '_branch')
 
                 branch.style.fill = branch.style.stroke = sanitizedColor
 
-                if (graphic === false) {
-                    node.colors.branch = sanitizedColor
-                }
+                node.colors.branch = sanitizedColor
             } else {
                 return false
             }
@@ -785,22 +773,19 @@ export default class Nodes {
      * Update the node font size with a new value.
      * @param {Node} node
      * @param {number} size
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontSize = (node: Node, size: number, graphic: boolean = false) => {
+    private updateNodeFontSize = (node: Node, size: number) => {
         if (size && typeof size !== 'number') {
             Log.error('The font size must be a number', 'type')
         }
 
-        if (node.font.size != size || graphic) {
+        if (node.font.size != size) {
             node.getNameDOM().style['font-size'] = size + 'px'
 
             this.map.draw.updateNodeShapes(node)
 
-            if (graphic === false) {
-                node.font.size = size
-            }
+            node.font.size = size
             return true
         } else {
             return false
@@ -811,16 +796,15 @@ export default class Nodes {
      * Update the node image size with a new value.
      * @param {Node} node
      * @param {number} size
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeImageSize = (node: Node, size: number, graphic: boolean = false) => {
+    private updateNodeImageSize = (node: Node, size: number) => {
         if (size && typeof size !== 'number') {
             Log.error('The image size must be a number', 'type')
         }
 
         if (node.image.src !== '') {
-            if (node.image.size !== size || graphic) {
+            if (node.image.size !== size) {
                 const image = node.getImageDOM(),
                     box = (image as any).getBBox(),
                     height = size,
@@ -833,9 +817,7 @@ export default class Nodes {
                 image.setAttribute('y', y.toString())
                 image.setAttribute('x', x.toString())
 
-                if (graphic === false) {
-                    node.image.size = height
-                }
+                node.image.size = height
             } else {
                 return false
             }
@@ -886,10 +868,9 @@ export default class Nodes {
      * Update the node font style.
      * @param {Node} node
      * @param {string} style
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontStyle = (node: Node, style: string, graphic: boolean = false) => {
+    private updateNodeFontStyle = (node: Node, style: string) => {
         if (style && typeof style !== 'string') {
             Log.error('The font style must be a string', 'type')
         }
@@ -897,9 +878,7 @@ export default class Nodes {
         if (node.font.style !== style) {
             node.getNameDOM().style['font-style'] = DOMPurify.sanitize(style)
 
-            if (graphic === false) {
-                node.font.style = style
-            }
+            node.font.style = style
         } else {
             return false
         }
@@ -909,10 +888,9 @@ export default class Nodes {
      * Update the node font weight.
      * @param {Node} node
      * @param {string} weight
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontWeight = (node: Node, weight: string, graphic: boolean = false) => {
+    private updateNodeFontWeight = (node: Node, weight: string) => {
         if (weight && typeof weight !== 'string') {
             Log.error('The font weight must be a string', 'type')
         }
@@ -922,9 +900,7 @@ export default class Nodes {
 
             this.map.draw.updateNodeShapes(node)
 
-            if (graphic === false) {
-                node.font.weight = weight
-            }
+            node.font.weight = weight
         } else {
             return false
         }
@@ -934,10 +910,9 @@ export default class Nodes {
      * Update the node text decoration.
      * @param {Node} node
      * @param {string} decoration
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeTextDecoration = (node: Node, decoration: string, graphic: boolean = false) => {
+    private updateNodeTextDecoration = (node: Node, decoration: string) => {
         if (decoration && typeof decoration !== 'string') {
             Log.error('The text decoration must be a string', 'type')
         }
@@ -947,9 +922,7 @@ export default class Nodes {
 
             this.map.draw.updateNodeShapes(node)
 
-            if (graphic === false) {
-                node.font.decoration = decoration
-            }
+            node.font.decoration = decoration
         } else {
             return false
         }
