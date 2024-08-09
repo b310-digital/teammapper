@@ -35,9 +35,12 @@ export class ToolbarComponent {
     );
   }
 
+  // In some cases the mmpService is not yet initialized so trying to call getSelectedNode() will throw an error
   get canHideNodes() {
-    const selectedNode = this.mmpService.getSelectedNode();
-    return selectedNode && !selectedNode.isRoot;
+    if (this.mmpService) {
+      const selectedNode = this.mmpService.getSelectedNode();
+      return selectedNode && !selectedNode.isRoot;
+    }
   }
 
   public async share() {

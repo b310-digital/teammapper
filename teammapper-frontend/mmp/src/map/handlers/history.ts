@@ -99,6 +99,7 @@ export default class History {
         }
 
         this.snapshots.push(this.getSnapshot())
+
         this.index++
     }
 
