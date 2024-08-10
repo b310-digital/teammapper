@@ -55,11 +55,12 @@ export default class Draw {
      * Update the dom of the map with the (new) nodes.
      */
     public update() {
-        let nodes = this.map.nodes.getNodes().filter(node => !node.hidden)
+        let nodes = this.map.nodes.getNodes()
 
+        // Set visibility: hidden instead of filtering out nodes to still allow updates such as text, images and pictograms to take effect "behind the curtain"
         const dom = {
-            nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes, (d) => d.id),
-            branches: this.map.dom.g.selectAll('.' + this.map.id + '_branch').data(nodes.slice(1), (d) => d.id)
+            nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes, (d) => d.id).style("visibility", d => d.hidden ? "hidden" : "visible"),
+            branches: this.map.dom.g.selectAll('.' + this.map.id + '_branch').data(nodes.slice(1), (d) => d.id).style("visibility", d => d.hidden ? "hidden" : "visible")
         }
         let tapedTwice = false
 

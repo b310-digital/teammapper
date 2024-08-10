@@ -92,6 +92,10 @@ export default class Nodes {
         properties.id = overwriteId || uuidv4()
         properties.parent = parentNode
 
+        if (parentNode.hidden) {
+            properties.hidden = true
+        }
+
         const node: Node = new Node(properties)
 
         this.nodes.set(properties.id, node)
@@ -239,6 +243,7 @@ export default class Nodes {
             }
 
             this.map.draw.update()
+            this.map.history.save()
         }
     }
 
