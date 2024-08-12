@@ -58,7 +58,7 @@
     "uuid": "9.0.1"
   },
   "devDependencies": {
-    "@golevelup/ts-jest": "^0.4.0",
+    "@golevelup/ts-jest": "^0.5.1",
     "@nestjs/schematics": "^10.1.1",
     "@nestjs/testing": "^10.3.10",
     "@types/cache-manager": "4.0.6",
