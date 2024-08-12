@@ -1,6 +1,6 @@
 import Map from '../map'
-import Node, {Colors, Coordinates, ExportNodeProperties, Font, Image, Link, NodeProperties} from '../models/node'
-import {Event} from './events'
+import Node, { Colors, Coordinates, ExportNodeProperties, Font, Image, Link, NodeProperties } from '../models/node'
+import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
 import { DefaultNodeValues } from '../options'
@@ -54,7 +54,7 @@ export default class History {
 
             this.save()
 
-            if(notifyWithEvent) this.map.events.call(Event.create, this.map.dom)
+            if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom)
         } else if (this.checkSnapshotStructure(snapshot)) {
             const previousData = this.map.export.asJSON()
 
@@ -64,7 +64,7 @@ export default class History {
 
             this.save()
 
-            if(notifyWithEvent) this.map.events.call(Event.create, this.map.dom, { previousMap: previousData })
+            if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom, { previousMap: previousData })
         } else {
             Log.error('The snapshot is not correct')
         }
@@ -143,7 +143,7 @@ export default class History {
             const node: Node = new Node(properties)
             this.map.nodes.setNode(node.id, node)
 
-            if(mergedProperty.isRoot) this.map.rootId = mergedProperty.id
+            if (mergedProperty.isRoot) this.map.rootId = mergedProperty.id
         })
 
         this.map.draw.clear()
