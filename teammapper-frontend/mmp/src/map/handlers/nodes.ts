@@ -12,7 +12,7 @@ import MmpMap from '../map'
 import * as d3 from 'd3'
 import DOMPurify from 'dompurify'
 import { v4 as uuidv4 } from 'uuid'
-import {Event} from './events'
+import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
 
@@ -85,8 +85,8 @@ export default class Nodes {
      */
     public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, updateHistory: boolean = true, parentId?: string, overwriteId?: string): Node => {
         const parentNode: Node = userProperties.detached ? null :
-          parentId ? this.getNode(parentId) : this.getSelectedNode()
-    
+            parentId ? this.getNode(parentId) : this.getSelectedNode()
+
         const properties: NodeProperties = Utils.mergeObjects(this.map.options.defaultNode, userProperties, true) as NodeProperties
 
         properties.id = overwriteId || uuidv4()
@@ -110,7 +110,7 @@ export default class Nodes {
             this.map.history.save()
         }
 
-        if(notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
+        if (notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
         return node
     }
 
@@ -162,7 +162,7 @@ export default class Nodes {
      * @param {string} color
      * @returns {void}
      */
-        public highlightNodeWithColor = (id: string, color: string, notifyWithEvent: boolean = true): void => {
+    public highlightNodeWithColor = (id: string, color: string, notifyWithEvent: boolean = true): void => {
         if (id !== undefined) {
             if (typeof id !== 'string') {
                 Log.error('The node id must be a string', 'type')
@@ -175,7 +175,7 @@ export default class Nodes {
                 if (background.style.stroke !== color) {
                     background.style.stroke = DOMPurify.sanitize(color)
 
-                    if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, this.getNodeProperties(node))
+                    if (notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, this.getNodeProperties(node))
                 }
             } else {
                 Log.error('The node id is not correct')
@@ -216,7 +216,7 @@ export default class Nodes {
     public toggleBranchVisibility = () => {
         if (this.selectedNode) {
             const children = this.getChildren(this.selectedNode);
-            
+
             const descendants = this.getDescendants(this.selectedNode).filter(x => !children.includes(x));
 
             /**
@@ -235,11 +235,18 @@ export default class Nodes {
                     if (x.parent.hidden && !x.hidden) {
                         this.updateNode('hidden', true, false, false, false, x.id)
                     }
-                    
+
                     if (!x.parent.hidden && x.hidden) {
                         this.updateNode('hidden', false, false, false, false, x.id)
                     }
                 })
+            }
+
+            // Lengthy but definitive check to see if we have any hidden nodes after toggling
+            if (this.map.nodes.nodeChildren(this.selectedNode.id)?.filter(x => x.hidden).length > 0) {
+                this.selectedNode.hasHiddenChildNodes = true
+            } else {
+                this.selectedNode.hasHiddenChildNodes = false
             }
 
             this.map.draw.update()
@@ -251,7 +258,7 @@ export default class Nodes {
      * Deselect the current selected node.
      */
     public deselectNode = () => {
-        if(this.selectedNode?.id === this.getRoot().id) return
+        if (this.selectedNode?.id === this.getRoot().id) return
 
         const oldNodeProps: ExportNodeProperties = this.getNodeProperties(this.selectedNode)
         const oldDom: SVGGElement = this.selectedNode.dom
@@ -338,7 +345,7 @@ export default class Nodes {
         if (graphic === false && updated !== false && updateHistory) {
             this.map.history.save()
         }
-          
+
         if (graphic === false && updated !== false && notifyWithEvent) {
             this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
         }
@@ -371,7 +378,7 @@ export default class Nodes {
 
             this.map.history.save()
 
-            if(notifyWithEvent) this.map.events.call(Event.nodeRemove, null, this.getNodeProperties(node))
+            if (notifyWithEvent) this.map.events.call(Event.nodeRemove, null, this.getNodeProperties(node))
 
             this.deselectNode()
         } else {
@@ -419,11 +426,12 @@ export default class Nodes {
             image: Utils.cloneObject(node.image) as Image,
             colors: Utils.cloneObject(node.colors) as Colors,
             font: Utils.cloneObject(node.font) as Font,
-            link:  Utils.cloneObject(node.link) as Link,
+            link: Utils.cloneObject(node.link) as Link,
             locked: node.locked,
             isRoot: node.isRoot,
             detached: node.detached,
             hidden: node.hidden,
+            hasHiddenChildNodes: node.hasHiddenChildNodes,
             k: node.k
         }
     }
@@ -601,15 +609,15 @@ export default class Nodes {
      * @param {string} id
      * @returns {Node}
      */
-         public getNode = (id: string): Node => {
-            if (id !== undefined) {
-                if (typeof id !== 'string') {
-                    Log.error('The node id must be a string', 'type')
-                    return
-                }
-                return this.nodes.get(id)
+    public getNode = (id: string): Node => {
+        if (id !== undefined) {
+            if (typeof id !== 'string') {
+                Log.error('The node id must be a string', 'type')
+                return
             }
+            return this.nodes.get(id)
         }
+    }
 
     /**
      * Return the siblings of a node.
@@ -638,9 +646,9 @@ export default class Nodes {
      */
     private calculateCoordinates(node: Node): Coordinates {
         let coordinates: Coordinates = {
-                x: node.parent ? node.parent.coordinates.x : node.coordinates.x || 0,
-                y: node.parent ? node.parent.coordinates.y : node.coordinates.y || 0
-            },
+            x: node.parent ? node.parent.coordinates.x : node.coordinates.x || 0,
+            y: node.parent ? node.parent.coordinates.y : node.coordinates.y || 0
+        },
             siblings: Array<Node> = this.getSiblings(node)
 
         if (node.parent && node.parent.isRoot) {
@@ -658,7 +666,7 @@ export default class Nodes {
                 coordinates.x += 200
                 siblings = rightNodes
             }
-        } else if(!node.detached) {
+        } else if (!node.detached) {
             if (node.parent && this.getOrientation(node.parent)) {
                 coordinates.x -= 200
             } else {
@@ -670,7 +678,7 @@ export default class Nodes {
             const lowerNode = this.getLowerNode(siblings)
             coordinates.y = lowerNode.coordinates.y + 60
         } else if (!node.detached) {
-          coordinates.y -= 120
+            coordinates.y -= 120
         }
 
         return coordinates

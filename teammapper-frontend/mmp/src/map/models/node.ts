@@ -21,6 +21,7 @@ export default class Node implements NodeProperties {
     public isRoot: boolean
     public detached: boolean
     public hidden: boolean
+    public hasHiddenChildNodes: boolean
 
     /**
      * Initialize the node properties, the dimensions and the k coefficient.
@@ -39,6 +40,7 @@ export default class Node implements NodeProperties {
         this.isRoot = properties.isRoot
         this.detached = properties.detached
         this.hidden = properties.hidden
+        this.hasHiddenChildNodes = properties.hasHiddenChildNodes
 
         this.dimensions = {
             width: 0,

@@ -449,7 +449,7 @@ export default class Draw {
      * @param {Node} node
      */
     private checkForHiddenChildren(node: Node) {
-        if (this.map.nodes.nodeChildren(node.id)?.filter(x => x.hidden).length > 0) {
+        if (node.hasHiddenChildNodes) {
             this.setHiddenChildrenIcon(node)
         } else {
             this.removeHiddenChildrenIcon(node)

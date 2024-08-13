@@ -1,4 +1,4 @@
-import {Colors, Coordinates, Font, Image, Link} from './models/node'
+import { Colors, Coordinates, Font, Image, Link } from './models/node'
 import Utils from '../utils/utils'
 import Map from './map'
 import * as d3 from 'd3'
@@ -136,16 +136,16 @@ export default class Options implements OptionParameters {
      * Update edit behavior.
      * @param {boolean} flag
      */
-        private updateEdit(flag: boolean) {
-            if (typeof flag !== 'boolean') {
-                Log.error('The value must be a boolean', 'type')
-            }
-    
-            this.edit = flag
-    
-            this.map.draw.clear()
-            this.map.draw.update()
+    private updateEdit(flag: boolean) {
+        if (typeof flag !== 'boolean') {
+            Log.error('The value must be a boolean', 'type')
         }
+
+        this.edit = flag
+
+        this.map.draw.clear()
+        this.map.draw.update()
+    }
 
     /**
      * Update zoom behavior.
@@ -188,8 +188,8 @@ export const DefaultNodeValues: DefaultNodeProperties = {
         href: ''
     },
     coordinates: {
-      x: 0,
-      y: 0
+        x: 0,
+        y: 0
     },
     image: {
         src: '',
@@ -208,6 +208,7 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     },
     locked: true,
     detached: false,
+    hidden: false,
     isRoot: false,
 }
 
@@ -217,8 +218,8 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
         href: ''
     },
     coordinates: {
-      x: 0,
-      y: 0
+        x: 0,
+        y: 0
     },
     image: {
         src: '',
@@ -237,7 +238,8 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     },
     locked: true,
     detached: false,
-    isRoot: true
+    isRoot: true,
+    hidden: false
 }
 
 export interface DefaultNodeProperties {
@@ -250,6 +252,7 @@ export interface DefaultNodeProperties {
     locked: boolean
     detached: boolean
     isRoot: boolean
+    hidden: boolean
 }
 
 export interface OptionParameters {
