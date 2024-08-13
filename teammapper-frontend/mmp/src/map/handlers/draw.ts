@@ -315,6 +315,7 @@ export default class Draw {
         if (!domIcon) {
             domIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text')
             domIcon.textContent = 'visibility_off'
+            domIcon.classList.add('hidden-icon')
             domIcon.classList.add('material-icons')
             domIcon.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
             domIcon.setAttribute('y', (-node.dimensions.height + 30).toString())

@@ -95,7 +95,7 @@ export default class Node implements NodeProperties {
     public getLinkDOM(): SVGAElement {
         // Unfortunately typescript returns an html type as default - in this case its a SVG element
         // https://github.com/microsoft/TypeScript/issues/51844
-        return this.dom.querySelector('a > text') as any
+        return this.dom.querySelector('a > text.link-text') as any
     }
 
     /**
@@ -103,7 +103,7 @@ export default class Node implements NodeProperties {
      * @returns {SVGITextElement} text
      */
     public getHiddenChildIconDOM(): SVGTextElement {
-        return this.dom.querySelector('text') as any
+        return this.dom.querySelector('text.hidden-icon') as any
     }
 
 }
