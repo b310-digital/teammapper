@@ -282,16 +282,16 @@ export default class Draw {
      */
     public setLink(node: Node) {
         let domLink = node.getLinkDOM()
+        const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+        domText.textContent = 'link'
+        domText.classList.add('link-text')
+        domText.classList.add('material-icons')
+        domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
+        domText.setAttribute('y', node.dimensions.height.toString())
+        domText.setAttribute('x', '-10')
 
         if (!domLink) {
             domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
-            const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-            domText.textContent = 'link'
-            domText.classList.add('link-text')
-            domText.classList.add('material-icons')
-            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
-            domText.setAttribute('y', node.dimensions.height.toString())
-            domText.setAttribute('x', '-10')
             node.dom.appendChild(domLink)
             domLink.appendChild(domText)
         }
@@ -299,6 +299,7 @@ export default class Draw {
         if (DOMPurify.sanitize(node.link.href) !== '') {
             domLink.setAttribute('href', DOMPurify.sanitize(node.link.href))
             domLink.setAttribute('target', '_self')
+            domLink.appendChild(domText)
 
         } else {
             domLink.remove()
@@ -310,15 +311,15 @@ export default class Draw {
      * @param {Node} node
      */
     public setHiddenChildrenIcon(node: Node) {
-        let domText = node.getHiddenChildIconDOM()
-        if (!domText) {
-            domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-            domText.textContent = 'visibility_off'
-            domText.classList.add('material-icons')
-            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
-            domText.setAttribute('y', (-node.dimensions.height + 30).toString())
-            domText.setAttribute('x', '-60')
-            node.dom.appendChild(domText)
+        let domIcon = node.getHiddenChildIconDOM()
+        if (!domIcon) {
+            domIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+            domIcon.textContent = 'visibility_off'
+            domIcon.classList.add('material-icons')
+            domIcon.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
+            domIcon.setAttribute('y', (-node.dimensions.height + 30).toString())
+            domIcon.setAttribute('x', '-60')
+            node.dom.appendChild(domIcon)
         }
     }
 
@@ -327,9 +328,9 @@ export default class Draw {
      * @param {Node} node
      */
     public removeHiddenChildrenIcon(node) {
-        const domText = node.getHiddenChildIconDOM()
-        if (domText) {
-            domText.remove()
+        const domIcon = node.getHiddenChildIconDOM()
+        if (domIcon) {
+            domIcon.remove()
         }
     }
 
