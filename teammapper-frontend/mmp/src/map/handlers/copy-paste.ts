@@ -139,7 +139,7 @@ export default class CopyPaste {
                 font: nodePropertiesCopy.font,
                 locked: nodePropertiesCopy.locked,
                 isRoot: nodePropertiesCopy.isRoot,
-            }, false, newParentNode.id)
+            }, false, false, newParentNode.id)
 
             newNodes.push(createdNode)
 
@@ -155,6 +155,11 @@ export default class CopyPaste {
         }
 
         addNodes(this.copiedNodes[0], node)
+
+        this.map.draw.clear()
+        this.map.draw.update()
+
+        this.map.history.save()
 
         this.map.events.call(Event.nodePaste, node.dom, newNodes.map((node) => this.map.nodes.getNodeProperties(node)))
     }

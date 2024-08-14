@@ -129,6 +129,9 @@ export default class Export {
         clone.setAttribute('transform', 'translate(0,0)')
         svg.appendChild(clone)
 
+        // Remove any text related to Material Icons
+        d3.select(clone).selectAll('text.material-icons').text('')
+
         // convert all foreignObjects to native svg text to ensure better compatibility with svg readers
         d3.select(clone).selectAll('foreignObject').nodes().forEach((fo: HTMLElement) => {
             const parent = fo.parentElement
