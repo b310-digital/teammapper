@@ -55,7 +55,7 @@ export default class Draw {
      * Update the dom of the map with the (new) nodes.
      */
     public update() {
-        let nodes = this.map.nodes.getNodes()
+        const nodes = this.map.nodes.getNodes()
 
         // Set visibility: hidden instead of filtering out nodes to still allow updates such as text, images and pictograms to take effect "behind the curtain"
         const dom = {
@@ -65,7 +65,7 @@ export default class Draw {
         let tapedTwice = false
 
         // When doing an initial draw, all nodes appear in dom.nodes
-        dom.nodes.each((node: Node) => this.checkForHiddenChildren(node))
+        dom.nodes.each((node: Node) => this.updateHiddenChildrenIcon(node))
 
         const outer = dom.nodes.enter().append('g')
             .style('cursor', 'pointer')
@@ -134,7 +134,7 @@ export default class Draw {
             this.setImage(node)
             this.setLink(node)
             // Sometimes, undo/redo will not render nodes in dom.nodes, but instead all nodes will only be present in dom.nodes.enter(), so we also need to check for hidden children there
-            this.checkForHiddenChildren(node)
+            this.updateHiddenChildrenIcon(node)
         })
 
 
@@ -282,16 +282,16 @@ export default class Draw {
      */
     public setLink(node: Node) {
         let domLink = node.getLinkDOM()
-        const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-        domText.textContent = 'link'
-        domText.classList.add('link-text')
-        domText.classList.add('material-icons')
-        domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
-        domText.setAttribute('y', node.dimensions.height.toString())
-        domText.setAttribute('x', '-10')
 
         if (!domLink) {
             domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
+            const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+            domText.textContent = 'link'
+            domText.classList.add('link-text')
+            domText.classList.add('material-icons')
+            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
+            domText.setAttribute('y', node.dimensions.height.toString())
+            domText.setAttribute('x', '-10')
             node.dom.appendChild(domLink)
             domLink.appendChild(domText)
         }
@@ -299,7 +299,6 @@ export default class Draw {
         if (DOMPurify.sanitize(node.link.href) !== '') {
             domLink.setAttribute('href', DOMPurify.sanitize(node.link.href))
             domLink.setAttribute('target', '_self')
-            domLink.appendChild(domText)
 
         } else {
             domLink.remove()
@@ -450,7 +449,7 @@ export default class Draw {
      * Check if given node has hidden children and render the eye icon if so
      * @param {Node} node
      */
-    private checkForHiddenChildren(node: Node) {
+    private updateHiddenChildrenIcon(node: Node) {
         if (node.hasHiddenChildNodes) {
             this.setHiddenChildrenIcon(node)
         } else {

@@ -58,28 +58,7 @@ export default class History {
         } else if (this.checkSnapshotStructure(snapshot)) {
             const previousData = this.map.export.asJSON()
 
-            // Find all nodes where we've set hasHiddenChildNodes in the previous map
-            const nodesWithHiddenChildren = previousData.filter(node => node.hasHiddenChildNodes)
-
-            // This method will recursively hide all children of children until none are left
-            const hideChildNodes = (parentId: string) => snapshot.filter(node => node.parent === parentId).forEach(node => {
-                node.hidden = true
-                hideChildNodes(node.id)
-            })
-
-            snapshot.forEach(snapshotNode => {
-                const nodeWithHiddenChildren = nodesWithHiddenChildren.find(x => snapshotNode.id === x.id)
-
-                if (nodeWithHiddenChildren) {
-                    snapshotNode.hasHiddenChildNodes = true
-
-                    // We need to iterate through the snapshot instead of using this.map.nodes.nodeChildren() to see if we need to set hidden attributes as the latter will not have new nodes added yet
-                    snapshot.filter(node => node.parent === snapshotNode.id).forEach(node => {
-                        node.hidden = true
-                        hideChildNodes(node.id)
-                    })
-                }
-            })
+            this.reapplyHiddenState(previousData, snapshot)
 
             this.redraw(snapshot)
 
@@ -288,6 +267,36 @@ export default class History {
                 style: oldNode.value.italic ? 'italic' : 'normal'
             }
         }
+    }
+
+    /**
+     * Find nodes that were previously hidden locally and re-apply attributes
+     * @param {MapSnapshot} previousData
+     * @param {MapSnapshot} snapshot
+     */
+    private reapplyHiddenState(previousData: MapSnapshot, snapshot: MapSnapshot): void {
+        // Find all nodes where we've set hasHiddenChildNodes in the previous map
+        const nodesWithHiddenChildren = previousData.filter(node => node.hasHiddenChildNodes)
+
+        // This method will recursively hide all children of children until none are left
+        const hideChildNodes = (parentId: string) => snapshot.filter(node => node.parent === parentId).forEach(node => {
+            node.hidden = true
+            hideChildNodes(node.id)
+        })
+
+        snapshot.forEach(snapshotNode => {
+            const nodeWithHiddenChildren = nodesWithHiddenChildren.find(x => snapshotNode.id === x.id)
+
+            if (nodeWithHiddenChildren) {
+                snapshotNode.hasHiddenChildNodes = true
+
+                // We need to iterate through the snapshot instead of using this.map.nodes.nodeChildren() to see if we need to set hidden attributes as the latter will not have new nodes added yet
+                snapshot.filter(node => node.parent === snapshotNode.id).forEach(node => {
+                    node.hidden = true
+                    hideChildNodes(node.id)
+                })
+            }
+        })
     }
 
 }
