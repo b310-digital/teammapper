@@ -82,7 +82,7 @@
     "eslint-plugin-typeorm": "0.0.19",
     "jest": "29.7.0",
     "jest-jasmine2": "29.7.0",
-    "prettier": "^3.1.1",
+    "prettier": "^3.3.3",
     "socket.io-client": "^4.7.2",
     "supertest": "^6.3.3",
     "ts-jest": "29.2.2",
