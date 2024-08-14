@@ -2,7 +2,7 @@
 @import 'src/theme.scss';
 
 section.jumbotron {
-  background-color: mat.get-color-from-palette($app-primary);
+  background-color: mat.m2-get-color-from-palette($app-primary);
   padding: 100px 0 40px 0;
   text-align: center;
   display: flex;
@@ -59,7 +59,7 @@ section.jumbotron {
       font-family: Fira Sans;
       width: 170px;
       font-weight: bold;
-      color: mat.get-color-from-palette($app-primary);
+      color: mat.m2-get-color-from-palette($app-primary);
       margin-bottom: 10px;
     }
 

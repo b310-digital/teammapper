@@ -1,4 +1,8 @@
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import {
+  HttpClient,
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -19,13 +23,14 @@ export function createTranslateLoader(http: HttpClient) {
 }
 
 @NgModule({
+  declarations: [RootComponent],
+  bootstrap: [RootComponent],
   imports: [
     BrowserModule,
     SharedModule,
     BrowserAnimationsModule,
     ToastrModule.forRoot(),
     RootRoutingModule,
-    HttpClientModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -35,7 +40,6 @@ export function createTranslateLoader(http: HttpClient) {
     }),
     HotkeyModule.forRoot(),
   ],
-  declarations: [RootComponent],
   providers: [
     {
       provide: APP_INITIALIZER,
@@ -43,7 +47,7 @@ export function createTranslateLoader(http: HttpClient) {
       deps: [SettingsService],
       multi: true,
     },
+    provideHttpClient(withInterceptorsFromDi()),
   ],
-  bootstrap: [RootComponent],
 })
 export class RootModule {}
