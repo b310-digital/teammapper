@@ -243,6 +243,7 @@ export default class Nodes {
             }
 
             // Lengthy but definitive check to see if we have any hidden nodes after toggling
+            // We need the hasHiddenChildNodes attribute so we can correctly re-apply hidden state when we get map updates from the server
             if (this.map.nodes.nodeChildren(this.selectedNode.id)?.filter(x => x.hidden).length > 0) {
                 this.selectedNode.hasHiddenChildNodes = true
             } else {
