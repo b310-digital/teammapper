@@ -55,7 +55,7 @@
     "rxjs": "^7.8.1",
     "socket.io": "4.7.2",
     "typeorm": "^0.3.17",
-    "uuid": "9.0.1"
+    "uuid": "10.0.0"
   },
   "devDependencies": {
     "@golevelup/ts-jest": "^0.4.0",
@@ -68,7 +68,7 @@
     "@types/jest": "29.5.11",
     "@types/node": "^22.1.0",
     "@types/supertest": "^2.0.16",
-    "@types/uuid": "^9.0.8",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.13.2",
     "concurrently": "8.2.2",
