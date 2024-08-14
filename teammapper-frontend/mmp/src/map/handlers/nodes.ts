@@ -949,7 +949,7 @@ export default class Nodes {
      * @param {boolean} hidden
      * @returns {boolean}
      */
-    private updateNodeHidden = (node: Node, hidden: boolean) => {
+    private updateNodeHidden = (node: Node, hidden: boolean): void => {
         if (hidden && typeof hidden !== 'boolean') {
             Log.error('The hidden value must be boolean', 'type')
         }
@@ -957,7 +957,7 @@ export default class Nodes {
         if (node.hidden !== hidden) {
             node.hidden = hidden;
         } else {
-            return false
+            return undefined
         }
     }
 
