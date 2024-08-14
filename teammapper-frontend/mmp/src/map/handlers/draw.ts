@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify'
 import Map from '../map'
 import Utils from '../../utils/utils'
 import Node from '../models/node'
-import {Path} from 'd3-path'
+import { Path } from 'd3-path'
 
 /**
  * Draw the map and update it.
@@ -55,16 +55,26 @@ export default class Draw {
      * Update the dom of the map with the (new) nodes.
      */
     public update() {
-        const nodes = this.map.nodes.getNodes(),
-            dom = {
-                nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes),
-                branches: this.map.dom.g.selectAll('.' + this.map.id + '_branch').data(nodes.slice(1))
-            }
+        const nodes = this.map.nodes.getNodes()
+
+        // Set visibility: hidden instead of filtering out nodes to still allow updates such as text, images and pictograms to take effect "behind the curtain"
+        const dom = {
+            nodes: this.map.dom.g.selectAll('.' + this.map.id + '_node').data(nodes, (d) => d.id).style("visibility", d => d.hidden ? "hidden" : "visible"),
+            branches: this.map.dom.g.selectAll('.' + this.map.id + '_branch').data(nodes.slice(1), (d) => d.id).style("visibility", d => d.hidden ? "hidden" : "visible")
+        }
         let tapedTwice = false
+
+        // When doing an initial draw, all nodes appear in dom.nodes
+        dom.nodes.each((node: Node) => this.updateHiddenChildrenIcon(node))
 
         const outer = dom.nodes.enter().append('g')
             .style('cursor', 'pointer')
             .style('touch-action', 'none')
+            /**
+             * dom.nodes includes all nodes rendered on screen, but dom.nodes.enter() includes "new" nodes given by the client,
+             * so we need an additional visibility check done here
+             */
+            .style('visibility', (node: Node) => node.hidden ? 'hidden' : 'visible')
             .attr('class', this.map.id + '_node')
             .attr('id', function (node: Node) {
                 node.dom = this
@@ -80,7 +90,7 @@ export default class Draw {
                 if (!this.map.options.edit) return false
                 // When not clicking a link and not in edit mode, disable all mobile native touch events
                 // A single tap is supposed to move the node in this application
-                if(!this.isLinkTarget(event) && !this.editing) {
+                if (!this.isLinkTarget(event) && !this.editing) {
                     event.preventDefault()
                 }
 
@@ -97,7 +107,6 @@ export default class Draw {
 
                 this.enableNodeNameEditing(node)
             })
-
         if (this.map.options.drag === true) {
             outer.call(this.map.drag.getDragBehavior())
         } else {
@@ -119,16 +128,24 @@ export default class Draw {
             .style('stroke-width', 3)
             .attr('d', (node: Node) => this.drawNodeBackground(node))
 
+
         // Set image and link of the node
         outer.each((node: Node) => {
             this.setImage(node)
             this.setLink(node)
+            // Sometimes, undo/redo will not render nodes in dom.nodes, but instead all nodes will only be present in dom.nodes.enter(), so we also need to check for hidden children there
+            this.updateHiddenChildrenIcon(node)
         })
 
 
         dom.branches.enter().insert('path', 'g')
             .style('fill', (node: Node) => DOMPurify.sanitize(node.colors.branch))
             .style('stroke', (node: Node) => DOMPurify.sanitize(node.colors.branch))
+            /**
+             * dom.branches includes all branches rendered on screen, but dom.branches.enter() includes "new" branches given by the client,
+             * so we need an additional visibility check done here
+             */
+            .style('visibility', (node: Node) => node.hidden ? 'hidden' : 'visible')
             .attr('class', this.map.id + '_branch')
             .attr('id', (node: Node) => node.id + '_branch')
             .attr('d', (node: Node) => this.drawBranch(node))
@@ -176,7 +193,7 @@ export default class Draw {
      * @returns {Path} path
      */
     public drawBranch(node: Node): Path {
-        if(node.parent === undefined || node.parent === null) return
+        if (node.parent === undefined || node.parent === null) return
 
         const parent = node.parent,
             path = d3.path(),
@@ -289,6 +306,35 @@ export default class Draw {
     }
 
     /**
+     * Set a hidden eye icon if child nodes are hidden.
+     * @param {Node} node
+     */
+    public setHiddenChildrenIcon(node: Node) {
+        let domIcon = node.getHiddenChildIconDOM()
+        if (!domIcon) {
+            domIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+            domIcon.textContent = 'visibility_off'
+            domIcon.classList.add('hidden-icon')
+            domIcon.classList.add('material-icons')
+            domIcon.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
+            domIcon.setAttribute('y', (-node.dimensions.height + 30).toString())
+            domIcon.setAttribute('x', '-60')
+            node.dom.appendChild(domIcon)
+        }
+    }
+
+    /**
+     * Explicitly remove the hidden eye icon even if not set
+     * @param {Node} node
+     */
+    public removeHiddenChildrenIcon(node) {
+        const domIcon = node.getHiddenChildIconDOM()
+        if (domIcon) {
+            domIcon.remove()
+        }
+    }
+
+    /**
      * Update the node image position.
      * @param {Node} node
      */
@@ -307,7 +353,7 @@ export default class Draw {
     public updateLinkPosition(node: Node) {
         if (DOMPurify.sanitize(node.link.href) !== '') {
             const link = node.getLinkDOM(),
-                  y = node.dimensions.height
+                y = node.dimensions.height
             link.setAttribute('y', y.toString())
         }
     }
@@ -400,33 +446,45 @@ export default class Draw {
     }
 
     /**
+     * Check if given node has hidden children and render the eye icon if so
+     * @param {Node} node
+     */
+    private updateHiddenChildrenIcon(node: Node) {
+        if (node.hasHiddenChildNodes) {
+            this.setHiddenChildrenIcon(node)
+        } else {
+            this.removeHiddenChildrenIcon(node)
+        }
+    }
+
+    /**
      * Update node name container (foreign object) dimensions.
      * @param {Node} node
      */
     private updateNodeNameContainer(node: Node) {
         const name = node.getNameDOM(),
-              foreignObject: SVGForeignObjectElement = name?.parentNode as SVGForeignObjectElement
-        
+            foreignObject: SVGForeignObjectElement = name?.parentNode as SVGForeignObjectElement
+
         const [width, height]: number[] = (() => {
             if (!this.browserIsFirefox()) {
-              // Default case
-              // Text is rendered based on needed width and height
-              // works well at least for chrome and safari
-              name.style.setProperty('width', 'auto')
-              name.style.setProperty('height', 'auto')
-              return [name.clientWidth, name.clientHeight]
+                // Default case
+                // Text is rendered based on needed width and height
+                // works well at least for chrome and safari
+                name.style.setProperty('width', 'auto')
+                name.style.setProperty('height', 'auto')
+                return [name.clientWidth, name.clientHeight]
             } else {
-              // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
-              // In these cases, try to approximate height and width before rendering.
-              name.style.setProperty('width', '100%')
-              name.style.setProperty('height', '100%')
-              // split by line break
-              const linesByLineBreaks = name.textContent.split(/\r?\n|\r|\n/g)
-              // take longest line as width, when no lines are present use 1 as length
-              const width = Math.max(...linesByLineBreaks.map((line: string) => line.length), 1)
-              // take number of lines as height factor
-              const height = linesByLineBreaks.length
-              return [width * node.font.size / 1.2, height * node.font.size * 1.2]
+                // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
+                // In these cases, try to approximate height and width before rendering.
+                name.style.setProperty('width', '100%')
+                name.style.setProperty('height', '100%')
+                // split by line break
+                const linesByLineBreaks = name.textContent.split(/\r?\n|\r|\n/g)
+                // take longest line as width, when no lines are present use 1 as length
+                const width = Math.max(...linesByLineBreaks.map((line: string) => line.length), 1)
+                // take number of lines as height factor
+                const height = linesByLineBreaks.length
+                return [width * node.font.size / 1.2, height * node.font.size * 1.2]
             }
         })().map((value: number) => Math.max(value, 25))
 

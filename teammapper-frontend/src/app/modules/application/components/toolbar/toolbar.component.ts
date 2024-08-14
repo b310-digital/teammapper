@@ -29,6 +29,20 @@ export class ToolbarComponent {
       );
   }
 
+  get hasHiddenNodes() {
+    return (
+      this.mmpService.nodeChildren()?.filter(node => node.hidden).length > 0
+    );
+  }
+
+  // In some cases the mmpService is not yet initialized so trying to call getSelectedNode() will throw an error
+  get canHideNodes() {
+    if (this.mmpService) {
+      const selectedNode = this.mmpService.getSelectedNode();
+      return selectedNode && !selectedNode.isRoot;
+    }
+  }
+
   public async share() {
     this.dialogService.openShareDialog();
   }

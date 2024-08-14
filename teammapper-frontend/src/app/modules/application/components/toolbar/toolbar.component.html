@@ -95,6 +95,14 @@
     mat-icon-button>
     <mat-icon>content_paste</mat-icon>
   </button>
+  <button
+    (click)="mmpService.toggleBranchVisibility()"
+    [title]="'TOOLTIPS.HIDE_CHILD_NODES' | translate"
+    [disabled]="editDisabled || !canHideNodes"
+    color="primary"
+    mat-icon-button>
+    <mat-icon>{{ hasHiddenNodes ? 'visibility_off' : 'visibility' }}</mat-icon>
+  </button>
 
   <div class="vertical-line">
     <div></div>

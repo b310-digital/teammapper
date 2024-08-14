@@ -20,6 +20,8 @@ export default class Node implements NodeProperties {
     public dom: SVGGElement
     public isRoot: boolean
     public detached: boolean
+    public hidden: boolean
+    public hasHiddenChildNodes: boolean
 
     /**
      * Initialize the node properties, the dimensions and the k coefficient.
@@ -37,6 +39,8 @@ export default class Node implements NodeProperties {
         this.locked = properties.locked
         this.isRoot = properties.isRoot
         this.detached = properties.detached
+        this.hidden = properties.hidden
+        this.hasHiddenChildNodes = properties.hasHiddenChildNodes
 
         this.dimensions = {
             width: 0,
@@ -91,7 +95,15 @@ export default class Node implements NodeProperties {
     public getLinkDOM(): SVGAElement {
         // Unfortunately typescript returns an html type as default - in this case its a SVG element
         // https://github.com/microsoft/TypeScript/issues/51844
-        return this.dom.querySelector('a > text') as any
+        return this.dom.querySelector('a > text.link-text') as any
+    }
+
+    /**
+     * Returns the SVG text of the hidden child icon.
+     * @returns {SVGITextElement} text
+     */
+    public getHiddenChildIconDOM(): SVGTextElement {
+        return this.dom.querySelector('text.hidden-icon') as any
     }
 
 }
@@ -106,6 +118,8 @@ export interface UserNodeProperties {
     locked?: boolean
     isRoot?: boolean
     detached?: boolean
+    hidden?: boolean
+    hasHiddenChildNodes?: boolean
 }
 
 export interface NodeProperties extends UserNodeProperties {

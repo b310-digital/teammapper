@@ -284,6 +284,15 @@ export class MmpService implements OnDestroy {
   }
 
   /**
+   * Get the currently selected node
+   */
+  public getSelectedNode() {
+    if (this.currentMap) {
+      return this.currentMap.instance.getSelectedNode();
+    }
+  }
+
+  /**
    * Deselect the current node.
    */
   public deselectNode() {
@@ -381,10 +390,17 @@ export class MmpService implements OnDestroy {
   }
 
   /**
+   * Toggle (hide/show) all child nodes of the selected node
+   */
+  public toggleBranchVisibility() {
+    this.currentMap.instance.toggleBranchVisibility();
+  }
+
+  /**
    * Return the children of the current node.
    */
   public nodeChildren(): ExportNodeProperties[] {
-    return this.currentMap.instance.nodeChildren();
+    return this.currentMap?.instance.nodeChildren();
   }
 
   /**
