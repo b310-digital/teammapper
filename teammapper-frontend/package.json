@@ -69,8 +69,9 @@
     "rxjs": "~7.4.0",
     "socket.io-client": "~4.7.5",
     "tslib": "^2.6.3",
-    "uuid": "^8.3.2",
-    "zone.js": "^0.14.4"
+    "uuid": "10.0.0",
+    "zone.js": "^0.14.4",
+    "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1801.2",
@@ -88,7 +89,6 @@
     "@types/jasmine": "~5.1.4",
     "@types/mousetrap": "1.6.8",
     "@types/node": "^13.7.7",
-    "@types/uuid": "8.3.1",
     "@typescript-eslint/eslint-plugin": "7.4.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.0",
