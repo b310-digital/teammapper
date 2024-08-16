@@ -383,10 +383,12 @@ export class MapSyncService implements OnDestroy {
       const existingNode = this.mmpService.getNode(newNode.id);
       const propertyPath = NodePropertyMapping[result.property];
       const changedValue = UtilsService.get(newNode, propertyPath);
+
       this.mmpService.updateNode(
         result.property,
         changedValue,
         false,
+        true,
         existingNode.id
       );
     });

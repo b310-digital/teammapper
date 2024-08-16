@@ -14,8 +14,8 @@
   },
   "license": "MIT",
   "engines": {
-    "npm": "~10.2.3",
-    "node": "~20.10.0"
+    "npm": "~10.7.0",
+    "node": "~22.2"
   },
   "keywords": [
     "mindmap",
@@ -50,7 +50,7 @@
     "@angular/platform-browser": "^18.1.2",
     "@angular/platform-browser-dynamic": "^18.1.2",
     "@angular/router": "^18.1.2",
-    "@fortawesome/angular-fontawesome": "^0.10.1",
+    "@fortawesome/angular-fontawesome": "^0.15.0",
     "@fortawesome/fontawesome-svg-core": "^1.2.27",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
@@ -74,12 +74,12 @@
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1801.2",
-    "@angular-devkit/core": "^18.1.2",
+    "@angular-devkit/core": "^18.1.4",
     "@angular-devkit/schematics": "^18.1.2",
     "@angular-eslint/builder": "18.1.0",
-    "@angular-eslint/eslint-plugin": "18.1.0",
-    "@angular-eslint/eslint-plugin-template": "18.1.0",
-    "@angular-eslint/schematics": "18.1.0",
+    "@angular-eslint/eslint-plugin": "18.3.0",
+    "@angular-eslint/eslint-plugin-template": "18.3.0",
+    "@angular-eslint/schematics": "18.2.0",
     "@angular-eslint/template-parser": "18.1.0",
     "@angular/language-service": "^18.1.2",
     "@compodoc/compodoc": "^1.1.25",
