@@ -724,8 +724,8 @@ export default class Nodes {
 
             if (graphic === false) {
                 node.name = name
-                return true
             }
+            return true
         } else {
             return false
         }
@@ -784,8 +784,8 @@ export default class Nodes {
 
             if (graphic === false) {
                 node.colors.background = sanitizedColor
-                return true
             }
+            return true
         } else {
             return false
         }
@@ -810,8 +810,8 @@ export default class Nodes {
 
             if (graphic === false) {
                 node.colors.name = sanitizedColor
-                return true
             }
+            return true
         } else {
             return false
         }
@@ -839,8 +839,8 @@ export default class Nodes {
 
                 if (graphic === false) {
                     node.colors.branch = sanitizedColor
-                    return true
                 }
+                return true
             } else {
                 return false
             }
@@ -869,8 +869,8 @@ export default class Nodes {
 
             if (graphic === false) {
                 node.font.size = size
-                return true
             }
+            return true
         } else {
             return false
         }
@@ -904,8 +904,8 @@ export default class Nodes {
 
                 if (graphic === false) {
                     node.image.size = height
-                    return true
                 }
+                return true
             } else {
                 return false
             }
@@ -993,8 +993,8 @@ export default class Nodes {
 
             if (graphic === false) {
                 node.font.style = style
-                return true
             }
+            return true
         } else {
             return false
         }
@@ -1019,8 +1019,8 @@ export default class Nodes {
 
             if (graphic === false) {
                 node.font.weight = weight
-                return true
             }
+            return true
         } else {
             return false
         }
@@ -1045,8 +1045,8 @@ export default class Nodes {
 
             if (graphic === false) {
                 node.font.decoration = decoration
-                return true
             }
+            return true
         } else {
             return false
         }
