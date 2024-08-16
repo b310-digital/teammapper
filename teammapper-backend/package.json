@@ -6,8 +6,8 @@
   "private": true,
   "license": "MIT",
   "engines": {
-    "npm": "~10.2.3",
-    "node": "~20.10.0"
+    "npm": "~10.7.0",
+    "node": "~22.2"
   },
   "scripts": {
     "prebuild": "rimraf dist",
@@ -56,7 +56,8 @@
     "rxjs": "^7.8.1",
     "socket.io": "4.7.2",
     "typeorm": "^0.3.17",
-    "uuid": "10.0.0"
+    "uuid": "10.0.0",
+    "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
     "@golevelup/ts-jest": "^0.4.0",

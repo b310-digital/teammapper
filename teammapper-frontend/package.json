@@ -14,8 +14,8 @@
   },
   "license": "MIT",
   "engines": {
-    "npm": "~10.2.3",
-    "node": "~20.10.0"
+    "npm": "~10.7.0",
+    "node": "~22.2"
   },
   "keywords": [
     "mindmap",
@@ -70,8 +70,9 @@
     "rxjs": "~7.4.0",
     "socket.io-client": "~4.7.5",
     "tslib": "^2.6.3",
-    "uuid": "^8.3.2",
-    "zone.js": "^0.14.4"
+    "uuid": "10.0.0",
+    "zone.js": "^0.14.4",
+    "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1801.2",
