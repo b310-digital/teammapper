@@ -37,7 +37,7 @@
     "deploy": "ng deploy"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "^18.1.2",
+    "@angular-devkit/build-angular": "^18.2.0",
     "@angular/animations": "^18.1.2",
     "@angular/cdk": "^18.1.2",
     "@angular/cli": "^18.1.2",
