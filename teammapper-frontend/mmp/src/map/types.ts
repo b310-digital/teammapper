@@ -9,6 +9,7 @@ interface MapCreateEvent {
 interface MapProperties {
     uuid: string,
     lastModified: number,
+    createdAt: number,
     data: MapSnapshot,
     deletedAt: number,
     deleteAfterDays: number

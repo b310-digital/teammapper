@@ -85,7 +85,7 @@ export class MapSyncService implements OnDestroy {
     this.availableColors = COLORS;
     this.clientColor =
       this.availableColors[
-        Math.floor(Math.random() * this.availableColors.length)
+      Math.floor(Math.random() * this.availableColors.length)
       ];
     this.modificationSecret = '';
     this.colorMapping = {};
@@ -105,6 +105,7 @@ export class MapSyncService implements OnDestroy {
       modificationSecret: privateServerMap.modificationSecret,
       ttl: serverMap.deletedAt,
       rootName: serverMap.data[0].name,
+      createdAt: serverMap.createdAt
     });
 
     this.prepareMap(serverMap);
@@ -191,6 +192,7 @@ export class MapSyncService implements OnDestroy {
     const cachedMap: CachedMap = {
       data: this.mmpService.exportAsJSON(),
       lastModified: Date.now(),
+      createdAt: cachedMapEntry.cachedMap.createdAt,
       uuid: cachedMapEntry.cachedMap.uuid,
       deletedAt: cachedMapEntry.cachedMap.deletedAt,
       deleteAfterDays: cachedMapEntry.cachedMap.deleteAfterDays,
@@ -350,6 +352,7 @@ export class MapSyncService implements OnDestroy {
     return Object.assign({}, serverMap, {
       lastModified: Date.parse(serverMap.lastModified),
       deletedAt: Date.parse(serverMap.deletedAt),
+      createdAt: Date.parse(serverMap.createdAt)
     });
   }
 
