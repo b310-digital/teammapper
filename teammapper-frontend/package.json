@@ -37,7 +37,7 @@
     "deploy": "ng deploy"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "^18.1.2",
+    "@angular-devkit/build-angular": "^18.2.1",
     "@angular/animations": "^18.1.2",
     "@angular/cdk": "^18.1.2",
     "@angular/cli": "^18.1.2",
@@ -71,13 +71,13 @@
     "socket.io-client": "~4.7.5",
     "tslib": "^2.6.3",
     "uuid": "10.0.0",
-    "zone.js": "^0.14.4",
+    "zone.js": "^0.14.10",
     "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1801.2",
     "@angular-devkit/core": "^18.1.4",
-    "@angular-devkit/schematics": "^18.1.2",
+    "@angular-devkit/schematics": "^18.2.0",
     "@angular-eslint/builder": "18.1.0",
     "@angular-eslint/eslint-plugin": "18.3.0",
     "@angular-eslint/eslint-plugin-template": "18.3.0",
@@ -97,7 +97,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "jasmine-core": "~4.3.0",
     "karma": "~6.4.1",
-    "karma-chrome-launcher": "~3.1.0",
+    "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",

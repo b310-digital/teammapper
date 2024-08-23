@@ -1,4 +1,4 @@
-FROM node:22.2-alpine3.18 as base
+FROM node:22-alpine3.19 as base
 
 RUN apk add --no-cache postgresql-client make g++ python3 py3-pip
 
