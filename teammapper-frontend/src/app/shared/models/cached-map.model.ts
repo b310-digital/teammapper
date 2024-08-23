@@ -7,6 +7,7 @@ export interface CachedMapEntry {
 
 export interface CachedMap {
   lastModified: number;
+  createdAt: number;
   data: MapSnapshot;
   uuid: string;
   deleteAfterDays: number;

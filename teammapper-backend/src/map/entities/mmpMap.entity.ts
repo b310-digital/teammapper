@@ -36,4 +36,7 @@ export class MmpMap {
   })
   /* eslint-enable @typescript-eslint/no-unused-vars */
   nodes: MmpNode[]
+
+  @Column({ type: 'timestamptz', default: () => 'now()' })
+  createdAt: Date
 }
