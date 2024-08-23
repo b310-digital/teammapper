@@ -95,6 +95,7 @@ describe('AppController (e2e)', () => {
         deleteAfterDays: 30,
         deletedAt: new Date(),
         options: { fontMaxSize: 10, fontMinSize: 15, fontIncrement: 2 },
+        createdAt: new Date(),
         data: [
           {
             name: 'test',

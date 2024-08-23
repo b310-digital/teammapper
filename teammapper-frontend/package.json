@@ -14,8 +14,8 @@
   },
   "license": "MIT",
   "engines": {
-    "npm": "~10.2.3",
-    "node": "~20.10.0"
+    "npm": "~10.7.0",
+    "node": "~22.2"
   },
   "keywords": [
     "mindmap",
@@ -37,7 +37,7 @@
     "deploy": "ng deploy"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "^18.1.2",
+    "@angular-devkit/build-angular": "^18.2.1",
     "@angular/animations": "^18.1.2",
     "@angular/cdk": "^18.1.2",
     "@angular/cli": "^18.1.2",
@@ -69,13 +69,14 @@
     "rxjs": "~7.4.0",
     "socket.io-client": "~4.7.5",
     "tslib": "^2.6.3",
-    "uuid": "^8.3.2",
-    "zone.js": "^0.14.4"
+    "uuid": "10.0.0",
+    "zone.js": "^0.14.10",
+    "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1801.2",
     "@angular-devkit/core": "^18.1.4",
-    "@angular-devkit/schematics": "^18.1.2",
+    "@angular-devkit/schematics": "^18.2.0",
     "@angular-eslint/builder": "18.1.0",
     "@angular-eslint/eslint-plugin": "18.3.0",
     "@angular-eslint/eslint-plugin-template": "18.3.0",
@@ -88,7 +89,6 @@
     "@types/jasmine": "~5.1.4",
     "@types/mousetrap": "1.6.8",
     "@types/node": "^13.7.7",
-    "@types/uuid": "8.3.1",
     "@typescript-eslint/eslint-plugin": "7.4.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.0",
@@ -96,7 +96,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "jasmine-core": "~4.3.0",
     "karma": "~6.4.1",
-    "karma-chrome-launcher": "~3.1.0",
+    "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",

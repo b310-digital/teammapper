@@ -712,7 +712,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeName = (node: Node, name: string, graphic: boolean = false) => {
+    private updateNodeName = (node: Node, name: string, graphic: boolean = false): boolean => {
         if (name && typeof name !== 'string') {
             Log.error('The name must be a string', 'type')
         }
@@ -725,6 +725,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.name = name
             }
+            return true
         } else {
             return false
         }
@@ -738,7 +739,7 @@ export default class Nodes {
      * @param {Coordinates} coordinates
      * @returns {boolean}
      */
-    private updateNodeCoordinatesWithoutDescendants = (initialNode: Node, coordinates: Coordinates) => {
+    private updateNodeCoordinatesWithoutDescendants = (initialNode: Node, coordinates: Coordinates): boolean => {
         // no moving of descendants here
         const fixedCoordinates = coordinates
 
@@ -751,6 +752,8 @@ export default class Nodes {
             d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
                 return this.map.draw.drawBranch(node) as any
             })
+
+            return true
         } else {
             return false
         }
@@ -763,7 +766,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeBackgroundColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeBackgroundColor = (node: Node, color: string, graphic: boolean = false): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The background color must be a string', 'type')
         }
@@ -782,6 +785,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.colors.background = sanitizedColor
             }
+            return true
         } else {
             return false
         }
@@ -794,7 +798,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeNameColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeNameColor = (node: Node, color: string, graphic: boolean = false): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The text color must be a string', 'type')
         }
@@ -807,6 +811,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.colors.name = sanitizedColor
             }
+            return true
         } else {
             return false
         }
@@ -819,7 +824,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeBranchColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeBranchColor = (node: Node, color: string, graphic: boolean = false): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The branch color must be a string', 'type')
         }
@@ -835,11 +840,13 @@ export default class Nodes {
                 if (graphic === false) {
                     node.colors.branch = sanitizedColor
                 }
+                return true
             } else {
                 return false
             }
         } else {
             Log.error('The root node has no branches')
+            return false
         }
     }
 
@@ -850,7 +857,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontSize = (node: Node, size: number, graphic: boolean = false) => {
+    private updateNodeFontSize = (node: Node, size: number, graphic: boolean = false): boolean => {
         if (size && typeof size !== 'number') {
             Log.error('The font size must be a number', 'type')
         }
@@ -876,7 +883,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeImageSize = (node: Node, size: number, graphic: boolean = false) => {
+    private updateNodeImageSize = (node: Node, size: number, graphic: boolean = false): boolean => {
         if (size && typeof size !== 'number') {
             Log.error('The image size must be a number', 'type')
         }
@@ -898,10 +905,14 @@ export default class Nodes {
                 if (graphic === false) {
                     node.image.size = height
                 }
+                return true
             } else {
                 return false
             }
-        } else Log.error('The node does not have an image')
+        } else {
+            Log.error('The node does not have an image')
+            return false
+        }
     }
 
     /**
@@ -910,7 +921,7 @@ export default class Nodes {
      * @param {string} src
      * @returns {boolean}
      */
-    private updateNodeImageSrc = (node: Node, src: string) => {
+    private updateNodeImageSrc = (node: Node, src: string): boolean => {
         if (src && typeof src !== 'string') {
             Log.error('The image path must be a string', 'type')
         }
@@ -919,6 +930,7 @@ export default class Nodes {
             node.image.src = src
 
             this.map.draw.setImage(node)
+            return true
         } else {
             return false
         }
@@ -930,7 +942,7 @@ export default class Nodes {
      * @param {string} href
      * @returns {boolean}
      */
-    private updateNodeLinkHref = (node: Node, href: string) => {
+    private updateNodeLinkHref = (node: Node, href: string): boolean => {
         if (href && typeof href !== 'string') {
             Log.error('The link href must be a string', 'type')
         }
@@ -939,6 +951,7 @@ export default class Nodes {
             node.link.href = href
 
             this.map.draw.setLink(node)
+            return true
         } else {
             return false
         }
@@ -950,15 +963,16 @@ export default class Nodes {
      * @param {boolean} hidden
      * @returns {boolean}
      */
-    private updateNodeHidden = (node: Node, hidden: boolean): void => {
+    private updateNodeHidden = (node: Node, hidden: boolean): boolean => {
         if (hidden && typeof hidden !== 'boolean') {
             Log.error('The hidden value must be boolean', 'type')
         }
 
         if (node.hidden !== hidden) {
             node.hidden = hidden;
+            return true
         } else {
-            return undefined
+            return false
         }
     }
 
@@ -969,7 +983,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontStyle = (node: Node, style: string, graphic: boolean = false) => {
+    private updateNodeFontStyle = (node: Node, style: string, graphic: boolean = false): boolean => {
         if (style && typeof style !== 'string') {
             Log.error('The font style must be a string', 'type')
         }
@@ -980,6 +994,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.font.style = style
             }
+            return true
         } else {
             return false
         }
@@ -992,7 +1007,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontWeight = (node: Node, weight: string, graphic: boolean = false) => {
+    private updateNodeFontWeight = (node: Node, weight: string, graphic: boolean = false): boolean => {
         if (weight && typeof weight !== 'string') {
             Log.error('The font weight must be a string', 'type')
         }
@@ -1005,6 +1020,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.font.weight = weight
             }
+            return true
         } else {
             return false
         }
@@ -1017,7 +1033,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeTextDecoration = (node: Node, decoration: string, graphic: boolean = false) => {
+    private updateNodeTextDecoration = (node: Node, decoration: string, graphic: boolean = false): boolean => {
         if (decoration && typeof decoration !== 'string') {
             Log.error('The text decoration must be a string', 'type')
         }
@@ -1030,6 +1046,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.font.decoration = decoration
             }
+            return true
         } else {
             return false
         }
@@ -1041,15 +1058,17 @@ export default class Nodes {
      * @param {boolean} flag
      * @returns {boolean}
      */
-    private updateNodeLockedStatus = (node: Node, flag: boolean) => {
+    private updateNodeLockedStatus = (node: Node, flag: boolean): boolean => {
         if (flag && typeof flag !== 'boolean') {
             Log.error('The node locked status must be a boolean', 'type')
         }
 
         if (!node.isRoot) {
             node.locked = flag || !node.locked
+            return true
         } else {
             Log.error('The root node can not be locked')
+            return false
         }
     }
 

@@ -27,10 +27,10 @@ export class MapsService {
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
     private mapsRepository: Repository<MmpMap>
-  ) {}
+  ) { }
 
   findMap(uuid: string): Promise<MmpMap | null> {
-    if(!uuidValidate(uuid)) return Promise.reject(new MalformedUUIDError('Invalid UUID'))
+    if (!uuidValidate(uuid)) return Promise.reject(new MalformedUUIDError('Invalid UUID'))
 
     return this.mapsRepository.findOne({
       where: { id: uuid },
@@ -46,7 +46,6 @@ export class MapsService {
 
     const nodes: MmpNode[] = await this.findNodes(map?.id)
     const days: number = configService.deleteAfterDays()
-    
     return mapMmpMapToClient(
       map,
       nodes,
@@ -136,6 +135,7 @@ export class MapsService {
       ...existingNode,
       ...mapClientNodeToMmpNode(clientNode, mapId),
       lastModified: new Date(),
+      createdAt: new Date()
     })
   }
 
@@ -213,7 +213,7 @@ export class MapsService {
     return copyDate
   }
 
-  async deleteOutdatedMaps(afterDays: number = 30): Promise<number | null | undefined>  {
+  async deleteOutdatedMaps(afterDays: number = 30): Promise<number | null | undefined> {
     const today = new Date()
 
     const deleteQuery = this.mapsRepository
@@ -271,7 +271,7 @@ export class MapsService {
 
   async validatesNodeParentForNode(
     mapId: string,
-    node:  MmpNode
+    node: MmpNode
   ): Promise<boolean> {
     return (
       node.root ||
