@@ -5,7 +5,7 @@ import { Location } from '@angular/common';
 
 interface Shortcut {
   keys: string[];
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   description: string | Function;
 }
 
