@@ -39,6 +39,7 @@ interface ServerMap {
   deleteAfterDays: number;
   data: MapSnapshot;
   options: CachedMapOptions;
+  createdAt: string;
 }
 
 interface PrivateServerMap {

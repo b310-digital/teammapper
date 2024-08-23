@@ -40,6 +40,7 @@ const createMap = (nodes: IMmpClientNode[]): IMmpClientMap => {
   return {
     uuid: crypto.randomUUID(),
     lastModified: new Date(),
+    createdAt: new Date(),
     deleteAfterDays: 30,
     data: nodes,
     deletedAt: new Date(),
