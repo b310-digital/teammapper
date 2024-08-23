@@ -37,7 +37,7 @@
     "deploy": "ng deploy"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "^18.1.2",
+    "@angular-devkit/build-angular": "^18.2.1",
     "@angular/animations": "^18.1.2",
     "@angular/cdk": "^18.1.2",
     "@angular/cli": "^18.1.2",
@@ -70,7 +70,7 @@
     "socket.io-client": "~4.7.5",
     "tslib": "^2.6.3",
     "uuid": "10.0.0",
-    "zone.js": "^0.14.4",
+    "zone.js": "^0.14.10",
     "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
