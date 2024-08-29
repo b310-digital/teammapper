@@ -58,20 +58,6 @@
             "type": "attribute"
           }
         ]
-        // @TODO: Replace with ESLint Stylistic: https://typescript-eslint.io/blog/deprecating-formatting-rules/#upgrading-to-eslint-stylistic
-        // "@typescript-eslint/member-delimiter-style": [
-        //   "warn",
-        //   {
-        //     "multiline": {
-        //         "delimiter": "semi",
-        //         "requireLast": true
-        //     },
-        //     "singleline": {
-        //         "delimiter": "semi",
-        //         "requireLast": false
-        //     }
-        //   }
-        // ]
       }
     },
     {
