@@ -89,7 +89,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('addNode', () => {
-    it(`allows request when modification secret is set`, (done) => {
+    it(`will return false if no new nodes are being added`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
@@ -100,7 +100,7 @@ describe('WebSocketGateway', () => {
           nodes: [{}],
         },
         (result: boolean) => {
-          expect(result).toEqual(true)
+          expect(result).toEqual(false)
           done()
         }
       )
