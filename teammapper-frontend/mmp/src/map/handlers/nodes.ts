@@ -92,7 +92,7 @@ export default class Nodes {
         properties.id = overwriteId || uuidv4()
         properties.parent = parentNode
 
-        if (parentNode.hidden) {
+        if (parentNode && parentNode.hidden) {
             properties.hidden = true
         }
 
