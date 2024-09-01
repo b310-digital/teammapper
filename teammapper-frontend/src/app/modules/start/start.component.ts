@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
   templateUrl: './start.component.html',
   styleUrls: ['./start.component.scss'],
 })
-export class StartComponent {
+export class StartComponent implements OnInit {
   public projectName: string;
   public faGithub = faGithub;
   public breakpoint: number;
