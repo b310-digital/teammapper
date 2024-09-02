@@ -135,7 +135,6 @@ export class MapsService {
       ...existingNode,
       ...mapClientNodeToMmpNode(clientNode, mapId),
       lastModified: new Date(),
-      createdAt: new Date()
     })
   }
 
