@@ -39,12 +39,12 @@ export class MapsGateway implements OnGatewayDisconnect {
   constructor(
     private mapsService: MapsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
-  ) {}
+  ) { }
 
   @SubscribeMessage('leave')
   async handleDisconnect(client: Socket) {
     const mapId: string | undefined = await this.cacheManager.get(client.id)
-    if(!mapId) return
+    if (!mapId) return
 
     this.server.to(mapId).emit('clientDisconnect', client.id)
     this.removeClientForMap(mapId, client.id)
