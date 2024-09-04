@@ -18,7 +18,7 @@ export class ShortcutsService implements OnDestroy {
     private hotkeysService: HotkeysService,
     private settingsService: SettingsService,
     private router: Router
-  ) {}
+  ) { }
 
   /**
    * Add all global hot keys of the application.
@@ -112,6 +112,19 @@ export class ShortcutsService implements OnDestroy {
         callback: () => {
           this.mmpService.pasteNode();
         },
+      },
+      {
+        keys: 'ctrl+=',
+        description: 'TOOLTIPS.ZOOM_IN_MAP',
+        callback: () => {
+          this.mmpService.zoomIn()
+        }
+      }, {
+        keys: 'ctrl+-',
+        description: 'TOOLTIPS.ZOOM_OUT_MAP',
+        callback: () => {
+          this.mmpService.zoomOut()
+        }
       },
       {
         keys: 'left',
