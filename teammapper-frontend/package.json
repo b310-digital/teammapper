@@ -74,10 +74,10 @@
     "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
-    "@angular-devkit/architect": "0.1801.2",
-    "@angular-devkit/core": "^18.1.4",
-    "@angular-devkit/schematics": "^18.2.0",
-    "@angular-eslint/builder": "18.1.0",
+    "@angular-devkit/architect": "0.1802.2",
+    "@angular-devkit/core": "18.2.2",
+    "@angular-devkit/schematics": "18.2.2",
+    "@angular-eslint/builder": "18.3.0",
     "@angular-eslint/eslint-plugin": "18.3.0",
     "@angular-eslint/eslint-plugin-template": "18.3.0",
     "@angular-eslint/schematics": "18.3.0",
