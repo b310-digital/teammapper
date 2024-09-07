@@ -57,7 +57,7 @@
     "@material-design-icons/font": "^0.13.0",
     "@ngx-translate/core": "^14.0.0",
     "@ngx-translate/http-loader": "^7.0.0",
-    "angular2-hotkeys": "^13.1.0",
+    "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
     "dompurify": "3.0.6",
     "eslint-config-standard": "^17.0.0",
