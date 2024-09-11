@@ -309,7 +309,7 @@ export class MmpService implements OnDestroy {
     updateHistory?: boolean,
     id?: string
   ) {
-    this.currentMap.instance.updateNode(property, value, notifyWithEvent, id);
+    this.currentMap.instance.updateNode(property, value, notifyWithEvent, updateHistory, id);
   }
 
   /**
