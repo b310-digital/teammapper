@@ -102,4 +102,7 @@ export class MmpNode {
 
   @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
   lastModified: Date
+
+  @Column({ type: 'timestamptz', default: () => 'now()', nullable: true })
+  createdAt: Date
 }
