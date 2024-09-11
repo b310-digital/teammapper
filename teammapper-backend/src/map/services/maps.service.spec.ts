@@ -125,7 +125,7 @@ describe('MapsController', () => {
         lastAccessed: new Date('2021-01-01'),
         lastModified: new Date('2020-01-01')
       })
-      
+
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).toEqual(null)
     })
@@ -151,7 +151,7 @@ describe('MapsController', () => {
 
     it('does not delete a map where lastAccessed is not set but lastModified is recent', async () => {
       const map: MmpMap = await mapsRepo.save({
-        lastModified: new Date('2024-06-20')
+        lastModified: new Date()
       })
 
       await mapsService.deleteOutdatedMaps(30)
@@ -162,7 +162,7 @@ describe('MapsController', () => {
     it('does not delete a map where lastModified is old but lastAccessed is recent', async () => {
       const map: MmpMap = await mapsRepo.save({
         lastModified: new Date('1970-01-01'),
-        lastAccessed: new Date('2024-06-20')
+        lastAccessed: new Date()
       })
 
       await mapsService.deleteOutdatedMaps(30)
@@ -173,7 +173,7 @@ describe('MapsController', () => {
     it('does not delete a map where lastAccessed is old but lastModified is recent', async () => {
       const map: MmpMap = await mapsRepo.save({
         lastAccessed: new Date('1970-01-01'),
-        lastModified: new Date('2024-06-20')
+        lastModified: new Date()
       })
 
       await mapsService.deleteOutdatedMaps(30)
