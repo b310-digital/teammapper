@@ -12,7 +12,7 @@ import MmpMap from '../map'
 import * as d3 from 'd3'
 import DOMPurify from 'dompurify'
 import { v4 as uuidv4 } from 'uuid'
-import {Event} from './events'
+import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
 
@@ -55,6 +55,7 @@ export default class Nodes {
             id: rootId,
             parent: null,
             detached: false,
+            hidden: false,
             isRoot: true
         }) as NodeProperties
 
@@ -82,14 +83,18 @@ export default class Nodes {
      * @param {string} parentId
      * @param {string} overwriteId
      */
-    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, parentId?: string, overwriteId?: string): Node => {
+    public addNode = (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, updateHistory: boolean = true, parentId?: string, overwriteId?: string): Node => {
         const parentNode: Node = userProperties.detached ? null :
-          parentId ? this.getNode(parentId) : this.getSelectedNode()
-    
+            parentId ? this.getNode(parentId) : this.getSelectedNode()
+
         const properties: NodeProperties = Utils.mergeObjects(this.map.options.defaultNode, userProperties, true) as NodeProperties
 
         properties.id = overwriteId || uuidv4()
         properties.parent = parentNode
+
+        if (parentNode && parentNode.hidden) {
+            properties.hidden = true
+        }
 
         const node: Node = new Node(properties)
 
@@ -101,9 +106,11 @@ export default class Nodes {
 
         this.map.draw.update()
 
-        this.map.history.save()
+        if (updateHistory) {
+            this.map.history.save()
+        }
 
-        if(notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
+        if (notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
         return node
     }
 
@@ -155,7 +162,7 @@ export default class Nodes {
      * @param {string} color
      * @returns {void}
      */
-        public highlightNodeWithColor = (id: string, color: string, notifyWithEvent: boolean = true): void => {
+    public highlightNodeWithColor = (id: string, color: string, notifyWithEvent: boolean = true): void => {
         if (id !== undefined) {
             if (typeof id !== 'string') {
                 Log.error('The node id must be a string', 'type')
@@ -168,7 +175,7 @@ export default class Nodes {
                 if (background.style.stroke !== color) {
                     background.style.stroke = DOMPurify.sanitize(color)
 
-                    if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, this.getNodeProperties(node))
+                    if (notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, this.getNodeProperties(node))
                 }
             } else {
                 Log.error('The node id is not correct')
@@ -204,10 +211,55 @@ export default class Nodes {
     }
 
     /**
+     * Toggle (hide/show) all child nodes of selected node
+     */
+    public toggleBranchVisibility = () => {
+        if (this.selectedNode) {
+            const children = this.getChildren(this.selectedNode);
+
+            const descendants = this.getDescendants(this.selectedNode).filter(x => !children.includes(x));
+
+            /**
+             * We need to hide direct children and descendants separately, because if we just use getDescendants() and set !x.hidden, we'd inadvertently show already hidden children of children.
+             * This is why we have two separate checks for children of children: 
+             * 1) If the parent is hidden but they're not, hide them.
+             * 2) If the parent is not hidden but they are, show them.
+             */
+
+            if (children) {
+                children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, false, x.id))
+            }
+
+            if (descendants) {
+                descendants.forEach(x => {
+                    if (x.parent.hidden && !x.hidden) {
+                        this.updateNode('hidden', true, false, false, false, x.id)
+                    }
+
+                    if (!x.parent.hidden && x.hidden) {
+                        this.updateNode('hidden', false, false, false, false, x.id)
+                    }
+                })
+            }
+
+            // Lengthy but definitive check to see if we have any hidden nodes after toggling
+            // We need the hasHiddenChildNodes attribute so we can correctly re-apply hidden state when we get map updates from the server
+            if (this.map.nodes.nodeChildren(this.selectedNode.id)?.filter(x => x.hidden).length > 0) {
+                this.selectedNode.hasHiddenChildNodes = true
+            } else {
+                this.selectedNode.hasHiddenChildNodes = false
+            }
+
+            this.map.draw.update()
+            this.map.history.save()
+        }
+    }
+
+    /**
      * Deselect the current selected node.
      */
     public deselectNode = () => {
-        if(this.selectedNode?.id === this.getRoot().id) return
+        if (this.selectedNode?.id === this.getRoot().id) return
 
         const oldNodeProps: ExportNodeProperties = this.getNodeProperties(this.selectedNode)
         const oldDom: SVGGElement = this.selectedNode.dom
@@ -222,10 +274,12 @@ export default class Nodes {
         this.map.events.call(Event.nodeDeselect, oldDom, oldNodeProps)
     }
 
+
+
     /**
      * Update the properties of the selected node.
      */
-    public updateNode = (property: string, value: any, graphic: boolean = false, notifyWithEvent: boolean = true, id?: string) => {
+    public updateNode = (property: string, value: any, graphic: boolean = false, notifyWithEvent: boolean = true, updateHistory: boolean = true, id?: string) => {
         if (id && typeof id !== 'string') {
             Log.error('The node id must be a string', 'type')
         }
@@ -283,12 +337,18 @@ export default class Nodes {
             case 'nameColor':
                 updated = this.updateNodeNameColor(node, value, graphic)
                 break
+            case 'hidden':
+                updated = this.updateNodeHidden(node, value)
+                break
             default:
                 Log.error('The property does not exist')
         }
-        if (graphic === false && updated !== false) {
+        if (graphic === false && updated !== false && updateHistory) {
             this.map.history.save()
-            if(notifyWithEvent) this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
+        }
+
+        if (graphic === false && updated !== false && notifyWithEvent) {
+            this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
         }
     }
 
@@ -319,7 +379,7 @@ export default class Nodes {
 
             this.map.history.save()
 
-            if(notifyWithEvent) this.map.events.call(Event.nodeRemove, null, this.getNodeProperties(node))
+            if (notifyWithEvent) this.map.events.call(Event.nodeRemove, null, this.getNodeProperties(node))
 
             this.deselectNode()
         } else {
@@ -367,10 +427,12 @@ export default class Nodes {
             image: Utils.cloneObject(node.image) as Image,
             colors: Utils.cloneObject(node.colors) as Colors,
             font: Utils.cloneObject(node.font) as Font,
-            link:  Utils.cloneObject(node.link) as Link,
+            link: Utils.cloneObject(node.link) as Link,
             locked: node.locked,
             isRoot: node.isRoot,
             detached: node.detached,
+            hidden: node.hidden,
+            hasHiddenChildNodes: node.hasHiddenChildNodes,
             k: node.k
         }
     }
@@ -548,15 +610,15 @@ export default class Nodes {
      * @param {string} id
      * @returns {Node}
      */
-         public getNode = (id: string): Node => {
-            if (id !== undefined) {
-                if (typeof id !== 'string') {
-                    Log.error('The node id must be a string', 'type')
-                    return
-                }
-                return this.nodes.get(id)
+    public getNode = (id: string): Node => {
+        if (id !== undefined) {
+            if (typeof id !== 'string') {
+                Log.error('The node id must be a string', 'type')
+                return
             }
+            return this.nodes.get(id)
         }
+    }
 
     /**
      * Return the siblings of a node.
@@ -585,9 +647,9 @@ export default class Nodes {
      */
     private calculateCoordinates(node: Node): Coordinates {
         let coordinates: Coordinates = {
-                x: node.parent ? node.parent.coordinates.x : node.coordinates.x || 0,
-                y: node.parent ? node.parent.coordinates.y : node.coordinates.y || 0
-            },
+            x: node.parent ? node.parent.coordinates.x : node.coordinates.x || 0,
+            y: node.parent ? node.parent.coordinates.y : node.coordinates.y || 0
+        },
             siblings: Array<Node> = this.getSiblings(node)
 
         if (node.parent && node.parent.isRoot) {
@@ -605,7 +667,7 @@ export default class Nodes {
                 coordinates.x += 200
                 siblings = rightNodes
             }
-        } else if(!node.detached) {
+        } else if (!node.detached) {
             if (node.parent && this.getOrientation(node.parent)) {
                 coordinates.x -= 200
             } else {
@@ -617,7 +679,7 @@ export default class Nodes {
             const lowerNode = this.getLowerNode(siblings)
             coordinates.y = lowerNode.coordinates.y + 60
         } else if (!node.detached) {
-          coordinates.y -= 120
+            coordinates.y -= 120
         }
 
         return coordinates
@@ -650,7 +712,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeName = (node: Node, name: string, graphic: boolean = false) => {
+    private updateNodeName = (node: Node, name: string, graphic: boolean = false): boolean => {
         if (name && typeof name !== 'string') {
             Log.error('The name must be a string', 'type')
         }
@@ -663,6 +725,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.name = name
             }
+            return true
         } else {
             return false
         }
@@ -676,7 +739,7 @@ export default class Nodes {
      * @param {Coordinates} coordinates
      * @returns {boolean}
      */
-    private updateNodeCoordinatesWithoutDescendants = (initialNode: Node, coordinates: Coordinates) => {
+    private updateNodeCoordinatesWithoutDescendants = (initialNode: Node, coordinates: Coordinates): boolean => {
         // no moving of descendants here
         const fixedCoordinates = coordinates
 
@@ -689,6 +752,8 @@ export default class Nodes {
             d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
                 return this.map.draw.drawBranch(node) as any
             })
+
+            return true
         } else {
             return false
         }
@@ -701,7 +766,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeBackgroundColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeBackgroundColor = (node: Node, color: string, graphic: boolean = false): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The background color must be a string', 'type')
         }
@@ -720,6 +785,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.colors.background = sanitizedColor
             }
+            return true
         } else {
             return false
         }
@@ -732,7 +798,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeNameColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeNameColor = (node: Node, color: string, graphic: boolean = false): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The text color must be a string', 'type')
         }
@@ -745,6 +811,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.colors.name = sanitizedColor
             }
+            return true
         } else {
             return false
         }
@@ -757,7 +824,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeBranchColor = (node: Node, color: string, graphic: boolean = false) => {
+    private updateNodeBranchColor = (node: Node, color: string, graphic: boolean = false): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The branch color must be a string', 'type')
         }
@@ -773,11 +840,13 @@ export default class Nodes {
                 if (graphic === false) {
                     node.colors.branch = sanitizedColor
                 }
+                return true
             } else {
                 return false
             }
         } else {
             Log.error('The root node has no branches')
+            return false
         }
     }
 
@@ -788,7 +857,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontSize = (node: Node, size: number, graphic: boolean = false) => {
+    private updateNodeFontSize = (node: Node, size: number, graphic: boolean = false): boolean => {
         if (size && typeof size !== 'number') {
             Log.error('The font size must be a number', 'type')
         }
@@ -814,7 +883,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeImageSize = (node: Node, size: number, graphic: boolean = false) => {
+    private updateNodeImageSize = (node: Node, size: number, graphic: boolean = false): boolean => {
         if (size && typeof size !== 'number') {
             Log.error('The image size must be a number', 'type')
         }
@@ -836,10 +905,14 @@ export default class Nodes {
                 if (graphic === false) {
                     node.image.size = height
                 }
+                return true
             } else {
                 return false
             }
-        } else Log.error('The node does not have an image')
+        } else {
+            Log.error('The node does not have an image')
+            return false
+        }
     }
 
     /**
@@ -848,7 +921,7 @@ export default class Nodes {
      * @param {string} src
      * @returns {boolean}
      */
-    private updateNodeImageSrc = (node: Node, src: string) => {
+    private updateNodeImageSrc = (node: Node, src: string): boolean => {
         if (src && typeof src !== 'string') {
             Log.error('The image path must be a string', 'type')
         }
@@ -857,6 +930,7 @@ export default class Nodes {
             node.image.src = src
 
             this.map.draw.setImage(node)
+            return true
         } else {
             return false
         }
@@ -868,7 +942,7 @@ export default class Nodes {
      * @param {string} href
      * @returns {boolean}
      */
-    private updateNodeLinkHref = (node: Node, href: string) => {
+    private updateNodeLinkHref = (node: Node, href: string): boolean => {
         if (href && typeof href !== 'string') {
             Log.error('The link href must be a string', 'type')
         }
@@ -877,6 +951,26 @@ export default class Nodes {
             node.link.href = href
 
             this.map.draw.setLink(node)
+            return true
+        } else {
+            return false
+        }
+    }
+
+    /**
+     * Update the node hidden value
+     * @param {Node} node
+     * @param {boolean} hidden
+     * @returns {boolean}
+     */
+    private updateNodeHidden = (node: Node, hidden: boolean): boolean => {
+        if (hidden && typeof hidden !== 'boolean') {
+            Log.error('The hidden value must be boolean', 'type')
+        }
+
+        if (node.hidden !== hidden) {
+            node.hidden = hidden;
+            return true
         } else {
             return false
         }
@@ -889,7 +983,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontStyle = (node: Node, style: string, graphic: boolean = false) => {
+    private updateNodeFontStyle = (node: Node, style: string, graphic: boolean = false): boolean => {
         if (style && typeof style !== 'string') {
             Log.error('The font style must be a string', 'type')
         }
@@ -900,6 +994,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.font.style = style
             }
+            return true
         } else {
             return false
         }
@@ -912,7 +1007,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontWeight = (node: Node, weight: string, graphic: boolean = false) => {
+    private updateNodeFontWeight = (node: Node, weight: string, graphic: boolean = false): boolean => {
         if (weight && typeof weight !== 'string') {
             Log.error('The font weight must be a string', 'type')
         }
@@ -925,6 +1020,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.font.weight = weight
             }
+            return true
         } else {
             return false
         }
@@ -937,7 +1033,7 @@ export default class Nodes {
      * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeTextDecoration = (node: Node, decoration: string, graphic: boolean = false) => {
+    private updateNodeTextDecoration = (node: Node, decoration: string, graphic: boolean = false): boolean => {
         if (decoration && typeof decoration !== 'string') {
             Log.error('The text decoration must be a string', 'type')
         }
@@ -950,6 +1046,7 @@ export default class Nodes {
             if (graphic === false) {
                 node.font.decoration = decoration
             }
+            return true
         } else {
             return false
         }
@@ -961,15 +1058,17 @@ export default class Nodes {
      * @param {boolean} flag
      * @returns {boolean}
      */
-    private updateNodeLockedStatus = (node: Node, flag: boolean) => {
+    private updateNodeLockedStatus = (node: Node, flag: boolean): boolean => {
         if (flag && typeof flag !== 'boolean') {
             Log.error('The node locked status must be a boolean', 'type')
         }
 
         if (!node.isRoot) {
             node.locked = flag || !node.locked
+            return true
         } else {
             Log.error('The root node can not be locked')
+            return false
         }
     }
 
@@ -1048,5 +1147,6 @@ export const PropertyMapping = {
     textDecoration: [],
     fontStyle: ['font', 'style'],
     fontSize: ['font', 'size'],
-    nameColor: ['colors', 'name']
+    nameColor: ['colors', 'name'],
+    hidden: ['hidden']
 } as const

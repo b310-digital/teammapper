@@ -15,6 +15,7 @@ export const createMmpMap = (overrides = {}): MmpMap => ({
         fontMinSize: 1,
         fontIncrement: 1
     },
+    createdAt: new Date('1970-01-01'),
     nodes: Array<MmpNode>(),
     ...overrides
 })
@@ -31,6 +32,7 @@ export const createMmpClientMap = (overrides = {}): IMmpClientMap => ({
         fontMinSize: 1,
         fontIncrement: 1
     },
+    createdAt: new Date('1970-01-01'),
     ...overrides,
 })
 

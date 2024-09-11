@@ -4,7 +4,9 @@
     "jasmine": true,
     "browser": true
   },
-  "plugins": ["prettier"],
+  "plugins": [
+    "prettier"
+  ],
   "ignorePatterns": [
     "projects/**/*"
   ],
@@ -31,7 +33,15 @@
         "prettier/prettier": "error",
         "no-unused-vars": "off",
         "@typescript-eslint/no-explicit-any": "warn",
-        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "args": "all",
+            "argsIgnorePattern": "^_",
+            "caughtErrors": "all",
+            "caughtErrorsIgnorePattern": "^_"
+          }
+        ],
         "@angular-eslint/component-selector": [
           "error",
           {
@@ -46,19 +56,6 @@
             "prefix": "teammapper",
             "style": "camelCase",
             "type": "attribute"
-          }
-        ],
-        "@typescript-eslint/member-delimiter-style": [
-          "warn",
-          {
-            "multiline": {
-                "delimiter": "semi",
-                "requireLast": true
-            },
-            "singleline": {
-                "delimiter": "semi",
-                "requireLast": false
-            }
           }
         ]
       }

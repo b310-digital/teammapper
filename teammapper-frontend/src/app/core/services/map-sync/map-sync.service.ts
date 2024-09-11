@@ -105,6 +105,7 @@ export class MapSyncService implements OnDestroy {
       modificationSecret: privateServerMap.modificationSecret,
       ttl: serverMap.deletedAt,
       rootName: serverMap.data[0].name,
+      createdAt: serverMap.createdAt,
     });
 
     this.prepareMap(serverMap);
@@ -120,11 +121,12 @@ export class MapSyncService implements OnDestroy {
   ): Promise<ServerMap> {
     this.modificationSecret = modificationSecret;
     const serverMap = await this.fetchMapFromServer(id);
-    this.updateCachedMapForAdmin(serverMap);
 
     if (!serverMap) {
       return;
     }
+
+    this.updateCachedMapForAdmin(serverMap);
     this.prepareMap(serverMap);
 
     return serverMap;
@@ -190,6 +192,7 @@ export class MapSyncService implements OnDestroy {
     const cachedMap: CachedMap = {
       data: this.mmpService.exportAsJSON(),
       lastModified: Date.now(),
+      createdAt: cachedMapEntry.cachedMap.createdAt,
       uuid: cachedMapEntry.cachedMap.uuid,
       deletedAt: cachedMapEntry.cachedMap.deletedAt,
       deleteAfterDays: cachedMapEntry.cachedMap.deleteAfterDays,
@@ -319,7 +322,6 @@ export class MapSyncService implements OnDestroy {
   private async fetchMapFromServer(id: string): Promise<ServerMap> {
     const response = await this.httpService.get(API_URL.ROOT, '/maps/' + id);
     if (!response.ok) return null;
-
     const json: ServerMap = await response.json();
     return json;
   }
@@ -332,6 +334,7 @@ export class MapSyncService implements OnDestroy {
         rootNode: this.settingsService.getCachedSettings().mapOptions.rootNode,
       })
     );
+
     return response.json();
   }
 
@@ -349,6 +352,7 @@ export class MapSyncService implements OnDestroy {
     return Object.assign({}, serverMap, {
       lastModified: Date.parse(serverMap.lastModified),
       deletedAt: Date.parse(serverMap.deletedAt),
+      createdAt: Date.parse(serverMap.createdAt),
     });
   }
 
@@ -382,10 +386,12 @@ export class MapSyncService implements OnDestroy {
       const existingNode = this.mmpService.getNode(newNode.id);
       const propertyPath = NodePropertyMapping[result.property];
       const changedValue = UtilsService.get(newNode, propertyPath);
+
       this.mmpService.updateNode(
         result.property,
         changedValue,
         false,
+        true,
         existingNode.id
       );
     });

@@ -25,6 +25,7 @@
     "COPY_NODE": "複製選取的節點",
     "CUT_NODE": "剪下選取的節點",
     "PASTE_NODE": "貼上已複製的節點",
+    "HIDE_CHILD_NODES": "Hide child nodes",
     "MOVE_NODE_TO_THE_LEFT": "將節點向左移動",
     "MOVE_NODE_TO_THE_RIGHT": "將節點向右移動",
     "MOVE_NODE_DOWN": "將節點向下移動",
@@ -83,7 +84,14 @@
       "TITLE": "Add a pictogram",
       "BUTTON_SEARCH": "Search",
       "FORM_INPUT_LABEL_SEARCH": "Search term",
-      "TERMS_TEXT": ["Pictograms author: Sergio Palao. Origin: ARASAAC (", "https://arasaac.org", "). License: ", "CC (BY-NC-SA)", "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en", ". Owner: Government of Aragon (Spain)"],
+      "TERMS_TEXT": [
+        "Pictograms author: Sergio Palao. Origin: ARASAAC (",
+        "https://arasaac.org",
+        "). License: ",
+        "CC (BY-NC-SA)",
+        "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
+        ". Owner: Government of Aragon (Spain)"
+      ],
       "EMPTY": "No result"
     },
     "SHARE": {
@@ -166,7 +174,11 @@
     "NODE_COPIED": "Node successfully copied!",
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",
-      "GENERIC_NODE_COPY_ERROR": "An error occurred whilst trying to copy the root node."
+      "ROOT_NODE_CUT": "It's not possible to cut the root node!",
+      "NODE_COPY_GENERIC": "An error occurred whilst trying to copy the node.",
+      "NODE_CUT_GENERIC": "An error occurred whilst trying to cut the node.",
+      "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
+      "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!"
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!"
   },

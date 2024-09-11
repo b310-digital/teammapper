@@ -57,6 +57,7 @@ describe('MapsController', () => {
       coordinatesX: 3,
       coordinatesY: 1,
       lastModified: lastModified,
+      createdAt: new Date()
     })
   }
 

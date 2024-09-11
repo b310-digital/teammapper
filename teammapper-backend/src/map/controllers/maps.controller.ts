@@ -25,7 +25,7 @@ export default class MapsController {
     await this.mapsService.updateLastAccessed(mapId)
 
     const map = await this.mapsService.exportMapToClient(mapId).catch((e: Error) => {
-      if (e.name === 'MalformedUUIDError') throw new NotFoundException()
+      if (e?.name === 'MalformedUUIDError') throw new NotFoundException()
     })
     if (!map) throw new NotFoundException()
 

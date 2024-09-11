@@ -114,6 +114,20 @@ export class ShortcutsService implements OnDestroy {
         },
       },
       {
+        keys: 'ctrl+=',
+        description: 'TOOLTIPS.ZOOM_IN_MAP',
+        callback: () => {
+          this.mmpService.zoomIn();
+        },
+      },
+      {
+        keys: 'ctrl+-',
+        description: 'TOOLTIPS.ZOOM_OUT_MAP',
+        callback: () => {
+          this.mmpService.zoomOut();
+        },
+      },
+      {
         keys: 'left',
         description: 'TOOLTIPS.SELECT_NODE_ON_THE_LEFT',
         callback: () => {

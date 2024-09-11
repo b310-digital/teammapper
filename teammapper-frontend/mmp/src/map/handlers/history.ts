@@ -1,6 +1,6 @@
 import Map from '../map'
-import Node, {Colors, Coordinates, ExportNodeProperties, Font, Image, Link, NodeProperties} from '../models/node'
-import {Event} from './events'
+import Node, { Colors, Coordinates, ExportNodeProperties, Font, Image, Link, NodeProperties } from '../models/node'
+import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
 import { DefaultNodeValues } from '../options'
@@ -54,9 +54,11 @@ export default class History {
 
             this.save()
 
-            if(notifyWithEvent) this.map.events.call(Event.create, this.map.dom)
+            if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom)
         } else if (this.checkSnapshotStructure(snapshot)) {
             const previousData = this.map.export.asJSON()
+
+            this.reapplyHiddenState(previousData, snapshot)
 
             this.redraw(snapshot)
 
@@ -64,7 +66,7 @@ export default class History {
 
             this.save()
 
-            if(notifyWithEvent) this.map.events.call(Event.create, this.map.dom, { previousMap: previousData })
+            if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom, { previousMap: previousData })
         } else {
             Log.error('The snapshot is not correct')
         }
@@ -99,6 +101,7 @@ export default class History {
         }
 
         this.snapshots.push(this.getSnapshot())
+
         this.index++
     }
 
@@ -135,13 +138,15 @@ export default class History {
                 link: Utils.cloneObject(mergedProperty.link) as Link,
                 locked: mergedProperty.locked,
                 detached: mergedProperty.detached,
+                hidden: mergedProperty.hidden,
+                hasHiddenChildNodes: mergedProperty.hasHiddenChildNodes,
                 isRoot: mergedProperty.isRoot
             }
 
             const node: Node = new Node(properties)
             this.map.nodes.setNode(node.id, node)
 
-            if(mergedProperty.isRoot) this.map.rootId = mergedProperty.id
+            if (mergedProperty.isRoot) this.map.rootId = mergedProperty.id
         })
 
         this.map.draw.clear()
@@ -262,6 +267,36 @@ export default class History {
                 style: oldNode.value.italic ? 'italic' : 'normal'
             }
         }
+    }
+
+    /**
+     * Find nodes that were previously hidden locally and re-apply attributes
+     * @param {MapSnapshot} previousData
+     * @param {MapSnapshot} snapshot
+     */
+    private reapplyHiddenState(previousData: MapSnapshot, snapshot: MapSnapshot): void {
+        // Find all nodes where we've set hasHiddenChildNodes in the previous map
+        const nodesWithHiddenChildren = previousData.filter(node => node.hasHiddenChildNodes)
+
+        // This method will recursively hide all children of children until none are left
+        const hideChildNodes = (parentId: string) => snapshot.filter(node => node.parent === parentId).forEach(node => {
+            node.hidden = true
+            hideChildNodes(node.id)
+        })
+
+        snapshot.forEach(snapshotNode => {
+            const nodeWithHiddenChildren = nodesWithHiddenChildren.find(x => snapshotNode.id === x.id)
+
+            if (nodeWithHiddenChildren) {
+                snapshotNode.hasHiddenChildNodes = true
+
+                // We need to iterate through the snapshot instead of using this.map.nodes.nodeChildren() to see if we need to set hidden attributes as the latter will not have new nodes added yet
+                snapshot.filter(node => node.parent === snapshotNode.id).forEach(node => {
+                    node.hidden = true
+                    hideChildNodes(node.id)
+                })
+            }
+        })
     }
 
 }
