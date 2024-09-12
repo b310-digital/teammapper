@@ -239,17 +239,10 @@ export class MapsService {
         'lastmodifiednode.nodeMapid = map.id'
       )
       .where(
-        "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today",
+        "(GREATEST(map.lastAccessed, map.lastModified, lastmodifiednode.lastUpdatedAt) + (INTERVAL '1 day' * :afterDays)) < :today",
         { afterDays, today }
       )
-      .orWhere(
-        new Brackets((qb) => {
-          qb.where("lastmodifiednode.lastUpdatedAt IS NULL").andWhere(
-            "(GREATEST(map.lastAccessed, map.lastModified) + (INTERVAL '1 day' * :afterDays)) < :today",
-            { afterDays, today }
-          )
-        })
-      )
+    // One case left: If lastModified is set but lastAccessed isn't and lastUpdatedAt is null, map should be deleted
 
     const outdatedMapsIdsFlat = (await deleteQuery.getRawMany()).flatMap(
       (id) => id['map_id']

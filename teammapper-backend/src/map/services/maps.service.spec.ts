@@ -126,18 +126,24 @@ describe('MapsController', () => {
         lastModified: new Date('2020-01-01')
       })
 
+      const node: MmpNode = await createNode(map, new Date('2019-01-01'))
+
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).toEqual(null)
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).toEqual(null)
     })
 
     it('does not delete a new map', async () => {
       const map: MmpMap = await mapsRepo.save({
-        lastAccessed: new Date('2024-06-20')
+        lastAccessed: new Date()
       })
+
+      const node: MmpNode = await createNode(map, new Date())
 
       await mapsService.deleteOutdatedMaps(30)
       const foundMap = await mapsService.findMap(map.id)
       expect(foundMap?.id).toEqual(map.id)
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).not.toBeNull()
     })
 
     it('deletes a map where lastAccessed is not set and lastModified is too old', async () => {
@@ -145,18 +151,11 @@ describe('MapsController', () => {
         lastModified: new Date('2019-01-01'),
       })
 
+      const node: MmpNode = await createNode(map, new Date('2019-01-01'))
+
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).toEqual(null)
-    })
-
-    it('does not delete a map where lastAccessed is not set but lastModified is recent', async () => {
-      const map: MmpMap = await mapsRepo.save({
-        lastModified: new Date()
-      })
-
-      await mapsService.deleteOutdatedMaps(30)
-      const foundMap = await mapsService.findMap(map.id)
-      expect(foundMap?.id).toEqual(map.id)
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).toEqual(null)
     })
 
     it('does not delete a map where lastModified is old but lastAccessed is recent', async () => {
@@ -165,9 +164,12 @@ describe('MapsController', () => {
         lastAccessed: new Date()
       })
 
+      const node: MmpNode = await createNode(map, new Date('2019-01-01'))
+
       await mapsService.deleteOutdatedMaps(30)
       const foundMap = await mapsService.findMap(map.id)
       expect(foundMap?.id).toEqual(map.id)
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).not.toBeNull()
     })
 
     it('does not delete a map where lastAccessed is old but lastModified is recent', async () => {
@@ -204,6 +206,33 @@ describe('MapsController', () => {
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).not.toBeNull()
       expect(await nodesRepo.findOne({ where: { id: node.id } })).not.toBeNull()
+    })
+
+    it('deletes a map which has outdated nodes and outdated lastAccess', async () => {
+      const map: MmpMap = await mapsRepo.save({
+        lastAccessed: new Date('2019-01-01'),
+        lastModified: new Date('2019-01-01')
+      })
+
+      const node: MmpNode = await createNode(map, new Date('2019-01-01'))
+
+      await mapsService.deleteOutdatedMaps(30)
+      expect(await mapsService.findMap(map.id)).toEqual(null)
+      expect(await nodesRepo.findOne({ where: { id: node.id } })).toEqual(null)
+    })
+
+    it('does not delete a map which has outdated lastAccess but some recent nodes', async () => {
+      const map: MmpMap = await mapsRepo.save({
+        lastAccessed: new Date('2019-01-01')
+      })
+
+      const outdatedNode: MmpNode = await createNode(map, new Date('2019-01-01'))
+      const recentNode: MmpNode = await createNode(map, new Date())
+
+      await mapsService.deleteOutdatedMaps(30)
+      expect(await mapsService.findMap(map.id)).not.toBeNull()
+      expect(await nodesRepo.findOne({ where: { id: outdatedNode.id } })).not.toBeNull()
+      expect(await nodesRepo.findOne({ where: { id: recentNode.id } })).not.toBeNull()
     })
 
     it('does not delete a map that contains outdated and recent nodes', async () => {
