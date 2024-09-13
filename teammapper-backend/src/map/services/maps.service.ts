@@ -242,7 +242,6 @@ export class MapsService {
         "(GREATEST(map.lastAccessed, map.lastModified, lastmodifiednode.lastUpdatedAt) + (INTERVAL '1 day' * :afterDays)) < :today",
         { afterDays, today }
       )
-    // One case left: If lastModified is set but lastAccessed isn't and lastUpdatedAt is null, map should be deleted
 
     const outdatedMapsIdsFlat = (await deleteQuery.getRawMany()).flatMap(
       (id) => id['map_id']
