@@ -106,7 +106,7 @@ export default class Draw {
                 }
 
                 this.enableNodeNameEditing(node)
-            })
+            }, { passive: false })
         if (this.map.options.drag === true) {
             outer.call(this.map.drag.getDragBehavior())
         } else {
