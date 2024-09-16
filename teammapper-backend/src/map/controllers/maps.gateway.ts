@@ -35,10 +35,11 @@ import { EditGuard } from '../guards/edit.guard'
 export class MapsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server
+  clients: Set<Socket> = new Set<Socket>()
 
   constructor(
     private mapsService: MapsService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) { }
 
   @SubscribeMessage('leave')
@@ -49,6 +50,8 @@ export class MapsGateway implements OnGatewayDisconnect {
     this.server.to(mapId).emit('clientDisconnect', client.id)
     this.removeClientForMap(mapId, client.id)
     this.cacheManager.del(client.id)
+    client.leave(mapId)
+    this.clients.delete(client)
   }
 
   @SubscribeMessage('join')
@@ -61,6 +64,7 @@ export class MapsGateway implements OnGatewayDisconnect {
       return Promise.reject()
 
     client.join(request.mapId)
+    this.clients.add(client)
     this.cacheManager.set(client.id, request.mapId, 10000)
     const updatedClientCache: IClientCache = await this.addClientForMap(
       request.mapId,
@@ -175,8 +179,14 @@ export class MapsGateway implements OnGatewayDisconnect {
     if (!(await this.mapsService.findMap(request.mapId)))
       return Promise.resolve(false)
 
+    // Disconnect all clients temporarily
+    this.clients.forEach((client) => client.leave(request.mapId))
+
     const mmpMap: IMmpClientMap = request.map
     await this.mapsService.updateMap(mmpMap)
+
+    // Reconnect clients once map is updated
+    this.clients.forEach((client) => client.join(request.mapId))
 
     const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid)
 
