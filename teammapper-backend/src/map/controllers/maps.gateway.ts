@@ -179,10 +179,14 @@ export class MapsGateway implements OnGatewayDisconnect {
     if (!(await this.mapsService.findMap(request.mapId)))
       return Promise.resolve(false)
 
+    const mmpMap: IMmpClientMap = request.map
+
     // Disconnect all clients temporarily
+    // Emit an event so clients can display a notification
+    this.server.to(mmpMap.uuid).emit('clientNotification', { clientId: client.id, message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS', type: 'warning' })
+
     this.clients.forEach((client) => client.leave(request.mapId))
 
-    const mmpMap: IMmpClientMap = request.map
     await this.mapsService.updateMap(mmpMap)
 
     // Reconnect clients once map is updated
@@ -193,6 +197,8 @@ export class MapsGateway implements OnGatewayDisconnect {
     this.server
       .to(mmpMap.uuid)
       .emit('mapUpdated', { clientId: client.id, map: exportMap })
+
+    this.server.to(mmpMap.uuid).emit('clientNotification', { clientId: client.id, message: 'TOASTS.MAP_IMPORT_SUCCESS', type: 'success' })
 
     return true
   }
