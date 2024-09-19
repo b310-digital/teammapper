@@ -172,6 +172,10 @@
     "SUCCESSFULLY_DUPLICATED": "思维导图复制成功！",
     "URL_COPIED": "成功复制 URL",
     "NODE_COPIED": "节点复制成功!",
+    "MAP_IMPORT_SUCCESS": "成功导入思维导图",
+    "WARNINGS": {
+      "MAP_IMPORT_IN_PROGRESS": "心智图导入中"
+    },
     "ERRORS": {
       "ROOT_NODE_COPIED": "无法复制根节点！",
       "ROOT_NODE_CUT": "不可能切断根节点！",

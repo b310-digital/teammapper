@@ -60,18 +60,12 @@ export default class History {
 
             this.reapplyHiddenState(previousData, snapshot)
 
-            this.redraw(snapshot, true)
+            this.redraw(snapshot)
 
             this.map.zoom.center('position', 0)
 
-            // If the amount of nodes is == 0, automatically rollback to the last clean snapshot and display a toast
-            if (this.map.nodes.getNodes().length === 0) {
-                this.undo()
-                Log.error('There was an error importing the map; changes have been rolled back.')
-            } else {
-                this.save()
-                if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom, { previousMap: previousData })
-            }
+            this.save()
+            if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom, { previousMap: previousData })
         } else {
             Log.error('The snapshot is not correct')
         }
@@ -125,12 +119,7 @@ export default class History {
      * Redraw the map with a new snapshot.
      * @param {MapSnapshot} snapshot
      */
-    private redraw(snapshot: MapSnapshot, backup: boolean = false) {
-        // Save the snapshot before clearing the map for easy rollback
-        if (backup) {
-            this.save()
-        }
-
+    private redraw(snapshot: MapSnapshot) {
         this.map.nodes.clear()
 
         snapshot.forEach((property: ExportNodeProperties) => {

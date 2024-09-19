@@ -172,6 +172,10 @@
     "SUCCESSFULLY_DUPLICATED": "¡Mapa mental duplicado con éxito!",
     "URL_COPIED": "URL copiada correctamente",
     "NODE_COPIED": "¡Nodo copiado con éxito!",
+    "MAP_IMPORT_SUCCESS": "Mapa mental importado correctamente",
+    "WARNINGS": {
+      "MAP_IMPORT_IN_PROGRESS": "Importación de mapas mentales en curso"
+    },
     "ERRORS": {
       "ROOT_NODE_COPIED": "No es posible copiar el nodo raíz.",
       "ROOT_NODE_CUT": "No es posible cortar el nodo raíz.",

@@ -172,6 +172,10 @@
     "SUCCESSFULLY_DUPLICATED": "Mindmap successfully duplicated!",
     "URL_COPIED": "URL successfully copied!",
     "NODE_COPIED": "Node successfully copied!",
+    "MAP_IMPORT_SUCCESS": "Map successfully imported!",
+    "WARNINGS": {
+      "MAP_IMPORT_IN_PROGRESS": "Map import in progress..."
+    },
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",
       "ROOT_NODE_CUT": "It's not possible to cut the root node!",
