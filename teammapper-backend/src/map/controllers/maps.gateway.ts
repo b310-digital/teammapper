@@ -10,7 +10,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets'
-import { Server, Socket } from 'socket.io'
+import { Server, Socket, RemoteSocket } from 'socket.io'
 import { MapsService } from '../services/maps.service'
 import {
   IClientCache,
@@ -35,7 +35,6 @@ import { EditGuard } from '../guards/edit.guard'
 export class MapsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server
-  clients: Set<Socket> = new Set<Socket>()
 
   constructor(
     private mapsService: MapsService,
@@ -51,7 +50,6 @@ export class MapsGateway implements OnGatewayDisconnect {
     this.removeClientForMap(mapId, client.id)
     this.cacheManager.del(client.id)
     client.leave(mapId)
-    this.clients.delete(client)
   }
 
   @SubscribeMessage('join')
@@ -64,7 +62,6 @@ export class MapsGateway implements OnGatewayDisconnect {
       return Promise.reject()
 
     client.join(request.mapId)
-    this.clients.add(client)
     this.cacheManager.set(client.id, request.mapId, 10000)
     const updatedClientCache: IClientCache = await this.addClientForMap(
       request.mapId,
@@ -185,12 +182,16 @@ export class MapsGateway implements OnGatewayDisconnect {
     // Emit an event so clients can display a notification
     this.server.to(mmpMap.uuid).emit('clientNotification', { clientId: client.id, message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS', type: 'warning' })
 
-    this.clients.forEach((client) => client.leave(request.mapId))
+    const sockets = await this.server.in(request.mapId).fetchSockets()
+    this.server.in(request.mapId).socketsLeave(request.mapId)
 
     await this.mapsService.updateMap(mmpMap)
 
     // Reconnect clients once map is updated
-    this.clients.forEach((client) => client.join(request.mapId))
+    sockets.forEach((socket: RemoteSocket<any, any>) => {
+      // socketsJoin() doesn't work here as the sockets have left the room and this.server.in(request.mapId) would return nothing
+      socket.join(request.mapId)
+    });
 
     const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid)
 
