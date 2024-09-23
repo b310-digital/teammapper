@@ -59,7 +59,7 @@
     "@ngx-translate/http-loader": "^7.0.0",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
-    "dompurify": "3.0.6",
+    "dompurify": "3.1.6",
     "eslint-config-standard": "^17.0.0",
     "jspdf": "^2.5.1",
     "localforage": "1.10.0",
@@ -81,8 +81,8 @@
     "@angular-eslint/eslint-plugin": "18.3.0",
     "@angular-eslint/eslint-plugin-template": "18.3.0",
     "@angular-eslint/schematics": "18.3.0",
-    "@angular-eslint/template-parser": "18.3.0",
-    "@angular/language-service": "18.2.2",
+    "@angular-eslint/template-parser": "18.3.1",
+    "@angular/language-service": "18.2.5",
     "@compodoc/compodoc": "^1.1.25",
     "@schematics/angular": "^18.2.2",
     "@types/d3": "7.1.0",
@@ -102,13 +102,13 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "minimist": "^1.2.5",
     "prettier": "2.8.7",
-    "ts-node": "~10.4.0",
+    "ts-node": "~10.9.2",
     "typescript": "~5.4.3"
   },
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "17.2.8",
     "@nx/nx-darwin-x64": "19.6.2",
     "@nx/nx-linux-x64-gnu": "19.6.4",
-    "@nx/nx-win32-x64-msvc": "17.2.8"
+    "@nx/nx-win32-x64-msvc": "19.8.0"
   }
 }

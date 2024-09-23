@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, Brackets } from 'typeorm'
+import { Repository } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
@@ -35,6 +35,10 @@ export class MapsService {
     return this.mapsRepository.findOne({
       where: { id: uuid },
     })
+  }
+
+  async updateLastAccessed(uuid: string, lastAccessed = new Date()) {
+    this.mapsRepository.update(uuid, { lastAccessed })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
@@ -203,7 +207,9 @@ export class MapsService {
         ? map.lastModified
         : newestNodeLastModified
 
-    return this.calculcateDeletedAt(new Date(lastModified), afterDays)
+    const lastAccessed = map.lastAccessed
+
+    return this.calculcateDeletedAt(lastAccessed ? new Date(lastAccessed) : new Date(lastModified), afterDays)
   }
 
   calculcateDeletedAt(lastModified: Date, afterDays: number): Date {
@@ -233,18 +239,8 @@ export class MapsService {
         'lastmodifiednode.nodeMapid = map.id'
       )
       .where(
-        // delete all maps that have nodes that were last updated after afterDays
-        "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today",
+        "(GREATEST(map.lastAccessed, map.lastModified, lastmodifiednode.lastUpdatedAt) + (INTERVAL '1 day' * :afterDays)) < :today",
         { afterDays, today }
-      )
-      .orWhere(
-        new Brackets((qb) => {
-          // also delete empty maps, use th emaps lastmodified date for this:
-          qb.where('lastmodifiednode.lastUpdatedAt IS NULL').andWhere(
-            "(map.lastModified + (INTERVAL '1 day' * :afterDays)) < :today",
-            { afterDays, today }
-          )
-        })
       )
 
     const outdatedMapsIdsFlat = (await deleteQuery.getRawMany()).flatMap(

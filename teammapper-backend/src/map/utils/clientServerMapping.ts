@@ -49,6 +49,7 @@ const mapMmpMapToClient = (
     deleteAfterDays,
     deletedAt,
     lastModified: serverMap.lastModified,
+    lastAccessed: serverMap.lastAccessed,
     options: serverMap?.options,
     createdAt: serverMap.createdAt
   }
