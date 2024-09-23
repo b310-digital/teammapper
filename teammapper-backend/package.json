@@ -39,7 +39,7 @@
     "@nestjs/config": "3.2.2",
     "@nestjs/core": "^10.3.10",
     "@nestjs/platform-express": "^10.3.10",
-    "@nestjs/platform-socket.io": "^10.3.8",
+    "@nestjs/platform-socket.io": "^10.4.3",
     "@nestjs/schedule": "^4.1.0",
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/typeorm": "^10.0.2",
