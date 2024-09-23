@@ -102,7 +102,7 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "minimist": "^1.2.5",
     "prettier": "2.8.7",
-    "ts-node": "~10.4.0",
+    "ts-node": "~10.9.2",
     "typescript": "~5.4.3"
   },
   "optionalDependencies": {
