@@ -16,7 +16,6 @@ export class MapListComponent implements OnInit {
     private router: Router
   ) {
     this.cachedAdminMapEntries = [];
-    console.log('test');
   }
 
   async ngOnInit() {
