@@ -10,7 +10,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets'
-import { Server, Socket, RemoteSocket } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 import { MapsService } from '../services/maps.service'
 import {
   IClientCache,
@@ -188,7 +188,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     await this.mapsService.updateMap(mmpMap)
 
     // Reconnect clients once map is updated
-    sockets.forEach((socket: RemoteSocket<any, any>) => {
+    sockets.forEach((socket) => {
       // socketsJoin() doesn't work here as the sockets have left the room and this.server.in(request.mapId) would return nothing
       socket.join(request.mapId)
     });
