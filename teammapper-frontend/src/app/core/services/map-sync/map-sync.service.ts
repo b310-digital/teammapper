@@ -89,7 +89,7 @@ export class MapSyncService implements OnDestroy {
     this.availableColors = COLORS;
     this.clientColor =
       this.availableColors[
-        Math.floor(Math.random() * this.availableColors.length)
+      Math.floor(Math.random() * this.availableColors.length)
       ];
     this.modificationSecret = '';
     this.colorMapping = {};
@@ -376,9 +376,6 @@ export class MapSyncService implements OnDestroy {
     this.socket.on(
       'clientNotification',
       async (notification: ResponseClientNotification) => {
-        console.log(
-          `Displaying notification: ${notification.message}, ${notification.type}`
-        );
         if (notification.clientId === this.socket.id) return;
 
         const msg = await this.utilsService.translate(notification.message);
