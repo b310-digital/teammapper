@@ -89,7 +89,7 @@ export class MapSyncService implements OnDestroy {
     this.availableColors = COLORS;
     this.clientColor =
       this.availableColors[
-      Math.floor(Math.random() * this.availableColors.length)
+        Math.floor(Math.random() * this.availableColors.length)
       ];
     this.modificationSecret = '';
     this.colorMapping = {};
