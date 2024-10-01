@@ -23,6 +23,12 @@ interface ResponseNodesAdded extends ResponseServer {
   nodes: ExportNodeProperties[];
 }
 
+interface ResponseClientNotification {
+  clientId: string;
+  message: string;
+  type: 'error' | 'warning' | 'success';
+}
+
 interface ResponseNodeRemoved extends ResponseServer {
   nodeId: string;
 }
@@ -55,6 +61,7 @@ export {
   ResponseNodeRemoved,
   ResponseNodeUpdated,
   ResponseSelectionUpdated,
+  ResponseClientNotification,
   ServerMap,
   PrivateServerMap,
 };

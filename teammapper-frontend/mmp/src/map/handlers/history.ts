@@ -65,7 +65,6 @@ export default class History {
             this.map.zoom.center('position', 0)
 
             this.save()
-
             if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom, { previousMap: previousData })
         } else {
             Log.error('The snapshot is not correct')
