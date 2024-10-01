@@ -30,6 +30,7 @@ describe('SettingsService', () => {
       modificationSecret: '456',
       adminId: '123',
       rootName: 'test',
+      createdAt: new Date(),
     };
     (storageServiceSpy.getAllCreatedMapsFromStorage as any).and.returnValue(
       new Promise(resolve => resolve([['123', cachedMapDataFromStorage]]))
@@ -49,12 +50,14 @@ describe('SettingsService', () => {
       modificationSecret: '456',
       adminId: '123',
       rootName: 'test',
+      createdAt: new Date(),
     };
     const otherCachedMapDataFromStorage: CachedAdminMapValue = {
       ttl: futureDateTwo,
       modificationSecret: '456',
       adminId: '123',
       rootName: 'test',
+      createdAt: new Date(),
     };
     (storageServiceSpy.getAllCreatedMapsFromStorage as any).and.returnValue(
       new Promise(resolve =>

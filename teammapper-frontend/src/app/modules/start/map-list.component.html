@@ -1,16 +1,24 @@
 <h4>Letzte Mindmaps</h4>
-<mat-list>
-  <mat-list-item
-    class="item-startpage"
-    *ngFor="let cachedMapEntry of cachedAdminMapEntries">
-    <span matLine style="font-style: italic">
-      <a href="{{ getMapUrl(cachedMapEntry) }}">{{
-        getMapTitle(cachedMapEntry)
-      }}</a>
-    </span>
-    <span matLine>
-      wird gelöscht am
-      {{ cachedMapEntry.cachedAdminMapValue.ttl | date : 'dd.MM.YYYY' }}</span
-    >
-  </mat-list-item>
-</mat-list>
+<ng-container *ngIf="cachedAdminMapEntries.length > 0; else noMindmaps">
+  <mat-list>
+    <ng-container *ngFor="let cachedMapEntry of cachedAdminMapEntries">
+      <mat-list-item class="item-startpage" *ngIf="cachedMapEntry.cachedAdminMapValue.createdAt">
+        <a href="{{ getMapUrl(cachedMapEntry) }}">{{
+          getMapTitle(cachedMapEntry)
+          }}
+          vom
+          {{ cachedMapEntry.cachedAdminMapValue.createdAt | date : 'dd.MM.YYYY' }}
+          um
+          {{ cachedMapEntry.cachedAdminMapValue.createdAt | date : 'HH:mm' }}
+          Uhr
+        </a>
+      </mat-list-item>
+    </ng-container>
+  </mat-list>
+</ng-container>
+
+<ng-template #noMindmaps>
+  <mat-list>
+    -
+  </mat-list>
+</ng-template>
