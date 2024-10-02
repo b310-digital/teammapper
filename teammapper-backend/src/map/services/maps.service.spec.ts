@@ -40,6 +40,7 @@ describe('MapsController', () => {
     nodesRepo = moduleFixture.get<Repository<MmpNode>>(
       getRepositoryToken(MmpNode)
     )
+
     mapsService = new MapsService(nodesRepo, mapsRepo)
   })
 
@@ -87,6 +88,51 @@ describe('MapsController', () => {
       })
 
       expect(createdNode).not.toBeUndefined()
+    })
+
+    it('catches an FK error when trying to assign a nodeParentId to a root node', async () => {
+      const map: MmpMap = await mapsRepo.save({})
+      const loggerSpy = jest.spyOn(mapsService.logger, 'warn');
+
+      const node: MmpNode = await nodesRepo.create({
+        id: '2177d542-665d-468c-bea5-7520bdc5b481',
+        nodeMapId: map.id,
+        root: true,
+        coordinatesX: 2,
+        coordinatesY: 1,
+        nodeParentId: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+      })
+
+      const nodes = await mapsService.addNodes(map.id, [node])
+      
+      expect(nodes).toEqual([])
+      expect(loggerSpy).toHaveBeenCalled()
+    })
+
+    it('catches an FK error when trying to assign a nodeParentId from a different map', async () => {
+      const map: MmpMap = await mapsRepo.save({})
+      const mapTwo: MmpMap = await mapsRepo.save({})
+      const loggerSpy = jest.spyOn(mapsService.logger, 'warn');
+
+      const parentNode: MmpNode = await nodesRepo.create({
+        id: '2177d542-665d-468c-bea5-7520bdc5b481',
+        nodeMapId: map.id,
+        coordinatesX: 2,
+        coordinatesY: 1,
+      })
+
+      const childNodeFromDifferentMap: MmpNode = await nodesRepo.create({
+        id: 'cf65f9cc-0050-4e23-ac4d-effb61cb1731',
+        nodeMapId: mapTwo.id,
+        coordinatesX: 1,
+        coordinatesY: 1,
+        nodeParentId: parentNode.id,
+      })
+
+      const nodes = await mapsService.addNodes(map.id, [parentNode, childNodeFromDifferentMap])
+      
+      expect(nodes).toEqual([])
+      expect(loggerSpy).toHaveBeenCalled()
     })
   })
 
