@@ -60,7 +60,7 @@ export default class History {
 
             this.reapplyHiddenState(previousData, snapshot)
 
-            this.redraw(snapshot)
+            this.redraw(snapshot, true)
 
             this.map.zoom.center('position', 0)
 
