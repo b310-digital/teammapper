@@ -72,9 +72,9 @@ describe('MapsController', () => {
 
   describe('addNodes', () => {
     it('adds a node', async () => {
-      const map: MmpMap = await mapsRepo.save({})
+      const map = await mapsRepo.save({})
 
-      const node: MmpNode = await nodesRepo.create({
+      const node = await nodesRepo.create({
         id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
         nodeMapId: map.id,
         coordinatesX: 3,
@@ -91,10 +91,10 @@ describe('MapsController', () => {
     })
 
     it('catches an FK error when trying to assign a nodeParentId to a root node', async () => {
-      const map: MmpMap = await mapsRepo.save({})
+      const map = await mapsRepo.save({})
       const loggerSpy = jest.spyOn(mapsService.logger, 'warn');
 
-      const node: MmpNode = await nodesRepo.create({
+      const node = await nodesRepo.create({
         id: '2177d542-665d-468c-bea5-7520bdc5b481',
         nodeMapId: map.id,
         root: true,
@@ -110,18 +110,18 @@ describe('MapsController', () => {
     })
 
     it('catches an FK error when trying to assign a nodeParentId from a different map', async () => {
-      const map: MmpMap = await mapsRepo.save({})
-      const mapTwo: MmpMap = await mapsRepo.save({})
+      const map = await mapsRepo.save({})
+      const mapTwo = await mapsRepo.save({})
       const loggerSpy = jest.spyOn(mapsService.logger, 'warn');
 
-      const parentNode: MmpNode = await nodesRepo.create({
+      const parentNode = await nodesRepo.create({
         id: '2177d542-665d-468c-bea5-7520bdc5b481',
         nodeMapId: map.id,
         coordinatesX: 2,
         coordinatesY: 1,
       })
 
-      const childNodeFromDifferentMap: MmpNode = await nodesRepo.create({
+      const childNodeFromDifferentMap = await nodesRepo.create({
         id: 'cf65f9cc-0050-4e23-ac4d-effb61cb1731',
         nodeMapId: mapTwo.id,
         coordinatesX: 1,
@@ -138,12 +138,12 @@ describe('MapsController', () => {
 
   describe('updateNode', () => {
     it('does update the lastModified value on update', async () => {
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2019-01-01'),
       })
 
       const oldDate = new Date('2019-01-01')
-      const node: MmpNode = await createNode(map, oldDate)
+      const node = await createNode(map, oldDate)
 
       const clientNode = mapMmpNodeToClient(node)
       clientNode.name = 'new'
@@ -178,12 +178,12 @@ describe('MapsController', () => {
       jest.setSystemTime(new Date('2021-01-31'))
 
       // Last modified is now() by default, so we need to set it here explicitly.
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastAccessed: new Date('2021-01-01'),
         lastModified: new Date('2020-01-01')
       })
 
-      const node: MmpNode = await createNode(map, new Date('2019-01-01'))
+      const node = await createNode(map, new Date('2019-01-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).toEqual(null)
@@ -193,11 +193,11 @@ describe('MapsController', () => {
     it('does not delete a new map', async () => {
       // Explicitly set system time to equal lastAccessed
       jest.setSystemTime(new Date('2024-09-01'))
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastAccessed: new Date('2024-09-01')
       })
 
-      const node: MmpNode = await createNode(map, new Date('2024-09-01'))
+      const node = await createNode(map, new Date('2024-09-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       const foundMap = await mapsService.findMap(map.id)
@@ -209,11 +209,11 @@ describe('MapsController', () => {
       // Explicitly set system time to lastModified + 30 days
       jest.setSystemTime(new Date('2021-01-31'))
 
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2021-01-01'),
       })
 
-      const node: MmpNode = await createNode(map, new Date('2021-01-01'))
+      const node = await createNode(map, new Date('2021-01-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).toEqual(null)
@@ -224,12 +224,12 @@ describe('MapsController', () => {
       // Explicitly set system time to equal lastAccessed
       jest.setSystemTime(new Date('2024-09-01'))
 
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2021-01-01'),
         lastAccessed: new Date('2024-09-01')
       })
 
-      const node: MmpNode = await createNode(map, new Date('2021-01-01'))
+      const node = await createNode(map, new Date('2021-01-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       const foundMap = await mapsService.findMap(map.id)
@@ -241,12 +241,12 @@ describe('MapsController', () => {
       // Explicitly set system time to equal lastModified
       jest.setSystemTime(new Date('2024-09-01'))
 
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastAccessed: new Date('2021-01-01'),
         lastModified: new Date('2024-09-01')
       })
 
-      const node: MmpNode = await createNode(map, new Date('2021-01-01'))
+      const node = await createNode(map, new Date('2021-01-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       const foundMap = await mapsService.findMap(map.id)
@@ -258,11 +258,11 @@ describe('MapsController', () => {
       // Explicitly set system time to node + 30 days
       jest.setSystemTime(new Date('2021-01-31'))
 
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2021-01-01'),
       })
 
-      const node: MmpNode = await createNode(map, new Date('2021-01-01'))
+      const node = await createNode(map, new Date('2021-01-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).toEqual(null)
@@ -274,11 +274,11 @@ describe('MapsController', () => {
       jest.setSystemTime(new Date('2024-09-01'))
 
       // map itself is old, but node is not:
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2021-01-01'),
       })
 
-      const node: MmpNode = await createNode(map, new Date('2024-09-01'))
+      const node = await createNode(map, new Date('2024-09-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).not.toBeNull()
@@ -289,12 +289,12 @@ describe('MapsController', () => {
       // Explicitly set system time to lastAccessed + 30 days
       jest.setSystemTime(new Date('2021-01-31'))
 
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastAccessed: new Date('2021-01-01'),
         lastModified: new Date('2021-01-01')
       })
 
-      const node: MmpNode = await createNode(map, new Date('2021-01-01'))
+      const node = await createNode(map, new Date('2021-01-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).toEqual(null)
@@ -305,12 +305,12 @@ describe('MapsController', () => {
       // Explcitly set system time to equal recentNode
       jest.setSystemTime(new Date('2024-09-01'))
 
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastAccessed: new Date('2021-01-01')
       })
 
-      const outdatedNode: MmpNode = await createNode(map, new Date('2021-01-01'))
-      const recentNode: MmpNode = await createNode(map, new Date('2024-09-01'))
+      const outdatedNode = await createNode(map, new Date('2021-01-01'))
+      const recentNode = await createNode(map, new Date('2024-09-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).not.toBeNull()
@@ -323,15 +323,15 @@ describe('MapsController', () => {
       jest.setSystemTime(new Date('2024-09-01'))
 
       // map itself is old, but node is not:
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2021-01-01'),
       })
 
-      const outdatedNode: MmpNode = await createNode(
+      const outdatedNode = await createNode(
         map,
         new Date('2021-01-01')
       )
-      const recentNode: MmpNode = await createNode(map, new Date('2024-09-01'))
+      const recentNode = await createNode(map, new Date('2024-09-01'))
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).not.toBeNull()
@@ -347,7 +347,7 @@ describe('MapsController', () => {
       // Explicitly set system time to lastModified + 30 days
       jest.setSystemTime(new Date('2021-01-31'))
 
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2021-01-01'),
       })
 
@@ -358,7 +358,7 @@ describe('MapsController', () => {
 
   describe('getDeletedAt', () => {
     it('calculates the correct date based on the newest node', async () => {
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2018-02-02'),
       })
 
@@ -371,7 +371,7 @@ describe('MapsController', () => {
     })
 
     it('calculates the date based on the map when no node is present', async () => {
-      const map: MmpMap = await mapsRepo.save({
+      const map = await mapsRepo.save({
         lastModified: new Date('2018-02-02'),
       })
 
@@ -383,15 +383,15 @@ describe('MapsController', () => {
 
   describe('removeNode', () => {
     it('remove all nodes connected together', async () => {
-      const map: MmpMap = await mapsRepo.save({})
+      const map = await mapsRepo.save({})
 
-      const node: MmpNode = await nodesRepo.save({
+      const node = await nodesRepo.save({
         nodeMapId: map.id,
         coordinatesX: 3,
         coordinatesY: 1,
       })
 
-      const nodeTwo: MmpNode = await nodesRepo.save({
+      const nodeTwo = await nodesRepo.save({
         nodeMapId: map.id,
         nodeParent: node,
         coordinatesX: 3,
