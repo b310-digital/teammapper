@@ -21,12 +21,12 @@ import MalformedUUIDError from './uuid.error'
 @Injectable()
 export class MapsService {
   private readonly logger = new Logger(MapsService.name)
-
+  
   constructor(
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
-    private mapsRepository: Repository<MmpMap>
+    private mapsRepository: Repository<MmpMap>,
   ) { }
 
   findMap(uuid: string): Promise<MmpMap | null> {
@@ -62,6 +62,8 @@ export class MapsService {
   async addNode(mapId: string, node: MmpNode): Promise<MmpNode> {
     // detached nodes are not allowed to have a parent
     if (node.detached && node.nodeParentId) return Promise.reject()
+    // root nodes are not allowed to have a parent
+    if (node.root && node.nodeParentId) return Promise.reject()
     if (!mapId || !node) return Promise.reject()
 
     const existingNode = await this.nodesRepository.findOne({
@@ -91,20 +93,21 @@ export class MapsService {
   ): Promise<MmpNode[]> {
     if (!mapId || nodes.length === 0) Promise.reject()
 
-    const reducer = async (
-      previousPromise: Promise<MmpNode[]>,
-      node: MmpNode
-    ): Promise<MmpNode[]> => {
-      const accCreatedNodes = await previousPromise
-      if (await this.validatesNodeParentForNode(mapId, node)) {
-        return accCreatedNodes.concat([await this.addNode(mapId, node)])
-      }
-
-      this.logger.warn(
-        `Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`
-      )
-      return accCreatedNodes
-    }
+      const reducer = async (previousPromise: Promise<MmpNode[]>, node: MmpNode): Promise<MmpNode[]> => {
+        const accCreatedNodes = await previousPromise;
+        if (await this.validatesNodeParentForNode(mapId, node)) {
+          try {
+            const newNode = await this.addNode(mapId, node);
+            return accCreatedNodes.concat([newNode]);
+          } catch (error) {
+            this.logger.warn(`Failed to add node ${node.id} to map ${mapId}: ${error}`);
+            return accCreatedNodes;
+          }
+        }
+    
+        this.logger.warn(`Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`);
+        return accCreatedNodes;
+      };
 
 
     return nodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
