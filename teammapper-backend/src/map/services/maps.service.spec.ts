@@ -21,7 +21,6 @@ describe('MapsController', () => {
   let nodesRepo: Repository<MmpNode>
   let mapsRepo: Repository<MmpMap>
   let moduleFixture: TestingModule
-  let logger: Logger
 
   beforeAll(async () => {
     // Calling advanceTimers here is very important, as otherwise async ops like await will hang indefinitely
