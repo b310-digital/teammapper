@@ -66,7 +66,9 @@ export default class History {
 
             // If the amount of nodes is == 0, automatically rollback to the last clean snapshot and display a toast
             if (this.map.nodes.getNodes().length === 0) {
-                this.redraw(previousData)
+                if (previousData.length > 0) {
+                    this.redraw(previousData)
+                }
                 Log.error('There was an error importing the map; changes have been rolled back.')
             } else {
                 this.save()
@@ -126,7 +128,8 @@ export default class History {
      * @param {MapSnapshot} snapshot
      */
     private redraw(snapshot: MapSnapshot) {
-
+        this.map.nodes.clear()
+        
         snapshot.forEach((property: ExportNodeProperties) => {
             // in case the data model changes this makes sure all properties are at least present using defaults
             const mergedProperty = { ...DefaultNodeValues, ...property } as ExportNodeProperties
