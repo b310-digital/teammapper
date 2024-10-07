@@ -23,6 +23,7 @@ import {
   ResponseNodeUpdated,
   ResponseNodesAdded,
   ResponseSelectionUpdated,
+  ResponseClientNotification,
   ServerMap,
 } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
@@ -30,6 +31,7 @@ import { COLORS } from '../mmp/mmp-utils';
 import { UtilsService } from '../utils/utils.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
+import { ToastrService } from 'ngx-toastr';
 
 const DEFAULT_COLOR = '#000000';
 const DEFAULT_SELF_COLOR = '#c0c0c0';
@@ -72,7 +74,9 @@ export class MapSyncService implements OnDestroy {
     private mmpService: MmpService,
     private httpService: HttpService,
     private storageService: StorageService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    public utilsService: UtilsService,
+    public toastrService: ToastrService
   ) {
     // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null);
@@ -368,6 +372,29 @@ export class MapSyncService implements OnDestroy {
       this.setConnectionStatusSubject('connected');
       this.mmpService.new(serverMap.data, false);
     });
+
+    this.socket.on(
+      'clientNotification',
+      async (notification: ResponseClientNotification) => {
+        if (notification.clientId === this.socket.id) return;
+
+        const msg = await this.utilsService.translate(notification.message);
+
+        if (!msg) return;
+
+        switch (notification.type) {
+          case 'error':
+            this.toastrService.error(msg);
+            break;
+          case 'success':
+            this.toastrService.success(msg);
+            break;
+          case 'warning':
+            this.toastrService.warning(msg);
+            break;
+        }
+      }
+    );
 
     this.socket.on('nodesAdded', (result: ResponseNodesAdded) => {
       if (result.clientId === this.socket.id) return;

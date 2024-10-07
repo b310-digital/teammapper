@@ -172,6 +172,10 @@
     "SUCCESSFULLY_DUPLICATED": "Mindmap dupliquée avec succès !",
     "URL_COPIED": "URL copié avec succès",
     "NODE_COPIED": "Nœud copié avec succès !",
+    "MAP_IMPORT_SUCCESS": "Mindmap importée avec succès !",
+    "WARNINGS": {
+      "MAP_IMPORT_IN_PROGRESS": "Importation de Mindmap en cours"
+    },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Il n'est pas possible de copier le noeud racine !",
       "ROOT_NODE_CUT": "Il n'est pas possible de couper le nœud racine !",
