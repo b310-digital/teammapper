@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { MapsService } from './maps.service'
 import { getRepositoryToken } from '@nestjs/typeorm'
+import { Logger } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
@@ -20,6 +21,7 @@ describe('MapsController', () => {
   let nodesRepo: Repository<MmpNode>
   let mapsRepo: Repository<MmpMap>
   let moduleFixture: TestingModule
+  let logger: Logger
 
   beforeAll(async () => {
     // Calling advanceTimers here is very important, as otherwise async ops like await will hang indefinitely
@@ -92,7 +94,7 @@ describe('MapsController', () => {
 
     it('catches an FK error when trying to assign a nodeParentId to a root node', async () => {
       const map = await mapsRepo.save({})
-      const loggerSpy = jest.spyOn(mapsService.logger, 'warn');
+      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn');
 
       const node = await nodesRepo.create({
         id: '2177d542-665d-468c-bea5-7520bdc5b481',
@@ -106,13 +108,13 @@ describe('MapsController', () => {
       const nodes = await mapsService.addNodes(map.id, [node])
       
       expect(nodes).toEqual([])
-      expect(loggerSpy).toHaveBeenCalled()
+      expect(loggerSpyWarn).toHaveBeenCalled()
     })
 
     it('catches an FK error when trying to assign a nodeParentId from a different map', async () => {
       const map = await mapsRepo.save({})
       const mapTwo = await mapsRepo.save({})
-      const loggerSpy = jest.spyOn(mapsService.logger, 'warn');
+      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn');
 
       const parentNode = await nodesRepo.create({
         id: '2177d542-665d-468c-bea5-7520bdc5b481',
@@ -132,7 +134,7 @@ describe('MapsController', () => {
       const nodes = await mapsService.addNodes(map.id, [parentNode, childNodeFromDifferentMap])
       
       expect(nodes).toEqual([])
-      expect(loggerSpy).toHaveBeenCalled()
+      expect(loggerSpyWarn).toHaveBeenCalled()
     })
   })
 

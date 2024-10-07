@@ -20,13 +20,13 @@ import MalformedUUIDError from './uuid.error'
 
 @Injectable()
 export class MapsService {
-  public readonly logger = new Logger(MapsService.name)
-
+  private readonly logger = new Logger(MapsService.name)
+  
   constructor(
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
-    private mapsRepository: Repository<MmpMap>
+    private mapsRepository: Repository<MmpMap>,
   ) { }
 
   findMap(uuid: string): Promise<MmpMap | null> {
