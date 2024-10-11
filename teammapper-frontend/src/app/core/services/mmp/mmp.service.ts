@@ -27,7 +27,7 @@ import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 export class MmpService implements OnDestroy {
   private currentMap: MmpMap;
 
-  private readonly branchColors: Array<string>;
+  private readonly branchColors: string[];
   // additional options that are not handled within mmp, like fontMaxSize etc.
   private additionalOptions: CachedMapOptions;
   private settingsSubscription: Subscription;
