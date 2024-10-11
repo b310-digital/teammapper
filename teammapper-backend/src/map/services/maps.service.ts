@@ -15,7 +15,7 @@ import {
   mapMmpMapToClient,
 } from '../utils/clientServerMapping'
 import configService from '../../config.service'
-import { validate as uuidValidate } from 'uuid';
+import { validate as uuidValidate } from 'uuid'
 import MalformedUUIDError from './uuid.error'
 
 @Injectable()
@@ -27,10 +27,11 @@ export class MapsService {
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
     private mapsRepository: Repository<MmpMap>
-  ) { }
+  ) {}
 
   findMap(uuid: string): Promise<MmpMap | null> {
-    if (!uuidValidate(uuid)) return Promise.reject(new MalformedUUIDError('Invalid UUID'))
+    if (!uuidValidate(uuid))
+      return Promise.reject(new MalformedUUIDError('Invalid UUID'))
 
     return this.mapsRepository.findOne({
       where: { id: uuid },
@@ -81,14 +82,11 @@ export class MapsService {
     mapId: string,
     clientNodes: IMmpClientNode[]
   ): Promise<MmpNode[]> {
-    const mmpNodes = clientNodes.map(x => mapClientNodeToMmpNode(x, mapId))
+    const mmpNodes = clientNodes.map((x) => mapClientNodeToMmpNode(x, mapId))
     return await this.addNodes(mapId, mmpNodes)
   }
 
-  async addNodes(
-    mapId: string,
-    nodes: Partial<MmpNode>[]
-  ): Promise<MmpNode[]> {
+  async addNodes(mapId: string, nodes: Partial<MmpNode>[]): Promise<MmpNode[]> {
     if (!mapId || nodes.length === 0) Promise.reject()
 
     const reducer = async (
@@ -105,7 +103,6 @@ export class MapsService {
       )
       return accCreatedNodes
     }
-
 
     return nodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
   }
@@ -209,7 +206,10 @@ export class MapsService {
 
     const lastAccessed = map.lastAccessed
 
-    return this.calculcateDeletedAt(lastAccessed ? new Date(lastAccessed) : new Date(lastModified), afterDays)
+    return this.calculcateDeletedAt(
+      lastAccessed ? new Date(lastAccessed) : new Date(lastModified),
+      afterDays
+    )
   }
 
   calculcateDeletedAt(lastModified: Date, afterDays: number): Date {
@@ -219,7 +219,9 @@ export class MapsService {
     return copyDate
   }
 
-  async deleteOutdatedMaps(afterDays: number = 30): Promise<number | null | undefined> {
+  async deleteOutdatedMaps(
+    afterDays: number = 30
+  ): Promise<number | null | undefined> {
     const today = new Date()
 
     const deleteQuery = this.mapsRepository
