@@ -1,6 +1,9 @@
 const prettier = require("eslint-plugin-prettier");
 const globals = require("globals");
 const js = require("@eslint/js");
+const tseslint = require("typescript-eslint");
+// Allows us to bring in the recommended rules for Angular projects from angular-eslint
+const angular = require('angular-eslint');
 
 const {
     FlatCompat,
@@ -14,7 +17,10 @@ const compat = new FlatCompat({
 
 module.exports = [{
     ignores: ["projects/**/*"],
-}, {
+},
+js.configs.recommended,
+...tseslint.configs.recommended,
+{
     plugins: {
         prettier,
     },
@@ -26,9 +32,6 @@ module.exports = [{
     },
 }, ...compat.extends(
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@angular-eslint/recommended",
-    "plugin:@angular-eslint/template/process-inline-templates",
     "plugin:prettier/recommended",
 ).map(config => ({
     ...config,
@@ -57,7 +60,17 @@ module.exports = [{
             caughtErrors: "all",
             caughtErrorsIgnorePattern: "^_",
         }],
-
+    },
+}, ...compat.extends(
+"plugin:@angular-eslint/template/recommended", 
+"plugin:@angular-eslint/recommended",
+"plugin:@angular-eslint/template/process-inline-templates"
+).map(config => ({
+    ...config,
+    files: ["**/*.component.html"],
+})), {
+    files: ["**/*.component.html"],
+    rules: {
         "@angular-eslint/component-selector": ["error", {
             prefix: "teammapper",
             style: "kebab-case",
@@ -69,11 +82,5 @@ module.exports = [{
             style: "camelCase",
             type: "attribute",
         }],
-    },
-}, ...compat.extends("plugin:@angular-eslint/template/recommended").map(config => ({
-    ...config,
-    files: ["**/*.html"],
-})), {
-    files: ["**/*.html"],
-    rules: {},
+    }
 }];
