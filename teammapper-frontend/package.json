@@ -57,6 +57,7 @@
     "@material-design-icons/font": "^0.13.0",
     "@ngx-translate/core": "^14.0.0",
     "@ngx-translate/http-loader": "^7.0.0",
+    "@types/uuid": "^10.0.0",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
     "dompurify": "3.1.6",
@@ -70,8 +71,7 @@
     "socket.io-client": "~4.7.5",
     "tslib": "^2.6.3",
     "uuid": "10.0.0",
-    "zone.js": "^0.14.10",
-    "@types/uuid": "^10.0.0"
+    "zone.js": "^0.14.10"
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1802.3",
@@ -85,6 +85,7 @@
     "@angular/language-service": "18.2.7",
     "@compodoc/compodoc": "^1.1.25",
     "@schematics/angular": "^18.2.6",
+    "@stylistic/eslint-plugin-ts": "^2.9.0",
     "@types/d3": "7.1.0",
     "@types/jasmine": "~5.1.4",
     "@types/mousetrap": "1.6.15",
