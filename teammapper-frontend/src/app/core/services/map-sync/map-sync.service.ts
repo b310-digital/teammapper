@@ -13,6 +13,7 @@ import {
   ExportNodeProperties,
   MapCreateEvent,
   MapProperties,
+  MapSnapshot,
   NodeUpdateEvent,
 } from '@mmp/map/types';
 import {
@@ -261,11 +262,12 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  public updateMap() {
+  public updateMap(diff?: Partial<MapSnapshot>) {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
     this.socket.emit('updateMap', {
       mapId: cachedMapEntry.cachedMap.uuid,
       map: cachedMapEntry.cachedMap,
+      diff,
       modificationSecret: this.modificationSecret,
     });
   }
@@ -566,16 +568,18 @@ export class MapSyncService implements OnDestroy {
       this.updateAttachedMap();
     });
 
-    this.mmpService.on('undo').subscribe(() => {
+    this.mmpService.on('undo').subscribe((diff?: Partial<MapSnapshot>) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
+      // Updating the attached map is important because this persists changes after refresh - it's ok to keep this as a full update for now.
       this.updateAttachedMap();
-      this.updateMap();
+      this.updateMap(diff);
     });
 
-    this.mmpService.on('redo').subscribe(() => {
+    this.mmpService.on('redo').subscribe((diff?: Partial<MapSnapshot>) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
+      // Updating the attached map is important because this persists changes after refresh - it's ok to keep this as a full update for now.
       this.updateAttachedMap();
-      this.updateMap();
+      this.updateMap(diff);
     });
 
     this.mmpService

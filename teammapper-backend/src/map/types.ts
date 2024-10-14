@@ -98,6 +98,7 @@ export interface IMmpClientUpdateMapOptionsRequest
 
 export interface IMmpClientMapRequest extends IMmpClientEditingRequest {
   map: IMmpClientMap
+  diff: Partial<IMmpClientNode[]>
 }
 
 export interface IMmpClientMapCreateRequest {

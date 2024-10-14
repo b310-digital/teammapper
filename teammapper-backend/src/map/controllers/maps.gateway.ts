@@ -178,6 +178,8 @@ export class MapsGateway implements OnGatewayDisconnect {
 
     const mmpMap: IMmpClientMap = request.map
 
+    console.log(request.diff)
+
     // Disconnect all clients temporarily
     // Emit an event so clients can display a notification
     this.server.to(mmpMap.uuid).emit('clientNotification', { clientId: client.id, message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS', type: 'warning' })

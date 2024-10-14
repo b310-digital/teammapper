@@ -27,6 +27,17 @@ export default class History {
         this.snapshots = []
     }
 
+    private switchDiffKeys(snapshotDiff: Partial<MapSnapshot>) {
+        for (const index in snapshotDiff) {
+            // We take the current snapshot, then focus on the index of the node that was changed and grab the ID
+            const nodeId = this.snapshots[this.index][index]?.id
+            if (nodeId) {
+                snapshotDiff[nodeId] = snapshotDiff[index]
+                delete snapshotDiff[index]
+            }
+        }
+    }
+
     /**
      * Return last snapshot of the current map.
      * @return {MapSnapshot} [snapshot] - Last snapshot of the map.
@@ -77,21 +88,16 @@ export default class History {
      */
     public undo = () => {
         if (this.index > 1) {
-            console.log("All snapshots: ", this.snapshots)
-
-            const prevIndex = --this.index
-            const prevSnapshot = this.snapshots[prevIndex]
+            const prevSnapshot = this.snapshots[this.index - 1]
             const currentSnapshot = this.snapshots[this.index]
-
-            console.log("Previous snapshot: ", prevSnapshot)
-            console.log("Current snapshot: ", currentSnapshot)
 
             const diffSnapshots = diff(prevSnapshot, currentSnapshot)
 
-            console.log(diffSnapshots)
+            // The key for the diff will be based off of snapshot index (eg. "0", "1", "2"), but we want to replace that with the node id to make it robust for server-side.
+            this.switchDiffKeys(diffSnapshots)
 
             this.redraw(this.snapshots[--this.index])
-            this.map.events.call(Event.undo)
+            this.map.events.call(Event.undo, this.map.dom, { diff: diffSnapshots })
         }
     }
 
@@ -100,21 +106,16 @@ export default class History {
      */
     public redo = () => {
         if (this.index < this.snapshots.length - 1) {
-            console.log("All snapshots: ", this.snapshots)
-            
-            const nextIndex = ++this.index
             const prevSnapshot = this.snapshots[this.index]
-            const currentSnapshot = this.snapshots[nextIndex]
-
-            console.log("Previous snapshot: ", prevSnapshot)
-            console.log("Current snapshot: ", currentSnapshot)
+            const currentSnapshot = this.snapshots[this.index + 1]
 
             const diffSnapshots = diff(prevSnapshot, currentSnapshot)
 
-            console.log(diffSnapshots)
+            // The key for the diff will be based off of snapshot index (eg. "0", "1", "2"), but we want to replace that with the node id to make it robust for server-side.
+            this.switchDiffKeys(diffSnapshots)
 
             this.redraw(this.snapshots[++this.index])
-            this.map.events.call(Event.redo)
+            this.map.events.call(Event.redo, this.map.dom, { diff: diffSnapshots })
         }
     }
 
