@@ -6,6 +6,7 @@ const globals = require("globals");
 const tsParser = require("@typescript-eslint/parser");
 const js = require("@eslint/js");
 const prettier = require("eslint-plugin-prettier");
+const stylisticTs = require("@stylistic/eslint-plugin-ts");
 
 const { FlatCompat } = require("@eslint/eslintrc");
 
@@ -27,6 +28,7 @@ module.exports = [
         plugins: {
             jest: jest,
             prettier: prettier,
+            "@stylistic/ts": stylisticTs
         },
         languageOptions: {
             globals: {
@@ -53,6 +55,17 @@ module.exports = [
             "@typescript-eslint/no-explicit-any": "warn",
             "prettier/prettier": "error",
             "no-unused-vars": "off",
+            "@stylistic/ts/member-delimiter-style": ["error", {
+                "multiline": {
+                    "delimiter": "none",
+                    "requireLast": true
+                },
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": false
+                },
+                "multilineDetection": "brackets"
+            }],
             "@typescript-eslint/no-unused-vars": ["error", {
                 argsIgnorePattern: "^_",
             }],
