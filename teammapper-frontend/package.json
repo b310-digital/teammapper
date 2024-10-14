@@ -57,8 +57,10 @@
     "@material-design-icons/font": "^0.13.0",
     "@ngx-translate/core": "^14.0.0",
     "@ngx-translate/http-loader": "^7.0.0",
+    "@types/uuid": "^10.0.0",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
+    "deep-object-diff": "^1.1.9",
     "dompurify": "3.1.6",
     "eslint-config-standard": "^17.0.0",
     "jspdf": "^2.5.1",
@@ -70,8 +72,7 @@
     "socket.io-client": "~4.7.5",
     "tslib": "^2.6.3",
     "uuid": "10.0.0",
-    "zone.js": "^0.14.10",
-    "@types/uuid": "^10.0.0"
+    "zone.js": "^0.14.10"
   },
   "devDependencies": {
     "@angular-devkit/architect": "0.1802.3",

@@ -4,6 +4,7 @@ import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
 import { DefaultNodeValues } from '../options'
+import { diff } from 'deep-object-diff'
 
 /**
  * Manage map history, for each change save a snapshot.
@@ -76,6 +77,19 @@ export default class History {
      */
     public undo = () => {
         if (this.index > 1) {
+            console.log("All snapshots: ", this.snapshots)
+
+            const prevIndex = --this.index
+            const prevSnapshot = this.snapshots[prevIndex]
+            const currentSnapshot = this.snapshots[this.index]
+
+            console.log("Previous snapshot: ", prevSnapshot)
+            console.log("Current snapshot: ", currentSnapshot)
+
+            const diffSnapshots = diff(prevSnapshot, currentSnapshot)
+
+            console.log(diffSnapshots)
+
             this.redraw(this.snapshots[--this.index])
             this.map.events.call(Event.undo)
         }
@@ -86,6 +100,19 @@ export default class History {
      */
     public redo = () => {
         if (this.index < this.snapshots.length - 1) {
+            console.log("All snapshots: ", this.snapshots)
+            
+            const nextIndex = ++this.index
+            const prevSnapshot = this.snapshots[this.index]
+            const currentSnapshot = this.snapshots[nextIndex]
+
+            console.log("Previous snapshot: ", prevSnapshot)
+            console.log("Current snapshot: ", currentSnapshot)
+
+            const diffSnapshots = diff(prevSnapshot, currentSnapshot)
+
+            console.log(diffSnapshots)
+
             this.redraw(this.snapshots[++this.index])
             this.map.events.call(Event.redo)
         }
