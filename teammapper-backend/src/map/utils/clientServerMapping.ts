@@ -51,7 +51,7 @@ const mapMmpMapToClient = (
     lastModified: serverMap.lastModified,
     lastAccessed: serverMap.lastAccessed,
     options: serverMap?.options,
-    createdAt: serverMap.createdAt
+    createdAt: serverMap.createdAt,
   }
 }
 

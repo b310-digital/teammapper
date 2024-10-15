@@ -7,7 +7,7 @@ interface EnvProps {
   [k: string]: string | undefined
 }
 
-require('dotenv').config()
+require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-imports
 
 class ConfigService {
   private env: EnvProps

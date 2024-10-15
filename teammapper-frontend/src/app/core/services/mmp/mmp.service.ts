@@ -27,7 +27,7 @@ import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 export class MmpService implements OnDestroy {
   private currentMap: MmpMap;
 
-  private readonly branchColors: Array<string>;
+  private readonly branchColors: string[];
   // additional options that are not handled within mmp, like fontMaxSize etc.
   private additionalOptions: CachedMapOptions;
   private settingsSubscription: Subscription;
@@ -334,9 +334,8 @@ export class MmpService implements OnDestroy {
     try {
       this.currentMap.instance.copyNode(nodeId);
 
-      const successMessage = await this.utilsService.translate(
-        'TOASTS.NODE_COPIED'
-      );
+      const successMessage =
+        await this.utilsService.translate('TOASTS.NODE_COPIED');
       this.toastrService.success(successMessage);
     } catch (e) {
       if (e.message == 'The root node can not be copied') {
@@ -361,9 +360,8 @@ export class MmpService implements OnDestroy {
     try {
       this.currentMap.instance.cutNode(nodeId);
 
-      const successMessage = await this.utilsService.translate(
-        'TOASTS.NODE_CUT'
-      );
+      const successMessage =
+        await this.utilsService.translate('TOASTS.NODE_CUT');
       this.toastrService.success(successMessage);
     } catch (e) {
       if (e.message == 'The root node can not be cut') {

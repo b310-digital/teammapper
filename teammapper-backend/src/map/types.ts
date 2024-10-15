@@ -28,7 +28,7 @@ export interface IMmpClientMap {
   deleteAfterDays: number
   deletedAt: Date
   data: IMmpClientNode[]
-  options: IMmpClientMapOptions,
+  options: IMmpClientMapOptions
   createdAt: Date
 }
 
