@@ -10,6 +10,20 @@ interface ResponseMapUpdated extends ResponseServer {
   map: ServerMap;
 }
 
+interface ResponseSnapshotChanges {
+  [k: string]: Partial<MapSnapshot> | undefined
+}
+
+interface ResponseMapDiff {
+  added: ResponseSnapshotChanges
+  deleted: ResponseSnapshotChanges
+  updated: ResponseSnapshotChanges
+}
+
+interface ResponseUndoRedoChanges extends ResponseServer {
+  diff: ResponseMapDiff
+}
+
 interface ResponseMapOptionsUpdated extends ResponseServer {
   options: CachedMapOptions;
 }
@@ -56,6 +70,7 @@ interface PrivateServerMap {
 
 export {
   ResponseMapUpdated,
+  ResponseUndoRedoChanges,
   ResponseMapOptionsUpdated,
   ResponseNodesAdded,
   ResponseNodeRemoved,

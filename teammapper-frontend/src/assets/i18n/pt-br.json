@@ -173,8 +173,10 @@
     "URL_COPIED": "URL copiado com sucesso",
     "NODE_COPIED": "Nó copiado com sucesso!",
     "MAP_IMPORT_SUCCESS": "Mapa mental importado com sucesso",
+    "MAP_UPDATE_SUCCESS": "Mindmap atualizado com sucesso",
     "WARNINGS": {
-      "MAP_IMPORT_IN_PROGRESS": "Importação de mapa mental em andamento"
+      "MAP_IMPORT_IN_PROGRESS": "Importação de mapa mental em andamento",
+      "MAP_UPDATE_IN_PROGRESS": "Atualizando o mapa mental"
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Não é possível copiar o nó raiz!",

@@ -173,8 +173,10 @@
     "URL_COPIED": "URL copié avec succès",
     "NODE_COPIED": "Nœud copié avec succès !",
     "MAP_IMPORT_SUCCESS": "Mindmap importée avec succès !",
+    "MAP_UPDATE_SUCCESS": "Mise à jour réussie de la carte heuristique !",
     "WARNINGS": {
-      "MAP_IMPORT_IN_PROGRESS": "Importation de Mindmap en cours"
+      "MAP_IMPORT_IN_PROGRESS": "Importation de Mindmap en cours",
+      "MAP_UPDATE_IN_PROGRESS": "Mise à jour de la carte heuristique..."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Il n'est pas possible de copier le noeud racine !",

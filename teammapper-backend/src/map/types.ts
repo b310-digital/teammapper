@@ -96,9 +96,22 @@ export interface IMmpClientUpdateMapOptionsRequest
   options: IMmpClientMapOptions
 }
 
+export interface IMmpClientSnapshotChanges {
+  [k: string]: Partial<IMmpClientNode> | undefined
+}
+
+export interface IMmpClientMapDiff {
+  added: IMmpClientSnapshotChanges
+  deleted: IMmpClientSnapshotChanges
+  updated: IMmpClientSnapshotChanges
+}
+
 export interface IMmpClientMapRequest extends IMmpClientEditingRequest {
   map: IMmpClientMap
-  diff: Partial<IMmpClientNode[]>
+}
+
+export interface IMmpClientUndoRedoRequest extends IMmpClientEditingRequest {
+  diff: IMmpClientMapDiff
 }
 
 export interface IMmpClientMapCreateRequest {

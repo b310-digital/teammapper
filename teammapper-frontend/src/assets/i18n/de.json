@@ -174,8 +174,10 @@
     "URL_COPIED": "URL erfolgreich kopiert!",
     "NODE_COPIED": "Knoten erfolgreich kopiert!",
     "MAP_IMPORT_SUCCESS": "Mindmap erfolgreich importiert!",
+    "MAP_UPDATE_SUCCESS": "Mindmap erfolgreich aktualisiert!",
     "WARNINGS": {
-      "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert..."
+      "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert...",
+      "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert..."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",

@@ -20,6 +20,17 @@ export const createMmpMap = (overrides = {}): MmpMap => ({
     ...overrides
 })
 
+export const createMmpRootNode = (mapId: string, overrides = {}): Partial<MmpNode> => ({
+    id: crypto.randomUUID(),
+    name: 'Root Node',
+    nodeMapId: mapId,
+    children: Array<MmpNode>(),
+    root: true,
+    coordinatesX: 1,
+    coordinatesY: 1,
+    ...overrides,
+})
+
 export const createMmpClientMap = (overrides = {}): IMmpClientMap => ({
     uuid: crypto.randomUUID(),
     data: [],
