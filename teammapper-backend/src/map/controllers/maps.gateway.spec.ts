@@ -157,39 +157,40 @@ describe('WebSocketGateway', () => {
           modificationSecret: map.modificationSecret,
           map: {},
         },
-        (result: MmpNode | undefined) => {
+        (result: boolean) => {
           expect(result).toEqual(true)
           done()
         }
       )
     })
+  })
 
-    it('updates a map based off of a diff', (done) => {
+  describe('undoRedoMapChanges', () => {
+    it('updates the map based off of a diff', (done) => {
       socket = io('http://localhost:3000')
       const localMap = createMmpMap()
       const rootNode = createMmpRootNode(localMap.id) as MmpNode
 
       const diff = {
-        [rootNode.id]: {
-          "name": "Thema"
+        "added": {},
+        "deleted": {},
+        "updated": {
+          [rootNode.id]: {
+            "name": "Thema"
+          }
         }
       }
 
       socket.emit(
-        'updateMap',
+        'undoRedoMapChanges',
         {
           mapId: map.id,
           diff,
           modificationSecret: map.modificationSecret
         },
-        (result: Array<MmpNode> | undefined) => {
-          expect(result).toBeDefined();
-          expect(result).toBeInstanceOf(Array);
-          expect(result).toContain(
-            expect.objectContaining({
-              name: 'Thema',
-            })
-          );
+        (result: boolean) => {
+          expect(result).toEqual(true);
+          done();
         }
       )
     })
