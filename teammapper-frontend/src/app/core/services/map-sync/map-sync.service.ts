@@ -25,6 +25,7 @@ import {
   ResponseSelectionUpdated,
   ResponseClientNotification,
   ServerMap,
+  ResponseUndoRedoChanges,
 } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
@@ -261,6 +262,15 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  public undoRedoMapChanges(diff: any) {
+    const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
+    this.socket.emit('undoRedoMapChanges', {
+      mapId: cachedMapEntry.cachedMap.uuid,
+      diff,
+      modificationSecret: this.modificationSecret,
+    });
+  }
+
   public updateMap() {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
     this.socket.emit('updateMap', {
@@ -399,11 +409,7 @@ export class MapSyncService implements OnDestroy {
     this.socket.on('nodesAdded', (result: ResponseNodesAdded) => {
       if (result.clientId === this.socket.id) return;
 
-      result.nodes.forEach(node => {
-        if (!this.mmpService.existNode(node?.id)) {
-          this.mmpService.addNodeFromServer(node);
-        }
-      });
+      this.mmpService.addNodesFromServer(result.nodes);
     });
 
     this.socket.on('nodeUpdated', (result: ResponseNodeUpdated) => {
@@ -427,6 +433,47 @@ export class MapSyncService implements OnDestroy {
       if (result.clientId === this.socket.id) return;
 
       this.mmpService.new(result.map.data, false);
+    });
+
+    this.socket.on('mapChangesUndoRedo', (result: ResponseUndoRedoChanges) => {
+      if (result.clientId === this.socket.id) return;
+
+      const { added, updated, deleted } = result.diff;
+
+      // Handle added nodes
+      if (added && typeof added === 'object') {
+        for (const nodeId in added) {
+          const node = added[nodeId];
+          this.mmpService.addNode(node, false);
+        }
+      }
+
+      // Handle updated nodes
+      if (updated && typeof updated === 'object') {
+        for (const nodeId in updated) {
+          const node = updated[nodeId];
+          if (this.mmpService.existNode(nodeId)) {
+            for (const property in node) {
+              this.mmpService.updateNode(
+                property,
+                node[property],
+                false, // notifyWithEvent
+                true, // updateHistory
+                nodeId
+              );
+            }
+          }
+        }
+      }
+
+      // Handle deleted nodes
+      if (deleted && typeof deleted === 'object') {
+        for (const nodeId in deleted) {
+          if (this.mmpService.existNode(nodeId)) {
+            this.mmpService.removeNode(nodeId, false);
+          }
+        }
+      }
     });
 
     this.socket.on('mapOptionsUpdated', (result: ResponseMapOptionsUpdated) => {
@@ -566,16 +613,18 @@ export class MapSyncService implements OnDestroy {
       this.updateAttachedMap();
     });
 
-    this.mmpService.on('undo').subscribe(() => {
+    this.mmpService.on('undo').subscribe((diff?: any) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
+      // Updating the attached map is important because this persists changes after refresh - it's ok to keep this as a full update for now.
       this.updateAttachedMap();
-      this.updateMap();
+      this.undoRedoMapChanges(diff);
     });
 
-    this.mmpService.on('redo').subscribe(() => {
+    this.mmpService.on('redo').subscribe((diff?: any) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
+      // Updating the attached map is important because this persists changes after refresh - it's ok to keep this as a full update for now.
       this.updateAttachedMap();
-      this.updateMap();
+      this.undoRedoMapChanges(diff);
     });
 
     this.mmpService
