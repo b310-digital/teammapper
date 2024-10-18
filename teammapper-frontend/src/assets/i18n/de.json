@@ -173,6 +173,7 @@
     "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert!",
     "URL_COPIED": "URL erfolgreich kopiert!",
     "NODE_COPIED": "Knoten erfolgreich kopiert!",
+    "NODE_CUT": "Knoten erfolgreich ausgeschnitten!",
     "MAP_IMPORT_SUCCESS": "Mindmap erfolgreich importiert!",
     "MAP_UPDATE_SUCCESS": "Mindmap erfolgreich aktualisiert!",
     "WARNINGS": {

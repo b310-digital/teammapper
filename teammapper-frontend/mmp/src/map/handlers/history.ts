@@ -35,7 +35,7 @@ export default class History {
                 for (const index in snapshotDiff[key]) {
                     const nodeId = snapshotDiff[key][index]?.id ?? this.snapshots[this.index][index]?.id;
                     if (nodeId) {
-                        snapshotDiff[key][nodeId] = snapshotDiff[key][index];
+                        snapshotDiff[key][nodeId] = snapshotDiff[key][index] ?? {};
                         delete snapshotDiff[key][index];
                     }
                 }

@@ -171,7 +171,8 @@
   "TOASTS": {
     "SUCCESSFULLY_DUPLICATED": "思维导图复制成功！",
     "URL_COPIED": "成功复制 URL",
-    "NODE_COPIED": "节点复制成功!",
+    "NODE_COPIED": "节点复制成功",
+    "NODE_CUT": "节点成功切断",
     "MAP_IMPORT_SUCCESS": "成功导入思维导图",
     "MAP_UPDATE_SUCCESS": "思维导图更新成功",
     "WARNINGS": {

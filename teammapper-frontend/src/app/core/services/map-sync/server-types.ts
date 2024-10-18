@@ -11,17 +11,17 @@ interface ResponseMapUpdated extends ResponseServer {
 }
 
 interface ResponseSnapshotChanges {
-  [k: string]: Partial<MapSnapshot> | undefined
+  [k: string]: Partial<ExportNodeProperties> | undefined;
 }
 
 interface ResponseMapDiff {
-  added: ResponseSnapshotChanges
-  deleted: ResponseSnapshotChanges
-  updated: ResponseSnapshotChanges
+  added: ResponseSnapshotChanges;
+  deleted: ResponseSnapshotChanges;
+  updated: ResponseSnapshotChanges;
 }
 
 interface ResponseUndoRedoChanges extends ResponseServer {
-  diff: ResponseMapDiff
+  diff: ResponseMapDiff;
 }
 
 interface ResponseMapOptionsUpdated extends ResponseServer {

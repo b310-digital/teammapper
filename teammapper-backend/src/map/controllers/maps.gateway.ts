@@ -19,7 +19,6 @@ import {
   IMmpClientJoinRequest,
   IMmpClientMap,
   IMmpClientMapRequest,
-  IMmpClientNode,
   IMmpClientNodeAddRequest,
   IMmpClientNodeRequest,
   IMmpClientNodeSelectionRequest,

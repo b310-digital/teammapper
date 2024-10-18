@@ -172,6 +172,7 @@
     "SUCCESSFULLY_DUPLICATED": "¡Mapa mental duplicado con éxito!",
     "URL_COPIED": "URL copiada correctamente",
     "NODE_COPIED": "¡Nodo copiado con éxito!",
+    "NODE_CUT": "¡Nodo cortado con éxito!",
     "MAP_IMPORT_SUCCESS": "¡Mapa mental importado correctamente!",
     "MAP_UPDATE_SUCCESS": "¡Mapa mental actualizado correctamente!",
     "WARNINGS": {

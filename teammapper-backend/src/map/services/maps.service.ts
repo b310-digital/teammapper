@@ -217,7 +217,7 @@ export class MapsService {
   
     if (diff.deleted && typeof diff.deleted === 'object') {
       for (const key in diff.deleted) {
-        await this.nodesRepository.delete(key);
+        await this.nodesRepository.delete({ id: key, nodeMapId: mapId });
       }
     }
   }

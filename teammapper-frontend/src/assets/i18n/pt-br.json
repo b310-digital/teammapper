@@ -172,6 +172,7 @@
     "SUCCESSFULLY_DUPLICATED": "Mindmap duplicado com sucesso!",
     "URL_COPIED": "URL copiado com sucesso",
     "NODE_COPIED": "Nó copiado com sucesso!",
+    "NODE_CUT": "Nó cortado com sucesso!",
     "MAP_IMPORT_SUCCESS": "Mapa mental importado com sucesso",
     "MAP_UPDATE_SUCCESS": "Mindmap atualizado com sucesso",
     "WARNINGS": {
