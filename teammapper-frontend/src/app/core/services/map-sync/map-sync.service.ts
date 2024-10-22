@@ -33,6 +33,7 @@ import { UtilsService } from '../utils/utils.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
+import { MapDiff } from '@mmp/map/handlers/history';
 
 const DEFAULT_COLOR = '#000000';
 const DEFAULT_SELF_COLOR = '#c0c0c0';
@@ -262,7 +263,7 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  public undoRedoMapChanges(diff: any) {
+  public undoRedoMapChanges(diff: MapDiff) {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
     this.socket.emit('undoRedoMapChanges', {
       mapId: cachedMapEntry.cachedMap.uuid,
@@ -613,14 +614,14 @@ export class MapSyncService implements OnDestroy {
       this.updateAttachedMap();
     });
 
-    this.mmpService.on('undo').subscribe((diff?: any) => {
+    this.mmpService.on('undo').subscribe((diff?: MapDiff) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
       // Updating the attached map is important because this persists changes after refresh - it's ok to keep this as a full update for now.
       this.updateAttachedMap();
       this.undoRedoMapChanges(diff);
     });
 
-    this.mmpService.on('redo').subscribe((diff?: any) => {
+    this.mmpService.on('redo').subscribe((diff?: MapDiff) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
       // Updating the attached map is important because this persists changes after refresh - it's ok to keep this as a full update for now.
       this.updateAttachedMap();
