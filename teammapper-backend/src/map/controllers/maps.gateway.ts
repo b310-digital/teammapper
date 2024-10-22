@@ -179,26 +179,11 @@ export class MapsGateway implements OnGatewayDisconnect {
     if (!request.diff)
       return Promise.resolve(false)
 
-    // Disconnect all clients temporarily
-    // Emit an event so clients can display a notification
-    this.server.to(request.mapId).emit('clientNotification', { clientId: client.id, message: 'TOASTS.WARNINGS.MAP_UPDATE_IN_PROGRESS', type: 'warning' })
-
-    const sockets = await this.server.in(request.mapId).fetchSockets()
-    this.server.in(request.mapId).socketsLeave(request.mapId)
-
     await this.mapsService.updateMapByDiff(request.mapId, request.diff);
-
-    // Reconnect clients once map is updated
-    sockets.forEach((socket) => {
-      // socketsJoin() doesn't work here as the sockets have left the room and this.server.in(request.mapId) would return nothing
-      socket.join(request.mapId)
-    });
 
     this.server
       .to(request.mapId)
       .emit('mapChangesUndoRedo', { clientId: client.id, diff: request.diff })
-
-    this.server.to(request.mapId).emit('clientNotification', { clientId: client.id, message: 'TOASTS.MAP_UPDATE_SUCCESS', type: 'success' })
 
     return true
   }
