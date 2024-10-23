@@ -61,7 +61,7 @@
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
     "deep-object-diff": "^1.1.9",
-    "dompurify": "3.1.6",
+    "dompurify": "3.1.7",
     "eslint-config-standard": "^17.0.0",
     "jspdf": "^2.5.1",
     "localforage": "1.10.0",
@@ -75,15 +75,15 @@
     "zone.js": "^0.14.10"
   },
   "devDependencies": {
-    "@angular-devkit/architect": "0.1802.3",
+    "@angular-devkit/architect": "0.1802.9",
     "@angular-devkit/core": "18.2.2",
     "@angular-devkit/schematics": "18.2.2",
     "@angular-eslint/builder": "18.3.0",
-    "@angular-eslint/eslint-plugin": "18.3.0",
-    "@angular-eslint/eslint-plugin-template": "18.3.0",
+    "@angular-eslint/eslint-plugin": "18.3.1",
+    "@angular-eslint/eslint-plugin-template": "18.3.1",
     "@angular-eslint/schematics": "18.3.0",
     "@angular-eslint/template-parser": "18.3.1",
-    "@angular/language-service": "18.2.7",
+    "@angular/language-service": "18.2.8",
     "@compodoc/compodoc": "^1.1.25",
     "@schematics/angular": "^18.2.6",
     "@types/d3": "7.1.0",
@@ -108,7 +108,7 @@
   },
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "17.2.8",
-    "@nx/nx-darwin-x64": "20.0.0",
+    "@nx/nx-darwin-x64": "20.0.3",
     "@nx/nx-linux-x64-gnu": "19.8.2",
     "@nx/nx-win32-x64-msvc": "19.8.4"
   }
