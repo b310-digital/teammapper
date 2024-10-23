@@ -187,7 +187,7 @@ export class MapsService {
 
   async updateMapByDiff(mapId: string, diff: IMmpClientMapDiff) {
     if (diff.added && typeof diff.added === 'object') {
-      for (const key in diff.added) {
+      Object.keys(diff.added).map(async (key) => {
         const clientNode = diff.added[key];
 
         if (clientNode) {
@@ -196,11 +196,11 @@ export class MapsService {
           newNode.nodeMapId = mapId;
           await this.nodesRepository.save(newNode);
         }
-      }
+      })
     }
   
     if (diff.updated && typeof diff.updated === 'object') {
-      for (const key in diff.updated) {
+      Object.keys(diff.updated).map(async (key) => {
         const clientNode = diff.updated[key];
 
         if (clientNode) {
@@ -212,13 +212,13 @@ export class MapsService {
             await this.nodesRepository.save(serverNode);
           }
         }
-      }
+      })
     }
   
     if (diff.deleted && typeof diff.deleted === 'object') {
-      for (const key in diff.deleted) {
+      Object.keys(diff.deleted).map(async (key) => {
         await this.nodesRepository.delete({ id: key, nodeMapId: mapId });
-      }
+      })
     }
   }
 
