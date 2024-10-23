@@ -4,7 +4,7 @@ import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
 import { DefaultNodeValues } from '../options'
-import { diff, detailedDiff } from 'deep-object-diff'
+import {  detailedDiff } from 'deep-object-diff'
 
 /**
  * Manage map history, for each change save a snapshot.
@@ -27,20 +27,26 @@ export default class History {
         this.snapshots = []
     }
 
-    private switchDiffKeys(snapshotDiff: MapDiff) {
-        const diffKeys = ['added', 'deleted', 'updated'];
-        
-        for (const key of diffKeys) {
+    /**
+     * As snapshots are saved by number (1, 2, 3 etc) and not by node ID, this switches out the number with the affected node ID.
+     * This helps the server understand which node was modified.
+     * @param {MapDiff} snapshotDiff
+     */
+    private switchDiffKeys(snapshotDiff: MapDiff) {        
+        ['added', 'deleted', 'updated'].forEach(key => {
             if (snapshotDiff[key] && typeof snapshotDiff[key] === 'object') {
                 for (const index in snapshotDiff[key]) {
+                    // The ID in snapshotDiff[key][index] will only be present when we are adding a node; otherwise we will have to reference the existing snapshots (this.snapshots) for the ID.
                     const nodeId = snapshotDiff[key][index]?.id ?? this.snapshots[this.index][index]?.id;
                     if (nodeId) {
+                        // This is the part where we switch out the number (ie. "2") with the node ID (random UUIDv4), afterwards deleting the other diff.
+                        // The ?? {} is important because when a node gets deleted, the key will be the node ID but the value will be undefined - this breaks server side.
                         snapshotDiff[key][nodeId] = snapshotDiff[key][index] ?? {};
                         delete snapshotDiff[key][index];
                     }
                 }
             }
-        }
+        })
     }
 
     /**
