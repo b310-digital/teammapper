@@ -165,7 +165,7 @@ describe('WebSocketGateway', () => {
     })
   })
 
-  describe('undoRedoMapChanges', () => {
+  describe('applyMapChangesByDiff', () => {
     it('updates the map based off of a diff', (done) => {
       socket = io('http://localhost:3000')
       const localMap = createMmpMap()
@@ -182,7 +182,7 @@ describe('WebSocketGateway', () => {
       }
 
       socket.emit(
-        'undoRedoMapChanges',
+        'applyMapChangesByDiff',
         {
           mapId: map.id,
           diff,

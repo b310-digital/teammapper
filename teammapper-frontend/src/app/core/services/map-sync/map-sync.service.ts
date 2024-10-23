@@ -263,9 +263,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  public undoRedoMapChanges(diff: MapDiff) {
+  public applyMapChangesByDiff(diff: MapDiff) {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
-    this.socket.emit('undoRedoMapChanges', {
+    this.socket.emit('applyMapChangesByDiff', {
       mapId: cachedMapEntry.cachedMap.uuid,
       diff,
       modificationSecret: this.modificationSecret,
@@ -616,16 +616,16 @@ export class MapSyncService implements OnDestroy {
 
     this.mmpService.on('undo').subscribe((diff?: MapDiff) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
-      // Updating the attached map is important because this persists changes after refresh - it's ok to keep this as a full update for now.
+      // Updating the attached map is important because this persists changes after refresh
       this.updateAttachedMap();
-      this.undoRedoMapChanges(diff);
+      this.applyMapChangesByDiff(diff);
     });
 
     this.mmpService.on('redo').subscribe((diff?: MapDiff) => {
       this.attachedNodeSubject.next(this.mmpService.selectNode());
-      // Updating the attached map is important because this persists changes after refresh - it's ok to keep this as a full update for now.
+      // Updating the attached map is important because this persists changes after refresh
       this.updateAttachedMap();
-      this.undoRedoMapChanges(diff);
+      this.applyMapChangesByDiff(diff);
     });
 
     this.mmpService

@@ -169,8 +169,8 @@ export class MapsGateway implements OnGatewayDisconnect {
   }
 
   @UseGuards(EditGuard)
-  @SubscribeMessage('undoRedoMapChanges')
-  async undoRedoMapChanges(
+  @SubscribeMessage('applyMapChangesByDiff')
+  async applyMapChangesByDiff(
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientUndoRedoRequest
   ): Promise<boolean> {
