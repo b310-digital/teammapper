@@ -169,7 +169,7 @@ describe('WebSocketGateway', () => {
     it('updates the map based off of a diff', (done) => {
       socket = io('http://localhost:3000')
       const localMap = createMmpMap()
-      const rootNode = createMmpRootNode(localMap.id) as MmpNode
+      const rootNode = createMmpRootNode(localMap)
 
       const diff = {
         "added": {},
