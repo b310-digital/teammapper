@@ -22,6 +22,7 @@ import {
   IMmpClientNodeAddRequest,
   IMmpClientNodeRequest,
   IMmpClientNodeSelectionRequest,
+  IMmpClientUndoRedoRequest,
   IMmpClientUpdateMapOptionsRequest,
 } from '../types'
 import { mapMmpNodeToClient } from '../utils/clientServerMapping'
@@ -163,6 +164,26 @@ export class MapsGateway implements OnGatewayDisconnect {
       property: request.updatedProperty,
       node: mapMmpNodeToClient(updatedNode),
     })
+
+    return true
+  }
+
+  @UseGuards(EditGuard)
+  @SubscribeMessage('applyMapChangesByDiff')
+  async applyMapChangesByDiff(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() request: IMmpClientUndoRedoRequest
+  ): Promise<boolean> {
+    if (!(await this.mapsService.findMap(request.mapId)))
+      return Promise.resolve(false)
+    if (!request.diff)
+      return Promise.resolve(false)
+
+    await this.mapsService.updateMapByDiff(request.mapId, request.diff);
+
+    this.server
+      .to(request.mapId)
+      .emit('mapChangesUndoRedo', { clientId: client.id, diff: request.diff })
 
     return true
   }

@@ -8,11 +8,13 @@ import {
   IMmpClientMapOptions,
   IMmpClientNode,
   IMmpClientNodeBasics,
+  IMmpClientMapDiff
 } from '../types'
 import {
   mapClientBasicNodeToMmpRootNode,
   mapClientNodeToMmpNode,
   mapMmpMapToClient,
+  mergeClientNodeIntoMmpNode,
 } from '../utils/clientServerMapping'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid';
@@ -184,6 +186,43 @@ export class MapsService {
     await this.addNodesFromClient(clientMap.uuid, clientMap.data)
     // reload map
     return this.findMap(clientMap.uuid)
+  }
+
+  async updateMapByDiff(mapId: string, diff: IMmpClientMapDiff) {
+    if (diff.added && typeof diff.added === 'object') {
+      Object.keys(diff.added).map(async (key) => {
+        const clientNode = diff.added[key];
+
+        if (clientNode) {
+          const newNode = new MmpNode();
+          Object.assign(newNode, mergeClientNodeIntoMmpNode(clientNode, newNode));
+          newNode.nodeMapId = mapId;
+          await this.nodesRepository.save(newNode);
+        }
+      })
+    }
+  
+    if (diff.updated && typeof diff.updated === 'object') {
+      Object.keys(diff.updated).map(async (key) => {
+        const clientNode = diff.updated[key];
+
+        if (clientNode) {
+          const serverNode = await this.nodesRepository.findOne({ where: { id: key } });
+        
+          if (serverNode) {
+            const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
+            Object.assign(serverNode, mergedNode);
+            await this.nodesRepository.save(serverNode);
+          }
+        }
+      })
+    }
+  
+    if (diff.deleted && typeof diff.deleted === 'object') {
+      Object.keys(diff.deleted).map(async (key) => {
+        await this.nodesRepository.delete({ id: key, nodeMapId: mapId });
+      })
+    }
   }
 
   async updateMapOptions(

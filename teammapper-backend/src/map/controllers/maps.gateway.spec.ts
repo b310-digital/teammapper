@@ -10,6 +10,7 @@ import { MapsGateway } from './maps.gateway'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
 import { IMmpClientNode } from '../types'
+import { createMmpMap, createMmpRootNode } from '../utils/tests/mapFactories'
 
 describe('WebSocketGateway', () => {
   let app: INestApplication
@@ -156,9 +157,40 @@ describe('WebSocketGateway', () => {
           modificationSecret: map.modificationSecret,
           map: {},
         },
-        (result: MmpNode | undefined) => {
+        (result: boolean) => {
           expect(result).toEqual(true)
           done()
+        }
+      )
+    })
+  })
+
+  describe('applyMapChangesByDiff', () => {
+    it('updates the map based off of a diff', (done) => {
+      socket = io('http://localhost:3000')
+      const localMap = createMmpMap()
+      const rootNode = createMmpRootNode(localMap)
+
+      const diff = {
+        "added": {},
+        "deleted": {},
+        "updated": {
+          [rootNode.id]: {
+            "name": "Thema"
+          }
+        }
+      }
+
+      socket.emit(
+        'applyMapChangesByDiff',
+        {
+          mapId: map.id,
+          diff,
+          modificationSecret: map.modificationSecret
+        },
+        (result: boolean) => {
+          expect(result).toEqual(true);
+          done();
         }
       )
     })
