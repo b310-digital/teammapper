@@ -100,8 +100,8 @@ export default class MmpMap {
             cutNode: (id: string) => 
                 this.copyPaste.cut(id),
                 
-            applyCoordinatesToSnapshotNodes: (nodes) => 
-                this.nodes.applyCoordinatesToSnapshotNodes(nodes),
+            applyCoordinatesToMapSnapshot: (nodes) => 
+                this.nodes.applyCoordinatesToMapSnapshot(nodes),
                 
             deselectNode: () => 
                 this.nodes.deselectNode(),
@@ -190,7 +190,7 @@ export interface MmpInstance {
     center: Function
     copyNode: Function
     cutNode: Function
-    applyCoordinatesToSnapshotNodes: Function
+    applyCoordinatesToMapSnapshot: Function
     deselectNode: Function
     getSelectedNode: Function
     editNode: Function

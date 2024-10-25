@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
+import { MapSnapshot } from './history'
 
 /**
  * Manage the nodes of the map.
@@ -644,10 +645,10 @@ export default class Nodes {
      * Proactively apply coordinates to all nodes that are missing coordinates
      * This method is very similar to calculateCoordinates, but it's fully self-contained and only applicable to MapSnapshots.
      * Adding this functionality to calculateCoordinates would break a lot of things, as Node and ExportNodeProperties are not the same.
-     * @param {ExportNodeProperties[]} nodes
-     * @returns {ExportNodeProperties[]} nodes - Return all nodes with properly applied coordinates
+     * @param {MapSnapshot} map
+     * @returns {MapSnapshot} map - Return the map snapshot with properly applied coordinates
      */
-    public applyCoordinatesToSnapshotNodes(nodes: ExportNodeProperties[]): ExportNodeProperties[] {
+    public applyCoordinatesToMapSnapshot(map: MapSnapshot): MapSnapshot {
         const getOrientation = (node: ExportNodeProperties, rootNode: ExportNodeProperties) => node.coordinates?.x < rootNode.coordinates?.x
         const getLowerNode = (nodes: ExportNodeProperties[]) => {
             let tmp = nodes[0].coordinates?.y || 0
@@ -663,17 +664,17 @@ export default class Nodes {
             return lowerNode
         }
 
-        const rootNode = nodes.find(x => x.isRoot)
+        const rootNode = map.find(x => x.isRoot)
 
-        nodes.map(node => {
+        map.map(node => {
             if (!node.coordinates) {
-                const nodeParent = node.parent ? nodes.find(x => x.id === node.parent) : null
+                const nodeParent = node.parent ? map.find(x => x.id === node.parent) : null
                 let coordinates: Coordinates = {
                     x: nodeParent ? nodeParent.coordinates?.x : 0,
                     y: nodeParent ? nodeParent.coordinates?.y : 0
                 }
     
-                let siblings = node.parent ? nodes.filter(x => x.parent === node.parent && x.id !== node.id) : null
+                let siblings = node.parent ? map.filter(x => x.parent === node.parent && x.id !== node.id) : null
                 
                 if (nodeParent && nodeParent.isRoot) {
                     const rightNodes: Array<ExportNodeProperties> = [],
@@ -708,7 +709,7 @@ export default class Nodes {
                 node.coordinates = coordinates
             }
         })
-        return nodes
+        return map
     }
 
     /**

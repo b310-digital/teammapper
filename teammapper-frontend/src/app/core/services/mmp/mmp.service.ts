@@ -647,7 +647,7 @@ export class MmpService implements OnDestroy {
    * Check a given snapshot for missing coordinates
    */
   private checkMissingCoordinates(map: MapSnapshot) {
-    this.currentMap.instance.applyCoordinatesToSnapshotNodes(map);
+    this.currentMap.instance.applyCoordinatesToMapSnapshot(map);
     return map;
   }
 }
