@@ -666,7 +666,6 @@ export default class Nodes {
         const rootNode = nodes.find(x => x.isRoot)
 
         nodes.map(node => {
-            console.log("Mapping node: ", node)
             if (!node.coordinates) {
                 const nodeParent = node.parent ? nodes.find(x => x.id === node.parent) : null
                 let coordinates: Coordinates = {
@@ -701,7 +700,7 @@ export default class Nodes {
 
                 if (siblings && siblings.length > 0) {
                     const lowerNode = getLowerNode(siblings)
-                    coordinates.y = lowerNode.coordinates?.y + 60
+                    coordinates.y = lowerNode.coordinates ? lowerNode.coordinates.y + 60 : 0
                 } else if (!node.detached) {
                     coordinates.y -= 120
                 }
@@ -709,8 +708,6 @@ export default class Nodes {
                 node.coordinates = coordinates
             }
         })
-
-        console.log("Returning nodes: ", nodes)
         return nodes
     }
 
