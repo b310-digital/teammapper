@@ -3,11 +3,12 @@ import Events from './handlers/events'
 import Zoom from './handlers/zoom'
 import Draw from './handlers/draw'
 import Options, {OptionParameters} from './options'
-import History from './handlers/history'
+import History, { MapSnapshot } from './handlers/history'
 import Drag from './handlers/drag'
 import Nodes from './handlers/nodes'
 import Export from './handlers/export'
 import CopyPaste from './handlers/copy-paste'
+import { UserNodeProperties } from './types'
 
 /**
  * Initialize all handlers and return a mmp object.
@@ -85,37 +86,100 @@ export default class MmpMap {
      * @return {MmpInstance} mmpInstance
      */
     private createMmpInstance(): MmpInstance {
+        // We define every function as an arrow function to preserve proper "this" context within all methods.
         return this.instance = {
-            addNode: this.nodes.addNode,
-            center: this.zoom.center,
-            copyNode: this.copyPaste.copy,
-            cutNode: this.copyPaste.cut,
-            deselectNode: this.nodes.deselectNode,
-            getSelectedNode: this.nodes.getSelectedNode,
-            editNode: this.nodes.editNode,
-            toggleBranchVisibility: this.nodes.toggleBranchVisibility,
-            existNode: this.nodes.existNode,
-            exportAsImage: this.export.asImage,
-            exportAsJSON: this.export.asJSON,
-            exportNodeProperties: this.nodes.exportNodeProperties,
-            exportRootProperties: this.nodes.exportRootProperties,
-            exportSelectedNode: this.nodes.exportSelectedNode,
-            highlightNode: this.nodes.highlightNodeWithColor,
-            history: this.history.getHistory,
-            new: this.history.new,
-            nodeChildren: this.nodes.nodeChildren,
-            on: this.events.on,
-            pasteNode: this.copyPaste.paste,
-            redo: this.history.redo,
-            remove: this.remove,
-            removeNode: this.nodes.removeNode,
-            selectNode: this.nodes.selectNode,
-            undo: this.history.undo,
-            unsubscribeAll: this.events.unsubscribeAll,
-            updateNode: this.nodes.updateNode,
-            updateOptions: this.options.update,
-            zoomIn: this.zoom.zoomIn,
-            zoomOut: this.zoom.zoomOut
+            addNode: (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, updateHistory: boolean = true, parentId?: string, overwriteId?: string) => 
+                this.nodes.addNode(userProperties, notifyWithEvent, updateHistory, parentId, overwriteId),
+                
+            center: (type?: 'zoom' | 'position', duration: number = 500) => 
+                this.zoom.center(type, duration),
+                
+            copyNode: (id: string) => 
+                this.copyPaste.copy(id),
+                
+            cutNode: (id: string) => 
+                this.copyPaste.cut(id),
+                
+            applyCoordinatesToSnapshotNodes: (nodes) => 
+                this.nodes.applyCoordinatesToSnapshotNodes(nodes),
+                
+            deselectNode: () => 
+                this.nodes.deselectNode(),
+                
+            getSelectedNode: () => 
+                this.nodes.getSelectedNode(),
+                
+            editNode: () => 
+                this.nodes.editNode(),
+                
+            toggleBranchVisibility: () => 
+                this.nodes.toggleBranchVisibility(),
+                
+            existNode: (id?: string): boolean => 
+                this.nodes.existNode(id),
+                
+            exportAsImage: (callback: Function, type?: string) => 
+                this.export.asImage(callback, type),
+                
+            exportAsJSON: (): MapSnapshot => 
+                this.export.asJSON(),
+                
+            exportNodeProperties: (id: string) => 
+                this.nodes.exportNodeProperties(id),
+                
+            exportRootProperties: () => 
+                this.nodes.exportRootProperties(),
+                
+            exportSelectedNode: () => 
+                this.nodes.exportSelectedNode(),
+                
+            highlightNode: (id: string, color: string, notifyWithEvent: boolean = true) => 
+                this.nodes.highlightNodeWithColor(id, color, notifyWithEvent),
+                
+            history: () => 
+                this.history.getHistory(),
+                
+            new: (snapshot?: MapSnapshot, notifyWithEvent: boolean = true) => 
+                this.history.new(snapshot, notifyWithEvent),
+                
+            nodeChildren: (id?: string) => 
+                this.nodes.nodeChildren(id),
+                
+            on: (event: string, callback: Function) => 
+                this.events.on(event, callback),
+                
+            pasteNode: (id: string) => 
+                this.copyPaste.paste(id),
+                
+            redo: () => 
+                this.history.redo(),
+                
+            remove: () => 
+                this.remove(),
+                
+            removeNode: (id?: string, notifyWithEvent: boolean = true) => 
+                this.nodes.removeNode(id, notifyWithEvent),
+                
+            selectNode: (id?: string) => 
+                this.nodes.selectNode(id),
+                
+            undo: () => 
+                this.history.undo(),
+                
+            unsubscribeAll: () => 
+                this.events.unsubscribeAll(),
+                
+            updateNode: (property: string, value: any, notifyWithEvent: boolean = true, updateHistory: boolean = true, id?: string) => 
+                this.nodes.updateNode(property, value, notifyWithEvent, updateHistory, id),
+                
+            updateOptions: (property: string, value: any) => 
+                this.options.update(property, value),
+                
+            zoomIn: (duration?: number) => 
+                this.zoom.zoomIn(duration),
+                
+            zoomOut: (duration?: number) => 
+                this.zoom.zoomOut(duration)
         }
     }
 
@@ -126,6 +190,7 @@ export interface MmpInstance {
     center: Function
     copyNode: Function
     cutNode: Function
+    applyCoordinatesToSnapshotNodes: Function
     deselectNode: Function
     getSelectedNode: Function
     editNode: Function

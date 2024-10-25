@@ -641,6 +641,80 @@ export default class Nodes {
     }
 
     /**
+     * Proactively apply coordinates to all nodes that are missing coordinates
+     * This method is very similar to calculateCoordinates, but it's fully self-contained and only applicable to MapSnapshots.
+     * Adding this functionality to calculateCoordinates would break a lot of things, as Node and ExportNodeProperties are not the same.
+     * @param {ExportNodeProperties[]} nodes
+     * @returns {ExportNodeProperties[]} nodes - Return all nodes with properly applied coordinates
+     */
+    public applyCoordinatesToSnapshotNodes(nodes: ExportNodeProperties[]): ExportNodeProperties[] {
+        const getOrientation = (node: ExportNodeProperties, rootNode: ExportNodeProperties) => node.coordinates?.x < rootNode.coordinates?.x
+        const getLowerNode = (nodes: ExportNodeProperties[]) => {
+            let tmp = nodes[0].coordinates?.y || 0
+            let lowerNode = nodes[0]
+
+            nodes.map(node => {
+                if (node.coordinates && node.coordinates.y > tmp) {
+                    tmp = node.coordinates.y
+                    lowerNode = node
+                }
+            })
+
+            return lowerNode
+        }
+
+        const rootNode = nodes.find(x => x.isRoot)
+
+        nodes.map(node => {
+            console.log("Mapping node: ", node)
+            if (!node.coordinates) {
+                const nodeParent = node.parent ? nodes.find(x => x.id === node.parent) : null
+                let coordinates: Coordinates = {
+                    x: nodeParent ? nodeParent.coordinates?.x : 0,
+                    y: nodeParent ? nodeParent.coordinates?.y : 0
+                }
+    
+                let siblings = node.parent ? nodes.filter(x => x.parent === node.parent && x.id !== node.id) : null
+                
+                if (nodeParent && nodeParent.isRoot) {
+                    const rightNodes: Array<ExportNodeProperties> = [],
+                        leftNodes: Array<ExportNodeProperties> = []
+
+                    siblings.map(sibling => {
+                        getOrientation(sibling, rootNode) ? leftNodes.push(sibling) : rightNodes.push(sibling)
+                    })
+
+                    if (leftNodes.length <= rightNodes.length) {
+                        coordinates.x -= 200
+                        siblings = leftNodes
+                    } else {
+                        coordinates.x += 200
+                        siblings = rightNodes
+                    }
+                } else if (!node.detached) {
+                    if (node.parent && getOrientation(nodeParent, rootNode)) {
+                        coordinates.x -= 200
+                    } else {
+                        coordinates.x += 200
+                    }
+                }
+
+                if (siblings && siblings.length > 0) {
+                    const lowerNode = getLowerNode(siblings)
+                    coordinates.y = lowerNode.coordinates?.y + 60
+                } else if (!node.detached) {
+                    coordinates.y -= 120
+                }
+
+                node.coordinates = coordinates
+            }
+        })
+
+        console.log("Returning nodes: ", nodes)
+        return nodes
+    }
+
+    /**
      * Return the appropriate coordinates of the node.
      * @param {Node} node
      * @returns {Coordinates} coordinates
