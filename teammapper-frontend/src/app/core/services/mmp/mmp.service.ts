@@ -89,7 +89,7 @@ export class MmpService implements OnDestroy {
   public new(map?: MapSnapshot, notifyWithEvent = true) {
     // If MapSnapshot is missing coordinates, this is the place to add them
     // However, it might be hard to access calculateCoordinates in the MMP Handler.
-    const mapWithCoordinates = this.checkMissingCoordinates(map)
+    const mapWithCoordinates = this.checkMissingCoordinates(map);
     this.currentMap.instance.new(mapWithCoordinates, notifyWithEvent);
   }
 
@@ -647,7 +647,7 @@ export class MmpService implements OnDestroy {
    * Check a given snapshot for missing coordinates
    */
   private checkMissingCoordinates(map: MapSnapshot) {
-    this.currentMap.instance.applyCoordinatesToSnapshotNodes(map)
-    return map
+    this.currentMap.instance.applyCoordinatesToSnapshotNodes(map);
+    return map;
   }
 }
