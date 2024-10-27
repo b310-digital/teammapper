@@ -8,7 +8,8 @@ import {
   IMmpClientMapOptions,
   IMmpClientNode,
   IMmpClientNodeBasics,
-  IMmpClientMapDiff
+  IMmpClientMapDiff,
+  IMmpClientSnapshotChanges
 } from '../types'
 import {
   mapClientBasicNodeToMmpRootNode,
@@ -189,9 +190,12 @@ export class MapsService {
   }
 
   async updateMapByDiff(mapId: string, diff: IMmpClientMapDiff) {
-    if (diff.added && typeof diff.added === 'object') {
-      Object.keys(diff.added).map(async (key) => {
-        const clientNode = diff.added[key];
+    type DiffCallback = (diff: IMmpClientSnapshotChanges) => Promise<void>;
+    type DiffKey = keyof IMmpClientMapDiff;
+
+    const diffAddedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
+        const clientNode = diff[key];
 
         if (clientNode) {
           const newNode = new MmpNode();
@@ -199,12 +203,12 @@ export class MapsService {
           newNode.nodeMapId = mapId;
           await this.nodesRepository.save(newNode);
         }
-      })
+      }));
     }
-  
-    if (diff.updated && typeof diff.updated === 'object') {
-      Object.keys(diff.updated).map(async (key) => {
-        const clientNode = diff.updated[key];
+
+    const diffUpdatedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
+        const clientNode = diff[key];
 
         if (clientNode) {
           const serverNode = await this.nodesRepository.findOne({ where: { id: key } });
@@ -215,14 +219,30 @@ export class MapsService {
             await this.nodesRepository.save(serverNode);
           }
         }
-      })
+      }));
     }
-  
-    if (diff.deleted && typeof diff.deleted === 'object') {
-      Object.keys(diff.deleted).map(async (key) => {
+
+    const diffDeletedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
         await this.nodesRepository.delete({ id: key, nodeMapId: mapId });
-      })
+      }));
     }
+
+    const callbacks: Record<keyof IMmpClientMapDiff, DiffCallback> = {
+      added: diffAddedCallback,
+      updated: diffUpdatedCallback,
+      deleted: diffDeletedCallback
+    };
+
+    const diffKeys: DiffKey[] = ["added", "updated", "deleted"];
+    
+    diffKeys.forEach(key => {
+      const changes = diff[key];
+      // Make sure we're using != to check both null and undefined
+      if (changes != null) {
+        callbacks[key](changes);
+      }
+    });
   }
 
   async updateMapOptions(

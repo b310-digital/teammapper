@@ -32,21 +32,19 @@ export default class History {
      * This helps the server understand which node was modified.
      * @param {MapDiff} snapshotDiff
      */
-    private switchDiffKeys(snapshotDiff: MapDiff) {        
-        ['added', 'deleted', 'updated'].forEach(key => {
-            if (snapshotDiff[key] && typeof snapshotDiff[key] === 'object') {
-                for (const index in snapshotDiff[key]) {
-                    // The ID in snapshotDiff[key][index] will only be present when we are adding a node; otherwise we will have to reference the existing snapshots (this.snapshots) for the ID.
-                    const nodeId = snapshotDiff[key][index]?.id ?? this.snapshots[this.index][index]?.id;
+    private switchDiffKeys(snapshotDiff: MapDiff): void {
+        ['added', 'deleted', 'updated'].forEach((key: keyof MapDiff) => {
+            const diffSection = snapshotDiff[key];
+            if (diffSection && typeof diffSection === 'object') {
+                Object.entries(diffSection).forEach(([index, value]: [string, Partial<ExportNodeProperties> | undefined]) => {
+                    const nodeId = value?.id ?? this.snapshots[this.index][Number(index)]?.id;
                     if (nodeId) {
-                        // This is the part where we switch out the number (ie. "2") with the node ID (random UUIDv4), afterwards deleting the other diff.
-                        // The ?? {} is important because when a node gets deleted, the key will be the node ID but the value will be undefined - this breaks server side.
-                        snapshotDiff[key][nodeId] = snapshotDiff[key][index] ?? {};
-                        delete snapshotDiff[key][index];
+                        delete diffSection[Number(index)];
+                        diffSection[nodeId] = value ?? {};
                     }
-                }
+                });
             }
-        })
+        });
     }
 
     /**
