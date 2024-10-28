@@ -74,7 +74,7 @@
     "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
-    "@angular-devkit/architect": "0.1802.9",
+    "@angular-devkit/architect": "0.1802.10",
     "@angular-devkit/core": "18.2.2",
     "@angular-devkit/schematics": "18.2.2",
     "@angular-eslint/builder": "18.3.0",
