@@ -665,106 +665,92 @@ export default class Nodes {
         }
     }
 
-    /**
-     * Proactively apply coordinates to all nodes that are missing coordinates
-     * This method is very similar to calculateCoordinates, but it's fully self-contained and only applicable to MapSnapshots.
-     * Adding this functionality to calculateCoordinates would break a lot of things, as Node and ExportNodeProperties are not the same.
-     * @param {MapSnapshot} map
-     * @returns {MapSnapshot} map - Return the map snapshot with properly applied coordinates
-     */
-    public applyCoordinatesToMapSnapshot(map: MapSnapshot): MapSnapshot {
-
-        const rootNode = map.find(x => x.isRoot)
-
-        map.map(node => {
-            if (!node.coordinates) {
-                const nodeParent = node.parent ? map.find(x => x.id === node.parent) : null
-                let coordinates: Coordinates = {
-                    x: nodeParent ? nodeParent.coordinates?.x : 0,
-                    y: nodeParent ? nodeParent.coordinates?.y : 0
-                }
+    private calculateNodeCoordinates(
+        node: Node | ExportNodeProperties,
+        params: {
+            getParent: () => (Node | ExportNodeProperties) | null,
+            getSiblings: () => (Node | ExportNodeProperties)[],
+            isRoot: boolean,
+            getOrientation: (n: Node | ExportNodeProperties) => boolean | undefined
+        }
+    ): Coordinates {
+        const nodeParent = params.getParent();
+        
+        let coordinates: Coordinates = {
+            x: nodeParent?.coordinates?.x ?? (node.coordinates?.x ?? 0),
+            y: nodeParent?.coordinates?.y ?? (node.coordinates?.y ?? 0)
+        };
     
-                let siblings = node.parent ? map.filter(x => x.parent === node.parent && x.id !== node.id) : null
-                
-                if (nodeParent && nodeParent.isRoot) {
-                    const rightNodes: Array<ExportNodeProperties> = [],
-                        leftNodes: Array<ExportNodeProperties> = []
-
-                    siblings.map(sibling => {
-                        this.getExportOrientation(sibling, rootNode) ? leftNodes.push(sibling) : rightNodes.push(sibling)
-                    })
-
-                    if (leftNodes.length <= rightNodes.length) {
-                        coordinates.x -= NODE_HORIZONTAL_SPACING
-                        siblings = leftNodes
-                    } else {
-                        coordinates.x += NODE_HORIZONTAL_SPACING
-                        siblings = rightNodes
-                    }
-                } else if (!node.detached) {
-                    if (node.parent && this.getExportOrientation(nodeParent, rootNode)) {
-                        coordinates.x -= NODE_HORIZONTAL_SPACING
-                    } else {
-                        coordinates.x += NODE_HORIZONTAL_SPACING
-                    }
-                }
-
-                if (siblings && siblings.length > 0) {
-                    const lowerNode = this.getExportLowerNode(siblings)
-                    coordinates.y = lowerNode.coordinates ? lowerNode.coordinates.y + NODE_VERTICAL_SIBLING_OFFSET : 0
-                } else if (!node.detached) {
-                    coordinates.y -= NODE_VERTICAL_SPACING
-                }
-
-                node.coordinates = coordinates
+        let siblings = params.getSiblings();
+    
+        if (nodeParent && params.isRoot) {
+            const [leftNodes, rightNodes] = siblings.reduce<[(Node | ExportNodeProperties)[], (Node | ExportNodeProperties)[]]>(
+                (acc, sibling) => {
+                    params.getOrientation(sibling) 
+                        ? acc[0].push(sibling) 
+                        : acc[1].push(sibling);
+                    return acc;
+                },
+                [[], []]
+            );
+    
+            if (leftNodes.length <= rightNodes.length) {
+                coordinates.x -= NODE_HORIZONTAL_SPACING;
+                siblings = leftNodes;
+            } else {
+                coordinates.x += NODE_HORIZONTAL_SPACING;
+                siblings = rightNodes;
             }
-        })
-        return map
+        } else if (!node.detached) {
+            if (nodeParent && params.getOrientation(nodeParent)) {
+                coordinates.x -= NODE_HORIZONTAL_SPACING;
+            } else {
+                coordinates.x += NODE_HORIZONTAL_SPACING;
+            }
+        }
+    
+        if (siblings.length > 0) {
+            const lowerNode = 'isRoot' in node 
+                ? this.getNodeLowerNode(siblings as Node[])
+                : this.getExportLowerNode(siblings as ExportNodeProperties[]);
+            coordinates.y = (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
+        } else if (!node.detached) {
+            coordinates.y -= NODE_VERTICAL_SPACING;
+        }
+    
+        return coordinates;
     }
 
-    /**
-     * Return the appropriate coordinates of the node.
-     * @param {Node} node
-     * @returns {Coordinates} coordinates
-     */
     private calculateCoordinates(node: Node): Coordinates {
-        let coordinates: Coordinates = {
-            x: node.parent ? node.parent.coordinates.x : node.coordinates.x || 0,
-            y: node.parent ? node.parent.coordinates.y : node.coordinates.y || 0
-        },
-            siblings: Array<Node> = this.getSiblings(node)
-
-        if (node.parent && node.parent.isRoot) {
-            const rightNodes: Array<Node> = [],
-                leftNodes: Array<Node> = []
-
-            for (const sibling of siblings) {
-                this.getNodeOrientation(sibling) ? leftNodes.push(sibling) : rightNodes.push(sibling)
+        return this.calculateNodeCoordinates(
+            node,
+            {
+                getParent: () => node.parent,
+                getSiblings: () => this.getSiblings(node),
+                isRoot: node.parent?.isRoot ?? false,
+                getOrientation: (n: Node) => this.getNodeOrientation(n)
             }
+        );
+    }
 
-            if (leftNodes.length <= rightNodes.length) {
-                coordinates.x -= NODE_HORIZONTAL_SPACING
-                siblings = leftNodes
-            } else {
-                coordinates.x += NODE_HORIZONTAL_SPACING
-                siblings = rightNodes
+    public applyCoordinatesToMapSnapshot(map: MapSnapshot): MapSnapshot {
+        const rootNode = map.find(x => x.isRoot);
+        
+        map.forEach(node => {
+            if (!node.coordinates) {
+                node.coordinates = this.calculateNodeCoordinates(
+                    node,
+                    {
+                        getParent: () => node.parent ? map.find(x => x.id === node.parent) : null,
+                        getSiblings: () => node.parent ? map.filter(x => x.parent === node.parent && x.id !== node.id) : [],
+                        isRoot: !!node.parent && map.find(x => x.id === node.parent)?.isRoot,
+                        getOrientation: (n: ExportNodeProperties) => this.getExportOrientation(n, rootNode)
+                    }
+                );
             }
-        } else if (!node.detached) {
-            if (node.parent && this.getNodeOrientation(node.parent)) {
-                coordinates.x -= NODE_HORIZONTAL_SPACING
-            } else {
-                coordinates.x += NODE_HORIZONTAL_SPACING
-            }
-        }
+        });
 
-        if (siblings.length > 0) {
-            const lowerNode = this.getNodeLowerNode(siblings)
-            coordinates.y = lowerNode.coordinates.y + NODE_VERTICAL_SIBLING_OFFSET
-        } else if (!node.detached) {
-            coordinates.y -= NODE_VERTICAL_SPACING
-        }
-
-        return coordinates
+        return map;
     }
 
     /**
