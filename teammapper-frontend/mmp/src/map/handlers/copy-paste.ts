@@ -113,7 +113,7 @@ export default class CopyPaste {
                 let dx = oldParentNode.coordinates.x - nodeProperties.coordinates.x
                 const dy = oldParentNode.coordinates.y - nodeProperties.coordinates.y
 
-                const newParentOrientation = this.map.nodes.getOrientation(newParentNode)
+                const newParentOrientation = this.map.nodes.getNodeOrientation(newParentNode)
                 const oldParentOrientation = oldParentNode.coordinates.x < rootNode.coordinates.x
 
                 if (oldParentOrientation !== newParentOrientation) {

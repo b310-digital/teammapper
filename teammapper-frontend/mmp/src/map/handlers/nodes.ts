@@ -17,6 +17,9 @@ import Log from '../../utils/log'
 import Utils from '../../utils/utils'
 import { MapSnapshot } from './history'
 
+const NODE_HORIZONTAL_SPACING = 200;  // The x-axis spacing between parent and child nodes
+const NODE_VERTICAL_SIBLING_OFFSET = 60;     // The y-axis spacing between sibling nodes
+const NODE_VERTICAL_SPACING = 120;  // The initial vertical spacing for the first child node
 /**
  * Manage the nodes of the map.
  */
@@ -506,10 +509,31 @@ export default class Nodes {
      * Return the orientation of a node in the map (true if left).
      * @return {boolean}
      */
-    public getOrientation(node: Node): boolean {
-        if (!node.isRoot) {
-            return node.coordinates.x < this.getRoot().coordinates.x
+    private getOrientation(
+        node: Node | ExportNodeProperties, 
+        rootNode?: Node | ExportNodeProperties
+    ): boolean | undefined {
+        // isRoot exists only on Node type, so type guard is needed
+        if ('isRoot' in node && node.isRoot) {
+            return undefined;
         }
+    
+        // For Node type, use this.getRoot() if rootNode not provided
+        const root = rootNode ?? (('isRoot' in node) ? this.getRoot() : undefined);
+        if (!root) {
+            return undefined;
+        }
+    
+        return (node.coordinates?.x ?? 0) < (root.coordinates?.x ?? 0);
+    }
+    
+    // Wrapper methods with specific types
+    public getNodeOrientation(node: Node): boolean | undefined {
+        return this.getOrientation(node);
+    }
+    
+    public getExportOrientation(node: ExportNodeProperties, rootNode: ExportNodeProperties): boolean | undefined {
+        return this.getOrientation(node, rootNode);
     }
 
     /**
@@ -649,20 +673,6 @@ export default class Nodes {
      * @returns {MapSnapshot} map - Return the map snapshot with properly applied coordinates
      */
     public applyCoordinatesToMapSnapshot(map: MapSnapshot): MapSnapshot {
-        const getOrientation = (node: ExportNodeProperties, rootNode: ExportNodeProperties) => node.coordinates?.x < rootNode.coordinates?.x
-        const getLowerNode = (nodes: ExportNodeProperties[]) => {
-            let tmp = nodes[0].coordinates?.y || 0
-            let lowerNode = nodes[0]
-
-            nodes.map(node => {
-                if (node.coordinates && node.coordinates.y > tmp) {
-                    tmp = node.coordinates.y
-                    lowerNode = node
-                }
-            })
-
-            return lowerNode
-        }
 
         const rootNode = map.find(x => x.isRoot)
 
@@ -681,29 +691,29 @@ export default class Nodes {
                         leftNodes: Array<ExportNodeProperties> = []
 
                     siblings.map(sibling => {
-                        getOrientation(sibling, rootNode) ? leftNodes.push(sibling) : rightNodes.push(sibling)
+                        this.getExportOrientation(sibling, rootNode) ? leftNodes.push(sibling) : rightNodes.push(sibling)
                     })
 
                     if (leftNodes.length <= rightNodes.length) {
-                        coordinates.x -= 200
+                        coordinates.x -= NODE_HORIZONTAL_SPACING
                         siblings = leftNodes
                     } else {
-                        coordinates.x += 200
+                        coordinates.x += NODE_HORIZONTAL_SPACING
                         siblings = rightNodes
                     }
                 } else if (!node.detached) {
-                    if (node.parent && getOrientation(nodeParent, rootNode)) {
-                        coordinates.x -= 200
+                    if (node.parent && this.getExportOrientation(nodeParent, rootNode)) {
+                        coordinates.x -= NODE_HORIZONTAL_SPACING
                     } else {
-                        coordinates.x += 200
+                        coordinates.x += NODE_HORIZONTAL_SPACING
                     }
                 }
 
                 if (siblings && siblings.length > 0) {
-                    const lowerNode = getLowerNode(siblings)
-                    coordinates.y = lowerNode.coordinates ? lowerNode.coordinates.y + 60 : 0
+                    const lowerNode = this.getExportLowerNode(siblings)
+                    coordinates.y = lowerNode.coordinates ? lowerNode.coordinates.y + NODE_VERTICAL_SIBLING_OFFSET : 0
                 } else if (!node.detached) {
-                    coordinates.y -= 120
+                    coordinates.y -= NODE_VERTICAL_SPACING
                 }
 
                 node.coordinates = coordinates
@@ -729,29 +739,29 @@ export default class Nodes {
                 leftNodes: Array<Node> = []
 
             for (const sibling of siblings) {
-                this.getOrientation(sibling) ? leftNodes.push(sibling) : rightNodes.push(sibling)
+                this.getNodeOrientation(sibling) ? leftNodes.push(sibling) : rightNodes.push(sibling)
             }
 
             if (leftNodes.length <= rightNodes.length) {
-                coordinates.x -= 200
+                coordinates.x -= NODE_HORIZONTAL_SPACING
                 siblings = leftNodes
             } else {
-                coordinates.x += 200
+                coordinates.x += NODE_HORIZONTAL_SPACING
                 siblings = rightNodes
             }
         } else if (!node.detached) {
-            if (node.parent && this.getOrientation(node.parent)) {
-                coordinates.x -= 200
+            if (node.parent && this.getNodeOrientation(node.parent)) {
+                coordinates.x -= NODE_HORIZONTAL_SPACING
             } else {
-                coordinates.x += 200
+                coordinates.x += NODE_HORIZONTAL_SPACING
             }
         }
 
         if (siblings.length > 0) {
-            const lowerNode = this.getLowerNode(siblings)
-            coordinates.y = lowerNode.coordinates.y + 60
+            const lowerNode = this.getNodeLowerNode(siblings)
+            coordinates.y = lowerNode.coordinates.y + NODE_VERTICAL_SIBLING_OFFSET
         } else if (!node.detached) {
-            coordinates.y -= 120
+            coordinates.y -= NODE_VERTICAL_SPACING
         }
 
         return coordinates
@@ -762,19 +772,26 @@ export default class Nodes {
      * @param {Node[]} nodes
      * @returns {Node} lowerNode
      */
-    private getLowerNode(nodes: Node[] = Array.from(this.nodes.values())): Node {
-        if (nodes.length > 0) {
-            let tmp = nodes[0].coordinates.y, lowerNode = nodes[0]
-
-            for (const node of nodes) {
-                if (node.coordinates.y > tmp) {
-                    tmp = node.coordinates.y
-                    lowerNode = node
-                }
-            }
-
-            return lowerNode
+    private getLowerNode(nodes: Node[] | ExportNodeProperties[]): Node | ExportNodeProperties | undefined {
+        if (nodes.length === 0) {
+            return undefined;
         }
+    
+        return nodes.reduce((lowest, current) => {
+            const lowestY = lowest.coordinates?.y ?? 0;
+            const currentY = current.coordinates?.y ?? 0;
+            
+            return currentY > lowestY ? current : lowest;
+        }, nodes[0]);
+    }
+    
+    // Wrapper methods with specific types
+    public getExportLowerNode(nodes: ExportNodeProperties[]): ExportNodeProperties | undefined {
+        return this.getLowerNode(nodes) as ExportNodeProperties | undefined;
+    }
+    
+    public getNodeLowerNode(nodes: Node[] = Array.from(this.nodes.values())): Node | undefined {
+        return this.getLowerNode(nodes) as Node | undefined;
     }
 
     /**
@@ -1129,7 +1146,7 @@ export default class Nodes {
 
             if (this.selectedNode.parent.isRoot) {
                 siblings = siblings.filter((node: Node) => {
-                    return this.getOrientation(node) === this.getOrientation(this.selectedNode)
+                    return this.getNodeOrientation(node) === this.getNodeOrientation(this.selectedNode)
                 })
             }
 
@@ -1156,20 +1173,20 @@ export default class Nodes {
      * @param {boolean} direction
      */
     private moveSelectionOnBranch(direction: boolean) {
-        if ((this.getOrientation(this.selectedNode) === false && direction) ||
-            (this.getOrientation(this.selectedNode) === true && !direction)) {
+        if ((this.getNodeOrientation(this.selectedNode) === false && direction) ||
+            (this.getNodeOrientation(this.selectedNode) === true && !direction)) {
             this.selectNode(this.selectedNode.parent.id)
         } else {
             let children = this.getChildren(this.selectedNode)
 
-            if (this.getOrientation(this.selectedNode) === undefined) {
+            if (this.getNodeOrientation(this.selectedNode) === undefined) {
                 // The selected node is the root
                 children = children.filter((node: Node) => {
-                    return this.getOrientation(node) === direction
+                    return this.getNodeOrientation(node) === direction
                 })
             }
 
-            const lowerNode = this.getLowerNode(children)
+            const lowerNode = this.getNodeLowerNode(children)
 
             if (children.length > 0) {
                 this.selectNode(lowerNode.id)
