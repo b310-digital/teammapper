@@ -84,7 +84,7 @@
     "jest-jasmine2": "29.7.0",
     "prettier": "^3.3.3",
     "socket.io-client": "^4.7.5",
-    "supertest": "^6.3.3",
+    "supertest": "^7.0.0",
     "ts-jest": "29.2.5",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
