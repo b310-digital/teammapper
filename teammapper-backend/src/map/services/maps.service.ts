@@ -12,6 +12,7 @@ import {
   IMmpClientSnapshotChanges
 } from '../types'
 import {
+  getChangedProperties,
   mapClientBasicNodeToMmpRootNode,
   mapClientNodeToMmpNode,
   mapMmpMapToClient,
@@ -193,6 +194,12 @@ export class MapsService {
     type DiffCallback = (diff: IMmpClientSnapshotChanges) => Promise<void>;
     type DiffKey = keyof IMmpClientMapDiff;
 
+    let diffServerNodes: Record<DiffKey, object[]> = {
+      "added": [],
+      "deleted": [],
+      "updated": []
+    }
+
     const diffAddedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
       await Promise.all(Object.keys(diff).map(async (key) => {
         const clientNode = diff[key];
@@ -202,6 +209,8 @@ export class MapsService {
           Object.assign(newNode, mergeClientNodeIntoMmpNode(clientNode, newNode));
           newNode.nodeMapId = mapId;
           await this.nodesRepository.save(newNode);
+
+          diffServerNodes["added"].push(newNode)
         }
       }));
     }
@@ -214,6 +223,11 @@ export class MapsService {
           const serverNode = await this.nodesRepository.findOne({ where: { id: key } });
         
           if (serverNode) {
+            // Updating is a bit of a special case, because we need to map the diff (which is a client node) to server side properties,
+            // but ONLY properties that were changed
+            const changedProperties = getChangedProperties(clientNode, serverNode)
+            diffServerNodes["updated"].push(changedProperties)
+
             const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
             Object.assign(serverNode, mergedNode);
             await this.nodesRepository.save(serverNode);
@@ -225,6 +239,7 @@ export class MapsService {
     const diffDeletedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
       await Promise.all(Object.keys(diff).map(async (key) => {
         await this.nodesRepository.delete({ id: key, nodeMapId: mapId });
+        diffServerNodes["deleted"].push({ id: key, nodeMapId: mapId })
       }));
     }
 
@@ -236,13 +251,14 @@ export class MapsService {
 
     const diffKeys: DiffKey[] = ["added", "updated", "deleted"];
     
-    diffKeys.forEach(key => {
-      const changes = diff[key];
-      // Make sure we're using != to check both null and undefined
-      if (changes != null) {
-        callbacks[key](changes);
-      }
-    });
+    await Promise.all(diffKeys.map(async (key) => {
+        const changes = diff[key];
+        if (changes != null) {
+            await callbacks[key](changes);
+        }
+    }));
+    
+    return diffServerNodes
   }
 
   async updateMapOptions(

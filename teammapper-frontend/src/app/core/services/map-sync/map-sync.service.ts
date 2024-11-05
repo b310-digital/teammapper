@@ -300,7 +300,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   public async updateNodeSelection(id: string, selected: boolean) {
-    // Remember all clients selections with the dedicated colors to switch between colors when clients change among nodes
+    // Remember all clients selections with the dedicated colors to switch between colors whWen clients change among nodes
     if (selected) {
       this.colorMapping[this.socket.id] = {
         color: DEFAULT_SELF_COLOR,
@@ -442,38 +442,41 @@ export class MapSyncService implements OnDestroy {
       const { added, updated, deleted } = result.diff;
 
       // Handle added nodes
-      if (added && typeof added === 'object') {
-        for (const nodeId in added) {
-          const node = added[nodeId];
+      if (added.length > 0) {
+        added.forEach(node => {
           this.mmpService.addNode(node, false);
-        }
+        })
       }
 
       // Handle updated nodes
-      if (updated && typeof updated === 'object') {
-        for (const nodeId in updated) {
-          const node = updated[nodeId];
-          if (this.mmpService.existNode(nodeId)) {
+      if (updated.length > 0) {
+        updated.forEach(node => {
+          if (this.mmpService.existNode(node.id)) {
             for (const property in node) {
+              // Skip IDs as we don't update those
+              if (property === "id") {
+                continue
+              }
+
               this.mmpService.updateNode(
                 property,
                 node[property],
-                false, // notifyWithEvent
-                true, // updateHistory
-                nodeId
-              );
+                false,
+                true,
+                node.id
+              )
             }
           }
-        }
+        })
       }
 
       // Handle deleted nodes
-      if (deleted && typeof deleted === 'object') {
-        for (const nodeId in deleted) {
-          if (this.mmpService.existNode(nodeId)) {
-            this.mmpService.removeNode(nodeId, false);
+      if (deleted.length > 0) {
+        deleted.forEach(node => {
+          if (this.mmpService.existNode(node.id)) {
+            this.mmpService.removeNode(node.id, false)
           }
-        }
+        })
       }
     });
 

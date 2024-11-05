@@ -127,10 +127,67 @@ const mapClientBasicNodeToMmpRootNode = (
   nodeMapId: mapId,
 })
 
+interface PropertyMapping {
+  clientPath: string[];
+  serverKey: keyof MmpNode;
+}
+
+// This is the equivalent of what we already have client-side, but mapping client keys to server keys
+const propertyMappings: PropertyMapping[] = [
+  { clientPath: ['colors', 'background'], serverKey: 'colorsBackground' },
+  { clientPath: ['colors', 'branch'], serverKey: 'colorsBranch' },
+  { clientPath: ['colors', 'name'], serverKey: 'colorsName' },
+  { clientPath: ['coordinates', 'x'], serverKey: 'coordinatesX' },
+  { clientPath: ['coordinates', 'y'], serverKey: 'coordinatesY' },
+  { clientPath: ['font', 'size'], serverKey: 'fontSize' },
+  { clientPath: ['font', 'style'], serverKey: 'fontStyle' },
+  { clientPath: ['font', 'weight'], serverKey: 'fontWeight' },
+  { clientPath: ['image', 'src'], serverKey: 'imageSrc' },
+  { clientPath: ['image', 'size'], serverKey: 'imageSize' },
+  { clientPath: ['k'], serverKey: 'k' },
+  { clientPath: ['link', 'href'], serverKey: 'linkHref' },
+  { clientPath: ['locked'], serverKey: 'locked' },
+  { clientPath: ['detached'], serverKey: 'detached' },
+  { clientPath: ['name'], serverKey: 'name' },
+  { clientPath: ['parent'], serverKey: 'nodeParentId' },
+  { clientPath: ['isRoot'], serverKey: 'root' }
+];
+
+// any is easier than reworking Partial<IMmpClientNode> to accept strings as keys (for now).
+const getNestedValue = (obj: any, path: string[]): any => {
+  return path.reduce((curr, key) => curr?.[key], obj);
+};
+
+const getChangedProperties = (
+  clientNode: Partial<IMmpClientNode>,
+  serverNode: MmpNode
+): Partial<MmpNode> => {
+  const changes: Partial<MmpNode> = { id: serverNode.id };
+
+  for (const mapping of propertyMappings) {
+    const clientValue = getNestedValue(clientNode, mapping.clientPath);
+    const serverValue = serverNode[mapping.serverKey];
+    
+    // Special case for name which can be empty string
+    if (mapping.serverKey === 'name' && clientValue !== undefined && clientValue !== serverValue) {
+      changes[mapping.serverKey] = clientValue;
+      continue;
+    }
+
+    // For all other properties, only include if the value exists and is different
+    if (clientValue != null && clientValue !== serverValue) {
+      changes[mapping.serverKey] = clientValue;
+    }
+  }
+
+  return changes;
+};
+
 export {
   mapMmpNodeToClient,
   mapClientNodeToMmpNode,
   mapClientBasicNodeToMmpRootNode,
   mapMmpMapToClient,
   mergeClientNodeIntoMmpNode,
+  getChangedProperties
 }
