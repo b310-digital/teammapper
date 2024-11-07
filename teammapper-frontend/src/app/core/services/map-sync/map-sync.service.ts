@@ -51,11 +51,6 @@ interface ServerClientList {
   [clientId: string]: string;
 }
 
-interface PropertyMapping {
-  clientPath: string[];
-  serverKey: string;
-}
-
 export type ConnectionStatus = 'connected' | 'disconnected' | null;
 
 @Injectable({
@@ -445,50 +440,56 @@ export class MapSyncService implements OnDestroy {
       if (result.clientId === this.socket.id) return;
 
       const ReversePropertyMapping = {
-          'name': 'name',
-          'locked': 'locked',
-          'coordinates': 'coordinates',
-          'image': {
-              'src': 'imageSrc',
-              'size': 'imageSize'
-          },
-          'link': {
-              'href': 'linkHref'
-          },
-          'colors': {
-              'background': 'backgroundColor',
-              'branch': 'branchColor',
-              'name': 'nameColor'
-          },
-          'font': {
-              'weight': 'fontWeight',
-              'style': 'fontStyle',
-              'size': 'fontSize'
-          },
-          'hidden': 'hidden'
+        name: 'name',
+        locked: 'locked',
+        coordinates: 'coordinates',
+        image: {
+          src: 'imageSrc',
+          size: 'imageSize',
+        },
+        link: {
+          href: 'linkHref',
+        },
+        colors: {
+          background: 'backgroundColor',
+          branch: 'branchColor',
+          name: 'nameColor',
+        },
+        font: {
+          weight: 'fontWeight',
+          style: 'fontStyle',
+          size: 'fontSize',
+        },
+        hidden: 'hidden',
       } as const;
 
-      const getClientProperty = (serverProperty: string, value: any): { clientProperty: string, directValue: any } => {
-          const mapping = ReversePropertyMapping[serverProperty as keyof typeof ReversePropertyMapping];
-          
-          if (typeof mapping === 'string') {
-              return {
-                clientProperty: mapping,
-                directValue: value,
-              };
-          }
-          
-          if (mapping && typeof value === 'object') {
-              const subProperty = Object.keys(value)[0];
-              const nestedMapping = mapping[subProperty];
+      const getClientProperty = (
+        serverProperty: string,
+        value: any
+      ): { clientProperty: string; directValue: any } => {
+        const mapping =
+          ReversePropertyMapping[
+            serverProperty as keyof typeof ReversePropertyMapping
+          ];
 
-              return {
-                clientProperty: nestedMapping,
-                directValue: value[subProperty]
-              }
-          }
-          
-          return undefined;
+        if (typeof mapping === 'string') {
+          return {
+            clientProperty: mapping,
+            directValue: value,
+          };
+        }
+
+        if (mapping && typeof value === 'object') {
+          const subProperty = Object.keys(value)[0];
+          const nestedMapping = mapping[subProperty];
+
+          return {
+            clientProperty: nestedMapping,
+            directValue: value[subProperty],
+          };
+        }
+
+        return undefined;
       };
 
       const { added, updated, deleted } = result.diff;
@@ -507,7 +508,10 @@ export class MapSyncService implements OnDestroy {
           const node = updated[nodeId];
           if (this.mmpService.existNode(nodeId)) {
             for (const property in node) {
-              const updatedProperty = getClientProperty(property, node[property])
+              const updatedProperty = getClientProperty(
+                property,
+                node[property]
+              );
 
               this.mmpService.updateNode(
                 updatedProperty.clientProperty,
