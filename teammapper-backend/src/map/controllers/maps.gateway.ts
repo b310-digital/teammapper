@@ -179,11 +179,11 @@ export class MapsGateway implements OnGatewayDisconnect {
     if (!request.diff)
       return Promise.resolve(false)
 
-    const serverDiff = await this.mapsService.updateMapByDiff(request.mapId, request.diff);
+    await this.mapsService.updateMapByDiff(request.mapId, request.diff);
 
     this.server
       .to(request.mapId)
-      .emit('mapChangesUndoRedo', { clientId: client.id, diff: serverDiff })
+      .emit('mapChangesUndoRedo', { clientId: client.id, diff: request.diff })
 
     return true
   }
