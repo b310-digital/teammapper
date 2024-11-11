@@ -194,16 +194,23 @@ export class MapsService {
     type DiffKey = keyof IMmpClientMapDiff;
 
     const diffAddedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
-      await Promise.all(Object.keys(diff).map(async (key) => {
+      // Sort keys so parents come before children
+      const sortedKeys = Object.keys(diff).sort((a, b) => {
+        const nodeA = diff[a];
+        const nodeB = diff[b];
+        return nodeB!.parent === nodeA!.id ? -1 : 1;  // Parent nodes come first
+      });
+    
+      // Then process in order
+      for (const key of sortedKeys) {
         const clientNode = diff[key];
-
         if (clientNode) {
           const newNode = new MmpNode();
           Object.assign(newNode, mergeClientNodeIntoMmpNode(clientNode, newNode));
           newNode.nodeMapId = mapId;
           await this.nodesRepository.save(newNode);
         }
-      }));
+      }
     }
 
     const diffUpdatedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
@@ -238,8 +245,7 @@ export class MapsService {
     
     diffKeys.forEach(key => {
       const changes = diff[key];
-      // Make sure we're using != to check both null and undefined
-      if (changes != null) {
+      if (changes && Object.keys(changes).length > 0) {
         callbacks[key](changes);
       }
     });
