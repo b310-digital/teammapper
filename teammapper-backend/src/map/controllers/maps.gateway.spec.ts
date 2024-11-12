@@ -10,7 +10,6 @@ import { MapsGateway } from './maps.gateway'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
 import { IMmpClientNode } from '../types'
-import { createMmpMap } from '../utils/tests/mapFactories'
 
 describe('WebSocketGateway', () => {
   let app: INestApplication
@@ -168,7 +167,6 @@ describe('WebSocketGateway', () => {
   describe('applyMapChangesByDiff', () => {
     it('updates the map based off of a diff', (done) => {
       socket = io('http://localhost:3000')
-      const localMap = createMmpMap()
       const rootNodeId = crypto.randomUUID()
 
       const diff = {

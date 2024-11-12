@@ -28,7 +28,7 @@ export default class History {
     }
 
     /**
-     * As snapshots are saved by number (1, 2, 3 etc) and not by node ID, this switches out the number with the affected node ID.
+     * As snapshots are saved by number (1, 2, 3 etc) by the deep-object-diff library and not by node ID, this switches out the number with the affected node ID.
      * This helps the server understand which node was modified.
      * @param {MapDiff} snapshotDiff
      */
