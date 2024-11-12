@@ -11,6 +11,9 @@ import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
 import { IMmpClientNode } from '../types'
 
+
+const crypto = require('crypto')
+
 describe('WebSocketGateway', () => {
   let app: INestApplication
   let mapsService: MapsService
