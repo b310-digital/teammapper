@@ -538,13 +538,13 @@ export default class Nodes {
     ): boolean | undefined {
         // isRoot exists only on Node type, so type guard is needed
         if ('isRoot' in node && node.isRoot) {
-            return undefined;
+            return;
         }
     
         // For Node type, use this.getRoot() if rootNode not provided
         const root = rootNode ?? (('isRoot' in node) ? this.getRoot() : undefined);
         if (!root) {
-            return undefined;
+            return;
         }
     
         return (node.coordinates?.x ?? 0) < (root.coordinates?.x ?? 0);
@@ -688,6 +688,18 @@ export default class Nodes {
         }
     }
 
+    /**
+     * Base method for calculating node coordinates. 
+     * The reason this exists is so we can work with a JSON snapshot (as given by an import), but also allow saved, "real" nodes to calculate coordinates
+     * This prevents duplication, whilst passing methods that differ depending on whether or not a JSON snapshot or "real" node is calculating coordinates.
+     * @param node Either a node previously saved or one from a JSON snapshot
+     * @param params
+     * getParent() - Method to find the parent of the given node
+     * getSiblings() - Method to get the siblings of the given node
+     * isRoot() - If parent node is root
+     * getOrientation() - Method to get the orientation of the node
+     * @returns 
+     */
     private calculateNodeCoordinates(
         node: Node | ExportNodeProperties,
         params: {
@@ -744,6 +756,12 @@ export default class Nodes {
         return coordinates;
     }
 
+    /**
+     * Existing method to calculate the coordinates of "real", saved nodes in the database.
+     * This method will pass on existing methods such as this.getSiblings() to calculateNodeCoordinates, so existing implementations don't break
+     * @param node 
+     * @returns 
+     */
     private calculateCoordinates(node: Node): Coordinates {
         return this.calculateNodeCoordinates(
             node,
@@ -756,11 +774,16 @@ export default class Nodes {
         );
     }
 
-    public applyCoordinatesToMapSnapshot(map: MapSnapshot): MapSnapshot {
+    public applyCoordinatesToMapSnapshot = (map: MapSnapshot): MapSnapshot => {
         const rootNode = map.find(x => x.isRoot);
         
         map.forEach(node => {
             if (!node.coordinates) {
+                /**
+                 * Since we're working with a JSON snapshot here, none of the nodes actually exist.
+                 * This makes existing methods such as this.getSiblings() useless, because they only work with existing nodes.
+                 * So here, we pass on methods that work directly with the JSON.
+                 */
                 node.coordinates = this.calculateNodeCoordinates(
                     node,
                     {
@@ -783,7 +806,7 @@ export default class Nodes {
      */
     private getLowerNode(nodes: Node[] | ExportNodeProperties[]): Node | ExportNodeProperties | undefined {
         if (nodes.length === 0) {
-            return undefined;
+            return;
         }
     
         return nodes.reduce((lowest, current) => {
@@ -1182,8 +1205,8 @@ export default class Nodes {
      * @param {boolean} direction
      */
     private moveSelectionOnBranch(direction: boolean) {
-        if ((this.getNodeOrientation(this.selectedNode) === false && direction) ||
-            (this.getNodeOrientation(this.selectedNode) === true && !direction)) {
+        if ((!this.getNodeOrientation(this.selectedNode) && direction) ||
+        (this.getNodeOrientation(this.selectedNode) && !direction)) {
             this.selectNode(this.selectedNode.parent.id)
         } else {
             let children = this.getChildren(this.selectedNode)

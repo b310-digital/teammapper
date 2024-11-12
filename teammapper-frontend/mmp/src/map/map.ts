@@ -86,7 +86,6 @@ export default class MmpMap {
      * @return {MmpInstance} mmpInstance
      */
     private createMmpInstance(): MmpInstance {
-        // We define every function as an arrow function to preserve proper "this" context within all methods.
         return this.instance = {
             addNode: this.nodes.addNode,
             addNodes: this.nodes.addNodes,
