@@ -119,6 +119,29 @@ export default class Nodes {
     }
 
     /**
+     * Adds multiple nodes at once and saves one snapshot to history.
+     * @param {ExportNodeProperties[]} nodes
+     * @param {boolean} updateHistory
+     */
+    public addNodes = (nodes: ExportNodeProperties[], updateHistory: boolean = true) => {
+        nodes.forEach(node => {
+            if (!this.existNode(node.id)) {
+                this.addNode(
+                    node,
+                    false,
+                    false,
+                    node.parent,
+                    node.id
+                )
+            }
+        })
+
+        if (updateHistory) {
+            this.map.history.save()
+        }
+    }
+
+    /**
      * Select a node or return the current selected node.
      * @param {string} id
      * @returns {ExportNodeProperties}

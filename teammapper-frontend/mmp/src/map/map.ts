@@ -88,98 +88,39 @@ export default class MmpMap {
     private createMmpInstance(): MmpInstance {
         // We define every function as an arrow function to preserve proper "this" context within all methods.
         return this.instance = {
-            addNode: (userProperties?: UserNodeProperties, notifyWithEvent: boolean = true, updateHistory: boolean = true, parentId?: string, overwriteId?: string) => 
-                this.nodes.addNode(userProperties, notifyWithEvent, updateHistory, parentId, overwriteId),
-                
-            center: (type?: 'zoom' | 'position', duration: number = 500) => 
-                this.zoom.center(type, duration),
-                
-            copyNode: (id: string) => 
-                this.copyPaste.copy(id),
-                
-            cutNode: (id: string) => 
-                this.copyPaste.cut(id),
-                
-            applyCoordinatesToMapSnapshot: (nodes) => 
-                this.nodes.applyCoordinatesToMapSnapshot(nodes),
-                
-            deselectNode: () => 
-                this.nodes.deselectNode(),
-                
-            getSelectedNode: () => 
-                this.nodes.getSelectedNode(),
-                
-            editNode: () => 
-                this.nodes.editNode(),
-                
-            toggleBranchVisibility: () => 
-                this.nodes.toggleBranchVisibility(),
-                
-            existNode: (id?: string): boolean => 
-                this.nodes.existNode(id),
-                
-            exportAsImage: (callback: Function, type?: string) => 
-                this.export.asImage(callback, type),
-                
-            exportAsJSON: (): MapSnapshot => 
-                this.export.asJSON(),
-                
-            exportNodeProperties: (id: string) => 
-                this.nodes.exportNodeProperties(id),
-                
-            exportRootProperties: () => 
-                this.nodes.exportRootProperties(),
-                
-            exportSelectedNode: () => 
-                this.nodes.exportSelectedNode(),
-                
-            highlightNode: (id: string, color: string, notifyWithEvent: boolean = true) => 
-                this.nodes.highlightNodeWithColor(id, color, notifyWithEvent),
-                
-            history: () => 
-                this.history.getHistory(),
-                
-            new: (snapshot?: MapSnapshot, notifyWithEvent: boolean = true) => 
-                this.history.new(snapshot, notifyWithEvent),
-                
-            nodeChildren: (id?: string) => 
-                this.nodes.nodeChildren(id),
-                
-            on: (event: string, callback: Function) => 
-                this.events.on(event, callback),
-                
-            pasteNode: (id: string) => 
-                this.copyPaste.paste(id),
-                
-            redo: () => 
-                this.history.redo(),
-                
-            remove: () => 
-                this.remove(),
-                
-            removeNode: (id?: string, notifyWithEvent: boolean = true) => 
-                this.nodes.removeNode(id, notifyWithEvent),
-                
-            selectNode: (id?: string) => 
-                this.nodes.selectNode(id),
-                
-            undo: () => 
-                this.history.undo(),
-                
-            unsubscribeAll: () => 
-                this.events.unsubscribeAll(),
-                
-            updateNode: (property: string, value: any, notifyWithEvent: boolean = true, updateHistory: boolean = true, id?: string) => 
-                this.nodes.updateNode(property, value, notifyWithEvent, updateHistory, id),
-                
-            updateOptions: (property: string, value: any) => 
-                this.options.update(property, value),
-                
-            zoomIn: (duration?: number) => 
-                this.zoom.zoomIn(duration),
-                
-            zoomOut: (duration?: number) => 
-                this.zoom.zoomOut(duration)
+            addNode: this.nodes.addNode,
+            addNodes: this.nodes.addNodes,
+            center: this.zoom.center,
+            copyNode: this.copyPaste.copy,
+            cutNode: this.copyPaste.cut,
+            applyCoordinatesToMapSnapshot: this.nodes.applyCoordinatesToMapSnapshot,
+            deselectNode: this.nodes.deselectNode,
+            getSelectedNode: this.nodes.getSelectedNode,
+            editNode: this.nodes.editNode,
+            toggleBranchVisibility: this.nodes.toggleBranchVisibility,
+            existNode: this.nodes.existNode,
+            exportAsImage: this.export.asImage,
+            exportAsJSON: this.export.asJSON,
+            exportNodeProperties: this.nodes.exportNodeProperties,
+            exportRootProperties: this.nodes.exportRootProperties,
+            exportSelectedNode: this.nodes.exportSelectedNode,
+            highlightNode: this.nodes.highlightNodeWithColor,
+            history: this.history.getHistory,
+            new: this.history.new,
+            save: this.history.save,
+            nodeChildren: this.nodes.nodeChildren,
+            on: this.events.on,
+            pasteNode: this.copyPaste.paste,
+            redo: this.history.redo,
+            remove: this.remove,
+            removeNode: this.nodes.removeNode,
+            selectNode: this.nodes.selectNode,
+            undo: this.history.undo,
+            unsubscribeAll: this.events.unsubscribeAll,
+            updateNode: this.nodes.updateNode,
+            updateOptions: this.options.update,
+            zoomIn: this.zoom.zoomIn,
+            zoomOut: this.zoom.zoomOut
         }
     }
 
@@ -187,6 +128,7 @@ export default class MmpMap {
 
 export interface MmpInstance {
     addNode: Function
+    addNodes: Function
     center: Function
     copyNode: Function
     cutNode: Function
@@ -204,6 +146,7 @@ export interface MmpInstance {
     highlightNode: Function
     history: Function
     new: Function
+    save: Function
     nodeChildren: Function
     on: Function
     pasteNode: Function
