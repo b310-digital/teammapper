@@ -20,35 +20,6 @@ export const createMmpMap = (overrides = {}): MmpMap => ({
     ...overrides
 })
 
-export const createMmpRootNode = (map: MmpMap, overrides = {}): MmpNode => ({
-    id: crypto.randomUUID(),
-    name: 'Root Node',
-    children: Array<MmpNode>(),
-    root: true,
-    coordinatesX: 1,
-    coordinatesY: 1,
-    ...overrides,
-    colorsName: "",
-    colorsBackground: "",
-    colorsBranch: "",
-    fontSize: 0,
-    fontStyle: "",
-    fontWeight: "",
-    imageSrc: "",
-    imageSize: 0,
-    linkHref: "",
-    locked: false,
-    detached: false,
-    k: 0,
-    nodeParentId: "",
-    orderNumber: 0,
-    lastModified: new Date(),
-    createdAt: new Date(),
-    nodeMap: map,
-    nodeMapId: map.id,
-    nodeParent: new MmpNode
-})
-
 export const createMmpClientMap = (overrides = {}): IMmpClientMap => ({
     uuid: crypto.randomUUID(),
     data: [],

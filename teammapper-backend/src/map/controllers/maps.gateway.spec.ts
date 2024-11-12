@@ -10,7 +10,7 @@ import { MapsGateway } from './maps.gateway'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
 import { IMmpClientNode } from '../types'
-import { createMmpMap, createMmpRootNode } from '../utils/tests/mapFactories'
+import { createMmpMap } from '../utils/tests/mapFactories'
 
 describe('WebSocketGateway', () => {
   let app: INestApplication
@@ -169,13 +169,13 @@ describe('WebSocketGateway', () => {
     it('updates the map based off of a diff', (done) => {
       socket = io('http://localhost:3000')
       const localMap = createMmpMap()
-      const rootNode = createMmpRootNode(localMap)
+      const rootNodeId = crypto.randomUUID()
 
       const diff = {
         "added": {},
         "deleted": {},
         "updated": {
-          [rootNode.id]: {
+          [rootNodeId]: {
             "name": "Thema"
           }
         }
