@@ -32,19 +32,25 @@ export default class History {
      * This helps the server understand which node was modified.
      * @param {MapDiff} snapshotDiff
      */
-    private switchDiffKeys(snapshotDiff: MapDiff): void {
+    private switchDiffKeys(snapshotDiff: MapDiff) {
+        const updatedSnapshot: MapDiff = {
+            "added": {},
+            "deleted": {},
+            "updated": {}
+        };
+
         ['added', 'deleted', 'updated'].forEach((key: keyof MapDiff) => {
             const diffSection = snapshotDiff[key];
             if (diffSection && typeof diffSection === 'object') {
-                Object.entries(diffSection).forEach(([index, value]: [string, Partial<ExportNodeProperties> | undefined]) => {
+                updatedSnapshot[key] = Object.entries(diffSection)
+                .reduce((acc, [index, value]: [string, Partial<ExportNodeProperties> | undefined]) => {
                     const nodeId = value?.id ?? this.snapshots[this.index][Number(index)]?.id;
-                    if (nodeId) {
-                        delete diffSection[Number(index)];
-                        diffSection[nodeId] = value ?? {};
-                    }
-                });
+                    return nodeId ? { ...acc, [nodeId]: value ?? {} } : acc;
+                }, {});
             }
         });
+
+        return updatedSnapshot
     }
 
     /**
@@ -111,10 +117,10 @@ export default class History {
             // The position of these snapshots matters! diff() will always return the right-hand snapshot when comparing
             const diffSnapshots = detailedDiff(currentSnapshot, prevSnapshot) as MapDiff
             // The key for the diff will be based off of snapshot index (eg. "0", "1", "2"), but we want to replace that with the node id to make it robust for server-side.
-            this.switchDiffKeys(diffSnapshots)
+            const switchedKeysSnapshot = this.switchDiffKeys(diffSnapshots)
 
             this.redraw(this.snapshots[--this.index])
-            this.map.events.call(Event.undo, this.map.dom, diffSnapshots)
+            this.map.events.call(Event.undo, this.map.dom, switchedKeysSnapshot)
         }
     }
 
@@ -128,10 +134,10 @@ export default class History {
 
             const diffSnapshots = detailedDiff(currentSnapshot, nextSnapshot) as MapDiff
             // The key for the diff will be based off of snapshot index (eg. "0", "1", "2"), but we want to replace that with the node id to make it robust for server-side.
-            this.switchDiffKeys(diffSnapshots)
+            const switchedKeysSnapshot = this.switchDiffKeys(diffSnapshots)
 
             this.redraw(this.snapshots[++this.index])
-            this.map.events.call(Event.redo, this.map.dom, diffSnapshots)
+            this.map.events.call(Event.redo, this.map.dom, switchedKeysSnapshot)
         }
     }
 

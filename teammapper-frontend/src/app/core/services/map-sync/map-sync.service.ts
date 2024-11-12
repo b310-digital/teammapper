@@ -26,6 +26,7 @@ import {
   ResponseClientNotification,
   ServerMap,
   ResponseUndoRedoChanges,
+  ReversePropertyMapping,
 } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
@@ -438,30 +439,6 @@ export class MapSyncService implements OnDestroy {
 
     this.socket.on('mapChangesUndoRedo', (result: ResponseUndoRedoChanges) => {
       if (result.clientId === this.socket.id) return;
-
-      const ReversePropertyMapping = {
-        name: 'name',
-        locked: 'locked',
-        coordinates: 'coordinates',
-        image: {
-          src: 'imageSrc',
-          size: 'imageSize',
-        },
-        link: {
-          href: 'linkHref',
-        },
-        colors: {
-          background: 'backgroundColor',
-          branch: 'branchColor',
-          name: 'nameColor',
-        },
-        font: {
-          weight: 'fontWeight',
-          style: 'fontStyle',
-          size: 'fontSize',
-        },
-        hidden: 'hidden',
-      } as const;
 
       const getClientProperty = (
         serverProperty: string,

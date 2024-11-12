@@ -68,6 +68,30 @@ interface PrivateServerMap {
   modificationSecret: string;
 }
 
+const ReversePropertyMapping = {
+  name: 'name',
+  locked: 'locked',
+  coordinates: 'coordinates',
+  image: {
+    src: 'imageSrc',
+    size: 'imageSize',
+  },
+  link: {
+    href: 'linkHref',
+  },
+  colors: {
+    background: 'backgroundColor',
+    branch: 'branchColor',
+    name: 'nameColor',
+  },
+  font: {
+    weight: 'fontWeight',
+    style: 'fontStyle',
+    size: 'fontSize',
+  },
+  hidden: 'hidden',
+} as const;
+
 export {
   ResponseMapUpdated,
   ResponseUndoRedoChanges,
@@ -79,4 +103,5 @@ export {
   ResponseClientNotification,
   ServerMap,
   PrivateServerMap,
+  ReversePropertyMapping,
 };
