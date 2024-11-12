@@ -11,6 +11,9 @@ import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
 import { IMmpClientNode } from '../types'
 
+
+const crypto = require('crypto')
+
 describe('WebSocketGateway', () => {
   let app: INestApplication
   let mapsService: MapsService
@@ -156,9 +159,39 @@ describe('WebSocketGateway', () => {
           modificationSecret: map.modificationSecret,
           map: {},
         },
-        (result: MmpNode | undefined) => {
+        (result: boolean) => {
           expect(result).toEqual(true)
           done()
+        }
+      )
+    })
+  })
+
+  describe('applyMapChangesByDiff', () => {
+    it('updates the map based off of a diff', (done) => {
+      socket = io('http://localhost:3000')
+      const rootNodeId = crypto.randomUUID()
+
+      const diff = {
+        "added": {},
+        "deleted": {},
+        "updated": {
+          [rootNodeId]: {
+            "name": "Thema"
+          }
+        }
+      }
+
+      socket.emit(
+        'applyMapChangesByDiff',
+        {
+          mapId: map.id,
+          diff,
+          modificationSecret: map.modificationSecret
+        },
+        (result: boolean) => {
+          expect(result).toEqual(true);
+          done();
         }
       )
     })

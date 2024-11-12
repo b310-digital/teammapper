@@ -8,11 +8,14 @@ import {
   IMmpClientMapOptions,
   IMmpClientNode,
   IMmpClientNodeBasics,
+  IMmpClientMapDiff,
+  IMmpClientSnapshotChanges
 } from '../types'
 import {
   mapClientBasicNodeToMmpRootNode,
   mapClientNodeToMmpNode,
   mapMmpMapToClient,
+  mergeClientNodeIntoMmpNode,
 } from '../utils/clientServerMapping'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid';
@@ -184,6 +187,68 @@ export class MapsService {
     await this.addNodesFromClient(clientMap.uuid, clientMap.data)
     // reload map
     return this.findMap(clientMap.uuid)
+  }
+
+  async updateMapByDiff(mapId: string, diff: IMmpClientMapDiff) {
+    type DiffCallback = (diff: IMmpClientSnapshotChanges) => Promise<void>;
+    type DiffKey = keyof IMmpClientMapDiff;
+
+    const diffAddedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      // Sort keys so parents come before children
+      const sortedKeys = Object.keys(diff).sort((a, b) => {
+        const nodeA = diff[a];
+        const nodeB = diff[b];
+        return nodeB!.parent === nodeA!.id ? -1 : 1;  // Parent nodes come first
+      });
+    
+      // Then process in order
+      for (const key of sortedKeys) {
+        const clientNode = diff[key];
+        if (clientNode) {
+          const newNode = new MmpNode();
+          Object.assign(newNode, mergeClientNodeIntoMmpNode(clientNode, newNode));
+          newNode.nodeMapId = mapId;
+          await this.nodesRepository.save(newNode);
+        }
+      }
+    }
+
+    const diffUpdatedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
+        const clientNode = diff[key];
+
+        if (clientNode) {
+          const serverNode = await this.nodesRepository.findOne({ where: { id: key } });
+        
+          if (serverNode) {
+            const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
+            Object.assign(serverNode, mergedNode);
+            await this.nodesRepository.save(serverNode);
+          }
+        }
+      }));
+    }
+
+    const diffDeletedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
+        await this.nodesRepository.delete({ id: key, nodeMapId: mapId });
+      }));
+    }
+
+    const callbacks: Record<keyof IMmpClientMapDiff, DiffCallback> = {
+      added: diffAddedCallback,
+      updated: diffUpdatedCallback,
+      deleted: diffDeletedCallback
+    };
+
+    const diffKeys: DiffKey[] = ["added", "updated", "deleted"];
+    
+    diffKeys.forEach(key => {
+      const changes = diff[key];
+      if (changes && Object.keys(changes).length > 0) {
+        callbacks[key](changes);
+      }
+    });
   }
 
   async updateMapOptions(
