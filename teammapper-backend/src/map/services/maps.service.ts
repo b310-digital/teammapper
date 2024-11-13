@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, Brackets } from 'typeorm'
+import { Repository } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
@@ -8,11 +8,14 @@ import {
   IMmpClientMapOptions,
   IMmpClientNode,
   IMmpClientNodeBasics,
+  IMmpClientMapDiff,
+  IMmpClientSnapshotChanges
 } from '../types'
 import {
   mapClientBasicNodeToMmpRootNode,
   mapClientNodeToMmpNode,
   mapMmpMapToClient,
+  mergeClientNodeIntoMmpNode,
 } from '../utils/clientServerMapping'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid';
@@ -21,12 +24,12 @@ import MalformedUUIDError from './uuid.error'
 @Injectable()
 export class MapsService {
   private readonly logger = new Logger(MapsService.name)
-
+  
   constructor(
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
-    private mapsRepository: Repository<MmpMap>
+    private mapsRepository: Repository<MmpMap>,
   ) { }
 
   findMap(uuid: string): Promise<MmpMap | null> {
@@ -35,6 +38,10 @@ export class MapsService {
     return this.mapsRepository.findOne({
       where: { id: uuid },
     })
+  }
+
+  async updateLastAccessed(uuid: string, lastAccessed = new Date()) {
+    this.mapsRepository.update(uuid, { lastAccessed })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
@@ -57,6 +64,8 @@ export class MapsService {
   async addNode(mapId: string, node: MmpNode): Promise<MmpNode> {
     // detached nodes are not allowed to have a parent
     if (node.detached && node.nodeParentId) return Promise.reject()
+    // root nodes are not allowed to have a parent
+    if (node.root && node.nodeParentId) return Promise.reject()
     if (!mapId || !node) return Promise.reject()
 
     const existingNode = await this.nodesRepository.findOne({
@@ -86,20 +95,21 @@ export class MapsService {
   ): Promise<MmpNode[]> {
     if (!mapId || nodes.length === 0) Promise.reject()
 
-    const reducer = async (
-      previousPromise: Promise<MmpNode[]>,
-      node: MmpNode
-    ): Promise<MmpNode[]> => {
-      const accCreatedNodes = await previousPromise
-      if (await this.validatesNodeParentForNode(mapId, node)) {
-        return accCreatedNodes.concat([await this.addNode(mapId, node)])
-      }
-
-      this.logger.warn(
-        `Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`
-      )
-      return accCreatedNodes
-    }
+      const reducer = async (previousPromise: Promise<MmpNode[]>, node: MmpNode): Promise<MmpNode[]> => {
+        const accCreatedNodes = await previousPromise;
+        if (await this.validatesNodeParentForNode(mapId, node)) {
+          try {
+            const newNode = await this.addNode(mapId, node);
+            return accCreatedNodes.concat([newNode]);
+          } catch (error) {
+            this.logger.warn(`Failed to add node ${node.id} to map ${mapId}: ${error}`);
+            return accCreatedNodes;
+          }
+        }
+    
+        this.logger.warn(`Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`);
+        return accCreatedNodes;
+      };
 
 
     return nodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
@@ -178,6 +188,68 @@ export class MapsService {
     return this.findMap(clientMap.uuid)
   }
 
+  async updateMapByDiff(mapId: string, diff: IMmpClientMapDiff) {
+    type DiffCallback = (diff: IMmpClientSnapshotChanges) => Promise<void>;
+    type DiffKey = keyof IMmpClientMapDiff;
+
+    const diffAddedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      // Sort keys so parents come before children
+      const sortedKeys = Object.keys(diff).sort((a, b) => {
+        const nodeA = diff[a];
+        const nodeB = diff[b];
+        return nodeB!.parent === nodeA!.id ? -1 : 1;  // Parent nodes come first
+      });
+    
+      // Then process in order
+      for (const key of sortedKeys) {
+        const clientNode = diff[key];
+        if (clientNode) {
+          const newNode = new MmpNode();
+          Object.assign(newNode, mergeClientNodeIntoMmpNode(clientNode, newNode));
+          newNode.nodeMapId = mapId;
+          await this.nodesRepository.save(newNode);
+        }
+      }
+    }
+
+    const diffUpdatedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
+        const clientNode = diff[key];
+
+        if (clientNode) {
+          const serverNode = await this.nodesRepository.findOne({ where: { id: key } });
+        
+          if (serverNode) {
+            const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
+            Object.assign(serverNode, mergedNode);
+            await this.nodesRepository.save(serverNode);
+          }
+        }
+      }));
+    }
+
+    const diffDeletedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
+        await this.nodesRepository.delete({ id: key, nodeMapId: mapId });
+      }));
+    }
+
+    const callbacks: Record<keyof IMmpClientMapDiff, DiffCallback> = {
+      added: diffAddedCallback,
+      updated: diffUpdatedCallback,
+      deleted: diffDeletedCallback
+    };
+
+    const diffKeys: DiffKey[] = ["added", "updated", "deleted"];
+    
+    diffKeys.forEach(key => {
+      const changes = diff[key];
+      if (changes && Object.keys(changes).length > 0) {
+        callbacks[key](changes);
+      }
+    });
+  }
+
   async updateMapOptions(
     mapId: string,
     clientOptions: IMmpClientMapOptions
@@ -202,7 +274,9 @@ export class MapsService {
         ? map.lastModified
         : newestNodeLastModified
 
-    return this.calculcateDeletedAt(new Date(lastModified), afterDays)
+    const lastAccessed = map.lastAccessed
+
+    return this.calculcateDeletedAt(lastAccessed ? new Date(lastAccessed) : new Date(lastModified), afterDays)
   }
 
   calculcateDeletedAt(lastModified: Date, afterDays: number): Date {
@@ -232,18 +306,8 @@ export class MapsService {
         'lastmodifiednode.nodeMapid = map.id'
       )
       .where(
-        // delete all maps that have nodes that were last updated after afterDays
-        "(lastmodifiednode.lastUpdatedAt + (INTERVAL '1 day' * :afterDays)) < :today",
+        "(GREATEST(map.lastAccessed, map.lastModified, lastmodifiednode.lastUpdatedAt) + (INTERVAL '1 day' * :afterDays)) < :today",
         { afterDays, today }
-      )
-      .orWhere(
-        new Brackets((qb) => {
-          // also delete empty maps, use th emaps lastmodified date for this:
-          qb.where('lastmodifiednode.lastUpdatedAt IS NULL').andWhere(
-            "(map.lastModified + (INTERVAL '1 day' * :afterDays)) < :today",
-            { afterDays, today }
-          )
-        })
       )
 
     const outdatedMapsIdsFlat = (await deleteQuery.getRawMany()).flatMap(

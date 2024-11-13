@@ -24,6 +24,7 @@ export interface IMmpClientFont {
 export interface IMmpClientMap {
   uuid: string
   lastModified: Date
+  lastAccessed: Date
   deleteAfterDays: number
   deletedAt: Date
   data: IMmpClientNode[]
@@ -95,8 +96,22 @@ export interface IMmpClientUpdateMapOptionsRequest
   options: IMmpClientMapOptions
 }
 
+export interface IMmpClientSnapshotChanges {
+  [k: string]: Partial<IMmpClientNode> | undefined
+}
+
+export interface IMmpClientMapDiff {
+  added: IMmpClientSnapshotChanges
+  deleted: IMmpClientSnapshotChanges
+  updated: IMmpClientSnapshotChanges
+}
+
 export interface IMmpClientMapRequest extends IMmpClientEditingRequest {
   map: IMmpClientMap
+}
+
+export interface IMmpClientUndoRedoRequest extends IMmpClientEditingRequest {
+  diff: IMmpClientMapDiff
 }
 
 export interface IMmpClientMapCreateRequest {
