@@ -173,6 +173,13 @@
     "SUCCESSFULLY_DUPLICATED": "Mappa mentale duplicata con successo!",
     "URL_COPIED": "URL copiato con successo",
     "NODE_COPIED": "Nodo copiato con successo!",
+    "NODE_CUT": "Nodo tagliato con successo!",
+    "MAP_IMPORT_SUCCESS": "Mappa mentale importata con successo",
+    "MAP_UPDATE_SUCCESS": "Mappa mentale aggiornata con successo!",
+    "WARNINGS": {
+      "MAP_IMPORT_IN_PROGRESS": "Importazione della mappa mentale in corso",
+      "MAP_UPDATE_IN_PROGRESS": "Aggiornamento della mappa mentale..."
+    },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Non è possibile copiare il nodo radice!",
       "ROOT_NODE_CUT": "Non è possibile tagliare il nodo radice!",

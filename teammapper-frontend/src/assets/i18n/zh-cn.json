@@ -5,13 +5,13 @@
     "IT": "意大利语",
     "ZH-TW": "繁体中文",
     "ZH-CN": "简体中文",
-    "PT-BR": "巴西葡萄牙語",
+    "PT-BR": "巴西葡萄牙语",
     "ES": "西班牙语",
     "DE": "德语"
   },
   "TOOLTIPS": {
-    "IMPORT_MAP": "Imports the map",
-    "EXPORT_MAP": "Exports the map",
+    "IMPORT_MAP": "导入思维导图",
+    "EXPORT_MAP": "导出思维导图",
     "ESC": "关闭",
     "FULLSCREEN": "全屏",
     "CLOSE_MENU": "关闭菜单",
@@ -37,14 +37,14 @@
     "EDIT_NODE": "编辑节点",
     "COUPLE_NODE": "锁定节点",
     "NODE_IMAGE": "向节点添加图片",
-    "PICTOGRAM": "Pictrogram",
+    "PICTOGRAM": "图标",
     "BOLD_TEXT": "粗体",
     "ITALIC_TEXT": "斜体",
     "TEXT_SIZE": "文字大小",
     "IMAGE_SIZE": "图片大小",
-    "START_EDIT_NODE": "Edit node text",
+    "START_EDIT_NODE": "编辑节点",
     "ADD_NODE": "新增节点",
-    "ADD_DETACHED_NODE": "Add a detached node",
+    "ADD_DETACHED_NODE": "添加独立节点",
     "REMOVE_NODE": "删除节点",
     "ZOOM_IN_MAP": "放大",
     "ZOOM_OUT_MAP": "缩小",
@@ -60,83 +60,83 @@
     "SETTINGS": "设置",
     "CENTER_ON_RESIZING": "置中缩放",
     "NODE_DRAGGING": "拖拽节点",
-    "MAP_ZOOM": "缩放地图",
+    "MAP_ZOOM": "缩放思维导图",
     "AUTO_BRANCH_COLORS": "自动分配分支颜色",
-    "SHARE": "Share",
-    "LINK_ADD": "Adds a link",
-    "LINK_REMOVE": "Removes a link",
-    "FONT_MIN_SIZE": "Minimal font size",
-    "FONT_MAX_SIZE": "Maximal font size",
-    "FONT_INCREMENT": "Font size step",
-    "FONT_INCREASE": "Increase font ",
-    "FONT_DECREASE": "Decrease font"
+    "SHARE": "分享",
+    "LINK_ADD": "添加链接",
+    "LINK_REMOVE": "移除链接",
+    "FONT_MIN_SIZE": "最小字体大小",
+    "FONT_MAX_SIZE": "最大字体大小",
+    "FONT_INCREMENT": "字体大小步长",
+    "FONT_INCREASE": "增大字体",
+    "FONT_DECREASE": "减小字体"
   },
   "MODALS": {
     "GENERAL": {
-      "BUTTON_CLOSE": "Close"
+      "BUTTON_CLOSE": "关闭"
     },
     "CONNECTION_INFO": {
-      "TITLE": "Connection lost",
-      "CONTENT": "Connection to server was lost. Retrying...",
-      "BUTTON_RECONNECT": "Reconnect"
+      "TITLE": "连接丢失",
+      "CONTENT": "与服务器的连接已丢失。正在重试...",
+      "BUTTON_RECONNECT": "重新连接"
     },
     "PICTOGRAMS": {
-      "TITLE": "Add a pictogram",
-      "BUTTON_SEARCH": "Search",
-      "FORM_INPUT_LABEL_SEARCH": "Search term",
+      "TITLE": "添加图标",
+      "BUTTON_SEARCH": "搜索",
+      "FORM_INPUT_LABEL_SEARCH": "搜索词",
       "TERMS_TEXT": [
-        "Pictograms author: Sergio Palao. Origin: ARASAAC (",
+        "图标作者：Sergio Palao。来源：ARASAAC (",
         "https://arasaac.org",
-        "). License: ",
+        ")。许可证：",
         "CC (BY-NC-SA)",
         "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
-        ". Owner: Government of Aragon (Spain)"
+        "。所有者：阿拉贡政府（西班牙）"
       ],
-      "EMPTY": "No result"
+      "EMPTY": "空"
     },
     "SHARE": {
-      "TITLE": "Share map",
-      "CONTENT": "Copy this link to share the map",
-      "LINK_TYPE_VIEW": "Only observe",
-      "LINK_TYPE_EDIT": "Observe and modify"
+      "TITLE": "分享思维导图",
+      "CONTENT": "复制此链接以分享思维导图",
+      "LINK_TYPE_VIEW": "仅查看",
+      "LINK_TYPE_EDIT": "查看并修改"
     },
     "INFO": {
-      "DELETED_AT": "Mindmap is going to be deleted at:",
-      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-      "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "DELETED_AT": "思维导图将在以下时间删除：",
+      "DELETE_AFTER_DAYS": "思维导图将在此服务器上 {{deleteAfterDays}} 天后删除。",
+      "DELETE": "删除思维导图",
+      "CONFIRM_DELETE": "删除？"
     },
     "LINK": {
-      "URL": "Link URL (https://...)"
+      "URL": "链接 URL (https://...)"
     }
   },
   "PAGES": {
     "ABOUT": {
       "INTRODUCTION": {
-        "APPLICATION_DESCRIPTION": "The open-source web application to draw mind maps together.",
+        "APPLICATION_DESCRIPTION": "一个开源的网页应用程序，可以共同绘制思维导图。",
         "APPLICATION_PROPERTIES": [
-          "Collaborate together on mind maps",
-          "Share mind maps with others - either by a QR code or by providing the link.",
-          "Add images, colors, font properties and links to nodes",
-          "Import and export functionality"
+          "共同协作思维导图",
+          "通过二维码或提供链接与他人分享思维导图。",
+          "向节点添加图片、颜色、字体属性和链接",
+          "导入和导出功能"
         ]
       },
       "SECTIONS": [
         {
-          "TITLE": "Mind maps",
-          "SUBTITLE": "teammapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
+          "TITLE": "思维导图",
+          "SUBTITLE": "teammapper 遵循 Tony Buzan 方法，利用图像和颜色的唤起力量，使概念的记忆更加容易，激发创造力和心理联想。",
           "CARDS": [
             {
-              "TITLE": "Colors and images",
-              "CONTENT": "Colors and images of mind maps exploit brain characteristics to express concepts in a more effective and lasting way."
+              "TITLE": "颜色和图像",
+              "CONTENT": "思维导图的颜色和图像利用大脑特征，以更有效和持久的方式表达概念。"
             },
             {
-              "TITLE": "Radial tree",
-              "CONTENT": "Hierarchical structure of mind maps exploits the radial geometry, which is divided on several levels and facilitates concept expressiveness."
+              "TITLE": "放射树",
+              "CONTENT": "思维导图的层级结构利用放射几何，分为多个层级，便于概念的表达。"
             },
             {
-              "TITLE": "Uses",
-              "CONTENT": "Mind maps are particularly effective to learn or organize ideas, for example in educational or business contexts."
+              "TITLE": "用途",
+              "CONTENT": "思维导图特别有效于学习或组织想法，例如在教育或商业环境中。"
             }
           ]
         }
@@ -145,34 +145,40 @@
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "自动分配分支颜色",
       "CENTER_ON_RESIZING": "缩放之后居中",
-      "FONT_MIN_SIZE": "Minimal font size",
-      "FONT_MAX_SIZE": "Maximal font size",
-      "FONT_INCREMENT": "Font size step",
+      "FONT_MIN_SIZE": "最小字体大小",
+      "FONT_MAX_SIZE": "最大字体大小",
+      "FONT_INCREMENT": "字体大小步长",
       "GENERAL": "一般",
       "MAIN": "主界面",
-      "MAP_LIST": "List of created maps",
+      "MAP_LIST": "已创建思维导图列表",
       "MAP_OPTIONS": "思维导图选项",
       "ROOT_NODE_NAME": "根节点名称",
       "NODE_NAME": "节点名称",
       "TITLE": "设置",
-      "TTL": "Last known date of deletion"
+      "TTL": "最后已知删除日期"
     },
     "SHORTCUTS": {
       "TITLE": "快捷键"
     }
   },
   "MESSAGES": {
-    "NO_SAVED_MAPS": "No saved maps!",
+    "NO_SAVED_MAPS": "没有保存的思维导图！",
     "INITIAL_INFORMATION": "TeamMapper 已经准备好了 ☺",
-    "WELCOME_MESSAGE": "欢迎使用 TeamMapper app ☺",
-    "MAP_DELETION_CONFIRM": "Are you sure you want to delete the map?",
-    "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images.",
-    "DELETE_WARNING": "Attention: Mind maps are deleted automatically when inactive after a couple of days."
+    "WELCOME_MESSAGE": "欢迎使用 TeamMapper 应用 ☺",
+    "MAP_DELETION_CONFIRM": "您确定要删除这张思维导图吗？",
+    "JSON_FILE_SIZE_TOO_LARGE": "文件大小超过 1 MB，可能会导致导入时出现问题。请通过删除图片等方式减小文件大小。"
   },
   "TOASTS": {
     "SUCCESSFULLY_DUPLICATED": "思维导图复制成功！",
     "URL_COPIED": "成功复制 URL",
-    "NODE_COPIED": "节点复制成功!",
+    "NODE_COPIED": "节点复制成功",
+    "NODE_CUT": "节点成功切断",
+    "MAP_IMPORT_SUCCESS": "成功导入思维导图",
+    "MAP_UPDATE_SUCCESS": "思维导图更新成功",
+    "WARNINGS": {
+      "MAP_IMPORT_IN_PROGRESS": "心智图导入中",
+      "MAP_UPDATE_IN_PROGRESS": "更新思维导图"
+    },
     "ERRORS": {
       "ROOT_NODE_COPIED": "无法复制根节点！",
       "ROOT_NODE_CUT": "不可能切断根节点！",
@@ -184,13 +190,11 @@
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！"
   },
   "GENERAL": {
-    "REPOSITORY": "Source Code",
-    "CREATE": "Create mind map",
-    "DATAPROTECTION": "Privacy",
-    "LEGAL": "Legal Disclosure",
+    "REPOSITORY": "源代码",
+    "CREATE": "创建思维导图",
     "DISMISS": "解除",
-    "SAVED_MAPS": "Saved maps",
-    "JSON": "File (.json)",
+    "SAVED_MAPS": "已保存的思维导图",
+    "JSON": "文件 (.json)",
     "PNG": "图片 (.png)",
     "SVG": "图片 (.svg)",
     "JPG": "图片 (.jpg)",
@@ -203,13 +207,13 @@
     "OPEN": "打开",
     "CANCEL": "取消",
     "NODE_DRAGGING": "拖拽节点",
-    "MAP_ZOOM": "缩放",
+    "MAP_ZOOM": "缩放思维导图",
     "MAP": "思维导图",
     "NODES": "节点",
     "SAVED": "已保存",
     "NOT_SAVED": "未保存",
-    "FONT_MIN_SIZE": "Minimal font size",
-    "FONT_MAX_SIZE": "Maximal font size",
-    "FONT_INCREMENT": "Font size step"
+    "FONT_MIN_SIZE": "最小字体大小",
+    "FONT_MAX_SIZE": "最大字体大小",
+    "FONT_INCREMENT": "字体大小步长"
   }
 }
