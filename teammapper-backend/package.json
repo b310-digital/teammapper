@@ -91,6 +91,9 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "~5.5.4"
   },
+  "overrides": {
+    "path-to-regexp": "1.9.0"
+  },
   "jest": {
     "moduleFileExtensions": [
       "js",
