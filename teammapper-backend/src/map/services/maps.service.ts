@@ -194,22 +194,8 @@ export class MapsService {
     type DiffKey = keyof IMmpClientMapDiff;
 
     const diffAddedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
-      // Sort keys so parents come before children
-      const sortedKeys = Object.keys(diff).sort((a, b) => {
-        const nodeA = diff[a];
-        const nodeB = diff[b];
-        return nodeB!.parent === nodeA!.id ? -1 : 1;  // Parent nodes come first
-      });
-    
-      // Then process in order
-      for (const key of sortedKeys) {
-        const clientNode = diff[key];
-        if (clientNode) {
-          const newNode = new MmpNode();
-          Object.assign(newNode, mergeClientNodeIntoMmpNode(clientNode, newNode));
-          await this.addNode(mapId, newNode);
-        }
-      }
+      const nodes = Object.values(diff);
+      await this.addNodesFromClient(mapId, nodes as IMmpClientNode[])
     }
 
     const diffUpdatedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
@@ -217,7 +203,7 @@ export class MapsService {
         const clientNode = diff[key];
 
         if (clientNode) {
-          const serverNode = await this.nodesRepository.findOne({ where: { id: key } });
+          const serverNode = await this.nodesRepository.findOne({ where: { nodeMapId: mapId, id: key } });
         
           if (serverNode) {
             const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
