@@ -90,6 +90,7 @@ export class MmpNode {
   locked: boolean
 
   @Column({ default: false })
+  @IsDefined()
   detached: boolean
 
   @Column({ nullable: true, type: 'float' })
@@ -97,6 +98,7 @@ export class MmpNode {
 
   @PrimaryColumn('uuid')
   @Index()
+  @IsDefined()
   nodeMapId: string
 
   @Column({ nullable: true })
