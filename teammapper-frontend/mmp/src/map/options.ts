@@ -203,8 +203,7 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     font: {
         size: 16,
         style: 'normal',
-        weight: 'normal',
-        decoration: ''
+        weight: 'normal'
     },
     locked: true,
     detached: false,
@@ -233,8 +232,7 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     font: {
         size: 20,
         style: 'normal',
-        weight: 'normal',
-        decoration: ''
+        weight: 'normal'
     },
     locked: true,
     detached: false,
