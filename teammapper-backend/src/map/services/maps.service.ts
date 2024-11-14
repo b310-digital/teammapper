@@ -207,8 +207,7 @@ export class MapsService {
         if (clientNode) {
           const newNode = new MmpNode();
           Object.assign(newNode, mergeClientNodeIntoMmpNode(clientNode, newNode));
-          newNode.nodeMapId = mapId;
-          await this.nodesRepository.save(newNode);
+          await this.addNode(mapId, newNode);
         }
       }
     }
@@ -231,7 +230,16 @@ export class MapsService {
 
     const diffDeletedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
       await Promise.all(Object.keys(diff).map(async (key) => {
-        await this.nodesRepository.delete({ id: key, nodeMapId: mapId });
+        const existingNode = await this.nodesRepository.findOneBy({
+          id: key,
+          nodeMapId: mapId,
+        })
+    
+        if (!existingNode) {
+          return
+        }
+    
+        return this.nodesRepository.remove(existingNode)
       }));
     }
 

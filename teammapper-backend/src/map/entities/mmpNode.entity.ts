@@ -8,8 +8,11 @@ import {
   JoinColumn,
   Generated,
   OneToMany,
+  BeforeInsert, 
+  BeforeUpdate,
 } from 'typeorm'
 import { MmpMap } from './mmpMap.entity'
+import { validateOrReject, IsDefined } from 'class-validator';
 
 @Entity()
 export class MmpNode {
@@ -45,12 +48,15 @@ export class MmpNode {
   /* eslint-enable @typescript-eslint/no-unused-vars */
 
   @Column({ default: false })
+  @IsDefined()
   root: boolean
 
   @Column({ type: 'float' })
+  @IsDefined()
   coordinatesX: number
 
   @Column({ type: 'float' })
+  @IsDefined()
   coordinatesY: number
 
   @Column({ nullable: true })
@@ -105,4 +111,10 @@ export class MmpNode {
 
   @Column({ type: 'timestamptz', default: () => 'now()', nullable: true })
   createdAt: Date
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async validate() {
+    await validateOrReject(this);
+  }
 }

@@ -4,9 +4,12 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   Generated,
+  BeforeInsert, 
+  BeforeUpdate,
 } from 'typeorm'
 import { MapOptions } from '../types'
 import { MmpNode } from './mmpNode.entity'
+import { validateOrReject, IsDefined } from 'class-validator';
 
 @Entity()
 export class MmpMap {

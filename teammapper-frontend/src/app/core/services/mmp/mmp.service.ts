@@ -196,7 +196,7 @@ export class MmpService implements OnDestroy {
   ) {
     const newProps: UserNodeProperties = properties || { name: '' };
     const parent =
-      properties?.parent !== undefined
+      properties?.parent
         ? this.selectNode(properties.parent)
         : !properties?.detached
         ? this.selectNode()
