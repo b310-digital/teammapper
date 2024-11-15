@@ -20,7 +20,6 @@ import {
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid';
 import MalformedUUIDError from './uuid.error'
-import { ValidationError } from 'class-validator';
 
 @Injectable()
 export class MapsService {
