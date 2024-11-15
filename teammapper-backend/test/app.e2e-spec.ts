@@ -150,7 +150,7 @@ describe('AppController (e2e)', () => {
                 font: {},
                 colors: {},
                 link: {},
-                isRoot: false,
+                isRoot: true,
                 detached: false
               },
             ],
