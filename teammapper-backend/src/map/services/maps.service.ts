@@ -20,6 +20,7 @@ import {
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid';
 import MalformedUUIDError from './uuid.error'
+import { ValidationError } from 'class-validator';
 
 @Injectable()
 export class MapsService {
@@ -79,7 +80,12 @@ export class MapsService {
       nodeMapId: mapId,
     })
 
-    return this.nodesRepository.save(newNode)
+    try {
+      return this.nodesRepository.save(newNode)
+    } catch(error) {
+      this.logger.error(`${error.constructor.name} - Failed to add node ${newNode.id}: ${error}`)
+      return Promise.reject(error)
+    }
   }
 
   async addNodesFromClient(
@@ -142,11 +148,16 @@ export class MapsService {
 
     if (!existingNode) return Promise.reject()
 
-    return this.nodesRepository.save({
-      ...existingNode,
-      ...mapClientNodeToMmpNode(clientNode, mapId),
-      lastModified: new Date(),
-    })
+      try {
+        return this.nodesRepository.save({
+          ...existingNode,
+          ...mapClientNodeToMmpNode(clientNode, mapId),
+          lastModified: new Date(),
+        })
+      } catch(error) {
+        this.logger.error(`${error.constructor.name} - Failed to update node ${existingNode.id}: ${error}`)
+        return Promise.reject(error)
+      }
   }
 
   async removeNode(
@@ -173,7 +184,12 @@ export class MapsService {
       const newRootNode = this.nodesRepository.create(
         mapClientBasicNodeToMmpRootNode(rootNode, savedNewMap.id)
       )
-      await this.nodesRepository.save(newRootNode)
+      try {
+        await this.nodesRepository.save(newRootNode)
+      } catch(error) {
+        this.logger.error(`${error.constructor.name} - Failed to create root node ${newRootNode.id}: ${error}`)
+        return Promise.reject(error)
+      }
     }
 
     return newMap
@@ -208,7 +224,12 @@ export class MapsService {
           if (serverNode) {
             const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
             Object.assign(serverNode, mergedNode);
-            await this.nodesRepository.save(serverNode);
+            try {
+              await this.nodesRepository.save(serverNode);
+            } catch(error) {
+              this.logger.error(`${error.constructor.name} - Failed to update node ${serverNode.id} during diff update: ${error}`)
+              return Promise.reject(error)
+            }
           }
         }
       }));
