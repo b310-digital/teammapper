@@ -44,7 +44,9 @@
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/typeorm": "^10.0.2",
     "@nestjs/websockets": "^10.4.1",
+    "@types/uuid": "^10.0.0",
     "cache-manager": "^5.7.4",
+    "class-validator": "^0.14.1",
     "dotenv": "16.4.5",
     "http-proxy-middleware": "3.0.3",
     "npm-check-updates": "^17.1.10",
@@ -55,8 +57,7 @@
     "rxjs": "^7.8.1",
     "socket.io": "4.8.0",
     "typeorm": "^0.3.20",
-    "uuid": "10.0.0",
-    "@types/uuid": "^10.0.0"
+    "uuid": "10.0.0"
   },
   "devDependencies": {
     "@golevelup/ts-jest": "^0.5.6",
