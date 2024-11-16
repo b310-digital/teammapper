@@ -17,21 +17,18 @@ import { validateOrReject, IsDefined } from 'class-validator';
 @Entity()
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
-  @Column({ nullable: true })
-  name: string
+  @Column({ type: 'varchar', nullable: true })
+  name: string | null;
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @ManyToOne((type) => MmpMap, (map) => map.nodes, {
+  @ManyToOne(() => MmpMap, (map) => map.nodes, {
     onDelete: 'CASCADE',
   })
   @JoinColumn()
-  nodeMap: MmpMap
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+  nodeMap: MmpMap;
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @ManyToOne((type) => MmpNode, (node) => node.children, {
+  @ManyToOne(() => MmpNode, (node) => node.children, {
     onDelete: 'CASCADE',
   })
   @JoinColumn([
@@ -39,80 +36,77 @@ export class MmpNode {
     { name: 'nodeParentId', referencedColumnName: 'id' },
   ])
   @Index()
-  nodeParent: MmpNode
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+  nodeParent: MmpNode;
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @OneToMany((type) => MmpNode, (node) => node.nodeParent)
-  children: MmpNode[]
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+  @OneToMany(() => MmpNode, (node) => node.nodeParent)
+  children: MmpNode[];
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   @IsDefined()
-  root: boolean
+  root: boolean = false;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'float8' })
   @IsDefined()
-  coordinatesX: number
+  coordinatesX: number;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'float8' })
   @IsDefined()
-  coordinatesY: number
+  coordinatesY: number;
 
-  @Column({ nullable: true })
-  colorsName: string
+  @Column({ type: 'varchar', nullable: true })
+  colorsName: string | null;
 
-  @Column({ nullable: true })
-  colorsBackground: string
+  @Column({ type: 'varchar', nullable: true })
+  colorsBackground: string | null;
 
-  @Column({ nullable: true })
-  colorsBranch: string
+  @Column({ type: 'varchar', nullable: true })
+  colorsBranch: string | null;
 
-  @Column({ nullable: true })
-  fontSize: number
+  @Column({ type: 'integer', nullable: true })
+  fontSize: number | null;
 
-  @Column({ nullable: true })
-  fontStyle: string
+  @Column({ type: 'varchar', nullable: true })
+  fontStyle: string | null;
 
-  @Column({ nullable: true })
-  fontWeight: string
+  @Column({ type: 'varchar', nullable: true })
+  fontWeight: string | null;
 
-  @Column({ nullable: true })
-  imageSrc: string
+  @Column({ type: 'varchar', nullable: true })
+  imageSrc: string | null;
 
-  @Column({ nullable: true, default: 60 })
-  imageSize: number
+  @Column({ type: 'integer', nullable: true, default: 60 })
+  imageSize: number | null = 60;
 
-  @Column({ nullable: true })
-  linkHref: string
+  @Column({ type: 'varchar', nullable: true })
+  linkHref: string | null;
 
-  @Column({ nullable: true })
-  locked: boolean
+  @Column({ type: 'boolean', nullable: true })
+  locked: boolean | null;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   @IsDefined()
-  detached: boolean
+  detached: boolean = false;
 
-  @Column({ nullable: true, type: 'float' })
-  k: number
+  @Column({ type: 'float8', nullable: true })
+  k: number | null;
 
   @PrimaryColumn('uuid')
   @Index()
   @IsDefined()
-  nodeMapId: string
+  nodeMapId: string;
 
-  @Column({ nullable: true })
-  nodeParentId: string
+  @Column({ type: 'uuid', nullable: true })
+  nodeParentId: string | null;
 
-  @Column({ nullable: false })
+  @Column({ type: 'integer' })
   @Generated('increment')
-  orderNumber: number
+  orderNumber: number;
 
-  @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
-  lastModified: Date
+  @Column({ type: 'timestamptz', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
+  lastModified: Date | null = new Date();
 
-  @Column({ type: 'timestamptz', default: () => 'now()', nullable: true })
-  createdAt: Date
+  @Column({ type: 'timestamptz', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date | null = new Date();
 
   @BeforeInsert()
   @BeforeUpdate()
