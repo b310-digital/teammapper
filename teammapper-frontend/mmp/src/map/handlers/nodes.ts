@@ -703,13 +703,13 @@ export default class Nodes {
     private calculateNodeCoordinates(
         node: Node | ExportNodeProperties,
         params: {
-            getParent: () => (Node | ExportNodeProperties) | null,
+            nodeParent: (Node | ExportNodeProperties) | null,
             getSiblings: () => (Node | ExportNodeProperties)[],
             isRoot: boolean,
             getOrientation: (n: Node | ExportNodeProperties) => boolean | undefined
         }
     ): Coordinates {
-        const nodeParent = params.getParent();
+        const nodeParent = params.nodeParent;
         
         let coordinates: Coordinates = {
             x: nodeParent?.coordinates?.x ?? (node.coordinates?.x ?? 0),
@@ -764,7 +764,7 @@ export default class Nodes {
         return this.calculateNodeCoordinates(
             node,
             {
-                getParent: () => node.parent,
+                nodeParent: node.parent,
                 getSiblings: () => this.getSiblings(node),
                 isRoot: node.parent?.isRoot ?? false,
                 getOrientation: (n: Node) => this.getNodeOrientation(n)
@@ -785,7 +785,7 @@ export default class Nodes {
                 node.coordinates = this.calculateNodeCoordinates(
                     node,
                     {
-                        getParent: () => node.parent ? map.find(x => x.id === node.parent) : null,
+                        nodeParent: node.parent ? map.find(x => x.id === node.parent) : null,
                         getSiblings: () => node.parent ? map.filter(x => x.parent === node.parent && x.id !== node.id) : [],
                         isRoot: !!node.parent && map.find(x => x.id === node.parent)?.isRoot,
                         getOrientation: (n: ExportNodeProperties) => this.getExportOrientation(n, rootNode)
