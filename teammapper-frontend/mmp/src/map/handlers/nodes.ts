@@ -775,7 +775,7 @@ export default class Nodes {
     public applyCoordinatesToMapSnapshot = (map: MapSnapshot): MapSnapshot => {
         const rootNode = map.find(x => x.isRoot);
         
-        map.forEach(node => {
+        return map.map(node => {
             if (!node.coordinates) {
                 /**
                  * Since we're working with a JSON snapshot here, none of the nodes actually exist.
@@ -792,9 +792,9 @@ export default class Nodes {
                     }
                 );
             }
-        });
 
-        return map;
+            return node
+        });
     }
 
     /**
