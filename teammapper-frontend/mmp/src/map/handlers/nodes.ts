@@ -745,9 +745,7 @@ export default class Nodes {
         }
     
         if (siblings.length > 0) {
-            const lowerNode = 'isRoot' in node 
-                ? this.getNodeLowerNode(siblings as Node[])
-                : this.getExportLowerNode(siblings as ExportNodeProperties[]);
+            const lowerNode = this.getLowerNode(siblings)
             coordinates.y = (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
         } else if (!node.detached) {
             coordinates.y -= NODE_VERTICAL_SPACING;
@@ -804,7 +802,7 @@ export default class Nodes {
      * @param {Node[]} nodes
      * @returns {Node} lowerNode
      */
-    private getLowerNode(nodes: Node[] | ExportNodeProperties[]): Node | ExportNodeProperties | undefined {
+    private getLowerNode(nodes: (Node | ExportNodeProperties)[]): Node | ExportNodeProperties | undefined {
         if (nodes.length === 0) {
             return;
         }
@@ -815,15 +813,6 @@ export default class Nodes {
             
             return currentY > lowestY ? current : lowest;
         }, nodes[0]);
-    }
-    
-    // Wrapper methods with specific types
-    public getExportLowerNode(nodes: ExportNodeProperties[]): ExportNodeProperties | undefined {
-        return this.getLowerNode(nodes) as ExportNodeProperties | undefined;
-    }
-    
-    public getNodeLowerNode(nodes: Node[] = Array.from(this.nodes.values())): Node | undefined {
-        return this.getLowerNode(nodes) as Node | undefined;
     }
 
     /**
@@ -1218,7 +1207,7 @@ export default class Nodes {
                 })
             }
 
-            const lowerNode = this.getNodeLowerNode(children)
+            const lowerNode = this.getLowerNode(children)
 
             if (children.length > 0) {
                 this.selectNode(lowerNode.id)
