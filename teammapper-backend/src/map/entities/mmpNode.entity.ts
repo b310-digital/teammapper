@@ -45,11 +45,11 @@ export class MmpNode {
   @IsDefined()
   root: boolean = false;
 
-  @Column({ type: 'float8' })
+  @Column({ type: 'float' })
   @IsDefined()
   coordinatesX: number;
 
-  @Column({ type: 'float8' })
+  @Column({ type: 'float' })
   @IsDefined()
   coordinatesY: number;
 
@@ -103,10 +103,10 @@ export class MmpNode {
   orderNumber: number;
 
   @Column({ type: 'timestamptz', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
-  lastModified: Date | null = new Date();
+  lastModified: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date | null = new Date();
+  createdAt: Date | null;
 
   @BeforeInsert()
   @BeforeUpdate()

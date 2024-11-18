@@ -14,7 +14,7 @@ export class MmpMap {
   id: string;
 
   @Column({ type: 'timestamptz', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
-  lastModified: Date | null = new Date();
+  lastModified: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   lastAccessed: Date | null;
@@ -25,7 +25,7 @@ export class MmpMap {
 
   @Column({ type: 'uuid', nullable: true, default: null })
   @Generated('uuid')
-  modificationSecret: string | null = null;
+  modificationSecret: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   name: string | null;
@@ -42,5 +42,5 @@ export class MmpMap {
   nodes: MmpNode[];
 
   @Column({ type: 'timestamptz', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date | null = new Date();
+  createdAt: Date | null;
 }
