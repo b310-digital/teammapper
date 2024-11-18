@@ -125,7 +125,7 @@ export class MapsGateway implements OnGatewayDisconnect {
       request.mapId,
       request.nodes
     )
-    if (newNodes.length === 0) return false
+    if (!newNodes || newNodes.length === 0) return false
 
     this.server.to(request.mapId).emit('nodesAdded', {
       clientId: client.id,
