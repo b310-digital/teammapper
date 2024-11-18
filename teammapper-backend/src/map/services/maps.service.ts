@@ -99,7 +99,7 @@ export class MapsService {
     mapId: string,
     nodes: Partial<MmpNode>[]
   ): Promise<MmpNode[]> {
-    if (!mapId || nodes.length === 0) Promise.reject()
+    if (!mapId || nodes.length === 0) return Promise.reject()
 
       const reducer = async (previousPromise: Promise<MmpNode[]>, node: MmpNode): Promise<MmpNode[]> => {
         const accCreatedNodes = await previousPromise;
