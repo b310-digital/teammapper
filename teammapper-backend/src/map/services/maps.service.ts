@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { EntityNotFoundError, Repository } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
@@ -42,14 +42,14 @@ export class MapsService {
 
   async updateLastAccessed(uuid: string, lastAccessed = new Date()) {
     const map = await this.findMap(uuid)
-    if (!map) return Promise.reject(new Error(`Map not found with uuid: ${uuid}`))
+    if (!map) return Promise.reject(new EntityNotFoundError("MmpMap", uuid))
 
     this.mapsRepository.update(uuid, { lastAccessed })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
     const map = await this.findMap(uuid)
-    if (!map) return Promise.reject(new Error(`Map not found with uuid: ${uuid}`))
+    if (!map) return Promise.reject(new EntityNotFoundError("MmpMap", uuid))
 
     const nodes = await this.findNodes(map?.id)
     const days = configService.deleteAfterDays()
