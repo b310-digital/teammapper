@@ -41,6 +41,9 @@ export class MapsService {
   }
 
   async updateLastAccessed(uuid: string, lastAccessed = new Date()) {
+    const map = await this.findMap(uuid).catch((_error) => this.logger.warn(`Map not found with uuid: ${uuid}`))
+    if (!map) return Promise.reject()
+
     this.mapsRepository.update(uuid, { lastAccessed })
   }
 
