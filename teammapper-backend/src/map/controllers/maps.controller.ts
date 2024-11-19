@@ -14,6 +14,8 @@ import {
   IMmpClientMapCreateRequest,
   IMmpClientPrivateMap,
 } from '../types'
+import MalformedUUIDError from '../services/uuid.error'
+import { EntityNotFoundError } from 'typeorm'
 
 @Controller('api/maps')
 export default class MapsController {
@@ -21,15 +23,20 @@ export default class MapsController {
 
   @Get(':id')
   async findOne(@Param('id') mapId: string): Promise<IMmpClientMap | void> {
-    // If we update lastAccessed first, we guarantee that the exportMapToClient returns a fresh map that includes an up-to-date lastAccessed field
-    await this.mapsService.updateLastAccessed(mapId)
+    try {
+      // If we update lastAccessed first, we guarantee that the exportMapToClient returns a fresh map that includes an up-to-date lastAccessed field
+      await this.mapsService.updateLastAccessed(mapId)
+      const map = await this.mapsService.exportMapToClient(mapId)
+      if (!map) throw new NotFoundException()
 
-    const map = await this.mapsService.exportMapToClient(mapId).catch((e: Error) => {
-      if (e?.name === 'MalformedUUIDError') throw new NotFoundException()
-    })
-    if (!map) throw new NotFoundException()
-
-    return map
+      return map
+    } catch(e) {
+      if (e instanceof MalformedUUIDError || e instanceof EntityNotFoundError) {
+        throw new NotFoundException()
+      } else {
+        throw e
+      }
+    }
   }
 
   @Delete(':id')
