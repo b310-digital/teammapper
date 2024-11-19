@@ -23,15 +23,18 @@ export default class MapsController {
 
   @Get(':id')
   async findOne(@Param('id') mapId: string): Promise<IMmpClientMap | void> {
-    // If we update lastAccessed first, we guarantee that the exportMapToClient returns a fresh map that includes an up-to-date lastAccessed field
-    await this.mapsService.updateLastAccessed(mapId).catch((e: Error) => {
+    try {
+      // If we update lastAccessed first, we guarantee that the exportMapToClient returns a fresh map that includes an up-to-date lastAccessed field
+      await this.mapsService.updateLastAccessed(mapId)
+      const map = await this.mapsService.exportMapToClient(mapId)
+      if (!map) throw new NotFoundException()
+
+      return map
+    } catch(e) {
       if (e instanceof MalformedUUIDError || e instanceof EntityNotFoundError) throw new NotFoundException()
-    })
+    }
 
-    const map = await this.mapsService.exportMapToClient(mapId)
-    if (!map) throw new NotFoundException()
-
-    return map
+    
   }
 
   @Delete(':id')
