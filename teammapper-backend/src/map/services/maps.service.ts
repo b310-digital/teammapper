@@ -41,21 +41,18 @@ export class MapsService {
   }
 
   async updateLastAccessed(uuid: string, lastAccessed = new Date()) {
-    const map = await this.findMap(uuid).catch((_error) => this.logger.warn(`Map not found with uuid: ${uuid}`))
-    if (!map) return Promise.reject()
+    const map = await this.findMap(uuid)
+    if (!map) return Promise.reject(new Error(`Map not found with uuid: ${uuid}`))
 
     this.mapsRepository.update(uuid, { lastAccessed })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
-    const map = await this.findMap(uuid).catch((e: Error) => {
-      return Promise.reject(e)
-    })
+    const map = await this.findMap(uuid)
+    if (!map) return Promise.reject(new Error(`Map not found with uuid: ${uuid}`))
 
-    if (!map) return Promise.reject()
-
-    const nodes: MmpNode[] = await this.findNodes(map?.id)
-    const days: number = configService.deleteAfterDays()
+    const nodes = await this.findNodes(map?.id)
+    const days = configService.deleteAfterDays()
 
     return mapMmpMapToClient(
       map,
