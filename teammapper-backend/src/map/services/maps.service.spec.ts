@@ -169,7 +169,7 @@ describe('MapsController', () => {
         mapsService.exportMapToClient(
           '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
         )
-      ).rejects.toEqual(undefined)
+      ).rejects.toThrow()
     })
   })
 

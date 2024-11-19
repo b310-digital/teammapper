@@ -31,10 +31,12 @@ export default class MapsController {
 
       return map
     } catch(e) {
-      if (e instanceof MalformedUUIDError || e instanceof EntityNotFoundError) throw new NotFoundException()
+      if (e instanceof MalformedUUIDError || e instanceof EntityNotFoundError) {
+        throw new NotFoundException()
+      } else {
+        throw e
+      }
     }
-
-    
   }
 
   @Delete(':id')
