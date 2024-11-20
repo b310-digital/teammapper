@@ -1,16 +1,8 @@
 import { PictogramService } from './pictogram.service';
-import { TestBed } from '@angular/core/testing';
-import {
-  HttpClient,
-  provideHttpClient,
-  withInterceptorsFromDi,
-} from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
-import { IPictogramResponse } from './picto-types';
+import { HttpClient } from '@angular/common/http';
 import { SettingsService } from '../settings/settings.service';
+import { of } from 'rxjs';
+import { IPictogramResponse } from './picto-types';
 
 const testData: IPictogramResponse = {
   schematic: false,
@@ -31,63 +23,73 @@ const testData: IPictogramResponse = {
 };
 
 describe('PictogramService', () => {
-  let httpClient: HttpClient;
-  let httpTestingController: HttpTestingController;
-  let settingsService: SettingsService;
+  let httpClient: jest.Mocked<HttpClient>;
+  let settingsService: jest.Mocked<SettingsService>;
+  let service: PictogramService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [],
-      providers: [
-        provideHttpClient(withInterceptorsFromDi()),
-        provideHttpClientTesting(),
-      ],
-    });
+    httpClient = {
+      get: jest.fn(),
+    } as any;
 
-    // Inject the http service and test controller for each test
-    httpClient = TestBed.inject(HttpClient);
-    httpTestingController = TestBed.inject(HttpTestingController);
-    settingsService = jasmine.createSpyObj('storageService', [
-      'getCachedSettings',
-    ]);
+    settingsService = {
+      getCachedSettings: jest.fn().mockReturnValue({
+        general: { language: 'en' }
+      })
+    } as any;
+
+    service = new PictogramService(httpClient, settingsService);
   });
 
-  it('fetches pictos', () => {
-    new PictogramService(httpClient, settingsService)
-      .getPictos('House')
-      .subscribe(data => {
-        expect(data).toEqual([testData]);
-      });
-    const httpRequest = httpTestingController.expectOne(
-      'https://api.arasaac.org/v1/pictograms/en/search/House'
-    );
-    expect(httpRequest.request.method).toBe('GET');
-    httpRequest.flush([testData]);
-    httpTestingController.verify();
+  it('fetches pictos', (done) => {
+    const searchTerm = 'House';
+    const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';
+    httpClient.get.mockReturnValue(of([testData]));
+
+    service.getPictos(searchTerm).subscribe(data => {
+      expect(data).toEqual([testData]);
+      expect(httpClient.get).toHaveBeenCalledWith(expectedUrl);
+      done();
+    });
   });
 
   it('constructs the asset url', () => {
-    const imageUrl = new PictogramService(
-      httpClient,
-      settingsService
-    ).getPictoImageUrl(3);
+    const imageUrl = service.getPictoImageUrl(3);
+
     expect(imageUrl).toEqual(
       'https://static.arasaac.org/pictograms/3/3_300.png'
     );
   });
 
-  it('gets the image', () => {
-    const blob: Blob = new Blob();
-    new PictogramService(httpClient, settingsService)
-      .getPictoImage(3)
-      .subscribe(data => {
-        expect(data).toEqual(blob);
-      });
-    const httpRequest = httpTestingController.expectOne(
-      'https://static.arasaac.org/pictograms/3/3_300.png'
+  it('gets the image', (done) => {
+    const blob = new Blob();
+    const expectedUrl = 'https://static.arasaac.org/pictograms/3/3_300.png';
+    httpClient.get.mockReturnValue(of(blob));
+
+    service.getPictoImage(3).subscribe(data => {
+      expect(data).toEqual(blob);
+      expect(httpClient.get).toHaveBeenCalledWith(expectedUrl, { responseType: 'blob' });
+      done();
+    });
+  });
+
+  it('uses default language when settings are not available', (done) => {
+    settingsService.getCachedSettings.mockReturnValue(null);
+    const searchTerm = 'House';
+    const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';
+    httpClient.get.mockReturnValue(of([testData]));
+
+    service.getPictos(searchTerm).subscribe(data => {
+      expect(httpClient.get).toHaveBeenCalledWith(expectedUrl);
+      done();
+    });
+  });
+
+  it('constructs the asset url with custom size and file type', () => {
+    const imageUrl = service.getPictoImageUrl(3, 500, 'jpg');
+
+    expect(imageUrl).toEqual(
+      'https://static.arasaac.org/pictograms/3/3_500.jpg'
     );
-    expect(httpRequest.request.method).toBe('GET');
-    httpRequest.flush(blob);
-    httpTestingController.verify();
   });
 });
