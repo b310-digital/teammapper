@@ -135,6 +135,7 @@
     "moduleNameMapper": {
       "@mmp/index": "<rootDir>/src/test/mocks/mmp-index.js",
       "@mmp/map/map": "<rootDir>/src/test/mocks/mmp-map.js"
-    }
+    },
+    "setupFilesAfterEnv": ["<rootDir>/setup-jest.ts"]
   }
 }
