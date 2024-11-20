@@ -44,7 +44,7 @@ export default class Drag {
      * @param {Node} node
      */
     private started(event: D3DragEvent<any, any, any>, node: Node) {
-        this.orientation = this.map.nodes.getNodeOrientation(node)
+        this.orientation = this.map.nodes.getOrientation(node)
         this.descendants = this.map.nodes.getDescendants(node)
 
         this.map.nodes.selectNode(node.id)
@@ -68,7 +68,7 @@ export default class Drag {
         // If the node is locked move also descendants
         if (node.locked) {
             // Check if old and new orientation are equal
-            const newOrientation = this.map.nodes.getNodeOrientation(node),
+            const newOrientation = this.map.nodes.getOrientation(node),
                 orientationIsChanged = newOrientation !== this.orientation,
                 root = node
 
