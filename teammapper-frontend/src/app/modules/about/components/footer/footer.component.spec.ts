@@ -20,9 +20,9 @@ describe('FooterComponent', () => {
       fontMaxSize: 16,
       fontMinSize: 12,
       fontIncrement: 2,
-    }
+    },
   };
-  
+
   beforeEach(async () => {
     mockSettingsService = {
       getCachedSettings: jest.fn().mockReturnValue(mockSettings),
@@ -41,7 +41,7 @@ describe('FooterComponent', () => {
       declarations: [FooterComponent],
       providers: [
         { provide: SettingsService, useValue: mockSettingsService },
-        { provide: TranslateService, useValue: mockTranslateService }
+        { provide: TranslateService, useValue: mockTranslateService },
       ],
       imports: [
         TranslateModule.forRoot({
@@ -49,7 +49,7 @@ describe('FooterComponent', () => {
         }),
         MatIconModule,
         MatSelectModule,
-        BrowserAnimationsModule
+        BrowserAnimationsModule,
       ],
     }).compileComponents();
 
@@ -65,7 +65,16 @@ describe('FooterComponent', () => {
 
     it('should initialize with correct settings and languages', () => {
       expect(mockSettingsService.getCachedSettings).toHaveBeenCalled();
-      expect(component.languages).toEqual(['en', 'fr', 'de', 'it', 'zh-tw', 'zh-cn', 'es', 'pt-br']);
+      expect(component.languages).toEqual([
+        'en',
+        'fr',
+        'de',
+        'it',
+        'zh-tw',
+        'zh-cn',
+        'es',
+        'pt-br',
+      ]);
       expect(component.currentYear).toBe(new Date().getFullYear().toString());
     });
   });
@@ -74,12 +83,14 @@ describe('FooterComponent', () => {
     it('should update language', async () => {
       const newSettings = {
         ...mockSettings,
-        general: { language: 'fr' }
+        general: { language: 'fr' },
       };
       component.settings = newSettings;
       await component.updateLanguage();
 
-      expect(mockSettingsService.updateCachedSettings).toHaveBeenCalledWith(newSettings);
+      expect(mockSettingsService.updateCachedSettings).toHaveBeenCalledWith(
+        newSettings
+      );
       expect(mockTranslateService.use).toHaveBeenCalledWith('fr');
     });
   });

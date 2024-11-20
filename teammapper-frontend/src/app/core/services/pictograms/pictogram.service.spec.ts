@@ -34,14 +34,14 @@ describe('PictogramService', () => {
 
     settingsService = {
       getCachedSettings: jest.fn().mockReturnValue({
-        general: { language: 'en' }
-      })
+        general: { language: 'en' },
+      }),
     } as any;
 
     service = new PictogramService(httpClient, settingsService);
   });
 
-  it('fetches pictos', (done) => {
+  it('fetches pictos', done => {
     const searchTerm = 'House';
     const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';
     httpClient.get.mockReturnValue(of([testData]));
@@ -61,19 +61,21 @@ describe('PictogramService', () => {
     );
   });
 
-  it('gets the image', (done) => {
+  it('gets the image', done => {
     const blob = new Blob();
     const expectedUrl = 'https://static.arasaac.org/pictograms/3/3_300.png';
     httpClient.get.mockReturnValue(of(blob));
 
     service.getPictoImage(3).subscribe(data => {
       expect(data).toEqual(blob);
-      expect(httpClient.get).toHaveBeenCalledWith(expectedUrl, { responseType: 'blob' });
+      expect(httpClient.get).toHaveBeenCalledWith(expectedUrl, {
+        responseType: 'blob',
+      });
       done();
     });
   });
 
-  it('uses default language when settings are not available', (done) => {
+  it('uses default language when settings are not available', done => {
     settingsService.getCachedSettings.mockReturnValue(null);
     const searchTerm = 'House';
     const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';

@@ -40,14 +40,14 @@ describe('SettingsService', () => {
       adminId: '123',
       rootName: 'test',
     };
-    
+
     storageService.getAllCreatedMapsFromStorage.mockResolvedValue([
-      ['123', cachedMapDataFromStorage]
+      ['123', cachedMapDataFromStorage],
     ]);
 
     // Test
     const result = await settingsService.getCachedAdminMapEntries();
-    
+
     // Assert
     expect(result).toEqual([]);
     expect(storageService.getAllCreatedMapsFromStorage).toHaveBeenCalled();
@@ -59,14 +59,14 @@ describe('SettingsService', () => {
     futureDateOne.setFullYear(new Date().getFullYear() + 2);
     const futureDateTwo = new Date();
     futureDateTwo.setFullYear(new Date().getFullYear() + 1);
-    
+
     const cachedMapDataFromStorage: CachedAdminMapValue = {
       ttl: futureDateOne,
       modificationSecret: '456',
       adminId: '123',
       rootName: 'test',
     };
-    
+
     const otherCachedMapDataFromStorage: CachedAdminMapValue = {
       ttl: futureDateTwo,
       modificationSecret: '456',
@@ -76,16 +76,16 @@ describe('SettingsService', () => {
 
     storageService.getAllCreatedMapsFromStorage.mockResolvedValue([
       ['789', otherCachedMapDataFromStorage],
-      ['123', cachedMapDataFromStorage]
+      ['123', cachedMapDataFromStorage],
     ]);
 
     // Test
     const result = await settingsService.getCachedAdminMapEntries();
-    
+
     // Assert
     expect(result).toEqual([
       { id: '123', cachedAdminMapValue: cachedMapDataFromStorage },
-      { id: '789', cachedAdminMapValue: otherCachedMapDataFromStorage }
+      { id: '789', cachedAdminMapValue: otherCachedMapDataFromStorage },
     ]);
     expect(storageService.getAllCreatedMapsFromStorage).toHaveBeenCalled();
   });
@@ -94,29 +94,35 @@ describe('SettingsService', () => {
   describe('init', () => {
     it('initializes settings with default values when no cached settings exist', async () => {
       const defaultSettings = { language: 'en' };
-      
+
       httpService.get.mockResolvedValue({
-        json: () => Promise.resolve(defaultSettings)
+        json: () => Promise.resolve(defaultSettings),
       });
       storageService.get.mockResolvedValue(null);
-      
+
       await settingsService.init();
-      
-      expect(storageService.set).toHaveBeenCalledWith('settings', defaultSettings);
+
+      expect(storageService.set).toHaveBeenCalledWith(
+        'settings',
+        defaultSettings
+      );
     });
 
     it('initializes settings with cached values when they exist', async () => {
       const defaultSettings = { language: 'en' };
       const cachedSettings = { language: 'fr' };
-      
+
       httpService.get.mockResolvedValue({
-        json: () => Promise.resolve(defaultSettings)
+        json: () => Promise.resolve(defaultSettings),
       });
       storageService.get.mockResolvedValue(cachedSettings);
-      
+
       await settingsService.init();
-      
-      expect(storageService.set).toHaveBeenCalledWith('settings', cachedSettings);
+
+      expect(storageService.set).toHaveBeenCalledWith(
+        'settings',
+        cachedSettings
+      );
     });
   });
 });

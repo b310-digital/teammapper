@@ -17,28 +17,32 @@ describe('DialogPictogramsComponent', () => {
   let mockUtilsService: jest.Mocked<UtilsService>;
   let mockPictoService: jest.Mocked<PictogramService>;
 
-  const mockPictogramResponse: IPictogramResponse[] = [{
-    _id: 1,
-    keywords: [{
-      keyword: 'test',
-      type: 1,
-      plural: 'tests',
-      hasLocation: false
-    }],
-    schematic: false,
-    sex: false,
-    violence: false,
-    aac: false,
-    aacColor: false,
-    skin: false,
-    hair: false,
-    downloads: 0,
-    categories: ['test'],
-    synsets: ['test'],
-    tags: ['test'],
-    created: new Date(),
-    lastUpdated: new Date()
-  }];
+  const mockPictogramResponse: IPictogramResponse[] = [
+    {
+      _id: 1,
+      keywords: [
+        {
+          keyword: 'test',
+          type: 1,
+          plural: 'tests',
+          hasLocation: false,
+        },
+      ],
+      schematic: false,
+      sex: false,
+      violence: false,
+      aac: false,
+      aacColor: false,
+      skin: false,
+      hair: false,
+      downloads: 0,
+      categories: ['test'],
+      synsets: ['test'],
+      tags: ['test'],
+      created: new Date(),
+      lastUpdated: new Date(),
+    },
+  ];
 
   beforeEach(async () => {
     mockMmpService = {
@@ -93,7 +97,7 @@ describe('DialogPictogramsComponent', () => {
 
   it('should update pictos when search is called', async () => {
     mockPictoService.getPictos.mockReturnValue(of(mockPictogramResponse));
-    
+
     await component.search();
     expect(component.pictos).toEqual(mockPictogramResponse);
   });
@@ -102,7 +106,7 @@ describe('DialogPictogramsComponent', () => {
     const testId = 123;
     const mockUrl = 'test-url';
     mockPictoService.getPictoImageUrl.mockReturnValue(mockUrl);
-    
+
     const result = component.getImageUrlOfId(testId);
     expect(mockPictoService.getPictoImageUrl).toHaveBeenCalledWith(testId);
     expect(result).toBe(mockUrl);

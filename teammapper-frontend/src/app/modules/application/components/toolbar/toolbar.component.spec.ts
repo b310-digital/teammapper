@@ -29,13 +29,13 @@ describe('ToolbarComponent', () => {
       removeNodeLink: jest.fn(),
       toggleBranchVisibility: jest.fn(),
       addNodeImage: jest.fn(),
-      importMap: jest.fn()
+      importMap: jest.fn(),
     } as unknown as jest.Mocked<MmpService>;
 
     mockDialogService = {
       openAboutDialog: jest.fn(),
       openShareDialog: jest.fn(),
-      openPictogramDialog: jest.fn()
+      openPictogramDialog: jest.fn(),
     } as unknown as jest.Mocked<DialogService>;
 
     mockTranslateService = {
@@ -49,12 +49,17 @@ describe('ToolbarComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [ToolbarComponent],
-      imports: [MatMenuModule, MatToolbarModule, TranslateModule.forRoot(), MatIconModule],
+      imports: [
+        MatMenuModule,
+        MatToolbarModule,
+        TranslateModule.forRoot(),
+        MatIconModule,
+      ],
       providers: [
         { provide: MmpService, useValue: mockMmpService },
         { provide: DialogService, useValue: mockDialogService },
-        { provide: TranslateService, useValue: mockTranslateService }
-      ]
+        { provide: TranslateService, useValue: mockTranslateService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ToolbarComponent);
@@ -116,12 +121,16 @@ describe('ToolbarComponent', () => {
 
   describe('canHideNodes', () => {
     it('should return false for root node', () => {
-      mockMmpService.getSelectedNode.mockReturnValue({ isRoot: true } as ExportNodeProperties);
+      mockMmpService.getSelectedNode.mockReturnValue({
+        isRoot: true,
+      } as ExportNodeProperties);
       expect(component.canHideNodes).toBeFalsy();
     });
 
     it('should return true for non-root node', () => {
-      mockMmpService.getSelectedNode.mockReturnValue({ isRoot: false } as ExportNodeProperties);
+      mockMmpService.getSelectedNode.mockReturnValue({
+        isRoot: false,
+      } as ExportNodeProperties);
       expect(component.canHideNodes).toBeTruthy();
     });
   });
@@ -131,16 +140,26 @@ describe('ToolbarComponent', () => {
       const mockFont: Font = {
         size: 14,
         weight: 'normal',
-        style: 'normal'
+        style: 'normal',
       };
-      mockMmpService.selectNode.mockReturnValue({ font: mockFont } as ExportNodeProperties);
+      mockMmpService.selectNode.mockReturnValue({
+        font: mockFont,
+      } as ExportNodeProperties);
       component.toogleNodeFontStyle();
-      expect(mockMmpService.updateNode).toHaveBeenCalledWith('fontStyle', 'italic');
+      expect(mockMmpService.updateNode).toHaveBeenCalledWith(
+        'fontStyle',
+        'italic'
+      );
 
       mockFont.style = 'italic';
-      mockMmpService.selectNode.mockReturnValue({ font: mockFont } as ExportNodeProperties);
+      mockMmpService.selectNode.mockReturnValue({
+        font: mockFont,
+      } as ExportNodeProperties);
       component.toogleNodeFontStyle();
-      expect(mockMmpService.updateNode).toHaveBeenCalledWith('fontStyle', 'normal');
+      expect(mockMmpService.updateNode).toHaveBeenCalledWith(
+        'fontStyle',
+        'normal'
+      );
     });
   });
 
@@ -148,7 +167,9 @@ describe('ToolbarComponent', () => {
     it('should add valid link', () => {
       window.prompt = jest.fn().mockReturnValue('https://example.com');
       component.addLink();
-      expect(mockMmpService.addNodeLink).toHaveBeenCalledWith('https://example.com');
+      expect(mockMmpService.addNodeLink).toHaveBeenCalledWith(
+        'https://example.com'
+      );
     });
 
     it('should not add invalid link', () => {
@@ -161,30 +182,36 @@ describe('ToolbarComponent', () => {
   describe('file upload handling', () => {
     it('should handle image upload', () => {
       const mockFile = new File([''], 'test.jpg', { type: 'image/jpeg' });
-      const mockEvent = { target: { files: [mockFile] } } as unknown as InputEvent;
-      
+      const mockEvent = {
+        target: { files: [mockFile] },
+      } as unknown as InputEvent;
+
       const mockFileReader = {
         readAsDataURL: jest.fn(),
         result: 'data:image/jpeg;base64,test',
-        onload: null
+        onload: null,
       };
       window.FileReader = jest.fn(() => mockFileReader) as any;
-      
+
       component.initImageUpload(mockEvent);
       expect(mockFileReader.readAsDataURL).toHaveBeenCalledWith(mockFile);
     });
 
     it('should handle JSON upload', () => {
-      const mockFile = new File(['{}'], 'test.json', { type: 'application/json' });
-      const mockEvent = { target: { files: [mockFile] } } as unknown as InputEvent;
-      
+      const mockFile = new File(['{}'], 'test.json', {
+        type: 'application/json',
+      });
+      const mockEvent = {
+        target: { files: [mockFile] },
+      } as unknown as InputEvent;
+
       const mockFileReader = {
         readAsText: jest.fn(),
         result: '{}',
-        onload: null
+        onload: null,
       };
       window.FileReader = jest.fn(() => mockFileReader) as any;
-      
+
       component.initJSONUpload(mockEvent);
       expect(mockFileReader.readAsText).toHaveBeenCalledWith(mockFile);
     });
