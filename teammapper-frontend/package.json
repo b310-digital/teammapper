@@ -37,7 +37,7 @@
     "deploy": "ng deploy"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "18.2.11",
+    "@angular-devkit/build-angular": "18.2.12",
     "@angular/animations": "18.2.2",
     "@angular/cdk": "18.2.2",
     "@angular/cli": "18.2.2",
@@ -57,7 +57,6 @@
     "@material-design-icons/font": "^0.13.0",
     "@ngx-translate/core": "^16.0.3",
     "@ngx-translate/http-loader": "^7.0.0",
-    "@types/uuid": "^10.0.0",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
     "deep-object-diff": "^1.1.9",
@@ -68,16 +67,17 @@
     "ngx-color-picker": "^17.0.0",
     "ngx-toastr": "^19.0.0",
     "qr-code-styling": "1.5.0",
-    "rxjs": "~7.4.0",
+    "rxjs": "~7.8.1",
     "socket.io-client": "~4.8.1",
     "tslib": "^2.6.3",
-    "uuid": "11.0.2",
-    "zone.js": "^0.14.10"
+    "uuid": "11.0.3",
+    "zone.js": "^0.14.10",
+    "@types/uuid": "^10.0.0"
   },
   "devDependencies": {
     "@angular-builders/jest": "^18.0.0",
     "@angular-devkit/architect": "0.1802.11",
-    "@angular-devkit/core": "18.2.2",
+    "@angular-devkit/core": "18.2.12",
     "@angular-devkit/schematics": "18.2.10",
     "@angular-eslint/builder": "18.3.0",
     "@angular-eslint/eslint-plugin": "18.3.1",

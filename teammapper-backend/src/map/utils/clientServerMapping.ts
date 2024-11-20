@@ -75,7 +75,7 @@ const mergeClientNodeIntoMmpNode = (
   locked: clientNode?.locked ?? serverNode.locked,
   detached: clientNode?.detached ?? serverNode.detached,
   name: clientNode?.name !== undefined ? clientNode.name : serverNode.name,
-  nodeParentId: clientNode?.parent ?? serverNode.nodeParentId,
+  nodeParentId: (clientNode?.parent || serverNode.nodeParentId) || undefined,
   root: clientNode?.isRoot ?? serverNode.root,
   nodeMapId: serverNode.nodeMapId,
 })
