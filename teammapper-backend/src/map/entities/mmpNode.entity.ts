@@ -43,7 +43,7 @@ export class MmpNode {
 
   @Column({ type: 'boolean', default: false })
   @IsDefined()
-  root: boolean = false;
+  root: boolean;
 
   @Column({ type: 'float' })
   @IsDefined()
@@ -75,7 +75,7 @@ export class MmpNode {
   imageSrc: string | null;
 
   @Column({ type: 'integer', nullable: true, default: 60 })
-  imageSize: number | null = 60;
+  imageSize: number | null;
 
   @Column({ type: 'varchar', nullable: true })
   linkHref: string | null;
@@ -85,9 +85,9 @@ export class MmpNode {
 
   @Column({ type: 'boolean', default: false })
   @IsDefined()
-  detached: boolean = false;
+  detached: boolean;
 
-  @Column({ type: 'float8', nullable: true })
+  @Column({ type: 'float', nullable: true })
   k: number | null;
 
   @PrimaryColumn('uuid')

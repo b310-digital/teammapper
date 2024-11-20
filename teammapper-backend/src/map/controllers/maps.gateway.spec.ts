@@ -139,10 +139,7 @@ describe('WebSocketGateway', () => {
       // Date objects are serialised to JSON in the result, so we'll need to be explicit in setting these here
       const defaultNode = {
         "createdAt": new Date('2021-01-31T00:00:00.000Z').toISOString(),
-        "detached": false,
-        "imageSize": 60,
         "lastModified": new Date('2021-01-31T00:00:00.000Z').toISOString(),
-        "root": false
       }
 
       socket.emit(
