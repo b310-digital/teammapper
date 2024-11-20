@@ -1,35 +1,86 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslateModule } from '@ngx-translate/core';
+import { MatSelectModule } from '@angular/material/select';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
-
+import { of } from 'rxjs';
 import { FooterComponent } from './footer.component';
 
 describe('FooterComponent', () => {
   let component: FooterComponent;
   let fixture: ComponentFixture<FooterComponent>;
+  let mockSettingsService: Partial<SettingsService>;
+  let mockTranslateService: jest.Mocked<TranslateService>;
 
-  beforeEach(waitForAsync(() => {
-    const mockSettingsService: jasmine.SpyObj<SettingsService> =
-      jasmine.createSpyObj(SettingsService, ['getCachedSettings']);
-    mockSettingsService.getCachedSettings.and.returnValue(
-      jasmine.createSpyObj('settings', ['general'])
-    );
+  const mockSettings = {
+    general: { language: 'en' },
+    mapOptions: {
+      autoBranchColors: true,
+      fontMaxSize: 16,
+      fontMinSize: 12,
+      fontIncrement: 2,
+    }
+  };
+  
+  beforeEach(async () => {
+    mockSettingsService = {
+      getCachedSettings: jest.fn().mockReturnValue(mockSettings),
+      updateCachedSettings: jest.fn().mockResolvedValue(undefined),
+    };
+    mockTranslateService = {
+      use: jest.fn().mockReturnValue(Promise.resolve('en')),
+      get: jest.fn().mockReturnValue(of('translated value')),
+      instant: jest.fn().mockReturnValue('translated value'),
+      onLangChange: of({ lang: 'en' }),
+      onTranslationChange: of({}),
+      onDefaultLangChange: of({}),
+    } as unknown as jest.Mocked<TranslateService>;
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       declarations: [FooterComponent],
-      providers: [{ provide: SettingsService, useValue: mockSettingsService }],
-      imports: [TranslateModule.forRoot(), MatIconModule],
+      providers: [
+        { provide: SettingsService, useValue: mockSettingsService },
+        { provide: TranslateService, useValue: mockTranslateService }
+      ],
+      imports: [
+        TranslateModule.forRoot({
+          defaultLanguage: 'en',
+        }),
+        MatIconModule,
+        MatSelectModule,
+        BrowserAnimationsModule
+      ],
     }).compileComponents();
-  }));
 
-  beforeEach(() => {
     fixture = TestBed.createComponent(FooterComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  describe('Initialization', () => {
+    it('should create the component', () => {
+      expect(component).toBeTruthy();
+    });
+
+    it('should initialize with correct settings and languages', () => {
+      expect(mockSettingsService.getCachedSettings).toHaveBeenCalled();
+      expect(component.languages).toEqual(['en', 'fr', 'de', 'it', 'zh-tw', 'zh-cn', 'es', 'pt-br']);
+      expect(component.currentYear).toBe(new Date().getFullYear().toString());
+    });
+  });
+
+  describe('Behavior', () => {
+    it('should update language', async () => {
+      const newSettings = {
+        ...mockSettings,
+        general: { language: 'fr' }
+      };
+      component.settings = newSettings;
+      await component.updateLanguage();
+
+      expect(mockSettingsService.updateCachedSettings).toHaveBeenCalledWith(newSettings);
+      expect(mockTranslateService.use).toHaveBeenCalledWith('fr');
+    });
   });
 });
