@@ -81,7 +81,7 @@ describe('PictogramService', () => {
     const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';
     httpClient.get.mockReturnValue(of([testData]));
 
-    service.getPictos(searchTerm).subscribe(data => {
+    service.getPictos(searchTerm).subscribe(_ => {
       expect(httpClient.get).toHaveBeenCalledWith(expectedUrl);
       done();
     });
