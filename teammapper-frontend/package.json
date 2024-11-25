@@ -82,7 +82,7 @@
     "@angular-eslint/eslint-plugin": "18.3.1",
     "@angular-eslint/eslint-plugin-template": "18.3.1",
     "@angular-eslint/schematics": "18.4.0",
-    "@angular-eslint/template-parser": "18.3.1",
+    "@angular-eslint/template-parser": "18.4.2",
     "@angular/language-service": "18.2.8",
     "@compodoc/compodoc": "^1.1.26",
     "@schematics/angular": "^18.2.11",
