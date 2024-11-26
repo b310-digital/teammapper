@@ -11,6 +11,8 @@ import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
 import { IMmpClientNode } from '../types'
 
+const crypto = require('crypto') // eslint-disable-line @typescript-eslint/no-require-imports
+
 describe('WebSocketGateway', () => {
   let app: INestApplication
   let mapsService: MapsService
@@ -28,7 +30,10 @@ describe('WebSocketGateway', () => {
         }),
       removeNode: (_clientNode: IMmpClientNode, _mapId: string) =>
         new Promise((resolve, _reject) => {
-          resolve(new MmpNode())
+          const node = new MmpNode()
+          node.createdAt = new Date('2021-01-31T00:00:00.000Z')
+          node.lastModified = new Date('2021-01-31T00:00:00.000Z')
+          resolve(node)
         }),
     })
     const testingModule = await Test.createTestingModule({
@@ -130,15 +135,21 @@ describe('WebSocketGateway', () => {
     it(`allows request when modification secret is set`, (done) => {
       socket = io('http://localhost:3000')
 
+      // Date objects are serialised to JSON in the result, so we'll need to be explicit in setting these here
+      const defaultNode = {
+        createdAt: new Date('2021-01-31T00:00:00.000Z').toISOString(),
+        lastModified: new Date('2021-01-31T00:00:00.000Z').toISOString(),
+      }
+
       socket.emit(
         'removeNode',
         {
           mapId: map.id,
           modificationSecret: map.modificationSecret,
-          node: {},
+          node: defaultNode,
         },
         (result: MmpNode | undefined) => {
-          expect(result).toEqual({})
+          expect(result).toEqual(defaultNode)
           done()
         }
       )
@@ -156,7 +167,37 @@ describe('WebSocketGateway', () => {
           modificationSecret: map.modificationSecret,
           map: {},
         },
-        (result: MmpNode | undefined) => {
+        (result: boolean) => {
+          expect(result).toEqual(true)
+          done()
+        }
+      )
+    })
+  })
+
+  describe('applyMapChangesByDiff', () => {
+    it('updates the map based off of a diff', (done) => {
+      socket = io('http://localhost:3000')
+      const rootNodeId = crypto.randomUUID()
+
+      const diff = {
+        added: {},
+        deleted: {},
+        updated: {
+          [rootNodeId]: {
+            name: 'Thema',
+          },
+        },
+      }
+
+      socket.emit(
+        'applyMapChangesByDiff',
+        {
+          mapId: map.id,
+          diff,
+          modificationSecret: map.modificationSecret,
+        },
+        (result: boolean) => {
           expect(result).toEqual(true)
           done()
         }

@@ -8,27 +8,27 @@ import {
   JoinColumn,
   Generated,
   OneToMany,
+  BeforeInsert,
+  BeforeUpdate,
 } from 'typeorm'
 import { MmpMap } from './mmpMap.entity'
+import { validateOrReject, IsDefined } from 'class-validator'
 
 @Entity()
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ nullable: true })
-  name: string
+  @Column({ type: 'varchar', nullable: true })
+  name: string | null
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @ManyToOne((type) => MmpMap, (map) => map.nodes, {
+  @ManyToOne(() => MmpMap, (map) => map.nodes, {
     onDelete: 'CASCADE',
   })
   @JoinColumn()
   nodeMap: MmpMap
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @ManyToOne((type) => MmpNode, (node) => node.children, {
+  @ManyToOne(() => MmpNode, (node) => node.children, {
     onDelete: 'CASCADE',
   })
   @JoinColumn([
@@ -37,72 +37,88 @@ export class MmpNode {
   ])
   @Index()
   nodeParent: MmpNode
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @OneToMany((type) => MmpNode, (node) => node.nodeParent)
+  @OneToMany(() => MmpNode, (node) => node.nodeParent)
   children: MmpNode[]
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
+  @IsDefined()
   root: boolean
 
   @Column({ type: 'float' })
+  @IsDefined()
   coordinatesX: number
 
   @Column({ type: 'float' })
+  @IsDefined()
   coordinatesY: number
 
-  @Column({ nullable: true })
-  colorsName: string
+  @Column({ type: 'varchar', nullable: true })
+  colorsName: string | null
 
-  @Column({ nullable: true })
-  colorsBackground: string
+  @Column({ type: 'varchar', nullable: true })
+  colorsBackground: string | null
 
-  @Column({ nullable: true })
-  colorsBranch: string
+  @Column({ type: 'varchar', nullable: true })
+  colorsBranch: string | null
 
-  @Column({ nullable: true })
-  fontSize: number
+  @Column({ type: 'integer', nullable: true })
+  fontSize: number | null
 
-  @Column({ nullable: true })
-  fontStyle: string
+  @Column({ type: 'varchar', nullable: true })
+  fontStyle: string | null
 
-  @Column({ nullable: true })
-  fontWeight: string
+  @Column({ type: 'varchar', nullable: true })
+  fontWeight: string | null
 
-  @Column({ nullable: true })
-  imageSrc: string
+  @Column({ type: 'varchar', nullable: true })
+  imageSrc: string | null
 
-  @Column({ nullable: true, default: 60 })
-  imageSize: number
+  @Column({ type: 'integer', nullable: true, default: 60 })
+  imageSize: number | null
 
-  @Column({ nullable: true })
-  linkHref: string
+  @Column({ type: 'varchar', nullable: true })
+  linkHref: string | null
 
-  @Column({ nullable: true })
-  locked: boolean
+  @Column({ type: 'boolean', nullable: true })
+  locked: boolean | null
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
+  @IsDefined()
   detached: boolean
 
-  @Column({ nullable: true, type: 'float' })
-  k: number
+  @Column({ type: 'float', nullable: true })
+  k: number | null
 
   @PrimaryColumn('uuid')
   @Index()
+  @IsDefined()
   nodeMapId: string
 
-  @Column({ nullable: true })
-  nodeParentId: string
+  @Column({ type: 'uuid', nullable: true })
+  nodeParentId: string | null
 
-  @Column({ nullable: false })
+  @Column({ type: 'integer' })
   @Generated('increment')
   orderNumber: number
 
-  @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
-  lastModified: Date
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  lastModified: Date | null
 
-  @Column({ type: 'timestamptz', default: () => 'now()', nullable: true })
-  createdAt: Date
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date | null
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async validate() {
+    await validateOrReject(this)
+  }
 }

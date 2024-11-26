@@ -37,7 +37,7 @@
     "deploy": "ng deploy"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "18.2.3",
+    "@angular-devkit/build-angular": "18.2.12",
     "@angular/animations": "18.2.2",
     "@angular/cdk": "18.2.2",
     "@angular/cli": "18.2.2",
@@ -55,39 +55,43 @@
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@material-design-icons/font": "^0.13.0",
-    "@ngx-translate/core": "^14.0.0",
+    "@ngx-translate/core": "^16.0.3",
     "@ngx-translate/http-loader": "^7.0.0",
     "@types/uuid": "^10.0.0",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
-    "dompurify": "3.1.6",
+    "deep-object-diff": "^1.1.9",
+    "dompurify": "3.1.7",
+    "eslint-config-standard": "^17.0.0",
     "jspdf": "^2.5.1",
     "localforage": "1.10.0",
     "ngx-color-picker": "^17.0.0",
     "ngx-toastr": "^19.0.0",
     "qr-code-styling": "1.5.0",
-    "rxjs": "~7.4.0",
-    "socket.io-client": "~4.7.5",
-    "tslib": "^2.6.3",
-    "uuid": "10.0.0",
+    "rxjs": "~7.8.1",
+    "socket.io-client": "~4.8.1",
+    "tslib": "^2.8.1",
+    "uuid": "11.0.3",
     "zone.js": "^0.14.10"
   },
   "devDependencies": {
-    "@angular-devkit/architect": "0.1802.3",
-    "@angular-devkit/core": "18.2.2",
-    "@angular-devkit/schematics": "18.2.2",
+    "@angular-builders/jest": "^18.0.0",
+    "@angular-devkit/architect": "0.1802.11",
+    "@angular-devkit/core": "18.2.12",
+    "@angular-devkit/schematics": "18.2.10",
     "@angular-eslint/builder": "18.3.0",
     "@angular-eslint/eslint-plugin": "18.3.1",
     "@angular-eslint/eslint-plugin-template": "18.3.1",
-    "@angular-eslint/schematics": "18.3.0",
-    "@angular-eslint/template-parser": "18.3.1",
+    "@angular-eslint/schematics": "18.4.0",
+    "@angular-eslint/template-parser": "18.4.2",
     "@angular/language-service": "18.2.8",
-    "@compodoc/compodoc": "^1.1.25",
+    "@compodoc/compodoc": "^1.1.26",
     "@eslint/js": "^9.12.0",
-    "@schematics/angular": "^18.2.6",
+    "@schematics/angular": "^18.2.11",
     "@types/d3": "7.1.0",
     "@types/eslint__js": "^8.42.3",
     "@types/jasmine": "~5.1.4",
+    "@types/jest": "^29.5.14",
     "@types/mousetrap": "1.6.15",
     "@types/node": "^13.7.7",
     "@typescript-eslint/eslint-plugin": "^8.2.0",
@@ -98,12 +102,9 @@
     "eslint-plugin-jest": "^28.8.3",
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.11.0",
-    "jasmine-core": "~5.3.0",
-    "karma": "~6.4.4",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
+    "jest": "^29.7.0",
+    "jest-canvas-mock": "^2.5.2",
+    "jest-preset-angular": "^14.2.4",
     "minimist": "^1.2.5",
     "prettier": "^3.3.3",
     "ts-node": "~10.9.2",
@@ -112,8 +113,35 @@
   },
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "17.2.8",
-    "@nx/nx-darwin-x64": "20.0.0",
+    "@nx/nx-darwin-x64": "20.0.3",
     "@nx/nx-linux-x64-gnu": "19.8.2",
     "@nx/nx-win32-x64-msvc": "19.8.4"
+  },
+  "jest": {
+    "preset": "jest-preset-angular",
+    "testPathIgnorePatterns": [
+      "node_modules/",
+      "dist/"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": ".",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "modulePaths": [
+      "<rootDir>"
+    ],
+    "moduleNameMapper": {
+      "@mmp/index": "<rootDir>/src/test/mocks/mmp-index.js",
+      "@mmp/map/map": "<rootDir>/src/test/mocks/mmp-map.js"
+    },
+    "setupFilesAfterEnv": ["<rootDir>/setup-jest.ts"]
   }
 }

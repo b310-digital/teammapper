@@ -10,6 +10,7 @@ import {
   createMmpClientMap,
   createMmpMap,
 } from '../utils/tests/mapFactories'
+import MalformedUUIDError from '../services/uuid.error'
 
 describe('MapsController', () => {
   let mapsController: MapsController
@@ -107,9 +108,9 @@ describe('MapsController', () => {
 
       jest
         .spyOn(mapsService, 'exportMapToClient')
-        .mockRejectedValueOnce(new Error('MalformedUUIDError'))
+        .mockRejectedValueOnce(new MalformedUUIDError('MalformedUUIDError'))
 
-      await expect(mapsController.findOne(invalidMapId)).rejects.toThrow(
+      expect(mapsController.findOne(invalidMapId)).rejects.toThrow(
         NotFoundException
       )
     })
@@ -117,7 +118,7 @@ describe('MapsController', () => {
 
   describe('delete', () => {
     it('should delete an existing map successfully', async () => {
-      const existingMap: MmpMap = createMmpMap()
+      const existingMap = createMmpMap()
 
       jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(existingMap)
       // We're not interested in testing the repository at this stage, only if the request gets past the admin ID check

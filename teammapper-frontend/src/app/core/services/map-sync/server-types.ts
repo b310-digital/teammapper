@@ -10,6 +10,21 @@ interface ResponseMapUpdated extends ResponseServer {
   map: ServerMap;
 }
 
+type ResponseSnapshotChanges = Record<
+  string,
+  Partial<ExportNodeProperties> | undefined
+>;
+
+interface ResponseMapDiff {
+  added: ResponseSnapshotChanges;
+  deleted: ResponseSnapshotChanges;
+  updated: ResponseSnapshotChanges;
+}
+
+interface ResponseUndoRedoChanges extends ResponseServer {
+  diff: ResponseMapDiff;
+}
+
 interface ResponseMapOptionsUpdated extends ResponseServer {
   options: CachedMapOptions;
 }
@@ -54,8 +69,33 @@ interface PrivateServerMap {
   modificationSecret: string;
 }
 
+const ReversePropertyMapping = {
+  name: 'name',
+  locked: 'locked',
+  coordinates: 'coordinates',
+  image: {
+    src: 'imageSrc',
+    size: 'imageSize',
+  },
+  link: {
+    href: 'linkHref',
+  },
+  colors: {
+    background: 'backgroundColor',
+    branch: 'branchColor',
+    name: 'nameColor',
+  },
+  font: {
+    weight: 'fontWeight',
+    style: 'fontStyle',
+    size: 'fontSize',
+  },
+  hidden: 'hidden',
+} as const;
+
 export {
   ResponseMapUpdated,
+  ResponseUndoRedoChanges,
   ResponseMapOptionsUpdated,
   ResponseNodesAdded,
   ResponseNodeRemoved,
@@ -64,4 +104,5 @@ export {
   ResponseClientNotification,
   ServerMap,
   PrivateServerMap,
+  ReversePropertyMapping,
 };

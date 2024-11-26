@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { EntityNotFoundError, Repository } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
@@ -8,11 +8,14 @@ import {
   IMmpClientMapOptions,
   IMmpClientNode,
   IMmpClientNodeBasics,
+  IMmpClientMapDiff,
+  IMmpClientSnapshotChanges,
 } from '../types'
 import {
   mapClientBasicNodeToMmpRootNode,
   mapClientNodeToMmpNode,
   mapMmpMapToClient,
+  mergeClientNodeIntoMmpNode,
 } from '../utils/clientServerMapping'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid'
@@ -39,18 +42,18 @@ export class MapsService {
   }
 
   async updateLastAccessed(uuid: string, lastAccessed = new Date()) {
+    const map = await this.findMap(uuid)
+    if (!map) return Promise.reject(new EntityNotFoundError('MmpMap', uuid))
+
     this.mapsRepository.update(uuid, { lastAccessed })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
-    const map = await this.findMap(uuid).catch((e: Error) => {
-      return Promise.reject(e)
-    })
+    const map = await this.findMap(uuid)
+    if (!map) return Promise.reject(new EntityNotFoundError('MmpMap', uuid))
 
-    if (!map) return Promise.reject()
-
-    const nodes: MmpNode[] = await this.findNodes(map?.id)
-    const days: number = configService.deleteAfterDays()
+    const nodes = await this.findNodes(map?.id)
+    const days = configService.deleteAfterDays()
 
     return mapMmpMapToClient(
       map,
@@ -63,6 +66,8 @@ export class MapsService {
   async addNode(mapId: string, node: MmpNode): Promise<MmpNode> {
     // detached nodes are not allowed to have a parent
     if (node.detached && node.nodeParentId) return Promise.reject()
+    // root nodes are not allowed to have a parent
+    if (node.root && node.nodeParentId) return Promise.reject()
     if (!mapId || !node) return Promise.reject()
 
     const existingNode = await this.nodesRepository.findOne({
@@ -75,7 +80,14 @@ export class MapsService {
       nodeMapId: mapId,
     })
 
-    return this.nodesRepository.save(newNode)
+    try {
+      return this.nodesRepository.save(newNode)
+    } catch (error) {
+      this.logger.error(
+        `${error.constructor.name} - Failed to add node ${newNode.id}: ${error}`
+      )
+      return Promise.reject(error)
+    }
   }
 
   async addNodesFromClient(
@@ -87,7 +99,7 @@ export class MapsService {
   }
 
   async addNodes(mapId: string, nodes: Partial<MmpNode>[]): Promise<MmpNode[]> {
-    if (!mapId || nodes.length === 0) Promise.reject()
+    if (!mapId || nodes.length === 0) return Promise.reject()
 
     const reducer = async (
       previousPromise: Promise<MmpNode[]>,
@@ -95,7 +107,15 @@ export class MapsService {
     ): Promise<MmpNode[]> => {
       const accCreatedNodes = await previousPromise
       if (await this.validatesNodeParentForNode(mapId, node)) {
-        return accCreatedNodes.concat([await this.addNode(mapId, node)])
+        try {
+          const newNode = await this.addNode(mapId, node)
+          return accCreatedNodes.concat([newNode])
+        } catch (error) {
+          this.logger.warn(
+            `Failed to add node ${node.id} to map ${mapId}: ${error}`
+          )
+          return accCreatedNodes
+        }
       }
 
       this.logger.warn(
@@ -133,11 +153,18 @@ export class MapsService {
 
     if (!existingNode) return Promise.reject()
 
-    return this.nodesRepository.save({
-      ...existingNode,
-      ...mapClientNodeToMmpNode(clientNode, mapId),
-      lastModified: new Date(),
-    })
+    try {
+      return this.nodesRepository.save({
+        ...existingNode,
+        ...mapClientNodeToMmpNode(clientNode, mapId),
+        lastModified: new Date(),
+      })
+    } catch (error) {
+      this.logger.error(
+        `${error.constructor.name} - Failed to update node ${existingNode.id}: ${error}`
+      )
+      return Promise.reject(error)
+    }
   }
 
   async removeNode(
@@ -164,7 +191,14 @@ export class MapsService {
       const newRootNode = this.nodesRepository.create(
         mapClientBasicNodeToMmpRootNode(rootNode, savedNewMap.id)
       )
-      await this.nodesRepository.save(newRootNode)
+      try {
+        await this.nodesRepository.save(newRootNode)
+      } catch (error) {
+        this.logger.error(
+          `${error.constructor.name} - Failed to create root node ${newRootNode.id}: ${error}`
+        )
+        return Promise.reject(error)
+      }
     }
 
     return newMap
@@ -178,6 +212,84 @@ export class MapsService {
     await this.addNodesFromClient(clientMap.uuid, clientMap.data)
     // reload map
     return this.findMap(clientMap.uuid)
+  }
+
+  async updateMapByDiff(mapId: string, diff: IMmpClientMapDiff) {
+    type DiffCallback = (diff: IMmpClientSnapshotChanges) => Promise<void>
+    type DiffKey = keyof IMmpClientMapDiff
+
+    const diffAddedCallback: DiffCallback = async (
+      diff: IMmpClientSnapshotChanges
+    ) => {
+      const nodes = Object.values(diff)
+      await this.addNodesFromClient(mapId, nodes as IMmpClientNode[])
+    }
+
+    const diffUpdatedCallback: DiffCallback = async (
+      diff: IMmpClientSnapshotChanges
+    ) => {
+      await Promise.all(
+        Object.keys(diff).map(async (key) => {
+          const clientNode = diff[key]
+
+          if (clientNode) {
+            const serverNode = await this.nodesRepository.findOne({
+              where: { nodeMapId: mapId, id: key },
+            })
+
+            if (serverNode) {
+              const mergedNode = mergeClientNodeIntoMmpNode(
+                clientNode,
+                serverNode
+              )
+              Object.assign(serverNode, mergedNode)
+              try {
+                await this.nodesRepository.save(serverNode)
+              } catch (error) {
+                this.logger.error(
+                  `${error.constructor.name} - Failed to update node ${serverNode.id} during diff update: ${error}`
+                )
+                return Promise.reject(error)
+              }
+            }
+          }
+        })
+      )
+    }
+
+    const diffDeletedCallback: DiffCallback = async (
+      diff: IMmpClientSnapshotChanges
+    ) => {
+      await Promise.all(
+        Object.keys(diff).map(async (key) => {
+          const existingNode = await this.nodesRepository.findOneBy({
+            id: key,
+            nodeMapId: mapId,
+          })
+
+          if (!existingNode) {
+            return
+          }
+
+          return this.nodesRepository.remove(existingNode)
+        })
+      )
+    }
+
+    const callbacks: Record<keyof IMmpClientMapDiff, DiffCallback> = {
+      added: diffAddedCallback,
+      updated: diffUpdatedCallback,
+      deleted: diffDeletedCallback,
+    }
+
+    const diffKeys: DiffKey[] = ['added', 'updated', 'deleted']
+
+    diffKeys.forEach((key) => {
+      const changes = diff[key]
+      if (changes && Object.keys(changes).length > 0) {
+        callbacks[key](changes)
+      }
+    })
   }
 
   async updateMapOptions(

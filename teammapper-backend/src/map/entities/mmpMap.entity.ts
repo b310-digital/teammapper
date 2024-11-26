@@ -13,33 +13,42 @@ export class MmpMap {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ type: 'timestamptz', nullable: true, default: () => 'now()' })
-  lastModified: Date
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  lastModified: Date | null
 
   @Column({ type: 'timestamptz', nullable: true })
-  lastAccessed: Date
+  lastAccessed: Date | null
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   @Generated('uuid')
-  adminId: string
+  adminId: string | null
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'uuid', nullable: true, default: null })
   @Generated('uuid')
-  modificationSecret: string
+  modificationSecret: string | null
 
-  @Column({ nullable: true })
-  name: string
+  @Column({ type: 'varchar', nullable: true })
+  name: string | null
 
-  @Column('jsonb', { nullable: false, default: {} })
+  @Column('jsonb', {
+    nullable: false,
+    default: {},
+  })
   options: MapOptions
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  @OneToMany((type) => MmpNode, (node) => node.nodeMap, {
+  @OneToMany(() => MmpNode, (node) => node.nodeMap, {
     cascade: true,
   })
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   nodes: MmpNode[]
 
-  @Column({ type: 'timestamptz', default: () => 'now()', nullable: true })
-  createdAt: Date
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date | null
 }
