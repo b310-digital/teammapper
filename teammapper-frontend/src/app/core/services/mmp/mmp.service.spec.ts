@@ -6,6 +6,7 @@ import { UtilsService } from '../utils/utils.service';
 import * as mmp from '@mmp/index';
 import { Subject } from 'rxjs';
 import { OptionParameters } from '@mmp/map/types';
+import MmpMap from '@mmp/map/map';
 
 jest.mock('dompurify', () => ({
   default: {
@@ -24,9 +25,9 @@ const downloadFileSpy = jest
 
 describe('MmpService', () => {
   let service: MmpService;
-  let settingsService: jest.Mocked<SettingsService>;
-  let utilsService: jest.Mocked<UtilsService>;
-  let toastrService: jest.Mocked<ToastrService>;
+  let settingsService: Partial<jest.Mocked<SettingsService>>;
+  let utilsService: Partial<jest.Mocked<UtilsService>>;
+  let toastrService: Partial<jest.Mocked<ToastrService>>;
   let editModeSubject: Subject<boolean>;
 
   const mockMap = {
@@ -87,16 +88,16 @@ describe('MmpService', () => {
           fontIncrement: 2,
         },
       }),
-    } as any;
+    };
 
     utilsService = {
       translate: jest.fn().mockResolvedValue('translated-text'),
-    } as any;
+    };
 
     toastrService = {
       success: jest.fn(),
       error: jest.fn(),
-    } as any;
+    };
 
     TestBed.configureTestingModule({
       providers: [
