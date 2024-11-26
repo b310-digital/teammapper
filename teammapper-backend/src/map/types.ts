@@ -5,9 +5,9 @@ export interface MapOptions {
 }
 
 export interface IMmpClientColor {
-  name: string | null
-  background: string | null
-  branch: string | null
+  name: string | null;
+  background: string | null;
+  branch: string | null;
 }
 
 export interface IMmpClientCoordinates {
@@ -16,44 +16,44 @@ export interface IMmpClientCoordinates {
 }
 
 export interface IMmpClientFont {
-  style: string | null
-  size: number | null
-  weight: string | null
+  style: string | null;
+  size: number | null;
+  weight: string | null;
 }
 
 export interface IMmpClientMap {
-  uuid: string
-  lastModified: Date | null
-  lastAccessed: Date | null
-  deleteAfterDays: number
-  deletedAt: Date
-  data: IMmpClientNode[]
-  options: IMmpClientMapOptions,
-  createdAt: Date | null
+  uuid: string;
+  lastModified: Date | null;
+  lastAccessed: Date | null;
+  deleteAfterDays: number;
+  deletedAt: Date;
+  data: IMmpClientNode[];
+  options: IMmpClientMapOptions;
+  createdAt: Date | null;
 }
 
 export interface IMmpClientPrivateMap {
-  map: IMmpClientMap
-  adminId: string | null
-  modificationSecret: string | null
+  map: IMmpClientMap;
+  adminId: string | null;
+  modificationSecret: string | null;
 }
 
 export interface IMmpClientNodeBasics {
-  colors: IMmpClientColor
-  font: IMmpClientFont
-  name: string | null
-  image: { src: string | null; size: number | null }
+  colors: IMmpClientColor;
+  font: IMmpClientFont;
+  name: string | null;
+  image: { src: string | null; size: number | null };
 }
 
 export interface IMmpClientNode extends IMmpClientNodeBasics {
-  coordinates: IMmpClientCoordinates
-  detached: boolean
-  id: string
-  k: number
-  link: { href: string | null }
-  locked: boolean
-  parent: string | null
-  isRoot: boolean
+  coordinates: IMmpClientCoordinates;
+  detached: boolean;
+  id: string;
+  k: number;
+  link: { href: string | null };
+  locked: boolean;
+  parent: string | null;
+  isRoot: boolean;
 }
 
 export interface IMmpClientMapOptions {
@@ -93,25 +93,25 @@ export interface IMmpClientNodeAddRequest extends IMmpClientEditingRequest {
 
 export interface IMmpClientUpdateMapOptionsRequest
   extends IMmpClientEditingRequest {
-  options: IMmpClientMapOptions
+  options: IMmpClientMapOptions;
 }
 
 export interface IMmpClientSnapshotChanges {
-  [k: string]: Partial<IMmpClientNode> | undefined
+  [k: string]: Partial<IMmpClientNode> | undefined;
 }
 
 export interface IMmpClientMapDiff {
-  added: IMmpClientSnapshotChanges
-  deleted: IMmpClientSnapshotChanges
-  updated: IMmpClientSnapshotChanges
+  added: IMmpClientSnapshotChanges;
+  deleted: IMmpClientSnapshotChanges;
+  updated: IMmpClientSnapshotChanges;
 }
 
 export interface IMmpClientMapRequest extends IMmpClientEditingRequest {
-  map: IMmpClientMap
+  map: IMmpClientMap;
 }
 
 export interface IMmpClientUndoRedoRequest extends IMmpClientEditingRequest {
-  diff: IMmpClientMapDiff
+  diff: IMmpClientMapDiff;
 }
 
 export interface IMmpClientMapCreateRequest {
@@ -119,6 +119,6 @@ export interface IMmpClientMapCreateRequest {
 }
 
 export interface IMmpClientDeleteRequest {
-  adminId: string | null
-  mapId: string
+  adminId: string | null;
+  mapId: string;
 }

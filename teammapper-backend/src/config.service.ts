@@ -4,7 +4,7 @@ import { DataSourceOptions } from 'typeorm'
 import { join } from 'path'
 
 interface EnvProps {
-  [k: string]: string | undefined
+  [k: string]: string | undefined;
 }
 
 require('dotenv').config()
