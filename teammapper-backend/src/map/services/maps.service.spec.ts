@@ -157,7 +157,7 @@ describe('MapsController', () => {
       })
 
       expect(updatedNode?.lastModified).not.toEqual(oldDate)
-      expect(updatedNode?.lastModified.getTime()).toBeGreaterThan(
+      expect(updatedNode?.lastModified!.getTime()).toBeGreaterThan(
         timeBeforeUpdate.getTime()
       )
     })

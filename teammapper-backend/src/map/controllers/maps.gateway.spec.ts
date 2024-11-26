@@ -31,7 +31,10 @@ describe('WebSocketGateway', () => {
         }),
       removeNode: (_clientNode: IMmpClientNode, _mapId: string) =>
         new Promise((resolve, _reject) => {
-          resolve(new MmpNode())
+          const node = new MmpNode();
+          node.createdAt = new Date('2021-01-31T00:00:00.000Z');
+          node.lastModified = new Date('2021-01-31T00:00:00.000Z');
+          resolve(node);
         }),
     })
     const testingModule = await Test.createTestingModule({
@@ -133,15 +136,21 @@ describe('WebSocketGateway', () => {
     it(`allows request when modification secret is set`, (done) => {
       socket = io('http://localhost:3000')
 
+      // Date objects are serialised to JSON in the result, so we'll need to be explicit in setting these here
+      const defaultNode = {
+        "createdAt": new Date('2021-01-31T00:00:00.000Z').toISOString(),
+        "lastModified": new Date('2021-01-31T00:00:00.000Z').toISOString(),
+      }
+
       socket.emit(
         'removeNode',
         {
           mapId: map.id,
           modificationSecret: map.modificationSecret,
-          node: {},
+          node: defaultNode,
         },
         (result: MmpNode | undefined) => {
-          expect(result).toEqual({})
+          expect(result).toEqual(defaultNode)
           done()
         }
       )
