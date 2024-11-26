@@ -6,7 +6,6 @@ import { UtilsService } from '../utils/utils.service';
 import * as mmp from '@mmp/index';
 import { Subject } from 'rxjs';
 import { OptionParameters } from '@mmp/map/types';
-import MmpMap from '@mmp/map/map';
 
 jest.mock('dompurify', () => ({
   default: {

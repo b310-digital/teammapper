@@ -65,9 +65,8 @@ export class DialogShareComponent implements OnInit {
     this.inputLink.nativeElement.select();
     // requires a secure origin (https) to work
     navigator.clipboard.writeText(this.getLink());
-    const successMessage = await this.utilsService.translate(
-      'TOASTS.URL_COPIED'
-    );
+    const successMessage =
+      await this.utilsService.translate('TOASTS.URL_COPIED');
     this.toastrService.success(successMessage);
   }
 

@@ -198,8 +198,8 @@ export class MmpService implements OnDestroy {
     const parent = properties?.parent
       ? this.selectNode(properties.parent)
       : !properties?.detached
-      ? this.selectNode()
-      : null;
+        ? this.selectNode()
+        : null;
 
     // detached nodes are not available as parent
     if (this.selectNode()?.detached) {
@@ -348,9 +348,8 @@ export class MmpService implements OnDestroy {
     try {
       this.currentMap.instance.copyNode(nodeId);
 
-      const successMessage = await this.utilsService.translate(
-        'TOASTS.NODE_COPIED'
-      );
+      const successMessage =
+        await this.utilsService.translate('TOASTS.NODE_COPIED');
       this.toastrService.success(successMessage);
     } catch (e) {
       if (e.message == 'The root node can not be copied') {
@@ -375,9 +374,8 @@ export class MmpService implements OnDestroy {
     try {
       this.currentMap.instance.cutNode(nodeId);
 
-      const successMessage = await this.utilsService.translate(
-        'TOASTS.NODE_CUT'
-      );
+      const successMessage =
+        await this.utilsService.translate('TOASTS.NODE_CUT');
       this.toastrService.success(successMessage);
     } catch (e) {
       if (e.message == 'The root node can not be cut') {
