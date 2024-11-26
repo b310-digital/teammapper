@@ -115,6 +115,29 @@ export default class Nodes {
     }
 
     /**
+     * Adds multiple nodes at once and saves one snapshot to history.
+     * @param {ExportNodeProperties[]} nodes
+     * @param {boolean} updateHistory
+     */
+    public addNodes = (nodes: ExportNodeProperties[], updateHistory: boolean = true) => {
+        nodes.forEach(node => {
+            if (!this.existNode(node.id)) {
+                this.addNode(
+                    node,
+                    false,
+                    false,
+                    node.parent,
+                    node.id
+                )
+            }
+        })
+
+        if (updateHistory) {
+            this.map.history.save()
+        }
+    }
+
+    /**
      * Select a node or return the current selected node.
      * @param {string} id
      * @returns {ExportNodeProperties}
@@ -324,9 +347,6 @@ export default class Nodes {
                 break
             case 'fontWeight':
                 updated = this.updateNodeFontWeight(node, value)
-                break
-            case 'textDecoration':
-                updated = this.updateNodeTextDecoration(node, value)
                 break
             case 'fontStyle':
                 updated = this.updateNodeFontStyle(node, value)
@@ -1003,29 +1023,6 @@ export default class Nodes {
     }
 
     /**
-     * Update the node text decoration.
-     * @param {Node} node
-     * @param {string} decoration
-     * @returns {boolean}
-     */
-    private updateNodeTextDecoration = (node: Node, decoration: string): boolean => {
-        if (decoration && typeof decoration !== 'string') {
-            Log.error('The text decoration must be a string', 'type')
-        }
-
-        if (node.font.decoration !== decoration) {
-            node.getNameDOM().style['text-decoration'] = DOMPurify.sanitize(decoration)
-
-            this.map.draw.updateNodeShapes(node)
-
-            node.font.decoration = decoration
-            return true
-        } else {
-            return false
-        }
-    }
-
-    /**
      * Update the node locked status.
      * @param {Node} node
      * @param {boolean} flag
@@ -1117,7 +1114,6 @@ export const PropertyMapping = {
     backgroundColor: ['colors', 'background'],
     branchColor: ['colors', 'branch'],
     fontWeight: ['font', 'weight'],
-    textDecoration: [],
     fontStyle: ['font', 'style'],
     fontSize: ['font', 'size'],
     nameColor: ['colors', 'name'],

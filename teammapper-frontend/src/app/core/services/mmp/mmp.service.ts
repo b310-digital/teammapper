@@ -152,6 +152,13 @@ export class MmpService implements OnDestroy {
   }
 
   /**
+   * Save the current snapshot to history
+   */
+  public save() {
+    return this.currentMap.instance.save();
+  }
+
+  /**
    * Center the mind mmp.
    */
   public center(type?: 'position' | 'zoom', duration?: number) {
@@ -170,18 +177,12 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Adds an already created node on the server
+   * Adds already created nodes from the server to the local map
    *
-   * @param properties Given node properties as synced from the server
+   * @param nodes Given nodes from the server
    */
-  public addNodeFromServer(properties?: ExportNodeProperties) {
-    this.currentMap.instance.addNode(
-      properties,
-      false,
-      true,
-      properties?.parent,
-      properties?.id
-    );
+  public addNodesFromServer(nodes?: ExportNodeProperties[]) {
+    this.currentMap.instance.addNodes(nodes);
   }
 
   /**
@@ -189,9 +190,16 @@ export class MmpService implements OnDestroy {
    *
    * Detached nodes can be used as comments and are not assigned to a parent node
    */
-  public addNode(properties?: UserNodeProperties, notifyWithEvent = true) {
+  public addNode(
+    properties?: Partial<ExportNodeProperties>,
+    notifyWithEvent = true
+  ) {
     const newProps: UserNodeProperties = properties || { name: '' };
-    const parent = !properties?.detached ? this.selectNode() : null;
+    const parent = properties?.parent
+      ? this.selectNode(properties.parent)
+      : !properties?.detached
+      ? this.selectNode()
+      : null;
 
     // detached nodes are not available as parent
     if (this.selectNode()?.detached) {
@@ -227,7 +235,13 @@ export class MmpService implements OnDestroy {
       };
     }
 
-    this.currentMap.instance.addNode(newProps, notifyWithEvent);
+    this.currentMap.instance.addNode(
+      newProps,
+      notifyWithEvent,
+      true,
+      parent?.id,
+      properties?.id
+    );
   }
 
   /**

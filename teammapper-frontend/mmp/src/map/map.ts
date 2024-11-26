@@ -87,6 +87,7 @@ export default class MmpMap {
     private createMmpInstance(): MmpInstance {
         return this.instance = {
             addNode: this.nodes.addNode,
+            addNodes: this.nodes.addNodes,
             center: this.zoom.center,
             copyNode: this.copyPaste.copy,
             cutNode: this.copyPaste.cut,
@@ -103,6 +104,7 @@ export default class MmpMap {
             highlightNode: this.nodes.highlightNodeWithColor,
             history: this.history.getHistory,
             new: this.history.new,
+            save: this.history.save,
             nodeChildren: this.nodes.nodeChildren,
             on: this.events.on,
             pasteNode: this.copyPaste.paste,
@@ -123,6 +125,7 @@ export default class MmpMap {
 
 export interface MmpInstance {
     addNode: Function
+    addNodes: Function
     center: Function
     copyNode: Function
     cutNode: Function
@@ -139,6 +142,7 @@ export interface MmpInstance {
     highlightNode: Function
     history: Function
     new: Function
+    save: Function
     nodeChildren: Function
     on: Function
     pasteNode: Function
