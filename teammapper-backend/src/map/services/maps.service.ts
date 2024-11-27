@@ -47,19 +47,22 @@ export class MapsService {
     this.mapsRepository.update(uuid, { lastAccessed })
   }
 
-  async exportMapToClient(uuid: string): Promise<IMmpClientMap> {
+  async exportMapToClient(uuid: string): Promise<IMmpClientMap | undefined> {
     const map = await this.findMap(uuid)
     if (!map) return Promise.reject(new EntityNotFoundError("MmpMap", uuid))
 
     const nodes = await this.findNodes(map?.id)
     const days = configService.deleteAfterDays()
+    const deletedAt = await this.getDeletedAt(map, days);
 
-    return mapMmpMapToClient(
-      map,
-      nodes,
-      await this.getDeletedAt(map, days),
-      days
-    )
+    if (deletedAt) {
+      return mapMmpMapToClient(
+        map,
+        nodes,
+        deletedAt,
+        days
+      )
+    }
   }
 
   async addNode(mapId: string, node: MmpNode): Promise<MmpNode | undefined> {
@@ -99,7 +102,7 @@ export class MapsService {
   async addNodesFromClient(
     mapId: string,
     clientNodes: IMmpClientNode[]
-  ): Promise<MmpNode[]> {
+  ): Promise<MmpNode[] | undefined> {
     const mmpNodes = clientNodes.map(x => mapClientNodeToMmpNode(x, mapId))
     return await this.addNodes(mapId, mmpNodes)
   }

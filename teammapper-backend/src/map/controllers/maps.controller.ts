@@ -51,19 +51,23 @@ export default class MapsController {
   @Post()
   async create(
     @Body() body: IMmpClientMapCreateRequest
-  ): Promise<IMmpClientPrivateMap> {
+  ): Promise<IMmpClientPrivateMap | undefined> {
     const newMap = await this.mapsService.createEmptyMap(body.rootNode)
-    return {
-      map: await this.mapsService.exportMapToClient(newMap.id),
-      adminId: newMap.adminId,
-      modificationSecret: newMap.modificationSecret,
+    const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
+
+    if (exportedMap) {
+      return {
+        map: exportedMap,
+        adminId: newMap.adminId,
+        modificationSecret: newMap.modificationSecret,
+      }
     }
   }
 
   @Post(':id/duplicate')
   async duplicate(
     @Param('id') mapId: string,
-  ): Promise<IMmpClientPrivateMap> {
+  ): Promise<IMmpClientPrivateMap | undefined> {
     const oldMap = await this.mapsService.findMap(mapId).catch((e: Error) => {
       if (e.name === 'MalformedUUIDError') throw new NotFoundException()
     })
@@ -75,11 +79,15 @@ export default class MapsController {
     const oldNodes = await this.mapsService.findNodes(oldMap.id)
     
     await this.mapsService.addNodes(newMap.id, oldNodes)
-    
-    return {
-      map: await this.mapsService.exportMapToClient(newMap.id),
-      adminId: newMap.adminId,
-      modificationSecret: newMap.modificationSecret
+
+    const exportedMap = await this.mapsService.exportMapToClient(newMap.id);
+
+    if (exportedMap) {
+      return {
+        map: exportedMap,
+        adminId: newMap.adminId,
+        modificationSecret: newMap.modificationSecret
+      }
     }
   }
 }
