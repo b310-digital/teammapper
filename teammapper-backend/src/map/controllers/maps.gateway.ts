@@ -1,4 +1,4 @@
-import { Inject, UseGuards } from '@nestjs/common'
+import { Inject, UseGuards, Logger } from '@nestjs/common'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Cache } from 'cache-manager'
 import { randomBytes } from 'crypto'
@@ -37,6 +37,8 @@ export class MapsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server
 
+  private readonly logger = new Logger(MapsService.name)
+
   constructor(
     private mapsService: MapsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -57,10 +59,12 @@ export class MapsGateway implements OnGatewayDisconnect {
   async onJoin(
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientJoinRequest
-  ): Promise<IMmpClientMap> {
+  ): Promise<IMmpClientMap | undefined> {
     const map = await this.mapsService.findMap(request.mapId)
-    if (!map)
-      return Promise.reject()
+    if (!map) {
+      this.logger.error(`Could not find map when client ${client.id} tried to join`);
+      return;
+    }
 
     client.join(request.mapId)
     this.cacheManager.set(client.id, request.mapId, 10000)
