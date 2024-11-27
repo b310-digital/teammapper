@@ -65,12 +65,12 @@ export class MapsService {
   async addNode(mapId: string, node: MmpNode): Promise<MmpNode | undefined> {
     // detached nodes are not allowed to have a parent
     if (node.detached && node.nodeParentId) {
-      this.logger.info(`Detached node ${node.id} is not allowed to have a parent.`);
+      this.logger.log(`Detached node ${node.id} is not allowed to have a parent.`);
       return;
     }
     // root nodes are not allowed to have a parent
     if (node.root && node.nodeParentId) {
-      this.logger.info(`Root node ${node.id} is not allowed to have a parent.`);
+      this.logger.log(`Root node ${node.id} is not allowed to have a parent.`);
       return;
     }
     if (!mapId || !node) {
