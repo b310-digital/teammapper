@@ -5,7 +5,7 @@ import { Logger } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
-import { EntityNotFoundError, Repository } from 'typeorm'
+import { Repository } from 'typeorm'
 import { ConfigModule } from '@nestjs/config'
 import AppModule from '../../app.module'
 import {
