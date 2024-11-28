@@ -164,12 +164,10 @@ describe('MapsController', () => {
   })
 
   describe('exportMapToClient', () => {
-    it('throws error when no map is available', async () => {
-      expect(
-        mapsService.exportMapToClient(
-          '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
-        )
-      ).rejects.toThrow(EntityNotFoundError)
+    it('returns undefined when no map is available', async () => {
+      expect(await mapsService.exportMapToClient(
+        '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
+      )).toEqual(undefined)
     })
   })
 

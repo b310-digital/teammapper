@@ -62,7 +62,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   ): Promise<IMmpClientMap | undefined> {
     const map = await this.mapsService.findMap(request.mapId)
     if (!map) {
-      this.logger.error(`Could not find map when client ${client.id} tried to join`);
+      this.logger.error(`onJoin(): Could not find map ${request.mapId} when client ${client.id} tried to join`);
       return;
     }
 

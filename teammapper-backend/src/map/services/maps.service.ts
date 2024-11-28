@@ -42,14 +42,20 @@ export class MapsService {
 
   async updateLastAccessed(uuid: string, lastAccessed = new Date()) {
     const map = await this.findMap(uuid)
-    if (!map) return Promise.reject(new EntityNotFoundError("MmpMap", uuid))
+    if (!map) {
+      this.logger.warn(`updateLastAccessed(): Map was not found`)
+      return;
+    }
 
     this.mapsRepository.update(uuid, { lastAccessed })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap | undefined> {
     const map = await this.findMap(uuid)
-    if (!map) return Promise.reject(new EntityNotFoundError("MmpMap", uuid))
+    if (!map) {
+      this.logger.warn(`exportMapToClient(): Map was not found`)
+      return;
+    }
 
     const nodes = await this.findNodes(map?.id)
     const days = configService.deleteAfterDays()
@@ -68,16 +74,16 @@ export class MapsService {
   async addNode(mapId: string, node: MmpNode): Promise<MmpNode | undefined> {
     // detached nodes are not allowed to have a parent
     if (node.detached && node.nodeParentId) {
-      this.logger.log(`Detached node ${node.id} is not allowed to have a parent.`);
+      this.logger.warn(`addNode(): Detached node ${node.id} is not allowed to have a parent.`);
       return;
     }
     // root nodes are not allowed to have a parent
     if (node.root && node.nodeParentId) {
-      this.logger.log(`Root node ${node.id} is not allowed to have a parent.`);
+      this.logger.warn(`addNode(): Root node ${node.id} is not allowed to have a parent.`);
       return;
     }
     if (!mapId || !node) {
-      this.logger.warn(`Required arguments mapId or node not supplied to addNode()`);
+      this.logger.warn(`addNode(): Required arguments mapId or node not supplied`);
       return;
     }
 
@@ -94,7 +100,7 @@ export class MapsService {
     try {
       return this.nodesRepository.save(newNode)
     } catch(error) {
-      this.logger.error(`${error.constructor.name} - Failed to add node ${newNode.id}: ${error}`)
+      this.logger.error(`${error.constructor.name} addNode(): Failed to add node ${newNode.id}: ${error}`)
       return Promise.reject(error)
     }
   }
@@ -102,7 +108,7 @@ export class MapsService {
   async addNodesFromClient(
     mapId: string,
     clientNodes: IMmpClientNode[]
-  ): Promise<MmpNode[] | undefined> {
+  ): Promise<MmpNode[] | []> {
     const mmpNodes = clientNodes.map(x => mapClientNodeToMmpNode(x, mapId))
     return await this.addNodes(mapId, mmpNodes)
   }
@@ -110,10 +116,10 @@ export class MapsService {
   async addNodes(
     mapId: string,
     nodes: Partial<MmpNode>[]
-  ): Promise<MmpNode[] | undefined> {
+  ): Promise<MmpNode[] | []> {
     if (!mapId || nodes.length === 0) {
       this.logger.warn(`Required arguments mapId or nodes not supplied to addNodes()`);
-      return;
+      return [];
     }
 
       const reducer = async (previousPromise: Promise<MmpNode[]>, node: MmpNode): Promise<MmpNode[]> => {
@@ -123,6 +129,8 @@ export class MapsService {
             const newNode = await this.addNode(mapId, node);
             if (newNode) {
               return accCreatedNodes.concat([newNode]);
+            } else {
+              return [];
             }
           } catch (error) {
             this.logger.warn(`Failed to add node ${node.id} to map ${mapId}: ${error}`);
@@ -163,7 +171,7 @@ export class MapsService {
     })
 
     if (!existingNode) {
-      this.logger.warn(`Existing node on server for given client node ${clientNode.id} has not been found.`);
+      this.logger.warn(`updateNode(): Existing node on server for given client node ${clientNode.id} has not been found.`);
       return;
     }
 
@@ -174,7 +182,7 @@ export class MapsService {
           lastModified: new Date(),
         })
       } catch(error) {
-        this.logger.error(`${error.constructor.name} - Failed to update node ${existingNode.id}: ${error}`)
+        this.logger.error(`${error.constructor.name} updateNode(): Failed to update node ${existingNode.id}: ${error}`)
         return Promise.reject(error)
       }
   }
@@ -206,7 +214,7 @@ export class MapsService {
       try {
         await this.nodesRepository.save(newRootNode)
       } catch(error) {
-        this.logger.error(`${error.constructor.name} - Failed to create root node ${newRootNode.id}: ${error}`)
+        this.logger.error(`${error.constructor.name} createEmptyMap(): Failed to create root node ${newRootNode.id}: ${error}`)
         return Promise.reject(error)
       }
     }
@@ -246,7 +254,7 @@ export class MapsService {
             try {
               await this.nodesRepository.save(serverNode);
             } catch(error) {
-              this.logger.error(`${error.constructor.name} - Failed to update node ${serverNode.id} during diff update: ${error}`)
+              this.logger.error(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`)
               return Promise.reject(error)
             }
           }
