@@ -159,49 +159,49 @@ describe('AppController (e2e)', () => {
             })
           })
         })
+    })
 
-      it('notifies a user about a node update', (done) => {
-        socket.on('nodeUpdated', (result: any) => {
-          expect(result.property).toEqual('nodeName')
-          expect(result.node.id).toEqual('51271bf2-81fa-477a-b0bd-10cecf8d6b65')
-          expect(result.node.coordinates.x).toEqual(3)
-          done()
+    it('notifies a user about a node update', (done) => {
+      socket.on('nodeUpdated', (result: any) => {
+        expect(result.property).toEqual('nodeName')
+        expect(result.node.id).toEqual('51271bf2-81fa-477a-b0bd-10cecf8d6b65')
+        expect(result.node.coordinates.x).toEqual(3)
+        done()
+      })
+      mapRepo
+        .save({
+          id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+          nodes: [
+            nodesRepo.create({
+              id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+              coordinatesX: 1,
+              coordinatesY: 2,
+              nodeMapId: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+              detached: false,
+              root: true,
+            }),
+          ],
         })
-        mapRepo
-          .save({
-            id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-            modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-            nodes: [
-              nodesRepo.create({
+        .then((map) => {
+          socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => {
+            socket.emit('updateNode', {
+              mapId: map.id,
+              modificationSecret: map.modificationSecret,
+              updatedProperty: 'nodeName',
+              node: {
                 id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-                coordinatesX: 1,
-                coordinatesY: 2,
-                nodeMapId: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+                name: 'test',
+                coordinates: { x: 3, y: 4 },
+                font: {},
+                colors: {},
+                link: {},
                 detached: false,
                 root: true,
-              }),
-            ],
-          })
-          .then((map) => {
-            socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => {
-              socket.emit('updateNode', {
-                mapId: map.id,
-                modificationSecret: map.modificationSecret,
-                updatedProperty: 'nodeName',
-                node: {
-                  id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-                  name: 'test',
-                  coordinates: { x: 3, y: 4 },
-                  font: {},
-                  colors: {},
-                  link: {},
-                  detached: false,
-                  root: true,
-                },
-              })
+              },
             })
           })
-      })
+        })
     })
   })
 })
