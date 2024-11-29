@@ -90,7 +90,7 @@
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "~5.5.4"
+    "typescript": "~5.7.2"
   },
   "overrides": {
     "path-to-regexp": "1.9.0"
