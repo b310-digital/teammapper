@@ -100,7 +100,7 @@ export class MapsService {
     try {
       return this.nodesRepository.save(newNode)
     } catch(error) {
-      this.logger.error(`${error.constructor.name} addNode(): Failed to add node ${newNode.id}: ${error}`)
+      this.logger.warn(`${error.constructor.name} addNode(): Failed to add node ${newNode.id}: ${error}`)
       return Promise.reject(error)
     }
   }
@@ -129,13 +129,12 @@ export class MapsService {
             const newNode = await this.addNode(mapId, node);
             if (newNode) {
               return accCreatedNodes.concat([newNode]);
-            } else {
-              return [];
             }
           } catch (error) {
             this.logger.warn(`Failed to add node ${node.id} to map ${mapId}: ${error}`);
-            return accCreatedNodes;
           }
+
+          return accCreatedNodes;
         }
     
         this.logger.warn(`Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`);
@@ -182,7 +181,7 @@ export class MapsService {
           lastModified: new Date(),
         })
       } catch(error) {
-        this.logger.error(`${error.constructor.name} updateNode(): Failed to update node ${existingNode.id}: ${error}`)
+        this.logger.warn(`${error.constructor.name} updateNode(): Failed to update node ${existingNode.id}: ${error}`)
         return Promise.reject(error)
       }
   }
@@ -214,7 +213,7 @@ export class MapsService {
       try {
         await this.nodesRepository.save(newRootNode)
       } catch(error) {
-        this.logger.error(`${error.constructor.name} createEmptyMap(): Failed to create root node ${newRootNode.id}: ${error}`)
+        this.logger.warn(`${error.constructor.name} createEmptyMap(): Failed to create root node ${newRootNode.id}: ${error}`)
         return Promise.reject(error)
       }
     }
@@ -254,7 +253,7 @@ export class MapsService {
             try {
               await this.nodesRepository.save(serverNode);
             } catch(error) {
-              this.logger.error(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`)
+              this.logger.warn(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`)
               return Promise.reject(error)
             }
           }
