@@ -53,7 +53,7 @@
     "@fortawesome/angular-fontawesome": "^0.15.0",
     "@fortawesome/fontawesome-svg-core": "^1.2.27",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
-    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.1",
     "@material-design-icons/font": "^0.13.0",
     "@ngx-translate/core": "^16.0.3",
     "@ngx-translate/http-loader": "^7.0.0",
