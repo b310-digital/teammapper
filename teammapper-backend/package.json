@@ -49,7 +49,7 @@
     "class-validator": "^0.14.1",
     "dotenv": "16.4.5",
     "http-proxy-middleware": "3.0.3",
-    "npm-check-updates": "^17.1.10",
+    "npm-check-updates": "^17.1.11",
     "pg": "^8.13.1",
     "pq": "^0.0.3",
     "reflect-metadata": "^0.2.2",
