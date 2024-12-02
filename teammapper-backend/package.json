@@ -43,7 +43,7 @@
     "@nestjs/schedule": "^4.1.1",
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/typeorm": "^10.0.2",
-    "@nestjs/websockets": "^10.4.1",
+    "@nestjs/websockets": "^10.4.12",
     "@types/uuid": "^10.0.0",
     "cache-manager": "^5.7.4",
     "class-validator": "^0.14.1",
