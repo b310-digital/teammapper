@@ -24,7 +24,7 @@ import MalformedUUIDError from './uuid.error'
 @Injectable()
 export class MapsService {
   private readonly logger = new Logger(MapsService.name)
-  
+
   constructor(
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
@@ -62,27 +62,24 @@ export class MapsService {
     )
   }
 
-  async addNode(mapId: string, node: MmpNode): Promise<MmpNode> {
+  async addNode(mapId: string, node: MmpNode): Promise<MmpNode | null> {
     // detached nodes are not allowed to have a parent
     if (node.detached && node.nodeParentId) return Promise.reject()
     // root nodes are not allowed to have a parent
     if (node.root && node.nodeParentId) return Promise.reject()
     if (!mapId || !node) return Promise.reject()
 
-    const existingNode = await this.nodesRepository.findOne({
-      where: { id: node.id, nodeMapId: mapId },
-    })
-    if (existingNode) return existingNode
-
-    const newNode = this.nodesRepository.create({
-      ...node,
-      nodeMapId: mapId,
-    })
-
     try {
-      return this.nodesRepository.save(newNode)
-    } catch(error) {
-      this.logger.error(`${error.constructor.name} - Failed to add node ${newNode.id}: ${error}`)
+      await this.nodesRepository.upsert({
+        ...node,
+        nodeMapId: mapId,
+      }, ["id", "nodeMapId"]);
+
+      return this.nodesRepository.findOne({
+        where: { id: node.id, nodeMapId: mapId },
+      })
+    } catch (error) {
+      this.logger.error(`${error.constructor.name} - Failed to add node ${node.id}: ${error}`)
       return Promise.reject(error)
     }
   }
@@ -101,21 +98,21 @@ export class MapsService {
   ): Promise<MmpNode[]> {
     if (!mapId || nodes.length === 0) return Promise.reject()
 
-      const reducer = async (previousPromise: Promise<MmpNode[]>, node: MmpNode): Promise<MmpNode[]> => {
-        const accCreatedNodes = await previousPromise;
-        if (await this.validatesNodeParentForNode(mapId, node)) {
-          try {
-            const newNode = await this.addNode(mapId, node);
-            return accCreatedNodes.concat([newNode]);
-          } catch (error) {
-            this.logger.warn(`Failed to add node ${node.id} to map ${mapId}: ${error}`);
-            return accCreatedNodes;
-          }
+    const reducer = async (previousPromise: Promise<MmpNode[]>, node: MmpNode): Promise<MmpNode[]> => {
+      const accCreatedNodes = await previousPromise;
+      if (await this.validatesNodeParentForNode(mapId, node)) {
+        try {
+          const newNode = await this.addNode(mapId, node);
+          return accCreatedNodes.concat([newNode!]);
+        } catch (error) {
+          this.logger.warn(`Failed to add node ${node.id} to map ${mapId}: ${error}`);
+          return accCreatedNodes;
         }
-    
-        this.logger.warn(`Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`);
-        return accCreatedNodes;
-      };
+      }
+
+      this.logger.warn(`Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`);
+      return accCreatedNodes;
+    };
 
 
     return nodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
@@ -140,23 +137,22 @@ export class MapsService {
   async updateNode(
     mapId: string,
     clientNode: IMmpClientNode
-  ): Promise<MmpNode> {
-    const existingNode = await this.nodesRepository.findOne({
-      where: { nodeMapId: mapId, id: clientNode.id },
-    })
+  ): Promise<MmpNode | null> {
+    const mmpNode = mapClientNodeToMmpNode(clientNode, mapId);
 
-    if (!existingNode) return Promise.reject()
+    try {
+      await this.nodesRepository.upsert({
+        ...mmpNode,
+        lastModified: new Date(),
+      }, ["id", "nodeMapId"])
 
-      try {
-        return this.nodesRepository.save({
-          ...existingNode,
-          ...mapClientNodeToMmpNode(clientNode, mapId),
-          lastModified: new Date(),
-        })
-      } catch(error) {
-        this.logger.error(`${error.constructor.name} - Failed to update node ${existingNode.id}: ${error}`)
-        return Promise.reject(error)
-      }
+      return await this.nodesRepository.findOne({
+        where: { nodeMapId: mapId, id: clientNode.id },
+      })
+    } catch (error) {
+      this.logger.error(`${error.constructor.name} - Failed to update node ${clientNode.id}: ${error}`)
+      return Promise.reject(error)
+    }
   }
 
   async removeNode(
@@ -185,7 +181,7 @@ export class MapsService {
       )
       try {
         await this.nodesRepository.save(newRootNode)
-      } catch(error) {
+      } catch (error) {
         this.logger.error(`${error.constructor.name} - Failed to create root node ${newRootNode.id}: ${error}`)
         return Promise.reject(error)
       }
@@ -219,13 +215,13 @@ export class MapsService {
 
         if (clientNode) {
           const serverNode = await this.nodesRepository.findOne({ where: { nodeMapId: mapId, id: key } });
-        
+
           if (serverNode) {
             const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
             Object.assign(serverNode, mergedNode);
             try {
               await this.nodesRepository.save(serverNode);
-            } catch(error) {
+            } catch (error) {
               this.logger.error(`${error.constructor.name} - Failed to update node ${serverNode.id} during diff update: ${error}`)
               return Promise.reject(error)
             }
@@ -240,11 +236,11 @@ export class MapsService {
           id: key,
           nodeMapId: mapId,
         })
-    
+
         if (!existingNode) {
           return
         }
-    
+
         return this.nodesRepository.remove(existingNode)
       }));
     }
@@ -256,7 +252,7 @@ export class MapsService {
     };
 
     const diffKeys: DiffKey[] = ["added", "updated", "deleted"];
-    
+
     diffKeys.forEach(key => {
       const changes = diff[key];
       if (changes && Object.keys(changes).length > 0) {
