@@ -103,7 +103,7 @@
     "minimist": "^1.2.5",
     "prettier": "2.8.7",
     "ts-node": "~10.9.2",
-    "typescript": "~5.5.4"
+    "typescript": "~5.7.2"
   },
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "17.2.8",
