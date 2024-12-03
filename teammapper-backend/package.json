@@ -43,13 +43,13 @@
     "@nestjs/schedule": "^4.1.1",
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/typeorm": "^10.0.2",
-    "@nestjs/websockets": "^10.4.1",
+    "@nestjs/websockets": "^10.4.12",
     "@types/uuid": "^10.0.0",
     "cache-manager": "^5.7.4",
     "class-validator": "^0.14.1",
     "dotenv": "16.4.5",
     "http-proxy-middleware": "3.0.3",
-    "npm-check-updates": "^17.1.10",
+    "npm-check-updates": "^17.1.11",
     "pg": "^8.13.1",
     "pq": "^0.0.3",
     "reflect-metadata": "^0.2.2",
@@ -70,10 +70,10 @@
     "@types/express-serve-static-core": "^4.19.5",
     "@types/jest": "29.5.14",
     "@types/node": "^22.8.7",
-    "@types/supertest": "^2.0.16",
-    "@typescript-eslint/eslint-plugin": "^8.13.0",
+    "@types/supertest": "^6.0.2",
+    "@typescript-eslint/eslint-plugin": "^8.16.0",
     "@typescript-eslint/parser": "^8.2.0",
-    "concurrently": "9.0.1",
+    "concurrently": "9.1.0",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "3.6.1",
@@ -91,7 +91,7 @@
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "~5.5.4"
+    "typescript": "~5.7.2"
   },
   "overrides": {
     "path-to-regexp": "1.9.0"

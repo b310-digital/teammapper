@@ -87,7 +87,9 @@ export class MmpService implements OnDestroy {
    * Clear or load an existing mind mmp.
    */
   public new(map?: MapSnapshot, notifyWithEvent = true) {
-    this.currentMap.instance.new(map, notifyWithEvent);
+    const mapWithCoordinates =
+      this.currentMap.instance.applyCoordinatesToMapSnapshot(map);
+    this.currentMap.instance.new(mapWithCoordinates, notifyWithEvent);
   }
 
   /**
