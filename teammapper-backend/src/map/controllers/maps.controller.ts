@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Logger
 } from '@nestjs/common'
 import { MapsService } from '../services/maps.service'
 import {
@@ -19,6 +20,7 @@ import { EntityNotFoundError } from 'typeorm'
 
 @Controller('api/maps')
 export default class MapsController {
+  private readonly logger = new Logger(MapsController.name)
   constructor(private mapsService: MapsService) {}
 
   @Get(':id')
@@ -69,7 +71,10 @@ export default class MapsController {
     @Param('id') mapId: string,
   ): Promise<IMmpClientPrivateMap | undefined> {
     const oldMap = await this.mapsService.findMap(mapId).catch((e: Error) => {
-      if (e.name === 'MalformedUUIDError') throw new NotFoundException()
+      if (e.name === 'MalformedUUIDError') {
+        this.logger.warn(`:id/duplicate(): Wrong/no UUID provided for findMap() with mapId ${mapId}`)
+        return;
+      }
     })
 
     if (!oldMap) throw new NotFoundException()
