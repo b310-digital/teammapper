@@ -466,7 +466,7 @@ export class MapSyncService implements OnDestroy {
           };
         }
 
-        return undefined;
+        return;
       };
 
       const { added, updated, deleted } = result.diff;
