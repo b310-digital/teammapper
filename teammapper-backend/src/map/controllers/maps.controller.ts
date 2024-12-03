@@ -30,7 +30,7 @@ export default class MapsController {
       if (!map) throw new NotFoundException()
 
       return map
-    } catch(e) {
+    } catch (e) {
       if (e instanceof MalformedUUIDError || e instanceof EntityNotFoundError) {
         throw new NotFoundException()
       } else {
@@ -45,7 +45,8 @@ export default class MapsController {
     @Body() body: IMmpClientDeleteRequest
   ): Promise<void> {
     const mmpMap = await this.mapsService.findMap(mapId)
-    if (mmpMap && mmpMap.adminId === body.adminId) this.mapsService.deleteMap(mapId)
+    if (mmpMap && mmpMap.adminId === body.adminId)
+      this.mapsService.deleteMap(mapId)
   }
 
   @Post()
@@ -61,9 +62,7 @@ export default class MapsController {
   }
 
   @Post(':id/duplicate')
-  async duplicate(
-    @Param('id') mapId: string,
-  ): Promise<IMmpClientPrivateMap> {
+  async duplicate(@Param('id') mapId: string): Promise<IMmpClientPrivateMap> {
     const oldMap = await this.mapsService.findMap(mapId).catch((e: Error) => {
       if (e.name === 'MalformedUUIDError') throw new NotFoundException()
     })
@@ -73,13 +72,13 @@ export default class MapsController {
     const newMap = await this.mapsService.createEmptyMap()
 
     const oldNodes = await this.mapsService.findNodes(oldMap.id)
-    
+
     await this.mapsService.addNodes(newMap.id, oldNodes)
-    
+
     return {
       map: await this.mapsService.exportMapToClient(newMap.id),
       adminId: newMap.adminId,
-      modificationSecret: newMap.modificationSecret
+      modificationSecret: newMap.modificationSecret,
     }
   }
 }

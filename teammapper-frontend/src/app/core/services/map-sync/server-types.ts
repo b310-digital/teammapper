@@ -10,9 +10,10 @@ interface ResponseMapUpdated extends ResponseServer {
   map: ServerMap;
 }
 
-interface ResponseSnapshotChanges {
-  [k: string]: Partial<ExportNodeProperties> | undefined;
-}
+type ResponseSnapshotChanges = Record<
+  string,
+  Partial<ExportNodeProperties> | undefined
+>;
 
 interface ResponseMapDiff {
   added: ResponseSnapshotChanges;

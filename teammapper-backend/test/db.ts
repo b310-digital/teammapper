@@ -2,7 +2,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm'
 import { DataSource } from 'typeorm'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 
-require('dotenv').config()
+require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-imports
 
 // we create a database for each worker:
 const setupWorkerDatabase = async (workerId: string): Promise<string> => {

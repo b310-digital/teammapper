@@ -11,8 +11,7 @@ import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
 import { IMmpClientNode } from '../types'
 
-
-const crypto = require('crypto')
+const crypto = require('crypto') // eslint-disable-line @typescript-eslint/no-require-imports
 
 describe('WebSocketGateway', () => {
   let app: INestApplication
@@ -31,10 +30,10 @@ describe('WebSocketGateway', () => {
         }),
       removeNode: (_clientNode: IMmpClientNode, _mapId: string) =>
         new Promise((resolve, _reject) => {
-          const node = new MmpNode();
-          node.createdAt = new Date('2021-01-31T00:00:00.000Z');
-          node.lastModified = new Date('2021-01-31T00:00:00.000Z');
-          resolve(node);
+          const node = new MmpNode()
+          node.createdAt = new Date('2021-01-31T00:00:00.000Z')
+          node.lastModified = new Date('2021-01-31T00:00:00.000Z')
+          resolve(node)
         }),
     })
     const testingModule = await Test.createTestingModule({
@@ -138,8 +137,8 @@ describe('WebSocketGateway', () => {
 
       // Date objects are serialised to JSON in the result, so we'll need to be explicit in setting these here
       const defaultNode = {
-        "createdAt": new Date('2021-01-31T00:00:00.000Z').toISOString(),
-        "lastModified": new Date('2021-01-31T00:00:00.000Z').toISOString(),
+        createdAt: new Date('2021-01-31T00:00:00.000Z').toISOString(),
+        lastModified: new Date('2021-01-31T00:00:00.000Z').toISOString(),
       }
 
       socket.emit(
@@ -182,13 +181,13 @@ describe('WebSocketGateway', () => {
       const rootNodeId = crypto.randomUUID()
 
       const diff = {
-        "added": {},
-        "deleted": {},
-        "updated": {
+        added: {},
+        deleted: {},
+        updated: {
           [rootNodeId]: {
-            "name": "Thema"
-          }
-        }
+            name: 'Thema',
+          },
+        },
       }
 
       socket.emit(
@@ -196,11 +195,11 @@ describe('WebSocketGateway', () => {
         {
           mapId: map.id,
           diff,
-          modificationSecret: map.modificationSecret
+          modificationSecret: map.modificationSecret,
         },
         (result: boolean) => {
-          expect(result).toEqual(true);
-          done();
+          expect(result).toEqual(true)
+          done()
         }
       )
     })
