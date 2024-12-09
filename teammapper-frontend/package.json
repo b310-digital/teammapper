@@ -39,7 +39,7 @@
   "dependencies": {
     "@angular-devkit/build-angular": "18.2.12",
     "@angular/animations": "18.2.2",
-    "@angular/cdk": "18.2.2",
+    "@angular/cdk": "19.0.2",
     "@angular/cli": "18.2.2",
     "@angular/common": "18.2.2",
     "@angular/compiler": "18.2.2",
