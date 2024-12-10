@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { HeaderComponent } from './header.component';
 
@@ -11,7 +12,7 @@ describe('HeaderComponent', () => {
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [HeaderComponent],
-      imports: [TranslateModule.forRoot(), MatIconModule],
+      imports: [TranslateModule.forRoot(), MatIconModule, FontAwesomeModule],
     }).compileComponents();
   }));
 

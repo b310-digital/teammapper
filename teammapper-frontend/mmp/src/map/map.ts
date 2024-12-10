@@ -3,11 +3,12 @@ import Events from './handlers/events'
 import Zoom from './handlers/zoom'
 import Draw from './handlers/draw'
 import Options, {OptionParameters} from './options'
-import History from './handlers/history'
+import History, { MapSnapshot } from './handlers/history'
 import Drag from './handlers/drag'
 import Nodes from './handlers/nodes'
 import Export from './handlers/export'
 import CopyPaste from './handlers/copy-paste'
+import { UserNodeProperties } from './types'
 
 /**
  * Initialize all handlers and return a mmp object.
@@ -91,6 +92,7 @@ export default class MmpMap {
             center: this.zoom.center,
             copyNode: this.copyPaste.copy,
             cutNode: this.copyPaste.cut,
+            applyCoordinatesToMapSnapshot: this.nodes.applyCoordinatesToMapSnapshot,
             deselectNode: this.nodes.deselectNode,
             getSelectedNode: this.nodes.getSelectedNode,
             editNode: this.nodes.editNode,
@@ -129,6 +131,7 @@ export interface MmpInstance {
     center: Function
     copyNode: Function
     cutNode: Function
+    applyCoordinatesToMapSnapshot: Function
     deselectNode: Function
     getSelectedNode: Function
     editNode: Function
