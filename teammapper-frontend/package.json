@@ -89,9 +89,9 @@
     "@schematics/angular": "^18.2.11",
     "@types/d3": "7.1.0",
     "@types/jasmine": "~5.1.4",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "29.5.14",
     "@types/mousetrap": "1.6.15",
-    "@types/node": "^13.7.7",
+    "@types/node": "^13.13.52",
     "@typescript-eslint/eslint-plugin": "^8.2.0",
     "@typescript-eslint/parser": "^8.4.0",
     "eslint": "^8.57.0",
@@ -133,9 +133,11 @@
       "<rootDir>"
     ],
     "moduleNameMapper": {
-      "@mmp/index": "<rootDir>/src/test/mocks/mmp-index.js",
-      "@mmp/map/map": "<rootDir>/src/test/mocks/mmp-map.js"
+      "@mmp/index": "<rootDir>/src/test/mocks/mmp-index.ts",
+      "@mmp/map/map": "<rootDir>/src/test/mocks/mmp-map.ts"
     },
-    "setupFilesAfterEnv": ["<rootDir>/setup-jest.ts"]
+    "setupFilesAfterEnv": [
+      "<rootDir>/setup-jest.ts"
+    ]
   }
 }
