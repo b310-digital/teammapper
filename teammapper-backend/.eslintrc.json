@@ -17,6 +17,7 @@
     },
     "plugins": [
         "@typescript-eslint",
+        "@stylistic/ts",
         "jest",
         "nestjs",
         "import"
@@ -24,6 +25,7 @@
     "rules": {
         "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        "@stylistic/ts/member-delimiter-style": ["error"],
         "import/extensions": [
            "error",
            "ignorePackages",

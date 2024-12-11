@@ -87,6 +87,7 @@
     "@angular/language-service": "18.2.8",
     "@compodoc/compodoc": "^1.1.26",
     "@schematics/angular": "^18.2.11",
+    "@stylistic/eslint-plugin-ts": "^2.9.0",
     "@types/d3": "7.1.0",
     "@types/jasmine": "~5.1.4",
     "@types/jest": "29.5.14",
