@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Logger
 } from '@nestjs/common'
 import { MapsService } from '../services/maps.service'
 import {
@@ -19,6 +20,7 @@ import { EntityNotFoundError } from 'typeorm'
 
 @Controller('api/maps')
 export default class MapsController {
+  private readonly logger = new Logger(MapsController.name)
   constructor(private mapsService: MapsService) {}
 
   @Get(':id')
@@ -51,21 +53,28 @@ export default class MapsController {
   @Post()
   async create(
     @Body() body: IMmpClientMapCreateRequest
-  ): Promise<IMmpClientPrivateMap> {
+  ): Promise<IMmpClientPrivateMap | undefined> {
     const newMap = await this.mapsService.createEmptyMap(body.rootNode)
-    return {
-      map: await this.mapsService.exportMapToClient(newMap.id),
-      adminId: newMap.adminId,
-      modificationSecret: newMap.modificationSecret,
+    const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
+
+    if (exportedMap) {
+      return {
+        map: exportedMap,
+        adminId: newMap.adminId,
+        modificationSecret: newMap.modificationSecret,
+      }
     }
   }
 
   @Post(':id/duplicate')
   async duplicate(
     @Param('id') mapId: string,
-  ): Promise<IMmpClientPrivateMap> {
+  ): Promise<IMmpClientPrivateMap | undefined> {
     const oldMap = await this.mapsService.findMap(mapId).catch((e: Error) => {
-      if (e.name === 'MalformedUUIDError') throw new NotFoundException()
+      if (e.name === 'MalformedUUIDError') {
+        this.logger.warn(`:id/duplicate(): Wrong/no UUID provided for findMap() with mapId ${mapId}`)
+        return;
+      }
     })
 
     if (!oldMap) throw new NotFoundException()
@@ -75,11 +84,15 @@ export default class MapsController {
     const oldNodes = await this.mapsService.findNodes(oldMap.id)
     
     await this.mapsService.addNodes(newMap.id, oldNodes)
-    
-    return {
-      map: await this.mapsService.exportMapToClient(newMap.id),
-      adminId: newMap.adminId,
-      modificationSecret: newMap.modificationSecret
+
+    const exportedMap = await this.mapsService.exportMapToClient(newMap.id);
+
+    if (exportedMap) {
+      return {
+        map: exportedMap,
+        adminId: newMap.adminId,
+        modificationSecret: newMap.modificationSecret
+      }
     }
   }
 }
