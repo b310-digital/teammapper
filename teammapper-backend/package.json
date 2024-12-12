@@ -57,7 +57,7 @@
     "rxjs": "^7.8.1",
     "socket.io": "4.8.0",
     "typeorm": "^0.3.20",
-    "uuid": "10.0.0"
+    "uuid": "11.0.3"
   },
   "devDependencies": {
     "@golevelup/ts-jest": "^0.5.6",
