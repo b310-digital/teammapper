@@ -93,9 +93,12 @@ export class MapsService {
         nodeMapId: mapId,
       }, ["id", "nodeMapId"]);
 
-      return this.nodesRepository.findOne({
+      const newNode = await this.nodesRepository.findOne({
         where: { id: node.id, nodeMapId: mapId },
       })
+
+      if (!newNode) return;
+      return newNode;
     } catch (error) {
       this.logger.error(`${error.constructor.name} - Failed to add node ${node.id}: ${error}`)
       return Promise.reject(error)
@@ -169,9 +172,12 @@ export class MapsService {
         lastModified: new Date(),
       }, ["id", "nodeMapId"])
 
-      return await this.nodesRepository.findOne({
+      const updatedNode = await this.nodesRepository.findOne({
         where: { nodeMapId: mapId, id: clientNode.id },
       })
+
+      if (!updatedNode) return;
+      return updatedNode;
     } catch (error) {
       this.logger.error(`${error.constructor.name} - Failed to update node ${clientNode.id}: ${error}`)
       return Promise.reject(error)
