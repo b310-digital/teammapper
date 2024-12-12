@@ -1,4 +1,3 @@
-// @ts-nocheck
 export const mockMmpService = {
   new: jest.fn(),
   addNodeImage: jest.fn(),
