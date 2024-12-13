@@ -5,9 +5,9 @@ export interface MapOptions {
 }
 
 export interface IMmpClientColor {
-  name: string
-  background: string
-  branch: string
+  name: string | null
+  background: string | null
+  branch: string | null
 }
 
 export interface IMmpClientCoordinates {
@@ -16,32 +16,33 @@ export interface IMmpClientCoordinates {
 }
 
 export interface IMmpClientFont {
-  style: string
-  size: number
-  weight: string
+  style: string | null
+  size: number | null
+  weight: string | null
 }
 
 export interface IMmpClientMap {
   uuid: string
-  lastModified: Date
+  lastModified: Date | null
+  lastAccessed: Date | null
   deleteAfterDays: number
   deletedAt: Date
   data: IMmpClientNode[]
   options: IMmpClientMapOptions,
-  createdAt: Date
+  createdAt: Date | null
 }
 
 export interface IMmpClientPrivateMap {
   map: IMmpClientMap
-  adminId: string
-  modificationSecret: string
+  adminId: string | null
+  modificationSecret: string | null
 }
 
 export interface IMmpClientNodeBasics {
   colors: IMmpClientColor
   font: IMmpClientFont
-  name: string
-  image: { src: string; size: number }
+  name: string | null
+  image: { src: string | null; size: number | null }
 }
 
 export interface IMmpClientNode extends IMmpClientNodeBasics {
@@ -49,9 +50,9 @@ export interface IMmpClientNode extends IMmpClientNodeBasics {
   detached: boolean
   id: string
   k: number
-  link: { href: string }
+  link: { href: string | null }
   locked: boolean
-  parent: string
+  parent: string | null
   isRoot: boolean
 }
 
@@ -95,8 +96,22 @@ export interface IMmpClientUpdateMapOptionsRequest
   options: IMmpClientMapOptions
 }
 
+export interface IMmpClientSnapshotChanges {
+  [k: string]: Partial<IMmpClientNode> | undefined
+}
+
+export interface IMmpClientMapDiff {
+  added: IMmpClientSnapshotChanges
+  deleted: IMmpClientSnapshotChanges
+  updated: IMmpClientSnapshotChanges
+}
+
 export interface IMmpClientMapRequest extends IMmpClientEditingRequest {
   map: IMmpClientMap
+}
+
+export interface IMmpClientUndoRedoRequest extends IMmpClientEditingRequest {
+  diff: IMmpClientMapDiff
 }
 
 export interface IMmpClientMapCreateRequest {
@@ -104,6 +119,6 @@ export interface IMmpClientMapCreateRequest {
 }
 
 export interface IMmpClientDeleteRequest {
-  adminId: string
+  adminId: string | null
   mapId: string
 }

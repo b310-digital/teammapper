@@ -15,7 +15,11 @@ import { v4 as uuidv4 } from 'uuid'
 import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
+import { MapSnapshot } from './history'
 
+const NODE_HORIZONTAL_SPACING = 200;  // The x-axis spacing between parent and child nodes
+const NODE_VERTICAL_SIBLING_OFFSET = 60;     // The y-axis spacing between sibling nodes
+const NODE_VERTICAL_SPACING = 120;  // The initial vertical spacing for the first child node
 /**
  * Manage the nodes of the map.
  */
@@ -112,6 +116,29 @@ export default class Nodes {
 
         if (notifyWithEvent) this.map.events.call(Event.nodeCreate, node.dom, this.getNodeProperties(node))
         return node
+    }
+
+    /**
+     * Adds multiple nodes at once and saves one snapshot to history.
+     * @param {ExportNodeProperties[]} nodes
+     * @param {boolean} updateHistory
+     */
+    public addNodes = (nodes: ExportNodeProperties[], updateHistory: boolean = true) => {
+        nodes.forEach(node => {
+            if (!this.existNode(node.id)) {
+                this.addNode(
+                    node,
+                    false,
+                    false,
+                    node.parent,
+                    node.id
+                )
+            }
+        })
+
+        if (updateHistory) {
+            this.map.history.save()
+        }
     }
 
     /**
@@ -227,17 +254,17 @@ export default class Nodes {
              */
 
             if (children) {
-                children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, false, x.id))
+                children.forEach(x => this.updateNode('hidden', !x.hidden, false, false, x.id))
             }
 
             if (descendants) {
                 descendants.forEach(x => {
                     if (x.parent.hidden && !x.hidden) {
-                        this.updateNode('hidden', true, false, false, false, x.id)
+                        this.updateNode('hidden', true, false, false, x.id)
                     }
 
                     if (!x.parent.hidden && x.hidden) {
-                        this.updateNode('hidden', false, false, false, false, x.id)
+                        this.updateNode('hidden', false, false, false, x.id)
                     }
                 })
             }
@@ -279,7 +306,7 @@ export default class Nodes {
     /**
      * Update the properties of the selected node.
      */
-    public updateNode = (property: string, value: any, graphic: boolean = false, notifyWithEvent: boolean = true, updateHistory: boolean = true, id?: string) => {
+    public updateNode = (property: string, value: any, notifyWithEvent: boolean = true, updateHistory: boolean = true, id?: string) => {
         if (id && typeof id !== 'string') {
             Log.error('The node id must be a string', 'type')
         }
@@ -299,7 +326,7 @@ export default class Nodes {
 
         switch (property) {
             case 'name':
-                updated = this.updateNodeName(node, value, graphic)
+                updated = this.updateNodeName(node, value)
                 break
             case 'locked':
                 updated = this.updateNodeLockedStatus(node, value)
@@ -311,31 +338,28 @@ export default class Nodes {
                 updated = this.updateNodeImageSrc(node, value)
                 break
             case 'imageSize':
-                updated = this.updateNodeImageSize(node, value, graphic)
+                updated = this.updateNodeImageSize(node, value)
                 break
             case 'linkHref':
                 updated = this.updateNodeLinkHref(node, value)
                 break
             case 'backgroundColor':
-                updated = this.updateNodeBackgroundColor(node, value, graphic)
+                updated = this.updateNodeBackgroundColor(node, value)
                 break
             case 'branchColor':
-                updated = this.updateNodeBranchColor(node, value, graphic)
+                updated = this.updateNodeBranchColor(node, value)
                 break
             case 'fontWeight':
-                updated = this.updateNodeFontWeight(node, value, graphic)
-                break
-            case 'textDecoration':
-                updated = this.updateNodeTextDecoration(node, value, graphic)
+                updated = this.updateNodeFontWeight(node, value)
                 break
             case 'fontStyle':
-                updated = this.updateNodeFontStyle(node, value, graphic)
+                updated = this.updateNodeFontStyle(node, value)
                 break
             case 'fontSize':
-                updated = this.updateNodeFontSize(node, value, graphic)
+                updated = this.updateNodeFontSize(node, value)
                 break
             case 'nameColor':
-                updated = this.updateNodeNameColor(node, value, graphic)
+                updated = this.updateNodeNameColor(node, value)
                 break
             case 'hidden':
                 updated = this.updateNodeHidden(node, value)
@@ -343,11 +367,11 @@ export default class Nodes {
             default:
                 Log.error('The property does not exist')
         }
-        if (graphic === false && updated !== false && updateHistory) {
+        if (updated !== false && updateHistory) {
             this.map.history.save()
         }
 
-        if (graphic === false && updated !== false && notifyWithEvent) {
+        if (updated !== false && notifyWithEvent) {
             this.map.events.call(Event.nodeUpdate, node.dom, { nodeProperties: this.getNodeProperties(node), changedProperty: property, previousValue })
         }
     }
@@ -505,10 +529,22 @@ export default class Nodes {
      * Return the orientation of a node in the map (true if left).
      * @return {boolean}
      */
-    public getOrientation(node: Node): boolean {
-        if (!node.isRoot) {
-            return node.coordinates.x < this.getRoot().coordinates.x
+    public getOrientation(
+        node: Node | ExportNodeProperties, 
+        rootNode?: Node | ExportNodeProperties
+    ): boolean | undefined {
+        // isRoot exists only on Node type, so type guard is needed
+        if ('isRoot' in node && node.isRoot) {
+            return;
         }
+    
+        // For Node type, use this.getRoot() if rootNode not provided
+        const root = rootNode ?? (('isRoot' in node) ? this.getRoot() : undefined);
+        if (!root) {
+            return;
+        }
+    
+        return (node.coordinates?.x ?? 0) < (root.coordinates?.x ?? 0);
     }
 
     /**
@@ -641,48 +677,113 @@ export default class Nodes {
     }
 
     /**
-     * Return the appropriate coordinates of the node.
-     * @param {Node} node
-     * @returns {Coordinates} coordinates
+     * Base method for calculating node coordinates. 
+     * The reason this exists is so we can work with a JSON snapshot (as given by an import), but also allow saved, "real" nodes to calculate coordinates
+     * This prevents duplication, whilst passing methods that differ depending on whether or not a JSON snapshot or "real" node is calculating coordinates.
+     * @param node Either a node previously saved or one from a JSON snapshot
+     * @param params
+     * getParent - Parent node of given node
+     * getSiblings() - Method to get the siblings of the given node
+     * isRoot - If parent node is root
+     * getOrientation() - Method to get the orientation of the node
+     * @returns 
      */
-    private calculateCoordinates(node: Node): Coordinates {
+    private calculateNodeCoordinates(
+        node: Node | ExportNodeProperties,
+        params: {
+            nodeParent: (Node | ExportNodeProperties) | null,
+            getSiblings: () => (Node | ExportNodeProperties)[],
+            isRoot: boolean,
+            getOrientation: (n: Node | ExportNodeProperties) => boolean | undefined
+        }
+    ): Coordinates {
+        const nodeParent = params.nodeParent;
+        
         let coordinates: Coordinates = {
-            x: node.parent ? node.parent.coordinates.x : node.coordinates.x || 0,
-            y: node.parent ? node.parent.coordinates.y : node.coordinates.y || 0
-        },
-            siblings: Array<Node> = this.getSiblings(node)
-
-        if (node.parent && node.parent.isRoot) {
-            const rightNodes: Array<Node> = [],
-                leftNodes: Array<Node> = []
-
-            for (const sibling of siblings) {
-                this.getOrientation(sibling) ? leftNodes.push(sibling) : rightNodes.push(sibling)
-            }
-
+            x: nodeParent?.coordinates?.x ?? (node.coordinates?.x ?? 0),
+            y: nodeParent?.coordinates?.y ?? (node.coordinates?.y ?? 0)
+        };
+    
+        let siblings = params.getSiblings();
+    
+        if (nodeParent && params.isRoot) {
+            // This will go through sibling nodes and assign them to the left or to the right depending on the orientation of the sibling node
+            const [leftNodes, rightNodes] = siblings.reduce<[(Node | ExportNodeProperties)[], (Node | ExportNodeProperties)[]]>(
+                (acc, sibling) => {
+                    params.getOrientation(sibling) 
+                        ? acc[0].push(sibling) 
+                        : acc[1].push(sibling);
+                    return acc;
+                },
+                [[], []]
+            );
+    
             if (leftNodes.length <= rightNodes.length) {
-                coordinates.x -= 200
-                siblings = leftNodes
+                coordinates.x -= NODE_HORIZONTAL_SPACING;
+                siblings = leftNodes;
             } else {
-                coordinates.x += 200
-                siblings = rightNodes
+                coordinates.x += NODE_HORIZONTAL_SPACING;
+                siblings = rightNodes;
             }
         } else if (!node.detached) {
-            if (node.parent && this.getOrientation(node.parent)) {
-                coordinates.x -= 200
+            if (nodeParent && params.getOrientation(nodeParent)) {
+                coordinates.x -= NODE_HORIZONTAL_SPACING;
             } else {
-                coordinates.x += 200
+                coordinates.x += NODE_HORIZONTAL_SPACING;
             }
         }
-
+    
         if (siblings.length > 0) {
             const lowerNode = this.getLowerNode(siblings)
-            coordinates.y = lowerNode.coordinates.y + 60
+            coordinates.y = (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
         } else if (!node.detached) {
-            coordinates.y -= 120
+            coordinates.y -= NODE_VERTICAL_SPACING;
         }
+    
+        return coordinates;
+    }
 
-        return coordinates
+    /**
+     * Existing method to calculate the coordinates of "real", saved nodes in the database.
+     * This method will pass on existing methods such as this.getSiblings() to calculateNodeCoordinates, so existing implementations don't break
+     * @param node 
+     * @returns 
+     */
+    private calculateCoordinates(node: Node): Coordinates {
+        return this.calculateNodeCoordinates(
+            node,
+            {
+                nodeParent: node.parent,
+                getSiblings: () => this.getSiblings(node),
+                isRoot: node.parent?.isRoot ?? false,
+                getOrientation: (n: Node) => this.getOrientation(n)
+            }
+        );
+    }
+
+    public applyCoordinatesToMapSnapshot = (mapSnapshot: MapSnapshot): MapSnapshot => {
+        const rootNode = mapSnapshot.find(x => x.isRoot);
+        
+        return mapSnapshot.map(node => {
+            if (!node.coordinates) {
+                /**
+                 * Since we're working with a JSON snapshot here, none of the nodes actually exist.
+                 * This makes existing methods such as this.getSiblings() useless, because they only work with existing nodes.
+                 * So here, we pass on methods that work directly with the JSON.
+                 */
+                node.coordinates = this.calculateNodeCoordinates(
+                    node,
+                    {
+                        nodeParent: node.parent ? mapSnapshot.find(x => x.id === node.parent) : null,
+                        getSiblings: () => node.parent ? mapSnapshot.filter(x => x.parent === node.parent && x.id !== node.id) : [],
+                        isRoot: !!node.parent && mapSnapshot.find(x => x.id === node.parent)?.isRoot,
+                        getOrientation: (n: ExportNodeProperties) => this.getOrientation(n, rootNode)
+                    }
+                );
+            }
+
+            return node
+        });
     }
 
     /**
@@ -690,41 +791,36 @@ export default class Nodes {
      * @param {Node[]} nodes
      * @returns {Node} lowerNode
      */
-    private getLowerNode(nodes: Node[] = Array.from(this.nodes.values())): Node {
-        if (nodes.length > 0) {
-            let tmp = nodes[0].coordinates.y, lowerNode = nodes[0]
-
-            for (const node of nodes) {
-                if (node.coordinates.y > tmp) {
-                    tmp = node.coordinates.y
-                    lowerNode = node
-                }
-            }
-
-            return lowerNode
+    private getLowerNode(nodes: (Node | ExportNodeProperties)[]): Node | ExportNodeProperties | undefined {
+        if (nodes.length === 0) {
+            return;
         }
+    
+        return nodes.reduce((lowest, current) => {
+            const lowestY = lowest.coordinates?.y ?? 0;
+            const currentY = current.coordinates?.y ?? 0;
+            
+            return currentY > lowestY ? current : lowest;
+        }, nodes[0]);
     }
 
     /**
      * Update the node name with a new value.
      * @param {Node} node
      * @param {string} name
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeName = (node: Node, name: string, graphic: boolean = false): boolean => {
+    private updateNodeName = (node: Node, name: string): boolean => {
         if (name && typeof name !== 'string') {
             Log.error('The name must be a string', 'type')
         }
 
-        if (node.name != name || graphic) {
+        if (node.name != name) {
             node.getNameDOM().innerHTML = DOMPurify.sanitize(name)
 
             this.map.draw.updateNodeShapes(node)
 
-            if (graphic === false) {
-                node.name = name
-            }
+            node.name = name
             return true
         } else {
             return false
@@ -763,17 +859,16 @@ export default class Nodes {
      * Update the node background color with a new value.
      * @param {Node} node
      * @param {string} color
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeBackgroundColor = (node: Node, color: string, graphic: boolean = false): boolean => {
+    private updateNodeBackgroundColor = (node: Node, color: string): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The background color must be a string', 'type')
         }
 
         const sanitizedColor = DOMPurify.sanitize(color)
 
-        if (node.colors.background !== color || graphic) {
+        if (node.colors.background !== color) {
             const background = node.getBackgroundDOM()
 
             background.style.fill = sanitizedColor
@@ -782,9 +877,7 @@ export default class Nodes {
                 background.style.stroke = d3.color(sanitizedColor).darker(.5).toString()
             }
 
-            if (graphic === false) {
-                node.colors.background = sanitizedColor
-            }
+            node.colors.background = sanitizedColor
             return true
         } else {
             return false
@@ -795,22 +888,19 @@ export default class Nodes {
      * Update the node text color with a new value.
      * @param {Node} node
      * @param {string} color
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeNameColor = (node: Node, color: string, graphic: boolean = false): boolean => {
+    private updateNodeNameColor = (node: Node, color: string): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The text color must be a string', 'type')
         }
 
         const sanitizedColor = DOMPurify.sanitize(color)
 
-        if (node.colors.name !== color || graphic) {
+        if (node.colors.name !== color) {
             node.getNameDOM().style.color = sanitizedColor
 
-            if (graphic === false) {
-                node.colors.name = sanitizedColor
-            }
+            node.colors.name = sanitizedColor
             return true
         } else {
             return false
@@ -821,10 +911,9 @@ export default class Nodes {
      * Update the node branch color with a new value.
      * @param {Node} node
      * @param {string} color
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeBranchColor = (node: Node, color: string, graphic: boolean = false): boolean => {
+    private updateNodeBranchColor = (node: Node, color: string): boolean => {
         if (color && typeof color !== 'string') {
             Log.error('The branch color must be a string', 'type')
         }
@@ -832,14 +921,12 @@ export default class Nodes {
         const sanitizedColor = DOMPurify.sanitize(color)
 
         if (!node.isRoot) {
-            if (node.colors.name !== color || graphic) {
+            if (node.colors.name !== color) {
                 const branch = document.getElementById(node.id + '_branch')
 
                 branch.style.fill = branch.style.stroke = sanitizedColor
 
-                if (graphic === false) {
-                    node.colors.branch = sanitizedColor
-                }
+                node.colors.branch = sanitizedColor
                 return true
             } else {
                 return false
@@ -854,22 +941,19 @@ export default class Nodes {
      * Update the node font size with a new value.
      * @param {Node} node
      * @param {number} size
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontSize = (node: Node, size: number, graphic: boolean = false): boolean => {
+    private updateNodeFontSize = (node: Node, size: number): boolean => {
         if (size && typeof size !== 'number') {
             Log.error('The font size must be a number', 'type')
         }
 
-        if (node.font.size != size || graphic) {
+        if (node.font.size != size) {
             node.getNameDOM().style['font-size'] = size + 'px'
 
             this.map.draw.updateNodeShapes(node)
 
-            if (graphic === false) {
-                node.font.size = size
-            }
+            node.font.size = size
             return true
         } else {
             return false
@@ -880,16 +964,15 @@ export default class Nodes {
      * Update the node image size with a new value.
      * @param {Node} node
      * @param {number} size
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeImageSize = (node: Node, size: number, graphic: boolean = false): boolean => {
+    private updateNodeImageSize = (node: Node, size: number): boolean => {
         if (size && typeof size !== 'number') {
             Log.error('The image size must be a number', 'type')
         }
 
         if (node.image.src !== '') {
-            if (node.image.size !== size || graphic) {
+            if (node.image.size !== size) {
                 const image = node.getImageDOM(),
                     box = (image as any).getBBox(),
                     height = size,
@@ -902,9 +985,7 @@ export default class Nodes {
                 image.setAttribute('y', y.toString())
                 image.setAttribute('x', x.toString())
 
-                if (graphic === false) {
-                    node.image.size = height
-                }
+                node.image.size = height
                 return true
             } else {
                 return false
@@ -980,10 +1061,9 @@ export default class Nodes {
      * Update the node font style.
      * @param {Node} node
      * @param {string} style
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontStyle = (node: Node, style: string, graphic: boolean = false): boolean => {
+    private updateNodeFontStyle = (node: Node, style: string): boolean => {
         if (style && typeof style !== 'string') {
             Log.error('The font style must be a string', 'type')
         }
@@ -991,9 +1071,7 @@ export default class Nodes {
         if (node.font.style !== style) {
             node.getNameDOM().style['font-style'] = DOMPurify.sanitize(style)
 
-            if (graphic === false) {
-                node.font.style = style
-            }
+            node.font.style = style
             return true
         } else {
             return false
@@ -1004,10 +1082,9 @@ export default class Nodes {
      * Update the node font weight.
      * @param {Node} node
      * @param {string} weight
-     * @param {boolean} graphic
      * @returns {boolean}
      */
-    private updateNodeFontWeight = (node: Node, weight: string, graphic: boolean = false): boolean => {
+    private updateNodeFontWeight = (node: Node, weight: string): boolean => {
         if (weight && typeof weight !== 'string') {
             Log.error('The font weight must be a string', 'type')
         }
@@ -1017,35 +1094,7 @@ export default class Nodes {
 
             this.map.draw.updateNodeShapes(node)
 
-            if (graphic === false) {
-                node.font.weight = weight
-            }
-            return true
-        } else {
-            return false
-        }
-    }
-
-    /**
-     * Update the node text decoration.
-     * @param {Node} node
-     * @param {string} decoration
-     * @param {boolean} graphic
-     * @returns {boolean}
-     */
-    private updateNodeTextDecoration = (node: Node, decoration: string, graphic: boolean = false): boolean => {
-        if (decoration && typeof decoration !== 'string') {
-            Log.error('The text decoration must be a string', 'type')
-        }
-
-        if (node.font.decoration !== decoration) {
-            node.getNameDOM().style['text-decoration'] = DOMPurify.sanitize(decoration)
-
-            this.map.draw.updateNodeShapes(node)
-
-            if (graphic === false) {
-                node.font.decoration = decoration
-            }
+            node.font.weight = weight
             return true
         } else {
             return false
@@ -1111,8 +1160,8 @@ export default class Nodes {
      * @param {boolean} direction
      */
     private moveSelectionOnBranch(direction: boolean) {
-        if ((this.getOrientation(this.selectedNode) === false && direction) ||
-            (this.getOrientation(this.selectedNode) === true && !direction)) {
+        if ((!this.getOrientation(this.selectedNode) && direction) ||
+        (this.getOrientation(this.selectedNode) && !direction)) {
             this.selectNode(this.selectedNode.parent.id)
         } else {
             let children = this.getChildren(this.selectedNode)
@@ -1144,7 +1193,6 @@ export const PropertyMapping = {
     backgroundColor: ['colors', 'background'],
     branchColor: ['colors', 'branch'],
     fontWeight: ['font', 'weight'],
-    textDecoration: [],
     fontStyle: ['font', 'style'],
     fontSize: ['font', 'size'],
     nameColor: ['colors', 'name'],

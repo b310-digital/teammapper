@@ -92,6 +92,7 @@ describe('AppController (e2e)', () => {
       const map: IMmpClientMap = {
         uuid: oldMap.id,
         lastModified: new Date(),
+        lastAccessed: new Date(),
         deleteAfterDays: 30,
         deletedAt: new Date(),
         options: { fontMaxSize: 10, fontMinSize: 15, fontIncrement: 2 },
@@ -149,7 +150,8 @@ describe('AppController (e2e)', () => {
                 font: {},
                 colors: {},
                 link: {},
-                detached: true
+                isRoot: true,
+                detached: false
               },
             ],
           })
@@ -173,6 +175,8 @@ describe('AppController (e2e)', () => {
             coordinatesX: 1,
             coordinatesY: 2,
             nodeMapId: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+            detached: false,
+            root: true
           }),
         ],
       }).then((map) => {
@@ -188,6 +192,8 @@ describe('AppController (e2e)', () => {
               font: {},
               colors: {},
               link: {},
+              detached: false,
+              root: true
             },
           })
         })

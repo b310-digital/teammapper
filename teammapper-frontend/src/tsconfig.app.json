@@ -6,5 +6,5 @@
     "types": ["node"]
   },
   "include": ["**/*.ts"],
-  "exclude": ["test.ts", "**/*.spec.ts"]
+  "exclude": ["**/*.spec.ts", "**/__mocks__/*", "test/*"]
 }

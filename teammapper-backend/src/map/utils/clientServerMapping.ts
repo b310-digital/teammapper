@@ -49,10 +49,36 @@ const mapMmpMapToClient = (
     deleteAfterDays,
     deletedAt,
     lastModified: serverMap.lastModified,
+    lastAccessed: serverMap.lastAccessed,
     options: serverMap?.options,
     createdAt: serverMap.createdAt
   }
 }
+
+const mergeClientNodeIntoMmpNode = (
+  clientNode: Partial<IMmpClientNode>,
+  serverNode: MmpNode,
+): Partial<MmpNode> => ({
+  id: clientNode?.id ?? serverNode.id,
+  colorsBackground: clientNode?.colors?.background ?? serverNode.colorsBackground,
+  colorsBranch: clientNode?.colors?.branch ?? serverNode.colorsBranch,
+  colorsName: clientNode?.colors?.name ?? serverNode.colorsName,
+  coordinatesX: clientNode?.coordinates?.x ?? serverNode.coordinatesX,
+  coordinatesY: clientNode?.coordinates?.y ?? serverNode.coordinatesY,
+  fontSize: clientNode?.font?.size ?? serverNode.fontSize,
+  fontStyle: clientNode?.font?.style ?? serverNode.fontStyle,
+  fontWeight: clientNode?.font?.weight ?? serverNode.fontWeight,
+  imageSrc: clientNode?.image?.src ?? serverNode.imageSrc,
+  imageSize: clientNode?.image?.size ?? serverNode.imageSize,
+  k: clientNode?.k ?? serverNode.k,
+  linkHref: clientNode?.link?.href ?? serverNode.linkHref,
+  locked: clientNode?.locked ?? serverNode.locked,
+  detached: clientNode?.detached ?? serverNode.detached,
+  name: clientNode?.name !== undefined ? clientNode.name : serverNode.name,
+  nodeParentId: (clientNode?.parent || serverNode.nodeParentId) || undefined,
+  root: clientNode?.isRoot ?? serverNode.root,
+  nodeMapId: serverNode.nodeMapId,
+})
 
 const mapClientNodeToMmpNode = (
   clientNode: IMmpClientNode,
@@ -106,4 +132,5 @@ export {
   mapClientNodeToMmpNode,
   mapClientBasicNodeToMmpRootNode,
   mapMmpMapToClient,
+  mergeClientNodeIntoMmpNode,
 }

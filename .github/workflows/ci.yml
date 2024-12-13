@@ -97,4 +97,4 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - run: npm --prefix teammapper-frontend ci
-            - run: npm --prefix teammapper-frontend run test -- --progress=false --watch=false --code-coverage --source-map=false
+            - run: npm --prefix teammapper-frontend run test

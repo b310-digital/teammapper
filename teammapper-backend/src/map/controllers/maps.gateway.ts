@@ -1,4 +1,4 @@
-import { Inject, UseGuards } from '@nestjs/common'
+import { Inject, UseGuards, Logger } from '@nestjs/common'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Cache } from 'cache-manager'
 import { randomBytes } from 'crypto'
@@ -22,6 +22,7 @@ import {
   IMmpClientNodeAddRequest,
   IMmpClientNodeRequest,
   IMmpClientNodeSelectionRequest,
+  IMmpClientUndoRedoRequest,
   IMmpClientUpdateMapOptionsRequest,
 } from '../types'
 import { mapMmpNodeToClient } from '../utils/clientServerMapping'
@@ -36,10 +37,12 @@ export class MapsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server
 
+  private readonly logger = new Logger(MapsService.name)
+
   constructor(
     private mapsService: MapsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
-  ) { }
+  ) {}
 
   @SubscribeMessage('leave')
   async handleDisconnect(client: Socket) {
@@ -49,16 +52,19 @@ export class MapsGateway implements OnGatewayDisconnect {
     this.server.to(mapId).emit('clientDisconnect', client.id)
     this.removeClientForMap(mapId, client.id)
     this.cacheManager.del(client.id)
+    client.leave(mapId)
   }
 
   @SubscribeMessage('join')
   async onJoin(
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientJoinRequest
-  ): Promise<IMmpClientMap> {
+  ): Promise<IMmpClientMap | undefined> {
     const map = await this.mapsService.findMap(request.mapId)
-    if (!map)
-      return Promise.reject()
+    if (!map) {
+      this.logger.warn(`onJoin(): Could not find map ${request.mapId} when client ${client.id} tried to join`);
+      return;
+    }
 
     client.join(request.mapId)
     this.cacheManager.set(client.id, request.mapId, 10000)
@@ -123,7 +129,7 @@ export class MapsGateway implements OnGatewayDisconnect {
       request.mapId,
       request.nodes
     )
-    if (newNodes.length === 0) return false
+    if (!newNodes || newNodes.length === 0) return false
 
     this.server.to(request.mapId).emit('nodesAdded', {
       clientId: client.id,
@@ -167,6 +173,26 @@ export class MapsGateway implements OnGatewayDisconnect {
   }
 
   @UseGuards(EditGuard)
+  @SubscribeMessage('applyMapChangesByDiff')
+  async applyMapChangesByDiff(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() request: IMmpClientUndoRedoRequest
+  ): Promise<boolean> {
+    if (!(await this.mapsService.findMap(request.mapId)))
+      return Promise.resolve(false)
+    if (!request.diff)
+      return Promise.resolve(false)
+
+    await this.mapsService.updateMapByDiff(request.mapId, request.diff);
+
+    this.server
+      .to(request.mapId)
+      .emit('mapChangesUndoRedo', { clientId: client.id, diff: request.diff })
+
+    return true
+  }
+
+  @UseGuards(EditGuard)
   @SubscribeMessage('updateMap')
   async updateMap(
     @ConnectedSocket() client: Socket,
@@ -176,13 +202,29 @@ export class MapsGateway implements OnGatewayDisconnect {
       return Promise.resolve(false)
 
     const mmpMap: IMmpClientMap = request.map
+
+    // Disconnect all clients temporarily
+    // Emit an event so clients can display a notification
+    this.server.to(mmpMap.uuid).emit('clientNotification', { clientId: client.id, message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS', type: 'warning' })
+
+    const sockets = await this.server.in(request.mapId).fetchSockets()
+    this.server.in(request.mapId).socketsLeave(request.mapId)
+
     await this.mapsService.updateMap(mmpMap)
+
+    // Reconnect clients once map is updated
+    sockets.forEach((socket) => {
+      // socketsJoin() doesn't work here as the sockets have left the room and this.server.in(request.mapId) would return nothing
+      socket.join(request.mapId)
+    });
 
     const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid)
 
     this.server
       .to(mmpMap.uuid)
       .emit('mapUpdated', { clientId: client.id, map: exportMap })
+
+    this.server.to(mmpMap.uuid).emit('clientNotification', { clientId: client.id, message: 'TOASTS.MAP_IMPORT_SUCCESS', type: 'success' })
 
     return true
   }

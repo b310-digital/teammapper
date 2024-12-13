@@ -6,6 +6,7 @@ import { MmpMap } from '../entities/mmpMap.entity';
 import { IMmpClientMap, IMmpClientPrivateMap } from '../types';
 import { MmpNode } from '../entities/mmpNode.entity';
 import { createClientRootNode, createMmpClientMap, createMmpMap } from '../utils/tests/mapFactories';
+import MalformedUUIDError from '../services/uuid.error';
 
 describe('MapsController', () => {
   let mapsController: MapsController;
@@ -23,7 +24,8 @@ describe('MapsController', () => {
             findNodes: jest.fn(),
             addNodes: jest.fn(),
             exportMapToClient: jest.fn(),
-            deleteMap: jest.fn()
+            deleteMap: jest.fn(),
+            updateLastAccessed: jest.fn(),
           },
         },
       ],
@@ -90,15 +92,15 @@ describe('MapsController', () => {
     it('should throw a NotFoundException if the map wasn\'t found', async () => {
       const invalidMapId = 'map_id';
 
-      jest.spyOn(mapsService, 'exportMapToClient').mockRejectedValueOnce(new Error('MalformedUUIDError'));
+      jest.spyOn(mapsService, 'exportMapToClient').mockRejectedValueOnce(new MalformedUUIDError('MalformedUUIDError'));
 
-      await expect(mapsController.findOne(invalidMapId)).rejects.toThrow(NotFoundException);
+      expect(mapsController.findOne(invalidMapId)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('delete', () => {
     it('should delete an existing map successfully', async () => {
-      const existingMap: MmpMap = createMmpMap();
+      const existingMap = createMmpMap();
 
       jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(existingMap);
       // We're not interested in testing the repository at this stage, only if the request gets past the admin ID check
