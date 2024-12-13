@@ -157,19 +157,17 @@ describe('MapsController', () => {
       })
 
       expect(updatedNode?.lastModified).not.toEqual(oldDate)
-      expect(updatedNode?.lastModified.getTime()).toBeGreaterThan(
+      expect(updatedNode?.lastModified!.getTime()).toBeGreaterThan(
         timeBeforeUpdate.getTime()
       )
     })
   })
 
   describe('exportMapToClient', () => {
-    it('returns null when no map is available', async () => {
-      expect(
-        mapsService.exportMapToClient(
-          '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
-        )
-      ).rejects.toEqual(undefined)
+    it('returns undefined when no map is available', async () => {
+      expect(await mapsService.exportMapToClient(
+        '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
+      )).toEqual(undefined)
     })
   })
 

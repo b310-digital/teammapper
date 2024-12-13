@@ -506,7 +506,6 @@ export default class Draw {
         div.style.setProperty('color', DOMPurify.sanitize(node.colors.name))
         div.style.setProperty('font-style', DOMPurify.sanitize(node.font.style))
         div.style.setProperty('font-weight', DOMPurify.sanitize(node.font.weight))
-        div.style.setProperty('text-decoration', DOMPurify.sanitize(node.font.decoration))
 
         div.style.setProperty('touch-action', 'none')
         div.style.setProperty('display', 'inline-block')

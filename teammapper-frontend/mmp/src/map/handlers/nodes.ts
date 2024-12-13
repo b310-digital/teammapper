@@ -15,7 +15,11 @@ import { v4 as uuidv4 } from 'uuid'
 import { Event } from './events'
 import Log from '../../utils/log'
 import Utils from '../../utils/utils'
+import { MapSnapshot } from './history'
 
+const NODE_HORIZONTAL_SPACING = 200;  // The x-axis spacing between parent and child nodes
+const NODE_VERTICAL_SIBLING_OFFSET = 60;     // The y-axis spacing between sibling nodes
+const NODE_VERTICAL_SPACING = 120;  // The initial vertical spacing for the first child node
 /**
  * Manage the nodes of the map.
  */
@@ -348,9 +352,6 @@ export default class Nodes {
             case 'fontWeight':
                 updated = this.updateNodeFontWeight(node, value)
                 break
-            case 'textDecoration':
-                updated = this.updateNodeTextDecoration(node, value)
-                break
             case 'fontStyle':
                 updated = this.updateNodeFontStyle(node, value)
                 break
@@ -528,10 +529,22 @@ export default class Nodes {
      * Return the orientation of a node in the map (true if left).
      * @return {boolean}
      */
-    public getOrientation(node: Node): boolean {
-        if (!node.isRoot) {
-            return node.coordinates.x < this.getRoot().coordinates.x
+    public getOrientation(
+        node: Node | ExportNodeProperties, 
+        rootNode?: Node | ExportNodeProperties
+    ): boolean | undefined {
+        // isRoot exists only on Node type, so type guard is needed
+        if ('isRoot' in node && node.isRoot) {
+            return;
         }
+    
+        // For Node type, use this.getRoot() if rootNode not provided
+        const root = rootNode ?? (('isRoot' in node) ? this.getRoot() : undefined);
+        if (!root) {
+            return;
+        }
+    
+        return (node.coordinates?.x ?? 0) < (root.coordinates?.x ?? 0);
     }
 
     /**
@@ -664,48 +677,113 @@ export default class Nodes {
     }
 
     /**
-     * Return the appropriate coordinates of the node.
-     * @param {Node} node
-     * @returns {Coordinates} coordinates
+     * Base method for calculating node coordinates. 
+     * The reason this exists is so we can work with a JSON snapshot (as given by an import), but also allow saved, "real" nodes to calculate coordinates
+     * This prevents duplication, whilst passing methods that differ depending on whether or not a JSON snapshot or "real" node is calculating coordinates.
+     * @param node Either a node previously saved or one from a JSON snapshot
+     * @param params
+     * getParent - Parent node of given node
+     * getSiblings() - Method to get the siblings of the given node
+     * isRoot - If parent node is root
+     * getOrientation() - Method to get the orientation of the node
+     * @returns 
      */
-    private calculateCoordinates(node: Node): Coordinates {
+    private calculateNodeCoordinates(
+        node: Node | ExportNodeProperties,
+        params: {
+            nodeParent: (Node | ExportNodeProperties) | null,
+            getSiblings: () => (Node | ExportNodeProperties)[],
+            isRoot: boolean,
+            getOrientation: (n: Node | ExportNodeProperties) => boolean | undefined
+        }
+    ): Coordinates {
+        const nodeParent = params.nodeParent;
+        
         let coordinates: Coordinates = {
-            x: node.parent ? node.parent.coordinates.x : node.coordinates.x || 0,
-            y: node.parent ? node.parent.coordinates.y : node.coordinates.y || 0
-        },
-            siblings: Array<Node> = this.getSiblings(node)
-
-        if (node.parent && node.parent.isRoot) {
-            const rightNodes: Array<Node> = [],
-                leftNodes: Array<Node> = []
-
-            for (const sibling of siblings) {
-                this.getOrientation(sibling) ? leftNodes.push(sibling) : rightNodes.push(sibling)
-            }
-
+            x: nodeParent?.coordinates?.x ?? (node.coordinates?.x ?? 0),
+            y: nodeParent?.coordinates?.y ?? (node.coordinates?.y ?? 0)
+        };
+    
+        let siblings = params.getSiblings();
+    
+        if (nodeParent && params.isRoot) {
+            // This will go through sibling nodes and assign them to the left or to the right depending on the orientation of the sibling node
+            const [leftNodes, rightNodes] = siblings.reduce<[(Node | ExportNodeProperties)[], (Node | ExportNodeProperties)[]]>(
+                (acc, sibling) => {
+                    params.getOrientation(sibling) 
+                        ? acc[0].push(sibling) 
+                        : acc[1].push(sibling);
+                    return acc;
+                },
+                [[], []]
+            );
+    
             if (leftNodes.length <= rightNodes.length) {
-                coordinates.x -= 200
-                siblings = leftNodes
+                coordinates.x -= NODE_HORIZONTAL_SPACING;
+                siblings = leftNodes;
             } else {
-                coordinates.x += 200
-                siblings = rightNodes
+                coordinates.x += NODE_HORIZONTAL_SPACING;
+                siblings = rightNodes;
             }
         } else if (!node.detached) {
-            if (node.parent && this.getOrientation(node.parent)) {
-                coordinates.x -= 200
+            if (nodeParent && params.getOrientation(nodeParent)) {
+                coordinates.x -= NODE_HORIZONTAL_SPACING;
             } else {
-                coordinates.x += 200
+                coordinates.x += NODE_HORIZONTAL_SPACING;
             }
         }
-
+    
         if (siblings.length > 0) {
             const lowerNode = this.getLowerNode(siblings)
-            coordinates.y = lowerNode.coordinates.y + 60
+            coordinates.y = (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
         } else if (!node.detached) {
-            coordinates.y -= 120
+            coordinates.y -= NODE_VERTICAL_SPACING;
         }
+    
+        return coordinates;
+    }
 
-        return coordinates
+    /**
+     * Existing method to calculate the coordinates of "real", saved nodes in the database.
+     * This method will pass on existing methods such as this.getSiblings() to calculateNodeCoordinates, so existing implementations don't break
+     * @param node 
+     * @returns 
+     */
+    private calculateCoordinates(node: Node): Coordinates {
+        return this.calculateNodeCoordinates(
+            node,
+            {
+                nodeParent: node.parent,
+                getSiblings: () => this.getSiblings(node),
+                isRoot: node.parent?.isRoot ?? false,
+                getOrientation: (n: Node) => this.getOrientation(n)
+            }
+        );
+    }
+
+    public applyCoordinatesToMapSnapshot = (mapSnapshot: MapSnapshot): MapSnapshot => {
+        const rootNode = mapSnapshot.find(x => x.isRoot);
+        
+        return mapSnapshot.map(node => {
+            if (!node.coordinates) {
+                /**
+                 * Since we're working with a JSON snapshot here, none of the nodes actually exist.
+                 * This makes existing methods such as this.getSiblings() useless, because they only work with existing nodes.
+                 * So here, we pass on methods that work directly with the JSON.
+                 */
+                node.coordinates = this.calculateNodeCoordinates(
+                    node,
+                    {
+                        nodeParent: node.parent ? mapSnapshot.find(x => x.id === node.parent) : null,
+                        getSiblings: () => node.parent ? mapSnapshot.filter(x => x.parent === node.parent && x.id !== node.id) : [],
+                        isRoot: !!node.parent && mapSnapshot.find(x => x.id === node.parent)?.isRoot,
+                        getOrientation: (n: ExportNodeProperties) => this.getOrientation(n, rootNode)
+                    }
+                );
+            }
+
+            return node
+        });
     }
 
     /**
@@ -713,19 +791,17 @@ export default class Nodes {
      * @param {Node[]} nodes
      * @returns {Node} lowerNode
      */
-    private getLowerNode(nodes: Node[] = Array.from(this.nodes.values())): Node {
-        if (nodes.length > 0) {
-            let tmp = nodes[0].coordinates.y, lowerNode = nodes[0]
-
-            for (const node of nodes) {
-                if (node.coordinates.y > tmp) {
-                    tmp = node.coordinates.y
-                    lowerNode = node
-                }
-            }
-
-            return lowerNode
+    private getLowerNode(nodes: (Node | ExportNodeProperties)[]): Node | ExportNodeProperties | undefined {
+        if (nodes.length === 0) {
+            return;
         }
+    
+        return nodes.reduce((lowest, current) => {
+            const lowestY = lowest.coordinates?.y ?? 0;
+            const currentY = current.coordinates?.y ?? 0;
+            
+            return currentY > lowestY ? current : lowest;
+        }, nodes[0]);
     }
 
     /**
@@ -1026,29 +1102,6 @@ export default class Nodes {
     }
 
     /**
-     * Update the node text decoration.
-     * @param {Node} node
-     * @param {string} decoration
-     * @returns {boolean}
-     */
-    private updateNodeTextDecoration = (node: Node, decoration: string): boolean => {
-        if (decoration && typeof decoration !== 'string') {
-            Log.error('The text decoration must be a string', 'type')
-        }
-
-        if (node.font.decoration !== decoration) {
-            node.getNameDOM().style['text-decoration'] = DOMPurify.sanitize(decoration)
-
-            this.map.draw.updateNodeShapes(node)
-
-            node.font.decoration = decoration
-            return true
-        } else {
-            return false
-        }
-    }
-
-    /**
      * Update the node locked status.
      * @param {Node} node
      * @param {boolean} flag
@@ -1107,8 +1160,8 @@ export default class Nodes {
      * @param {boolean} direction
      */
     private moveSelectionOnBranch(direction: boolean) {
-        if ((this.getOrientation(this.selectedNode) === false && direction) ||
-            (this.getOrientation(this.selectedNode) === true && !direction)) {
+        if ((!this.getOrientation(this.selectedNode) && direction) ||
+        (this.getOrientation(this.selectedNode) && !direction)) {
             this.selectNode(this.selectedNode.parent.id)
         } else {
             let children = this.getChildren(this.selectedNode)
@@ -1140,7 +1193,6 @@ export const PropertyMapping = {
     backgroundColor: ['colors', 'background'],
     branchColor: ['colors', 'branch'],
     fontWeight: ['font', 'weight'],
-    textDecoration: [],
     fontStyle: ['font', 'style'],
     fontSize: ['font', 'size'],
     nameColor: ['colors', 'name'],
