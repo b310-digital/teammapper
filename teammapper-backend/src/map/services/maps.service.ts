@@ -20,6 +20,7 @@ import {
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid';
 import MalformedUUIDError from './uuid.error'
+import { TypeORMAnalyzerService } from 'src/database/typeorm-analyzer.service'
 
 @Injectable()
 export class MapsService {
@@ -30,6 +31,7 @@ export class MapsService {
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
     private mapsRepository: Repository<MmpMap>,
+    private typeormAnalyzer: TypeORMAnalyzerService,
   ) { }
 
   findMap(uuid: string): Promise<MmpMap | null> {
@@ -216,6 +218,9 @@ export class MapsService {
       }
     }
 
+    const analysis = this.typeormAnalyzer.getAnalysis();
+    console.log("createEmptyMap(): Analysis - ", analysis)
+
     return newMap
   }
 
@@ -250,6 +255,10 @@ export class MapsService {
             Object.assign(serverNode, mergedNode);
             try {
               await this.nodesRepository.save(serverNode);
+
+              const analysis = this.typeormAnalyzer.getAnalysis();
+
+              console.log("diffUpdatedCallback(): Analysis - ", analysis)
             } catch (error) {
               this.logger.warn(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`)
               return Promise.reject(error)
@@ -270,7 +279,13 @@ export class MapsService {
           return
         }
 
-        return this.nodesRepository.remove(existingNode)
+        const returnValue = this.nodesRepository.remove(existingNode)
+
+        const analysis = this.typeormAnalyzer.getAnalysis();
+
+        console.log("diffDeletedCallback(): Analysis - ", analysis);
+
+        return returnValue;
       }));
     }
 
