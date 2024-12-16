@@ -6,9 +6,10 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { Logger } from '@nestjs/common'
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
+  const logger = new Logger('Main Process');
 
-  // Process-level handlers for uncaught errors - anything that happens outside of NestJS, such as type errors
+  // Process-level handlers for uncaught errors - anything that happens outside of NestJS, such as type errors.
+  // This is only logged server-side so we log the whole stack for better review.
   process.on('uncaughtException', (error) => {
     logger.error('Uncaught Exception: ', error.stack);
   });

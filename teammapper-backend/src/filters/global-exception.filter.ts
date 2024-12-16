@@ -1,6 +1,6 @@
 import { ExceptionFilter, Catch, ArgumentsHost, Logger } from '@nestjs/common';
 
-// This is for any gateway and "internal" NestJS related errors - like if the gateway can't reach clients or things like that.
+// This is for any unhandled gateway and "internal" NestJS related errors - like if the gateway can't reach clients or things like that.
 // It will try to always keep clients and their websockets alive and gracefully send errors over the wire, without revealing internal error reasons.
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -55,7 +55,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     } catch (handlerError) {
       // If the error handler itself fails, log it and emit to process
-      this.logger.error('Error handler failed', handlerError);
+      this.logger.error('Global exception handler failed: ', handlerError);
       process.emit('uncaughtException', exception);
     }
   }

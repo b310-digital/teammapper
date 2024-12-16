@@ -137,7 +137,8 @@ export class MapsService {
           return accCreatedNodes;
         }
     
-        this.logger.warn(`Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`);
+        // This needs to be an error because it is almost guaranteed to cause issues down the line due to differing client state
+        this.logger.error(`Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`);
         return accCreatedNodes;
       };
 
