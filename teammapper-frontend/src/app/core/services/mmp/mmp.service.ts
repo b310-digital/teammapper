@@ -89,13 +89,13 @@ export class MmpService implements OnDestroy {
    */
   public async new(map?: MapSnapshot, notifyWithEvent = true) {
     const hasInvalidUUID = map.some(node => !uuidValidate(node.id));
-    
+
     if (hasInvalidUUID) {
-        const importErrorMessage = await this.utilsService.translate(
-            'TOASTS.ERRORS.IMPORT_ERROR'
-        );
-        this.toastrService.error(importErrorMessage);
-        return;
+      const importErrorMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.IMPORT_ERROR'
+      );
+      this.toastrService.error(importErrorMessage);
+      return;
     }
 
     const mapWithCoordinates =
