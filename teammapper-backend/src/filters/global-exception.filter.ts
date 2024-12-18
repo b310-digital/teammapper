@@ -1,4 +1,4 @@
-import { ExceptionFilter, Catch, ArgumentsHost, Logger } from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, Logger, HttpException } from '@nestjs/common';
 
 // This is for any unhandled gateway and "internal" NestJS related errors - like if the gateway can't reach clients or things like that.
 // It will try to always keep clients and their websockets alive and gracefully send errors over the wire, without revealing internal error reasons.
@@ -6,7 +6,7 @@ import { ExceptionFilter, Catch, ArgumentsHost, Logger } from '@nestjs/common';
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: Error | HttpException | unknown, host: ArgumentsHost) {
     const ctx = host.getType();
 
     this.logger.error({

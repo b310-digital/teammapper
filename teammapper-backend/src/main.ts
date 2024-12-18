@@ -14,7 +14,7 @@ async function bootstrap() {
     logger.error('Uncaught Exception: ', error.stack);
   });
 
-  process.on('unhandledRejection', (reason: any) => {
+  process.on('unhandledRejection', (reason: unknown) => {
     const stack = reason instanceof Error ? reason.stack : 'No stack trace available';
     logger.error('Unhandled Rejection. Stack trace: ', stack);
   });
