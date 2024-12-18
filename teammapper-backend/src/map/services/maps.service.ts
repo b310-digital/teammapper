@@ -242,7 +242,6 @@ export class MapsService {
 
     const diffUpdatedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
       await Promise.all(Object.keys(diff).map(async (key) => {
-        if (!uuidValidate(key)) return Promise.reject(new MalformedUUIDError('Invalid UUID'))
         const clientNode = diff[key];
 
         if (clientNode) {
@@ -264,7 +263,6 @@ export class MapsService {
 
     const diffDeletedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
       await Promise.all(Object.keys(diff).map(async (key) => {
-        if (!uuidValidate(key)) return Promise.reject(new MalformedUUIDError('Invalid UUID'))
         const existingNode = await this.nodesRepository.findOneBy({
           id: key,
           nodeMapId: mapId,
