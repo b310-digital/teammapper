@@ -17,6 +17,7 @@ import {
 } from '@mmp/map/types';
 import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
+import { validate as uuidValidate } from 'uuid';
 
 /**
  * Mmp wrapper service with mmp and other functions.
@@ -86,7 +87,17 @@ export class MmpService implements OnDestroy {
   /**
    * Clear or load an existing mind mmp.
    */
-  public new(map?: MapSnapshot, notifyWithEvent = true) {
+  public async new(map?: MapSnapshot, notifyWithEvent = true) {
+    const hasInvalidUUID = map.some(node => !uuidValidate(node.id));
+
+    if (hasInvalidUUID) {
+      const importErrorMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.IMPORT_ERROR'
+      );
+      this.toastrService.error(importErrorMessage);
+      return;
+    }
+
     const mapWithCoordinates =
       this.currentMap.instance.applyCoordinatesToMapSnapshot(map);
     this.currentMap.instance.new(mapWithCoordinates, notifyWithEvent);

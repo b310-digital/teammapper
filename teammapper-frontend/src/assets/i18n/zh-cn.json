@@ -185,7 +185,8 @@
       "NODE_COPY_GENERIC": "尝试复制节点时发生错误。",
       "NODE_CUT_GENERIC": "在尝试切割节点时发生错误。",
       "EXPORT_IMAGE_ERROR": "导出图像时发生错误。思维导图可能过大。",
-      "MAP_COULD_NOT_BE_FOUND": "找不到思维导图！"
+      "MAP_COULD_NOT_BE_FOUND": "找不到思维导图！",
+      "IMPORT_ERROR": "无法导入思维导图！"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！"
   },
