@@ -186,7 +186,8 @@
       "NODE_COPY_GENERIC": "An error occurred whilst trying to copy the node.",
       "NODE_CUT_GENERIC": "An error occurred whilst trying to cut the node.",
       "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
-      "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!"
+      "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!",
+      "IMPORT_ERROR": "Mindmap could not be imported!"
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!"
   },

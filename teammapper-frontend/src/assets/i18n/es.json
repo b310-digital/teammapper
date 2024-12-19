@@ -186,7 +186,8 @@
       "NODE_COPY_GENERIC": "Se ha producido un error al intentar copiar el nodo.",
       "NODE_CUT_GENERIC": "Se ha producido un error al intentar cortar el nodo.",
       "EXPORT_IMAGE_ERROR": "Se ha producido un error durante la exportación de la imagen. El mapa mental puede ser demasiado grande.",
-      "MAP_COULD_NOT_BE_FOUND": "No se ha encontrado el mapa mental."
+      "MAP_COULD_NOT_BE_FOUND": "No se ha encontrado el mapa mental.",
+      "IMPORT_ERROR": "No se ha podido importar el mapa mental."
     },
     "DELETE_MAP_SUCCESS": "¡Mapa mental borrado con éxito!"
   },
