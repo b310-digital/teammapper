@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { MapsService } from './maps.service'
-import { getRepositoryToken } from '@nestjs/typeorm'
+import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Logger } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { Repository } from 'typeorm'
@@ -14,7 +13,7 @@ import {
 } from '../../../test/db'
 import { mapMmpNodeToClient } from '../utils/clientServerMapping'
 import { truncateDatabase } from 'test/helper'
-import { jest } from '@jest/globals';
+import { jest } from '@jest/globals'
 
 describe('MapsController', () => {
   let mapsService: MapsService
@@ -67,7 +66,7 @@ describe('MapsController', () => {
       coordinatesX: 3,
       coordinatesY: 1,
       lastModified: lastModified,
-      createdAt: new Date()
+      createdAt: new Date(),
     })
   }
 
@@ -93,7 +92,7 @@ describe('MapsController', () => {
 
     it('catches an FK error when trying to assign a nodeParentId to a root node', async () => {
       const map = await mapsRepo.save({})
-      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn');
+      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn')
 
       const node = await nodesRepo.create({
         id: '2177d542-665d-468c-bea5-7520bdc5b481',
@@ -105,7 +104,7 @@ describe('MapsController', () => {
       })
 
       const nodes = await mapsService.addNodes(map.id, [node])
-      
+
       expect(nodes).toEqual([])
       expect(loggerSpyWarn).toHaveBeenCalled()
     })
@@ -113,7 +112,7 @@ describe('MapsController', () => {
     it('catches an FK error when trying to assign a nodeParentId from a different map', async () => {
       const map = await mapsRepo.save({})
       const mapTwo = await mapsRepo.save({})
-      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn');
+      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn')
 
       const parentNode = await nodesRepo.create({
         id: '2177d542-665d-468c-bea5-7520bdc5b481',
@@ -130,8 +129,11 @@ describe('MapsController', () => {
         nodeParentId: parentNode.id,
       })
 
-      const nodes = await mapsService.addNodes(map.id, [parentNode, childNodeFromDifferentMap])
-      
+      const nodes = await mapsService.addNodes(map.id, [
+        parentNode,
+        childNodeFromDifferentMap,
+      ])
+
       expect(nodes).toEqual([])
       expect(loggerSpyWarn).toHaveBeenCalled()
     })
@@ -165,9 +167,11 @@ describe('MapsController', () => {
 
   describe('exportMapToClient', () => {
     it('returns undefined when no map is available', async () => {
-      expect(await mapsService.exportMapToClient(
-        '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
-      )).toEqual(undefined)
+      expect(
+        await mapsService.exportMapToClient(
+          '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
+        )
+      ).toEqual(undefined)
     })
   })
 
@@ -179,7 +183,7 @@ describe('MapsController', () => {
       // Last modified is now() by default, so we need to set it here explicitly.
       const map = await mapsRepo.save({
         lastAccessed: new Date('2021-01-01'),
-        lastModified: new Date('2020-01-01')
+        lastModified: new Date('2020-01-01'),
       })
 
       const node = await createNode(map, new Date('2019-01-01'))
@@ -193,7 +197,7 @@ describe('MapsController', () => {
       // Explicitly set system time to equal lastAccessed
       jest.setSystemTime(new Date('2024-09-01'))
       const map = await mapsRepo.save({
-        lastAccessed: new Date('2024-09-01')
+        lastAccessed: new Date('2024-09-01'),
       })
 
       const node = await createNode(map, new Date('2024-09-01'))
@@ -225,7 +229,7 @@ describe('MapsController', () => {
 
       const map = await mapsRepo.save({
         lastModified: new Date('2021-01-01'),
-        lastAccessed: new Date('2024-09-01')
+        lastAccessed: new Date('2024-09-01'),
       })
 
       const node = await createNode(map, new Date('2021-01-01'))
@@ -242,7 +246,7 @@ describe('MapsController', () => {
 
       const map = await mapsRepo.save({
         lastAccessed: new Date('2021-01-01'),
-        lastModified: new Date('2024-09-01')
+        lastModified: new Date('2024-09-01'),
       })
 
       const node = await createNode(map, new Date('2021-01-01'))
@@ -290,7 +294,7 @@ describe('MapsController', () => {
 
       const map = await mapsRepo.save({
         lastAccessed: new Date('2021-01-01'),
-        lastModified: new Date('2021-01-01')
+        lastModified: new Date('2021-01-01'),
       })
 
       const node = await createNode(map, new Date('2021-01-01'))
@@ -305,7 +309,7 @@ describe('MapsController', () => {
       jest.setSystemTime(new Date('2024-09-01'))
 
       const map = await mapsRepo.save({
-        lastAccessed: new Date('2021-01-01')
+        lastAccessed: new Date('2021-01-01'),
       })
 
       const outdatedNode = await createNode(map, new Date('2021-01-01'))
@@ -313,8 +317,12 @@ describe('MapsController', () => {
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).not.toBeNull()
-      expect(await nodesRepo.findOne({ where: { id: outdatedNode.id } })).not.toBeNull()
-      expect(await nodesRepo.findOne({ where: { id: recentNode.id } })).not.toBeNull()
+      expect(
+        await nodesRepo.findOne({ where: { id: outdatedNode.id } })
+      ).not.toBeNull()
+      expect(
+        await nodesRepo.findOne({ where: { id: recentNode.id } })
+      ).not.toBeNull()
     })
 
     it('does not delete a map which has outdated lastModified but some recent nodes', async () => {
@@ -326,10 +334,7 @@ describe('MapsController', () => {
         lastModified: new Date('2021-01-01'),
       })
 
-      const outdatedNode = await createNode(
-        map,
-        new Date('2021-01-01')
-      )
+      const outdatedNode = await createNode(map, new Date('2021-01-01'))
       const recentNode = await createNode(map, new Date('2024-09-01'))
 
       await mapsService.deleteOutdatedMaps(30)

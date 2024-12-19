@@ -1,4 +1,4 @@
-export type IPictogramResponse = {
+export interface IPictogramResponse {
   schematic: boolean;
   sex: boolean;
   violence: boolean;
@@ -19,4 +19,4 @@ export type IPictogramResponse = {
   }[];
   created: Date;
   lastUpdated: Date;
-};
+}

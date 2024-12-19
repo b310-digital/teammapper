@@ -41,8 +41,8 @@ export class MapsGateway implements OnGatewayDisconnect {
 
   constructor(
     private mapsService: MapsService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) { }
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {}
 
   @SubscribeMessage('leave')
   async handleDisconnect(client: Socket) {
@@ -62,8 +62,10 @@ export class MapsGateway implements OnGatewayDisconnect {
   ): Promise<IMmpClientMap | undefined> {
     const map = await this.mapsService.findMap(request.mapId)
     if (!map) {
-      this.logger.warn(`onJoin(): Could not find map ${request.mapId} when client ${client.id} tried to join`);
-      return;
+      this.logger.warn(
+        `onJoin(): Could not find map ${request.mapId} when client ${client.id} tried to join`
+      )
+      return
     }
 
     client.join(request.mapId)
@@ -180,10 +182,9 @@ export class MapsGateway implements OnGatewayDisconnect {
   ): Promise<boolean> {
     if (!(await this.mapsService.findMap(request.mapId)))
       return Promise.resolve(false)
-    if (!request.diff)
-      return Promise.resolve(false)
+    if (!request.diff) return Promise.resolve(false)
 
-    await this.mapsService.updateMapByDiff(request.mapId, request.diff);
+    await this.mapsService.updateMapByDiff(request.mapId, request.diff)
 
     this.server
       .to(request.mapId)
@@ -205,7 +206,11 @@ export class MapsGateway implements OnGatewayDisconnect {
 
     // Disconnect all clients temporarily
     // Emit an event so clients can display a notification
-    this.server.to(mmpMap.uuid).emit('clientNotification', { clientId: client.id, message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS', type: 'warning' })
+    this.server.to(mmpMap.uuid).emit('clientNotification', {
+      clientId: client.id,
+      message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS',
+      type: 'warning',
+    })
 
     const sockets = await this.server.in(request.mapId).fetchSockets()
     this.server.in(request.mapId).socketsLeave(request.mapId)
@@ -216,7 +221,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     sockets.forEach((socket) => {
       // socketsJoin() doesn't work here as the sockets have left the room and this.server.in(request.mapId) would return nothing
       socket.join(request.mapId)
-    });
+    })
 
     const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid)
 
@@ -224,7 +229,11 @@ export class MapsGateway implements OnGatewayDisconnect {
       .to(mmpMap.uuid)
       .emit('mapUpdated', { clientId: client.id, map: exportMap })
 
-    this.server.to(mmpMap.uuid).emit('clientNotification', { clientId: client.id, message: 'TOASTS.MAP_IMPORT_SUCCESS', type: 'success' })
+    this.server.to(mmpMap.uuid).emit('clientNotification', {
+      clientId: client.id,
+      message: 'TOASTS.MAP_IMPORT_SUCCESS',
+      type: 'success',
+    })
 
     return true
   }

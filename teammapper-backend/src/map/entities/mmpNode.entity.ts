@@ -8,25 +8,25 @@ import {
   JoinColumn,
   Generated,
   OneToMany,
-  BeforeInsert, 
+  BeforeInsert,
   BeforeUpdate,
 } from 'typeorm'
 import { MmpMap } from './mmpMap.entity'
-import { validateOrReject, IsDefined } from 'class-validator';
+import { validateOrReject, IsDefined } from 'class-validator'
 
 @Entity()
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string
 
   @Column({ type: 'varchar', nullable: true })
-  name: string | null;
+  name: string | null
 
   @ManyToOne(() => MmpMap, (map) => map.nodes, {
     onDelete: 'CASCADE',
   })
   @JoinColumn()
-  nodeMap: MmpMap;
+  nodeMap: MmpMap
 
   @ManyToOne(() => MmpNode, (node) => node.children, {
     onDelete: 'CASCADE',
@@ -36,81 +36,89 @@ export class MmpNode {
     { name: 'nodeParentId', referencedColumnName: 'id' },
   ])
   @Index()
-  nodeParent: MmpNode;
+  nodeParent: MmpNode
 
   @OneToMany(() => MmpNode, (node) => node.nodeParent)
-  children: MmpNode[];
+  children: MmpNode[]
 
   @Column({ type: 'boolean', default: false })
   @IsDefined()
-  root: boolean;
+  root: boolean
 
   @Column({ type: 'float' })
   @IsDefined()
-  coordinatesX: number;
+  coordinatesX: number
 
   @Column({ type: 'float' })
   @IsDefined()
-  coordinatesY: number;
+  coordinatesY: number
 
   @Column({ type: 'varchar', nullable: true })
-  colorsName: string | null;
+  colorsName: string | null
 
   @Column({ type: 'varchar', nullable: true })
-  colorsBackground: string | null;
+  colorsBackground: string | null
 
   @Column({ type: 'varchar', nullable: true })
-  colorsBranch: string | null;
+  colorsBranch: string | null
 
   @Column({ type: 'integer', nullable: true })
-  fontSize: number | null;
+  fontSize: number | null
 
   @Column({ type: 'varchar', nullable: true })
-  fontStyle: string | null;
+  fontStyle: string | null
 
   @Column({ type: 'varchar', nullable: true })
-  fontWeight: string | null;
+  fontWeight: string | null
 
   @Column({ type: 'varchar', nullable: true })
-  imageSrc: string | null;
+  imageSrc: string | null
 
   @Column({ type: 'integer', nullable: true, default: 60 })
-  imageSize: number | null;
+  imageSize: number | null
 
   @Column({ type: 'varchar', nullable: true })
-  linkHref: string | null;
+  linkHref: string | null
 
   @Column({ type: 'boolean', nullable: true })
-  locked: boolean | null;
+  locked: boolean | null
 
   @Column({ type: 'boolean', default: false })
   @IsDefined()
-  detached: boolean;
+  detached: boolean
 
   @Column({ type: 'float', nullable: true })
-  k: number | null;
+  k: number | null
 
   @PrimaryColumn('uuid')
   @Index()
   @IsDefined()
-  nodeMapId: string;
+  nodeMapId: string
 
   @Column({ type: 'uuid', nullable: true })
-  nodeParentId: string | null;
+  nodeParentId: string | null
 
   @Column({ type: 'integer' })
   @Generated('increment')
-  orderNumber: number;
+  orderNumber: number
 
-  @Column({ type: 'timestamptz', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
-  lastModified: Date | null;
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  lastModified: Date | null
 
-  @Column({ type: 'timestamptz', nullable: true, default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date | null;
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date | null
 
   @BeforeInsert()
   @BeforeUpdate()
   async validate() {
-    await validateOrReject(this);
+    await validateOrReject(this)
   }
 }

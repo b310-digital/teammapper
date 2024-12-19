@@ -51,16 +51,17 @@ const mapMmpMapToClient = (
     lastModified: serverMap.lastModified,
     lastAccessed: serverMap.lastAccessed,
     options: serverMap?.options,
-    createdAt: serverMap.createdAt
+    createdAt: serverMap.createdAt,
   }
 }
 
 const mergeClientNodeIntoMmpNode = (
   clientNode: Partial<IMmpClientNode>,
-  serverNode: MmpNode,
+  serverNode: MmpNode
 ): Partial<MmpNode> => ({
   id: clientNode?.id ?? serverNode.id,
-  colorsBackground: clientNode?.colors?.background ?? serverNode.colorsBackground,
+  colorsBackground:
+    clientNode?.colors?.background ?? serverNode.colorsBackground,
   colorsBranch: clientNode?.colors?.branch ?? serverNode.colorsBranch,
   colorsName: clientNode?.colors?.name ?? serverNode.colorsName,
   coordinatesX: clientNode?.coordinates?.x ?? serverNode.coordinatesX,
@@ -75,7 +76,7 @@ const mergeClientNodeIntoMmpNode = (
   locked: clientNode?.locked ?? serverNode.locked,
   detached: clientNode?.detached ?? serverNode.detached,
   name: clientNode?.name !== undefined ? clientNode.name : serverNode.name,
-  nodeParentId: (clientNode?.parent || serverNode.nodeParentId) || undefined,
+  nodeParentId: clientNode?.parent || serverNode.nodeParentId || undefined,
   root: clientNode?.isRoot ?? serverNode.root,
   nodeMapId: serverNode.nodeMapId,
 })
