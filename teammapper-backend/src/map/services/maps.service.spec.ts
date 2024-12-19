@@ -4,7 +4,7 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Logger } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
-import { EntityNotFoundError, Repository } from 'typeorm'
+import { Repository } from 'typeorm'
 import { ConfigModule } from '@nestjs/config'
 import AppModule from '../../app.module'
 import {
@@ -166,10 +166,12 @@ describe('MapsController', () => {
   })
 
   describe('exportMapToClient', () => {
-    it('throws error when no map is available', async () => {
+    it('returns undefined when no map is available', async () => {
       expect(
-        mapsService.exportMapToClient('78a2ae85-1815-46da-a2bc-a41de6bdd5ab')
-      ).rejects.toThrow(EntityNotFoundError)
+        await mapsService.exportMapToClient(
+          '78a2ae85-1815-46da-a2bc-a41de6bdd5ab'
+        )
+      ).toEqual(undefined)
     })
   })
 
