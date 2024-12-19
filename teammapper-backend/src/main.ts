@@ -10,8 +10,8 @@ async function bootstrap() {
 
   // Process-level handlers for uncaught errors - anything that happens outside of NestJS, such as type errors.
   // This is only logged server-side so we log the whole stack for better review.
-  process.on('uncaughtException', (error) => {
-    logger.error('Uncaught Exception: ', error.stack);
+  process.on('warning', (error) => {
+    logger.error('Possible uncaught exception: ', error);
   });
 
   process.on('unhandledRejection', (reason: unknown) => {

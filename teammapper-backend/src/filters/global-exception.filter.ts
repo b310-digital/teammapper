@@ -6,16 +6,18 @@ import { ExceptionFilter, Catch, ArgumentsHost, Logger, HttpException } from '@n
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  catch(exception: Error | HttpException | unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.getType();
 
-    this.logger.error({
+    const errorDetails = {
       error: exception,
       type: exception?.constructor?.name || typeof exception,
-      message: exception?.message || 'Unknown error',
-      stack: exception?.stack,
+      message: exception instanceof Error ? exception.message : 'Unknown error',
+      stack: exception instanceof Error ? exception.stack : undefined,
       context: ctx,
-    });
+    };
+
+    this.logger.error(errorDetails);
 
     try {
       switch (ctx) {
@@ -49,14 +51,28 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         default: {
           // Handle any runtime errors outside HTTP/WS contexts
           this.logger.error(`Unhandled exception type: ${ctx}`);
-          // Emit to process handler as last resort
-          process.emit('uncaughtException', exception);
+          // Forward to the global error handler
+          if (exception instanceof Error) {
+            process.emitWarning(exception);
+          } else {
+            process.emitWarning(
+              new Error(String(exception)),
+              'UnhandledError'
+            );
+          }
         }
       }
     } catch (handlerError) {
       // If the error handler itself fails, log it and emit to process
       this.logger.error('Global exception handler failed: ', handlerError);
-      process.emit('uncaughtException', exception);
+      if (handlerError instanceof Error) {
+        process.emitWarning(handlerError);
+      } else {
+        process.emitWarning(
+          new Error(String(handlerError)),
+          'HandlerError'
+        );
+      }
     }
   }
 }
