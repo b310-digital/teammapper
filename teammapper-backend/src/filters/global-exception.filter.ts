@@ -2,7 +2,8 @@ import {
   ExceptionFilter,
   Catch,
   ArgumentsHost,
-  Logger
+  Logger,
+  NotFoundException
 } from '@nestjs/common'
 
 // This is for any unhandled gateway and "internal" NestJS related errors - like if the gateway can't reach clients or things like that.
@@ -13,6 +14,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.getType()
+
+    // Skip logging for NotFoundException in HTTP context
+    // This is handled before anything else (and explicitly outside of ctx switch) to prevent _any_ error from logging
+    if (ctx === 'http' && exception instanceof NotFoundException) {
+      const response = host.switchToHttp().getResponse()
+      return response.status(404).json({
+        statusCode: 404,
+        message: 'Not Found',
+        timestamp: new Date().toISOString(),
+      })
+    }
 
     const errorDetails = {
       error: exception,
