@@ -39,18 +39,14 @@ import { MapDiff } from '@mmp/map/handlers/history';
 const DEFAULT_COLOR = '#000000';
 const DEFAULT_SELF_COLOR = '#c0c0c0';
 
-interface ClientColorMapping {
-  [clientId: string]: ClientColorMappingValue;
-}
+type ClientColorMapping = Record<string, ClientColorMappingValue>;
 
 interface ClientColorMappingValue {
   nodeId: string;
   color: string;
 }
 
-interface ServerClientList {
-  [clientId: string]: string;
-}
+type ServerClientList = Record<string, string>;
 
 export type ConnectionStatus = 'connected' | 'disconnected' | null;
 
