@@ -43,6 +43,13 @@ export class ToolbarComponent {
     }
   }
 
+  get canUndoRedo() {
+    if (this.mmpService) {
+      const history = this.mmpService.history();
+      return history.snapshots.length > 1
+    }
+  }
+
   public async share() {
     this.dialogService.openShareDialog();
   }
