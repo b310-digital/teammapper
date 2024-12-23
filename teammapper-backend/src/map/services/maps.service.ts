@@ -248,24 +248,37 @@ export class MapsService {
     ) => {
       await Promise.all(
         Object.keys(diff).map(async (key) => {
-          const clientNode = diff[key]
-
-        if (clientNode) {
-          const serverNode = await this.nodesRepository.findOne({ where: { nodeMapId: mapId, id: key } });
-
-          if (serverNode) {
-            const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
-            Object.assign(serverNode, mergedNode);
-            try {
-              await this.nodesRepository.save(serverNode);
-            } catch (error) {
-              this.logger.warn(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`)
-              return Promise.reject(error)
-            }
+          const clientNode = diff[key];
+    
+          if (!clientNode) {
+            return;
+          }
+    
+          const serverNode = await this.nodesRepository.findOne({ 
+            where: { 
+              nodeMapId: mapId, 
+              id: key 
+            } 
+          });
+    
+          if (!serverNode) {
+            return;
+          }
+    
+          const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
+          Object.assign(serverNode, mergedNode);
+          
+          try {
+            await this.nodesRepository.save(serverNode);
+          } catch (error) {
+            this.logger.warn(
+              `${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`
+            );
+            return Promise.reject(error);
           }
         })
-      )
-    }
+      );
+    };
 
     const diffDeletedCallback: DiffCallback = async (
       diff: IMmpClientSnapshotChanges
