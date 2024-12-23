@@ -6,7 +6,7 @@ import { ToolbarComponent } from './toolbar.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
-import { ExportNodeProperties, MapSnapshot } from '@mmp/map/types';
+import { ExportNodeProperties } from '@mmp/map/types';
 import { Font } from 'mmp/src/map/models/node';
 import { of } from 'rxjs';
 
@@ -22,7 +22,6 @@ describe('ToolbarComponent', () => {
       exportMap: jest.fn(),
       nodeChildren: jest.fn(),
       getSelectedNode: jest.fn(),
-      history: jest.fn(),
       selectNode: jest.fn(),
       updateNode: jest.fn(),
       addNodeLink: jest.fn(),
@@ -135,7 +134,7 @@ describe('ToolbarComponent', () => {
       expect(component.canHideNodes).toBeTruthy();
     });
   });
-  
+
   describe('font style toggle', () => {
     it('should toggle font style between italic and normal', () => {
       const mockFont: Font = {

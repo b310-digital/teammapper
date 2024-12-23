@@ -19,7 +19,7 @@ export class ToolbarComponent {
     private translationService: TranslateService,
     public mmpService: MmpService,
     private dialogService: DialogService
-  ) {}
+  ) { }
 
   public async exportMap(format: string) {
     const result = await this.mmpService.exportMap(format);
@@ -44,10 +44,11 @@ export class ToolbarComponent {
   }
 
   get canUndoRedo() {
-    if (this.mmpService) {
+    if (this.mmpService && typeof this.mmpService.history === 'function') {
       const history = this.mmpService.history();
-      return history.snapshots.length > 1
+      return history?.snapshots?.length > 1;
     }
+    return false;
   }
 
   public async share() {
