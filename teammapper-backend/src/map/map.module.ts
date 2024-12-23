@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { CacheModule } from '@nestjs/cache-manager'
 import { ScheduleModule } from '@nestjs/schedule'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { DatabaseModule } from '../database/database.module'  // Import this
 import MapsController from './controllers/maps.controller'
 import { MapsGateway } from './controllers/maps.gateway'
 import { MmpMap } from './entities/mmpMap.entity'
@@ -14,6 +15,7 @@ import { TasksService } from './services/tasks.service'
     TypeOrmModule.forFeature([MmpMap, MmpNode]),
     CacheModule.register(),
     ScheduleModule.forRoot(),
+    DatabaseModule,
   ],
   controllers: [MapsController],
   providers: [MapsService, MapsGateway, TasksService],

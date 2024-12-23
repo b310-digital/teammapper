@@ -1,0 +1,104 @@
+
+--- Analysis at 2024-12-14T11:04:35.341Z ---
+Database Usage Analysis:
+Connection Stats:
+- Current Active Connections: 0
+- Max Connections Reached: 0
+- Total Queries Executed: 14
+- Total Save Operations: 2
+
+Query Patterns:
+
+Top 5 Query Patterns:
+- Count: 4
+  Pattern: SELECT ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ? FROM ? ? WHERE ((?.? = $N)) LIMIT N
+- Count: 2
+  Pattern: START TRANSACTION
+- Count: 2
+  Pattern: COMMIT
+- Count: 2
+  Pattern: SELECT ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ? FROM ? ? WHERE ?.? = $N ORDER BY ?.? ASC
+- Count: 2
+  Pattern: SELECT max(?.?) AS lastModified FROM ? ? WHERE ?.? = $N
+
+Potential N+1 Query Patterns Detected:
+- Possible N+1 at:     at PostgresQueryRunner.query (/home/node/app/teammapper-backend/node_modules/typeorm/driver/src/driver/postgres/PostgresQueryRunner.ts:251:39)
+
+
+--- Analysis at 2024-12-14T12:04:35.357Z ---
+Database Usage Analysis:
+Connection Stats:
+- Current Active Connections: 0
+- Max Connections Reached: 0
+- Total Queries Executed: 14
+- Total Save Operations: 2
+
+Query Patterns:
+
+Top 5 Query Patterns:
+- Count: 4
+  Pattern: SELECT ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ? FROM ? ? WHERE ((?.? = $N)) LIMIT N
+- Count: 2
+  Pattern: START TRANSACTION
+- Count: 2
+  Pattern: COMMIT
+- Count: 2
+  Pattern: SELECT ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ? FROM ? ? WHERE ?.? = $N ORDER BY ?.? ASC
+- Count: 2
+  Pattern: SELECT max(?.?) AS lastModified FROM ? ? WHERE ?.? = $N
+
+Potential N+1 Query Patterns Detected:
+- Possible N+1 at:     at PostgresQueryRunner.query (/home/node/app/teammapper-backend/node_modules/typeorm/driver/src/driver/postgres/PostgresQueryRunner.ts:251:39)
+
+
+--- Analysis at 2024-12-14T13:04:35.371Z ---
+Database Usage Analysis:
+Connection Stats:
+- Current Active Connections: 0
+- Max Connections Reached: 0
+- Total Queries Executed: 14
+- Total Save Operations: 2
+
+Query Patterns:
+
+Top 5 Query Patterns:
+- Count: 4
+  Pattern: SELECT ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ? FROM ? ? WHERE ((?.? = $N)) LIMIT N
+- Count: 2
+  Pattern: START TRANSACTION
+- Count: 2
+  Pattern: COMMIT
+- Count: 2
+  Pattern: SELECT ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ? FROM ? ? WHERE ?.? = $N ORDER BY ?.? ASC
+- Count: 2
+  Pattern: SELECT max(?.?) AS lastModified FROM ? ? WHERE ?.? = $N
+
+Potential N+1 Query Patterns Detected:
+- Possible N+1 at:     at PostgresQueryRunner.query (/home/node/app/teammapper-backend/node_modules/typeorm/driver/src/driver/postgres/PostgresQueryRunner.ts:251:39)
+
+
+--- Analysis at 2024-12-14T14:04:35.388Z ---
+Database Usage Analysis:
+Connection Stats:
+- Current Active Connections: 0
+- Max Connections Reached: 0
+- Total Queries Executed: 14
+- Total Save Operations: 2
+
+Query Patterns:
+
+Top 5 Query Patterns:
+- Count: 4
+  Pattern: SELECT ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ? FROM ? ? WHERE ((?.? = $N)) LIMIT N
+- Count: 2
+  Pattern: START TRANSACTION
+- Count: 2
+  Pattern: COMMIT
+- Count: 2
+  Pattern: SELECT ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ?, ?.? AS ? FROM ? ? WHERE ?.? = $N ORDER BY ?.? ASC
+- Count: 2
+  Pattern: SELECT max(?.?) AS lastModified FROM ? ? WHERE ?.? = $N
+
+Potential N+1 Query Patterns Detected:
+- Possible N+1 at:     at PostgresQueryRunner.query (/home/node/app/teammapper-backend/node_modules/typeorm/driver/src/driver/postgres/PostgresQueryRunner.ts:251:39)
+

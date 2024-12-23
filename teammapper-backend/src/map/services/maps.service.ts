@@ -20,6 +20,7 @@ import {
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid'
 import MalformedUUIDError from './uuid.error'
+import { TypeORMAnalyzerService } from 'src/database/typeorm-analyzer.service'
 
 @Injectable()
 export class MapsService {
@@ -29,8 +30,9 @@ export class MapsService {
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
-    private mapsRepository: Repository<MmpMap>
-  ) {}
+    private mapsRepository: Repository<MmpMap>,
+    private typeormAnalyzer: TypeORMAnalyzerService,
+  ) { }
 
   findMap(uuid: string): Promise<MmpMap | null> {
     if (!uuidValidate(uuid))
@@ -219,6 +221,9 @@ export class MapsService {
       }
     }
 
+    const analysis = this.typeormAnalyzer.getAnalysis();
+    console.log("createEmptyMap(): Analysis - ", analysis)
+
     return newMap
   }
 
@@ -243,76 +248,61 @@ export class MapsService {
       await this.addNodesFromClient(mapId, nodes as IMmpClientNode[])
     }
 
-    const diffUpdatedCallback: DiffCallback = async (
-      diff: IMmpClientSnapshotChanges
-    ) => {
-      await Promise.all(
-        Object.keys(diff).map(async (key) => {
-          const clientNode = diff[key];
-    
-          if (!clientNode) {
-            return;
+    const diffUpdatedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
+        const clientNode = diff[key];
+
+        if (clientNode) {
+          const serverNode = await this.nodesRepository.findOne({ where: { nodeMapId: mapId, id: key } });
+
+          if (serverNode) {
+            const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
+            Object.assign(serverNode, mergedNode);
+            try {
+              await this.nodesRepository.save(serverNode);
+
+              const analysis = this.typeormAnalyzer.getAnalysis();
+              console.log("diffUpdatedCallback(): Analysis - ", analysis);
+            } catch (error) {
+              this.logger.warn(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`);
+              return Promise.reject(error);
+            }
           }
-    
-          const serverNode = await this.nodesRepository.findOne({ 
-            where: { 
-              nodeMapId: mapId, 
-              id: key 
-            } 
-          });
-    
-          if (!serverNode) {
-            return;
-          }
-    
-          const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
-          Object.assign(serverNode, mergedNode);
-          
-          try {
-            await this.nodesRepository.save(serverNode);
-          } catch (error) {
-            this.logger.warn(
-              `${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`
-            );
-            return Promise.reject(error);
-          }
-        })
-      );
+        }
+      }));
     };
 
-    const diffDeletedCallback: DiffCallback = async (
-      diff: IMmpClientSnapshotChanges
-    ) => {
-      await Promise.all(
-        Object.keys(diff).map(async (key) => {
-          const existingNode = await this.nodesRepository.findOneBy({
-            id: key,
-            nodeMapId: mapId,
-          });
-    
-          if (!existingNode) {
-            return;
-          }
-    
-          return this.nodesRepository.remove(existingNode);
-        })
-      );
+    const diffDeletedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
+      await Promise.all(Object.keys(diff).map(async (key) => {
+        const existingNode = await this.nodesRepository.findOne({ where: { nodeMapId: mapId, id: key } });
+
+        if (!existingNode) {
+          return;
+        }
+
+        const returnValue = await this.nodesRepository.remove(existingNode);
+
+        const analysis = this.typeormAnalyzer.getAnalysis();
+        console.log("diffDeletedCallback(): Analysis - ", analysis);
+
+        return returnValue;
+      }));
     };
 
     const callbacks: Record<keyof IMmpClientMapDiff, DiffCallback> = {
       added: diffAddedCallback,
       updated: diffUpdatedCallback,
       deleted: diffDeletedCallback,
-    }
+    };
 
-    const diffKeys: DiffKey[] = ['added', 'updated', 'deleted']
+    const diffKeys: DiffKey[] = ['added', 'updated', 'deleted'];
 
-    diffKeys.forEach((key) => {
-      const changes = diff[key]
+    await Promise.all(diffKeys.map(async (key) => {
+      const changes = diff[key];
       if (changes && Object.keys(changes).length > 0) {
-        callbacks[key](changes)
+        await callbacks[key](changes);
       }
-    })
+    }));
   }
 
   async updateMapOptions(
