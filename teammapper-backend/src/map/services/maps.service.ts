@@ -221,8 +221,6 @@ export class MapsService {
       }
     }
 
-    this.typeormAnalyzer.logAnalysis();
-
     return newMap
   }
 
@@ -259,8 +257,6 @@ export class MapsService {
             Object.assign(serverNode, mergedNode);
             try {
               await this.nodesRepository.update({ id: serverNode.id, nodeMapId: mapId }, serverNode);
-
-              this.typeormAnalyzer.logAnalysis();
             } catch (error) {
               this.logger.warn(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`);
               return Promise.reject(error);
@@ -279,8 +275,6 @@ export class MapsService {
         }
 
         const returnValue = await this.nodesRepository.remove(existingNode);
-
-        this.typeormAnalyzer.logAnalysis();
 
         return returnValue;
       }));
