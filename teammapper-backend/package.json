@@ -73,6 +73,7 @@
     "@types/express-serve-static-core": "^4.19.5",
     "@types/jest": "29.5.14",
     "@types/node": "^22.8.7",
+    "@types/pg": "^8.11.10",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^8.16.0",
     "@typescript-eslint/parser": "^8.2.0",
