@@ -14,17 +14,22 @@ import {
 import { mapMmpNodeToClient } from '../utils/clientServerMapping'
 import { truncateDatabase } from 'test/helper'
 import { jest } from '@jest/globals'
+import { TypeORMAnalyzerService } from 'src/database/typeorm-analyzer.service'
 
 describe('MapsController', () => {
   let mapsService: MapsService
   let nodesRepo: Repository<MmpNode>
   let mapsRepo: Repository<MmpMap>
   let moduleFixture: TestingModule
+  let typeormAnalyzer: jest.Mocked<TypeORMAnalyzerService>
 
   beforeAll(async () => {
     // Calling advanceTimers here is very important, as otherwise async ops like await will hang indefinitely
     // Ref: https://jestjs.io/docs/jest-object#jestusefaketimersfaketimersconfig
     jest.useFakeTimers({ advanceTimers: true })
+
+    typeormAnalyzer = {
+    } as jest.Mocked<TypeORMAnalyzerService>
 
     moduleFixture = await Test.createTestingModule({
       imports: [
@@ -41,7 +46,7 @@ describe('MapsController', () => {
       getRepositoryToken(MmpNode)
     )
 
-    mapsService = new MapsService(nodesRepo, mapsRepo)
+    mapsService = new MapsService(nodesRepo, mapsRepo, typeormAnalyzer)
   })
 
   afterAll(async () => {

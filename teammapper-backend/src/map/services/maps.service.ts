@@ -294,6 +294,8 @@ export class MapsService {
         await callbacks[key](changes);
       }
     }));
+
+    this.typeormAnalyzer.logAnalysis();
   }
 
   async updateMapOptions(

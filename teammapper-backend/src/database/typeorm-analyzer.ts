@@ -81,13 +81,8 @@ Query Patterns:
 
         // Analyze query patterns
         const queryPatterns = new Map<string, number>();
-        this.queryLog.forEach(log => {
-            // Simplify query by removing specific values
-            const pattern = log.query.replace(/\b\d+\b/g, 'N')
-                                  .replace(/'[^']*'/g, '?')
-                                  .replace(/"[^"]*"/g, '?');
-            
-            queryPatterns.set(pattern, (queryPatterns.get(pattern) || 0) + 1);
+        this.queryLog.forEach(log => {            
+            queryPatterns.set(log.query, (queryPatterns.get(log.query) || 0) + 1);
         });
 
         // Sort patterns by frequency
