@@ -20,7 +20,6 @@ export class TypeORMAnalyzerService implements OnModuleInit, OnModuleDestroy {
     async onModuleInit() {
         await this.analyzer.setupLogging(this.connection);
         
-        // Log analysis every hour
         this.logInterval = setInterval(() => {
             this.logAnalysis();
         }, 60 * 60 * 1000); // 1 hour
@@ -34,23 +33,20 @@ export class TypeORMAnalyzerService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-    private logAnalysis() {
+    public logAnalysis() {
         const analysis = this.analyzer.getAnalysis();
         const timestamp = new Date().toISOString();
         const logDir = path.join(process.cwd(), 'logs');
         
-        // Ensure logs directory exists
         if (!fs.existsSync(logDir)) {
             fs.mkdirSync(logDir);
         }
 
-        // Write to file
         fs.appendFileSync(
             path.join(logDir, 'typeorm-analysis.log'),
             `\n--- Analysis at ${timestamp} ---\n${analysis}\n`
         );
 
-        // If in development, also log to console
         if (process.env.NODE_ENV === 'development') {
             console.log(`\n=== TypeORM Analysis at ${timestamp} ===\n${analysis}`);
         }

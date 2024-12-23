@@ -221,8 +221,7 @@ export class MapsService {
       }
     }
 
-    const analysis = this.typeormAnalyzer.getAnalysis();
-    console.log("createEmptyMap(): Analysis - ", analysis)
+    this.typeormAnalyzer.logAnalysis();
 
     return newMap
   }
@@ -259,10 +258,9 @@ export class MapsService {
             const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
             Object.assign(serverNode, mergedNode);
             try {
-              await this.nodesRepository.save(serverNode);
+              await this.nodesRepository.update({ id: serverNode.id, nodeMapId: mapId }, serverNode);
 
-              const analysis = this.typeormAnalyzer.getAnalysis();
-              console.log("diffUpdatedCallback(): Analysis - ", analysis);
+              this.typeormAnalyzer.logAnalysis();
             } catch (error) {
               this.logger.warn(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`);
               return Promise.reject(error);
@@ -282,8 +280,7 @@ export class MapsService {
 
         const returnValue = await this.nodesRepository.remove(existingNode);
 
-        const analysis = this.typeormAnalyzer.getAnalysis();
-        console.log("diffDeletedCallback(): Analysis - ", analysis);
+        this.typeormAnalyzer.logAnalysis();
 
         return returnValue;
       }));

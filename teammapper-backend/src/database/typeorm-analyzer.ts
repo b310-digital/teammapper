@@ -123,11 +123,11 @@ Query Patterns:
             if (nextQuery.timestamp - currentQuery.timestamp < timeWindow &&
                 currentQuery.query.toLowerCase().includes('select') &&
                 nextQuery.query.toLowerCase().includes('select')) {
-                    patterns.push(`Possible N+1 at: ${currentQuery.stack.split('\n')[2]}`);
+                    patterns.push(`Possible N+1 at: ${currentQuery.stack}`);
             }
         }
         
-        return [...new Set(patterns)]; // Remove duplicates
+        return [...new Set(patterns)];
     }
 }
 
