@@ -92,7 +92,7 @@
     "@types/jasmine": "~5.1.4",
     "@types/jest": "29.5.14",
     "@types/mousetrap": "1.6.15",
-    "@types/node": "^13.13.52",
+    "@types/node": "^22.10.2",
     "@typescript-eslint/eslint-plugin": "^8.2.0",
     "@typescript-eslint/parser": "^8.4.0",
     "angular-eslint": "^18.3.1",
