@@ -21,8 +21,11 @@
         <img
           src="{{ getImageUrlOfId(picto._id) }}"
           (click)="getImageFileOfId(picto._id)"
+          (keydown.enter)="getImageFileOfId(picto._id)"
           width="150"
-          height="150" />
+          height="150"
+          alt="Pictogram"
+          role="img" />
       </mat-grid-tile>
       }
     </mat-grid-list>
@@ -41,7 +44,7 @@
   </span>
   <br />
   <a href="https://arasaac.org/"
-    ><img src="assets/images/logo_ARASAAC.png" width="200" height="50" /></a
+    ><img src="assets/images/logo_ARASAAC.png" width="200" height="50" alt="ARASAAC Logo" /></a
   ><br />
 </mat-dialog-content>
 <mat-dialog-actions>

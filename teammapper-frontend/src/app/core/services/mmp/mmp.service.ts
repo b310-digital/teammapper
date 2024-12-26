@@ -17,6 +17,7 @@ import {
 } from '@mmp/map/types';
 import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
+import { validate as uuidValidate } from 'uuid';
 
 /**
  * Mmp wrapper service with mmp and other functions.
@@ -27,7 +28,7 @@ import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 export class MmpService implements OnDestroy {
   private currentMap: MmpMap;
 
-  private readonly branchColors: Array<string>;
+  private readonly branchColors: string[];
   // additional options that are not handled within mmp, like fontMaxSize etc.
   private additionalOptions: CachedMapOptions;
   private settingsSubscription: Subscription;
@@ -86,7 +87,17 @@ export class MmpService implements OnDestroy {
   /**
    * Clear or load an existing mind mmp.
    */
-  public new(map?: MapSnapshot, notifyWithEvent = true) {
+  public async new(map?: MapSnapshot, notifyWithEvent = true) {
+    const hasInvalidUUID = map.some(node => !uuidValidate(node.id));
+
+    if (hasInvalidUUID) {
+      const importErrorMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.IMPORT_ERROR'
+      );
+      this.toastrService.error(importErrorMessage);
+      return;
+    }
+
     const mapWithCoordinates =
       this.currentMap.instance.applyCoordinatesToMapSnapshot(map);
     this.currentMap.instance.new(mapWithCoordinates, notifyWithEvent);
@@ -200,8 +211,8 @@ export class MmpService implements OnDestroy {
     const parent = properties?.parent
       ? this.selectNode(properties.parent)
       : !properties?.detached
-      ? this.selectNode()
-      : null;
+        ? this.selectNode()
+        : null;
 
     // detached nodes are not available as parent
     if (this.selectNode()?.detached) {
@@ -350,9 +361,8 @@ export class MmpService implements OnDestroy {
     try {
       this.currentMap.instance.copyNode(nodeId);
 
-      const successMessage = await this.utilsService.translate(
-        'TOASTS.NODE_COPIED'
-      );
+      const successMessage =
+        await this.utilsService.translate('TOASTS.NODE_COPIED');
       this.toastrService.success(successMessage);
     } catch (e) {
       if (e.message == 'The root node can not be copied') {
@@ -377,9 +387,8 @@ export class MmpService implements OnDestroy {
     try {
       this.currentMap.instance.cutNode(nodeId);
 
-      const successMessage = await this.utilsService.translate(
-        'TOASTS.NODE_CUT'
-      );
+      const successMessage =
+        await this.utilsService.translate('TOASTS.NODE_CUT');
       this.toastrService.success(successMessage);
     } catch (e) {
       if (e.message == 'The root node can not be cut') {

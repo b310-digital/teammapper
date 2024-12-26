@@ -43,6 +43,14 @@ export class ToolbarComponent {
     }
   }
 
+  get canUndoRedo() {
+    if (this.mmpService && typeof this.mmpService.history === 'function') {
+      const history = this.mmpService.history();
+      return history?.snapshots?.length > 1;
+    }
+    return false;
+  }
+
   public async share() {
     this.dialogService.openShareDialog();
   }
