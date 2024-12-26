@@ -98,6 +98,7 @@ export default class History {
                 }
                 Log.error('There was an error importing the map; changes have been rolled back.')
             } else {
+                this.clearHistory()
                 this.save()
                 if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom, { previousMap: previousData })
             }
@@ -152,6 +153,14 @@ export default class History {
         this.snapshots.push(this.getSnapshot())
 
         this.index++
+    }
+
+    /**
+     * Clears the history of the map
+     */
+    public clearHistory = () => {
+        this.snapshots = []
+        this.index = -1
     }
 
     /**
