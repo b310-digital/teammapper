@@ -111,7 +111,7 @@
   <button
     (click)="mmpService.undo()"
     [title]="'TOOLTIPS.UNDO_MAP' | translate"
-    [disabled]="editDisabled"
+    [disabled]="editDisabled || !canUndoRedo"
     color="primary"
     mat-icon-button>
     <mat-icon>undo</mat-icon>
@@ -120,7 +120,7 @@
   <button
     (click)="mmpService.redo()"
     [title]="'TOOLTIPS.REDO_MAP' | translate"
-    [disabled]="editDisabled"
+    [disabled]="editDisabled || !canUndoRedo"
     color="primary"
     mat-icon-button>
     <mat-icon>redo</mat-icon>

@@ -9,7 +9,7 @@ import {
   IMmpClientNode,
   IMmpClientNodeBasics,
   IMmpClientMapDiff,
-  IMmpClientSnapshotChanges
+  IMmpClientSnapshotChanges,
 } from '../types'
 import {
   mapClientBasicNodeToMmpRootNode,
@@ -18,22 +18,23 @@ import {
   mergeClientNodeIntoMmpNode,
 } from '../utils/clientServerMapping'
 import configService from '../../config.service'
-import { validate as uuidValidate } from 'uuid';
+import { validate as uuidValidate } from 'uuid'
 import MalformedUUIDError from './uuid.error'
 
 @Injectable()
 export class MapsService {
   private readonly logger = new Logger(MapsService.name)
-  
+
   constructor(
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
-    private mapsRepository: Repository<MmpMap>,
-  ) { }
+    private mapsRepository: Repository<MmpMap>
+  ) {}
 
   findMap(uuid: string): Promise<MmpMap | null> {
-    if (!uuidValidate(uuid)) return Promise.reject(new MalformedUUIDError('Invalid UUID'))
+    if (!uuidValidate(uuid))
+      return Promise.reject(new MalformedUUIDError('Invalid UUID'))
 
     return this.mapsRepository.findOne({
       where: { id: uuid },
@@ -44,7 +45,7 @@ export class MapsService {
     const map = await this.findMap(uuid)
     if (!map) {
       this.logger.warn(`updateLastAccessed(): Map was not found`)
-      return;
+      return
     }
 
     this.mapsRepository.update(uuid, { lastAccessed })
@@ -54,37 +55,38 @@ export class MapsService {
     const map = await this.findMap(uuid)
     if (!map) {
       this.logger.warn(`exportMapToClient(): Map was not found`)
-      return;
+      return
     }
 
     const nodes = await this.findNodes(map?.id)
     const days = configService.deleteAfterDays()
-    const deletedAt = await this.getDeletedAt(map, days);
+    const deletedAt = await this.getDeletedAt(map, days)
 
     if (deletedAt) {
-      return mapMmpMapToClient(
-        map,
-        nodes,
-        deletedAt,
-        days
-      )
+      return mapMmpMapToClient(map, nodes, deletedAt, days)
     }
   }
 
   async addNode(mapId: string, node: MmpNode): Promise<MmpNode | undefined> {
     // detached nodes are not allowed to have a parent
     if (node.detached && node.nodeParentId) {
-      this.logger.warn(`addNode(): Detached node ${node.id} is not allowed to have a parent.`);
-      return;
+      this.logger.warn(
+        `addNode(): Detached node ${node.id} is not allowed to have a parent.`
+      )
+      return
     }
     // root nodes are not allowed to have a parent
     if (node.root && node.nodeParentId) {
-      this.logger.warn(`addNode(): Root node ${node.id} is not allowed to have a parent.`);
-      return;
+      this.logger.warn(
+        `addNode(): Root node ${node.id} is not allowed to have a parent.`
+      )
+      return
     }
     if (!mapId || !node) {
-      this.logger.warn(`addNode(): Required arguments mapId or node not supplied`);
-      return;
+      this.logger.warn(
+        `addNode(): Required arguments mapId or node not supplied`
+      )
+      return
     }
 
     const existingNode = await this.nodesRepository.findOne({
@@ -99,8 +101,10 @@ export class MapsService {
 
     try {
       return this.nodesRepository.save(newNode)
-    } catch(error) {
-      this.logger.warn(`${error.constructor.name} addNode(): Failed to add node ${newNode.id}: ${error}`)
+    } catch (error) {
+      this.logger.warn(
+        `${error.constructor.name} addNode(): Failed to add node ${newNode.id}: ${error}`
+      )
       return Promise.reject(error)
     }
   }
@@ -109,7 +113,7 @@ export class MapsService {
     mapId: string,
     clientNodes: IMmpClientNode[]
   ): Promise<MmpNode[] | []> {
-    const mmpNodes = clientNodes.map(x => mapClientNodeToMmpNode(x, mapId))
+    const mmpNodes = clientNodes.map((x) => mapClientNodeToMmpNode(x, mapId))
     return await this.addNodes(mapId, mmpNodes)
   }
 
@@ -118,29 +122,37 @@ export class MapsService {
     nodes: Partial<MmpNode>[]
   ): Promise<MmpNode[] | []> {
     if (!mapId || nodes.length === 0) {
-      this.logger.warn(`Required arguments mapId or nodes not supplied to addNodes()`);
-      return [];
+      this.logger.warn(
+        `Required arguments mapId or nodes not supplied to addNodes()`
+      )
+      return []
     }
 
-      const reducer = async (previousPromise: Promise<MmpNode[]>, node: MmpNode): Promise<MmpNode[]> => {
-        const accCreatedNodes = await previousPromise;
-        if (await this.validatesNodeParentForNode(mapId, node)) {
-          try {
-            const newNode = await this.addNode(mapId, node);
-            if (newNode) {
-              return accCreatedNodes.concat([newNode]);
-            }
-          } catch (error) {
-            this.logger.warn(`Failed to add node ${node.id} to map ${mapId}: ${error}`);
+    const reducer = async (
+      previousPromise: Promise<MmpNode[]>,
+      node: MmpNode
+    ): Promise<MmpNode[]> => {
+      const accCreatedNodes = await previousPromise
+      if (await this.validatesNodeParentForNode(mapId, node)) {
+        try {
+          const newNode = await this.addNode(mapId, node)
+          if (newNode) {
+            return accCreatedNodes.concat([newNode])
           }
-
-          return accCreatedNodes;
+        } catch (error) {
+          this.logger.warn(
+            `Failed to add node ${node.id} to map ${mapId}: ${error}`
+          )
         }
-    
-        this.logger.warn(`Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`);
-        return accCreatedNodes;
-      };
 
+        return accCreatedNodes
+      }
+
+      this.logger.warn(
+        `Parent with id ${node.nodeParentId} does not exist for node ${node.id} and map ${mapId}`
+      )
+      return accCreatedNodes
+    }
 
     return nodes.reduce(reducer, Promise.resolve(new Array<MmpNode>()))
   }
@@ -170,20 +182,24 @@ export class MapsService {
     })
 
     if (!existingNode) {
-      this.logger.warn(`updateNode(): Existing node on server for given client node ${clientNode.id} has not been found.`);
-      return;
+      this.logger.warn(
+        `updateNode(): Existing node on server for given client node ${clientNode.id} has not been found.`
+      )
+      return
     }
 
-      try {
-        return this.nodesRepository.save({
-          ...existingNode,
-          ...mapClientNodeToMmpNode(clientNode, mapId),
-          lastModified: new Date(),
-        })
-      } catch(error) {
-        this.logger.warn(`${error.constructor.name} updateNode(): Failed to update node ${existingNode.id}: ${error}`)
-        return Promise.reject(error)
-      }
+    try {
+      return this.nodesRepository.save({
+        ...existingNode,
+        ...mapClientNodeToMmpNode(clientNode, mapId),
+        lastModified: new Date(),
+      })
+    } catch (error) {
+      this.logger.warn(
+        `${error.constructor.name} updateNode(): Failed to update node ${existingNode.id}: ${error}`
+      )
+      return Promise.reject(error)
+    }
   }
 
   async removeNode(
@@ -212,8 +228,10 @@ export class MapsService {
       )
       try {
         await this.nodesRepository.save(newRootNode)
-      } catch(error) {
-        this.logger.warn(`${error.constructor.name} createEmptyMap(): Failed to create root node ${newRootNode.id}: ${error}`)
+      } catch (error) {
+        this.logger.warn(
+          `${error.constructor.name} createEmptyMap(): Failed to create root node ${newRootNode.id}: ${error}`
+        )
         return Promise.reject(error)
       }
     }
@@ -232,64 +250,81 @@ export class MapsService {
   }
 
   async updateMapByDiff(mapId: string, diff: IMmpClientMapDiff) {
-    type DiffCallback = (diff: IMmpClientSnapshotChanges) => Promise<void>;
-    type DiffKey = keyof IMmpClientMapDiff;
+    type DiffCallback = (diff: IMmpClientSnapshotChanges) => Promise<void>
+    type DiffKey = keyof IMmpClientMapDiff
 
-    const diffAddedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
-      const nodes = Object.values(diff);
+    const diffAddedCallback: DiffCallback = async (
+      diff: IMmpClientSnapshotChanges
+    ) => {
+      const nodes = Object.values(diff)
       await this.addNodesFromClient(mapId, nodes as IMmpClientNode[])
     }
 
-    const diffUpdatedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
-      await Promise.all(Object.keys(diff).map(async (key) => {
-        const clientNode = diff[key];
+    const diffUpdatedCallback: DiffCallback = async (
+      diff: IMmpClientSnapshotChanges
+    ) => {
+      await Promise.all(
+        Object.keys(diff).map(async (key) => {
+          const clientNode = diff[key]
 
-        if (clientNode) {
-          const serverNode = await this.nodesRepository.findOne({ where: { nodeMapId: mapId, id: key } });
-        
-          if (serverNode) {
-            const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode);
-            Object.assign(serverNode, mergedNode);
-            try {
-              await this.nodesRepository.save(serverNode);
-            } catch(error) {
-              this.logger.warn(`${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`)
-              return Promise.reject(error)
+          if (clientNode) {
+            const serverNode = await this.nodesRepository.findOne({
+              where: { nodeMapId: mapId, id: key },
+            })
+
+            if (serverNode) {
+              const mergedNode = mergeClientNodeIntoMmpNode(
+                clientNode,
+                serverNode
+              )
+              Object.assign(serverNode, mergedNode)
+              try {
+                await this.nodesRepository.save(serverNode)
+              } catch (error) {
+                this.logger.warn(
+                  `${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`
+                )
+                return Promise.reject(error)
+              }
             }
           }
-        }
-      }));
+        })
+      )
     }
 
-    const diffDeletedCallback: DiffCallback = async (diff: IMmpClientSnapshotChanges) => {
-      await Promise.all(Object.keys(diff).map(async (key) => {
-        const existingNode = await this.nodesRepository.findOneBy({
-          id: key,
-          nodeMapId: mapId,
+    const diffDeletedCallback: DiffCallback = async (
+      diff: IMmpClientSnapshotChanges
+    ) => {
+      await Promise.all(
+        Object.keys(diff).map(async (key) => {
+          const existingNode = await this.nodesRepository.findOneBy({
+            id: key,
+            nodeMapId: mapId,
+          })
+
+          if (!existingNode) {
+            return
+          }
+
+          return this.nodesRepository.remove(existingNode)
         })
-    
-        if (!existingNode) {
-          return
-        }
-    
-        return this.nodesRepository.remove(existingNode)
-      }));
+      )
     }
 
     const callbacks: Record<keyof IMmpClientMapDiff, DiffCallback> = {
       added: diffAddedCallback,
       updated: diffUpdatedCallback,
-      deleted: diffDeletedCallback
-    };
+      deleted: diffDeletedCallback,
+    }
 
-    const diffKeys: DiffKey[] = ["added", "updated", "deleted"];
-    
-    diffKeys.forEach(key => {
-      const changes = diff[key];
+    const diffKeys: DiffKey[] = ['added', 'updated', 'deleted']
+
+    diffKeys.forEach((key) => {
+      const changes = diff[key]
       if (changes && Object.keys(changes).length > 0) {
-        callbacks[key](changes);
+        callbacks[key](changes)
       }
-    });
+    })
   }
 
   async updateMapOptions(
@@ -301,10 +336,15 @@ export class MapsService {
     return await this.mapsRepository.findOne({ where: { id: mapId } })
   }
 
-  async getDeletedAt(map: MmpMap, afterDays: number): Promise<Date | undefined> {
+  async getDeletedAt(
+    map: MmpMap,
+    afterDays: number
+  ): Promise<Date | undefined> {
     if (!map) {
-      this.logger.warn(`Required argument map was not supplied to getDeletedAt()`);
-      return;
+      this.logger.warn(
+        `Required argument map was not supplied to getDeletedAt()`
+      )
+      return
     }
 
     // get newest node of this map:
@@ -321,7 +361,10 @@ export class MapsService {
 
     const lastAccessed = map.lastAccessed
 
-    return this.calculcateDeletedAt(lastAccessed ? new Date(lastAccessed) : new Date(lastModified), afterDays)
+    return this.calculcateDeletedAt(
+      lastAccessed ? new Date(lastAccessed) : new Date(lastModified),
+      afterDays
+    )
   }
 
   calculcateDeletedAt(lastModified: Date, afterDays: number): Date {
@@ -331,7 +374,9 @@ export class MapsService {
     return copyDate
   }
 
-  async deleteOutdatedMaps(afterDays: number = 30): Promise<number | null | undefined> {
+  async deleteOutdatedMaps(
+    afterDays: number = 30
+  ): Promise<number | null | undefined> {
     const today = new Date()
 
     const deleteQuery = this.mapsRepository
