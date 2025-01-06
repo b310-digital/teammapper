@@ -1,8 +1,12 @@
 import { PictogramService } from './pictogram.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { SettingsService } from '../settings/settings.service';
-import { of } from 'rxjs';
 import { IPictogramResponse } from './picto-types';
+import { TestBed } from '@angular/core/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 
 const testData: IPictogramResponse = {
   schematic: false,
@@ -23,34 +27,37 @@ const testData: IPictogramResponse = {
 };
 
 describe('PictogramService', () => {
-  let httpClient: jest.Mocked<HttpClient>;
-  let settingsService: jest.Mocked<SettingsService>;
+  let httpClient: HttpClient;
   let service: PictogramService;
+  let httpTesting: HttpTestingController;
 
   beforeEach(() => {
-    httpClient = {
-      get: jest.fn(),
-    } as any;
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        SettingsService,
+      ],
+    });
 
-    settingsService = {
-      getCachedSettings: jest.fn().mockReturnValue({
-        general: { language: 'en' },
-      }),
-    } as any;
+    httpClient = TestBed.inject(HttpClient);
+    const settingsService = TestBed.inject(SettingsService);
 
     service = new PictogramService(httpClient, settingsService);
+    httpTesting = TestBed.inject(HttpTestingController);
   });
 
   it('fetches pictos', done => {
     const searchTerm = 'House';
     const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';
-    httpClient.get.mockReturnValue(of([testData]));
-
-    service.getPictos(searchTerm).subscribe(data => {
-      expect(data).toEqual([testData]);
-      expect(httpClient.get).toHaveBeenCalledWith(expectedUrl);
-      done();
+    service.getPictos(searchTerm).subscribe({
+      next: data => {
+        expect(data).toEqual([testData]);
+        done();
+      },
+      error: done.fail,
     });
+    httpTesting.expectOne(expectedUrl).flush([testData]);
   });
 
   it('constructs the asset url', () => {
@@ -64,27 +71,28 @@ describe('PictogramService', () => {
   it('gets the image', done => {
     const blob = new Blob();
     const expectedUrl = 'https://static.arasaac.org/pictograms/3/3_300.png';
-    httpClient.get.mockReturnValue(of(blob));
 
-    service.getPictoImage(3).subscribe(data => {
-      expect(data).toEqual(blob);
-      expect(httpClient.get).toHaveBeenCalledWith(expectedUrl, {
-        responseType: 'blob',
-      });
-      done();
+    service.getPictoImage(3).subscribe({
+      next: data => {
+        expect(data).toEqual(blob);
+        done();
+      },
+      error: done.fail,
     });
+    httpTesting.expectOne(expectedUrl).flush(blob);
   });
 
   it('uses default language when settings are not available', done => {
-    settingsService.getCachedSettings.mockReturnValue(null);
     const searchTerm = 'House';
     const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';
-    httpClient.get.mockReturnValue(of([testData]));
 
-    service.getPictos(searchTerm).subscribe(_ => {
-      expect(httpClient.get).toHaveBeenCalledWith(expectedUrl);
-      done();
+    service.getPictos(searchTerm).subscribe({
+      next: _ => {
+        done();
+      },
+      error: done.fail,
     });
+    httpTesting.expectOne(expectedUrl).flush([testData]);
   });
 
   it('constructs the asset url with custom size and file type', () => {
