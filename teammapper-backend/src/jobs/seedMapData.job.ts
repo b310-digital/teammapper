@@ -45,7 +45,7 @@ const createMap = (nodes: IMmpClientNode[]): IMmpClientMap => {
     deleteAfterDays: 30,
     data: nodes,
     deletedAt: new Date(),
-    options: { fontMaxSize: 10, fontIncrement: 5, fontMinSize: 10 }
+    options: { fontMaxSize: 10, fontIncrement: 5, fontMinSize: 10 },
   }
 }
 

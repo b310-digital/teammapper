@@ -161,7 +161,7 @@ export class MmpService implements OnDestroy {
    * Return the array of snapshots of the mind map.
    */
   public history(): ExportHistory {
-    return this.currentMap.instance.history();
+    return this.currentMap?.instance?.history();
   }
 
   /**
