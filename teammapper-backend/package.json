@@ -12,6 +12,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
+    "tsc": "npx tsc -p ./tsconfig.build.json",
     "client": "cd ../ && npm start --prefix teammapper-frontend",
     "dev": "concurrently \"nest start --watch\" \"npm run client\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
