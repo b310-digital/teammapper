@@ -3,7 +3,7 @@ import {
   Catch,
   ArgumentsHost,
   Logger,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common'
 
 // This is for any unhandled gateway and "internal" NestJS related errors - like if the gateway can't reach clients or things like that.
