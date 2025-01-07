@@ -55,6 +55,26 @@ jobs:
 
             - run: npm --prefix teammapper-frontend run lint
 
+    teammapper-frontend-tsc:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - run: npm --prefix teammapper-frontend ci
+
+            - run: npm --prefix teammapper-frontend run tsc
+
+    teammapper-backend-tsc:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - run: npm --prefix teammapper-backend ci
+
+            - run: npm --prefix teammapper-backend run tsc
+
     teammapper-backend-test-e2e:
         runs-on: ubuntu-latest
 

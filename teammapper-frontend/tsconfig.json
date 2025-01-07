@@ -8,6 +8,7 @@
       "module": "esnext",
       "moduleResolution": "node",
       "emitDecoratorMetadata": true,
+      "skipLibCheck": true,
       "experimentalDecorators": true,
       "importHelpers": true,
       "target": "ES2022",
