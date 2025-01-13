@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@angular-builders/jest": "^18.0.0",
-    "@angular-devkit/architect": "0.1802.11",
+    "@angular-devkit/architect": "0.1900.7",
     "@angular-devkit/core": "18.2.12",
     "@angular-devkit/schematics": "18.2.10",
     "@angular-eslint/builder": "18.3.0",
