@@ -118,13 +118,14 @@
           "Gleichzeitig an Mindmaps arbeiten",
           "Einfaches Teilen der Mindmap über einen QR-Code oder Link",
           "Erweitern von Knoten mit Bildern, Farben oder Links",
-          "Import und Export Möglichkeiten"
+          "Import und Export Möglichkeiten",
+          "Volle Kontrolle über eigene Daten durch offenen Quellcode / eigenes Hosting"
         ]
       },
       "SECTIONS": [
         {
           "TITLE": "Mindmaps",
-          "SUBTITLE": "TeamMapper folgt dem Tony Buzan Ansatz, welcher die Kraft von Bildern und Farben nutzt, um die Merkfähigkeit zu verbessern und die Kreativität anzuregen.",
+          "SUBTITLE": "TeamMapper folgt dem Tony Buzan Ansatz, welcher Bilder und Farben nutzt, um das Erinnerungsvermögen zu verbessern und die Kreativität anzuregen.",
           "CARDS": [
             {
               "TITLE": "Farben und Bilder",
@@ -168,7 +169,7 @@
     "MAP_DELETION_CONFIRM": "Bist du sicher, dass du die Mindmap löschen möchtest?",
     "UNLOAD_WARN": "Seite wirklich verlassen?",
     "JSON_FILE_SIZE_TOO_LARGE": "Die Datei ist größer als 1 MB und kann möglicherweise später nicht importiert werden. Bitte Datei verkleinern (z.B. Bilder entfernen).",
-    "DELETE_WARNING": "Achtung: Mindmaps werden auf diesem Server automatisch bei Inaktivität nach einiger Zeit gelöscht."
+    "DELETE_WARNING": "Achtung: Demo Instanz! Mindmaps werden auf diesem Server automatisch bei Inaktivität nach einiger Zeit gelöscht."
   },
   "TOASTS": {
     "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert!",

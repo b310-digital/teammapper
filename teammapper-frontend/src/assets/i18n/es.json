@@ -118,7 +118,8 @@
           "Collaborate together on mind maps",
           "Share mind maps with others - either by a QR code or by providing the link.",
           "Add images, colors, font properties and links to nodes",
-          "Import and export functionality"
+          "Import and export functionality",
+          "Full control over your own data through open source code / self-hosting"
         ]
       },
       "SECTIONS": [
@@ -167,7 +168,7 @@
     "WELCOME_MESSAGE": "Bienvenido a TeamMapper app ☺",
     "MAP_DELETION_CONFIRM": "Are you sure you want to delete the map?",
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images.",
-    "DELETE_WARNING": "Attention: Mind maps are deleted automatically when inactive after a couple of days."
+    "DELETE_WARNING": "Attention: Demo instance! Mind maps are deleted automatically when inactive after a couple of days."
   },
   "TOASTS": {
     "SUCCESSFULLY_DUPLICATED": "¡Mapa mental duplicado con éxito!",
