@@ -82,13 +82,13 @@ volumes:
 -   Start up app necessary services
 
     ```bash
-    docker-compose up -d --build --force-recreate
+    docker compose up -d --build --force-recreate
     ```
 
 -   Start frontend and backend at once
 
     ```bash
-    docker-compose exec app npm --prefix teammapper-backend run dev
+    docker compose exec app npm --prefix teammapper-backend run dev
     ```
 
     or start frontend and backend separately
@@ -97,10 +97,10 @@ volumes:
     # Open two terminal sessions on your host machine
 
     # In first terminal session
-    docker-compose exec app npm --prefix teammapper-backend start
+    docker compose exec app npm --prefix teammapper-backend start
 
     # In second terminal session
-    docker-compose exec app npm --prefix teammapper-frontend start
+    docker compose exec app npm --prefix teammapper-frontend start
     ```
 
 -   Visit the frontend in http://localhost:4200
@@ -110,13 +110,13 @@ volumes:
 -   Create a test database
 
     ```bash
-    docker-compose exec postgres createdb -e -U teammapper-user -W teammapper-backend-test
+    docker compose exec postgres createdb -e -U teammapper-user -W teammapper-backend-test
     ```
 
 -   Execute the tests
 
     ```bash
-    docker-compose exec app npm -prefix teammapper-backend run test:e2e
+    docker compose exec app npm -prefix teammapper-backend run test:e2e
     ```
 
 ### Production
@@ -131,7 +131,7 @@ volumes:
 -   Start everything at once (including a forced build):
 
     ```bash
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --build --force-recreate
+    docker compose --file docker compose-prod.yml --env-file .env.prod up -d --build --force-recreate
     ```
 
 -   Go to `http://localhost:3011` (if default port is used in .env.prod) to open up teammapper. Happy mapping!
@@ -140,25 +140,25 @@ volumes:
     If you want to make sure to include the most recent updates, run first:
 
     ```bash
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod build --no-cache
+    docker compose --file docker compose-prod.yml --env-file .env.prod build --no-cache
     ```
 
     then:
 
     ```bash
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod up -d --force-recreate
+    docker compose --file docker compose-prod.yml --env-file .env.prod up -d --force-recreate
     ```
 
     If you want to remove old data, including cached node packages and stored databases (DANGER!):
 
     ```bash
-    docker-compose --file docker-compose-prod.yml --env-file .env.prod down -v
+    docker compose --file docker compose-prod.yml --env-file .env.prod down -v
     ```
     
     If you want to run prod migrations (again):
     
     ```bash
-    docker-compose exec app_prod npm -prefix teammapper-backend run prod:typeorm:migrate
+    docker compose exec app_prod npm -prefix teammapper-backend run prod:typeorm:migrate
     ```
 #### Postgres and SSL
 If needed, you can make the connection to Postgres more secure by using a SSL connection.
@@ -180,14 +180,14 @@ If needed, you can make the connection to Postgres more secure by using a SSL co
      # command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
     ```
 
-    within the docker-compose-prod file.
+    within the docker compose-prod file.
 
 #### Running jobs
 
 Trigger delete job (also executed daily with cron task scheduler):
 
 ```
-docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npm --prefix teammapper-backend run prod:data:maps:cleanup
+docker compose --file docker compose-prod.yml --env-file .env.prod exec app_prod npm --prefix teammapper-backend run prod:data:maps:cleanup
 ```
 
 #### Running further queries
@@ -195,16 +195,16 @@ docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod
 Example of running sql via typeorm:
 
 ```
-docker-compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npx --prefix teammapper-backend typeorm query "select * from mmp_node" --dataSource ./teammapper-backend/dist/data-source.js
+docker compose --file docker compose-prod.yml --env-file .env.prod exec app_prod npx --prefix teammapper-backend typeorm query "select * from mmp_node" --dataSource ./teammapper-backend/dist/data-source.js
 ```
 
 ### Frontend feature flags
 See file /teammapper-frontend/src/envrionments/environment.prod.ts to configure feature flags:
--   featureFlagPictograms: Disables/Enables the pictogram feature (default: enabled). Note: You have to set this flag before build time!
+-   `featureFlagPictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time!
 
 ### Further details
 
--   Once this docker volume is initialized after the first `docker-compose up`, the database-related variables in `.env.prod` will not have any effect; please have this in mind => you will then need to setup your database manually
+-   Once this docker volume is initialized after the first `docker compose up`, the database-related variables in `.env.prod` will not have any effect; please have this in mind => you will then need to setup your database manually
 
 ## Contributing
 
