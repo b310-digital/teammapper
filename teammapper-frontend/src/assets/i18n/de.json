@@ -118,13 +118,14 @@
           "Gleichzeitig an Mindmaps arbeiten",
           "Einfaches Teilen der Mindmap über einen QR-Code oder Link",
           "Erweitern von Knoten mit Bildern, Farben oder Links",
-          "Import und Export Möglichkeiten"
+          "Import und Export Möglichkeiten",
+          "Volle Datenkontrolle möglich, durch Self-Hosting und offenen Quellcode"
         ]
       },
       "SECTIONS": [
         {
           "TITLE": "Mindmaps",
-          "SUBTITLE": "TeamMapper folgt dem Tony Buzan Ansatz, welcher die Kraft von Bildern und Farben nutzt, um die Merkfähigkeit zu verbessern und die Kreativität anzuregen.",
+          "SUBTITLE": "TeamMapper folgt dem Tony Buzan Ansatz, welcher Bilder und Farben nutzt, um das Erinnerungsvermögen zu verbessern und die Kreativität anzuregen.",
           "CARDS": [
             {
               "TITLE": "Farben und Bilder",
