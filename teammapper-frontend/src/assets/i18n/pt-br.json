@@ -118,7 +118,8 @@
           "Collaborate together on mind maps",
           "Share mind maps with others - either by a QR code or by providing the link.",
           "Add images, colors, font properties and links to nodes",
-          "Import and export functionality"
+          "Import and export functionality",
+          "Full control over your own data through open source code / self-hosting"
         ]
       },
       "SECTIONS": [
