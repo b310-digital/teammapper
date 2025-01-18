@@ -42,19 +42,26 @@ footer.footer {
     div.languages {
       padding: 8px 0;
 
-      mat-select::ng-deep {
-        width: fit-content !important;
-        min-width: 100%;
+      ::ng-deep {
+        .mat-mdc-select {
+          min-width: 150px;
+        }
 
-        .mat-select-value {
-          width: fit-content;
-          min-width: 2ch;
-          max-width: 25ch;
+        .mat-mdc-select-value {
+          max-width: 100%;
+          width: auto;
+        }
+
+        .mat-mdc-select-value-text {
           color: whitesmoke;
         }
 
-        .mat-select-arrow {
+        .mat-mdc-select-arrow {
           color: whitesmoke;
+        }
+
+        .mat-mdc-select-placeholder {
+          color: rgba(255, 255, 255, 0.7);
         }
       }
     }
