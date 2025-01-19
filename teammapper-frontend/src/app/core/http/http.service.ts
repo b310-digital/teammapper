@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
  * All the API urls used with the http service.
  */
 export enum API_URL {
-  LOCAL_ASSETS = '/assets/data/',
+  LOCAL_ASSETS = './assets/data/',
   ROOT = 'api',
 }
 
