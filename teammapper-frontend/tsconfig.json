@@ -23,6 +23,11 @@
           "mmp/src/*"
         ]
       },
-      "useDefineForClassFields": false
-    }
+      "useDefineForClassFields": false,
+      "allowSyntheticDefaultImports": true
+    },
+    "exclude": [
+      "node_modules",
+      "dist"
+    ],
 }
