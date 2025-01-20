@@ -113,13 +113,9 @@ export class ApplicationComponent implements OnInit, OnDestroy {
       return existingMap;
     } else {
       const privateServerMap = await this.mapSyncService.prepareNewMap();
-      const newUrl = this.router
-        .createUrlTree([`/map/${privateServerMap.map.uuid}`], {
-          fragment: privateServerMap.modificationSecret,
-        })
-        .toString();
-      // router navigate would work as well, but it will trigger a component rerender which is not required
-      history.replaceState({}, '', newUrl);
+      this.router.navigate([`map/${privateServerMap.map.uuid}`], {
+        fragment: privateServerMap.modificationSecret,
+      });
       return privateServerMap.map;
     }
   }
