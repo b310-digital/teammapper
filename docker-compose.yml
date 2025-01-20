@@ -1,14 +1,11 @@
 version: "3.8"
 
 services:
-  nginx:
-    image: nginx:latest
-    ports:
-      - 80:80
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
   app:
-    image: ghcr.io/b310-digital/teammapper:revert-absolute-path-changes
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
     tty: true
     stdin_open: true
     environment:
