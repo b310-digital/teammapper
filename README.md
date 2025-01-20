@@ -77,6 +77,8 @@ volumes:
   postgres_prod_data:
 ```
 
+For examples with a reverse proxy, see [documentation about deployment](docs/deployment.md).
+
 ### Development
 
 -   Start up app necessary services
