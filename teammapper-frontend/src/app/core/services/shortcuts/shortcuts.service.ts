@@ -58,7 +58,7 @@ export class ShortcutsService implements OnDestroy {
         description: 'TOOLTIPS.NEW_MAP',
         callback: () => {
           // use a full page reload here to reload all singleton services
-          window.location.replace('/map');
+          window.location.replace(`${document.baseURI}/map`);
         },
       },
       {
