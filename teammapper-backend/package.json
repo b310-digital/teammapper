@@ -42,7 +42,7 @@
     "@nestjs/platform-express": "^10.4.15",
     "@nestjs/platform-socket.io": "^10.4.15",
     "@nestjs/schedule": "^4.1.2",
-    "@nestjs/serve-static": "^4.0.2",
+    "@nestjs/serve-static": "^5.0.1",
     "@nestjs/typeorm": "^10.0.2",
     "@nestjs/websockets": "^10.4.15",
     "@types/uuid": "^10.0.0",
