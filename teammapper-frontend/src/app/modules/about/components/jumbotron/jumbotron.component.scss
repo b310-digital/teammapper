@@ -1,12 +1,16 @@
 @use '@angular/material' as mat;
 @import 'src/theme.scss';
 
+.m-2 {
+  margin: 2rem;
+}
+
 section.jumbotron {
   background-color: mat.m2-get-color-from-palette($app-primary);
   padding: 100px 0 40px 0;
   text-align: center;
-  display: flex;
   align-items: center;
+  display: flex;
   justify-content: center;
   flex-wrap: wrap;
 
@@ -17,6 +21,7 @@ section.jumbotron {
     word-wrap: break-word !important;
     white-space: pre-wrap !important;
     line-height: 150%;
+    overflow-wrap: break-word !important;
   }
 
   > div {
@@ -32,9 +37,10 @@ section.jumbotron {
       > mat-list {
         text-align: left;
         margin-bottom: 10px;
+        max-width: 100%;
 
-        mat-list-item {
-          height: 30px;
+        .mdc-list-item {
+          height: auto;
         }
 
         mat-icon {
@@ -64,7 +70,7 @@ section.jumbotron {
     }
 
     > img {
-      max-width: 500px;
+      max-width: 400px;
       width: 100%;
     }
   }
