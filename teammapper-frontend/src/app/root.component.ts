@@ -9,7 +9,7 @@ import { routeAnimation } from './shared/animations/route.animation';
   selector: 'teammapper-root',
   templateUrl: 'root.component.html',
   styleUrls: ['./root.component.scss'],
-
+  standalone: false,
   animations: [routeAnimation],
 })
 export class RootComponent implements OnInit {
