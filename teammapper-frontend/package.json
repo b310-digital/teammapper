@@ -62,7 +62,7 @@
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
     "deep-object-diff": "^1.1.9",
-    "dompurify": "3.2.3",
+    "dompurify": "3.2.4",
     "jspdf": "^2.5.1",
     "localforage": "1.10.0",
     "ngx-color-picker": "^17.0.0",
