@@ -6,6 +6,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service';
   selector: 'teammapper-colors-panel',
   templateUrl: './color-panels.component.html',
   styleUrls: ['./color-panels.component.scss'],
+  standalone: false,
 })
 export class ColorPanelsComponent implements OnInit {
   @Input() public node: ExportNodeProperties;

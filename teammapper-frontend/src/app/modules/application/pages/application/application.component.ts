@@ -22,6 +22,7 @@ import { DialogService } from 'src/app/core/services/dialog/dialog.service';
   selector: 'teammapper-application',
   templateUrl: './application.component.html',
   styleUrls: ['./application.component.scss'],
+  standalone: false,
 })
 export class ApplicationComponent implements OnInit, OnDestroy {
   public node: Observable<ExportNodeProperties>;
