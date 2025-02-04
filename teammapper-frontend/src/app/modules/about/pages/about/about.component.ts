@@ -12,7 +12,6 @@ import {
   selector: 'teammapper-about',
   templateUrl: './about.component.html',
   styleUrls: ['./about.component.scss'],
-  standalone: false,
 })
 export class AboutComponent {
   public faBrain = faBrain;

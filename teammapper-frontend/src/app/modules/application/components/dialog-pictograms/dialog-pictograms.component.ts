@@ -14,7 +14,6 @@ import { UtilsService } from 'src/app/core/services/utils/utils.service';
   selector: 'teammapper-dialog-pictograms',
   templateUrl: 'dialog-pictograms.component.html',
   styleUrls: ['./dialog-pictograms.component.scss'],
-  standalone: false,
 })
 export class DialogPictogramsComponent {
   public pictos: IPictogramResponse[];

@@ -8,7 +8,6 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service';
   selector: 'teammapper-sliders-panel',
   templateUrl: './slider-panels.component.html',
   styleUrls: ['./slider-panels.component.scss'],
-  standalone: false,
 })
 export class SliderPanelsComponent {
   @Input() public node: ExportNodeProperties;

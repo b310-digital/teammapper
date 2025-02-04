@@ -12,7 +12,6 @@ import { MatDialogRef } from '@angular/material/dialog';
   selector: 'teammapper-dialog-share',
   templateUrl: 'dialog-share.component.html',
   styleUrls: ['dialog-share.component.scss'],
-  standalone: false,
 })
 export class DialogShareComponent implements OnInit {
   @ViewChild('qrcodecanvas', { static: true })

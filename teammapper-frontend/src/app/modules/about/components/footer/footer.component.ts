@@ -7,7 +7,6 @@ import { Settings } from '../../../../shared/models/settings.model';
   selector: 'teammapper-footer',
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss'],
-  standalone: false,
 })
 export class FooterComponent implements OnInit {
   public settings: Settings;
