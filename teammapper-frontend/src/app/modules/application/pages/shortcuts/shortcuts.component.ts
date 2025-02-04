@@ -13,6 +13,7 @@ interface Shortcut {
   selector: 'teammapper-shortcuts',
   templateUrl: './shortcuts.component.html',
   styleUrls: ['./shortcuts.component.scss'],
+  standalone: false,
 })
 export class ShortcutsComponent implements OnInit {
   public shortcuts: Shortcut[];

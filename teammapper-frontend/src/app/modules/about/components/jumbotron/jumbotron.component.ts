@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
   selector: 'teammapper-jumbotron',
   templateUrl: './jumbotron.component.html',
   styleUrls: ['./jumbotron.component.scss'],
+  standalone: false,
 })
 export class JumbotronComponent {
   public projectName: string;

@@ -16,6 +16,7 @@ import { first, Subscription } from 'rxjs';
   selector: 'teammapper-map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss'],
+  standalone: false,
 })
 export class MapComponent implements AfterViewInit, OnDestroy {
   @ViewChild('map') mapWrapper: ElementRef<HTMLElement>;

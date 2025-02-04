@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
   selector: 'teammapper-client-colors-panel',
   templateUrl: './client-color-panels.component.html',
   styleUrls: ['./client-color-panels.component.scss'],
+  standalone: false,
 })
 export class ClientColorPanelsComponent {
   @ViewChild('background') public background: ElementRef;
