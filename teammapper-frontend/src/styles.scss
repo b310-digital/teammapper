@@ -1,6 +1,6 @@
 //@import '@angular/material' as mat;
-@import '@material-design-icons/font';
-@import 'theme.scss';
+@use '@material-design-icons/font';
+@use 'theme.scss';
 
 @font-face {
   font-family: 'Source Sans Pro';

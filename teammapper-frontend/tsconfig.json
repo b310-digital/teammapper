@@ -5,6 +5,7 @@
       "outDir": "./dist/out-tsc",
       "sourceMap": true,
       "declaration": false,
+      "esModuleInterop": true,
       "module": "esnext",
       "moduleResolution": "node",
       "emitDecoratorMetadata": true,
@@ -24,8 +25,7 @@
           "mmp/src/*"
         ]
       },
-      "useDefineForClassFields": false,
-      "allowSyntheticDefaultImports": true
+      "useDefineForClassFields": false
     },
     "exclude": [
       "node_modules",
