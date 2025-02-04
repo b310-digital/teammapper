@@ -15,6 +15,16 @@ const setupWorkerDatabase = async (workerId: string): Promise<string> => {
   return databaseName
 }
 
+const createDataSourceConfig: PostgresConnectionOptions = {
+  type: 'postgres',
+  host: process.env.POSTGRES_TEST_HOST,
+  port: parseInt(process.env.POSTGRES_TEST_PORT || '3000', 10),
+  username: process.env.POSTGRES_TEST_USER,
+  password: process.env.POSTGRES_TEST_PASSWORD,
+  database: process.env.POSTGRES_TEST_DATABASE,
+  synchronize: false,
+}
+
 // this is the configuration for the main test database. this database is not used for actual tests.
 // it is the entrypoint for each worker to be able to create their own worker database
 const mainTestDataSource = async () => {
@@ -36,22 +46,11 @@ const workerDataSourceConfig = (databaseName: string): TypeOrmModuleOptions => {
     synchronize: true,
     autoLoadEntities: true,
     dropSchema: true,
-    keepConnectionAlive: true,
     extra: {
       query_timeout: 1000,
       statement_timeout: 1000,
     },
   }
-}
-
-const createDataSourceConfig: PostgresConnectionOptions = {
-  type: 'postgres',
-  host: process.env.POSTGRES_TEST_HOST,
-  port: parseInt(process.env.POSTGRES_TEST_PORT || '3000', 10),
-  username: process.env.POSTGRES_TEST_USER,
-  password: process.env.POSTGRES_TEST_PASSWORD,
-  database: process.env.POSTGRES_TEST_DATABASE,
-  synchronize: false,
 }
 
 export const destroyWorkerDatabase = async (
