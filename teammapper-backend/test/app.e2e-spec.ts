@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
-import * as request from 'supertest'
+import request from 'supertest'
 import { MmpMap } from 'src/map/entities/mmpMap.entity'
 import { MmpNode } from 'src/map/entities/mmpNode.entity'
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
