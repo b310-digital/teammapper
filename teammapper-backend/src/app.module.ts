@@ -12,7 +12,7 @@ import { MapModule } from './map/map.module'
     TypeOrmModule.forRoot(configService.getTypeOrmConfig()),
     MapModule,
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'client'),
+      rootPath: join(__dirname, '..', 'client', 'browser'),
     }),
   ],
 })
