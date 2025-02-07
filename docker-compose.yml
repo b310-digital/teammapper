@@ -27,7 +27,7 @@ services:
       DELETE_AFTER_DAYS: ${DELETE_AFTER_DAYS:-30}
     ports:
       - "${APP_FRONTEND_PORT:-4200}:4200"
-      - "${APP_BACKTEND_PORT:-3000}:3000"
+      - "${APP_BACKEND_PORT:-3000}:3000"
       # karma server
       - 9876:9876
     volumes:
