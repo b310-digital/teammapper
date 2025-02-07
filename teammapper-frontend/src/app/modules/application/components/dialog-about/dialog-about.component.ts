@@ -13,6 +13,7 @@ import { MatDialogRef } from '@angular/material/dialog';
   selector: 'teammapper-dialog-about',
   templateUrl: 'dialog-about.component.html',
   styleUrls: ['./dialog-about.component.scss'],
+  standalone: false,
 })
 export class DialogAboutComponent {
   public faGithub = faGithub;

@@ -12,6 +12,8 @@
     "baseUrl": "./",
     "incremental": true,
     "noImplicitAny": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
   }
 }

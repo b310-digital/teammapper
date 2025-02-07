@@ -7,11 +7,14 @@ import * as mmp from '@mmp/index';
 import { Subject } from 'rxjs';
 import { OptionParameters } from '@mmp/map/types';
 
-jest.mock('dompurify', () => ({
-  default: {
-    sanitize: jest.fn().mockImplementation(str => str),
-  },
-}));
+jest.mock('dompurify', () => {
+  return {
+    __esModule: true,
+    default: {
+      sanitize: jest.fn((str: string) => str),
+    },
+  };
+});
 
 jest.mock('@mmp/index', () => ({
   create: jest.fn(),

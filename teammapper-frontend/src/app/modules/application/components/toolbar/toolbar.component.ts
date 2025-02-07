@@ -9,6 +9,7 @@ import { environment } from 'src/environments/environment';
   selector: 'teammapper-toolbar',
   templateUrl: './toolbar.component.html',
   styleUrls: ['./toolbar.component.scss'],
+  standalone: false,
 })
 export class ToolbarComponent {
   @Input() public node: ExportNodeProperties;

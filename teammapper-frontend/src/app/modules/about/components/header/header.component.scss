@@ -1,5 +1,5 @@
 @use '@angular/material' as mat;
-@import 'src/theme.scss';
+@use 'src/theme.scss';
 
 header.header {
   z-index: 99;
@@ -28,7 +28,7 @@ header.header {
 
     a.link {
       cursor: pointer;
-      color: mat.m2-get-color-from-palette($app-primary);
+      color: mat.m2-get-color-from-palette(theme.$app-primary);
       padding-right: 12px;
     }
 

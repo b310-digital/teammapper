@@ -14,15 +14,21 @@
       },
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist",
+            "outputPath": {
+              "base": "dist"
+            },
             "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": [
+              "src/polyfills.ts"
+            ],
             "tsConfig": "src/tsconfig.app.json",
             "stylePreprocessorOptions": {
-              "includePaths": ["src"]
+              "includePaths": [
+                "src",
+                "."
+              ]
             },
             "assets": [
               "src/assets",
@@ -34,7 +40,8 @@
               "node_modules/ngx-toastr/toastr.css"
             ],
             "scripts": ["src/mtm.js"],
-            "serviceWorker": false
+            "serviceWorker": false,
+            "browser": "src/main.ts"
           },
           "configurations": {
             "production": {
@@ -57,8 +64,6 @@
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
               "budgets": [
                 {
                   "type": "initial",
@@ -68,9 +73,7 @@
               ]
             },
             "development": {
-              "buildOptimizer": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
