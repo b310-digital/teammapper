@@ -66,7 +66,7 @@
     "@golevelup/ts-jest": "^0.6.2",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.7",
-    "@stylistic/eslint-plugin-ts": "^3.0.1",
+    "@stylistic/eslint-plugin-ts": "^3.1.0",
     "@types/cache-manager": "5.0.0",
     "@types/cron": "^2.4.3",
     "@types/eslint__js": "^8.42.3",
