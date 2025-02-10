@@ -81,7 +81,7 @@
     "@angular-devkit/schematics": "19.1.5",
     "@angular-eslint/builder": "19.0.2",
     "@angular-eslint/eslint-plugin": "19.0.2",
-    "@angular-eslint/eslint-plugin-template": "19.0.2",
+    "@angular-eslint/eslint-plugin-template": "19.1.0",
     "@angular-eslint/schematics": "19.0.2",
     "@angular-eslint/template-parser": "19.0.2",
     "@angular/language-service": "19.1.4",
