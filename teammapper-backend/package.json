@@ -45,7 +45,7 @@
     "@nestjs/schedule": "^5.0.1",
     "@nestjs/serve-static": "^5.0.1",
     "@nestjs/typeorm": "^11.0.0",
-    "@nestjs/websockets": "^11.0.7",
+    "@nestjs/websockets": "^11.0.8",
     "@types/uuid": "^10.0.0",
     "cache-manager": "^6.4.0",
     "class-validator": "^0.14.1",
