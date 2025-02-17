@@ -79,7 +79,7 @@
     "@angular-devkit/architect": "0.1901.6",
     "@angular-devkit/core": "19.1.5",
     "@angular-devkit/schematics": "19.1.5",
-    "@angular-eslint/builder": "19.0.2",
+    "@angular-eslint/builder": "19.1.0",
     "@angular-eslint/eslint-plugin": "19.0.2",
     "@angular-eslint/eslint-plugin-template": "19.1.0",
     "@angular-eslint/schematics": "19.1.0",
