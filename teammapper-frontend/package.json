@@ -78,7 +78,7 @@
     "@angular-builders/jest": "^19.0.0",
     "@angular-devkit/architect": "0.1902.0",
     "@angular-devkit/core": "19.1.5",
-    "@angular-devkit/schematics": "19.1.5",
+    "@angular-devkit/schematics": "19.2.0",
     "@angular-eslint/builder": "19.1.0",
     "@angular-eslint/eslint-plugin": "19.0.2",
     "@angular-eslint/eslint-plugin-template": "19.1.0",
