@@ -40,7 +40,7 @@
     "@nestjs/common": "^11.0.7",
     "@nestjs/config": "4.0.0",
     "@nestjs/core": "^11.0.9",
-    "@nestjs/platform-express": "^11.0.7",
+    "@nestjs/platform-express": "^11.0.12",
     "@nestjs/platform-socket.io": "^11.0.7",
     "@nestjs/schedule": "^5.0.1",
     "@nestjs/serve-static": "^5.0.3",
