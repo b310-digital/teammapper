@@ -87,7 +87,7 @@
     "@angular/language-service": "19.2.1",
     "@compodoc/compodoc": "^1.1.26",
     "@eslint/js": "^9.12.0",
-    "@schematics/angular": "^19.2.1",
+    "@schematics/angular": "^19.2.9",
     "@types/d3": "7.1.0",
     "@types/eslint__js": "^8.42.3",
     "@types/jasmine": "~5.1.4",
