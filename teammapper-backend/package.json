@@ -37,7 +37,7 @@
   "dependencies": {
     "@nestjs/cache-manager": "^3.0.0",
     "@nestjs/cli": "^11.0.7",
-    "@nestjs/common": "^11.0.7",
+    "@nestjs/common": "^11.1.1",
     "@nestjs/config": "4.0.0",
     "@nestjs/core": "^11.0.9",
     "@nestjs/platform-express": "^11.1.1",
@@ -50,7 +50,7 @@
     "cache-manager": "^6.4.0",
     "class-validator": "^0.14.1",
     "dotenv": "16.4.7",
-    "http-proxy-middleware": "3.0.3",
+    "http-proxy-middleware": "3.0.5",
     "pg": "^8.16.0",
     "pq": "^0.0.3",
     "reflect-metadata": "^0.2.2",
