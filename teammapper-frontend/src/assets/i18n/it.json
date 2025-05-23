@@ -5,7 +5,7 @@
     "IT": "Italiano",
     "ZH-TW": "Cinese tradizionale",
     "ZH-CN": "Cinese semplificato",
-    "PT-BR": "Portoghese Brasile",
+    "PT-BR": "Portoghese Brasiliano",
     "ES": "Spagnolo",
     "DE": "Tedesco"
   },
@@ -128,15 +128,15 @@
           "SUBTITLE": "teammapper segue l’approccio di Tony Buzan, che sfrutta il potere evocativo delle immagini e dei colori per facilitare la memorizzazione dei concetti, stimolando la creatività e le associazioni mentali.",
           "CARDS": [
             {
-              "TITLE": "Colors and images",
+              "TITLE": "Colori e immagini",
               "CONTENT": "I colori e le immagini delle mappe mentali sfruttano le caratteristiche del cervello per esprimere i concetti in modo più efficace e duraturo."
             },
             {
-              "TITLE": "Radial tree",
+              "TITLE": "Albero raggiale",
               "CONTENT": "La struttura gerarchica delle mappe mentali sfrutta la geometria radiale, che si suddivide su più livelli e facilita l'espressività dei concetti."
             },
             {
-              "TITLE": "Uses",
+              "TITLE": "Usi",
               "CONTENT": "Le mappe mentali sono particolarmente efficaci per apprendere o organizzare idee, ad esempio in contesti educativi o aziendali."
             }
           ]
