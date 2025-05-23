@@ -5,7 +5,7 @@
     "IT": "Italiano",
     "ZH-TW": "Cinese tradizionale",
     "ZH-CN": "Cinese semplificato",
-    "PT-BR": "Portoghese Brasile",
+    "PT-BR": "Portoghese Brasiliano",
     "ES": "Spagnolo",
     "DE": "Tedesco"
   },
@@ -37,14 +37,14 @@
     "EDIT_NODE": "Permette di modificare il testo del nodo",
     "COUPLE_NODE": "Blocca o sblocca il nodo",
     "NODE_IMAGE": "Aggiunge un'immagine al nodo",
-    "PICTOGRAM": "Pictrogram",
-    "START_EDIT_NODE": "Edit node text",
+    "PICTOGRAM": "Pittogramma",
+    "START_EDIT_NODE": "Modifica il testo del nodo",
     "BOLD_TEXT": "Cambia la larghezza del testo",
     "ITALIC_TEXT": "Cambia lo stile del testo",
     "TEXT_SIZE": "Cambia la dimensione del testo e del nodo",
     "IMAGE_SIZE": "Cambia la dimensione dell'immage del nodo",
     "ADD_NODE": "Aggiunge un nodo",
-    "ADD_DETACHED_NODE": "Add a detached node",
+    "ADD_DETACHED_NODE": "Aggiungi un nodo staccato",
     "REMOVE_NODE": "Rimuove un nodo",
     "ZOOM_IN_MAP": "Esegue uno zoom-in",
     "ZOOM_OUT_MAP": "Esegue uno zoom-out",
@@ -62,49 +62,49 @@
     "NODE_DRAGGING": "Permette di trascinare i nodi nella mappa",
     "MAP_ZOOM": "Permette di effettuare lo zoom sulla mappa",
     "AUTO_BRANCH_COLORS": "Permette di scegliere in modo automatico i colori dei rami",
-    "SHARE": "Share",
-    "LINK_ADD": "Adds a link",
-    "LINK_REMOVE": "Removes a link",
-    "FONT_MIN_SIZE": "Minimal font size",
-    "FONT_MAX_SIZE": "Maximal font size",
-    "FONT_INCREMENT": "Font size step",
-    "FONT_INCREASE": "Increase font ",
-    "FONT_DECREASE": "Decrease font"
+    "SHARE": "Condividere",
+    "LINK_ADD": "Aggiunge un link",
+    "LINK_REMOVE": "Rimuove link",
+    "FONT_MIN_SIZE": "Dimensione minima del font",
+    "FONT_MAX_SIZE": "Dimensione massima del font",
+    "FONT_INCREMENT": "Dimensione passo del font",
+    "FONT_INCREASE": "Aumenta font",
+    "FONT_DECREASE": "Diminuisci font"
   },
   "MODALS": {
     "GENERAL": {
-      "BUTTON_CLOSE": "Close"
+      "BUTTON_CLOSE": "Chiudi"
     },
     "CONNECTION_INFO": {
-      "TITLE": "Connection lost",
-      "CONTENT": "Connection to server was lost. Retrying...",
-      "BUTTON_RECONNECT": "Reconnect"
+      "TITLE": "Connessione persa",
+      "CONTENT": "Connessione al server persa. Nuovo tentativo...",
+      "BUTTON_RECONNECT": "Reconnetti"
     },
     "PICTOGRAMS": {
-      "TITLE": "Add a pictogram",
-      "BUTTON_SEARCH": "Search",
-      "FORM_INPUT_LABEL_SEARCH": "Search term",
+      "TITLE": "Aggingi un pittogramma",
+      "BUTTON_SEARCH": "Cerca",
+      "FORM_INPUT_LABEL_SEARCH": "Cerca termine",
       "TERMS_TEXT": [
-        "Pictograms author: Sergio Palao. Origin: ARASAAC (",
+        "Autore dei pittogrammi: Sergio Palao. Origin: ARASAAC (",
         "https://arasaac.org",
         "). License: ",
         "CC (BY-NC-SA)",
         "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
-        ". Owner: Government of Aragon (Spain)"
+        ". Proprietario: Governo d'Aragona (Spagna)"
       ],
-      "EMPTY": "No result"
+      "EMPTY": "Nessun risultato"
     },
     "SHARE": {
-      "TITLE": "Share map",
-      "CONTENT": "Copy this link to share the map",
-      "LINK_TYPE_VIEW": "Only observe",
-      "LINK_TYPE_EDIT": "Observe and modify"
+      "TITLE": "Condividi mappa",
+      "CONTENT": "Copia questo link per condividere la mappa",
+      "LINK_TYPE_VIEW": "Osservare soltanto",
+      "LINK_TYPE_EDIT": "Osservare e modificare"
     },
     "INFO": {
-      "DELETED_AT": "Mindmap is going to be deleted at:",
-      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-      "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "DELETED_AT": "La mappa mentale verrà eliminata a:",
+      "DELETE_AFTER_DAYS": "Le mappe mentali verranno eliminate da questo server dopo {{deleteAfterDays}} giorni.",
+      "DELETE": "Elimina la mappa mentale",
+      "CONFIRM_DELETE": "Eliminare?"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -113,31 +113,31 @@
   "PAGES": {
     "ABOUT": {
       "INTRODUCTION": {
-        "APPLICATION_DESCRIPTION": "The open-source web application to draw mind maps together.",
+        "APPLICATION_DESCRIPTION": "L'applicazione web open source per disegnare mappe mentali insieme.",
         "APPLICATION_PROPERTIES": [
-          "Collaborate together on mind maps",
-          "Share mind maps with others - either by a QR code or by providing the link.",
-          "Add images, colors, font properties and links to nodes",
-          "Import and export functionality",
-          "Full control over your own data through open source code / self-hosting"
+          "Collaborare insieme alle mappe mentali",
+          "Condividi le mappe mentali con altri, tramite un codice QR o fornendo il link.",
+          "Aggiungi immagini, colori, proprietà dei caratteri e collegamenti ai nodi",
+          "Funzionalità di importazione ed esportazione",
+          "Controllo completo sui propri dati tramite codice open source/self-hosting"
         ]
       },
       "SECTIONS": [
         {
-          "TITLE": "Mind maps",
-          "SUBTITLE": "teammapper follows the Tony Buzan approach, which uses the evocative power of images and colors to make the memorization of concepts easier, stimulating creativity and mental associations.",
+          "TITLE": "Mappe mentali",
+          "SUBTITLE": "teammapper segue l’approccio di Tony Buzan, che sfrutta il potere evocativo delle immagini e dei colori per facilitare la memorizzazione dei concetti, stimolando la creatività e le associazioni mentali.",
           "CARDS": [
             {
-              "TITLE": "Colors and images",
-              "CONTENT": "Colors and images of mind maps exploit brain characteristics to express concepts in a more effective and lasting way."
+              "TITLE": "Colori e immagini",
+              "CONTENT": "I colori e le immagini delle mappe mentali sfruttano le caratteristiche del cervello per esprimere i concetti in modo più efficace e duraturo."
             },
             {
-              "TITLE": "Radial tree",
-              "CONTENT": "Hierarchical structure of mind maps exploits the radial geometry, which is divided on several levels and facilitates concept expressiveness."
+              "TITLE": "Albero raggiale",
+              "CONTENT": "La struttura gerarchica delle mappe mentali sfrutta la geometria radiale, che si suddivide su più livelli e facilita l'espressività dei concetti."
             },
             {
-              "TITLE": "Uses",
-              "CONTENT": "Mind maps are particularly effective to learn or organize ideas, for example in educational or business contexts."
+              "TITLE": "Usi",
+              "CONTENT": "Le mappe mentali sono particolarmente efficaci per apprendere o organizzare idee, ad esempio in contesti educativi o aziendali."
             }
           ]
         }
@@ -146,17 +146,17 @@
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "Colori automatici per i rami",
       "CENTER_ON_RESIZING": "Centra al ridimensionamento",
-      "FONT_MIN_SIZE": "Minimal font size",
-      "FONT_MAX_SIZE": "Maximal font size",
-      "FONT_INCREMENT": "Font size step",
+      "FONT_MIN_SIZE": "Dimensione minima del font",
+      "FONT_MAX_SIZE": "Dimensione massima del font",
+      "FONT_INCREMENT": "Passo dimensione del font",
       "GENERAL": "Generali",
       "MAIN": "Principali",
-      "MAP_LIST": "List of created maps",
+      "MAP_LIST": "Elenco delle mappe create",
       "MAP_OPTIONS": "Opzioni mappa",
       "ROOT_NODE_NAME": "Nome nodo radice",
       "NODE_NAME": "Nome nodo",
       "TITLE": "Impostazioni",
-      "TTL": "Last known date of deletion"
+      "TTL": "Ultima data di eliminazione conosciuta"
     },
     "SHORTCUTS": {
       "TITLE": "Scorciatoie da tastiera"
@@ -167,8 +167,7 @@
     "INITIAL_INFORMATION": "TeamMapper è pronto ☺",
     "WELCOME_MESSAGE": "Benvenuti nell'app TeamMapper ☺",
     "MAP_DELETION_CONFIRM": "Sei sicuro di voler cancellare la mappa?",
-    "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images.",
-    "DELETE_WARNING": "Attention: Demo instance! Mind maps are deleted automatically when inactive after a couple of days."
+    "JSON_FILE_SIZE_TOO_LARGE": "Il file supera 1 MB di dimensione e potrebbe causare problemi durante l'importazione. Riduci la dimensione del file, ad esempio rimuovendo le immagini."
   },
   "TOASTS": {
     "SUCCESSFULLY_DUPLICATED": "Mappa mentale duplicata con successo!",
@@ -193,10 +192,8 @@
     "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!"
   },
   "GENERAL": {
-    "REPOSITORY": "Source Code",
+    "REPOSITORY": "Codice sorgente",
     "APPLICATION": "Applicazione",
-    "DATAPROTECTION": "Privacy",
-    "LEGAL": "Legal Disclosure",
     "CREATE": "Provala",
     "DISMISS": "Chiudi",
     "SAVED_MAPS": "Mappe salvate",
@@ -218,8 +215,8 @@
     "NODES": "Nodi",
     "SAVED": "Salvato",
     "NOT_SAVED": "Non salvato",
-    "FONT_MIN_SIZE": "Minimal font size",
-    "FONT_MAX_SIZE": "Maximal font size",
-    "FONT_INCREMENT": "Font size step"
+    "FONT_MIN_SIZE": "Dimensione minima del font",
+    "FONT_MAX_SIZE": "Dimensione massima del font",
+    "FONT_INCREMENT": "Passo dimensione del font"
   }
 }
