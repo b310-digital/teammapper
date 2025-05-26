@@ -94,7 +94,7 @@
     "@types/jest": "29.5.14",
     "@types/mousetrap": "1.6.15",
     "@types/node": "^22.15.19",
-    "@typescript-eslint/eslint-plugin": "^8.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.4.0",
     "angular-eslint": "^19.2.1",
     "eslint": "^9.21.0",
