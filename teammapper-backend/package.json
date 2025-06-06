@@ -100,7 +100,7 @@
     "typescript-eslint": "^8.32.1"
   },
   "overrides": {
-    "multer": "2.0.0"
+    "multer": "2.0.1"
   },
   "jest": {
     "moduleFileExtensions": [
