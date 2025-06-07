@@ -1,4 +1,11 @@
 <mat-toolbar>
+  <button
+  (click)="mermaid()"
+  [title]="'TOOLTIPS.MERMAID' | translate"
+  color="primary"
+  mat-icon-button>
+  <mat-icon>share</mat-icon>
+</button>
   <a routerLink="/map" target="_blank">
     <button
       [title]="'TOOLTIPS.NEW_MAP' | translate"

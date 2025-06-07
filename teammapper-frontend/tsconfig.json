@@ -6,6 +6,7 @@
       "sourceMap": true,
       "declaration": false,
       "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
       "module": "esnext",
       "moduleResolution": "node",
       "emitDecoratorMetadata": true,
