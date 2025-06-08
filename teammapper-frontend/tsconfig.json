@@ -23,7 +23,7 @@
       ],
       "paths": {
         "@mmp/*": [
-          "lib/mmp/src/*"
+          "mmp/src/*"
         ],
       },
       "useDefineForClassFields": false
