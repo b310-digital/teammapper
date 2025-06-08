@@ -23,8 +23,9 @@
       ],
       "paths": {
         "@mmp/*": [
-          "mmp/src/*"
-        ]
+          "lib/mmp/src/*"
+        ],
+        "@mermaid-mindmap-parser": ["lib/mermaid-mindmap-parser"]
       },
       "useDefineForClassFields": false
     },

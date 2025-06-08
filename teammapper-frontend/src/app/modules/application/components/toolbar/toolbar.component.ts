@@ -2,7 +2,6 @@ import { Component, Input } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
-import { ImportService } from 'src/app/core/services/import/import.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { environment } from 'src/environments/environment';
 
@@ -20,7 +19,6 @@ export class ToolbarComponent {
   constructor(
     private translationService: TranslateService,
     public mmpService: MmpService,
-    private importService: ImportService,
     private dialogService: DialogService
   ) {}
 
@@ -59,7 +57,7 @@ export class ToolbarComponent {
   }
 
   public async mermaid() {
-    this.importService.importFromMermaid('');
+    this.dialogService.openImportMermaidDialog();
   }
 
   public async pictogram() {
