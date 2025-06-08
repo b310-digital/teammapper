@@ -25,12 +25,12 @@
         "@mmp/*": [
           "lib/mmp/src/*"
         ],
-        "@mermaid-mindmap-parser": ["lib/mermaid-mindmap-parser"]
       },
       "useDefineForClassFields": false
     },
     "exclude": [
       "node_modules",
-      "dist"
+      "dist",
+      "packages/mermaid-mindmap-parser/**/*"
     ],
 }

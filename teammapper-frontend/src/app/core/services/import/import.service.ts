@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { v4 as uuidv4 } from 'uuid';
+import { ToastrService } from 'ngx-toastr';
+import { UtilsService } from '../utils/utils.service';
 import {
   MermaidMindmapNode,
   mermaidMindmapParser,
-} from '@mermaid-mindmap-parser';
-import { ToastrService } from 'ngx-toastr';
-import { UtilsService } from '../utils/utils.service';
+} from 'packages/mermaid-mindmap-parser';
 
 @Injectable({
   providedIn: 'root',

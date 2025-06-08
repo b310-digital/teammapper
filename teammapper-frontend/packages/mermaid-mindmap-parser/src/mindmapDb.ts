@@ -1,25 +1,6 @@
 import DOMPurify from 'dompurify';
+import { D3Element, MindmapNode } from './types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type D3Element = any;
-
-// https://github.com/mermaid-js/mermaid/blob/develop/packages/mermaid/src/diagrams/mindmap/mindmapTypes.ts
-export interface MindmapNode {
-  id: number;
-  nodeId: string;
-  level: number;
-  descr: string;
-  type: number;
-  children: MindmapNode[];
-  width: number;
-  padding: number;
-  section?: number;
-  height?: number;
-  class?: string;
-  icon?: string;
-  x?: number;
-  y?: number;
-}
 
 export const sanitizeText = (text: string): string => {
   return DOMPurify.sanitize(text, {
