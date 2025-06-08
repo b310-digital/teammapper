@@ -5,12 +5,18 @@ import {
   MermaidMindmapNode,
   mermaidMindmapParser,
 } from '@mermaid-mindmap-parser';
+import { ToastrService } from 'ngx-toastr';
+import { UtilsService } from '../utils/utils.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ImportService {
-  constructor(public mmpService: MmpService) {}
+  constructor(
+    public mmpService: MmpService,
+    public toastrService: ToastrService,
+    public utilsService: UtilsService
+  ) {}
 
   async importFromMermaid(input: string) {
     console.log(input);
@@ -19,11 +25,17 @@ export class ImportService {
     this.mmpService.importMap(
       JSON.stringify(this.convertJsonStructure(parsedMermaidMindmap))
     );
+    const msg = await this.utilsService.translate('TOASTS.MAP_IMPORT_SUCCESS');
+    this.toastrService.success(msg);
   }
 
   convertJsonStructure(inputData: MermaidMindmapNode) {
     const result = [];
-    const processNode = (node, parentId = '', isRoot = true) => {
+    const processNode = (
+      node: MermaidMindmapNode,
+      parentId = '',
+      isRoot = true
+    ) => {
       const nodeId = uuidv4();
 
       // Create the converted node
@@ -45,7 +57,7 @@ export class ImportService {
           background: '#f5f5f5',
           branch: isRoot ? '' : '#FFC107',
         },
-        k: isRoot ? 1 : Math.random() * 10,
+        k: 1,
         link: { href: '' },
         image: { src: '', size: isRoot ? 70 : 60 },
       };

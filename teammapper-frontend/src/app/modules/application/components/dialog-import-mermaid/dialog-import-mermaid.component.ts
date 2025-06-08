@@ -10,6 +10,7 @@ import { ImportService } from 'src/app/core/services/import/import.service';
   standalone: false,
 })
 export class DialogImportMermaidComponent {
+  public mermaidInput = '';
   constructor(
     private importService: ImportService,
     private dialogRef: MatDialogRef<DialogImportMermaidComponent>,
@@ -17,9 +18,6 @@ export class DialogImportMermaidComponent {
   ) {}
 
   async import() {
-    const example = `mindmap
-      ROOT
-    `;
-    this.importService.importFromMermaid(example);
+    this.importService.importFromMermaid(this.mermaidInput);
   }
 }

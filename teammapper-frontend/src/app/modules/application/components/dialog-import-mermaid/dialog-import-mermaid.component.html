@@ -1,16 +1,24 @@
+<h2 mat-dialog-title>{{ 'MODALS.IMPORT_MERMAID.TITLE' | translate }}</h2>
 <mat-dialog-content>
   <div class="import-mermaid-modal-section">
-    <img src="./assets/icons/teammapper.svg" width="150" alt="Teammapper Logo" />
-    {{ 'MODALS.IMPORT_MERMAID.TITLE' | translate }}
+    {{ 'MODALS.IMPORT_MERMAID.CONTENT' | translate }}
   </div>
-  <br />
+  <mat-form-field class="max-width">
+    <textarea matInput
+              required
+              [(ngModel)]="mermaidInput"
+              cdkTextareaAutosize
+              #autosize="cdkTextareaAutosize"
+              cdkAutosizeMinRows="5"
+              cdkAutosizeMaxRows="20"></textarea>
+  </mat-form-field>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-raised-button [mat-dialog-close]="true">
     {{ 'MODALS.GENERAL.BUTTON_CLOSE' | translate }}
   </button>
   <div>
-    <button mat-raised-button (click)="import()" color="warn" class="ml-5">
+    <button mat-raised-button (click)="import()" class="ml-5">
       {{ 'MODALS.IMPORT_MERMAID.IMPORT' | translate }}
     </button>
   </div>
