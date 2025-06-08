@@ -6,6 +6,7 @@ import { UtilsService } from '../utils/utils.service';
 import {
   MermaidMindmapNode,
   mermaidMindmapParser,
+  mindmapDb,
 } from 'packages/mermaid-mindmap-parser';
 
 @Injectable({
@@ -16,17 +17,29 @@ export class ImportService {
     public mmpService: MmpService,
     public toastrService: ToastrService,
     public utilsService: UtilsService
-  ) {}
+  ) {
+    mermaidMindmapParser.yy = mindmapDb;
+  }
 
   async importFromMermaid(input: string) {
-    console.log(input);
-    const parsedMermaidMindmap = mermaidMindmapParser.parse(input).getMindmap();
-    console.log(parsedMermaidMindmap);
-    this.mmpService.importMap(
-      JSON.stringify(this.convertJsonStructure(parsedMermaidMindmap))
-    );
-    const msg = await this.utilsService.translate('TOASTS.MAP_IMPORT_SUCCESS');
-    this.toastrService.success(msg);
+    try {
+      const parseResult = mermaidMindmapParser.parse(input);
+      const parsedMermaidMindmap = parseResult.getMindmap();
+      this.mmpService.importMap(
+        JSON.stringify(this.convertJsonStructure(parsedMermaidMindmap))
+      );
+      mindmapDb.clear();
+      const msg = await this.utilsService.translate(
+        'TOASTS.MAP_IMPORT_SUCCESS'
+      );
+      this.toastrService.success(msg);
+    } catch (_error) {
+      const msg = await this.utilsService.translate(
+        'TOASTS.ERRORS.IMPORT_ERROR'
+      );
+      this.toastrService.error(msg);
+      return;
+    }
   }
 
   convertJsonStructure(inputData: MermaidMindmapNode) {
