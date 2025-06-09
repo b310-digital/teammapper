@@ -49,7 +49,7 @@
     "@types/uuid": "^10.0.0",
     "cache-manager": "^6.4.0",
     "class-validator": "^0.14.1",
-    "dotenv": "16.4.7",
+    "dotenv": "16.5.0",
     "http-proxy-middleware": "3.0.5",
     "pg": "^8.16.0",
     "pq": "^0.0.3",
