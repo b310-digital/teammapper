@@ -1,7 +1,6 @@
 import DOMPurify from 'dompurify';
 import { D3Element, MindmapNode } from './types';
 
-
 export const sanitizeText = (text: string): string => {
   return DOMPurify.sanitize(text, {
     FORBID_TAGS: ['style'],
