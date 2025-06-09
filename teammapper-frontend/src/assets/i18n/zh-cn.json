@@ -11,6 +11,7 @@
   },
   "TOOLTIPS": {
     "IMPORT_MAP": "导入思维导图",
+    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
     "EXPORT_MAP": "导出思维导图",
     "ESC": "关闭",
     "FULLSCREEN": "全屏",
@@ -79,6 +80,11 @@
       "TITLE": "连接丢失",
       "CONTENT": "与服务器的连接已丢失。正在重试...",
       "BUTTON_RECONNECT": "重新连接"
+    },
+    "IMPORT_MERMAID": {
+      "TITLE": "Mermaid Mindmap Import",
+      "CONTENT": "Import a mindmap based on Mermaid syntax.",
+      "IMPORT": "Import"
     },
     "PICTOGRAMS": {
       "TITLE": "添加图标",
@@ -196,6 +202,7 @@
     "CREATE": "创建思维导图",
     "DISMISS": "解除",
     "SAVED_MAPS": "已保存的思维导图",
+    "MERMAID": "Mermaid",
     "JSON": "文件 (.json)",
     "PNG": "图片 (.png)",
     "SVG": "图片 (.svg)",

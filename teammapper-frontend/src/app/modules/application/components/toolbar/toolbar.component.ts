@@ -56,6 +56,10 @@ export class ToolbarComponent {
     this.dialogService.openShareDialog();
   }
 
+  public async mermaid() {
+    this.dialogService.openImportMermaidDialog();
+  }
+
   public async pictogram() {
     this.dialogService.openPictogramDialog();
   }

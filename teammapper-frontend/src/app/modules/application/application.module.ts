@@ -19,6 +19,7 @@ import { DialogPictogramsComponent } from './components/dialog-pictograms/dialog
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatGridListModule } from '@angular/material/grid-list';
+import { DialogImportMermaidComponent } from './components/dialog-import-mermaid/dialog-import-mermaid.component';
 
 @NgModule({
   imports: [
@@ -42,6 +43,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
     ToolbarComponent,
     DialogConnectionInfoComponent,
     DialogShareComponent,
+    DialogImportMermaidComponent,
     DialogPictogramsComponent,
     DialogAboutComponent,
   ],

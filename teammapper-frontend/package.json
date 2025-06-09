@@ -31,8 +31,9 @@
     "start": "ng serve --host $BINDING",
     "test": "ng test",
     "tsc": "npx tsc -p ./tsconfig.json",
-    "build:dev": "ng build",
-    "build:prod": "ng build --configuration production",
+    "build:packages": "npm install --workspace=packages && npm run build --workspace=packages",
+    "build:dev": "npm run build:packages && ng build",
+    "build:prod": "npm run build:packages && ng build --configuration production",
     "lint": "ng lint",
     "doc": "compodoc -p src/tsconfig.app.json",
     "deploy": "ng deploy"
@@ -58,6 +59,7 @@
     "@material-design-icons/font": "^0.14.13",
     "@ngx-translate/core": "^16.0.3",
     "@ngx-translate/http-loader": "^16.0.1",
+    "@teammapper/mermaid-mindmap-parser": "^0.0.1",
     "@types/uuid": "^10.0.0",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
@@ -68,11 +70,11 @@
     "ngx-color-picker": "^17.0.0",
     "ngx-toastr": "^19.0.0",
     "qr-code-styling": "1.9.1",
-    "rxjs": "~7.8.1",
+    "rxjs": "~7.8.2",
     "socket.io-client": "~4.8.1",
     "tslib": "^2.8.1",
     "uuid": "11.1.0",
-    "zone.js": "^0.15.0"
+    "zone.js": "^0.15.1"
   },
   "devDependencies": {
     "@angular-builders/jest": "^19.0.0",
@@ -94,10 +96,10 @@
     "@types/jest": "29.5.14",
     "@types/mousetrap": "1.6.15",
     "@types/node": "^22.15.19",
-    "@typescript-eslint/eslint-plugin": "^8.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.4.0",
     "angular-eslint": "^19.2.1",
-    "eslint": "^9.21.0",
+    "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-jest": "^28.10.0",
     "eslint-plugin-prettier": "^5.2.3",
@@ -112,11 +114,14 @@
     "typescript-eslint": "^8.26.0"
   },
   "optionalDependencies": {
-    "@nx/nx-darwin-arm64": "20.4.6",
+    "@nx/nx-darwin-arm64": "21.1.2",
     "@nx/nx-darwin-x64": "20.0.3",
     "@nx/nx-linux-x64-gnu": "19.8.2",
     "@nx/nx-win32-x64-msvc": "19.8.4"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "jest": {
     "preset": "jest-preset-angular",
     "testPathIgnorePatterns": [

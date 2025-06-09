@@ -61,6 +61,8 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - run: npm --prefix teammapper-frontend run build:packages
+
             - run: npm --prefix teammapper-frontend ci
 
             - run: npm --prefix teammapper-frontend run tsc
@@ -116,5 +118,6 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - run: npm --prefix teammapper-frontend run build:packages
             - run: npm --prefix teammapper-frontend ci
             - run: npm --prefix teammapper-frontend run test

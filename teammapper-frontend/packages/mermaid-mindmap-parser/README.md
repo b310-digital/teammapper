@@ -1,0 +1,3 @@
+# Mermaid Mindmap Parser
+
+This code is derived from the mermaid project, specifically focusing on the mindmap parser. To avoid the overhead of including the entire mermaid project as a dependency, only the essential components related to mindmapping have been extracted. For more information on the mermaid project, please visit the official GitHub [repository](https://github.com/mermaid-js/mermaid). It's worth noting that while a parser package for mermaid is available, it currently does not support mindmaps. You can explore the parser package further [here](https://github.com/mermaid-js/mermaid/tree/develop/packages/parser).

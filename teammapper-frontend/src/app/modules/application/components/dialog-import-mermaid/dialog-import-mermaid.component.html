@@ -1,0 +1,29 @@
+<h2 mat-dialog-title>{{ 'MODALS.IMPORT_MERMAID.TITLE' | translate }}</h2>
+<mat-dialog-content>
+  <mat-form-field class="max-width">
+    <textarea matInput
+      required
+      [(ngModel)]="mermaidInput"
+      cdkTextareaAutosize
+      #autosize="cdkTextareaAutosize"
+      cdkAutosizeMinRows="5"
+      placeholder="mindmap
+        ...
+      "
+      cdkAutosizeMaxRows="20">
+    </textarea>
+  </mat-form-field>
+  <div class="import-mermaid-modal-section">
+    {{ 'MODALS.IMPORT_MERMAID.CONTENT' | translate }}
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button [mat-dialog-close]="true">
+    {{ 'MODALS.GENERAL.BUTTON_CLOSE' | translate }}
+  </button>
+  <div>
+    <button mat-raised-button (click)="import()" class="ml-5">
+      {{ 'MODALS.IMPORT_MERMAID.IMPORT' | translate }}
+    </button>
+  </div>
+</mat-dialog-actions>
