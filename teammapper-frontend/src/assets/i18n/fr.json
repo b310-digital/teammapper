@@ -11,6 +11,7 @@
   },
   "TOOLTIPS": {
     "IMPORT_MAP": "Imports the map",
+    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
     "EXPORT_MAP": "Exports the map",
     "ESC": "Ferme la fenêtre de dialogue",
     "FULLSCREEN": "Mettre en plein écran",
@@ -79,6 +80,11 @@
       "TITLE": "Connection lost",
       "CONTENT": "Connection to server was lost. Retrying...",
       "BUTTON_RECONNECT": "Reconnect"
+    },
+    "IMPORT_MERMAID": {
+      "TITLE": "Mermaid Mindmap Import",
+      "CONTENT": "Import a mindmap based on Mermaid syntax.",
+      "IMPORT": "Import"
     },
     "PICTOGRAMS": {
       "TITLE": "Add a pictogram",
@@ -196,6 +202,7 @@
     "CREATE": "Create mind map",
     "DISMISS": "Rejeter",
     "SAVED_MAPS": "Saved maps",
+    "MERMAID": "Mermaid",
     "JSON": "File (.json)",
     "PNG": "Image (.png)",
     "SVG": "Image (.svg)",

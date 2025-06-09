@@ -11,6 +11,7 @@
   },
   "TOOLTIPS": {
     "IMPORT_MAP": "Mindmap importieren",
+    "IMPORT_MERMAID": "Mermaid Mindmap importieren",
     "EXPORT_MAP": "Mindmap exportieren",
     "ESC": "Dialog schließen",
     "FULLSCREEN": "Vollbild",
@@ -79,6 +80,11 @@
       "TITLE": "Verbindung verloren",
       "CONTENT": "Leider ist die Verbindung zum Server verloren gegangen. Versuche erneut zu verbinden...",
       "BUTTON_RECONNECT": "Neu verbinden"
+    },
+    "IMPORT_MERMAID": {
+      "TITLE": "Mermaid Mindmap Import",
+      "CONTENT": "Importiere eine Mindmap auf Basis von Mermaid. Mermaid ist eine Syntax zum Beschreiben von Diagrammen und kann bspw. mit generativer KI einfach erzeugt werden.",
+      "IMPORT": "Importieren"
     },
     "PICTOGRAMS": {
       "TITLE": "Piktogramm einfügen",
@@ -197,6 +203,7 @@
     "REPOSITORY": "Source Code",
     "DISMISS": "Verwerfen",
     "SAVED_MAPS": "Gespeicherte Mindmaps",
+    "MERMAID": "Mermaid",
     "JSON": "Datei (.json)",
     "PNG": "Bild (.png)",
     "SVG": "Bild (.svg)",

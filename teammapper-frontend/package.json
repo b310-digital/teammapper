@@ -31,8 +31,9 @@
     "start": "ng serve --host $BINDING",
     "test": "ng test",
     "tsc": "npx tsc -p ./tsconfig.json",
-    "build:dev": "ng build",
-    "build:prod": "ng build --configuration production",
+    "build:packages": "npm install --workspace=packages && npm run build --workspace=packages",
+    "build:dev": "npm run build:packages && ng build",
+    "build:prod": "npm run build:packages && ng build --configuration production",
     "lint": "ng lint",
     "doc": "compodoc -p src/tsconfig.app.json",
     "deploy": "ng deploy"
@@ -58,6 +59,7 @@
     "@material-design-icons/font": "^0.14.13",
     "@ngx-translate/core": "^16.0.3",
     "@ngx-translate/http-loader": "^16.0.1",
+    "@teammapper/mermaid-mindmap-parser": "^0.0.1",
     "@types/uuid": "^10.0.0",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
@@ -117,6 +119,9 @@
     "@nx/nx-linux-x64-gnu": "19.8.2",
     "@nx/nx-win32-x64-msvc": "19.8.4"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "jest": {
     "preset": "jest-preset-angular",
     "testPathIgnorePatterns": [
