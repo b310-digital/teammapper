@@ -7,7 +7,7 @@ import {
   MermaidMindmapNode,
   mermaidMindmapParser,
   mindmapDb,
-} from 'packages/mermaid-mindmap-parser';
+} from '@teammapper/mermaid-mindmap-parser';
 
 @Injectable({
   providedIn: 'root',
