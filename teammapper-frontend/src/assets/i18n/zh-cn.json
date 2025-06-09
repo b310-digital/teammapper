@@ -11,6 +11,7 @@
   },
   "TOOLTIPS": {
     "IMPORT_MAP": "导入思维导图",
+    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
     "EXPORT_MAP": "导出思维导图",
     "ESC": "关闭",
     "FULLSCREEN": "全屏",

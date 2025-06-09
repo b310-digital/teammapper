@@ -11,6 +11,7 @@
   },
   "TOOLTIPS": {
     "IMPORT_MAP": "Mindmap importieren",
+    "IMPORT_MERMAID": "Mermaid Mindmap importieren",
     "EXPORT_MAP": "Mindmap exportieren",
     "ESC": "Dialog schließen",
     "FULLSCREEN": "Vollbild",

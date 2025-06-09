@@ -11,6 +11,7 @@
   },
   "TOOLTIPS": {
     "IMPORT_MAP": "Importa mappa",
+    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
     "EXPORT_MAP": "Esporta mappa",
     "ESC": "Chiudi la finestra di dialogo",
     "FULLSCREEN": "Imposta lo schermo intero",

@@ -9,6 +9,7 @@
   </a>
 
   <button
+    id="menu-import"
     [matMenuTriggerFor]="import_map"
     [title]="'TOOLTIPS.IMPORT_MAP' | translate"
     color="primary"
@@ -36,8 +37,9 @@
       #upload />
 
     <button
+      id="mermaid-upload"
       (click)="mermaid()"
-      [title]="'TOOLTIPS.MERMAID' | translate"
+      [title]="'TOOLTIPS.IMPORT_MERMAID' | translate"
       color="primary"
       mat-menu-item>
       <mat-icon>edit_square</mat-icon>

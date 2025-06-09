@@ -11,6 +11,7 @@
   },
   "TOOLTIPS": {
     "IMPORT_MAP": "Imports the map",
+    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
     "EXPORT_MAP": "Exports the map",
     "ESC": "關閉對話窗口",
     "FULLSCREEN": "將應用程式全螢幕",
