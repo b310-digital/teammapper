@@ -14,6 +14,7 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 -   **Customization**: Add images, pictograms*, colors, font properties and links to nodes
 -   **Collaboration**: Share your mindmap with friends and collegues, using either a view-only or modification invite!
 -   **Interoperability**: Import and export functionality (JSON, SVG, PDF, PNG...)
+-   **NEW: AI Ready**: Import Mermaid styled mindmaps which can be created with Generative AI
 -   **Shareability**: Use a QR Code or URL to share your maps
 -   **GDPR Compliancy**: By default, mindmaps are deleted after 30 days
 -   **Usability**: Redo / Undo, many Shortcuts
