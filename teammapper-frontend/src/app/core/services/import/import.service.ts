@@ -8,6 +8,7 @@ import {
   mermaidMindmapParser,
   mindmapDb,
 } from '@teammapper/mermaid-mindmap-parser';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +17,8 @@ export class ImportService {
   constructor(
     public mmpService: MmpService,
     public toastrService: ToastrService,
-    public utilsService: UtilsService
+    public utilsService: UtilsService,
+    public settingsService: SettingsService
   ) {
     mermaidMindmapParser.yy = mindmapDb;
   }
@@ -26,7 +28,7 @@ export class ImportService {
       const parseResult = mermaidMindmapParser.parse(input);
       const parsedMermaidMindmap = parseResult.getMindmap();
       this.mmpService.importMap(
-        JSON.stringify(this.convertJsonStructure(parsedMermaidMindmap))
+        JSON.stringify(await this.convertJsonStructure(parsedMermaidMindmap))
       );
       mindmapDb.clear();
       const msg = await this.utilsService.translate(
@@ -42,7 +44,7 @@ export class ImportService {
     }
   }
 
-  convertJsonStructure(inputData: MermaidMindmapNode) {
+  private convertJsonStructure(inputData: MermaidMindmapNode) {
     const result = [];
     const processNode = (
       node: MermaidMindmapNode,
@@ -50,36 +52,48 @@ export class ImportService {
       isRoot = true
     ) => {
       const nodeId = uuidv4();
+      const defaultSettings = this.settingsService.getCachedSettings();
 
-      // Create the converted node
       const convertedNode = {
         id: nodeId,
         parent: parentId,
-        name: node.descr || node.nodeId || 'Unnamed',
+        name:
+          node.descr ||
+          node.nodeId ||
+          defaultSettings.mapOptions.defaultNode.name,
         locked: isRoot ? false : true,
         isRoot: isRoot,
         detached: false,
         hidden: false,
         font: {
-          style: 'normal',
-          size: isRoot ? 26 : 22,
-          weight: 'normal',
+          style: defaultSettings.mapOptions.defaultNode.font.style,
+          size: isRoot
+            ? defaultSettings.mapOptions.rootNode.font.size
+            : defaultSettings.mapOptions.defaultNode.font.size,
+          weight: defaultSettings.mapOptions.defaultNode.font.weight,
         },
         colors: {
-          name: '#666666',
-          background: '#f5f5f5',
-          branch: isRoot ? '' : '#FFC107',
+          name: defaultSettings.mapOptions.defaultNode.colors.name,
+          background: defaultSettings.mapOptions.defaultNode.colors.background,
+          branch: isRoot
+            ? ''
+            : defaultSettings.mapOptions.defaultNode.colors.branch,
         },
         k: 1,
         link: { href: '' },
-        image: { src: '', size: isRoot ? 70 : 60 },
+        image: {
+          src: '',
+          size: isRoot
+            ? defaultSettings.mapOptions.rootNode.image.size
+            : defaultSettings.mapOptions.defaultNode.image.size,
+        },
       };
 
       result.push(convertedNode);
 
       // Process children recursively
       if (node.children && node.children.length > 0) {
-        node.children.forEach(child => {
+        node.children.forEach(async child => {
           processNode(child, nodeId, false);
         });
       }
