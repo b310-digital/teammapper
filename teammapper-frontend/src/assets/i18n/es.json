@@ -80,6 +80,11 @@
       "CONTENT": "Connection to server was lost. Retrying...",
       "BUTTON_RECONNECT": "Reconnect"
     },
+    "IMPORT_MERMAID": {
+      "TITLE": "Mermaid Mindmap Import",
+      "CONTENT": "Import a mindmap based on Mermaid syntax.",
+      "IMPORT": "Import"
+    },
     "PICTOGRAMS": {
       "TITLE": "Add a pictogram",
       "BUTTON_SEARCH": "Search",
@@ -197,6 +202,7 @@
     "GENERAL": "General",
     "DISMISS": "Desestimar",
     "SAVED_MAPS": "Saved maps",
+    "MERMAID": "Mermaid",
     "JSON": "File (.json)",
     "PNG": "Imagen (.png)",
     "SVG": "Imagen (.svg)",
