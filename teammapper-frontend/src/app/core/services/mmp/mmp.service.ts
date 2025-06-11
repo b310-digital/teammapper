@@ -183,7 +183,7 @@ export class MmpService implements OnDestroy {
    */
   public on(event: string): Observable<any> {
     return new Observable(observer => {
-      this.currentMap.instance.on(event, (...args) => {
+      this.currentMap.instance.on(event, args => {
         observer.next(args);
       });
     });
