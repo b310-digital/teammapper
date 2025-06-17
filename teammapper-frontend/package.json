@@ -114,7 +114,7 @@
     "typescript-eslint": "^8.26.0"
   },
   "optionalDependencies": {
-    "@nx/nx-darwin-arm64": "21.1.2",
+    "@nx/nx-darwin-arm64": "21.2.0",
     "@nx/nx-darwin-x64": "20.0.3",
     "@nx/nx-linux-x64-gnu": "19.8.2",
     "@nx/nx-win32-x64-msvc": "19.8.4"
