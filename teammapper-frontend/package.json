@@ -28,7 +28,7 @@
   "main": "app.js",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host $BINDING",
+    "start": "ng serve --host $BINDING --disable-host-check --ssl false",
     "test": "ng test",
     "tsc": "npx tsc -p ./tsconfig.json",
     "build:packages": "npm install --workspace=packages && npm run build --workspace=packages",
@@ -111,7 +111,8 @@
     "prettier": "^3.3.3",
     "ts-node": "~10.9.2",
     "typescript": "~5.7.3",
-    "typescript-eslint": "^8.26.0"
+    "typescript-eslint": "^8.26.0",
+    "@playwright/test": "^1.53.1"
   },
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "21.2.0",
