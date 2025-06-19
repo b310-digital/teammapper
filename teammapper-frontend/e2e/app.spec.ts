@@ -10,12 +10,12 @@ test.beforeEach(async ({ page }) => {
 
 test('creates a document and changes the location', async ({ browser }) => {
   const context = await browser.newContext({
-    cache: 'disabled',
-    ignoreHTTPSErrors: true,
-    extraHTTPHeaders: {
-      'upgrade-insecure-requests': '0',
-    },
-    args: ['--disable-web-security'],
+    //cache: 'disabled',
+    //ignoreHTTPSErrors: true,
+    // extraHTTPHeaders: {
+    //   'upgrade-insecure-requests': '0',
+    // },
+    //args: ['--disable-web-security'],
   });
 
   const page = await context.newPage();

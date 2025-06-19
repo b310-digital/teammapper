@@ -36,7 +36,9 @@ export default defineConfig({
     ...connectOptions,
   },
 
-  /* Configure projects for major browsers */
+  /* Configure projects for major browsers
+   * Chrome does not work as it always tried to forward to https
+   */
   projects: [
     {
       name: 'webkit',
