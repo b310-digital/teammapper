@@ -4,8 +4,14 @@ import { test, expect } from '@playwright/test';
  * Playwright e2e tests
  */
 
-test.beforeEach(async ({ page }) => {
-  page.on('console', msg => console.log(msg.text()));
+test.beforeEach(async ({ context }) => {
+  // Proxy requests to the app container instead of using localhost as its currently used for the dev environment
+  await context.route(/socket.io|api|arasaac/, route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    url.hostname = 'app';
+    route.continue({ url: url.toString() });
+  });
 });
 
 test('creates a map and changes the location', async ({ page }) => {

@@ -1,7 +1,7 @@
 name: Playwright Tests
 on:
   push:
-    branches: [main]
+    branches: [main, add-playwright-tests]
   pull_request:
     branches: [main]
 jobs:
@@ -16,11 +16,9 @@ jobs:
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright Browsers
-      run: npx playwright install chromium --with-deps
+      run: npx playwright install webkit --with-deps
     - name: Run Playwright tests
-      run: npx playwright test
-      env:
-        VITE_HOCUSPOCUS_SERVER_URL: "http://localhost:5173/backend"
+      run: npm run test:e2e
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:

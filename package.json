@@ -18,6 +18,7 @@
     "migrate:prod": "npm --prefix teammapper-backend run prod:typeorm:migrate",
     "start:prod": "npm --prefix teammapper-backend run start:prod",
     "build": "npm run prepare:prod && npm run build:prod && npm run migrate:prod",
-    "start": "npm run start:prod"
+    "start": "npm run start:prod",
+    "test:e2e": "cd teammapper-frontend && npx playwright test"
   }
 }
