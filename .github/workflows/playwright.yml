@@ -1,4 +1,6 @@
 name: Playwright Tests
+permissions:
+  contents: read
 on:
   push:
     branches: [main, add-playwright-tests]
@@ -36,6 +38,7 @@ jobs:
         POSTGRES_PASSWORD: postgres
         POSTGRES_DATABASE: teammapper-backend-dev
         POSTGRES_SSL: false
+        POSTGRES_QUERY_TIMEOUT: 100000
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
