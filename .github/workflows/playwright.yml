@@ -33,7 +33,7 @@ jobs:
     - name: Run Playwright tests
       run: npm run test:e2e
       env:
-        POSTGRES_HOST: postgres
+        POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
