@@ -1,0 +1,51 @@
+name: Playwright Tests
+permissions:
+  contents: read
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_DB: teammapper-backend-dev
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports: 
+          - 5432:5432
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+    - name: Install dependencies
+      run: npm run prepare:dev
+    - name: Install Playwright Browsers
+      run: cd teammapper-frontend && npx playwright install webkit --with-deps
+    - name: Run Playwright tests
+      run: npm run migrate:dev && npm run test:e2e
+      env:
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+        POSTGRES_DATABASE: teammapper-backend-dev
+        POSTGRES_SSL: false
+        POSTGRES_QUERY_TIMEOUT: 100000
+        POSTGRES_STATEMENT_TIMEOUT: 100000
+        BINDING: localhost
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright
+        path: playwright
+        retention-days: 7

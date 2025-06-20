@@ -12,12 +12,15 @@
   "scripts": {
     "build:prod": "npm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && npm run build:backend:prod",
     "prepare:prod": "npm --prefix teammapper-backend ci && npm --prefix teammapper-frontend ci",
+    "prepare:dev": "npm --prefix teammapper-backend i && npm --prefix teammapper-frontend run build:packages && npm --prefix teammapper-frontend i",
     "build:backend:prod": "npm --prefix teammapper-backend run build",
     "build:frontend:prod": "GENERATE_SOURCEMAP=false npm --prefix teammapper-frontend run build:prod",
     "clear": "rm teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist",
+    "migrate:dev": "npm --prefix teammapper-backend run dev:typeorm schema:sync",
     "migrate:prod": "npm --prefix teammapper-backend run prod:typeorm:migrate",
     "start:prod": "npm --prefix teammapper-backend run start:prod",
     "build": "npm run prepare:prod && npm run build:prod && npm run migrate:prod",
-    "start": "npm run start:prod"
+    "start": "npm run start:prod",
+    "test:e2e": "cd teammapper-frontend && npx playwright test"
   }
 }
