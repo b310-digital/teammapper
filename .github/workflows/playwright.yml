@@ -11,7 +11,7 @@ jobs:
         image: postgres
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
           POSTGRES_DB: teammapper-backend-dev
         options: >-
           --health-cmd pg_isready
@@ -32,12 +32,12 @@ jobs:
     - name: Install Playwright Browsers
       run: cd teammapper-frontend && npx playwright install webkit --with-deps
     - name: Run Playwright tests
-      run: npm run test:e2e
+      run: npm run migrate:dev && npm run test:e2e
       env:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
         POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
+        POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
         POSTGRES_DATABASE: teammapper-backend-dev
         POSTGRES_SSL: false
         POSTGRES_QUERY_TIMEOUT: 100000

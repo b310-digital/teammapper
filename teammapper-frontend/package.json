@@ -127,7 +127,8 @@
     "preset": "jest-preset-angular",
     "testPathIgnorePatterns": [
       "node_modules/",
-      "dist/"
+      "dist/",
+      "e2e"
     ],
     "moduleFileExtensions": [
       "js",

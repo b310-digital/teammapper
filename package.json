@@ -16,6 +16,7 @@
     "build:backend:prod": "npm --prefix teammapper-backend run build",
     "build:frontend:prod": "GENERATE_SOURCEMAP=false npm --prefix teammapper-frontend run build:prod",
     "clear": "rm teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist",
+    "migrate:dev": "npm --prefix teammapper-backend run dev:typeorm schema:sync",
     "migrate:prod": "npm --prefix teammapper-backend run prod:typeorm:migrate",
     "start:prod": "npm --prefix teammapper-backend run start:prod",
     "build": "npm run prepare:prod && npm run build:prod && npm run migrate:prod",
