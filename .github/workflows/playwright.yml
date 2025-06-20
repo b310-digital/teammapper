@@ -6,6 +6,16 @@ on:
     branches: [main]
 jobs:
   test:
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -19,6 +29,13 @@ jobs:
       run: npx playwright install webkit --with-deps
     - name: Run Playwright tests
       run: npm run test:e2e
+      env:
+        POSTGRES_HOST: postgres
+        POSTGRES_PORT: 5432
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DATABASE: teammapper-backend-dev
+        POSTGRES_SSL: false
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
