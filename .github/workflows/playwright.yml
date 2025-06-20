@@ -12,6 +12,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: teammapper-backend-dev
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -45,5 +46,5 @@ jobs:
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
-        path: playwright-report/Add commentMore actions
+        path: playwright-report
         retention-days: 30
