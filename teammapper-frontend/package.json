@@ -79,7 +79,7 @@
   "devDependencies": {
     "@angular-builders/jest": "^19.0.0",
     "@angular-devkit/architect": "0.1902.1",
-    "@angular-devkit/core": "19.2.1",
+    "@angular-devkit/core": "20.0.4",
     "@angular-devkit/schematics": "19.2.1",
     "@angular-eslint/builder": "19.2.1",
     "@angular-eslint/eslint-plugin": "19.2.1",
