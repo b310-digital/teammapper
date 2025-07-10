@@ -81,16 +81,16 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
 
 ### Development
 
--   Install and build local workspace packages required by the frontend
-
-    ```bash
-    npm --prefix teammapper-frontend run build:packages
-    ```
-
 -   Start up app necessary services
 
     ```bash
     docker compose up -d --build --force-recreate
+    ```
+
+-   Install and build local workspace packages required by the frontend
+
+    ```bash
+    docker compose exec app npm --prefix teammapper-frontend run build:packages
     ```
 
 -   Start frontend and backend at once
