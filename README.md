@@ -81,6 +81,12 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
 
 ### Development
 
+-   Install and build local workspace packages required by the frontend
+
+    ```bash
+    npm --prefix teammapper-frontend run build:packages
+    ```
+
 -   Start up app necessary services
 
     ```bash
