@@ -87,6 +87,12 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
     docker compose up -d --build --force-recreate
     ```
 
+-   Install and build local workspace packages required by the frontend
+
+    ```bash
+    docker compose exec app npm --prefix teammapper-frontend run build:packages
+    ```
+
 -   Start frontend and backend at once
 
     ```bash
