@@ -157,6 +157,7 @@ export interface Colors {
     name?: string
     background?: string
     branch: string
+    link?: string
 }
 
 export interface Font {

@@ -289,7 +289,7 @@ export default class Draw {
             domText.textContent = 'link'
             domText.classList.add('link-text')
             domText.classList.add('material-icons')
-            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.name))
+            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.link))
             domText.setAttribute('y', node.dimensions.height.toString())
             domText.setAttribute('x', '-10')
             node.dom.appendChild(domLink)

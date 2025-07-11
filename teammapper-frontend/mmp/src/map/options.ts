@@ -198,7 +198,8 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     colors: {
         name: '#787878',
         background: '#f9f9f9',
-        branch: '#577a96'
+        branch: '#577a96',
+        link: '#000000'
     },
     font: {
         size: 16,
@@ -227,7 +228,8 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     colors: {
         name: '#787878',
         background: '#f0f6f5',
-        branch: ''
+        branch: '',
+        link: '#000000'
     },
     font: {
         size: 20,
