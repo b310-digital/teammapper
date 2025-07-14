@@ -70,7 +70,8 @@
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
-    "FONT_DECREASE": "Decrease font"
+    "FONT_DECREASE": "Decrease font",
+    "SHOW_LINKTEXT": "Show the linktext instead of the link icon"
   },
   "MODALS": {
     "GENERAL": {
@@ -162,7 +163,8 @@
       "ROOT_NODE_NAME": "Root node name",
       "NODE_NAME": "Node name",
       "TITLE": "Settings",
-      "TTL": "Last known date of deletion"
+      "TTL": "Last known date of deletion",
+      "SHOW_LINKTEXT": "Show linktext"
     },
     "SHORTCUTS": {
       "TITLE": "Shortcuts"
@@ -220,6 +222,7 @@
     "MAP": "Map",
     "NODES": "Nodes",
     "SAVED": "Saved",
-    "NOT_SAVED": "Not saved"
+    "NOT_SAVED": "Not saved",
+    "LINKS": "Links"
   }
 }

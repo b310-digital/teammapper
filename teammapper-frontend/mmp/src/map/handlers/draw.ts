@@ -283,17 +283,46 @@ export default class Draw {
     public setLink(node: Node) {
         let domLink = node.getLinkDOM()
 
+        const showLinktext = this.map.options.showLinktext
+
         if (!domLink) {
             domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
             const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
             domText.textContent = 'link'
             domText.classList.add('link-text')
-            domText.classList.add('material-icons')
+
+            // Set text or icon based on option
+            if (showLinktext) {
+            domText.textContent = node.link.href;
+            domText.classList.remove('material-icons');
+
+            domText.style.setProperty('text-decoration', 'underline');
+            domText.style.setProperty('font-style', 'italic');
+            } else {
+            domText.textContent = 'link'; // material icon content
+            domText.classList.add('material-icons');
+            }
+
             domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.link))
             domText.setAttribute('y', node.dimensions.height.toString())
-            domText.setAttribute('x', '-10')
+            domText.setAttribute('text-anchor', 'middle');
             node.dom.appendChild(domLink)
             domLink.appendChild(domText)
+        } else {
+            // Update text/icon if link DOM already exists
+            const domText = domLink.querySelector('text');
+            if (domText) {
+                if (showLinktext) {
+                    domText.textContent = node.link.href;
+                    domText.classList.remove('material-icons');
+                    domText.style.setProperty('text-decoration', 'underline');
+                    domText.style.setProperty('font-style', 'italic');
+                } else {
+                    domText.textContent = 'link';
+                    domText.classList.add('material-icons');
+                }
+                domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.link));
+            }
         }
 
         if (DOMPurify.sanitize(node.link.href) !== '') {

@@ -70,7 +70,8 @@
     "FONT_MAX_SIZE": "Maximale Schriftgröße",
     "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
     "FONT_INCREASE": "Schrift vergrößern",
-    "FONT_DECREASE": "Schrift verkleinern"
+    "FONT_DECREASE": "Schrift verkleinern",
+    "SHOW_LINKTEXT": "Linktext statt icon anzeigen"
   },
   "MODALS": {
     "GENERAL": {
@@ -162,7 +163,8 @@
       "NODE_NAME": "Bezeichnung von Knoten",
       "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
       "TITLE": "Einstellungen",
-      "TTL": "Letztes bekannte Datum der Löschung"
+      "TTL": "Letztes bekannte Datum der Löschung",
+      "SHOW_LINKTEXT": "Linktext anzeigen"
     },
     "SHORTCUTS": {
       "TITLE": "Shortcuts"
@@ -221,6 +223,7 @@
     "MAP": "Mindmap",
     "NODES": "Knoten",
     "SAVED": "Gespeichert",
-    "NOT_SAVED": "Nicht gespeichert"
+    "NOT_SAVED": "Nicht gespeichert",
+    "LINKS": "Links"
   }
 }
