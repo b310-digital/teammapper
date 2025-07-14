@@ -293,7 +293,7 @@ export default class Draw {
 
             // Set text or icon based on option
             if (showLinktext) {
-            domText.textContent = node.link.href;
+            domText.textContent = this.truncateText(node.link.href);
             domText.classList.remove('material-icons');
 
             domText.style.setProperty('text-decoration', 'underline');
@@ -313,7 +313,7 @@ export default class Draw {
             const domText = domLink.querySelector('text');
             if (domText) {
                 if (showLinktext) {
-                    domText.textContent = node.link.href;
+                    domText.textContent = this.truncateText(node.link.href);
                     domText.classList.remove('material-icons');
                     domText.style.setProperty('text-decoration', 'underline');
                     domText.style.setProperty('font-style', 'italic');
@@ -566,5 +566,10 @@ export default class Draw {
      */
     private browserIsFirefox(): boolean {
         return navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+    }
+
+    private truncateText(text: string, maxLength = 50): string {
+        if (text.length <= maxLength) return text;
+        return text.slice(0, maxLength - 3) + '...';
     }
 }
