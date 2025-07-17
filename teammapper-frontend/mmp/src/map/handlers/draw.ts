@@ -293,14 +293,14 @@ export default class Draw {
 
             // Set text or icon based on option
             if (showLinktext) {
-            domText.textContent = this.truncateText(node.link.href);
-            domText.classList.remove('material-icons');
+                domText.textContent = this.truncateText(node.link.href);
+                domText.classList.remove('material-icons');
 
-            domText.style.setProperty('text-decoration', 'underline');
-            domText.style.setProperty('font-style', 'italic');
+                domText.style.setProperty('text-decoration', 'underline');
+                domText.style.setProperty('font-style', 'italic');
             } else {
-            domText.textContent = 'link'; // material icon content
-            domText.classList.add('material-icons');
+                domText.textContent = 'link'; // material icon content
+                domText.classList.add('material-icons');
             }
 
             domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.link))
