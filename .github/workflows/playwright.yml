@@ -6,12 +6,14 @@ on:
     branches: [main]
 jobs:
   test:
+    env:
+      DB_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD != '' && secrets.CI_POSTGRES_PASSWORD || format('fallback_ci_password_{0}', github.run_number) }}
     services:
       postgres:
         image: postgres
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
           POSTGRES_DB: teammapper-backend-dev
         options: >-
           --health-cmd pg_isready
@@ -37,7 +39,7 @@ jobs:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
         POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+        POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
         POSTGRES_DATABASE: teammapper-backend-dev
         POSTGRES_SSL: false
         POSTGRES_QUERY_TIMEOUT: 100000
