@@ -8,7 +8,7 @@ export interface MmpOptions extends OptionParameters {
   fontMaxSize: number;
   fontMinSize: number;
   fontIncrement: number;
-  showLinktext: boolean;
+  showLinktext?: boolean;
 }
 
 export interface Settings {
