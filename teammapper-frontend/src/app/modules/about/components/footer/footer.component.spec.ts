@@ -20,6 +20,7 @@ describe('FooterComponent', () => {
       fontMaxSize: 16,
       fontMinSize: 12,
       fontIncrement: 2,
+      showLinktext: false,
     },
   };
 
