@@ -1,169 +1,186 @@
-import Log from './log'
+import Log from './log';
 
 /**
  * A list of general useful functions.
  */
 export default class Utils {
+  /**
+   * Clone an object in depth.
+   * @param {object} object
+   * @returns object
+   */
+  static cloneObject(object: object): any {
+    if (object === null) {
+      return null;
+    } else if (typeof object === 'object') {
+      return JSON.parse(JSON.stringify(object));
+    } else {
+      Log.error('Impossible to clone a non-object', 'type');
+    }
+  }
 
-    /**
-     * Clone an object in depth.
-     * @param {object} object
-     * @returns object
-     */
-    static cloneObject(object: object): any {
-        if (object === null) {
-            return null
-        } else if (typeof object === 'object') {
-            return JSON.parse(JSON.stringify(object))
+  /**
+   * Clear an object.
+   * @param {object} object
+   */
+  static clearObject(object: object) {
+    for (const property in object) {
+      delete object[property];
+    }
+  }
+
+  /**
+   * Convert an Object to an array.
+   * @param {object} object
+   * @returns {Array}
+   */
+  static fromObjectToArray(object: object): any[] {
+    const array = [];
+
+    for (const p in object) {
+      array.push(object[p]);
+    }
+
+    return array;
+  }
+
+  /**
+   * Merge two objects.
+   * @param {object} object1
+   * @param {object} object2
+   * @param {boolean} restricted
+   * @returns {object} result
+   */
+  static mergeObjects(
+    object1: object,
+    object2: object,
+    restricted = false
+  ): object {
+    if (object2 === undefined && this.isPureObjectType(object1)) {
+      return this.cloneObject(object1);
+    } else if (object1 === undefined && this.isPureObjectType(object2)) {
+      return this.cloneObject(object2);
+    } else if (
+      !this.isPureObjectType(object1) ||
+      !this.isPureObjectType(object2)
+    ) {
+      Log.error('Only two pure objects can be merged', 'type');
+    }
+
+    const result = this.cloneObject(object1);
+
+    for (const property in object2) {
+      const value = object2[property];
+
+      if (!restricted || result[property] !== undefined) {
+        if (this.isPrimitiveType(value) || value === null) {
+          result[property] = value;
+        } else if (Array.isArray(value)) {
+          result[property] = Utils.cloneObject(value);
+        } else if (this.isPureObjectType(value)) {
+          if (this.isPureObjectType(result[property])) {
+            result[property] = Utils.mergeObjects(result[property], value);
+          } else {
+            result[property] = Utils.cloneObject(value);
+          }
         } else {
-            Log.error('Impossible to clone a non-object', 'type')
+          Log.error(`Type "${typeof value}" not allowed here`, 'type');
         }
+      }
     }
 
-    /**
-     * Clear an object.
-     * @param {object} object
-     */
-    static clearObject(object: object) {
-        for (const property in object) {
-            delete object[property]
+    return result;
+  }
+
+  /**
+   * Return css rules of an element.
+   * @param {HTMLElement} element
+   * @return {string} css
+   */
+  static cssRules(element: HTMLElement) {
+    let css = '';
+    const sheets = document.styleSheets;
+
+    for (const sheet of sheets) {
+      const rules = (sheet as any).cssRules;
+
+      if (rules) {
+        for (const rule of rules) {
+          const fontFace = rule.cssText.match(/^@font-face/);
+
+          // Fix: Safari does not accept double colon as selector, e.g. abc::placeholder
+          const sanitizedSelector: string = rule?.selectorText?.replace(
+            /::.*/,
+            ''
+          );
+
+          if (
+            (sanitizedSelector && element.querySelector(sanitizedSelector)) ||
+            fontFace
+          ) {
+            css += rule.cssText;
+          }
         }
+      }
     }
 
-    /**
-     * Convert an Object to an array.
-     * @param {object} object
-     * @returns {Array}
-     */
-    static fromObjectToArray(object: object): Array<any> {
-        const array = []
+    return css;
+  }
 
-        for (const p in object) {
-            array.push(object[p])
-        }
+  /**
+   * Return true if the value is a primitive type.
+   * @param value
+   * @returns {boolean}
+   */
+  static isPrimitiveType(value: any) {
+    return (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      typeof value === 'undefined'
+    );
+  }
 
-        return array
-    }
+  /**
+   * Return true if the value is a pure object.
+   * @param value
+   * @returns {boolean}
+   */
+  static isPureObjectType(value: any) {
+    return typeof value === 'object' && !Array.isArray(value) && value !== null;
+  }
 
-    /**
-     * Merge two objects.
-     * @param {object} object1
-     * @param {object} object2
-     * @param {boolean} restricted
-     * @returns {object} result
-     */
-    static mergeObjects(object1: object, object2: object, restricted: boolean = false): object {
-        if (object2 === undefined && this.isPureObjectType(object1)) {
-            return this.cloneObject(object1)
-        } else if (object1 === undefined && this.isPureObjectType(object2)) {
-            return this.cloneObject(object2)
-        } else if (!this.isPureObjectType(object1) || !this.isPureObjectType(object2)) {
-            Log.error('Only two pure objects can be merged', 'type')
-        }
+  /**
+   * Remove all ranges of window.
+   */
+  static removeAllRanges() {
+    window.getSelection().removeAllRanges();
+  }
 
-        const result = this.cloneObject(object1)
+  /**
+   * Focus an element putting the cursor in the end.
+   * @param {HTMLElement} element
+   */
+  static focusWithCaretAtEnd(element: HTMLElement) {
+    const range = document.createRange(),
+      sel = window.getSelection();
 
-        for (const property in object2) {
-            const value = object2[property]
+    element.focus();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
 
-            if (!restricted || result[property] !== undefined) {
-                if (this.isPrimitiveType(value) || value === null) {
-                    result[property] = value
-                } else if (Array.isArray(value)) {
-                    result[property] = Utils.cloneObject(value)
-                } else if (this.isPureObjectType(value)) {
-                    if (this.isPureObjectType(result[property])) {
-                        result[property] = Utils.mergeObjects(result[property], value)
-                    } else {
-                        result[property] = Utils.cloneObject(value)
-                    }
-                } else {
-                    Log.error(`Type "${typeof value}" not allowed here`, 'type')
-                }
-            }
-        }
-
-        return result
-    }
-
-    /**
-     * Return css rules of an element.
-     * @param {HTMLElement} element
-     * @return {string} css
-     */
-    static cssRules(element: HTMLElement) {
-        let css = '', sheets = document.styleSheets
-
-        for (let i = 0; i < sheets.length; i++) {
-            const rules = (sheets[i] as any).cssRules
-
-            if (rules) {
-                for (let j = 0; j < rules.length; j++) {
-                    const rule = rules[j],
-                        fontFace = rule.cssText.match(/^@font-face/)
-
-                        // Fix: Safari does not accept double colon as selector, e.g. abc::placeholder
-                        const sanitizedSelector: string = rule.selectorText?.replace(/::.*/, '')
-
-                    if ((sanitizedSelector && element.querySelector(sanitizedSelector)) || fontFace) {
-                        css += rule.cssText
-                    }
-                }
-            }
-        }
-
-        return css
-    }
-
-    /**
-     * Return true if the value is a primitive type.
-     * @param value
-     * @returns {boolean}
-     */
-    static isPrimitiveType(value: any) {
-        return typeof value === 'string' ||
-            typeof value === 'number' ||
-            typeof value === 'boolean' ||
-            typeof value === 'undefined'
-    }
-
-    /**
-     * Return true if the value is a pure object.
-     * @param value
-     * @returns {boolean}
-     */
-    static isPureObjectType(value: any) {
-        return typeof value === 'object' && !Array.isArray(value) && value !== null
-    }
-
-    /**
-     * Remove all ranges of window.
-     */
-    static removeAllRanges() {
-        window.getSelection().removeAllRanges()
-    }
-
-    /**
-     * Focus an element putting the cursor in the end.
-     * @param {HTMLElement} element
-     */
-    static focusWithCaretAtEnd(element: HTMLElement) {
-        const range = document.createRange(),
-              sel = window.getSelection()
-
-        element.focus()
-        range.selectNodeContents(element)
-        range.collapse(false)
-        sel.removeAllRanges()
-        sel.addRange(range)
-    }
-
-    /**
-     * Gets the nested property of object
-     * @param obj
-     * @param path
-     */
-    static get = (obj: any, path: string[]) =>
-        path.reduce((nestedObj, currentPath) => (nestedObj && nestedObj[currentPath]) ? nestedObj[currentPath] : null, obj)
-
+  /**
+   * Gets the nested property of object
+   * @param obj
+   * @param path
+   */
+  static get = (obj: any, path: string[]) =>
+    path.reduce(
+      (nestedObj, currentPath) =>
+        nestedObj && nestedObj[currentPath] ? nestedObj[currentPath] : null,
+      obj
+    );
 }
