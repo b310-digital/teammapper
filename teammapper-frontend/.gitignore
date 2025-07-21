@@ -35,6 +35,8 @@ npm-debug.log
 testem.log
 /typings
 /.angular
+/.jest-cache
+
 
 # e2e
 /e2e/*.js

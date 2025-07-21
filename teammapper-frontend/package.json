@@ -122,35 +122,5 @@
   },
   "workspaces": [
     "packages/*"
-  ],
-  "jest": {
-    "preset": "jest-preset-angular",
-    "testPathIgnorePatterns": [
-      "node_modules/",
-      "dist/",
-      "e2e"
-    ],
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "modulePaths": [
-      "<rootDir>"
-    ],
-    "moduleNameMapper": {
-      "@mmp/index": "<rootDir>/src/test/mocks/mmp-index.ts",
-      "@mmp/map/map": "<rootDir>/src/test/mocks/mmp-map.ts"
-    },
-    "setupFilesAfterEnv": [
-      "<rootDir>/setup-jest.ts"
-    ]
-  }
+  ]
 }
