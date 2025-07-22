@@ -32,11 +32,17 @@ export class ExportService {
 
   /**
    * Create a map of parent IDs to their children for efficient lookup
+   * Only includes nodes that are not detached (connected to the root)
    */
   private createChildrenMap(
     nodes: ExportNodeProperties[]
   ): Map<string, ExportNodeProperties[]> {
     return nodes.reduce((map, node) => {
+      // Skip detached nodes (not connected to root)
+      if (node.detached) {
+        return map;
+      }
+
       if (node.parent) {
         const siblings = map.get(node.parent) || [];
         map.set(node.parent, [...siblings, node]);
@@ -69,10 +75,16 @@ export class ExportService {
   }
 
   /**
-   * Format node text, escaping special characters
+   * Format node text, escaping special characters and adding links if present
    */
   private formatNodeText(node: ExportNodeProperties): string {
-    const text = node.name || 'Untitled';
+    let text = node.name || 'Untitled';
+
+    // If node has a link, wrap text in markdown link syntax
+    if (node.link?.href) {
+      text = `[${text}](${node.link.href})`;
+    }
+
     // Replace newlines with spaces and escape quotes
     const cleanText = text.replace(/\n/g, ' ').replace(/"/g, '\\"').trim();
 
@@ -85,7 +97,7 @@ export class ExportService {
    */
   private needsQuotes(text: string): boolean {
     // List of characters that require quoting
-    const specialChars = /[\s()[\]{}"'`]/;
+    const specialChars = /[()[\]{}"'`]/;
     return specialChars.test(text);
   }
 
@@ -106,21 +118,17 @@ export class ExportService {
     open: string;
     close: string;
   } {
-    // Map node properties to Mermaid bracket types
-    // This can be extended based on node styling or other properties
-
-    // Check if node has special properties that would map to different bracket types
-    if (node.colors?.background && node.colors.background !== '#ffffff') {
-      // Hexagon for colored nodes
-      return { open: '{{', close: '}}' };
-    }
-
+    // Just bold = square brackets
     if (node.font?.weight === 'bold') {
-      // Rectangle for bold nodes
       return { open: '[', close: ']' };
     }
 
-    // Default to round brackets
-    return { open: '(', close: ')' };
+    // Just colored = round brackets
+    if (node.colors?.background && node.colors.background !== '#ffffff') {
+      return { open: '(', close: ')' };
+    }
+
+    // Default to none
+    return { open: '', close: '' };
   }
 }

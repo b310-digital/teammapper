@@ -57,9 +57,9 @@ describe('ExportService', () => {
 
       const result = service.exportToMermaid(nodes);
       const expected = `mindmap
-  "Root Node"
-    ("Child 1")
-    ("Child 2")`;
+  Root Node
+    Child 1
+    Child 2`;
       expect(result).toBe(expected);
     });
 
@@ -88,8 +88,8 @@ describe('ExportService', () => {
       const result = service.exportToMermaid(nodes);
       const expected = `mindmap
   Root
-    ("Child 1")
-      (Grandchild)`;
+    Child 1
+      Grandchild`;
       expect(result).toBe(expected);
     });
 
@@ -131,13 +131,100 @@ describe('ExportService', () => {
           isRoot: false,
           colors: { background: '#ff0000' },
         } as ExportNodeProperties,
+        {
+          id: 'bold-colored',
+          parent: 'root',
+          name: 'Bold Colored',
+          isRoot: false,
+          font: { weight: 'bold' },
+          colors: { background: '#00ff00' },
+        } as ExportNodeProperties,
       ];
 
       const result = service.exportToMermaid(nodes);
       const expected = `mindmap
   Root
-    ["Bold Node"]
-    {{"Colored Node"}}`;
+    [Bold Node]
+    (Colored Node)
+    [Bold Colored]`;
+      expect(result).toBe(expected);
+    });
+
+    it('should export nodes with links', () => {
+      const nodes: ExportNodeProperties[] = [
+        {
+          id: 'root',
+          parent: '',
+          name: 'Root',
+          isRoot: true,
+        } as ExportNodeProperties,
+        {
+          id: 'linked',
+          parent: 'root',
+          name: 'Linked Node',
+          isRoot: false,
+          link: { href: 'https://example.com' },
+        } as ExportNodeProperties,
+      ];
+
+      const result = service.exportToMermaid(nodes);
+      const expected = `mindmap
+  Root
+    "[Linked Node](https://example.com)"`;
+      expect(result).toBe(expected);
+    });
+
+    it('should ignore image comments', () => {
+      const nodes: ExportNodeProperties[] = [
+        {
+          id: 'root',
+          parent: '',
+          name: 'Root',
+          isRoot: true,
+        } as ExportNodeProperties,
+        {
+          id: 'image',
+          parent: 'root',
+          name: 'Node with Image',
+          isRoot: false,
+          image: { src: 'https://example.com/image.png', size: 48 },
+        } as ExportNodeProperties,
+      ];
+
+      const result = service.exportToMermaid(nodes);
+      const expected = `mindmap
+  Root
+    Node with Image`;
+      expect(result).toBe(expected);
+    });
+
+    it('should ignore detached nodes', () => {
+      const nodes: ExportNodeProperties[] = [
+        {
+          id: 'root',
+          parent: '',
+          name: 'Root',
+          isRoot: true,
+        } as ExportNodeProperties,
+        {
+          id: 'attached',
+          parent: 'root',
+          name: 'Attached Node',
+          isRoot: false,
+        } as ExportNodeProperties,
+        {
+          id: 'detached',
+          parent: 'root',
+          name: 'Detached Node',
+          isRoot: false,
+          detached: true,
+        } as ExportNodeProperties,
+      ];
+
+      const result = service.exportToMermaid(nodes);
+      const expected = `mindmap
+  Root
+    Attached Node`;
       expect(result).toBe(expected);
     });
   });
