@@ -282,53 +282,26 @@ export default class Draw {
      */
     public setLink(node: Node) {
         let domLink = node.getLinkDOM()
-
-        const showLinktext = this.map.options.showLinktext
+        let domText: SVGTextElement | null = null;
 
         if (!domLink) {
+            // create new dom elements if they do not exist
             domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a')
-            const domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-            domText.textContent = 'link'
-            domText.classList.add('link-text')
-
-            // Set text or icon based on option
-            if (showLinktext) {
-                domText.textContent = this.truncateText(node.link.href);
-                domText.classList.remove('material-icons');
-
-                domText.style.setProperty('text-decoration', 'underline');
-                domText.style.setProperty('font-style', 'italic');
-            } else {
-                domText.textContent = 'link'; // material icon content
-                domText.classList.add('material-icons');
-            }
-
-            domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.link))
-            domText.setAttribute('y', node.dimensions.height.toString())
-            domText.setAttribute('text-anchor', 'middle');
+            domText = document.createElementNS('http://www.w3.org/2000/svg', 'text')
             node.dom.appendChild(domLink)
             domLink.appendChild(domText)
         } else {
-            // Update text/icon if link DOM already exists
-            const domText = domLink.querySelector('text');
-            if (domText) {
-                if (showLinktext) {
-                    domText.textContent = this.truncateText(node.link.href);
-                    domText.classList.remove('material-icons');
-                    domText.style.setProperty('text-decoration', 'underline');
-                    domText.style.setProperty('font-style', 'italic');
-                } else {
-                    domText.textContent = 'link';
-                    domText.classList.add('material-icons');
-                }
-                domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.link));
-            }
+            domText = domLink.querySelector('text');
+        }
+
+        if (domText) {
+            // Set the correct styling of the link
+            this.updateLinkStyle(domText, node)
         }
 
         if (DOMPurify.sanitize(node.link.href) !== '') {
             domLink.setAttribute('href', DOMPurify.sanitize(node.link.href))
             domLink.setAttribute('target', '_self')
-
         } else {
             domLink.remove()
         }
@@ -568,8 +541,35 @@ export default class Draw {
         return navigator.userAgent.toLowerCase().indexOf('firefox') > -1
     }
 
+    /**
+     * Truncates Text to a maximum Length
+     * @param text 
+     * @param maxLength 
+     */
     private truncateText(text: string, maxLength = 50): string {
         if (text.length <= maxLength) return text;
         return text.slice(0, maxLength - 3) + '...';
+    }
+
+    /**
+     * Set linktext or link icon based on options
+     * @param domText The dom element for the linktext
+     * @param node The node that should be modified
+     */
+    private updateLinkStyle(domText:SVGTextElement, node:Node) {
+        domText.classList.add('link-text')
+        const showLinktext = this.map.options.showLinktext
+        if (showLinktext) {
+            domText.textContent = this.truncateText(node.link.href);
+            domText.classList.remove('material-icons');
+            domText.style.setProperty('text-decoration', 'underline');
+            domText.style.setProperty('font-style', 'italic');
+        } else {
+            domText.textContent = 'link';
+            domText.classList.add('material-icons');
+        }
+        domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.link));
+        domText.setAttribute('y', node.dimensions.height.toString())
+        domText.setAttribute('text-anchor', 'middle');
     }
 }
