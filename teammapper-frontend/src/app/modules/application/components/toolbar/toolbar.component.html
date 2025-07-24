@@ -190,6 +190,7 @@
   <ng-template #renderInput>
     <button
       (click)="imageUpload.click()"
+      [disabled]="editDisabled"
       class="label-file-upload mat-icon-button mat-primary mat-focus-indicator"
       mat-icon-button>
       <mat-icon>image</mat-icon>
@@ -206,6 +207,7 @@
     <button
       (click)="pictogram()"
       [title]="'TOOLTIPS.PICTOGRAM' | translate"
+      [disabled]="editDisabled"
       color="primary"
       mat-icon-button>
       <mat-icon>nature_people</mat-icon>
