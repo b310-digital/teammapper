@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ToastGuard } from './guards/toast.guard';
+import { NotFoundComponent } from './not-found';
 
 const routes: Routes = [
   {
@@ -34,7 +35,7 @@ const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '',
+    component: NotFoundComponent,
   },
 ];
 
