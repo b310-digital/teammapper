@@ -22,6 +22,8 @@ export default class Options implements OptionParameters {
     public defaultNode: DefaultNodeProperties
     public rootNode: DefaultNodeProperties
 
+    public showLinktext: boolean
+
     /**
      * Initialize all options.
      * @param {OptionParameters} parameters
@@ -35,6 +37,7 @@ export default class Options implements OptionParameters {
         this.drag = parameters.drag !== undefined ? parameters.drag : true
         this.edit = parameters.edit !== undefined ? parameters.edit : true
         this.zoom = parameters.zoom !== undefined ? parameters.zoom : true
+        this.showLinktext = parameters.showLinktext !== undefined ? parameters.showLinktext : false
 
         // Default node properties
         this.defaultNode = Utils.mergeObjects(
@@ -77,6 +80,9 @@ export default class Options implements OptionParameters {
                 break
             case 'rootNode':
                 this.updateDefaultRootNode(value)
+                break
+            case 'showLinktext':
+                this.updateShowLinktext(value);
                 break
             default:
                 Log.error('The property does not exist')
@@ -180,6 +186,20 @@ export default class Options implements OptionParameters {
     private updateDefaultRootNode(properties: DefaultNodeProperties) {
         this.rootNode = Utils.mergeObjects(this.rootNode, properties, true) as DefaultNodeProperties
     }
+
+    /**
+     * Update if Linktext or Link Icon is shown.
+     * @param {boolean} value
+     */
+    private updateShowLinktext(value: boolean) {
+        if (typeof value !== 'boolean') {
+            Log.error('The value must be a boolean', 'type');
+        }
+
+        this.showLinktext = value;
+
+        this.map.draw.update();
+    }
 }
 
 export const DefaultNodeValues: DefaultNodeProperties = {
@@ -198,7 +218,8 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     colors: {
         name: '#787878',
         background: '#f9f9f9',
-        branch: '#577a96'
+        branch: '#577a96',
+        link: '#000000'
     },
     font: {
         size: 16,
@@ -227,7 +248,8 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     colors: {
         name: '#787878',
         background: '#f0f6f5',
-        branch: ''
+        branch: '',
+        link: '#000000'
     },
     font: {
         size: 20,
@@ -261,4 +283,5 @@ export interface OptionParameters {
     zoom?: boolean
     defaultNode?: DefaultNodeProperties
     rootNode?: DefaultNodeProperties
+    showLinktext?: boolean
 }

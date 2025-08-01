@@ -137,6 +137,21 @@
               </mat-form-field>
             </mat-card-content>
           </mat-card>
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>{{ 'GENERAL.LINKS' | translate }}</mat-card-title>
+            </mat-card-header>
+            <hr />
+            <mat-card-content>
+              <mat-slide-toggle
+                (change)="updateGeneralMapOptions()"
+                [(ngModel)]="settings.mapOptions.showLinktext"
+                [title]="'TOOLTIPS.SHOW_LINKTEXT' | translate"
+                color="primary">
+                {{ 'PAGES.SETTINGS.SHOW_LINKTEXT' | translate }}
+              </mat-slide-toggle>
+            </mat-card-content>
+          </mat-card>
         </div>
       </mat-tab>
       <mat-tab [label]="'PAGES.SETTINGS.MAP_LIST' | translate">
