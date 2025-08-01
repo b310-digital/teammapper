@@ -25,12 +25,6 @@ export class RootComponent implements OnInit {
   public async ngOnInit() {
     const settings = this.settingsService.getCachedSettings();
 
-    const browserLang = this.translateService.getBrowserLang();
-    if (settings.general.language !== browserLang) {
-      settings.general.language = browserLang;
-      await this.settingsService.updateCachedSettings(settings);
-    }
-
     await this.initTranslations(settings.general.language);
 
     this.shortcutsService.init();

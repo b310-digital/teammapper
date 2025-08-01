@@ -7,6 +7,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 
 const testData: IPictogramResponse = {
   schematic: false,
@@ -37,6 +38,7 @@ describe('PictogramService', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         SettingsService,
+        provideTranslateService(),
       ],
     });
 
