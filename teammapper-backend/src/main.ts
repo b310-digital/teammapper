@@ -60,13 +60,15 @@ async function bootstrap() {
           /\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map)$/
         )
       ) {
-        res.setHeader('Cache-Control', 'public, max-age=31536012')
+        res.setHeader('Cache-Control', 'public, max-age=31536000')
       }
     },
   })
 
-  // Serve Angular app files (js, css, etc.)
-  app.useStaticAssets(join(__dirname, '..', 'client/browser'))
+  // Serve Angular app files (js, css, html)
+  app.useStaticAssets(join(__dirname, '..', 'client/browser'), {
+    extensions: ['html', 'js', 'css'],
+  })
 
   await app.listen(configService.getPort())
 }
