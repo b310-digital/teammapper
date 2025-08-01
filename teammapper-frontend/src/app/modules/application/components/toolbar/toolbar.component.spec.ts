@@ -7,7 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { ExportNodeProperties } from '@mmp/map/types';
-import { Font } from 'mmp/src/map/models/node';
+import Node, { Font } from 'mmp/src/map/models/node';
 import { of } from 'rxjs';
 
 describe('ToolbarComponent', () => {
@@ -123,14 +123,14 @@ describe('ToolbarComponent', () => {
     it('should return false for root node', () => {
       mockMmpService.getSelectedNode.mockReturnValue({
         isRoot: true,
-      } as ExportNodeProperties);
+      } as Node);
       expect(component.canHideNodes).toBeFalsy();
     });
 
     it('should return true for non-root node', () => {
       mockMmpService.getSelectedNode.mockReturnValue({
         isRoot: false,
-      } as ExportNodeProperties);
+      } as Node);
       expect(component.canHideNodes).toBeTruthy();
     });
   });
