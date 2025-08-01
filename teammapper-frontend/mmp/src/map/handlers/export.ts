@@ -80,8 +80,7 @@ export default class Export {
         }
         // Safari seems to have an issue with loading all included images on time during the download of the data url.
         // This is a small workaround, as calling toBlob before seems to solve the problem most of the times.
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        canvas.toBlob(() => {});
+        canvas.toBlob(() => undefined);
 
         callback(canvas.toDataURL(type));
         this.map.events.call(Event.exportImage);

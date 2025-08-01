@@ -410,10 +410,12 @@ export interface ExportHistory {
   index: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface MapSnapshot extends Array<ExportNodeProperties> {}
+export type MapSnapshot = ExportNodeProperties[];
 
-export type SnapshotChanges = Record<number, Partial<MapSnapshot> | undefined>;
+export type SnapshotChanges = Record<
+  string,
+  Partial<ExportNodeProperties> | undefined
+>;
 
 export interface MapDiff {
   added: SnapshotChanges;
