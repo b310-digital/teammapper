@@ -12,7 +12,13 @@
   "TOOLTIPS": {
     "IMPORT_MAP": "Mindmap importieren",
     "IMPORT_MERMAID": "Mermaid Mindmap importieren",
+    "IMPORT_JSON": "JSON Mindmap importieren",
     "EXPORT_MAP": "Mindmap exportieren",
+    "EXPORT_JSON": "Mindmap als JSON exportieren",
+    "EXPORT_SVG": "Mindmap als SVG exportieren",
+    "EXPORT_PNG": "Mindmap als PNG exportieren",
+    "EXPORT_JPEG": "Mindmap als JPEG exportieren",
+    "EXPORT_PDF": "Mindmap als PDF exportieren",
     "ESC": "Dialog schließen",
     "FULLSCREEN": "Vollbild",
     "CLOSE_MENU": "Seitenmenü öffnen",
@@ -37,7 +43,8 @@
     "SELECT_NODE_ABOVE": "Knoten oben auswählen",
     "EDIT_NODE": "Änderungen am Text eines Knotens erlauben",
     "COUPLE_NODE": "Knoten koppeln oder entkoppeln",
-    "NODE_IMAGE": "Bild zum Knoten hinzufügen oder entfernen",
+    "NODE_IMAGE": "Bild zum Knoten hinzufügen",
+    "NODE_IMAGE_REMOVE": "Bild vom Knoten entfernen",
     "PICTOGRAM": "Piktrogramm",
     "BOLD_TEXT": "Fett",
     "ITALIC_TEXT": "Kursiv",
@@ -71,7 +78,8 @@
     "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
     "FONT_INCREASE": "Schrift vergrößern",
     "FONT_DECREASE": "Schrift verkleinern",
-    "SHOW_LINKTEXT": "Linktext statt Icon anzeigen"
+    "SHOW_LINKTEXT": "Linktext statt Icon anzeigen",
+    "INFO": "Info Screen öffnen"
   },
   "MODALS": {
     "GENERAL": {
