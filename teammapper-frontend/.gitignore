@@ -18,6 +18,8 @@
 *.launch
 .settings/
 *.sublime-workspace
+/.claude
+CLAUDE.md
 
 # IDE - VSCode
 .vscode/*

@@ -202,7 +202,7 @@
     "CREATE": "创建思维导图",
     "DISMISS": "解除",
     "SAVED_MAPS": "已保存的思维导图",
-    "MERMAID": "Mermaid",
+    "MERMAID": "Mermaid (.mmd)",
     "JSON": "文件 (.json)",
     "PNG": "图片 (.png)",
     "SVG": "图片 (.svg)",

@@ -204,7 +204,7 @@
     "CREATE": "Create mind map",
     "DISMISS": "Dismiss",
     "SAVED_MAPS": "Saved maps",
-    "MERMAID": "Mermaid",
+    "MERMAID": "Mermaid (.mmd)",
     "JSON": "File (.json)",
     "PNG": "Image (.png)",
     "SVG": "Image (.svg)",
