@@ -11,8 +11,14 @@
   },
   "TOOLTIPS": {
     "IMPORT_MAP": "导入思维导图",
-    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
+    "IMPORT_MERMAID": "导入Mermaid思维导图",
+    "IMPORT_JSON": "导入JSON思维导图",
     "EXPORT_MAP": "导出思维导图",
+    "EXPORT_JSON": "以JSON格式导出地图",
+    "EXPORT_SVG": "以SVG格式导出地图",
+    "EXPORT_PNG": "以PNG格式导出地图",
+    "EXPORT_JPEG": "以JPEG格式导出地图",
+    "EXPORT_PDF": "以PDF格式导出地图",
     "ESC": "关闭",
     "FULLSCREEN": "全屏",
     "CLOSE_MENU": "关闭菜单",
@@ -38,6 +44,7 @@
     "EDIT_NODE": "编辑节点",
     "COUPLE_NODE": "锁定节点",
     "NODE_IMAGE": "向节点添加图片",
+    "NODE_IMAGE_REMOVE": "从节点中移除图片",
     "PICTOGRAM": "图标",
     "BOLD_TEXT": "粗体",
     "ITALIC_TEXT": "斜体",
@@ -70,7 +77,8 @@
     "FONT_MAX_SIZE": "最大字体大小",
     "FONT_INCREMENT": "字体大小步长",
     "FONT_INCREASE": "增大字体",
-    "FONT_DECREASE": "减小字体"
+    "FONT_DECREASE": "减小字体",
+    "INFO": "打开信息界面"
   },
   "MODALS": {
     "GENERAL": {

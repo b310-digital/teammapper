@@ -10,9 +10,15 @@
     "DE": "Alemão"
   },
   "TOOLTIPS": {
-    "IMPORT_MAP": "Imports the map",
-    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
-    "EXPORT_MAP": "Exports the map",
+    "IMPORT_MAP": "Importa o mapa",
+    "IMPORT_MERMAID": "Importa um mapa mental do Mermaid",
+    "IMPORT_JSON": "Importa um mapa mental em JSON",
+    "EXPORT_MAP": "Exporta o mapa",
+    "EXPORT_JSON": "Exporta o mapa como JSON",
+    "EXPORT_SVG": "Exporta o mapa como SVG",
+    "EXPORT_PNG": "Exporta o mapa como PNG",
+    "EXPORT_JPEG": "Exporta o mapa como JPEG",
+    "EXPORT_PDF": "Exporta o mapa como PDF",
     "ESC": "Fechar a janela de diálogo",
     "FULLSCREEN": "Modo tela cheia",
     "CLOSE_MENU": "Fechar o menu lateral",
@@ -38,6 +44,7 @@
     "EDIT_NODE": "Permitir editar o texto do nó",
     "COUPLE_NODE": "Bloqueia ou desbloqueia o nó",
     "NODE_IMAGE": "Adiciona uma imagem ao nó",
+    "NODE_IMAGE_REMOVE": "Remove uma imagem do nó",
     "PICTOGRAM": "Pictrogram",
     "BOLD_TEXT": "Negrito",
     "ITALIC_TEXT": "Itálico",
@@ -70,7 +77,8 @@
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
-    "FONT_DECREASE": "Decrease font"
+    "FONT_DECREASE": "Decrease font",
+    "INFO": "Abre a tela de informações"
   },
   "MODALS": {
     "GENERAL": {

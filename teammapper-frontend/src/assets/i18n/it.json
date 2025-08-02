@@ -12,7 +12,13 @@
   "TOOLTIPS": {
     "IMPORT_MAP": "Importa mappa",
     "IMPORT_MERMAID": "Importa una mappa mentale Mermaid",
+    "IMPORT_JSON": "Importa una mappa mentale in formato JSON",
     "EXPORT_MAP": "Esporta mappa",
+    "EXPORT_JSON": "Esporta la mappa come JSON",
+    "EXPORT_SVG": "Esporta la mappa come SVG",
+    "EXPORT_PNG": "Esporta la mappa come PNG",
+    "EXPORT_JPEG": "Esporta la mappa come JPEG",
+    "EXPORT_PDF": "Esporta la mappa come PDF",
     "ESC": "Chiudi finestra di dialogo",
     "FULLSCREEN": "Imposta schermo intero",
     "CLOSE_MENU": "Chiudi menu' laterale",
@@ -38,6 +44,7 @@
     "EDIT_NODE": "Permetti di modificare il testo del nodo",
     "COUPLE_NODE": "Blocca o sblocca il nodo",
     "NODE_IMAGE": "Aggiungi un'immagine al nodo",
+    "NODE_IMAGE_REMOVE": "Rimuove un'immagine dal nodo",
     "PICTOGRAM": "Pittogramma",
     "START_EDIT_NODE": "Modifica il testo del nodo",
     "BOLD_TEXT": "Cambia la larghezza del testo",
@@ -70,7 +77,8 @@
     "FONT_MAX_SIZE": "Dimensione massima del font",
     "FONT_INCREMENT": "Dimensione passo del font",
     "FONT_INCREASE": "Aumenta font",
-    "FONT_DECREASE": "Diminuisci font"
+    "FONT_DECREASE": "Diminuisci font",
+    "INFO": "Apre la schermata delle informazioni"
   },
   "MODALS": {
     "GENERAL": {

@@ -44,7 +44,7 @@
     "EDIT_NODE": "Allows to edit the text of the node",
     "COUPLE_NODE": "Groups or ungroups the node",
     "NODE_IMAGE": "Adds an image to the node",
-    "NODE_IMAGE_REMOVE": "Removes an image to the node",
+    "NODE_IMAGE_REMOVE": "Removes an image from the node",
     "PICTOGRAM": "Pictrogram",
     "BOLD_TEXT": "Changes the weight of the text",
     "ITALIC_TEXT": "Changes the style of the text",

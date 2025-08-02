@@ -10,9 +10,15 @@
     "DE": "Allemand"
   },
   "TOOLTIPS": {
-    "IMPORT_MAP": "Imports the map",
-    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
-    "EXPORT_MAP": "Exports the map",
+    "IMPORT_MAP": "Importe la carte",
+    "IMPORT_MERMAID": "Importe une carte mentale Mermaid",
+    "IMPORT_JSON": "Importe une carte mentale en JSON",
+    "EXPORT_MAP": "Exporte la carte",
+    "EXPORT_JSON": "Exporte la carte au format JSON",
+    "EXPORT_SVG": "Exporte la carte au format SVG",
+    "EXPORT_PNG": "Exporte la carte au format PNG",
+    "EXPORT_JPEG": "Exporte la carte au format JPEG",
+    "EXPORT_PDF": "Exporte la carte au format PDF",
     "ESC": "Ferme la fenêtre de dialogue",
     "FULLSCREEN": "Mettre en plein écran",
     "CLOSE_MENU": "Ferme le menu latéral",
@@ -38,6 +44,7 @@
     "EDIT_NODE": "Allows to edit the text of the node",
     "COUPLE_NODE": "Verrouille ou déverrouille le nœud",
     "NODE_IMAGE": "Ajoute une image au noeud",
+    "NODE_IMAGE_REMOVE": "Supprime une image du nœud",
     "PICTOGRAM": "Pictrogram",
     "START_EDIT_NODE": "Edit node text",
     "BOLD_TEXT": "Change la taille du texte",
@@ -70,7 +77,8 @@
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
-    "FONT_DECREASE": "Decrease font"
+    "FONT_DECREASE": "Decrease font",
+    "INFO": "Ouvre l’écran d’informations"
   },
   "MODALS": {
     "GENERAL": {
