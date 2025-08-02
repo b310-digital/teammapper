@@ -30,7 +30,7 @@
     "ng": "ng",
     "start": "ng serve --host $BINDING --disable-host-check --ssl false",
     "test": "ng test",
-    "tsc": "npx tsc -p ./tsconfig.json",
+    "tsc": "npx tsc -p ./tsconfig.json --noEmit",
     "build:packages": "npm install --workspace=packages && npm run build --workspace=packages",
     "build:dev": "npm run build:packages && ng build",
     "build:prod": "npm run build:packages && ng build --configuration production",
