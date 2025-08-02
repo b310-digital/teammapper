@@ -86,7 +86,11 @@ export class ExportService {
     }
 
     // Escape backslashes first, then replace newlines with spaces and escape quotes
-    const cleanText = text.replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/"/g, '\\"').trim();
+    const cleanText = text
+      .replace(/\\/g, '\\\\')
+      .replace(/\n/g, ' ')
+      .replace(/"/g, '\\"')
+      .trim();
 
     // Wrap in quotes if contains special characters or spaces
     return this.needsQuotes(cleanText) ? `"${cleanText}"` : cleanText;
