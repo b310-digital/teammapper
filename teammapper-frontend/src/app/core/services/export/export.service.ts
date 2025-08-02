@@ -85,8 +85,8 @@ export class ExportService {
       text = `[${text}](${node.link.href})`;
     }
 
-    // Replace newlines with spaces and escape quotes
-    const cleanText = text.replace(/\n/g, ' ').replace(/"/g, '\\"').trim();
+    // Escape backslashes first, then replace newlines with spaces and escape quotes
+    const cleanText = text.replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/"/g, '\\"').trim();
 
     // Wrap in quotes if contains special characters or spaces
     return this.needsQuotes(cleanText) ? `"${cleanText}"` : cleanText;
