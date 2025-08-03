@@ -60,6 +60,10 @@
       <mat-icon>insert_drive_file</mat-icon>
       <span>{{ 'GENERAL.JSON' | translate }}</span>
     </button>
+    <button (click)="exportMap('mermaid')" mat-menu-item>
+      <mat-icon>edit_square</mat-icon>
+      <span>{{ 'GENERAL.MERMAID' | translate }}</span>
+    </button>
     <button (click)="exportMap('svg')" mat-menu-item>
       <mat-icon>image</mat-icon>
       <span>{{ 'GENERAL.SVG' | translate }}</span>

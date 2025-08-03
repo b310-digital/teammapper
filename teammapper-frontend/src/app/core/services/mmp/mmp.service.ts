@@ -18,6 +18,7 @@ import {
 import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 import { validate as uuidValidate } from 'uuid';
+import { ExportService } from '../export/export.service';
 
 /**
  * Mmp wrapper service with mmp and other functions.
@@ -36,7 +37,8 @@ export class MmpService implements OnDestroy {
   constructor(
     public settingsService: SettingsService,
     public utilsService: UtilsService,
-    public toastrService: ToastrService
+    public toastrService: ToastrService,
+    private exportService: ExportService
   ) {
     this.additionalOptions = null;
     this.branchColors = COLORS;
@@ -468,6 +470,9 @@ export class MmpService implements OnDestroy {
       case 'pdf': {
         return this.exportToPDF(format, name);
       }
+      case 'mermaid': {
+        return this.exportToMermaid(name);
+      }
       case 'svg':
       case 'jpeg':
       case 'png': {
@@ -663,5 +668,40 @@ export class MmpService implements OnDestroy {
     UtilsService.downloadFile(`${name}.${format}`, uri);
 
     return { success: true, size: fileSizeKb };
+  }
+
+  /**
+   * Export map to Mermaid format
+   */
+  private async exportToMermaid(
+    name: string
+  ): Promise<{ success: boolean; size?: number }> {
+    try {
+      const nodes = this.exportAsJSON();
+      const mermaidContent = this.exportService.exportToMermaid(nodes);
+
+      // Create blob and download
+      const blob = new Blob([mermaidContent], {
+        type: 'text/plain;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.download = `${name}.mmd`;
+      link.href = url;
+      link.click();
+
+      URL.revokeObjectURL(url);
+
+      const fileSizeKb = blob.size / 1024;
+
+      return { success: true, size: fileSizeKb };
+    } catch (_error) {
+      const exportErrorMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.EXPORT_IMAGE_ERROR'
+      );
+      this.toastrService.error(exportErrorMessage);
+      return { success: false };
+    }
   }
 }

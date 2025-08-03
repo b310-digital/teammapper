@@ -202,7 +202,7 @@
     "CREATE": "Create mind map",
     "DISMISS": "解除",
     "SAVED_MAPS": "Saved maps",
-    "MERMAID": "Mermaid",
+    "MERMAID": "Mermaid (.mmd)",
     "JSON": "File (.json)",
     "PNG": "圖片 (.png)",
     "SVG": "圖片 (.svg)",
