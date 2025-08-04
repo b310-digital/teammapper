@@ -1,0 +1,8 @@
+services:
+  app:
+    build:
+      context: ${DEV_BUILD_CONTEXT}
+      dockerfile: Dockerfile
+      target: development
+    tty: true
+    stdin_open: true
