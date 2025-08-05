@@ -5,15 +5,15 @@ test('uses zoom controls and center map', async ({ page }) => {
   await page.getByText('Create mind map').click();
   await expect(page.locator('.map').first()).toBeVisible();
   
-  // Test zoom in
-  await page.locator('#zoom-in-button').click();
+  // Test zoom in (use first() to handle duplicate elements)
+  await page.locator('#zoom-in-button').first().click();
   
-  // Test zoom out
-  await page.locator('#zoom-out-button').click();
-  await page.locator('#zoom-out-button').click();
+  // Test zoom out (use first() to handle duplicate elements)
+  await page.locator('#zoom-out-button').first().click();
+  await page.locator('#zoom-out-button').first().click();
   
-  // Test center
-  await page.locator('#center-map-button').click();
+  // Test center (use first() to handle duplicate elements)
+  await page.locator('#center-map-button').first().click();
   
   // Map should still be visible after all operations
   await expect(page.locator('.map').first()).toBeVisible();

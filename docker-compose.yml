@@ -53,7 +53,7 @@ services:
       - postgres_data:/var/lib/postgresql/data/pgdata
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.54.2-noble
+    image: mcr.microsoft.com/playwright:v1.54.1-noble
     container_name: playwright
     depends_on:
       - app

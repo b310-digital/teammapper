@@ -20,6 +20,8 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
+  /* Global teardown to ensure clean exit */
+  globalTeardown: require.resolve('./playwright-global-teardown.ts'),
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     ...{
@@ -48,11 +50,22 @@ export default defineConfig({
   outputDir: './playwright/output',
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    port: 4200,
-    command: 'npm run --prefix ../teammapper-backend dev',
-    reuseExistingServer: !process.env.CI,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  webServer: [
+    {
+      port: 3000,
+      command: 'npm run --prefix ../teammapper-backend start',
+      reuseExistingServer: !process.env.CI,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 120 * 1000, // 2 minutes timeout
+    },
+    {
+      port: 4200,
+      command: 'npm run start',
+      reuseExistingServer: !process.env.CI,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 120 * 1000, // 2 minutes timeout
+    },
+  ],
 });

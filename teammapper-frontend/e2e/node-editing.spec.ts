@@ -5,15 +5,15 @@ test('adds and removes nodes using floating buttons', async ({ page }) => {
   await page.getByText('Create mind map').click();
   await expect(page.getByText('Root node')).toBeVisible();
   
-  // Add node using floating button
-  await page.locator('#floating-add-node').click();
+  // Add node using floating button (use first() to handle duplicate elements)
+  await page.locator('#floating-add-node').first().click();
   await page.keyboard.type('New Child Node');
   await page.locator('.map').first().click();
   await expect(page.getByText('New Child Node')).toBeVisible();
   
-  // Remove node using floating button
+  // Remove node using floating button (use first() to handle duplicate elements)
   await page.getByText('New Child Node').click();
-  await page.locator('#floating-remove-node').click();
+  await page.locator('#floating-remove-node').first().click();
   await expect(page.getByText('New Child Node')).not.toBeVisible();
 });
 
@@ -26,12 +26,12 @@ test('toggles node font styles (bold and italic)', async ({ page }) => {
   await page.keyboard.type('Style Test Node');
   await page.locator('.map').first().click();
   
-  // Select the node and toggle bold
+  // Select the node and toggle bold (use first() to handle duplicate elements)
   await page.getByText('Style Test Node').click();
-  await page.locator('#bold-button').click();
+  await page.locator('#bold-button').first().click();
   
-  // Toggle italic
-  await page.locator('#italic-button').click();
+  // Toggle italic (use first() to handle duplicate elements)
+  await page.locator('#italic-button').first().click();
   
   // Verify styles were applied (would need to check computed styles in real test)
   await expect(page.getByText('Style Test Node')).toBeVisible();

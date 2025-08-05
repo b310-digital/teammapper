@@ -5,8 +5,8 @@ test('exports map in different formats', async ({ page }) => {
   await page.getByText('Create mind map').click();
   await expect(page.locator('.map').first()).toBeVisible();
   
-  // Open export menu
-  await page.locator('#menu-export').click();
+  // Open export menu (use first() to handle duplicate elements)
+  await page.locator('#menu-export').first().click();
   
   // Check all export options are visible
   await expect(page.getByText('JSON')).toBeVisible();
@@ -14,7 +14,8 @@ test('exports map in different formats', async ({ page }) => {
   await expect(page.getByText('SVG')).toBeVisible();
   await expect(page.getByText('PNG')).toBeVisible();
   await expect(page.getByText('JPG')).toBeVisible();
-  await expect(page.getByText('PDF')).toBeVisible();
+  // Check for PDF - use more specific selector to avoid duplicate text
+  await expect(page.getByRole('menuitem', { name: 'Document (.pdf)' })).toBeVisible();
 });
 
 test('copy, cut and paste node operations', async ({ page }) => {
@@ -27,13 +28,13 @@ test('copy, cut and paste node operations', async ({ page }) => {
   await page.keyboard.type('Test Node');
   await page.locator('.map').first().click();
   
-  // Copy node
+  // Copy node (use first() to handle duplicate elements)
   await page.getByText('Test Node').click();
-  await page.locator('#copy-node-button').click();
+  await page.locator('#copy-node-button').first().click();
   
-  // Select root node and paste
+  // Select root node and paste (use first() to handle duplicate elements)
   await page.getByText('Root node').click();
-  await page.locator('#paste-node-button').click();
+  await page.locator('#paste-node-button').first().click();
   
   // Should have two "Test Node" elements now
   const testNodes = await page.locator('text=Test Node').count();

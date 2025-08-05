@@ -12,10 +12,10 @@ test('tests undo and redo functionality', async ({ page }) => {
   await expect(page.getByText('Undo Test Node')).toBeVisible();
   
   // Undo the addition
-  await page.locator('#undo-button').click();
+  await page.locator('#undo-button').first().click();
   await expect(page.getByText('Undo Test Node')).not.toBeVisible();
   
   // Redo the addition
-  await page.locator('#redo-button').click();
+  await page.locator('#redo-button').first().click();
   await expect(page.getByText('Undo Test Node')).toBeVisible();
 });

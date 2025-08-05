@@ -5,9 +5,9 @@ test('adds image to node', async ({ page }) => {
   await page.getByText('Create mind map').click();
   
   // Add a new node
-  await page.locator("button[title='Adds a node']").first().click();
+  await page.locator("button[title='Adds a node']").click();
   await page.keyboard.type('Image Test Node');
-  await page.locator('.map').first().click();
+  await page.locator('.map').click();
   
   // Select the node
   await page.getByText('Image Test Node').click();
