@@ -1,13 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ApplicationComponent } from './pages/application/application.component';
-import { CreateMapGuard } from '../../guards/create-map.guard';
+import { LandingComponent } from './components/landing/landing.component';
 
 const routes: Routes = [
   {
     path: '',
-    canActivate: [CreateMapGuard],
-    component: ApplicationComponent,
+    component: LandingComponent,
   },
   {
     path: ':id',
