@@ -2,11 +2,16 @@ import { test, expect } from '@playwright/test';
 
 /*
  * Playwright e2e tests
+ * 
+ * Note: Tests may encounter duplicate elements when running sequentially.
+ * This is a known issue with the development server. See README.md for details.
+ * We use .first() selectors as a workaround where necessary.
  */
 
 test('creates a map and changes the location', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
+  // Use .first() due to potential duplicate elements issue (see README.md)
   await expect(page.locator('.map').first()).toBeVisible();
   await expect(page.getByText('Root node')).toBeVisible();
 });
@@ -17,7 +22,9 @@ test('adds a new node to the map that is saved and retrieved when reloaded', asy
   await page.goto('/');
   await page.getByText('Create mind map').click();
   await expect(page.getByText('Root node')).toBeVisible();
-  await page.locator("button[title='Adds a node']").first().click();
+  
+  // Use .first() due to potential duplicate elements issue (see README.md)
+  await page.locator('#floating-add-node').first().click();
   await page.keyboard.type('New Node');
   // End editing by clicking somewhere else
   await page.locator('.map').first().click();

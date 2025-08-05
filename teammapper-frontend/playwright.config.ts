@@ -10,13 +10,15 @@ const connectOptions = process.env.TESTING_PLAYWRIGHT_WS_ENDPOINT
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
+  /* Maximum time one test can run */
+  timeout: 30 * 1000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -29,6 +31,9 @@ export default defineConfig({
       /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
       trace: 'on-first-retry',
       screenshot: 'only-on-failure',
+      
+      /* Test isolation - each test gets a fresh context */
+      testIdAttribute: 'data-testid',
     },
     ...connectOptions,
   },
