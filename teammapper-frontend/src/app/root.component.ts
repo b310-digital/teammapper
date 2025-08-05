@@ -30,8 +30,13 @@ export class RootComponent implements OnInit {
     this.shortcutsService.init();
 
     // Fix for #347: Force reload of pages in bfcache to prevent broken sync states on macOS where URL and internal state don't match
+    // Only apply this fix when the page is actually restored from bfcache (event.persisted = true)
     window.addEventListener('pageshow', event => {
+      // Only reload if the page was actually cached and restored (not on initial load)
       if (event.persisted && window.location.pathname.includes('/map')) {
+        console.warn(
+          'Page restored from bfcache, reloading to ensure correct state'
+        );
         window.location.reload();
       }
     });
