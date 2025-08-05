@@ -19,8 +19,10 @@ test('navigates to settings page and back to map', async ({ page }) => {
 test('navigates to shortcuts page', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
+  await page.waitForURL(/\/map\/.*/);
   
   // Navigate to shortcuts (use first() to handle duplicate elements)
   await page.locator('button[routerlink="/app/shortcuts"]').first().click();
+  await page.waitForURL(/\/app\/shortcuts/);
   await expect(page.url()).toContain('/app/shortcuts');
 });

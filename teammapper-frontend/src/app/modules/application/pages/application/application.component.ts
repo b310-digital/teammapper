@@ -116,6 +116,7 @@ export class ApplicationComponent implements OnInit, OnDestroy {
       const privateServerMap = await this.mapSyncService.prepareNewMap();
       this.router.navigate([`map/${privateServerMap.map.uuid}`], {
         fragment: privateServerMap.modificationSecret,
+        replaceUrl: true,
       });
       return privateServerMap.map;
     }
