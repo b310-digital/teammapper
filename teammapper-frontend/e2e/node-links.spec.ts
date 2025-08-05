@@ -7,13 +7,13 @@ test('adds and removes links from nodes', async ({ page }) => {
   // Add a new node
   await page.locator("button[title='Adds a node']").click();
   await page.keyboard.type('Link Test Node');
-  await page.locator('.map').first().click();
+  await page.locator('.map').click();
   
   // Select the node
   await page.getByText('Link Test Node').click();
   
   // Click add link button
-  await page.locator('#add-link-button').first().click();
+  await page.locator('#add-link-button').click();
   
   // Would need to handle link dialog here in a real test
   await page.waitForTimeout(500);

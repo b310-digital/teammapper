@@ -3,10 +3,10 @@ import { test, expect } from '@playwright/test';
 test('exports map in different formats', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
-  await expect(page.locator('.map').first()).toBeVisible();
+  await expect(page.locator('.map')).toBeVisible();
   
   // Open export menu (use first() to handle duplicate elements)
-  await page.locator('#menu-export').first().click();
+  await page.locator('#menu-export').click();
   
   // Check all export options are visible
   await expect(page.getByText('JSON')).toBeVisible();
@@ -24,17 +24,17 @@ test('copy, cut and paste node operations', async ({ page }) => {
   await expect(page.getByText('Root node')).toBeVisible();
   
   // Add a new node first
-  await page.locator("button[title='Adds a node']").first().click();
+  await page.locator("button[title='Adds a node']").click();
   await page.keyboard.type('Test Node');
-  await page.locator('.map').first().click();
+  await page.locator('.map').click();
   
   // Copy node (use first() to handle duplicate elements)
   await page.getByText('Test Node').click();
-  await page.locator('#copy-node-button').first().click();
+  await page.locator('#copy-node-button').click();
   
   // Select root node and paste (use first() to handle duplicate elements)
   await page.getByText('Root node').click();
-  await page.locator('#paste-node-button').first().click();
+  await page.locator('#paste-node-button').click();
   
   // Should have two "Test Node" elements now
   const testNodes = await page.locator('text=Test Node').count();

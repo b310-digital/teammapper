@@ -5,7 +5,7 @@ test('changes language in settings', async ({ page }) => {
   await page.getByText('Create mind map').click();
   
   // Navigate to settings (use first() to handle duplicate elements)
-  await page.locator('button[routerlink="/app/settings"]').first().click();
+  await page.locator('button[routerlink="/app/settings"]').click();
   await expect(page.locator('.settings')).toBeVisible();
   
   // Wait for the language dropdown to be visible
@@ -30,7 +30,7 @@ test('modifies map options in settings', async ({ page }) => {
   await page.getByText('Create mind map').click();
   
   // Navigate to settings (use first() to handle duplicate elements)
-  await page.locator('button[routerlink="/app/settings"]').first().click();
+  await page.locator('button[routerlink="/app/settings"]').click();
   
   // Click on Map Options tab - wait for it to be visible
   await page.waitForSelector('mat-tab-group', { state: 'visible' });
@@ -50,5 +50,5 @@ test('modifies map options in settings', async ({ page }) => {
   
   // Close settings
   await page.locator('.close-button').click();
-  await expect(page.locator('.map').first()).toBeVisible();
+  await expect(page.locator('.map')).toBeVisible();
 });
