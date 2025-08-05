@@ -10,7 +10,6 @@ const connectOptions = process.env.TESTING_PLAYWRIGHT_WS_ENDPOINT
 
 export default defineConfig({
   testDir: './e2e',
-  /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
@@ -20,13 +19,9 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
-  /* Global teardown to ensure clean exit */
-  globalTeardown: require.resolve('./playwright-global-teardown.ts'),
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     ...{
-      /* Base URL to use in actions like `await page.goto('/')`. */
-
       ignoreHTTPSErrors: true,
       baseURL:
         process.env.TESTING_PLAYWRIGHT_BASE_URL ?? 'http://localhost:4200',
