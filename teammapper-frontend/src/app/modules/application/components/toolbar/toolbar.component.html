@@ -48,6 +48,7 @@
   </mat-menu>
 
   <button
+    id="menu-export"
     [matMenuTriggerFor]="export_map"
     [title]="'TOOLTIPS.EXPORT_MAP' | translate"
     color="primary"
@@ -83,6 +84,7 @@
   </mat-menu>
 
   <button
+    id="share-button"
     (click)="share()"
     [title]="'TOOLTIPS.SHARE' | translate"
     color="primary"
@@ -103,6 +105,7 @@
     <mat-icon>add_comment</mat-icon>
   </button>
   <button
+    id="copy-node-button"
     (click)="mmpService.copyNode()"
     [title]="'TOOLTIPS.COPY_NODE' | translate"
     [disabled]="editDisabled"
@@ -119,6 +122,7 @@
     <mat-icon>content_cut</mat-icon>
   </button>
   <button
+    id="paste-node-button"
     (click)="mmpService.pasteNode()"
     [title]="'TOOLTIPS.PASTE_NODE' | translate"
     [disabled]="editDisabled"
@@ -140,6 +144,7 @@
   </div>
 
   <button
+    id="undo-button"
     (click)="mmpService.undo()"
     [title]="'TOOLTIPS.UNDO_MAP' | translate"
     [disabled]="editDisabled || !canUndoRedo"
@@ -149,6 +154,7 @@
   </button>
 
   <button
+    id="redo-button"
     (click)="mmpService.redo()"
     [title]="'TOOLTIPS.REDO_MAP' | translate"
     [disabled]="editDisabled || !canUndoRedo"
@@ -211,6 +217,7 @@
   </div>
 
   <button
+    id="bold-button"
     (click)="toogleNodeFontWeight()"
     [title]="'TOOLTIPS.BOLD_TEXT' | translate"
     [disabled]="editDisabled"
@@ -219,6 +226,7 @@
     <mat-icon>format_bold</mat-icon>
   </button>
   <button
+    id="italic-button"
     (click)="toogleNodeFontStyle()"
     [title]="'TOOLTIPS.ITALIC_TEXT' | translate"
     [disabled]="editDisabled"
@@ -241,6 +249,7 @@
   </ng-template>
   <ng-template #renderLinkInput>
     <button
+      id="add-link-button"
       (click)="addLink()"
       [title]="'TOOLTIPS.LINK_ADD' | translate"
       [disabled]="editDisabled"

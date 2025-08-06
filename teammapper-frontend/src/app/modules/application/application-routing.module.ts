@@ -1,21 +1,16 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ApplicationComponent } from './pages/application/application.component';
-import { SettingsComponent } from './pages/settings/settings.component';
-import { ShortcutsComponent } from './pages/shortcuts/shortcuts.component';
+import { LandingComponent } from './components/landing/landing.component';
 
 const routes: Routes = [
   {
     path: '',
+    component: LandingComponent,
+  },
+  {
+    path: ':id',
     component: ApplicationComponent,
-  },
-  {
-    path: 'settings',
-    component: SettingsComponent,
-  },
-  {
-    path: 'shortcuts',
-    component: ShortcutsComponent,
   },
 ];
 

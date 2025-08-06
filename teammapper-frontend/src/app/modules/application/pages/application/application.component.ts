@@ -92,32 +92,31 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     mapId: string,
     modificationSecret: string
   ): Promise<ServerMap> {
-    if (mapId) {
-      const existingMap = await this.mapSyncService.prepareExistingMap(
-        mapId,
-        modificationSecret
+    if (!mapId) {
+      console.error(
+        'No map ID provided - this should not happen with the guard in place'
+      );
+      return null;
+    }
+
+    const existingMap = await this.mapSyncService.prepareExistingMap(
+      mapId,
+      modificationSecret
+    );
+
+    if (!existingMap) {
+      const errorMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.MAP_COULD_NOT_BE_FOUND'
       );
 
-      if (!existingMap) {
-        const errorMessage = await this.utilsService.translate(
-          'TOASTS.ERRORS.MAP_COULD_NOT_BE_FOUND'
-        );
-
-        this.router.navigate(['/'], {
-          queryParams: {
-            toastMessage: errorMessage,
-            toastIsError: 1,
-          },
-        });
-      }
-
-      return existingMap;
-    } else {
-      const privateServerMap = await this.mapSyncService.prepareNewMap();
-      this.router.navigate([`map/${privateServerMap.map.uuid}`], {
-        fragment: privateServerMap.modificationSecret,
+      this.router.navigate(['/'], {
+        queryParams: {
+          toastMessage: errorMessage,
+          toastIsError: 1,
+        },
       });
-      return privateServerMap.map;
     }
+
+    return existingMap;
   }
 }

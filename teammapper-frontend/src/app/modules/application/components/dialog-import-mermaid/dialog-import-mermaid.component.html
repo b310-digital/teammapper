@@ -1,7 +1,8 @@
 <h2 mat-dialog-title>{{ 'MODALS.IMPORT_MERMAID.TITLE' | translate }}</h2>
 <mat-dialog-content>
   <mat-form-field class="max-width">
-    <textarea matInput
+    <textarea
+      matInput
       required
       [(ngModel)]="mermaidInput"
       cdkTextareaAutosize

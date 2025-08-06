@@ -19,18 +19,10 @@ const routes: Routes = [
     canActivate: [ToastGuard],
   },
   {
-    path: 'map/:id',
-    loadChildren: () =>
-      import('./modules/application/application.module').then(
-        m => m.ApplicationModule
-      ),
-    canActivate: [ToastGuard],
-  },
-  {
     path: 'app',
     loadChildren: () =>
-      import('./modules/application/application.module').then(
-        m => m.ApplicationModule
+      import('./modules/application/app-routing.module').then(
+        m => m.AppRoutingModule
       ),
   },
   {
@@ -40,12 +32,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [
-    RouterModule.forRoot(routes, {
-      onSameUrlNavigation: 'reload',
-      scrollPositionRestoration: 'enabled',
-    }),
-  ],
+  imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule],
 })
 export class RootRoutingModule {}
