@@ -1,11 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-/*
- * Note: Tests may encounter duplicate elements when running sequentially.
- * This is a known issue with the development server. See README.md for details.
- * We use  selectors as a workaround where necessary.
- */
-
 test('adds and removes nodes using floating buttons', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
