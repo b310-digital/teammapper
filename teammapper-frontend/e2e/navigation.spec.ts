@@ -24,5 +24,5 @@ test('navigates to shortcuts page', async ({ page }) => {
   // Navigate to shortcuts
   await page.locator('button[routerlink="/app/shortcuts"]').click();
   await page.waitForURL(/\/app\/shortcuts/);
-  await expect(page.url()).toContain('/app/shortcuts');
+  expect(page.url()).toContain('/app/shortcuts');
 });
