@@ -17,10 +17,7 @@ test('uploads JSON file for import', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
   await expect(page.locator('.map')).toBeVisible();
-  
-  // Wait for initial map to load (should have default root node)
-  await page.waitForTimeout(500);
-  await expect(page.getByText('Root node')).toBeVisible();
+  await expect(page.getByText('Root node')).toBeVisible({ timeout: 5000 });
   
   // Open import menu
   await page.locator('#menu-import').click();
