@@ -10,6 +10,7 @@ import {
 } from '@teammapper/mermaid-mindmap-parser';
 import { SettingsService } from '../settings/settings.service';
 import { ExportNodeProperties } from '@mmp/map/types';
+import { COLORS } from '../mmp/mmp-utils';
 
 /**
  * Service responsible for importing mind maps from various formats.
@@ -145,7 +146,7 @@ export class ImportService {
 
     if (isDirectChildOfRoot) {
       const { autoBranchColors, defaultNode } = settings.mapOptions;
-      return UtilsService.getBranchColor(
+      return this.getBranchColor(
         siblingIndex,
         '',
         autoBranchColors === true,
@@ -154,6 +155,27 @@ export class ImportService {
     }
 
     return parentBranchColor;
+  }
+
+    /**
+   * Get the branch color for a node based on settings and context.
+   */
+  private getBranchColor(
+    childIndex: number,
+    parentBranchColor: string,
+    autoBranchColors: boolean,
+    defaultBranchColor: string
+  ): string {
+    if (parentBranchColor) {
+      // Inherit parent's branch color if auto colors are disabled
+      return parentBranchColor;
+     } else if (autoBranchColors) {
+      // Assign color from the COLORS array based on child index
+      return COLORS[childIndex % COLORS.length];
+    } else {
+      // Fall back to default
+      return defaultBranchColor;
+    }
   }
 
   /**

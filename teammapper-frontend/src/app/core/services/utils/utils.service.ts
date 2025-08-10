@@ -160,25 +160,4 @@ export class UtilsService {
       };
     });
   }
-
-  /**
-   * Get the branch color for a node based on settings and context.
-   */
-  public static getBranchColor(
-    childIndex: number,
-    parentBranchColor: string,
-    autoBranchColors: boolean,
-    defaultBranchColor: string
-  ): string {
-    if (autoBranchColors) {
-      // Assign color from the COLORS array based on child index
-      return COLORS[childIndex % COLORS.length];
-    } else if (parentBranchColor) {
-      // Inherit parent's branch color if auto colors are disabled
-      return parentBranchColor;
-    } else {
-      // Fall back to default
-      return defaultBranchColor;
-    }
-  }
 }

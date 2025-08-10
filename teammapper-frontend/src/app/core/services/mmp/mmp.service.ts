@@ -15,7 +15,7 @@ import {
   OptionParameters,
   UserNodeProperties,
 } from '@mmp/map/types';
-import { EMPTY_IMAGE_DATA } from './mmp-utils';
+import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 import { validate as uuidValidate } from 'uuid';
 import { ExportService } from '../export/export.service';
@@ -29,6 +29,7 @@ import { ExportService } from '../export/export.service';
 export class MmpService implements OnDestroy {
   private currentMap: MmpMap;
 
+  private readonly branchColors: string[];
   // additional options that are not handled within mmp, like fontMaxSize etc.
   private additionalOptions: CachedMapOptions;
   private settingsSubscription: Subscription;
@@ -40,6 +41,7 @@ export class MmpService implements OnDestroy {
     private exportService: ExportService
   ) {
     this.additionalOptions = null;
+    this.branchColors = COLORS;
 
     this.settingsSubscription = settingsService
       .getEditModeObservable()
@@ -224,34 +226,20 @@ export class MmpService implements OnDestroy {
       newProps.colors = {
         branch: properties.colors.branch,
       };
-    } else {
-      const children = this.nodeChildren()?.length || 0;
-      // Check if parent is the root node (direct children get random colors)
-      const isParentRoot = parent?.isRoot === true;
-      let branchColor: string;
-      if (isParentRoot && settings?.mapOptions?.autoBranchColors === true) {
-        // First-level nodes get colors from COLORS array based on child index
-        branchColor = UtilsService.getBranchColor(
-          children,
-          '',
-          true,
-          settings?.mapOptions?.defaultNode?.colors?.branch || ''
-        );
-      } else {
-        // Deeper nodes inherit parent's branch color
-        branchColor = UtilsService.getBranchColor(
-          children,
-          parent?.colors?.branch || '',
-          false, // Don't use auto colors for non-root children
-          settings?.mapOptions?.defaultNode?.colors?.branch || ''
-        );
-      }
+    } else if (parent?.colors?.branch) {
+      newProps.colors = {
+        branch: parent.colors.branch,
+      };
+    } else if (
+      settings !== null &&
+      settings.mapOptions !== null &&
+      settings.mapOptions.autoBranchColors === true
+    ) {
+      const children = this.nodeChildren().length;
 
-      if (branchColor) {
-        newProps.colors = {
-          branch: branchColor,
-        };
-      }
+      newProps.colors = {
+        branch: this.branchColors[children % this.branchColors.length],
+      };
     }
 
     if (properties?.detached) {
