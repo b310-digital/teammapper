@@ -18,6 +18,11 @@ export class DialogImportMermaidComponent {
   ) {}
 
   async import() {
-    this.importService.importFromMermaid(this.mermaidInput);
+    const success = await this.importService.importFromMermaid(
+      this.mermaidInput
+    );
+    if (success) {
+      this.dialogRef.close();
+    }
   }
 }

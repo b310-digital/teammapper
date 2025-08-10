@@ -81,15 +81,8 @@ test('imports Mermaid mindmap via modal', async ({ page }) => {
     .last()
     .click();
 
-  // Dialog might still be open, close it if needed
-  const dialogVisible = await page
-    .locator('mat-dialog-container')
-    .isVisible({ timeout: 5000 });
-  if (dialogVisible) {
-    // Click the close button
-    await page.getByRole('button', { name: /close/i }).click();
-    await expect(page.locator('mat-dialog-container')).not.toBeVisible();
-  }
+  // Dialog should close automatically on successful import
+  await expect(page.locator('mat-dialog-container')).not.toBeVisible({ timeout: 5000 });
 
   // Verify the nodes from the imported Mermaid are present
   await expect(page.getByText('Main Topic')).toBeVisible({ timeout: 5000 });
@@ -133,15 +126,8 @@ test('imports Mermaid mindmap with different branch colors', async ({
     .last()
     .click();
 
-  // Dialog might still be open, close it if needed
-  const dialogVisible = await page
-    .locator('mat-dialog-container')
-    .isVisible({ timeout: 5000 });
-  if (dialogVisible) {
-    // Click the close button
-    await page.getByRole('button', { name: /close/i }).click();
-    await expect(page.locator('mat-dialog-container')).not.toBeVisible();
-  }
+  // Dialog should close automatically on successful import
+  await expect(page.locator('mat-dialog-container')).not.toBeVisible({ timeout: 5000 });
 
   // Wait for the map to be rendered - use more specific selector for node text
   await expect(page.locator('div').filter({ hasText: /^Center$/ })).toBeVisible(

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { COLORS } from '../mmp/mmp-utils';
 
 @Injectable({
   providedIn: 'root',

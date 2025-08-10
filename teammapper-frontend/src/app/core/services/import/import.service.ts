@@ -31,25 +31,39 @@ export class ImportService {
 
   /**
    * Imports a mind map from Mermaid syntax.
+   * Returns true if import was successful, false otherwise.
    */
-  async importFromMermaid(input: string): Promise<void> {
+  async importFromMermaid(input: string): Promise<boolean> {
     try {
+      // Clear the mermaid database before parsing to prevent conflicts
+      mindmapDb.clear();
+
+      // Parse and validate the input first
       const parseResult = mermaidMindmapParser.parse(input);
       const parsedMermaidMindmap = parseResult.getMindmap();
       const convertedNodes = this.convertMermaidToNodes(parsedMermaidMindmap);
 
+      // Validate that we have valid nodes before clearing the existing map
+      if (!convertedNodes || convertedNodes.length === 0) {
+        throw new Error('No valid nodes found in the imported data');
+      }
+
+      // Only clear existing map and import if data is valid
       this.mmpService.importMap(JSON.stringify(convertedNodes));
-      mindmapDb.clear();
 
       const successMessage = await this.utilsService.translate(
         'TOASTS.MAP_IMPORT_SUCCESS'
       );
       this.toastrService.success(successMessage);
+      return true;
     } catch (_error) {
       const errorMessage = await this.utilsService.translate(
         'TOASTS.ERRORS.IMPORT_ERROR'
       );
       this.toastrService.error(errorMessage);
+      // Clear mermaid database on error to prevent stale data
+      mindmapDb.clear();
+      return false;
     }
   }
 
@@ -157,7 +171,7 @@ export class ImportService {
     return parentBranchColor;
   }
 
-    /**
+  /**
    * Get the branch color for a node based on settings and context.
    */
   private getBranchColor(
@@ -169,7 +183,7 @@ export class ImportService {
     if (parentBranchColor) {
       // Inherit parent's branch color if auto colors are disabled
       return parentBranchColor;
-     } else if (autoBranchColors) {
+    } else if (autoBranchColors) {
       // Assign color from the COLORS array based on child index
       return COLORS[childIndex % COLORS.length];
     } else {
