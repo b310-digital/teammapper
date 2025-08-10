@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { COLORS } from '../mmp/mmp-utils';
 
 @Injectable({
   providedIn: 'root',
@@ -158,5 +159,26 @@ export class UtilsService {
         resolve(reader.result);
       };
     });
+  }
+
+  /**
+   * Get the branch color for a node based on settings and context.
+   */
+  public static getBranchColor(
+    childIndex: number,
+    parentBranchColor: string,
+    autoBranchColors: boolean,
+    defaultBranchColor: string
+  ): string {
+    if (autoBranchColors) {
+      // Assign color from the COLORS array based on child index
+      return COLORS[childIndex % COLORS.length];
+    } else if (parentBranchColor) {
+      // Inherit parent's branch color if auto colors are disabled
+      return parentBranchColor;
+    } else {
+      // Fall back to default
+      return defaultBranchColor;
+    }
   }
 }
