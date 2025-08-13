@@ -21,9 +21,7 @@ test('adds and removes links from nodes', async ({ page }) => {
   await page.locator('#add-link-button').click();
 
   // Verify the link was added to the node
-  const linkElement = page.locator(
-    'svg a[href="https://teammapper.org"]'
-  );
+  const linkElement = page.locator('svg a[href="https://teammapper.org"]');
   await expect(linkElement).toBeVisible({ timeout: 5000 });
 
   // Also verify the link text element exists

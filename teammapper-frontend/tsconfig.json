@@ -1,36 +1,25 @@
 {
-    "compileOnSave": false,
-    "compilerOptions": {
-      "baseUrl": "./",
-      "outDir": "./dist/out-tsc",
-      "sourceMap": true,
-      "declaration": false,
-      "esModuleInterop": true,
-      "allowSyntheticDefaultImports": true,
-      "module": "esnext",
-      "moduleResolution": "node",
-      "emitDecoratorMetadata": true,
-      "skipLibCheck": true,
-      "experimentalDecorators": true,
-      "importHelpers": true,
-      "target": "ES2022",
-      "typeRoots": [
-        "node_modules/@types"
-      ],
-      "lib": [
-        "es2018",
-        "dom"
-      ],
-      "paths": {
-        "@mmp/*": [
-          "mmp/src/*"
-        ],
-      },
-      "useDefineForClassFields": false
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["es2018", "dom"],
+    "paths": {
+      "@mmp/*": ["mmp/src/*"]
     },
-    "exclude": [
-      "node_modules",
-      "dist",
-      "packages/mermaid-mindmap-parser/**/*"
-    ],
+    "useDefineForClassFields": false
+  },
+  "exclude": ["node_modules", "dist", "packages/mermaid-mindmap-parser/**/*"]
 }

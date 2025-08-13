@@ -19,4 +19,4 @@ interface MindmapNode {
   y?: number;
 }
 
-export type { D3Element, MindmapNode }
+export type { D3Element, MindmapNode };

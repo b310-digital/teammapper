@@ -1,64 +1,64 @@
 [
-    {
-        "id": "13593f4a-a4c3-4f1d-b74d-44ae7a65a80c",
-        "parent": "",
-        "name": "Root node",
-        "coordinates": {
-            "x": 0,
-            "y": 0
-        },
-        "image": {
-            "src": "",
-            "size": 70
-        },
-        "colors": {
-            "name": "#666666",
-            "background": "#f5f5f5",
-            "branch": ""
-        },
-        "font": {
-            "style": "normal",
-            "size": 26,
-            "weight": "normal"
-        },
-        "link": {
-            "href": ""
-        },
-        "locked": false,
-        "isRoot": true,
-        "detached": false,
-        "hidden": false,
-        "k": 1
+  {
+    "id": "13593f4a-a4c3-4f1d-b74d-44ae7a65a80c",
+    "parent": "",
+    "name": "Root node",
+    "coordinates": {
+      "x": 0,
+      "y": 0
     },
-    {
-        "id": "0b35522c-c3d4-40a7-bcd7-90188e5f215f",
-        "parent": "13593f4a-a4c3-4f1d-b74d-44ae7a65a80c",
-        "name": "test",
-        "coordinates": {
-            "x": -200,
-            "y": -120
-        },
-        "image": {
-            "src": "",
-            "size": 60
-        },
-        "colors": {
-            "name": "#666666",
-            "background": "#f5f5f5",
-            "branch": "#FFC107"
-        },
-        "font": {
-            "size": 22,
-            "style": "normal",
-            "weight": "normal"
-        },
-        "link": {
-            "href": ""
-        },
-        "locked": true,
-        "isRoot": false,
-        "detached": false,
-        "hidden": false,
-        "k": -5.334638335475086
-    }
+    "image": {
+      "src": "",
+      "size": 70
+    },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": ""
+    },
+    "font": {
+      "style": "normal",
+      "size": 26,
+      "weight": "normal"
+    },
+    "link": {
+      "href": ""
+    },
+    "locked": false,
+    "isRoot": true,
+    "detached": false,
+    "hidden": false,
+    "k": 1
+  },
+  {
+    "id": "0b35522c-c3d4-40a7-bcd7-90188e5f215f",
+    "parent": "13593f4a-a4c3-4f1d-b74d-44ae7a65a80c",
+    "name": "test",
+    "coordinates": {
+      "x": -200,
+      "y": -120
+    },
+    "image": {
+      "src": "",
+      "size": 60
+    },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#FFC107"
+    },
+    "font": {
+      "size": 22,
+      "style": "normal",
+      "weight": "normal"
+    },
+    "link": {
+      "href": ""
+    },
+    "locked": true,
+    "isRoot": false,
+    "detached": false,
+    "hidden": false,
+    "k": -5.334638335475086
+  }
 ]
