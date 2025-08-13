@@ -3,7 +3,7 @@
   "private": false,
   "version": "0.0.1",
   "type": "module",
-  "main": "dist/mermaid-mindmap-parser.js", 
+  "main": "dist/mermaid-mindmap-parser.js",
   "author": {
     "name": "b310 digital gmbh",
     "url": "http://b310.de"
@@ -15,7 +15,7 @@
     "build:js": "vite build",
     "preview": "vite preview"
   },
-  "types": "dist/index.d.ts", 
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

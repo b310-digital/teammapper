@@ -1,14 +1,12 @@
 import jison from './.vite/jisonPlugin.js';
-import { resolve } from 'path'
+import { resolve } from 'path';
 
 export default {
-  plugins: [
-    jison()
-  ],
+  plugins: [jison()],
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      formats: ['es']
-    }
-  }
-}
+      formats: ['es'],
+    },
+  },
+};

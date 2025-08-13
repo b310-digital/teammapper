@@ -17,7 +17,7 @@ test('adds a new node to the map that is saved and retrieved when reloaded', asy
   await page.goto('/');
   await page.getByText('Create mind map').click();
   await expect(page.getByText('Root node')).toBeVisible();
-  
+
   await page.locator('#floating-add-node').click();
   await page.keyboard.type('New Node');
   // End editing by clicking somewhere else

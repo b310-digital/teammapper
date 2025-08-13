@@ -36,7 +36,8 @@
     "build:prod": "npm run build:packages && ng build --configuration production",
     "lint": "ng lint",
     "doc": "compodoc -p src/tsconfig.app.json",
-    "deploy": "ng deploy"
+    "deploy": "ng deploy",
+    "format": "npx prettier . --write"
   },
   "dependencies": {
     "@angular-devkit/build-angular": "20.0.0",

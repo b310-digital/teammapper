@@ -31,7 +31,7 @@ export default defineConfig({
       /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
       trace: 'on-first-retry',
       screenshot: 'only-on-failure',
-      
+
       /* Test isolation - each test gets a fresh context */
       testIdAttribute: 'data-testid',
     },
