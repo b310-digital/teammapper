@@ -15,6 +15,7 @@
     "IMPORT_JSON": "Imports a JSON Mindmap",
     "EXPORT_MAP": "Exports the map",
     "EXPORT_JSON": "Exports the map as JSON",
+    "EXPORT_MERMAID": "Exports the map as Mermaid",
     "EXPORT_SVG": "Exports the map as SVG",
     "EXPORT_PNG": "Exports the map as PNG",
     "EXPORT_JPEG": "Exports the map as JPEG",

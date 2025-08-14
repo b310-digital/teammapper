@@ -15,6 +15,7 @@
     "IMPORT_JSON": "匯入JSON心智圖",
     "EXPORT_MAP": "匯出地圖",
     "EXPORT_JSON": "以JSON格式匯出地圖",
+    "EXPORT_MERMAID": "以Mermaid格式匯出地圖", 
     "EXPORT_SVG": "以SVG格式匯出地圖",
     "EXPORT_PNG": "以PNG格式匯出地圖",
     "EXPORT_JPEG": "以JPEG格式匯出地圖",

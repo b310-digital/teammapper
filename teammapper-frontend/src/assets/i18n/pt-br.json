@@ -15,6 +15,7 @@
     "IMPORT_JSON": "Importa um mapa mental em JSON",
     "EXPORT_MAP": "Exporta o mapa",
     "EXPORT_JSON": "Exporta o mapa como JSON",
+    "EXPORT_MERMAID": "Exporta o mapa como Mermaid", 
     "EXPORT_SVG": "Exporta o mapa como SVG",
     "EXPORT_PNG": "Exporta o mapa como PNG",
     "EXPORT_JPEG": "Exporta o mapa como JPEG",

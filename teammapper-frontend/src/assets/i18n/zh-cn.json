@@ -15,6 +15,7 @@
     "IMPORT_JSON": "导入JSON思维导图",
     "EXPORT_MAP": "导出思维导图",
     "EXPORT_JSON": "以JSON格式导出地图",
+    "EXPORT_MERMAID": "以Mermaid格式导出地图", 
     "EXPORT_SVG": "以SVG格式导出地图",
     "EXPORT_PNG": "以PNG格式导出地图",
     "EXPORT_JPEG": "以JPEG格式导出地图",

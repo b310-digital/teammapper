@@ -15,6 +15,7 @@
     "IMPORT_JSON": "JSON Mindmap importieren",
     "EXPORT_MAP": "Mindmap exportieren",
     "EXPORT_JSON": "Mindmap als JSON exportieren",
+    "EXPORT_MERMAID": "Mindmap als Mermaid exportieren",
     "EXPORT_SVG": "Mindmap als SVG exportieren",
     "EXPORT_PNG": "Mindmap als PNG exportieren",
     "EXPORT_JPEG": "Mindmap als JPEG exportieren",

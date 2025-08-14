@@ -64,7 +64,10 @@
       <mat-icon>insert_drive_file</mat-icon>
       <span>{{ 'GENERAL.JSON' | translate }}</span>
     </button>
-    <button (click)="exportMap('mermaid')" mat-menu-item>
+    <button 
+      (click)="exportMap('mermaid')" 
+      [title]="'TOOLTIPS.EXPORT_MERMAID' | translate"
+      mat-menu-item>
       <mat-icon>edit_square</mat-icon>
       <span>{{ 'GENERAL.MERMAID' | translate }}</span>
     </button>
