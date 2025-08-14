@@ -12,7 +12,14 @@
   "TOOLTIPS": {
     "IMPORT_MAP": "Imports the map",
     "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
+    "IMPORT_JSON": "Imports a JSON Mindmap",
     "EXPORT_MAP": "Exports the map",
+    "EXPORT_JSON": "Exports the map as JSON",
+    "EXPORT_MERMAID": "Exports the map as Mermaid",
+    "EXPORT_SVG": "Exports the map as SVG",
+    "EXPORT_PNG": "Exports the map as PNG",
+    "EXPORT_JPEG": "Exports the map as JPEG",
+    "EXPORT_PDF": "Exports the map as PDF",
     "ESC": "Closes the dialog window",
     "FULLSCREEN": "Sets the full screen",
     "CLOSE_MENU": "Closes the side menu",
@@ -38,6 +45,7 @@
     "EDIT_NODE": "Allows to edit the text of the node",
     "COUPLE_NODE": "Groups or ungroups the node",
     "NODE_IMAGE": "Adds an image to the node",
+    "NODE_IMAGE_REMOVE": "Removes an image from the node",
     "PICTOGRAM": "Pictrogram",
     "BOLD_TEXT": "Changes the weight of the text",
     "ITALIC_TEXT": "Changes the style of the text",
@@ -71,7 +79,8 @@
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
     "FONT_DECREASE": "Decrease font",
-    "SHOW_LINKTEXT": "Show the linktext instead of the link icon"
+    "SHOW_LINKTEXT": "Show the linktext instead of the link icon",
+    "INFO": "Opens the info screen"
   },
   "MODALS": {
     "GENERAL": {
