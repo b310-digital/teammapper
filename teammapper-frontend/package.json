@@ -47,7 +47,7 @@
     "@angular/common": "20.0.0",
     "@angular/compiler": "20.0.0",
     "@angular/compiler-cli": "20.0.0",
-    "@angular/core": "20.0.0",
+    "@angular/core": "20.1.7",
     "@angular/forms": "20.0.0",
     "@angular/material": "20.0.2",
     "@angular/platform-browser": "20.0.0",
