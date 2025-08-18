@@ -37,8 +37,8 @@ const PIPES = [InverseBoolPipe];
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
+    ...PIPES,
   ],
-  declarations: [...PIPES],
   exports: [
     CommonModule,
     FormsModule,

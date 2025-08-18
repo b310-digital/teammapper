@@ -11,8 +11,12 @@ describe('JumbotronComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [JumbotronComponent],
-      imports: [TranslateModule.forRoot(), MatIconModule, MatListModule],
+      imports: [
+        TranslateModule.forRoot(),
+        MatIconModule,
+        MatListModule,
+        JumbotronComponent,
+      ],
     }).compileComponents();
   }));
 

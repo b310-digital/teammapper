@@ -30,8 +30,6 @@ import { DialogImportMermaidComponent } from './components/dialog-import-mermaid
     ColorPickerModule,
     MatDialogModule,
     MatGridListModule,
-  ],
-  declarations: [
     ApplicationComponent,
     SettingsComponent,
     ShortcutsComponent,

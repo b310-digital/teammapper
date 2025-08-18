@@ -48,12 +48,12 @@ describe('ToolbarComponent', () => {
     } as unknown as jest.Mocked<TranslateService>;
 
     await TestBed.configureTestingModule({
-      declarations: [ToolbarComponent],
       imports: [
         MatMenuModule,
         MatToolbarModule,
         TranslateModule.forRoot(),
         MatIconModule,
+        ToolbarComponent,
       ],
       providers: [
         { provide: MmpService, useValue: mockMmpService },

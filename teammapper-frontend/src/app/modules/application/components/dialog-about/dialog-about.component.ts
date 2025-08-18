@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { MapProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
@@ -7,13 +7,35 @@ import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { environment } from 'src/environments/environment';
 import { Router } from '@angular/router';
-import { MatDialogRef } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose,
+} from '@angular/material/dialog';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatButton } from '@angular/material/button';
+import { NgIf, AsyncPipe, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'teammapper-dialog-about',
   templateUrl: 'dialog-about.component.html',
   styleUrls: ['./dialog-about.component.scss'],
-  standalone: false,
+  imports: [
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    FaIconComponent,
+    MatDialogActions,
+    MatButton,
+    MatDialogClose,
+    NgIf,
+    AsyncPipe,
+    DatePipe,
+    TranslatePipe,
+  ],
 })
 export class DialogAboutComponent {
   public faGithub = faGithub;
