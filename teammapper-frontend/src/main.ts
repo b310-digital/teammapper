@@ -16,13 +16,13 @@ import {
   HttpClient,
 } from '@angular/common/http';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
-import { SharedModule } from './app/shared/shared.module';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
-import { RootRoutingModule } from './app/root-routing.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { RootComponent } from './app/root.component';
+import { provideRouter } from '@angular/router';
+import { rootRoutes } from './app/root.routes';
 
 if (environment.production) {
   enableProdMode();
@@ -32,9 +32,7 @@ bootstrapApplication(RootComponent, {
   providers: [
     importProvidersFrom(
       BrowserModule,
-      SharedModule,
       ToastrModule.forRoot(),
-      RootRoutingModule,
       TranslateModule.forRoot({
         loader: {
           provide: TranslateLoader,
@@ -44,6 +42,7 @@ bootstrapApplication(RootComponent, {
       }),
       HotkeyModule.forRoot()
     ),
+    provideRouter(rootRoutes),
     {
       provide: APP_INITIALIZER,
       useFactory: appSettingsFactory,
