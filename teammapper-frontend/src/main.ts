@@ -3,8 +3,6 @@ import {
   APP_INITIALIZER,
   importProvidersFrom,
 } from '@angular/core';
-
-import { createTranslateLoader } from './app/root.module';
 import { environment } from './environments/environment';
 import {
   appSettingsFactory,
@@ -23,9 +21,14 @@ import { HotkeyModule } from 'angular2-hotkeys';
 import { RootComponent } from './app/root.component';
 import { provideRouter } from '@angular/router';
 import { rootRoutes } from './app/root.routes';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 if (environment.production) {
   enableProdMode();
+}
+
+function createTranslateLoader(http: HttpClient) {
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 bootstrapApplication(RootComponent, {
