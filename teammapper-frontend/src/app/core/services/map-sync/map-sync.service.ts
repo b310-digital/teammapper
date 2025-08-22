@@ -93,14 +93,25 @@ export class MapSyncService implements OnDestroy {
     this.modificationSecret = '';
     this.colorMapping = {};
 
+    const reconnectOptions = {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 60,
+      randomizationFactor: 0.5,
+    };
+
     const baseHref =
       document.querySelector('base')?.getAttribute('href') ?? '/';
     this.socket =
       baseHref !== '/'
         ? io('', {
             path: `${baseHref}socket.io`,
+            ...reconnectOptions,
           })
-        : io();
+        : io({
+            ...reconnectOptions,
+          });
   }
 
   ngOnDestroy() {
