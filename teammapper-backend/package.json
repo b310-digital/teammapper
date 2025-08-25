@@ -57,7 +57,7 @@
     "rimraf": "^6.0.1",
     "rxjs": "^7.8.2",
     "socket.io": "4.8.1",
-    "typeorm": "^0.3.20",
+    "typeorm": "^0.3.26",
     "uuid": "11.1.0"
   },
   "devDependencies": {
