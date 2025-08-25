@@ -59,7 +59,7 @@ async function bootstrap() {
           /\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map)$/
         )
       ) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000')
+        res.setHeader('Cache-Control', 'public, max-age=86400')
       }
     },
   })
