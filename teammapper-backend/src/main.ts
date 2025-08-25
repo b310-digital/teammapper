@@ -50,14 +50,13 @@ async function bootstrap() {
     })
   )
 
-  // Serve static assets first (these take priority)
+  // Serve static assets first
   app.useStaticAssets(join(__dirname, '..', 'client/browser/assets'), {
     prefix: '/assets/',
     setHeaders: (res, path) => {
-      // Cache static assets
       if (
         path.match(
-          /\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map)$/
+          /\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map)$/
         )
       ) {
         res.setHeader('Cache-Control', 'public, max-age=31536000')
