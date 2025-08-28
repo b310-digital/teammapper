@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { Observable } from 'rxjs';
 import { NgFor, NgStyle, AsyncPipe } from '@angular/common';
@@ -11,11 +11,15 @@ import { MatIcon } from '@angular/material/icon';
   imports: [NgFor, MatIcon, NgStyle, AsyncPipe],
 })
 export class ClientColorPanelsComponent {
+  mapSyncService = inject(MapSyncService);
+
   @ViewChild('background') public background: ElementRef;
 
   public clientColors: Observable<string[]>;
 
-  constructor(public mapSyncService: MapSyncService) {
+  constructor() {
+    const mapSyncService = this.mapSyncService;
+
     this.clientColors = mapSyncService.getClientListObservable();
   }
 }

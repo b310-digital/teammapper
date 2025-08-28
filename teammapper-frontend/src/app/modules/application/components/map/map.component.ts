@@ -4,6 +4,7 @@ import {
   ViewChild,
   OnDestroy,
   AfterViewInit,
+  inject,
 } from '@angular/core';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
@@ -18,15 +19,13 @@ import { first, Subscription } from 'rxjs';
   styleUrls: ['./map.component.scss'],
 })
 export class MapComponent implements AfterViewInit, OnDestroy {
+  private settingsService = inject(SettingsService);
+  private mmpService = inject(MmpService);
+  private mapSyncService = inject(MapSyncService);
+
   @ViewChild('map') mapWrapper: ElementRef<HTMLElement>;
 
   private mapSyncServiceSubscription: Subscription;
-
-  constructor(
-    private settingsService: SettingsService,
-    private mmpService: MmpService,
-    private mapSyncService: MapSyncService
-  ) {}
 
   public async ngAfterViewInit() {
     const settings = this.settingsService.getCachedSettings();

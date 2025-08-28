@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
@@ -54,6 +54,13 @@ export type ConnectionStatus = 'connected' | 'disconnected' | null;
   providedIn: 'root',
 })
 export class MapSyncService implements OnDestroy {
+  private mmpService = inject(MmpService);
+  private httpService = inject(HttpService);
+  private storageService = inject(StorageService);
+  private settingsService = inject(SettingsService);
+  utilsService = inject(UtilsService);
+  toastrService = inject(ToastrService);
+
   // needed in color panel to show all clients
   private readonly clientListSubject: BehaviorSubject<string[]>;
   // needed in map component to initialize when map is rendered and data present
@@ -69,14 +76,7 @@ export class MapSyncService implements OnDestroy {
   private clientColor: string;
   private modificationSecret: string;
 
-  constructor(
-    private mmpService: MmpService,
-    private httpService: HttpService,
-    private storageService: StorageService,
-    private settingsService: SettingsService,
-    public utilsService: UtilsService,
-    public toastrService: ToastrService
-  ) {
+  constructor() {
     // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null);
     this.attachedNodeSubject = new BehaviorSubject<ExportNodeProperties | null>(

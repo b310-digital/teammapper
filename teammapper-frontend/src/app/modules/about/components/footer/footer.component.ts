@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { Settings } from '../../../../shared/models/settings.model';
@@ -12,15 +12,13 @@ import { NgFor } from '@angular/common';
   imports: [MatSelect, NgFor, MatOption, TranslatePipe],
 })
 export class FooterComponent implements OnInit {
+  private settingsService = inject(SettingsService);
+  private translateService = inject(TranslateService);
+
   public settings: Settings;
   public languages: string[];
 
   public currentYear: string;
-
-  constructor(
-    private settingsService: SettingsService,
-    private translateService: TranslateService
-  ) {}
 
   public ngOnInit() {
     this.settings = this.settingsService.getCachedSettings();

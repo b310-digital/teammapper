@@ -1,4 +1,10 @@
-import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  ViewChild,
+  OnInit,
+  inject,
+} from '@angular/core';
 import QRCodeStyling from 'qr-code-styling';
 import { qrcodeStyling } from './qrcode-settings';
 import { API_URL, HttpService } from 'src/app/core/http/http.service';
@@ -52,6 +58,13 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
 })
 export class DialogShareComponent implements OnInit {
+  private httpService = inject(HttpService);
+  private toastrService = inject(ToastrService);
+  private utilsService = inject(UtilsService);
+  private storageService = inject(StorageService);
+  private dialogRef = inject<MatDialogRef<DialogShareComponent>>(MatDialogRef);
+  private router = inject(Router);
+
   @ViewChild('qrcodecanvas', { static: true })
   qrCodeCanvas: ElementRef<HTMLCanvasElement>;
   @ViewChild('sharedialog', { static: true })
@@ -68,15 +81,6 @@ export class DialogShareComponent implements OnInit {
     window.location.pathname +
     window.location.search;
   private qrCode: QRCodeStyling;
-
-  constructor(
-    private httpService: HttpService,
-    private toastrService: ToastrService,
-    private utilsService: UtilsService,
-    private storageService: StorageService,
-    private dialogRef: MatDialogRef<DialogShareComponent>,
-    private router: Router
-  ) {}
 
   ngOnInit() {
     this.appendQrCode();

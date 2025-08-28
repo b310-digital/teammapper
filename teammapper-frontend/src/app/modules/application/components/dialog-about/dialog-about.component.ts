@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { MapProperties } from '@mmp/map/types';
@@ -38,20 +38,20 @@ import { NgIf, AsyncPipe, DatePipe } from '@angular/common';
   ],
 })
 export class DialogAboutComponent {
+  private translateService = inject(TranslateService);
+  private settingsService = inject(SettingsService);
+  private storageService = inject(StorageService);
+  private mapSyncService = inject(MapSyncService);
+  private dialogRef = inject<MatDialogRef<DialogAboutComponent>>(MatDialogRef);
+  private router = inject(Router);
+
   public faGithub = faGithub;
   public version: string;
   public applicationName: string;
   public map: MapProperties;
   public mapAdminId: Promise<string>;
 
-  constructor(
-    private translateService: TranslateService,
-    private settingsService: SettingsService,
-    private storageService: StorageService,
-    private mapSyncService: MapSyncService,
-    private dialogRef: MatDialogRef<DialogAboutComponent>,
-    private router: Router
-  ) {
+  constructor() {
     this.version = environment.version;
     this.applicationName = environment.name;
     this.map = this.mapSyncService.getAttachedMap().cachedMap;
