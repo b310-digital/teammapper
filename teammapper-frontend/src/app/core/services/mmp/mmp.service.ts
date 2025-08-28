@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
@@ -27,6 +27,11 @@ import { ExportService } from '../export/export.service';
   providedIn: 'root',
 })
 export class MmpService implements OnDestroy {
+  settingsService = inject(SettingsService);
+  utilsService = inject(UtilsService);
+  toastrService = inject(ToastrService);
+  private exportService = inject(ExportService);
+
   private currentMap: MmpMap;
 
   private readonly branchColors: string[];
@@ -34,12 +39,9 @@ export class MmpService implements OnDestroy {
   private additionalOptions: CachedMapOptions;
   private settingsSubscription: Subscription;
 
-  constructor(
-    public settingsService: SettingsService,
-    public utilsService: UtilsService,
-    public toastrService: ToastrService,
-    private exportService: ExportService
-  ) {
+  constructor() {
+    const settingsService = this.settingsService;
+
     this.additionalOptions = null;
     this.branchColors = COLORS;
 

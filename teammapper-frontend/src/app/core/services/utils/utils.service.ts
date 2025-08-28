@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
   providedIn: 'root',
 })
 export class UtilsService {
-  constructor(private translateService: TranslateService) {}
+  private translateService = inject(TranslateService);
 
   /**
    * Gets the nested property of object

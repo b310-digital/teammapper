@@ -1,4 +1,11 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 
@@ -9,14 +16,14 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service';
   standalone: false,
 })
 export class ColorPanelsComponent implements OnInit {
+  mmpService = inject(MmpService);
+
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
 
   @ViewChild('background') public background: ElementRef;
 
   public options: any;
-
-  constructor(public mmpService: MmpService) {}
 
   ngOnInit() {
     this.options = {

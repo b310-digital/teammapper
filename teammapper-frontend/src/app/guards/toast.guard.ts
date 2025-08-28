@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   CanActivate,
   ActivatedRouteSnapshot,
@@ -11,10 +11,8 @@ import { ToastrService } from 'ngx-toastr';
   providedIn: 'root',
 })
 export class ToastGuard implements CanActivate {
-  constructor(
-    private router: Router,
-    private toastrService: ToastrService
-  ) {}
+  private router = inject(Router);
+  private toastrService = inject(ToastrService);
 
   canActivate(
     next: ActivatedRouteSnapshot,
