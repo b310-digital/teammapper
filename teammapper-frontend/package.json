@@ -94,7 +94,6 @@
     "@playwright/test": "^1.55.0",
     "@schematics/angular": "^19.2.12",
     "@types/d3": "7.1.0",
-    "@types/eslint__js": "^9.14.0",
     "@types/jasmine": "~5.1.4",
     "@types/jest": "29.5.14",
     "@types/mousetrap": "1.6.15",
