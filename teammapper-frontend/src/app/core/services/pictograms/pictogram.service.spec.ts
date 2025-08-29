@@ -45,7 +45,7 @@ describe('PictogramService', () => {
     httpClient = TestBed.inject(HttpClient);
     const settingsService = TestBed.inject(SettingsService);
 
-    service = new PictogramService(httpClient, settingsService);
+    service = TestBed.inject(PictogramService);
     httpTesting = TestBed.inject(HttpTestingController);
   });
 
