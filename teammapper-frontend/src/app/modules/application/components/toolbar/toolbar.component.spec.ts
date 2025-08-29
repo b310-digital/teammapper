@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ExportNodeProperties } from '@mmp/map/types';
 import Node, { Font } from 'mmp/src/map/models/node';
 import { of } from 'rxjs';
+import { provideRouter } from '@angular/router';
 
 describe('ToolbarComponent', () => {
   let component: ToolbarComponent;
@@ -59,6 +60,7 @@ describe('ToolbarComponent', () => {
         { provide: MmpService, useValue: mockMmpService },
         { provide: DialogService, useValue: mockDialogService },
         { provide: TranslateService, useValue: mockTranslateService },
+        provideRouter([]),
       ],
     }).compileComponents();
 
