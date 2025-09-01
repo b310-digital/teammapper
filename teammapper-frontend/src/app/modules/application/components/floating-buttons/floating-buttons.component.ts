@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 
 @Component({
@@ -8,7 +8,7 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service';
   standalone: false,
 })
 export class FloatingButtonsComponent {
-  @Input() public editDisabled: boolean;
+  mmpService = inject(MmpService);
 
-  constructor(public mmpService: MmpService) {}
+  @Input() public editDisabled: boolean;
 }

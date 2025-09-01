@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject } from '@angular/core';
 import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import {
@@ -17,6 +17,11 @@ import { UtilsService } from 'src/app/core/services/utils/utils.service';
   standalone: false,
 })
 export class DialogPictogramsComponent {
+  private pictoService = inject(PictogramService);
+  private breakpointObserver = inject(BreakpointObserver);
+  private mmpService = inject(MmpService);
+  private utilsService = inject(UtilsService);
+
   public pictos: IPictogramResponse[];
   public onPictogramAdd = new EventEmitter();
   public searchTerm = '';
@@ -44,13 +49,6 @@ export class DialogPictogramsComponent {
         };
       })
     );
-
-  constructor(
-    private pictoService: PictogramService,
-    private breakpointObserver: BreakpointObserver,
-    private mmpService: MmpService,
-    private utilsService: UtilsService
-  ) {}
 
   @HostListener('document:keydown.enter')
   async search() {

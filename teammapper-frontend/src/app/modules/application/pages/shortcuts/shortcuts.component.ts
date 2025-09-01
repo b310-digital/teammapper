@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ShortcutsService } from '../../../../core/services/shortcuts/shortcuts.service';
 import { Hotkey } from 'angular2-hotkeys';
 import { Location } from '@angular/common';
@@ -16,12 +16,10 @@ interface Shortcut {
   standalone: false,
 })
 export class ShortcutsComponent implements OnInit {
-  public shortcuts: Shortcut[];
+  private shortcutsService = inject(ShortcutsService);
+  private location = inject(Location);
 
-  constructor(
-    private shortcutsService: ShortcutsService,
-    private location: Location
-  ) {}
+  public shortcuts: Shortcut[];
 
   public ngOnInit() {
     const hotKeys: Hotkey[] = this.shortcutsService.getHotKeys();

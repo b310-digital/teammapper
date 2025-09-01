@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service';
 
@@ -8,10 +8,8 @@ import { MapSyncService } from '../../../../core/services/map-sync/map-sync.serv
   standalone: true,
 })
 export class LandingComponent implements OnInit {
-  constructor(
-    private router: Router,
-    private mapSyncService: MapSyncService
-  ) {}
+  private router = inject(Router);
+  private mapSyncService = inject(MapSyncService);
 
   async ngOnInit(): Promise<void> {
     const privateServerMap = await this.mapSyncService.prepareNewMap();
