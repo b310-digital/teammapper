@@ -50,7 +50,6 @@ async function bootstrap() {
     })
   )
 
-  // Serve static assets first
   app.useStaticAssets(join(__dirname, '..', 'client/browser/assets'), {
     prefix: '/assets/',
     setHeaders: (res, path) => {
@@ -62,11 +61,6 @@ async function bootstrap() {
         res.setHeader('Cache-Control', 'public, max-age=86400')
       }
     },
-  })
-
-  // Serve Angular app files (js, css, html)
-  app.useStaticAssets(join(__dirname, '..', 'client/browser'), {
-    extensions: ['html', 'js', 'css'],
   })
 
   await app.listen(configService.getPort())
