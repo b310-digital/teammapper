@@ -7,12 +7,37 @@ import {
   faHeart,
   faRocket,
 } from '@fortawesome/free-solid-svg-icons';
+import { HeaderComponent } from '../../components/header/header.component';
+import { JumbotronComponent } from '../../components/jumbotron/jumbotron.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+  MatCardAvatar,
+  MatCard,
+  MatCardHeader,
+  MatCardTitle,
+  MatCardImage,
+  MatCardContent,
+} from '@angular/material/card';
+import { FooterComponent } from '../../components/footer/footer.component';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'teammapper-about',
   templateUrl: './about.component.html',
   styleUrls: ['./about.component.scss'],
-  standalone: false,
+  imports: [
+    HeaderComponent,
+    JumbotronComponent,
+    FaIconComponent,
+    MatCardAvatar,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardImage,
+    MatCardContent,
+    FooterComponent,
+    TranslatePipe,
+  ],
 })
 export class AboutComponent {
   public faBrain = faBrain;

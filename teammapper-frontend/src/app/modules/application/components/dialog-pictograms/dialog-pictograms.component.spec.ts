@@ -69,14 +69,17 @@ describe('DialogPictogramsComponent', () => {
     } as unknown as jest.Mocked<PictogramService>;
 
     await TestBed.configureTestingModule({
-      declarations: [DialogPictogramsComponent],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: MmpService, useValue: mockMmpService },
         { provide: UtilsService, useValue: mockUtilsService },
         { provide: PictogramService, useValue: mockPictoService },
       ],
-      imports: [TranslateModule.forRoot(), MatMenuModule],
+      imports: [
+        TranslateModule.forRoot(),
+        MatMenuModule,
+        DialogPictogramsComponent,
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DialogPictogramsComponent);

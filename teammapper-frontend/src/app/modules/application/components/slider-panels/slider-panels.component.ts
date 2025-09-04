@@ -3,12 +3,16 @@ import { ExportNodeProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
+import { NgIf } from '@angular/common';
+import { MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'teammapper-sliders-panel',
   templateUrl: './slider-panels.component.html',
   styleUrls: ['./slider-panels.component.scss'],
-  standalone: false,
+  imports: [NgIf, MatSlider, MatSliderThumb, FormsModule, TranslatePipe],
 })
 export class SliderPanelsComponent {
   @Input() public node: ExportNodeProperties;

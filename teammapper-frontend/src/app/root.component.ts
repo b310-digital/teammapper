@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { SettingsService } from './core/services/settings/settings.service';
 import { ShortcutsService } from './core/services/shortcuts/shortcuts.service';
@@ -9,8 +9,8 @@ import { routeAnimation } from './shared/animations/route.animation';
   selector: 'teammapper-root',
   templateUrl: 'root.component.html',
   styleUrls: ['./root.component.scss'],
-  standalone: false,
   animations: [routeAnimation],
+  imports: [RouterOutlet],
 })
 export class RootComponent implements OnInit {
   public tapCounter = 0;

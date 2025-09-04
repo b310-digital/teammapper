@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 import { MatListModule } from '@angular/material/list';
-
 import { JumbotronComponent } from './jumbotron.component';
+import { provideRouter } from '@angular/router';
 
 describe('JumbotronComponent', () => {
   let component: JumbotronComponent;
@@ -11,8 +11,13 @@ describe('JumbotronComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [JumbotronComponent],
-      imports: [TranslateModule.forRoot(), MatIconModule, MatListModule],
+      imports: [
+        TranslateModule.forRoot(),
+        MatIconModule,
+        MatListModule,
+        JumbotronComponent,
+      ],
+      providers: [provideRouter([])],
     }).compileComponents();
   }));
 
