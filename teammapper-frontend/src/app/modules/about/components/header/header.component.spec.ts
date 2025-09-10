@@ -11,8 +11,12 @@ describe('HeaderComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [HeaderComponent],
-      imports: [TranslateModule.forRoot(), MatIconModule, FontAwesomeModule],
+      imports: [
+        TranslateModule.forRoot(),
+        MatIconModule,
+        FontAwesomeModule,
+        HeaderComponent,
+      ],
     }).compileComponents();
   }));
 

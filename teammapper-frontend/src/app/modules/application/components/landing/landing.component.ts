@@ -5,7 +5,6 @@ import { MapSyncService } from '../../../../core/services/map-sync/map-sync.serv
 @Component({
   selector: 'teammapper-landing',
   template: '',
-  standalone: true,
 })
 export class LandingComponent implements OnInit {
   constructor(

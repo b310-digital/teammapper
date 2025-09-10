@@ -1,9 +1,8 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { ShortcutsComponent } from './pages/shortcuts/shortcuts.component';
 
-const routes: Routes = [
+export const appRoutes: Routes = [
   {
     path: 'settings',
     component: SettingsComponent,
@@ -13,9 +12,3 @@ const routes: Routes = [
     component: ShortcutsComponent,
   },
 ];
-
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}

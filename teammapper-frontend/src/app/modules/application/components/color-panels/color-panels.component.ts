@@ -1,12 +1,15 @@
 import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
+import { NgIf } from '@angular/common';
+import { ColorPickerModule } from 'ngx-color-picker';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'teammapper-colors-panel',
   templateUrl: './color-panels.component.html',
   styleUrls: ['./color-panels.component.scss'],
-  standalone: false,
+  imports: [NgIf, ColorPickerModule, TranslatePipe],
 })
 export class ColorPanelsComponent implements OnInit {
   @Input() public node: ExportNodeProperties;
