@@ -44,14 +44,13 @@ export class DialogImportMermaidComponent {
     private router: Router
   ) {}
 
-  async createMermaidMindmapFromServer(): Promise<string> {
-    const result = await this.httpService.post(
+  async createMermaidMindmapFromServer(): Promise<void> {
+    const response = await this.httpService.post(
       API_URL.ROOT,
       '/mermaid/create',
       JSON.stringify({ topic: 'How to construct a house', language: 'english' })
     );
-    console.log(result)
-    return result;
+    this.mermaidInput = await response.text();
   }
 
   async import() {
