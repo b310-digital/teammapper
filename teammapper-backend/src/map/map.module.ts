@@ -8,6 +8,7 @@ import { MmpMap } from './entities/mmpMap.entity'
 import { MmpNode } from './entities/mmpNode.entity'
 import { MapsService } from './services/maps.service'
 import { TasksService } from './services/tasks.service'
+import MermaidController from './controllers/mermaid.controller'
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { TasksService } from './services/tasks.service'
     CacheModule.register(),
     ScheduleModule.forRoot(),
   ],
-  controllers: [MapsController],
+  controllers: [MapsController, MermaidController],
   providers: [MapsService, MapsGateway, TasksService],
   exports: [MapsService],
 })

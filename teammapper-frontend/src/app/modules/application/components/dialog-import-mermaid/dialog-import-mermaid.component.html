@@ -23,6 +23,11 @@
     {{ 'MODALS.GENERAL.BUTTON_CLOSE' | translate }}
   </button>
   <div>
+    <button mat-raised-button (click)="createMermaidMindmapFromServer()" class="ml-5">
+      {{ 'MODALS.IMPORT_MERMAID.CREATE_FROM_AI' | translate }}
+    </button>
+  </div>
+  <div>
     <button mat-raised-button (click)="import()" class="ml-5">
       {{ 'MODALS.IMPORT_MERMAID.IMPORT' | translate }}
     </button>

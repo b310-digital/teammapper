@@ -15,6 +15,7 @@ import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { TranslatePipe } from '@ngx-translate/core';
+import { API_URL, HttpService } from 'src/app/core/http/http.service';
 
 @Component({
   selector: 'teammapper-dialog-import-mermaid',
@@ -38,9 +39,20 @@ export class DialogImportMermaidComponent {
   public mermaidInput = '';
   constructor(
     private importService: ImportService,
+    private httpService: HttpService,
     private dialogRef: MatDialogRef<DialogImportMermaidComponent>,
     private router: Router
   ) {}
+
+  async createMermaidMindmapFromServer(): Promise<string> {
+    const result = await this.httpService.post(
+      API_URL.ROOT,
+      '/mermaid/create',
+      JSON.stringify({ topic: 'How to construct a house', language: 'english' })
+    );
+    console.log(result)
+    return result;
+  }
 
   async import() {
     const success = await this.importService.importFromMermaid(

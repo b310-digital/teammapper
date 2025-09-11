@@ -94,7 +94,8 @@
     "IMPORT_MERMAID": {
       "TITLE": "Mermaid Mindmap Import",
       "CONTENT": "Importiere eine Mindmap auf Basis von Mermaid. Mermaid ist eine Syntax zum Beschreiben von Diagrammen und kann bspw. mit generativer KI einfach erzeugt werden.",
-      "IMPORT": "Importieren"
+      "IMPORT": "Importieren",
+      "CREATE_FROM_AI": "Mermaid durch AI erstellen"
     },
     "PICTOGRAMS": {
       "TITLE": "Piktogramm einfügen",

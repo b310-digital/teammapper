@@ -122,3 +122,8 @@ export interface IMmpClientDeleteRequest {
   adminId: string | null
   mapId: string
 }
+
+export interface IMermaidCreateRequest {
+  topic: string
+  language: string
+}
