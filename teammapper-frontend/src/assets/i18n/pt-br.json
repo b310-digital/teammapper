@@ -92,8 +92,11 @@
     },
     "IMPORT_MERMAID": {
       "TITLE": "Mermaid Mindmap Import",
-      "CONTENT": "Import a mindmap based on Mermaid syntax.",
-      "IMPORT": "Import"
+      "CONTENT": "Import mindmaps using Mermaid syntax. Create your mindmap by either generating it with AI assistance or writing the Mermaid code manually.",
+      "IMPORT": "Import",
+      "LABEL_CREATE_FROM_AI": "Mindmap description",
+      "BUTTON_CREATE_FROM_AI": "Generate",
+      "LABEL_TEXT_AREA": "Mermaid"
     },
     "PICTOGRAMS": {
       "TITLE": "Add a pictogram",
@@ -202,9 +205,12 @@
       "NODE_CUT_GENERIC": "Ocorreu um erro ao tentar cortar o nó.",
       "EXPORT_IMAGE_ERROR": "Ocorreu um erro durante a exportação da imagem. O mapa mental pode ser muito grande.",
       "MAP_COULD_NOT_BE_FOUND": "Não foi possível encontrar o mapa mental!",
-      "IMPORT_ERROR": "O mapa mental não pôde ser importado!"
+      "IMPORT_ERROR": "O mapa mental não pôde ser importado!",
+      "AI_MERMAID_ERROR": "Mermaid could not be generated"
     },
-    "DELETE_MAP_SUCCESS": "Mapa mental excluído com sucesso!"
+    "DELETE_MAP_SUCCESS": "Mapa mental excluído com sucesso!",
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
+    "AI_MERMAID_GENERATING": "Creating Mermaid..."
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",

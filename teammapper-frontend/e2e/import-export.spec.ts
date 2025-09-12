@@ -73,7 +73,7 @@ test('imports Mermaid mindmap via modal', async ({ page }) => {
       Sub B1
       Sub B2`;
 
-  await page.locator('textarea[matInput]').fill(mermaidSyntax);
+  await page.getByRole('textbox', { name: 'mindmap ...' }).fill(mermaidSyntax);
 
   // Click the import button in the dialog
   await page
@@ -120,7 +120,7 @@ test('imports Mermaid mindmap with different branch colors', async ({
     Second Branch
     Third Branch`;
 
-  await page.locator('textarea[matInput]').fill(mermaidSyntax);
+  await page.getByRole('textbox', { name: 'mindmap ...' }).fill(mermaidSyntax);
 
   // Click the import button in the dialog
   await page

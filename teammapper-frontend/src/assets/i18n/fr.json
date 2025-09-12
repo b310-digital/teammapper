@@ -92,8 +92,11 @@
     },
     "IMPORT_MERMAID": {
       "TITLE": "Mermaid Mindmap Import",
-      "CONTENT": "Import a mindmap based on Mermaid syntax.",
-      "IMPORT": "Import"
+      "CONTENT": "Import mindmaps using Mermaid syntax. Create your mindmap by either generating it with AI assistance or writing the Mermaid code manually.",
+      "IMPORT": "Import",
+      "LABEL_CREATE_FROM_AI": "Mindmap description",
+      "BUTTON_CREATE_FROM_AI": "Generate",
+      "LABEL_TEXT_AREA": "Mermaid"
     },
     "PICTOGRAMS": {
       "TITLE": "Add a pictogram",
@@ -202,9 +205,12 @@
       "NODE_CUT_GENERIC": "Une erreur s'est produite lors de la découpe du nœud.",
       "EXPORT_IMAGE_ERROR": "Une erreur s'est produite lors de l'exportation de l'image. Il se peut que la mind map soit trop grande.",
       "MAP_COULD_NOT_BE_FOUND": "La carte heuristique est introuvable !",
-      "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !"
+      "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !",
+      "AI_MERMAID_ERROR": "Mermaid could not be generated"
     },
-    "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !"
+    "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
+    "AI_MERMAID_GENERATING": "Creating Mermaid..."
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",

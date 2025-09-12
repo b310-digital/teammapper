@@ -35,6 +35,8 @@
     "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {
+    "@ai-sdk/openai": "2.0.28",
+    "@ai-sdk/openai-compatible": "1.0.15",
     "@nestjs/cache-manager": "^3.0.0",
     "@nestjs/cli": "^11.0.7",
     "@nestjs/common": "^11.1.5",
@@ -47,6 +49,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.5",
     "@types/uuid": "^10.0.0",
+    "ai": "5.0.40",
     "cache-manager": "^6.4.0",
     "class-validator": "^0.14.1",
     "dotenv": "16.5.0",
