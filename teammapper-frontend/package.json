@@ -40,7 +40,7 @@
     "format": "npx prettier . --write"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "20.0.0",
+    "@angular-devkit/build-angular": "20.3.1",
     "@angular/animations": "20.0.0",
     "@angular/cdk": "20.0.2",
     "@angular/cli": "20.0.0",
