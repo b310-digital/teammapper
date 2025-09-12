@@ -1,3 +1,6 @@
+@use '@angular/material' as mat;
+@use 'src/theme.scss';
+
 .max-width {
   width: 100%;
 }

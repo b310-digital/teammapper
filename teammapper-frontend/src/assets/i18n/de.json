@@ -93,9 +93,11 @@
     },
     "IMPORT_MERMAID": {
       "TITLE": "Mermaid Mindmap Import",
-      "CONTENT": "Importiere eine Mindmap auf Basis von Mermaid. Mermaid ist eine Syntax zum Beschreiben von Diagrammen und kann bspw. mit generativer KI einfach erzeugt werden.",
+      "CONTENT": "Importiere eine Mindmap auf Basis von Mermaid. Mermaid ist eine Syntax zum Beschreiben von Diagrammen und kann entweder manuell oder bspw. mit generativer KI einfach erzeugt werden.",
       "IMPORT": "Importieren",
-      "CREATE_FROM_AI": "Mermaid durch AI erstellen"
+      "LABEL_CREATE_FROM_AI": "Beschreibung der Mindmap",
+      "BUTTON_CREATE_FROM_AI": "Generieren",
+      "LABEL_TEXT_AREA": "Mermaid"
     },
     "PICTOGRAMS": {
       "TITLE": "Piktogramm einfügen",
@@ -206,9 +208,12 @@
       "NODE_CUT_GENERIC": "Beim Ausschneiden des Knotens ist ein Fehler aufgetreten.",
       "EXPORT_IMAGE_ERROR": "Beim Bild-Export ist ein Fehler aufgetreten. Womöglich ist die Mindmap zu groß.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap konnte nicht gefunden werden!",
-      "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!"
+      "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!",
+      "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden."
     },
-    "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!"
+    "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",
+    "AI_MERMAID_GENERATING": "Mermaid wird erstellt..."
   },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",

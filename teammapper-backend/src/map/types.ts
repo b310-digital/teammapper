@@ -124,6 +124,6 @@ export interface IMmpClientDeleteRequest {
 }
 
 export interface IMermaidCreateRequest {
-  topic: string
+  mindmapDescription: string
   language: string
 }

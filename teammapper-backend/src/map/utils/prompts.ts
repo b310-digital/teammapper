@@ -1,8 +1,6 @@
-import { z } from 'zod'
-
-export const systemPrompt = (language: string = 'english') =>
-  `You are an expert in mindmaps and and in the ${language} language in which you design mindmaps. 
-   Please use simple mermaid syntax style. Example:
+export const systemPrompt = (language: string = 'en') =>
+  `You are an expert in mindmaps which you design in language code ${language}. 
+   Please use simple mermaid syntax style and try to generate at least 10 nodes. Example:
 
    mindmap
      Node
