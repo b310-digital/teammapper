@@ -4,10 +4,10 @@ import { AiService } from '../services/ai.service'
 
 @Controller('api/mermaid')
 export default class AiController {
-  constructor(private mermaidService: AiService) {}
+  constructor(private aiService: AiService) {}
   @Post('/create')
   async createMermaid(@Body() body: IMermaidCreateRequest) {
-    return this.mermaidService.generateMermaid(
+    return this.aiService.generateMermaid(
       body.mindmapDescription,
       body.language
     )
