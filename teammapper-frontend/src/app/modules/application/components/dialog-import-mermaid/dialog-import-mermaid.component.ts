@@ -10,6 +10,7 @@ import { ImportService } from 'src/app/core/services/import/import.service';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import {
   MatFormField,
+  MatHint,
   MatLabel,
   MatSuffix,
 } from '@angular/material/form-field';
@@ -23,6 +24,7 @@ import { MatIcon } from '@angular/material/icon';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'teammapper-dialog-import-mermaid',

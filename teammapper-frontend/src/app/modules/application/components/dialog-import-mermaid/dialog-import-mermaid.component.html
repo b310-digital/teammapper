@@ -8,13 +8,19 @@
     <mat-label>{{
       'MODALS.IMPORT_MERMAID.LABEL_CREATE_FROM_AI' | translate
     }}</mat-label>
-    <input matInput [(ngModel)]="mindmapDescription" />
-    <button matSuffix mat-button (click)="createMermaidMindmapFromServer()">
-      <mat-icon>construction</mat-icon> {{ 'MODALS.IMPORT_MERMAID.BUTTON_CREATE_FROM_AI' | translate }}
-    </button>
+    <textarea
+    matInput
+    [(ngModel)]="mindmapDescription"
+    cdkTextareaAutosize
+    #autosize="cdkTextareaAutosize"
+    cdkAutosizeMinRows="5"
+    cdkAutosizeMaxRows="10">
+  </textarea>
+  <button matSuffix mat-button (click)="createMermaidMindmapFromServer()">
+    <mat-icon>construction</mat-icon> {{ 'MODALS.IMPORT_MERMAID.BUTTON_CREATE_FROM_AI' | translate }}
+  </button>
   </mat-form-field>
-
-  <br />
+  <br /><br />
   {{
     'MODALS.IMPORT_MERMAID.LABEL_TEXT_AREA' | translate
   }} 
