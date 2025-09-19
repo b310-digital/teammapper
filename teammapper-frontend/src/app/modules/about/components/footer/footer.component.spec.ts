@@ -26,7 +26,7 @@ describe('FooterComponent', () => {
 
   beforeEach(async () => {
     mockSettingsService = {
-      getCachedSettings: jest.fn().mockReturnValue(mockSettings),
+      getCachedUserSettings: jest.fn().mockReturnValue(mockSettings),
       updateCachedSettings: jest.fn().mockResolvedValue(undefined),
     };
     mockTranslateService = {
@@ -65,7 +65,7 @@ describe('FooterComponent', () => {
     });
 
     it('should initialize with correct settings and languages', () => {
-      expect(mockSettingsService.getCachedSettings).toHaveBeenCalled();
+      expect(mockSettingsService.getCachedUserSettings).toHaveBeenCalled();
       expect(component.languages).toEqual([
         'en',
         'fr',

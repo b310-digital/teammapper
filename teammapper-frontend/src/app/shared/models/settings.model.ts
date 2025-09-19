@@ -12,11 +12,19 @@ export interface MmpOptions extends OptionParameters {
 }
 
 export interface Settings {
+  systemSettings: SystemSettings;
+  userSettings: UserSettings;
+}
+
+export interface SystemSettings {
   info: Info;
-  general: General;
-  mapOptions: MmpOptions;
   urls: Urls;
   featureFlags: FeatureFlags;
+}
+
+export interface UserSettings {
+  general: General;
+  mapOptions: MmpOptions;
 }
 
 interface General {

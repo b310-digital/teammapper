@@ -74,7 +74,7 @@ export class DialogImportMermaidComponent {
       JSON.stringify({
         mindmapDescription: this.mindmapDescription,
         language:
-          this.settingsService.getCachedSettings().general.language ?? 'en',
+          this.settingsService.getCachedUserSettings().general.language ?? 'en',
       })
     );
     if (response.status === 201) {

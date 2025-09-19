@@ -150,7 +150,7 @@ export class ImportService {
       return '';
     }
 
-    const settings = this.settingsService.getCachedSettings();
+    const settings = this.settingsService.getCachedUserSettings();
     if (!settings) {
       return parentBranchColor;
     }
@@ -202,7 +202,7 @@ export class ImportService {
     isRoot: boolean,
     branchColor: string
   ): ExportNodeProperties {
-    const settings = this.settingsService.getCachedSettings();
+    const settings = this.settingsService.getCachedUserSettings();
     if (!settings) {
       throw new Error('Settings not available');
     }

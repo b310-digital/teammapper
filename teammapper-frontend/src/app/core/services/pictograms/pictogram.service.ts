@@ -15,9 +15,16 @@ export class PictogramService {
   private staticAssetUrl = 'https://static.arasaac.org/pictograms';
   private apiResource = 'search';
 
+  constructor() {
+    const settings = this.settingsSerivce.getCachedSystemSettings();
+    this.apirUrl = settings?.urls?.pictogramApiUrl || this.apirUrl;
+    this.staticAssetUrl =
+      settings?.urls?.pictogramStaticUrl || this.staticAssetUrl;
+  }
+
   getPictos(seachTerm: string): Observable<IPictogramResponse[]> {
     const language =
-      this.settingsSerivce.getCachedSettings()?.general?.language || 'en';
+      this.settingsSerivce.getCachedUserSettings()?.general?.language || 'en';
     const url = `${this.apirUrl}/${language}/${this.apiResource}/${seachTerm}`;
     return this.http.get<IPictogramResponse[]>(url);
   }

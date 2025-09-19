@@ -42,7 +42,7 @@ export class ToolbarComponent {
 
   constructor() {
     this.featureFlagPictograms =
-      this.settingsService.getCachedSettings()?.featureFlags?.pictograms;
+      this.settingsService.getCachedSystemSettings()?.featureFlags?.pictograms;
   }
 
   public async exportMap(format: string) {
