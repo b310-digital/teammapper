@@ -52,8 +52,9 @@ export class DialogAboutComponent {
   public mapAdminId: Promise<string>;
 
   constructor() {
-    this.version = environment.version;
-    this.applicationName = environment.name;
+    const settings = this.settingsService.getCachedSettings();
+    this.version = settings.info.version;
+    this.applicationName = settings.info.name;
     this.map = this.mapSyncService.getAttachedMap().cachedMap;
     this.mapAdminId = this.getMapAdminId();
   }

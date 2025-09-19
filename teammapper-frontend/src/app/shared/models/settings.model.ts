@@ -12,10 +12,27 @@ export interface MmpOptions extends OptionParameters {
 }
 
 export interface Settings {
+  info: Info;
   general: General;
   mapOptions: MmpOptions;
+  urls: Urls;
+  featureFlags: FeatureFlags;
 }
 
 interface General {
   language: string;
+}
+
+interface Info {
+  name: string;
+  version: string;
+}
+
+interface Urls {
+  pictogramApiUrl: string;
+  pictogramStaticUrl: string;
+}
+
+interface FeatureFlags {
+  pictograms: boolean;
 }
