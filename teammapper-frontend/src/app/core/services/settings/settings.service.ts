@@ -103,11 +103,8 @@ export class SettingsService {
    * Return the default settings.
    */
   public async getDefaultSettings(): Promise<Settings> {
-    const response = await this.httpService.get(
-      API_URL.LOCAL_ASSETS,
-      'settings.json'
-    );
-    return response.json();
+    const response = await this.httpService.get(API_URL.ROOT, '/settings');
+    return await response.json();
   }
 }
 
