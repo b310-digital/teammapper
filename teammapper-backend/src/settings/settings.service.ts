@@ -5,10 +5,11 @@ import deepmerge from 'deepmerge'
 
 @Injectable()
 export class SettingsService {
+  private readonly mode = process.env.MODE == 'DEV' ? 'dev' : 'prod'
   private readonly defaultSettingsPath = path.join(
     __dirname,
     '../..',
-    'config/settings.default.json'
+    `config/settings.${this.mode}.json`
   )
 
   private readonly overrideSettingsPath = path.join(

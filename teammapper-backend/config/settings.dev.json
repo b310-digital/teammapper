@@ -2,11 +2,11 @@
   "systemSettings": {
     "info": {
       "name": "TeamMapper",
-      "version": "0.1.9"
+      "version": "0.4.0"
     },
     "urls": {
-      "pictogramApiUrl": "/arasaac/api/pictograms",
-      "pictogramStaticUrl": "/arasaac/images/pictograms"
+      "pictogramApiUrl": "https://api.arasaac.org/v1/pictograms",
+      "pictogramStaticUrl": "https://static.arasaac.org/pictograms"
     },
     "featureFlags": {
       "pictograms": true
