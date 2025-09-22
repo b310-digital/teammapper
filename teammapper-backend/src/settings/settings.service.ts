@@ -1,24 +1,39 @@
 import { Injectable } from '@nestjs/common'
 import * as fs from 'fs'
 import * as path from 'path'
-
-export interface AppSettings {
-  apiUrl: string
-  logLevel: string
-}
+import deepmerge from 'deepmerge'
 
 @Injectable()
 export class SettingsService {
-  private readonly settingsPath = path.join(
+  private readonly defaultSettingsPath = path.join(
     __dirname,
     '../..',
-    'config/default-settings.json'
+    'config/settings.default.json'
   )
 
-  getSettings(): AppSettings {
-    const fileData = fs.readFileSync(this.settingsPath, 'utf-8')
-    const settings: AppSettings = JSON.parse(fileData)
+  private readonly overrideSettingsPath = path.join(
+    __dirname,
+    '../..',
+    'config/settings.override.json'
+  )
 
-    return settings
+  getSettings() {
+    const defaultFileData = fs.readFileSync(this.defaultSettingsPath, 'utf-8')
+    const defaultSettings = JSON.parse(defaultFileData)
+
+    let overrideSettings = {}
+
+    if (
+      fs.existsSync(this.overrideSettingsPath) &&
+      fs.statSync(this.overrideSettingsPath).size > 0
+    ) {
+      const overrideFileData = fs.readFileSync(
+        this.overrideSettingsPath,
+        'utf-8'
+      )
+      overrideSettings = JSON.parse(overrideFileData)
+    }
+
+    return deepmerge(defaultSettings, overrideSettings)
   }
 }

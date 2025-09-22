@@ -9,7 +9,7 @@
       "pictogramStaticUrl": "/arasaac/images/pictograms"
     },
     "featureFlags": {
-      "pictograms": false
+      "pictograms": true
     }
   },
   "userSettings": {
@@ -25,7 +25,7 @@
       "fontIncrement": 5,
       "defaultNode": {
         "name": "",
-        "link": {
+       "link": {
           "href": ""
         },
         "image": {
