@@ -60,7 +60,6 @@
     "@material-design-icons/font": "^0.14.13",
     "@ngx-translate/core": "^16.0.3",
     "@ngx-translate/http-loader": "^16.0.1",
-    "@teammapper/mermaid-mindmap-parser": "^0.0.1",
     "@types/uuid": "^10.0.0",
     "ai": "^5.0.40",
     "angular2-hotkeys": "^16.0.1",
