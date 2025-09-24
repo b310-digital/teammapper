@@ -35,8 +35,6 @@ COPY --chown=node:node entrypoint.prod.sh $APP_PATH/
 CMD ["./entrypoint.prod.sh"]
 
 FROM base as development
-USER root
-RUN apk add --no-cache chromium
 USER node
 
 ENV CHROME_BIN=/usr/bin/chromium-browser
