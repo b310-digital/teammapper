@@ -17,7 +17,7 @@ export class AiService {
   private readonly logger = new Logger(AiService.name)
   private readonly llmConfig = configService.getLLMConfig()
   private tokensUsedPerMinute: RequestTokenEntry[] = []
-  private totalTokensDaily = { count: 0, date: new Date().getUTCDate() }
+  private totalTokensDaily = { count: 0, date: new Date().toLocaleDateString() }
 
   constructor() {}
 
@@ -28,7 +28,7 @@ export class AiService {
     const provider = createProvider(this.llmConfig)
     if (!provider || !this.llmConfig.model) return ''
 
-    this.logger.log("Daily used token count: " + this.totalTokensDaily.count)
+    this.logger.log('Daily used token count: ' + this.totalTokensDaily.count)
 
     await this.waitForRateLimit(DEFAULT_ESTIMATED_TOKENS_COUNT)
     const { text, usage } = await generateText({
@@ -51,8 +51,11 @@ export class AiService {
     this.tokensUsedPerMinute = this.tokensUsedPerMinute.filter(
       (entry) => entry.time > oneMinuteAgo
     )
-    if (new Date().getUTCDate() !== this.totalTokensDaily.date)
-      this.totalTokensDaily = { count: 0, date: new Date().getUTCDate() }
+    if (new Date().toLocaleDateString() !== this.totalTokensDaily.date)
+      this.totalTokensDaily = {
+        count: 0,
+        date: new Date().toLocaleDateString(),
+      }
 
     const currentTokens = this.tokensUsedPerMinute.reduce(
       (sum, entry) => sum + entry.count,

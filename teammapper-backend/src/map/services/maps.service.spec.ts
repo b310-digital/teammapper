@@ -15,7 +15,7 @@ import { mapMmpNodeToClient } from '../utils/clientServerMapping'
 import { truncateDatabase } from 'test/helper'
 import { jest } from '@jest/globals'
 
-describe('MapsController', () => {
+describe('MapsService', () => {
   let mapsService: MapsService
   let nodesRepo: Repository<MmpNode>
   let mapsRepo: Repository<MmpMap>
