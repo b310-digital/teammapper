@@ -77,7 +77,7 @@ describe('AiService', () => {
   })
 
   describe('generateMermaid', () => {
-    it('generates mermaid syntax successfully', async () => {
+    it('calls the generateText functionality', async () => {
       const result = await aiService.generateMermaid('create a mindmap', 'en')
 
       expect(result).toBe('mermaid graph')
@@ -351,7 +351,7 @@ describe('AiService', () => {
             outputTokens: 300,
             totalTokens: 400,
           },
-        } as unknown as MockGenerateTextReturn)
+        } as MockGenerateTextReturn)
         await aiService.generateMermaid(`request ${i}`, 'en')
       }
 
@@ -363,7 +363,7 @@ describe('AiService', () => {
           outputTokens: 250,
           totalTokens: 300,
         },
-      } as unknown as MockGenerateTextReturn)
+      } as MockGenerateTextReturn)
       await aiService.generateMermaid('fifth request', 'en')
 
       // 6th request should fail due to RPM limit (6 > 5)
