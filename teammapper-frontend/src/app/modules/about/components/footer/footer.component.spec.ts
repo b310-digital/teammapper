@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
+import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { FooterComponent } from './footer.component';
 
@@ -20,6 +22,7 @@ describe('FooterComponent', () => {
       fontMaxSize: 16,
       fontMinSize: 12,
       fontIncrement: 2,
+      showLinktext: false,
     },
   };
 
@@ -38,7 +41,6 @@ describe('FooterComponent', () => {
     } as unknown as jest.Mocked<TranslateService>;
 
     await TestBed.configureTestingModule({
-      declarations: [FooterComponent],
       providers: [
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: TranslateService, useValue: mockTranslateService },
@@ -49,7 +51,10 @@ describe('FooterComponent', () => {
         }),
         MatIconModule,
         MatSelectModule,
+        MatFormFieldModule,
         BrowserAnimationsModule,
+        RouterTestingModule,
+        FooterComponent,
       ],
     }).compileComponents();
 
@@ -65,16 +70,7 @@ describe('FooterComponent', () => {
 
     it('should initialize with correct settings and languages', () => {
       expect(mockSettingsService.getCachedSettings).toHaveBeenCalled();
-      expect(component.languages).toEqual([
-        'en',
-        'fr',
-        'de',
-        'it',
-        'zh-tw',
-        'zh-cn',
-        'es',
-        'pt-br',
-      ]);
+      expect(component.languages).toEqual(['en', 'de']);
       expect(component.currentYear).toBe(new Date().getFullYear().toString());
     });
   });

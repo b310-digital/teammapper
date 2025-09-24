@@ -28,47 +28,49 @@
   "main": "app.js",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host $BINDING",
+    "start": "ng serve --host $BINDING --disable-host-check --ssl false",
     "test": "ng test",
-    "tsc": "npx tsc -p ./tsconfig.json",
-    "build:packages": "npm install --workspace=packages && npm run build --workspace=packages",
-    "build:dev": "npm run build:packages && ng build",
-    "build:prod": "npm run build:packages && ng build --configuration production",
+    "tsc": "npx tsc -p ./tsconfig.json --noEmit",
+    "build:packages": "pnpm install --filter \"@teammapper/*\" && pnpm run --filter \"@teammapper/*\" build",
+    "build:dev": "pnpm run build:packages && ng build",
+    "build:prod": "pnpm run build:packages && ng build --configuration production",
     "lint": "ng lint",
     "doc": "compodoc -p src/tsconfig.app.json",
-    "deploy": "ng deploy"
+    "deploy": "ng deploy",
+    "format": "npx prettier . --write"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "19.2.13",
-    "@angular/animations": "19.2.1",
-    "@angular/cdk": "19.2.1",
-    "@angular/cli": "19.2.1",
-    "@angular/common": "19.2.1",
-    "@angular/compiler": "19.2.1",
-    "@angular/compiler-cli": "19.2.1",
-    "@angular/core": "19.2.1",
-    "@angular/forms": "19.2.1",
-    "@angular/material": "19.2.1",
-    "@angular/platform-browser": "19.2.1",
-    "@angular/platform-browser-dynamic": "19.2.1",
-    "@angular/router": "19.2.1",
-    "@fortawesome/angular-fontawesome": "^1.0.0",
+    "@angular-devkit/build-angular": "20.3.2",
+    "@angular/animations": "20.3.1",
+    "@angular/cdk": "20.0.2",
+    "@angular/cli": "20.3.2",
+    "@angular/common": "20.3.1",
+    "@angular/compiler": "20.3.1",
+    "@angular/compiler-cli": "20.3.1",
+    "@angular/core": "20.3.1",
+    "@angular/forms": "20.3.1",
+    "@angular/material": "20.0.2",
+    "@angular/platform-browser": "20.3.1",
+    "@angular/platform-browser-dynamic": "20.3.1",
+    "@angular/router": "20.3.1",
+    "@fortawesome/angular-fontawesome": "^2.0.1",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@material-design-icons/font": "^0.14.13",
     "@ngx-translate/core": "^16.0.3",
     "@ngx-translate/http-loader": "^16.0.1",
-    "@teammapper/mermaid-mindmap-parser": "^0.0.1",
     "@types/uuid": "^10.0.0",
+    "ai": "^5.0.40",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.6.1",
     "deep-object-diff": "^1.1.9",
     "dompurify": "3.2.4",
-    "jspdf": "^3.0.1",
+    "jspdf": "^3.0.2",
     "localforage": "1.10.0",
     "ngx-color-picker": "^17.0.0",
     "ngx-toastr": "^19.0.0",
+    "@teammapper/mermaid-mindmap-parser": "workspace:^0.0.1",
     "qr-code-styling": "1.9.1",
     "rxjs": "~7.8.2",
     "socket.io-client": "~4.8.1",
@@ -77,18 +79,19 @@
     "zone.js": "^0.15.1"
   },
   "devDependencies": {
-    "@angular-builders/jest": "^19.0.0",
-    "@angular-devkit/architect": "0.1902.1",
-    "@angular-devkit/core": "19.2.1",
-    "@angular-devkit/schematics": "19.2.1",
-    "@angular-eslint/builder": "19.2.1",
-    "@angular-eslint/eslint-plugin": "19.2.1",
-    "@angular-eslint/eslint-plugin-template": "19.2.1",
-    "@angular-eslint/schematics": "19.2.1",
-    "@angular-eslint/template-parser": "19.2.1",
-    "@angular/language-service": "19.2.1",
+    "@angular-builders/jest": "^20.0.0",
+    "@angular-devkit/architect": "0.2003.2",
+    "@angular-devkit/core": "20.3.2",
+    "@angular-devkit/schematics": "20.3.2",
+    "@angular-eslint/builder": "19.7.1",
+    "@angular-eslint/eslint-plugin": "19.7.1",
+    "@angular-eslint/eslint-plugin-template": "19.7.1",
+    "@angular-eslint/schematics": "19.7.1",
+    "@angular-eslint/template-parser": "19.7.1",
+    "@angular/language-service": "20.3.1",
     "@compodoc/compodoc": "^1.1.26",
     "@eslint/js": "^9.12.0",
+    "@playwright/test": "^1.55.0",
     "@schematics/angular": "^19.2.12",
     "@types/d3": "7.1.0",
     "@types/eslint__js": "^8.42.3",
@@ -100,55 +103,26 @@
     "@typescript-eslint/parser": "^8.4.0",
     "angular-eslint": "^19.2.1",
     "eslint": "^9.28.0",
-    "eslint-config-prettier": "^10.1.1",
+    "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-jest": "^28.10.0",
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^15.11.0",
     "jest": "^29.7.0",
     "jest-canvas-mock": "^2.5.2",
-    "jest-preset-angular": "^14.5.3",
+    "jest-preset-angular": "^14.6.0",
     "minimist": "^1.2.5",
     "prettier": "^3.3.3",
     "ts-node": "~10.9.2",
-    "typescript": "~5.7.3",
+    "typescript": "~5.8.3",
     "typescript-eslint": "^8.26.0"
   },
   "optionalDependencies": {
-    "@nx/nx-darwin-arm64": "21.1.2",
+    "@nx/nx-darwin-arm64": "21.2.0",
     "@nx/nx-darwin-x64": "20.0.3",
     "@nx/nx-linux-x64-gnu": "19.8.2",
     "@nx/nx-win32-x64-msvc": "19.8.4"
   },
   "workspaces": [
     "packages/*"
-  ],
-  "jest": {
-    "preset": "jest-preset-angular",
-    "testPathIgnorePatterns": [
-      "node_modules/",
-      "dist/"
-    ],
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "modulePaths": [
-      "<rootDir>"
-    ],
-    "moduleNameMapper": {
-      "@mmp/index": "<rootDir>/src/test/mocks/mmp-index.ts",
-      "@mmp/map/map": "<rootDir>/src/test/mocks/mmp-map.ts"
-    },
-    "setupFilesAfterEnv": [
-      "<rootDir>/setup-jest.ts"
-    ]
-  }
+  ]
 }

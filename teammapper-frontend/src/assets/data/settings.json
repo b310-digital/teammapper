@@ -5,6 +5,7 @@
   "mapOptions": {
     "centerOnResize": false,
     "autoBranchColors": true,
+    "showLinktext": false,
     "fontMaxSize": 70,
     "fontMinSize": 15,
     "fontIncrement": 5,

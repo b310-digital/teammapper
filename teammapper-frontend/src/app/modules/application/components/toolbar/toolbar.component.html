@@ -21,7 +21,7 @@
     <button
       [ngClass]="{ 'mat-button-disabled': editDisabled }"
       (click)="upload.click()"
-      [title]="'TOOLTIPS.IMPORT_MAP' | translate"
+      [title]="'TOOLTIPS.IMPORT_JSON' | translate"
       color="primary"
       mat-menu-item>
       <mat-icon>insert_drive_file</mat-icon>
@@ -45,9 +45,21 @@
       <mat-icon>edit_square</mat-icon>
       <span>{{ 'GENERAL.MERMAID' | translate }}</span>
     </button>
+
+    <button
+      *ngIf="featureFlagAI"
+      id="ai-upload"
+      (click)="importFromAi()"
+      [title]="'TOOLTIPS.IMPORT_AI' | translate"
+      color="primary"
+      mat-menu-item>
+      <mat-icon>auto_awesome</mat-icon>
+      <span>{{ 'GENERAL.AI' | translate }}</span>
+    </button>
   </mat-menu>
 
   <button
+    id="menu-export"
     [matMenuTriggerFor]="export_map"
     [title]="'TOOLTIPS.EXPORT_MAP' | translate"
     color="primary"
@@ -56,29 +68,52 @@
   </button>
 
   <mat-menu #export_map="matMenu">
-    <button (click)="exportMap('json')" mat-menu-item>
+    <button
+      (click)="exportMap('json')"
+      [title]="'TOOLTIPS.EXPORT_JSON' | translate"
+      mat-menu-item>
       <mat-icon>insert_drive_file</mat-icon>
       <span>{{ 'GENERAL.JSON' | translate }}</span>
     </button>
-    <button (click)="exportMap('svg')" mat-menu-item>
+    <button
+      (click)="exportMap('mermaid')"
+      [title]="'TOOLTIPS.EXPORT_MERMAID' | translate"
+      mat-menu-item>
+      <mat-icon>edit_square</mat-icon>
+      <span>{{ 'GENERAL.MERMAID' | translate }}</span>
+    </button>
+    <button
+      (click)="exportMap('svg')"
+      [title]="'TOOLTIPS.EXPORT_SVG' | translate"
+      mat-menu-item>
       <mat-icon>image</mat-icon>
       <span>{{ 'GENERAL.SVG' | translate }}</span>
     </button>
-    <button (click)="exportMap('png')" mat-menu-item>
+    <button
+      (click)="exportMap('png')"
+      [title]="'TOOLTIPS.EXPORT_PNG' | translate"
+      mat-menu-item>
       <mat-icon>image</mat-icon>
       <span>{{ 'GENERAL.PNG' | translate }}</span>
     </button>
-    <button (click)="exportMap('jpeg')" mat-menu-item>
+    <button
+      (click)="exportMap('jpeg')"
+      [title]="'TOOLTIPS.EXPORT_JPEG' | translate"
+      mat-menu-item>
       <mat-icon>image</mat-icon>
       <span>{{ 'GENERAL.JPG' | translate }}</span>
     </button>
-    <button (click)="exportMap('pdf')" mat-menu-item>
+    <button
+      (click)="exportMap('pdf')"
+      [title]="'TOOLTIPS.EXPORT_PDF' | translate"
+      mat-menu-item>
       <mat-icon>picture_as_pdf</mat-icon>
       <span>{{ 'GENERAL.PDF' | translate }}</span>
     </button>
   </mat-menu>
 
   <button
+    id="share-button"
     (click)="share()"
     [title]="'TOOLTIPS.SHARE' | translate"
     color="primary"
@@ -99,6 +134,7 @@
     <mat-icon>add_comment</mat-icon>
   </button>
   <button
+    id="copy-node-button"
     (click)="mmpService.copyNode()"
     [title]="'TOOLTIPS.COPY_NODE' | translate"
     [disabled]="editDisabled"
@@ -115,6 +151,7 @@
     <mat-icon>content_cut</mat-icon>
   </button>
   <button
+    id="paste-node-button"
     (click)="mmpService.pasteNode()"
     [title]="'TOOLTIPS.PASTE_NODE' | translate"
     [disabled]="editDisabled"
@@ -136,6 +173,7 @@
   </div>
 
   <button
+    id="undo-button"
     (click)="mmpService.undo()"
     [title]="'TOOLTIPS.UNDO_MAP' | translate"
     [disabled]="editDisabled || !canUndoRedo"
@@ -145,6 +183,7 @@
   </button>
 
   <button
+    id="redo-button"
     (click)="mmpService.redo()"
     [title]="'TOOLTIPS.REDO_MAP' | translate"
     [disabled]="editDisabled || !canUndoRedo"
@@ -170,7 +209,7 @@
   <ng-template #renderRemove>
     <button
       (click)="mmpService.removeNodeImage()"
-      [title]="'TOOLTIPS.NODE_IMAGE' | translate"
+      [title]="'TOOLTIPS.NODE_IMAGE_REMOVE' | translate"
       [disabled]="editDisabled"
       color="primary"
       mat-icon-button>
@@ -180,6 +219,8 @@
   <ng-template #renderInput>
     <button
       (click)="imageUpload.click()"
+      [title]="'TOOLTIPS.NODE_IMAGE' | translate"
+      [disabled]="editDisabled"
       class="label-file-upload mat-icon-button mat-primary mat-focus-indicator"
       mat-icon-button>
       <mat-icon>image</mat-icon>
@@ -196,6 +237,7 @@
     <button
       (click)="pictogram()"
       [title]="'TOOLTIPS.PICTOGRAM' | translate"
+      [disabled]="editDisabled"
       color="primary"
       mat-icon-button>
       <mat-icon>nature_people</mat-icon>
@@ -207,6 +249,7 @@
   </div>
 
   <button
+    id="bold-button"
     (click)="toogleNodeFontWeight()"
     [title]="'TOOLTIPS.BOLD_TEXT' | translate"
     [disabled]="editDisabled"
@@ -215,6 +258,7 @@
     <mat-icon>format_bold</mat-icon>
   </button>
   <button
+    id="italic-button"
     (click)="toogleNodeFontStyle()"
     [title]="'TOOLTIPS.ITALIC_TEXT' | translate"
     [disabled]="editDisabled"
@@ -237,6 +281,7 @@
   </ng-template>
   <ng-template #renderLinkInput>
     <button
+      id="add-link-button"
       (click)="addLink()"
       [title]="'TOOLTIPS.LINK_ADD' | translate"
       [disabled]="editDisabled"
@@ -248,15 +293,27 @@
 
   <span class="toolbar-spacer"></span>
 
-  <button color="primary" mat-icon-button routerLink="/app/shortcuts">
+  <button
+    color="primary"
+    [title]="'TOOLTIPS.SHORTCUTS' | translate"
+    mat-icon-button
+    routerLink="/app/shortcuts">
     <mat-icon>shortcuts</mat-icon>
   </button>
 
-  <button color="primary" mat-icon-button routerLink="/app/settings">
+  <button
+    color="primary"
+    [title]="'TOOLTIPS.SETTINGS' | translate"
+    mat-icon-button
+    routerLink="/app/settings">
     <mat-icon>settings</mat-icon>
   </button>
 
-  <button color="primary" (click)="openAbout()" mat-icon-button>
+  <button
+    color="primary"
+    (click)="openAbout()"
+    [title]="'TOOLTIPS.INFO' | translate"
+    mat-icon-button>
     <mat-icon>info</mat-icon>
   </button>
 </mat-toolbar>

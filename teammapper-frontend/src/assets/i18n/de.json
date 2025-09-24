@@ -12,7 +12,15 @@
   "TOOLTIPS": {
     "IMPORT_MAP": "Mindmap importieren",
     "IMPORT_MERMAID": "Mermaid Mindmap importieren",
+    "IMPORT_JSON": "JSON Mindmap importieren",
+    "IMPORT_AI": "Mindmap mit KI generieren",
     "EXPORT_MAP": "Mindmap exportieren",
+    "EXPORT_JSON": "Mindmap als JSON exportieren",
+    "EXPORT_MERMAID": "Mindmap als Mermaid exportieren",
+    "EXPORT_SVG": "Mindmap als SVG exportieren",
+    "EXPORT_PNG": "Mindmap als PNG exportieren",
+    "EXPORT_JPEG": "Mindmap als JPEG exportieren",
+    "EXPORT_PDF": "Mindmap als PDF exportieren",
     "ESC": "Dialog schließen",
     "FULLSCREEN": "Vollbild",
     "CLOSE_MENU": "Seitenmenü öffnen",
@@ -37,7 +45,8 @@
     "SELECT_NODE_ABOVE": "Knoten oben auswählen",
     "EDIT_NODE": "Änderungen am Text eines Knotens erlauben",
     "COUPLE_NODE": "Knoten koppeln oder entkoppeln",
-    "NODE_IMAGE": "Bild zum Knoten hinzufügen oder entfernen",
+    "NODE_IMAGE": "Bild zum Knoten hinzufügen",
+    "NODE_IMAGE_REMOVE": "Bild vom Knoten entfernen",
     "PICTOGRAM": "Piktrogramm",
     "BOLD_TEXT": "Fett",
     "ITALIC_TEXT": "Kursiv",
@@ -70,7 +79,9 @@
     "FONT_MAX_SIZE": "Maximale Schriftgröße",
     "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
     "FONT_INCREASE": "Schrift vergrößern",
-    "FONT_DECREASE": "Schrift verkleinern"
+    "FONT_DECREASE": "Schrift verkleinern",
+    "SHOW_LINKTEXT": "Linktext statt Icon anzeigen",
+    "INFO": "Info Screen öffnen"
   },
   "MODALS": {
     "GENERAL": {
@@ -83,8 +94,18 @@
     },
     "IMPORT_MERMAID": {
       "TITLE": "Mermaid Mindmap Import",
-      "CONTENT": "Importiere eine Mindmap auf Basis von Mermaid. Mermaid ist eine Syntax zum Beschreiben von Diagrammen und kann bspw. mit generativer KI einfach erzeugt werden.",
-      "IMPORT": "Importieren"
+      "CONTENT": "Importiere eine Mindmap auf Basis von Mermaid. Mermaid ist eine Syntax zum Beschreiben von Diagrammen und kann entweder manuell oder bspw. mit generativer KI einfach erzeugt werden.",
+      "IMPORT": "Importieren",
+      "LABEL_CREATE_FROM_AI": "Beschreibung der Mindmap",
+      "BUTTON_CREATE_FROM_AI": "Generieren",
+      "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "KI Mindmap Generator",
+      "CONTENT": "Generiere eine Mindmap direkt aus deiner Beschreibung mit KI. Beschreibe einfach, was du visualisieren möchtest und die KI erstellt es für dich.",
+      "LABEL_DESCRIPTION": "Beschreibe deine Mindmap",
+      "PLACEHOLDER": "Zum Beispiel: Geschichte des Reisens",
+      "BUTTON_GENERATE": "Generieren & Importieren"
     },
     "PICTOGRAMS": {
       "TITLE": "Piktogramm einfügen",
@@ -162,7 +183,8 @@
       "NODE_NAME": "Bezeichnung von Knoten",
       "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
       "TITLE": "Einstellungen",
-      "TTL": "Letztes bekannte Datum der Löschung"
+      "TTL": "Letztes bekannte Datum der Löschung",
+      "SHOW_LINKTEXT": "Linktext anzeigen"
     },
     "SHORTCUTS": {
       "TITLE": "Shortcuts"
@@ -195,9 +217,13 @@
       "NODE_CUT_GENERIC": "Beim Ausschneiden des Knotens ist ein Fehler aufgetreten.",
       "EXPORT_IMAGE_ERROR": "Beim Bild-Export ist ein Fehler aufgetreten. Womöglich ist die Mindmap zu groß.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap konnte nicht gefunden werden!",
-      "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!"
+      "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!",
+      "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden."
     },
-    "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!"
+    "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",
+    "AI_MERMAID_GENERATING": "Mermaid wird erstellt...",
+    "AI_DESCRIPTION_REQUIRED": "Bitte gib eine Beschreibung für die Mindmap ein"
   },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",
@@ -206,8 +232,9 @@
     "LEGAL": "Impressum",
     "DISMISS": "Verwerfen",
     "SAVED_MAPS": "Gespeicherte Mindmaps",
-    "MERMAID": "Mermaid",
+    "MERMAID": "Mermaid (.mmd)",
     "JSON": "Datei (.json)",
+    "AI": "KI Generator",
     "PNG": "Bild (.png)",
     "SVG": "Bild (.svg)",
     "JPG": "Bild (.jpg)",
@@ -224,6 +251,7 @@
     "MAP": "Mindmap",
     "NODES": "Knoten",
     "SAVED": "Gespeichert",
-    "NOT_SAVED": "Nicht gespeichert"
+    "NOT_SAVED": "Nicht gespeichert",
+    "LINKS": "Links"
   }
 }

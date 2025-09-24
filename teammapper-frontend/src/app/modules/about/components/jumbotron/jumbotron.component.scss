@@ -45,6 +45,7 @@ section.jumbotron {
 
         mat-icon {
           color: #74c13f;
+          margin-right: 16px !important;
         }
       }
     }
@@ -86,5 +87,8 @@ section.jumbotron {
   .white-list {
     font-family: Fira Sans;
     color: white;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
   }
 }

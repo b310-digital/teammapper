@@ -1,0 +1,4 @@
+packages:
+  - 'teammapper-backend'
+  - 'teammapper-frontend'
+  - 'teammapper-frontend/packages/*'

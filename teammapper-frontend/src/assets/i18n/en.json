@@ -12,7 +12,15 @@
   "TOOLTIPS": {
     "IMPORT_MAP": "Imports the map",
     "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
+    "IMPORT_JSON": "Imports a JSON Mindmap",
+    "IMPORT_AI": "Generate mindmap with AI",
     "EXPORT_MAP": "Exports the map",
+    "EXPORT_JSON": "Exports the map as JSON",
+    "EXPORT_MERMAID": "Exports the map as Mermaid",
+    "EXPORT_SVG": "Exports the map as SVG",
+    "EXPORT_PNG": "Exports the map as PNG",
+    "EXPORT_JPEG": "Exports the map as JPEG",
+    "EXPORT_PDF": "Exports the map as PDF",
     "ESC": "Closes the dialog window",
     "FULLSCREEN": "Sets the full screen",
     "CLOSE_MENU": "Closes the side menu",
@@ -38,6 +46,7 @@
     "EDIT_NODE": "Allows to edit the text of the node",
     "COUPLE_NODE": "Groups or ungroups the node",
     "NODE_IMAGE": "Adds an image to the node",
+    "NODE_IMAGE_REMOVE": "Removes an image from the node",
     "PICTOGRAM": "Pictrogram",
     "BOLD_TEXT": "Changes the weight of the text",
     "ITALIC_TEXT": "Changes the style of the text",
@@ -70,7 +79,9 @@
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
-    "FONT_DECREASE": "Decrease font"
+    "FONT_DECREASE": "Decrease font",
+    "SHOW_LINKTEXT": "Show the linktext instead of the link icon",
+    "INFO": "Opens the info screen"
   },
   "MODALS": {
     "GENERAL": {
@@ -83,8 +94,18 @@
     },
     "IMPORT_MERMAID": {
       "TITLE": "Mermaid Mindmap Import",
-      "CONTENT": "Import a mindmap based on Mermaid syntax.",
-      "IMPORT": "Import"
+      "CONTENT": "Import mindmaps using Mermaid syntax. Create your mindmap by either generating it with AI assistance or writing the Mermaid code manually.",
+      "IMPORT": "Import",
+      "LABEL_CREATE_FROM_AI": "Mindmap description",
+      "BUTTON_CREATE_FROM_AI": "Generate",
+      "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "AI Mindmap Generator",
+      "CONTENT": "Generate a mindmap directly from your description using AI. Simply describe what you want to map and the AI will create it for you.",
+      "LABEL_DESCRIPTION": "Describe your mindmap",
+      "PLACEHOLDER": "E.g. History of Travel",
+      "BUTTON_GENERATE": "Generate & Import"
     },
     "PICTOGRAMS": {
       "TITLE": "Add a pictogram",
@@ -162,7 +183,8 @@
       "ROOT_NODE_NAME": "Root node name",
       "NODE_NAME": "Node name",
       "TITLE": "Settings",
-      "TTL": "Last known date of deletion"
+      "TTL": "Last known date of deletion",
+      "SHOW_LINKTEXT": "Show linktext"
     },
     "SHORTCUTS": {
       "TITLE": "Shortcuts"
@@ -194,9 +216,13 @@
       "NODE_CUT_GENERIC": "An error occurred whilst trying to cut the node.",
       "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!",
-      "IMPORT_ERROR": "Mindmap could not be imported!"
+      "IMPORT_ERROR": "Could not import mindmap",
+      "AI_MERMAID_ERROR": "Mermaid could not be generated"
     },
-    "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!"
+    "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
+    "AI_MERMAID_GENERATING": "Creating Mermaid...",
+    "AI_DESCRIPTION_REQUIRED": "Please provide a description for the mindmap"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",
@@ -205,8 +231,9 @@
     "LEGAL": "Legal Disclosure",
     "DISMISS": "Dismiss",
     "SAVED_MAPS": "Saved maps",
-    "MERMAID": "Mermaid",
+    "MERMAID": "Mermaid (.mmd)",
     "JSON": "File (.json)",
+    "AI": "AI Generator",
     "PNG": "Image (.png)",
     "SVG": "Image (.svg)",
     "JPG": "Image (.jpg)",
@@ -223,6 +250,7 @@
     "MAP": "Map",
     "NODES": "Nodes",
     "SAVED": "Saved",
-    "NOT_SAVED": "Not saved"
+    "NOT_SAVED": "Not saved",
+    "LINKS": "Links"
   }
 }

@@ -23,6 +23,16 @@ services:
       POSTGRES_TEST_PORT: ${DOCKER_COMPOSE_APP_ENV_POSTGRES_PORT:-5432}
       POSTGRES_TEST_USER: ${DOCKER_COMPOSE_APP_ENV_POSTGRES_USER:-teammapper-user}
       DELETE_AFTER_DAYS: ${DELETE_AFTER_DAYS:-30}
+      AI_LLM_PROVIDER: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_PROVIDER}
+      AI_LLM_URL: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_URL}
+      AI_LLM_TOKEN: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_TOKEN}
+      AI_LLM_MODEL: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_MODEL}
+      AI_LLM_RPM: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_RPM}
+      AI_LLM_TPM: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_TPM}
+      AI_LLM_TPD: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_TPD}
+
+      TESTING_PLAYWRIGHT_WS_ENDPOINT: "ws://playwright:9323"
+      TESTING_PLAYWRIGHT_BASE_URL: "http://app:4200"
     ports:
       - "${APP_FRONTEND_PORT:-4200}:4200"
       - "${APP_BACKEND_PORT:-3000}:3000"
@@ -48,6 +58,15 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data/pgdata
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.55.0-noble
+    container_name: playwright
+    depends_on:
+      - app
+    expose:
+      - "9323"
+    command: ["npx", "playwright", "run-server", "--port=9323"]
 
 volumes:
   postgres_data:

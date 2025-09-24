@@ -10,9 +10,17 @@
     "DE": "Allemand"
   },
   "TOOLTIPS": {
-    "IMPORT_MAP": "Imports the map",
-    "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
-    "EXPORT_MAP": "Exports the map",
+    "IMPORT_MAP": "Importe la carte",
+    "IMPORT_MERMAID": "Importe une carte mentale Mermaid",
+    "IMPORT_JSON": "Importe une carte mentale en JSON",
+    "IMPORT_AI": "Générer une carte mentale avec l'IA",
+    "EXPORT_MAP": "Exporte la carte",
+    "EXPORT_JSON": "Exporte la carte au format JSON",
+    "EXPORT_MERMAID": "Exporte la carte au format Mermaid",
+    "EXPORT_SVG": "Exporte la carte au format SVG",
+    "EXPORT_PNG": "Exporte la carte au format PNG",
+    "EXPORT_JPEG": "Exporte la carte au format JPEG",
+    "EXPORT_PDF": "Exporte la carte au format PDF",
     "ESC": "Ferme la fenêtre de dialogue",
     "FULLSCREEN": "Mettre en plein écran",
     "CLOSE_MENU": "Ferme le menu latéral",
@@ -38,6 +46,7 @@
     "EDIT_NODE": "Allows to edit the text of the node",
     "COUPLE_NODE": "Verrouille ou déverrouille le nœud",
     "NODE_IMAGE": "Ajoute une image au noeud",
+    "NODE_IMAGE_REMOVE": "Supprime une image du nœud",
     "PICTOGRAM": "Pictrogram",
     "START_EDIT_NODE": "Edit node text",
     "BOLD_TEXT": "Change la taille du texte",
@@ -70,21 +79,32 @@
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
-    "FONT_DECREASE": "Decrease font"
+    "FONT_DECREASE": "Decrease font",
+    "INFO": "Ouvre l’écran d’informations"
   },
   "MODALS": {
     "GENERAL": {
-      "BUTTON_CLOSE": "Close"
+      "BUTTON_CLOSE": "Fermer"
     },
     "CONNECTION_INFO": {
-      "TITLE": "Connection lost",
-      "CONTENT": "Connection to server was lost. Retrying...",
-      "BUTTON_RECONNECT": "Reconnect"
+      "TITLE": "Connexion perdue",
+      "CONTENT": "La connexion au serveur a été perdue. Nouvelle tentative...",
+      "BUTTON_RECONNECT": "Reconnecter"
     },
     "IMPORT_MERMAID": {
-      "TITLE": "Mermaid Mindmap Import",
-      "CONTENT": "Import a mindmap based on Mermaid syntax.",
-      "IMPORT": "Import"
+      "TITLE": "Importation de carte mentale Mermaid",
+      "CONTENT": "Importez des cartes mentales en utilisant la syntaxe Mermaid. Créez votre carte mentale en la générant avec l'assistance de l'IA ou en écrivant le code Mermaid manuellement.",
+      "IMPORT": "Importer",
+      "LABEL_CREATE_FROM_AI": "Description de la carte mentale",
+      "BUTTON_CREATE_FROM_AI": "Générer",
+      "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "Générateur de carte mentale IA",
+      "CONTENT": "Générez une carte mentale directement à partir de votre description en utilisant l'IA. Décrivez simplement ce que vous souhaitez cartographier et l'IA la créera pour vous.",
+      "LABEL_DESCRIPTION": "Décrivez votre carte mentale",
+      "PLACEHOLDER": "Par exemple, créez une carte mentale d'une maison avec les pièces, les meubles et le jardin",
+      "BUTTON_GENERATE": "Générer & Importer"
     },
     "PICTOGRAMS": {
       "TITLE": "Add a pictogram",
@@ -194,9 +214,13 @@
       "NODE_CUT_GENERIC": "Une erreur s'est produite lors de la découpe du nœud.",
       "EXPORT_IMAGE_ERROR": "Une erreur s'est produite lors de l'exportation de l'image. Il se peut que la mind map soit trop grande.",
       "MAP_COULD_NOT_BE_FOUND": "La carte heuristique est introuvable !",
-      "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !"
+      "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !",
+      "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré"
     },
-    "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !"
+    "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",
+    "AI_MERMAID_GENERATING": "Création de Mermaid...",
+    "AI_DESCRIPTION_REQUIRED": "Veuillez fournir une description pour la carte mentale"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",
@@ -205,8 +229,9 @@
     "LEGAL": "Legal Disclosure",
     "DISMISS": "Rejeter",
     "SAVED_MAPS": "Saved maps",
-    "MERMAID": "Mermaid",
-    "JSON": "File (.json)",
+    "MERMAID": "Mermaid (.mmd)",
+    "JSON": "Fichier (.json)",
+    "AI": "Générateur IA",
     "PNG": "Image (.png)",
     "SVG": "Image (.svg)",
     "JPG": "Image (.jpg)",

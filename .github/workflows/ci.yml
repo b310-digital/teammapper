@@ -1,12 +1,12 @@
 name: Docker Image CI
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
     teammapper-backend-build:
@@ -28,6 +28,13 @@ jobs:
                   username: ${{ github.repository_owner }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '22'
+
+            - run: corepack enable
+            - run: corepack prepare pnpm@9 --activate
+
             - name: Build and export to Docker
               uses: docker/build-push-action@v6
               with:
@@ -41,9 +48,15 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-backend ci
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '22'
 
-            - run: npm --prefix teammapper-backend run lint
+            - run: corepack enable
+            - run: corepack prepare pnpm@9 --activate
+
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter teammapper-backend run lint
 
     teammapper-frontend-lint:
         runs-on: ubuntu-latest
@@ -51,9 +64,15 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-frontend ci
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '22'
 
-            - run: npm --prefix teammapper-frontend run lint
+            - run: corepack enable
+            - run: corepack prepare pnpm@9 --activate
+
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter teammapper-frontend run lint
 
     teammapper-frontend-tsc:
         runs-on: ubuntu-latest
@@ -61,11 +80,16 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-frontend run build:packages
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '22'
 
-            - run: npm --prefix teammapper-frontend ci
+            - run: corepack enable
+            - run: corepack prepare pnpm@9 --activate
 
-            - run: npm --prefix teammapper-frontend run tsc
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
+            - run: pnpm --filter teammapper-frontend run tsc
 
     teammapper-backend-tsc:
         runs-on: ubuntu-latest
@@ -73,9 +97,15 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-backend ci
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '22'
 
-            - run: npm --prefix teammapper-backend run tsc
+            - run: corepack enable
+            - run: corepack prepare pnpm@9 --activate
+
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter teammapper-backend run tsc
 
     teammapper-backend-test-e2e:
         runs-on: ubuntu-latest
@@ -96,9 +126,15 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-backend ci
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '22'
 
-            - run: npm --prefix teammapper-backend run test
+            - run: corepack enable
+            - run: corepack prepare pnpm@9 --activate
+
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter teammapper-backend run test
               env:
                   POSTGRES_DATABASE: "teammapper-backend-test"
                   POSTGRES_HOST: "localhost"
@@ -118,6 +154,13 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - run: npm --prefix teammapper-frontend run build:packages
-            - run: npm --prefix teammapper-frontend ci
-            - run: npm --prefix teammapper-frontend run test
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '22'
+
+            - run: corepack enable
+            - run: corepack prepare pnpm@9 --activate
+
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
+            - run: pnpm --filter teammapper-frontend run test

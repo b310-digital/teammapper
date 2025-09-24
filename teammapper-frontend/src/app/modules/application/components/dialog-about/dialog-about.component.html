@@ -1,18 +1,21 @@
 <h2 mat-dialog-title>{{ applicationName }} {{ version }}</h2>
 <mat-dialog-content>
   <div class="about-modal-section">
-    <img src="./assets/icons/teammapper.svg" width="150" alt="Teammapper Logo" />
+    <img
+      src="./assets/icons/teammapper.svg"
+      width="150"
+      alt="Teammapper Logo" />
     {{ 'PAGES.ABOUT.INTRODUCTION.APPLICATION_DESCRIPTION' | translate }}
   </div>
   <br />
   <div class="about-modal-section">
     {{
       'MODALS.INFO.DELETE_AFTER_DAYS'
-        | translate : { deleteAfterDays: map.deleteAfterDays }
+        | translate: { deleteAfterDays: map.deleteAfterDays }
     }}
     <br />
     {{ 'MODALS.INFO.DELETED_AT' | translate }}
-    {{ map.deletedAt | date : 'YYYY-MM-dd' }}<br />
+    {{ map.deletedAt | date: 'yyyy-MM-dd' }}<br />
 
     <br />
     <a
@@ -22,11 +25,11 @@
       {{ applicationName }}
       <fa-icon [icon]="faGithub" size="lg"></fa-icon>
     </a>
-    - 
+    -
     <a routerLink="/legal">
       {{ 'GENERAL.LEGAL' | translate }}
     </a>
-    - 
+    -
     <a routerLink="/privacy">
       {{ 'GENERAL.DATAPROTECTION' | translate }}
     </a>

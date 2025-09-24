@@ -3,4 +3,8 @@ import { parser as mermaidMindmapParser } from './parser/mindmap.jison';
 import mindmapDb from './mindmapDb';
 import { MindmapNode } from './types';
 
-export { mindmapDb, mermaidMindmapParser, type MindmapNode as MermaidMindmapNode };
+export {
+  mindmapDb,
+  mermaidMindmapParser,
+  type MindmapNode as MermaidMindmapNode,
+};

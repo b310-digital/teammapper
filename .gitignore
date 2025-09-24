@@ -9,6 +9,7 @@
 
 # dependencies
 /node_modules
+.pnpm-store
 
 # IDEs and editors
 /.idea
@@ -25,6 +26,7 @@
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.claude
 
 # misc
 /.sass-cache

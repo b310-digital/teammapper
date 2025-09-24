@@ -2,11 +2,13 @@ import { CachedAdminMapValue } from 'src/app/shared/models/cached-map.model';
 import { HttpService } from '../../http/http.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from './settings.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SettingsService', () => {
   let settingsService: SettingsService;
   let httpService: jest.Mocked<HttpService>;
   let storageService: jest.Mocked<StorageService>;
+  let translateService: jest.Mocked<TranslateService>;
 
   beforeEach(() => {
     // Clear all mocks before each test
@@ -27,7 +29,15 @@ describe('SettingsService', () => {
       set: jest.fn(),
     } as unknown as jest.Mocked<StorageService>;
 
-    settingsService = new SettingsService(storageService, httpService);
+    translateService = {
+      getBrowserLang: jest.fn(),
+    } as unknown as jest.Mocked<TranslateService>;
+
+    settingsService = new SettingsService(
+      storageService,
+      httpService,
+      translateService
+    );
   });
 
   it('ignores old maps when returning from storage', async () => {
@@ -93,7 +103,7 @@ describe('SettingsService', () => {
   // Additional tests for full coverage
   describe('init', () => {
     it('initializes settings with default values when no cached settings exist', async () => {
-      const defaultSettings = { language: 'en' };
+      const defaultSettings = { general: { language: 'en' } };
 
       httpService.get.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
@@ -109,8 +119,8 @@ describe('SettingsService', () => {
     });
 
     it('initializes settings with cached values when they exist', async () => {
-      const defaultSettings = { language: 'en' };
-      const cachedSettings = { language: 'fr' };
+      const defaultSettings = { general: { language: 'en' } };
+      const cachedSettings = { general: { language: 'fr' } };
 
       httpService.get.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),

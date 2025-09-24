@@ -1,25 +1,17 @@
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
 import { Settings } from '../../../shared/models/settings.model';
 import { API_URL, HttpService } from '../../http/http.service';
-import { StorageService, STORAGE_KEYS } from '../storage/storage.service';
+import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
 @Injectable({
   providedIn: 'root',
 })
 // Global per user settings service
 export class SettingsService {
-  public static readonly LANGUAGES = [
-    'en',
-    'fr',
-    'de',
-    'it',
-    'zh-tw',
-    'zh-cn',
-    'es',
-    'pt-br',
-  ];
+  public static readonly LANGUAGES = ['en', 'de'];
 
   public settings: Observable<Settings | null>;
   private settingsSubject: BehaviorSubject<Settings | null>;
@@ -27,7 +19,8 @@ export class SettingsService {
 
   constructor(
     private storageService: StorageService,
-    private httpService: HttpService
+    private httpService: HttpService,
+    private translateService: TranslateService
   ) {
     // Initialization of the behavior subjects.
     this.settingsSubject = new BehaviorSubject(null);
@@ -40,6 +33,9 @@ export class SettingsService {
    */
   public async init() {
     const defaultSettings: Settings = await this.getDefaultSettings();
+    defaultSettings.general.language =
+      this.translateService.getBrowserLang() ??
+      defaultSettings.general.language;
     const loadedSettings: Settings = await this.storageService.get(
       STORAGE_KEYS.SETTINGS
     );

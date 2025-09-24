@@ -10,45 +10,45 @@
       </p>
       <br />
       <mat-list>
-        <mat-list-item lines="3">
-          <mat-icon mat-list-icon>check</mat-icon>
-          <span class="white-list">
+        <mat-list-item>
+          <mat-icon matListItemIcon>check</mat-icon>
+          <div matListItemTitle class="white-list">
             {{
               'PAGES.ABOUT.INTRODUCTION.APPLICATION_PROPERTIES.0' | translate
             }}
-          </span>
+          </div>
         </mat-list-item>
-        <mat-list-item lines="3">
-          <mat-icon mat-list-icon>check</mat-icon>
-          <span class="white-list">
+        <mat-list-item>
+          <mat-icon matListItemIcon>check</mat-icon>
+          <div matListItemTitle class="white-list">
             {{
               'PAGES.ABOUT.INTRODUCTION.APPLICATION_PROPERTIES.1' | translate
             }}
-          </span>
+          </div>
         </mat-list-item>
-        <mat-list-item lines="3">
-          <mat-icon mat-list-icon>check</mat-icon>
-          <span class="white-list">
+        <mat-list-item>
+          <mat-icon matListItemIcon>check</mat-icon>
+          <div matListItemTitle class="white-list">
             {{
               'PAGES.ABOUT.INTRODUCTION.APPLICATION_PROPERTIES.2' | translate
             }}
-          </span>
+          </div>
         </mat-list-item>
-        <mat-list-item lines="3">
-          <mat-icon mat-list-icon>check</mat-icon>
-          <span class="white-list">
+        <mat-list-item>
+          <mat-icon matListItemIcon>check</mat-icon>
+          <div matListItemTitle class="white-list">
             {{
               'PAGES.ABOUT.INTRODUCTION.APPLICATION_PROPERTIES.3' | translate
             }}
-          </span>
+          </div>
         </mat-list-item>
-        <mat-list-item lines="3">
-          <mat-icon mat-list-icon>check</mat-icon>
-          <span class="white-list">
+        <mat-list-item>
+          <mat-icon matListItemIcon>check</mat-icon>
+          <div matListItemTitle class="white-list">
             {{
               'PAGES.ABOUT.INTRODUCTION.APPLICATION_PROPERTIES.4' | translate
             }}
-          </span>
+          </div>
         </mat-list-item>
       </mat-list>
     </div>
@@ -56,7 +56,9 @@
     <button mat-flat-button color="accent" routerLink="map">
       {{ 'GENERAL.CREATE' | translate }}
     </button>
-    <div class="alert alert-info">{{ 'MESSAGES.DELETE_WARNING' | translate }}</div>
+    <div class="alert alert-info">
+      {{ 'MESSAGES.DELETE_WARNING' | translate }}
+    </div>
   </div>
   <div>
     <img src="./assets/images/screens.png" alt="Screens" />

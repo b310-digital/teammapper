@@ -10,14 +10,28 @@
     "node": "~22.2"
   },
   "scripts": {
-    "build:prod": "npm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && npm run build:backend:prod",
-    "prepare:prod": "npm --prefix teammapper-backend ci && npm --prefix teammapper-frontend ci",
-    "build:backend:prod": "npm --prefix teammapper-backend run build",
-    "build:frontend:prod": "GENERATE_SOURCEMAP=false npm --prefix teammapper-frontend run build:prod",
-    "clear": "rm teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist",
-    "migrate:prod": "npm --prefix teammapper-backend run prod:typeorm:migrate",
-    "start:prod": "npm --prefix teammapper-backend run start:prod",
-    "build": "npm run prepare:prod && npm run build:prod && npm run migrate:prod",
-    "start": "npm run start:prod"
+    "dev": "concurrently \"pnpm --filter teammapper-backend start:dev\" \"pnpm --filter teammapper-frontend start\"",
+    "backend:dev": "pnpm --filter teammapper-backend start:dev",
+    "frontend:dev": "pnpm --filter teammapper-frontend start",
+    "build": "pnpm run build:prod",
+    "build:prod": "pnpm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && pnpm run build:backend:prod",
+    "build:backend:prod": "pnpm --filter teammapper-backend run build",
+    "build:frontend:prod": "GENERATE_SOURCEMAP=false pnpm --filter teammapper-frontend run build:prod",
+    "clean": "rm -rf teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist",
+    "format": "pnpm --filter '*' run format",
+    "install:frozen": "pnpm install --frozen-lockfile",
+    "lint": "pnpm --filter '*' run lint",
+    "migrate:dev": "pnpm --filter teammapper-backend run dev:typeorm schema:sync",
+    "migrate:prod": "pnpm --filter teammapper-backend run prod:typeorm:migrate",
+    "start": "pnpm run start:prod",
+    "start:prod": "pnpm --filter teammapper-backend run start:prod",
+    "test": "pnpm --filter '*' run test",
+    "test:backend": "pnpm --filter teammapper-backend run test",
+    "test:frontend": "pnpm --filter teammapper-frontend run test",
+    "test:e2e": "pnpm --filter teammapper-frontend exec playwright test",
+    "tsc": "pnpm --filter '*' run tsc"
+  },
+  "devDependencies": {
+    "concurrently": "9.1.2"
   }
 }

@@ -1,20 +1,38 @@
 import { Component, Input } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { environment } from 'src/environments/environment';
+import { MatToolbar } from '@angular/material/toolbar';
+import { RouterLink } from '@angular/router';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
+import { NgClass, NgIf } from '@angular/common';
 
 @Component({
   selector: 'teammapper-toolbar',
   templateUrl: './toolbar.component.html',
   styleUrls: ['./toolbar.component.scss'],
-  standalone: false,
+  imports: [
+    MatToolbar,
+    RouterLink,
+    MatIconButton,
+    MatIcon,
+    MatMenuTrigger,
+    MatMenu,
+    MatMenuItem,
+    NgClass,
+    NgIf,
+    TranslatePipe,
+  ],
 })
 export class ToolbarComponent {
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
   public featureFlagPictograms: boolean = environment.featureFlagPictograms;
+  public featureFlagAI: boolean = environment.featureFlagAI;
 
   constructor(
     private translationService: TranslateService,
@@ -58,6 +76,10 @@ export class ToolbarComponent {
 
   public async mermaid() {
     this.dialogService.openImportMermaidDialog();
+  }
+
+  public async importFromAi() {
+    this.dialogService.openImportAiDialog();
   }
 
   public async pictogram() {

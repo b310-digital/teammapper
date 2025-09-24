@@ -12,6 +12,14 @@ import { ExportNodeProperties } from '@mmp/map/types';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { ServerMap } from 'src/app/core/services/map-sync/server-types';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
+import { ColorPanelsComponent } from '../../components/color-panels/color-panels.component';
+import { ClientColorPanelsComponent } from '../../components/client-color-panels/client-color-panels.component';
+import { SliderPanelsComponent } from '../../components/slider-panels/slider-panels.component';
+import { FloatingButtonsComponent } from '../../components/floating-buttons/floating-buttons.component';
+import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
+import { MapComponent } from '../../components/map/map.component';
+import { AsyncPipe } from '@angular/common';
+import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
 
 // Initialization process of a map:
 // 1) Render the wrapper element inside the map angular html component
@@ -22,7 +30,16 @@ import { DialogService } from 'src/app/core/services/dialog/dialog.service';
   selector: 'teammapper-application',
   templateUrl: './application.component.html',
   styleUrls: ['./application.component.scss'],
-  standalone: false,
+  imports: [
+    ColorPanelsComponent,
+    ClientColorPanelsComponent,
+    SliderPanelsComponent,
+    FloatingButtonsComponent,
+    ToolbarComponent,
+    MapComponent,
+    AsyncPipe,
+    InverseBoolPipe,
+  ],
 })
 export class ApplicationComponent implements OnInit, OnDestroy {
   public node: Observable<ExportNodeProperties>;
@@ -92,32 +109,31 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     mapId: string,
     modificationSecret: string
   ): Promise<ServerMap> {
-    if (mapId) {
-      const existingMap = await this.mapSyncService.prepareExistingMap(
-        mapId,
-        modificationSecret
+    if (!mapId) {
+      console.error(
+        'No map ID provided - this should not happen with the guard in place'
+      );
+      return null;
+    }
+
+    const existingMap = await this.mapSyncService.prepareExistingMap(
+      mapId,
+      modificationSecret
+    );
+
+    if (!existingMap) {
+      const errorMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.MAP_COULD_NOT_BE_FOUND'
       );
 
-      if (!existingMap) {
-        const errorMessage = await this.utilsService.translate(
-          'TOASTS.ERRORS.MAP_COULD_NOT_BE_FOUND'
-        );
-
-        this.router.navigate(['/'], {
-          queryParams: {
-            toastMessage: errorMessage,
-            toastIsError: 1,
-          },
-        });
-      }
-
-      return existingMap;
-    } else {
-      const privateServerMap = await this.mapSyncService.prepareNewMap();
-      this.router.navigate([`map/${privateServerMap.map.uuid}`], {
-        fragment: privateServerMap.modificationSecret,
+      this.router.navigate(['/'], {
+        queryParams: {
+          toastMessage: errorMessage,
+          toastIsError: 1,
+        },
       });
-      return privateServerMap.map;
     }
+
+    return existingMap;
   }
 }
