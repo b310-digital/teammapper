@@ -1,25 +1,29 @@
 import { jest } from '@jest/globals'
 
-// Mock modules before any imports
-jest.mock('ai')
-jest.mock('../utils/aiProvider')
-jest.mock('../../config.service')
-
 import { AiService } from './ai.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'
-import * as ai from 'ai'
+import { generateText } from 'ai'
 import * as aiProvider from '../utils/aiProvider'
 import configService from '../../config.service'
 import type { LLMProps } from '../../config.service'
 
+// Define proper mock types based on actual function signatures
+type GenerateTextMock = jest.MockedFunction<typeof generateText>
+type CreateProviderMock = jest.MockedFunction<typeof aiProvider.createProvider>
+type GetLLMConfigMock = jest.MockedFunction<typeof configService.getLLMConfig>
+
+// Define the actual return type we need
+type MockGenerateTextReturn = Awaited<ReturnType<typeof generateText>>
+
+jest.mock('ai')
+jest.mock('../utils/aiProvider')
+jest.mock('../../config.service')
+
 describe('AiService', () => {
   let aiService: AiService
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let generateTextMock: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let createProviderMock: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let getLLMConfigMock: any
+  let generateTextMock: GenerateTextMock
+  let createProviderMock: CreateProviderMock
+  let getLLMConfigMock: GetLLMConfigMock
 
   beforeAll(async () => {
     // Calling advanceTimers here is very important, as otherwise async ops like await will hang indefinitely
@@ -30,18 +34,26 @@ describe('AiService', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    // Set up mocks
-    generateTextMock = ai.generateText
-    createProviderMock = aiProvider.createProvider
-    getLLMConfigMock = configService.getLLMConfig
+    // Set up mocks with proper type assertions
+    generateTextMock = generateText as GenerateTextMock
+    createProviderMock = aiProvider.createProvider as CreateProviderMock
+    getLLMConfigMock = configService.getLLMConfig as GetLLMConfigMock
 
-    // Default mock implementations
+    // Default mock implementations with proper types
     generateTextMock.mockResolvedValue({
       text: 'mermaid graph',
-      usage: { totalTokens: 500 },
-    })
+      usage: {
+        inputTokens: 100,
+        outputTokens: 400,
+        totalTokens: 500,
+      },
+    } as MockGenerateTextReturn)
 
-    createProviderMock.mockReturnValue(() => 'mocked-model')
+    createProviderMock.mockReturnValue(
+      (() => 'mocked-model') as unknown as ReturnType<
+        typeof aiProvider.createProvider
+      >
+    )
 
     getLLMConfigMock.mockReturnValue({
       url: 'localhost:3000',
@@ -51,7 +63,7 @@ describe('AiService', () => {
       tpm: '1000',
       rpm: '5',
       tpd: '10000',
-    } as LLMProps)
+    } satisfies LLMProps)
 
     aiService = new AiService()
   })
@@ -95,7 +107,7 @@ describe('AiService', () => {
         tpm: '1000',
         rpm: '5',
         tpd: '10000',
-      } as LLMProps)
+      } satisfies LLMProps)
 
       aiService = new AiService()
       const result = await aiService.generateMermaid('create a mindmap', 'en')
@@ -114,22 +126,30 @@ describe('AiService', () => {
         tpm: undefined,
         rpm: undefined,
         tpd: '1500', // Daily limit of 1500 tokens
-      } as LLMProps)
+      } satisfies LLMProps)
 
       aiService = new AiService()
 
       // First request uses 500 tokens
       generateTextMock.mockResolvedValueOnce({
         text: 'first response',
-        usage: { totalTokens: 500 },
-      })
+        usage: {
+          inputTokens: 100,
+          outputTokens: 400,
+          totalTokens: 500,
+        },
+      } as MockGenerateTextReturn)
       await aiService.generateMermaid('first request', 'en')
 
       // Second request uses 600 tokens (total 1100)
       generateTextMock.mockResolvedValueOnce({
         text: 'second response',
-        usage: { totalTokens: 600 },
-      })
+        usage: {
+          inputTokens: 100,
+          outputTokens: 500,
+          totalTokens: 600,
+        },
+      } as MockGenerateTextReturn)
       await aiService.generateMermaid('second request', 'en')
 
       // Third request would exceed the limit (1100 + 1000 estimated > 1500)
@@ -151,15 +171,19 @@ describe('AiService', () => {
         tpm: '1500', // Limit of 1500 tokens per minute (to account for estimated 1000)
         rpm: undefined,
         tpd: undefined,
-      } as LLMProps)
+      } satisfies LLMProps)
 
       aiService = new AiService()
 
       // First request uses 600 tokens (600 tracked + 1000 estimated for next = 1600 > 1500)
       generateTextMock.mockResolvedValueOnce({
         text: 'first response',
-        usage: { totalTokens: 600 },
-      })
+        usage: {
+          inputTokens: 100,
+          outputTokens: 500,
+          totalTokens: 600,
+        },
+      } as MockGenerateTextReturn)
       await aiService.generateMermaid('first request', 'en')
 
       // Second request would exceed the limit (600 tracked + 1000 estimated > 1500)
@@ -181,7 +205,7 @@ describe('AiService', () => {
         tpm: undefined,
         rpm: '3', // Limit of 3 requests per minute
         tpd: undefined,
-      } as LLMProps)
+      } satisfies LLMProps)
 
       aiService = new AiService()
 
@@ -189,8 +213,12 @@ describe('AiService', () => {
       for (let i = 0; i < 3; i++) {
         generateTextMock.mockResolvedValueOnce({
           text: `response ${i}`,
-          usage: { totalTokens: 100 },
-        })
+          usage: {
+            inputTokens: 20,
+            outputTokens: 80,
+            totalTokens: 100,
+          },
+        } as MockGenerateTextReturn)
         await aiService.generateMermaid(`request ${i}`, 'en')
       }
 
@@ -212,15 +240,19 @@ describe('AiService', () => {
         tpm: '1500',
         rpm: '3',
         tpd: undefined,
-      } as LLMProps)
+      } satisfies LLMProps)
 
       aiService = new AiService()
 
       // Make one request that uses 600 tokens
       generateTextMock.mockResolvedValueOnce({
         text: 'first response',
-        usage: { totalTokens: 600 },
-      })
+        usage: {
+          inputTokens: 100,
+          outputTokens: 500,
+          totalTokens: 600,
+        },
+      } as MockGenerateTextReturn)
       await aiService.generateMermaid('first request', 'en')
 
       // Second request would exceed limit (600 + 1000 estimated > 1500)
@@ -234,8 +266,12 @@ describe('AiService', () => {
       // Now the request should succeed since the minute has passed
       generateTextMock.mockResolvedValueOnce({
         text: 'second response',
-        usage: { totalTokens: 400 },
-      })
+        usage: {
+          inputTokens: 100,
+          outputTokens: 300,
+          totalTokens: 400,
+        },
+      } as MockGenerateTextReturn)
       const result = await aiService.generateMermaid(
         'second request after wait',
         'en'
@@ -252,15 +288,19 @@ describe('AiService', () => {
         tpm: undefined,
         rpm: undefined,
         tpd: '1500',
-      } as LLMProps)
+      } satisfies LLMProps)
 
       aiService = new AiService()
 
       // Use up most of the daily limit
       generateTextMock.mockResolvedValueOnce({
         text: 'first response',
-        usage: { totalTokens: 600 },
-      })
+        usage: {
+          inputTokens: 100,
+          outputTokens: 500,
+          totalTokens: 600,
+        },
+      } as MockGenerateTextReturn)
       await aiService.generateMermaid('first request', 'en')
 
       // Second request would exceed daily limit (600 + 1000 estimated > 1500)
@@ -271,33 +311,22 @@ describe('AiService', () => {
       // Mock date change to next day
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
-      const originalDate = global.Date
-      const dateSpy = jest
-        .spyOn(global, 'Date')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .mockImplementation(((...args: any[]) => {
-          if (args.length === 0) {
-            return tomorrow
-          }
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return new (originalDate as any)(...args)
-        }) as any)
-      // Restore Date.now
-      Date.now = originalDate.now
+      jest.setSystemTime(tomorrow)
 
       // Now the request should succeed with reset daily counter
       generateTextMock.mockResolvedValueOnce({
         text: 'second response',
-        usage: { totalTokens: 500 },
-      })
+        usage: {
+          inputTokens: 100,
+          outputTokens: 400,
+          totalTokens: 500,
+        },
+      } as MockGenerateTextReturn)
       const result = await aiService.generateMermaid(
         'second request next day',
         'en'
       )
       expect(result).toBe('second response')
-
-      // Restore Date mock
-      dateSpy.mockRestore()
     })
 
     it('handles multiple rate limits simultaneously', async () => {
@@ -309,7 +338,7 @@ describe('AiService', () => {
         tpm: '5000', // 5000 tokens per minute (to allow 4 * 400 + 1000 estimated)
         rpm: '5', // 5 requests per minute
         tpd: '5000', // 5000 tokens per day
-      } as LLMProps)
+      } satisfies LLMProps)
 
       aiService = new AiService()
 
@@ -317,16 +346,24 @@ describe('AiService', () => {
       for (let i = 0; i < 4; i++) {
         generateTextMock.mockResolvedValueOnce({
           text: `response ${i}`,
-          usage: { totalTokens: 400 },
-        })
+          usage: {
+            inputTokens: 100,
+            outputTokens: 300,
+            totalTokens: 400,
+          },
+        } as unknown as MockGenerateTextReturn)
         await aiService.generateMermaid(`request ${i}`, 'en')
       }
 
       // 5th request should succeed (still within all limits: 1600 + 300 = 1900 < 5000)
       generateTextMock.mockResolvedValueOnce({
         text: 'fifth response',
-        usage: { totalTokens: 300 },
-      })
+        usage: {
+          inputTokens: 50,
+          outputTokens: 250,
+          totalTokens: 300,
+        },
+      } as unknown as MockGenerateTextReturn)
       await aiService.generateMermaid('fifth request', 'en')
 
       // 6th request should fail due to RPM limit (6 > 5)
