@@ -28,14 +28,14 @@ jobs:
                   username: ${{ github.repository_owner }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
             - uses: actions/setup-node@v4
               with:
                 node-version: '22'
                 cache: 'pnpm'
-
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9
 
             - name: Build and export to Docker
               uses: docker/build-push-action@v6
@@ -49,14 +49,15 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
             - uses: actions/setup-node@v4
               with:
                 node-version: '22'
                 cache: 'pnpm'
 
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter teammapper-backend run lint
 
@@ -66,6 +67,15 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
+            - uses: actions/setup-node@v4
+              with:
+                node-version: '22'
+                cache: 'pnpm'
+
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter teammapper-frontend run lint
 
@@ -74,14 +84,14 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
             - uses: actions/setup-node@v4
               with:
                 node-version: '22'
                 cache: 'pnpm'
-
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
@@ -92,14 +102,14 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
             - uses: actions/setup-node@v4
               with:
                 node-version: '22'
                 cache: 'pnpm'
-
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter teammapper-backend run tsc
@@ -122,14 +132,14 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
             - uses: actions/setup-node@v4
               with:
                 node-version: '22'
                 cache: 'pnpm'
-
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter teammapper-backend run test
@@ -152,14 +162,14 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
             - uses: actions/setup-node@v4
               with:
                 node-version: '22'
                 cache: 'pnpm'
-
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
