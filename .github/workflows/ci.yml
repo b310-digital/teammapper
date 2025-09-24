@@ -41,9 +41,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-backend ci
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
 
-            - run: npm --prefix teammapper-backend run lint
+            - run: pnpm install --frozen-lockfile
+
+            - run: pnpm --filter teammapper-backend run lint
 
     teammapper-frontend-lint:
         runs-on: ubuntu-latest
@@ -51,9 +55,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-frontend ci
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
 
-            - run: npm --prefix teammapper-frontend run lint
+            - run: pnpm install --frozen-lockfile
+
+            - run: pnpm --filter teammapper-frontend run lint
 
     teammapper-frontend-tsc:
         runs-on: ubuntu-latest
@@ -61,11 +69,15 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-frontend run build:packages
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
 
-            - run: npm --prefix teammapper-frontend ci
+            - run: pnpm install --frozen-lockfile
 
-            - run: npm --prefix teammapper-frontend run tsc
+            - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
+
+            - run: pnpm --filter teammapper-frontend run tsc
 
     teammapper-backend-tsc:
         runs-on: ubuntu-latest
@@ -73,9 +85,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-backend ci
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
 
-            - run: npm --prefix teammapper-backend run tsc
+            - run: pnpm install --frozen-lockfile
+
+            - run: pnpm --filter teammapper-backend run tsc
 
     teammapper-backend-test-e2e:
         runs-on: ubuntu-latest
@@ -96,9 +112,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: npm --prefix teammapper-backend ci
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
 
-            - run: npm --prefix teammapper-backend run test
+            - run: pnpm install --frozen-lockfile
+
+            - run: pnpm --filter teammapper-backend run test
               env:
                   POSTGRES_DATABASE: "teammapper-backend-test"
                   POSTGRES_HOST: "localhost"
@@ -118,6 +138,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - run: npm --prefix teammapper-frontend run build:packages
-            - run: npm --prefix teammapper-frontend ci
-            - run: npm --prefix teammapper-frontend run test
+
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
+            - run: pnpm --filter teammapper-frontend run test

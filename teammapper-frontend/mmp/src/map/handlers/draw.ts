@@ -1,9 +1,9 @@
 import * as d3 from 'd3';
+import { Path } from 'd3';
 import DOMPurify from 'dompurify';
 import Map from '../map';
 import Utils from '../../utils/utils';
 import Node from '../models/node';
-import { Path } from 'd3-path';
 
 /**
  * Draw the map and update it.
