@@ -10,11 +10,15 @@ import { RateLimitExceededException } from '../controllers/rate-limit.exception'
 import * as ai from 'ai'
 import * as aiProvider from '../utils/aiProvider'
 import configService from '../../config.service'
+import type { LLMProps } from '../../config.service'
 
 describe('AiService', () => {
   let aiService: AiService
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let generateTextMock: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let createProviderMock: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let getLLMConfigMock: any
 
   beforeAll(async () => {
@@ -27,9 +31,9 @@ describe('AiService', () => {
     jest.clearAllMocks()
 
     // Set up mocks
-    generateTextMock = ai.generateText as jest.Mock
-    createProviderMock = aiProvider.createProvider as jest.Mock
-    getLLMConfigMock = configService.getLLMConfig as jest.Mock
+    generateTextMock = ai.generateText
+    createProviderMock = aiProvider.createProvider
+    getLLMConfigMock = configService.getLLMConfig
 
     // Default mock implementations
     generateTextMock.mockResolvedValue({
@@ -47,7 +51,7 @@ describe('AiService', () => {
       tpm: '1000',
       rpm: '5',
       tpd: '10000',
-    })
+    } as LLMProps)
 
     aiService = new AiService()
   })
@@ -91,7 +95,7 @@ describe('AiService', () => {
         tpm: '1000',
         rpm: '5',
         tpd: '10000',
-      })
+      } as LLMProps)
 
       aiService = new AiService()
       const result = await aiService.generateMermaid('create a mindmap', 'en')
@@ -110,7 +114,7 @@ describe('AiService', () => {
         tpm: undefined,
         rpm: undefined,
         tpd: '1500', // Daily limit of 1500 tokens
-      })
+      } as LLMProps)
 
       aiService = new AiService()
 
@@ -144,33 +148,26 @@ describe('AiService', () => {
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpm: '800', // Limit of 800 tokens per minute
+        tpm: '1500', // Limit of 1500 tokens per minute (to account for estimated 1000)
         rpm: undefined,
         tpd: undefined,
-      })
+      } as LLMProps)
 
       aiService = new AiService()
 
-      // First request uses 400 tokens
+      // First request uses 600 tokens (600 tracked + 1000 estimated for next = 1600 > 1500)
       generateTextMock.mockResolvedValueOnce({
         text: 'first response',
-        usage: { totalTokens: 400 },
+        usage: { totalTokens: 600 },
       })
       await aiService.generateMermaid('first request', 'en')
 
-      // Second request uses 300 tokens (total 700, still under limit)
-      generateTextMock.mockResolvedValueOnce({
-        text: 'second response',
-        usage: { totalTokens: 300 },
-      })
-      await aiService.generateMermaid('second request', 'en')
-
-      // Third request would exceed the limit (700 + 1000 estimated > 800)
+      // Second request would exceed the limit (600 tracked + 1000 estimated > 1500)
       await expect(
-        aiService.generateMermaid('third request', 'en')
+        aiService.generateMermaid('second request', 'en')
       ).rejects.toThrow(RateLimitExceededException)
       await expect(
-        aiService.generateMermaid('third request', 'en')
+        aiService.generateMermaid('second request', 'en')
       ).rejects.toThrow('Token limit exceeded.')
     })
 
@@ -184,7 +181,7 @@ describe('AiService', () => {
         tpm: undefined,
         rpm: '3', // Limit of 3 requests per minute
         tpd: undefined,
-      })
+      } as LLMProps)
 
       aiService = new AiService()
 
@@ -212,29 +209,23 @@ describe('AiService', () => {
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpm: '800',
+        tpm: '1500',
         rpm: '3',
         tpd: undefined,
-      })
+      } as LLMProps)
 
       aiService = new AiService()
 
-      // Make two requests that use up most of the token limit
+      // Make one request that uses 600 tokens
       generateTextMock.mockResolvedValueOnce({
         text: 'first response',
-        usage: { totalTokens: 400 },
+        usage: { totalTokens: 600 },
       })
       await aiService.generateMermaid('first request', 'en')
 
-      generateTextMock.mockResolvedValueOnce({
-        text: 'second response',
-        usage: { totalTokens: 300 },
-      })
-      await aiService.generateMermaid('second request', 'en')
-
-      // Third request would exceed limit
+      // Second request would exceed limit (600 + 1000 estimated > 1500)
       await expect(
-        aiService.generateMermaid('third request', 'en')
+        aiService.generateMermaid('second request', 'en')
       ).rejects.toThrow(RateLimitExceededException)
 
       // Advance time by more than 1 minute
@@ -242,14 +233,14 @@ describe('AiService', () => {
 
       // Now the request should succeed since the minute has passed
       generateTextMock.mockResolvedValueOnce({
-        text: 'third response',
+        text: 'second response',
         usage: { totalTokens: 400 },
       })
       const result = await aiService.generateMermaid(
-        'third request after wait',
+        'second request after wait',
         'en'
       )
-      expect(result).toBe('third response')
+      expect(result).toBe('second response')
     })
 
     it('resets daily token count when date changes', async () => {
@@ -261,18 +252,18 @@ describe('AiService', () => {
         tpm: undefined,
         rpm: undefined,
         tpd: '1500',
-      })
+      } as LLMProps)
 
       aiService = new AiService()
 
       // Use up most of the daily limit
       generateTextMock.mockResolvedValueOnce({
         text: 'first response',
-        usage: { totalTokens: 1400 },
+        usage: { totalTokens: 600 },
       })
       await aiService.generateMermaid('first request', 'en')
 
-      // Next request would exceed daily limit
+      // Second request would exceed daily limit (600 + 1000 estimated > 1500)
       await expect(
         aiService.generateMermaid('second request', 'en')
       ).rejects.toThrow(RateLimitExceededException)
@@ -280,7 +271,19 @@ describe('AiService', () => {
       // Mock date change to next day
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
-      jest.spyOn(global, 'Date').mockImplementation(() => tomorrow as Date)
+      const originalDate = global.Date
+      const dateSpy = jest
+        .spyOn(global, 'Date')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementation(((...args: any[]) => {
+          if (args.length === 0) {
+            return tomorrow
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return new (originalDate as any)(...args)
+        }) as any)
+      // Restore Date.now
+      Date.now = originalDate.now
 
       // Now the request should succeed with reset daily counter
       generateTextMock.mockResolvedValueOnce({
@@ -294,7 +297,7 @@ describe('AiService', () => {
       expect(result).toBe('second response')
 
       // Restore Date mock
-      jest.spyOn(global, 'Date').mockRestore()
+      dateSpy.mockRestore()
     })
 
     it('handles multiple rate limits simultaneously', async () => {
@@ -303,10 +306,10 @@ describe('AiService', () => {
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpm: '2000', // 2000 tokens per minute
+        tpm: '5000', // 5000 tokens per minute (to allow 4 * 400 + 1000 estimated)
         rpm: '5', // 5 requests per minute
         tpd: '5000', // 5000 tokens per day
-      })
+      } as LLMProps)
 
       aiService = new AiService()
 
@@ -319,7 +322,7 @@ describe('AiService', () => {
         await aiService.generateMermaid(`request ${i}`, 'en')
       }
 
-      // 5th request should succeed (still within all limits)
+      // 5th request should succeed (still within all limits: 1600 + 300 = 1900 < 5000)
       generateTextMock.mockResolvedValueOnce({
         text: 'fifth response',
         usage: { totalTokens: 300 },
