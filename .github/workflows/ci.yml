@@ -1,12 +1,12 @@
 name: Docker Image CI
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
     teammapper-backend-build:
@@ -40,13 +40,11 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
-
             - uses: pnpm/action-setup@v4
               with:
                 version: 9
 
             - run: pnpm install --frozen-lockfile
-
             - run: pnpm --filter teammapper-backend run lint
 
     teammapper-frontend-lint:
@@ -54,13 +52,11 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
-
             - uses: pnpm/action-setup@v4
               with:
                 version: 9
 
             - run: pnpm install --frozen-lockfile
-
             - run: pnpm --filter teammapper-frontend run lint
 
     teammapper-frontend-tsc:
@@ -68,15 +64,12 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
-
             - uses: pnpm/action-setup@v4
               with:
                 version: 9
 
             - run: pnpm install --frozen-lockfile
-
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
-
             - run: pnpm --filter teammapper-frontend run tsc
 
     teammapper-backend-tsc:
@@ -84,13 +77,11 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
-
             - uses: pnpm/action-setup@v4
               with:
                 version: 9
 
             - run: pnpm install --frozen-lockfile
-
             - run: pnpm --filter teammapper-backend run tsc
 
     teammapper-backend-test-e2e:
@@ -111,13 +102,11 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
-
             - uses: pnpm/action-setup@v4
               with:
                 version: 9
 
             - run: pnpm install --frozen-lockfile
-
             - run: pnpm --filter teammapper-backend run test
               env:
                   POSTGRES_DATABASE: "teammapper-backend-test"
@@ -138,7 +127,6 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-
             - uses: pnpm/action-setup@v4
               with:
                 version: 9
