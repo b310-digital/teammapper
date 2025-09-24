@@ -13,9 +13,10 @@
     "IMPORT_MAP": "导入思维导图",
     "IMPORT_MERMAID": "导入Mermaid思维导图",
     "IMPORT_JSON": "导入JSON思维导图",
+    "IMPORT_AI": "使用AI生成思维导图",
     "EXPORT_MAP": "导出思维导图",
     "EXPORT_JSON": "以JSON格式导出地图",
-    "EXPORT_MERMAID": "以Mermaid格式导出地图", 
+    "EXPORT_MERMAID": "以Mermaid格式导出地图",
     "EXPORT_SVG": "以SVG格式导出地图",
     "EXPORT_PNG": "以PNG格式导出地图",
     "EXPORT_JPEG": "以JPEG格式导出地图",
@@ -91,12 +92,19 @@
       "BUTTON_RECONNECT": "重新连接"
     },
     "IMPORT_MERMAID": {
-      "TITLE": "Mermaid Mindmap Import",
-      "CONTENT": "Import mindmaps using Mermaid syntax. Create your mindmap by either generating it with AI assistance or writing the Mermaid code manually.",
-      "IMPORT": "Import",
-      "LABEL_CREATE_FROM_AI": "Mindmap description",
-      "BUTTON_CREATE_FROM_AI": "Generate",
+      "TITLE": "导入Mermaid思维导图",
+      "CONTENT": "使用Mermaid语法导入思维导图。您可以通过AI辅助生成或手动编写Mermaid代码来创建思维导图。",
+      "IMPORT": "导入",
+      "LABEL_CREATE_FROM_AI": "思维导图描述",
+      "BUTTON_CREATE_FROM_AI": "生成",
       "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "AI思维导图生成器",
+      "CONTENT": "使用AI直接从您的描述生成思维导图。只需描述您想要映射的内容，AI就会为您创建它。",
+      "LABEL_DESCRIPTION": "描述您的思维导图",
+      "PLACEHOLDER": "例如，创建一个房子的思维导图，包括房间、家具和花园",
+      "BUTTON_GENERATE": "生成并导入"
     },
     "PICTOGRAMS": {
       "TITLE": "添加图标",
@@ -206,11 +214,12 @@
       "EXPORT_IMAGE_ERROR": "导出图像时发生错误。思维导图可能过大。",
       "MAP_COULD_NOT_BE_FOUND": "找不到思维导图！",
       "IMPORT_ERROR": "无法导入思维导图！",
-      "AI_MERMAID_ERROR": "Mermaid could not be generated"
+      "AI_MERMAID_ERROR": "无法生成Mermaid"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！",
-    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
-    "AI_MERMAID_GENERATING": "Creating Mermaid..."
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",
+    "AI_MERMAID_GENERATING": "正在创建Mermaid...",
+    "AI_DESCRIPTION_REQUIRED": "请提供思维导图的描述"
   },
   "GENERAL": {
     "REPOSITORY": "源代码",
@@ -219,6 +228,7 @@
     "SAVED_MAPS": "已保存的思维导图",
     "MERMAID": "Mermaid (.mmd)",
     "JSON": "文件 (.json)",
+    "AI": "AI生成器",
     "PNG": "图片 (.png)",
     "SVG": "图片 (.svg)",
     "JPG": "图片 (.jpg)",

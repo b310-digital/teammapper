@@ -45,6 +45,16 @@
       <mat-icon>edit_square</mat-icon>
       <span>{{ 'GENERAL.MERMAID' | translate }}</span>
     </button>
+
+    <button
+      id="ai-upload"
+      (click)="importFromAi()"
+      [title]="'TOOLTIPS.IMPORT_AI' | translate"
+      color="primary"
+      mat-menu-item>
+      <mat-icon>auto_awesome</mat-icon>
+      <span>{{ 'GENERAL.AI' | translate }}</span>
+    </button>
   </mat-menu>
 
   <button
@@ -57,42 +67,42 @@
   </button>
 
   <mat-menu #export_map="matMenu">
-    <button 
+    <button
       (click)="exportMap('json')"
       [title]="'TOOLTIPS.EXPORT_JSON' | translate"
       mat-menu-item>
       <mat-icon>insert_drive_file</mat-icon>
       <span>{{ 'GENERAL.JSON' | translate }}</span>
     </button>
-    <button 
-      (click)="exportMap('mermaid')" 
+    <button
+      (click)="exportMap('mermaid')"
       [title]="'TOOLTIPS.EXPORT_MERMAID' | translate"
       mat-menu-item>
       <mat-icon>edit_square</mat-icon>
       <span>{{ 'GENERAL.MERMAID' | translate }}</span>
     </button>
-    <button 
+    <button
       (click)="exportMap('svg')"
       [title]="'TOOLTIPS.EXPORT_SVG' | translate"
       mat-menu-item>
       <mat-icon>image</mat-icon>
       <span>{{ 'GENERAL.SVG' | translate }}</span>
     </button>
-    <button 
+    <button
       (click)="exportMap('png')"
       [title]="'TOOLTIPS.EXPORT_PNG' | translate"
       mat-menu-item>
       <mat-icon>image</mat-icon>
       <span>{{ 'GENERAL.PNG' | translate }}</span>
     </button>
-    <button 
+    <button
       (click)="exportMap('jpeg')"
       [title]="'TOOLTIPS.EXPORT_JPEG' | translate"
       mat-menu-item>
       <mat-icon>image</mat-icon>
       <span>{{ 'GENERAL.JPG' | translate }}</span>
     </button>
-    <button 
+    <button
       (click)="exportMap('pdf')"
       [title]="'TOOLTIPS.EXPORT_PDF' | translate"
       mat-menu-item>
@@ -282,24 +292,25 @@
 
   <span class="toolbar-spacer"></span>
 
-  <button 
+  <button
     color="primary"
     [title]="'TOOLTIPS.SHORTCUTS' | translate"
-    mat-icon-button routerLink="/app/shortcuts">
+    mat-icon-button
+    routerLink="/app/shortcuts">
     <mat-icon>shortcuts</mat-icon>
   </button>
 
-  <button 
-    color="primary" 
+  <button
+    color="primary"
     [title]="'TOOLTIPS.SETTINGS' | translate"
-    mat-icon-button 
+    mat-icon-button
     routerLink="/app/settings">
     <mat-icon>settings</mat-icon>
   </button>
 
-  <button 
-    color="primary" 
-    (click)="openAbout()" 
+  <button
+    color="primary"
+    (click)="openAbout()"
     [title]="'TOOLTIPS.INFO' | translate"
     mat-icon-button>
     <mat-icon>info</mat-icon>

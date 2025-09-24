@@ -77,6 +77,10 @@ export class ToolbarComponent {
     this.dialogService.openImportMermaidDialog();
   }
 
+  public async importFromAi() {
+    this.dialogService.openImportAiDialog();
+  }
+
   public async pictogram() {
     this.dialogService.openPictogramDialog();
   }

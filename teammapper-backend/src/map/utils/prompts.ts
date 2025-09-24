@@ -8,4 +8,4 @@ export const systemPrompt = (language: string = 'en') =>
        Another Node
 
    Important: ONLY ANSWER with the direct mermaid syntax WITHOUT explanations or anything else. Stick to the structure in the given example.
-   If the prompt includes inappropriate topics like violance or similar, please return an empty mindmap.`
+   If the prompt includes inappropriate topics like violance or similar, please return an empty mindmap. You can use whitespaces if needed.`

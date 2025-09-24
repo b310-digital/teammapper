@@ -13,9 +13,10 @@
     "IMPORT_MAP": "Importa mappa",
     "IMPORT_MERMAID": "Importa una mappa mentale Mermaid",
     "IMPORT_JSON": "Importa una mappa mentale in formato JSON",
+    "IMPORT_AI": "Genera mappa mentale con IA",
     "EXPORT_MAP": "Esporta mappa",
     "EXPORT_JSON": "Esporta la mappa come JSON",
-    "EXPORT_MERMAID": "Esporta la mappa come Mermaid", 
+    "EXPORT_MERMAID": "Esporta la mappa come Mermaid",
     "EXPORT_SVG": "Esporta la mappa come SVG",
     "EXPORT_PNG": "Esporta la mappa come PNG",
     "EXPORT_JPEG": "Esporta la mappa come JPEG",
@@ -93,10 +94,17 @@
     "IMPORT_MERMAID": {
       "TITLE": "Importa mappa mentale Mermaid",
       "CONTENT": "Importa mappe mentali utilizzando la sintassi Mermaid. Crea la tua mappa mentale generandola con l'assistenza dell'IA o scrivendo il codice Mermaid manualmente.",
-      "IMPORT": "Import",
-      "LABEL_CREATE_FROM_AI": "Mindmap description",
-      "BUTTON_CREATE_FROM_AI": "Generate",
+      "IMPORT": "Importa",
+      "LABEL_CREATE_FROM_AI": "Descrizione della mappa mentale",
+      "BUTTON_CREATE_FROM_AI": "Genera",
       "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "Generatore di mappe mentali IA",
+      "CONTENT": "Genera una mappa mentale direttamente dalla tua descrizione usando l'IA. Descrivi semplicemente ciò che vuoi mappare e l'IA la creerà per te.",
+      "LABEL_DESCRIPTION": "Descrivi la tua mappa mentale",
+      "PLACEHOLDER": "Ad esempio, crea una mappa mentale di una casa con stanze, mobili e giardino",
+      "BUTTON_GENERATE": "Genera e Importa"
     },
     "PICTOGRAMS": {
       "TITLE": "Aggiungi un pittogramma",
@@ -206,11 +214,12 @@
       "EXPORT_IMAGE_ERROR": "Si è verificato un errore durante l'esportazione dell'immagine. La mappa mentale potrebbe essere troppo grande.",
       "MAP_COULD_NOT_BE_FOUND": "Impossibile trovare la mappa mentale!",
       "IMPORT_ERROR": "Non è stato possibile importare la mappa mentale!",
-      "AI_MERMAID_ERROR": "Mermaid could not be generated"
+      "AI_MERMAID_ERROR": "Mermaid non può essere generato"
     },
     "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!",
-    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
-    "AI_MERMAID_GENERATING": "Creating Mermaid..."
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid generato con successo!",
+    "AI_MERMAID_GENERATING": "Creazione di Mermaid...",
+    "AI_DESCRIPTION_REQUIRED": "Si prega di fornire una descrizione per la mappa mentale"
   },
   "GENERAL": {
     "REPOSITORY": "Codice sorgente",
@@ -220,6 +229,7 @@
     "SAVED_MAPS": "Mappe salvate",
     "MERMAID": "Mermaid (.mmd)",
     "JSON": "File (.json)",
+    "AI": "Generatore IA",
     "PNG": "Immagine (.png)",
     "SVG": "Immagine (.svg)",
     "JPG": "Immagine (.jpg)",

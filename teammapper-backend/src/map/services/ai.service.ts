@@ -28,8 +28,6 @@ export class AiService {
     const provider = createProvider(this.llmConfig)
     if (!provider || !this.llmConfig.model) return ''
 
-    this.logger.log('Daily used token count: ' + this.totalTokensDaily.count)
-
     await this.waitForRateLimit(DEFAULT_ESTIMATED_TOKENS_COUNT)
     const { text, usage } = await generateText({
       model: provider(this.llmConfig.model),
@@ -41,6 +39,7 @@ export class AiService {
       count: usage.totalTokens ?? 0,
     })
     this.totalTokensDaily.count += usage.totalTokens ?? 0
+    this.logger.log('Daily used token count: ' + this.totalTokensDaily.count)
 
     return text
   }
