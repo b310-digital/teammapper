@@ -1,5 +1,4 @@
-import { dispatch } from 'd3';
-import { Dispatch } from 'd3-dispatch';
+import { dispatch, Dispatch } from 'd3';
 import Utils from '../../utils/utils';
 import Log from '../../utils/log';
 

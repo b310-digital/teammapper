@@ -90,13 +90,13 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
 -   Install and build local workspace packages required by the frontend
 
     ```bash
-    docker compose exec app npm --prefix teammapper-frontend run build:packages
+    docker compose exec app pnpm --filter teammapper-frontend run build:packages
     ```
 
 -   Start frontend and backend at once
 
     ```bash
-    docker compose exec app npm --prefix teammapper-backend run dev
+    docker compose exec app pnpm --filter teammapper-backend run dev
     ```
 
     or start frontend and backend separately
@@ -105,10 +105,10 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
     # Open two terminal sessions on your host machine
 
     # In first terminal session
-    docker compose exec app npm --prefix teammapper-backend start
+    docker compose exec app pnpm --filter teammapper-backend start
 
     # In second terminal session
-    docker compose exec app npm --prefix teammapper-frontend start
+    docker compose exec app pnpm --filter teammapper-frontend start
     ```
 
 -   Visit the frontend in http://localhost:4200
@@ -124,7 +124,7 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
 -   Execute the tests
 
     ```bash
-    docker compose exec app npm -prefix teammapper-backend run test:e2e
+    docker compose exec app pnpm --filter teammapper-backend run test:e2e
     ```
 
 ### Production
@@ -164,9 +164,9 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
     ```
     
     If you want to run prod migrations (again):
-    
+
     ```bash
-    docker compose exec app_prod npm -prefix teammapper-backend run prod:typeorm:migrate
+    docker compose exec app_prod pnpm --filter teammapper-backend run prod:typeorm:migrate
     ```
 #### Postgres and SSL
 If needed, you can make the connection to Postgres more secure by using a SSL connection.
@@ -195,7 +195,7 @@ If needed, you can make the connection to Postgres more secure by using a SSL co
 Trigger delete job (also executed daily with cron task scheduler):
 
 ```
-docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npm --prefix teammapper-backend run prod:data:maps:cleanup
+docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend run prod:data:maps:cleanup
 ```
 
 #### Running further queries
@@ -203,7 +203,7 @@ docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod
 Example of running sql via typeorm:
 
 ```
-docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod npx --prefix teammapper-backend typeorm query "select * from mmp_node" --dataSource ./teammapper-backend/dist/data-source.js
+docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend exec typeorm query "select * from mmp_node" --dataSource ./dist/data-source.js
 ```
 
 ### Frontend feature flags

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
+import { ZoomBehavior, D3ZoomEvent } from 'd3';
 import Map from '../map';
 import { Event } from './events';
-import { ZoomBehavior, D3ZoomEvent } from 'd3-zoom';
 import Log from '../../utils/log';
 
 /**

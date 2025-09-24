@@ -1,8 +1,8 @@
 import * as d3 from 'd3';
+import { DragBehavior, D3DragEvent } from 'd3';
 import Map from '../map';
 import Node from '../models/node';
 import { Event } from './events';
-import { DragBehavior, D3DragEvent } from 'd3-drag';
 
 /**
  * Manage the drag events of the nodes.
