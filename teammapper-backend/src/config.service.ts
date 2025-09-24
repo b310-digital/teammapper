@@ -8,12 +8,13 @@ interface EnvProps {
 }
 
 export interface LLMProps {
-  url: string | undefined
-  token: string | undefined
-  provider: string | undefined
-  model: string | undefined
-  tpm: string | undefined
-  rpm: string | undefined
+  url?: string
+  token?: string
+  provider?: string
+  model?: string
+  tpm?: string
+  tpd?: string
+  rpm?: string
 }
 
 require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-imports
@@ -59,6 +60,7 @@ class ConfigService {
       provider: this.getValue('AI_LLM_PROVIDER', false) ?? 'openai',
       model: this.getValue('AI_LLM_MODEL', false),
       tpm: this.getValue('AI_LLM_TPM', false),
+      tpd: this.getValue('AI_LLM_TPD', false),
       rpm: this.getValue('AI_LLM_RPM', false),
     }
   }
