@@ -32,6 +32,7 @@ export class ToolbarComponent {
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
   public featureFlagPictograms: boolean = environment.featureFlagPictograms;
+  public featureFlagAI: boolean = environment.featureFlagAI;
 
   constructor(
     private translationService: TranslateService,

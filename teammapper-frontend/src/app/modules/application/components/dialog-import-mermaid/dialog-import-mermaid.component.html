@@ -4,7 +4,7 @@
     {{ 'MODALS.IMPORT_MERMAID.CONTENT' | translate }}
   </div>
   <br />
-  <mat-form-field class="max-width">
+  <mat-form-field *ngIf="featureFlagAI" class="max-width">
     <mat-label>{{
       'MODALS.IMPORT_MERMAID.LABEL_CREATE_FROM_AI' | translate
     }}</mat-label>
@@ -21,7 +21,7 @@
       {{ 'MODALS.IMPORT_MERMAID.BUTTON_CREATE_FROM_AI' | translate }}
     </button>
   </mat-form-field>
-  <br /><br />
+  <br *ngIf="featureFlagAI" /><br *ngIf="featureFlagAI" />
   {{ 'MODALS.IMPORT_MERMAID.LABEL_TEXT_AREA' | translate }}
   <mat-form-field class="max-width">
     <textarea

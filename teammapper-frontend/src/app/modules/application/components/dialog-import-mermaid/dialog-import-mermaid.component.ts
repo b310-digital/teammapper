@@ -23,6 +23,8 @@ import { MatIcon } from '@angular/material/icon';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
+import { environment } from 'src/environments/environment';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'teammapper-dialog-import-mermaid',
@@ -43,11 +45,13 @@ import { UtilsService } from 'src/app/core/services/utils/utils.service';
     MatButton,
     MatDialogClose,
     TranslatePipe,
+    NgIf,
   ],
 })
 export class DialogImportMermaidComponent {
   public mermaidInput = '';
   public mindmapDescription = '';
+  public featureFlagAI: boolean = environment.featureFlagAI;
 
   constructor(
     private importService: ImportService,

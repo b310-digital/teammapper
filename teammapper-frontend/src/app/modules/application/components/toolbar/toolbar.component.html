@@ -47,6 +47,7 @@
     </button>
 
     <button
+      *ngIf="featureFlagAI"
       id="ai-upload"
       (click)="importFromAi()"
       [title]="'TOOLTIPS.IMPORT_AI' | translate"
