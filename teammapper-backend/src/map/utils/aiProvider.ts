@@ -3,29 +3,39 @@ import {
   OpenAICompatibleProvider,
 } from '@ai-sdk/openai-compatible'
 import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai'
+import { LLMProps } from 'src/config.service'
 
 const PROVIDER_STACKIT = 'stackit'
 
 type SupportedProvider = OpenAIProvider | OpenAICompatibleProvider
 
-const createStackitProvider = (): OpenAICompatibleProvider =>
-  createOpenAICompatible({
-    baseURL: process.env.AI_LLM_URL as string,
+const createStackitProvider = (
+  llmConfig: LLMProps
+): OpenAICompatibleProvider | undefined => {
+  if (!llmConfig.url || !llmConfig.token) return
+
+  return createOpenAICompatible({
+    baseURL: llmConfig.url,
     name: 'stackit',
     headers: {
-      Authorization: `Bearer ${process.env.AI_LLM_TOKEN}`,
+      Authorization: `Bearer ${llmConfig.token}`,
     },
   })
+}
 
-const createDefaultProvider = (): OpenAIProvider =>
-  createOpenAI({
-    baseURL: process.env.AI_LLM_URL as string,
-    apiKey: process.env.AI_LLM_TOKEN,
+const createDefaultProvider = (
+  llmConfig: LLMProps
+): OpenAIProvider | undefined => {
+  if (!llmConfig.token) return
+
+  return createOpenAI({
+    apiKey: llmConfig.token,
   })
+}
 
-export const createProvider = (): SupportedProvider | undefined =>
-  process.env.AI_LLM_URL && process.env.AI_LLM_TOKEN
-    ? process.env.AI_LLM_PROVIDER === PROVIDER_STACKIT
-      ? createStackitProvider()
-      : createDefaultProvider()
-    : undefined
+export const createProvider = (
+  llmConfig: LLMProps
+): SupportedProvider | undefined =>
+  llmConfig.provider === PROVIDER_STACKIT
+    ? createStackitProvider(llmConfig)
+    : createDefaultProvider(llmConfig)

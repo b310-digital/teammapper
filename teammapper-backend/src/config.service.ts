@@ -7,6 +7,16 @@ interface EnvProps {
   [k: string]: string | undefined
 }
 
+export interface LLMProps {
+  url?: string
+  token?: string
+  provider?: string
+  model?: string
+  tpm?: string
+  tpd?: string
+  rpm?: string
+}
+
 require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-imports
 
 class ConfigService {
@@ -41,6 +51,18 @@ class ConfigService {
 
   public deleteAfterDays() {
     return parseInt(this.getValue('DELETE_AFTER_DAYS', false) || '30')
+  }
+
+  public getLLMConfig(): LLMProps {
+    return {
+      url: this.getValue('AI_LLM_URL', false),
+      token: this.getValue('AI_LLM_TOKEN', false),
+      provider: this.getValue('AI_LLM_PROVIDER', false) ?? 'openai',
+      model: this.getValue('AI_LLM_MODEL', false),
+      tpm: this.getValue('AI_LLM_TPM', false),
+      tpd: this.getValue('AI_LLM_TPD', false),
+      rpm: this.getValue('AI_LLM_RPM', false),
+    }
   }
 
   public getTypeOrmConfig(): DataSourceOptions {
