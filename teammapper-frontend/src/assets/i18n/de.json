@@ -13,6 +13,7 @@
     "IMPORT_MAP": "Mindmap importieren",
     "IMPORT_MERMAID": "Mermaid Mindmap importieren",
     "IMPORT_JSON": "JSON Mindmap importieren",
+    "IMPORT_AI": "Mindmap mit KI generieren",
     "EXPORT_MAP": "Mindmap exportieren",
     "EXPORT_JSON": "Mindmap als JSON exportieren",
     "EXPORT_MERMAID": "Mindmap als Mermaid exportieren",
@@ -98,6 +99,13 @@
       "LABEL_CREATE_FROM_AI": "Beschreibung der Mindmap",
       "BUTTON_CREATE_FROM_AI": "Generieren",
       "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "KI Mindmap Generator",
+      "CONTENT": "Generiere eine Mindmap direkt aus deiner Beschreibung mit KI. Beschreibe einfach, was du visualisieren möchtest und die KI erstellt es für dich.",
+      "LABEL_DESCRIPTION": "Beschreibe deine Mindmap",
+      "PLACEHOLDER": "Zum Beispiel: Geschichte des Reisens",
+      "BUTTON_GENERATE": "Generieren & Importieren"
     },
     "PICTOGRAMS": {
       "TITLE": "Piktogramm einfügen",
@@ -213,7 +221,8 @@
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",
-    "AI_MERMAID_GENERATING": "Mermaid wird erstellt..."
+    "AI_MERMAID_GENERATING": "Mermaid wird erstellt...",
+    "AI_DESCRIPTION_REQUIRED": "Bitte gib eine Beschreibung für die Mindmap ein"
   },
   "GENERAL": {
     "CREATE": "Mindmap erstellen",
@@ -222,6 +231,7 @@
     "SAVED_MAPS": "Gespeicherte Mindmaps",
     "MERMAID": "Mermaid (.mmd)",
     "JSON": "Datei (.json)",
+    "AI": "KI Generator",
     "PNG": "Bild (.png)",
     "SVG": "Bild (.svg)",
     "JPG": "Bild (.jpg)",

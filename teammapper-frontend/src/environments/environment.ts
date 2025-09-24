@@ -5,4 +5,5 @@ export const environment = {
   pictogramApiUrl: 'https://api.arasaac.org/v1/pictograms',
   pictogramStaticUrl: 'https://static.arasaac.org/pictograms',
   featureFlagPictograms: true,
+  featureFlagAI: true,
 };

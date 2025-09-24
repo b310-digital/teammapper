@@ -13,6 +13,7 @@
     "IMPORT_MAP": "Imports the map",
     "IMPORT_MERMAID": "Imports a Mermaid Mindmap",
     "IMPORT_JSON": "Imports a JSON Mindmap",
+    "IMPORT_AI": "Generate mindmap with AI",
     "EXPORT_MAP": "Exports the map",
     "EXPORT_JSON": "Exports the map as JSON",
     "EXPORT_MERMAID": "Exports the map as Mermaid",
@@ -98,6 +99,13 @@
       "LABEL_CREATE_FROM_AI": "Mindmap description",
       "BUTTON_CREATE_FROM_AI": "Generate",
       "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "AI Mindmap Generator",
+      "CONTENT": "Generate a mindmap directly from your description using AI. Simply describe what you want to map and the AI will create it for you.",
+      "LABEL_DESCRIPTION": "Describe your mindmap",
+      "PLACEHOLDER": "E.g. History of Travel",
+      "BUTTON_GENERATE": "Generate & Import"
     },
     "PICTOGRAMS": {
       "TITLE": "Add a pictogram",
@@ -212,7 +220,8 @@
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
-    "AI_MERMAID_GENERATING": "Creating Mermaid..."
+    "AI_MERMAID_GENERATING": "Creating Mermaid...",
+    "AI_DESCRIPTION_REQUIRED": "Please provide a description for the mindmap"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",
@@ -221,6 +230,7 @@
     "SAVED_MAPS": "Saved maps",
     "MERMAID": "Mermaid (.mmd)",
     "JSON": "File (.json)",
+    "AI": "AI Generator",
     "PNG": "Image (.png)",
     "SVG": "Image (.svg)",
     "JPG": "Image (.jpg)",

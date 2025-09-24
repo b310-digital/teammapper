@@ -3,6 +3,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { DialogAboutComponent } from 'src/app/modules/application/components/dialog-about/dialog-about.component';
 import { DialogConnectionInfoComponent } from 'src/app/modules/application/components/dialog-connection-info/dialog-connection-info.component';
 import { DialogImportMermaidComponent } from 'src/app/modules/application/components/dialog-import-mermaid/dialog-import-mermaid.component';
+import { DialogImportAiComponent } from 'src/app/modules/application/components/dialog-import-ai/dialog-import-ai.component';
 import { DialogPictogramsComponent } from 'src/app/modules/application/components/dialog-pictograms/dialog-pictograms.component';
 import { DialogShareComponent } from 'src/app/modules/application/components/dialog-share/dialog-share.component';
 
@@ -15,6 +16,7 @@ export class DialogService {
   private aboutModalRef: MatDialogRef<DialogAboutComponent>;
   private pictogramsModalRef: MatDialogRef<DialogPictogramsComponent>;
   private importMermaidModalRef: MatDialogRef<DialogImportMermaidComponent>;
+  private importAiModalRef: MatDialogRef<DialogImportAiComponent>;
 
   constructor(private dialog: MatDialog) {}
 
@@ -39,6 +41,16 @@ export class DialogService {
     if (!this.importMermaidModalRef) return;
 
     this.importMermaidModalRef.close();
+  }
+
+  openImportAiDialog() {
+    this.importAiModalRef = this.dialog.open(DialogImportAiComponent);
+  }
+
+  closeImportAiDialog() {
+    if (!this.importAiModalRef) return;
+
+    this.importAiModalRef.close();
   }
 
   openDisconnectDialog() {

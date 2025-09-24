@@ -8,11 +8,7 @@ import {
 } from '@angular/material/dialog';
 import { ImportService } from 'src/app/core/services/import/import.service';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import {
-  MatFormField,
-  MatLabel,
-  MatSuffix,
-} from '@angular/material/form-field';
+import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
@@ -23,13 +19,12 @@ import { MatIcon } from '@angular/material/icon';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
-import { environment } from 'src/environments/environment';
 import { NgIf } from '@angular/common';
 
 @Component({
-  selector: 'teammapper-dialog-import-mermaid',
-  templateUrl: 'dialog-import-mermaid.component.html',
-  styleUrls: ['./dialog-import-mermaid.component.scss'],
+  selector: 'teammapper-dialog-import-ai',
+  templateUrl: 'dialog-import-ai.component.html',
+  styleUrls: ['./dialog-import-ai.component.scss'],
   imports: [
     MatDialogTitle,
     CdkScrollable,
@@ -38,7 +33,6 @@ import { NgIf } from '@angular/common';
     MatInput,
     MatIcon,
     MatLabel,
-    MatSuffix,
     CdkTextareaAutosize,
     FormsModule,
     MatDialogActions,
@@ -48,10 +42,9 @@ import { NgIf } from '@angular/common';
     NgIf,
   ],
 })
-export class DialogImportMermaidComponent {
-  public mermaidInput = '';
+export class DialogImportAiComponent {
   public mindmapDescription = '';
-  public featureFlagAI: boolean = environment.featureFlagAI;
+  public isGenerating = false;
 
   constructor(
     private importService: ImportService,
@@ -59,40 +52,56 @@ export class DialogImportMermaidComponent {
     private toastService: ToastrService,
     private httpService: HttpService,
     private utilsService: UtilsService,
-    private dialogRef: MatDialogRef<DialogImportMermaidComponent>
+    private dialogRef: MatDialogRef<DialogImportAiComponent>
   ) {}
 
-  async createMermaidMindmapFromServer(): Promise<void> {
+  async generateAndImport(): Promise<void> {
+    if (!this.mindmapDescription.trim()) {
+      this.toastService.warning(
+        await this.utilsService.translate('TOASTS.AI_DESCRIPTION_REQUIRED')
+      );
+      return;
+    }
+
+    this.isGenerating = true;
     this.toastService.info(
       await this.utilsService.translate('TOASTS.AI_MERMAID_GENERATING')
     );
-    const response = await this.httpService.post(
-      API_URL.ROOT,
-      '/mermaid/create',
-      JSON.stringify({
-        mindmapDescription: this.mindmapDescription,
-        language:
-          this.settingsService.getCachedSettings().general.language ?? 'en',
-      })
-    );
-    if (response.status === 201) {
-      this.toastService.success(
-        await this.utilsService.translate('TOASTS.AI_MERMAID_GENERATED_SUCCESS')
+
+    try {
+      const response = await this.httpService.post(
+        API_URL.ROOT,
+        '/mermaid/create',
+        JSON.stringify({
+          mindmapDescription: this.mindmapDescription,
+          language:
+            this.settingsService.getCachedSettings().general.language ?? 'en',
+        })
       );
-      this.mermaidInput = await response.text();
-    } else {
+
+      if (response.status === 201) {
+        this.toastService.success(
+          await this.utilsService.translate(
+            'TOASTS.AI_MERMAID_GENERATED_SUCCESS'
+          )
+        );
+        const mermaidInput = await response.text();
+        const success =
+          await this.importService.importFromMermaid(mermaidInput);
+        if (success) {
+          this.dialogRef.close();
+        }
+      } else {
+        this.toastService.error(
+          await this.utilsService.translate('TOASTS.ERRORS.AI_MERMAID_ERROR')
+        );
+      }
+    } catch (_error) {
       this.toastService.error(
         await this.utilsService.translate('TOASTS.ERRORS.AI_MERMAID_ERROR')
       );
-    }
-  }
-
-  async import() {
-    const success = await this.importService.importFromMermaid(
-      this.mermaidInput
-    );
-    if (success) {
-      this.dialogRef.close();
+    } finally {
+      this.isGenerating = false;
     }
   }
 }

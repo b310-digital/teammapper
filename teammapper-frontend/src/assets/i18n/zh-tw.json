@@ -13,9 +13,10 @@
     "IMPORT_MAP": "匯入地圖",
     "IMPORT_MERMAID": "匯入Mermaid心智圖",
     "IMPORT_JSON": "匯入JSON心智圖",
+    "IMPORT_AI": "使用AI生成心智圖",
     "EXPORT_MAP": "匯出地圖",
     "EXPORT_JSON": "以JSON格式匯出地圖",
-    "EXPORT_MERMAID": "以Mermaid格式匯出地圖", 
+    "EXPORT_MERMAID": "以Mermaid格式匯出地圖",
     "EXPORT_SVG": "以SVG格式匯出地圖",
     "EXPORT_PNG": "以PNG格式匯出地圖",
     "EXPORT_JPEG": "以JPEG格式匯出地圖",
@@ -83,20 +84,27 @@
   },
   "MODALS": {
     "GENERAL": {
-      "BUTTON_CLOSE": "Close"
+      "BUTTON_CLOSE": "關閉"
     },
     "CONNECTION_INFO": {
-      "TITLE": "Connection lost",
-      "CONTENT": "Connection to server was lost. Retrying...",
-      "BUTTON_RECONNECT": "Reconnect"
+      "TITLE": "連線中斷",
+      "CONTENT": "與伺服器的連線已中斷。正在重試...",
+      "BUTTON_RECONNECT": "重新連線"
     },
     "IMPORT_MERMAID": {
-      "TITLE": "Mermaid Mindmap Import",
-      "CONTENT": "Import mindmaps using Mermaid syntax. Create your mindmap by either generating it with AI assistance or writing the Mermaid code manually.",
-      "IMPORT": "Import",
-      "LABEL_CREATE_FROM_AI": "Mindmap description",
-      "BUTTON_CREATE_FROM_AI": "Generate",
+      "TITLE": "匯入Mermaid心智圖",
+      "CONTENT": "使用Mermaid語法匯入心智圖。您可以透過AI輔助生成或手動編寫Mermaid程式碼來創建心智圖。",
+      "IMPORT": "匯入",
+      "LABEL_CREATE_FROM_AI": "心智圖描述",
+      "BUTTON_CREATE_FROM_AI": "生成",
       "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "AI心智圖生成器",
+      "CONTENT": "使用AI直接從您的描述生成心智圖。只需描述您想要映射的內容，AI就會為您創建它。",
+      "LABEL_DESCRIPTION": "描述您的心智圖",
+      "PLACEHOLDER": "例如，創建一個房子的心智圖，包括房間、家具和花園",
+      "BUTTON_GENERATE": "生成並匯入"
     },
     "PICTOGRAMS": {
       "TITLE": "Add a pictogram",
@@ -206,11 +214,12 @@
       "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!",
       "IMPORT_ERROR": "Mindmap could not be imported!",
-      "AI_MERMAID_ERROR": "Mermaid could not be generated"
+      "AI_MERMAID_ERROR": "無法生成Mermaid"
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
-    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
-    "AI_MERMAID_GENERATING": "Creating Mermaid..."
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",
+    "AI_MERMAID_GENERATING": "正在創建Mermaid...",
+    "AI_DESCRIPTION_REQUIRED": "請提供心智圖的描述"
   },
   "GENERAL": {
     "REPOSITORY": "Source Code",
@@ -218,7 +227,8 @@
     "DISMISS": "解除",
     "SAVED_MAPS": "Saved maps",
     "MERMAID": "Mermaid (.mmd)",
-    "JSON": "File (.json)",
+    "JSON": "檔案 (.json)",
+    "AI": "AI生成器",
     "PNG": "圖片 (.png)",
     "SVG": "圖片 (.svg)",
     "JPG": "圖片 (.jpg)",

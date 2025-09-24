@@ -32,6 +32,7 @@ export class ToolbarComponent {
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
   public featureFlagPictograms: boolean = environment.featureFlagPictograms;
+  public featureFlagAI: boolean = environment.featureFlagAI;
 
   constructor(
     private translationService: TranslateService,
@@ -75,6 +76,10 @@ export class ToolbarComponent {
 
   public async mermaid() {
     this.dialogService.openImportMermaidDialog();
+  }
+
+  public async importFromAi() {
+    this.dialogService.openImportAiDialog();
   }
 
   public async pictogram() {
