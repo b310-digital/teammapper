@@ -9,5 +9,5 @@ done
 echo "Found database."
 echo "Starting the application..."
 
-npm --prefix teammapper-backend run prod:typeorm:migrate
-npm run start:prod
+pnpm run migrate:prod
+pnpm run start:prod
