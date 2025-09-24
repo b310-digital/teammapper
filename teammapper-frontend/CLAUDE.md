@@ -18,37 +18,37 @@ TeamMapper is a collaborative web-based mind mapping application built with Angu
 Important: After each task, make sure that the following commands succeed:
 
 ```bash
-npm run tsc
-npm run lint
-npm test
-npx playwright test --reporter=list
-npx prettier --write src
+pnpm run tsc
+pnpm run lint
+pnpm run test
+pnpm run playwright test --reporter=list
+pnpm run prettier --write src
 ```
 
 ## Development Commands
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run start
+pnpm run start
 
 # Build packages first (required)
-npm run build:packages
+pnpm run build:packages
 
 # Production build
-npm run build:prod
+pnpm run build:prod
 
 # Run linting
-npm run lint
+pnpm run lint
 
 # Run tests
-npm test
+pnpm test
 
 # Format code
-npx prettier --write src
+pnpm exec prettier --write src
 
 # Run e2e Tests
-npx playwright test --reporter=list
+pnpm run playwright test --reporter=list
 ```

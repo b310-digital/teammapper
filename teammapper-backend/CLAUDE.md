@@ -18,7 +18,7 @@ TeamMapper is a collaborative web-based mind mapping application built with Angu
 Important: After each task, make sure that the following commands succeed:
 
 ```bash
-npm run lint
-npm run test
-npm run format
+pnpm run lint
+pnpm run test
+pnpm run format
 ```

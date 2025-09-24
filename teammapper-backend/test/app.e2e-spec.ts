@@ -172,18 +172,16 @@ describe('AppController (e2e)', () => {
         .save({
           id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
           modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-          nodes: [
-            nodesRepo.create({
-              id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-              coordinatesX: 1,
-              coordinatesY: 2,
-              nodeMapId: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-              detached: false,
-              root: true,
-            }),
-          ],
         })
-        .then((map) => {
+        .then(async (map) => {
+          await nodesRepo.save({
+            id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+            coordinatesX: 1,
+            coordinatesY: 2,
+            nodeMapId: map.id,
+            detached: false,
+            root: true,
+          })
           socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => {
             socket.emit('updateNode', {
               mapId: map.id,
