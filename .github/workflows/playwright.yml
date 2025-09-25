@@ -29,9 +29,8 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
-    - uses: pnpm/action-setup@v4
-      with:
-        version: 9
+    - run: corepack enable
+    - run: corepack prepare pnpm@9 --activate
     - name: Install dependencies
       run: pnpm install
     - name: Install Playwright Browsers
