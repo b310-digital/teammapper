@@ -96,7 +96,7 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
 -   Start frontend and backend at once
 
     ```bash
-    docker compose exec app pnpm --filter teammapper-backend run dev
+    docker compose exec app pnpm run dev
     ```
 
     or start frontend and backend separately
