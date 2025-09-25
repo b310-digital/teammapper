@@ -43,4 +43,5 @@ interface Urls {
 
 interface FeatureFlags {
   pictograms: boolean;
+  ai: boolean;
 }

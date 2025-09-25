@@ -9,7 +9,8 @@
       "pictogramStaticUrl": "https://static.arasaac.org/pictograms"
     },
     "featureFlags": {
-      "pictograms": true
+      "pictograms": true,
+      "ai": true
     }
   },
   "userSettings": {

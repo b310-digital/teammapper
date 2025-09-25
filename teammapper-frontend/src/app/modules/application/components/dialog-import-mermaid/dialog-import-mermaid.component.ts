@@ -25,7 +25,6 @@ import { NgIf } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
-import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'teammapper-dialog-import-mermaid',
@@ -62,7 +61,8 @@ export class DialogImportMermaidComponent {
 
   public mermaidInput = '';
   public mindmapDescription = '';
-  public featureFlagAI: boolean = environment.featureFlagAI;
+  public featureFlagAI: boolean =
+    this.settingsService.getCachedSystemSettings().featureFlags.ai;
 
   async createMermaidMindmapFromServer(): Promise<void> {
     this.toastService.info(

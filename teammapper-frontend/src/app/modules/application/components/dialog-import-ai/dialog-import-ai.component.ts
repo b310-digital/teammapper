@@ -74,7 +74,8 @@ export class DialogImportAiComponent {
         JSON.stringify({
           mindmapDescription: this.mindmapDescription,
           language:
-            this.settingsService.getCachedSettings().general.language ?? 'en',
+            this.settingsService.getCachedUserSettings().general.language ??
+            'en',
         })
       );
 
