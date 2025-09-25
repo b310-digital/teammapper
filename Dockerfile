@@ -15,7 +15,7 @@ WORKDIR $APP_PATH
 FROM base as production
 USER node
 
-COPY --chown=node:node package.json pnpm-workspace.yaml $APP_PATH/
+COPY --chown=node:node package.json pnpm-workspace.yaml pnpm-lock.yaml $APP_PATH/
 COPY --chown=node:node teammapper-backend/package.json $APP_BACKEND_PATH/
 COPY --chown=node:node teammapper-frontend/package.json $APP_FRONTEND_PATH/
 COPY --chown=node:node teammapper-frontend/packages $APP_FRONTEND_PATH/packages

@@ -29,11 +29,12 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
-    - uses: pnpm/action-setup@v4
-      with:
-        version: 9
+    - run: corepack enable
+    - run: corepack prepare pnpm@9 --activate
     - name: Install dependencies
-      run: pnpm install
+      run: pnpm install --frozen-lockfile
+    - name: Build packages
+      run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
     - name: Install Playwright Browsers
       run: pnpm --filter teammapper-frontend exec playwright install webkit --with-deps
     - name: Run Playwright tests
