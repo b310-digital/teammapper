@@ -208,7 +208,8 @@ docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod
 
 ### Frontend feature flags
 See file /teammapper-frontend/src/envrionments/environment.prod.ts to configure feature flags:
--   `featureFlagPictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time!
+- `featureFlagPictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time!
+- `featureFlagAI`: Disables/Enables AI functionality like generating mindmaps with AI
 
 ### Further details
 
