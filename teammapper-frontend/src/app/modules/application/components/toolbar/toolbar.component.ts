@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
@@ -29,16 +29,14 @@ import { NgClass, NgIf } from '@angular/common';
   ],
 })
 export class ToolbarComponent {
+  private translationService = inject(TranslateService);
+  mmpService = inject(MmpService);
+  private dialogService = inject(DialogService);
+
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
   public featureFlagPictograms: boolean = environment.featureFlagPictograms;
   public featureFlagAI: boolean = environment.featureFlagAI;
-
-  constructor(
-    private translationService: TranslateService,
-    public mmpService: MmpService,
-    private dialogService: DialogService
-  ) {}
 
   public async exportMap(format: string) {
     const result = await this.mmpService.exportMap(format);

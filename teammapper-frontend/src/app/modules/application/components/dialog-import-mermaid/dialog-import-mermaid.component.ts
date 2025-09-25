@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   MatDialogRef,
   MatDialogTitle,
@@ -20,11 +21,11 @@ import { MatButton } from '@angular/material/button';
 import { TranslatePipe } from '@ngx-translate/core';
 import { API_URL, HttpService } from 'src/app/core/http/http.service';
 import { MatIcon } from '@angular/material/icon';
+import { NgIf } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { environment } from 'src/environments/environment';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'teammapper-dialog-import-mermaid',
@@ -49,18 +50,19 @@ import { NgIf } from '@angular/common';
   ],
 })
 export class DialogImportMermaidComponent {
+  private importService = inject(ImportService);
+  private toastService = inject(ToastrService);
+  private httpService = inject(HttpService);
+  private utilsService = inject(UtilsService);
+  private settingsService = inject(SettingsService);
+
+  private dialogRef =
+    inject<MatDialogRef<DialogImportMermaidComponent>>(MatDialogRef);
+  private router = inject(Router);
+
   public mermaidInput = '';
   public mindmapDescription = '';
   public featureFlagAI: boolean = environment.featureFlagAI;
-
-  constructor(
-    private importService: ImportService,
-    private settingsService: SettingsService,
-    private toastService: ToastrService,
-    private httpService: HttpService,
-    private utilsService: UtilsService,
-    private dialogRef: MatDialogRef<DialogImportMermaidComponent>
-  ) {}
 
   async createMermaidMindmapFromServer(): Promise<void> {
     this.toastService.info(

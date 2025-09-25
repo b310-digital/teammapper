@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { MatMiniFabButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -11,7 +11,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   imports: [MatMiniFabButton, MatIcon, TranslatePipe],
 })
 export class FloatingButtonsComponent {
-  @Input() public editDisabled: boolean;
+  mmpService = inject(MmpService);
 
-  constructor(public mmpService: MmpService) {}
+  @Input() public editDisabled: boolean;
 }

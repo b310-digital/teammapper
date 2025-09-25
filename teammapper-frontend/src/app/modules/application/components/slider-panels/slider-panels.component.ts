@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
@@ -15,14 +15,14 @@ import { TranslatePipe } from '@ngx-translate/core';
   imports: [NgIf, MatSlider, MatSliderThumb, FormsModule, TranslatePipe],
 })
 export class SliderPanelsComponent {
+  mmpService = inject(MmpService);
+  settingsService = inject(SettingsService);
+
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
   public mapOptions: CachedMapOptions;
 
-  constructor(
-    public mmpService: MmpService,
-    public settingsService: SettingsService
-  ) {
+  constructor() {
     this.mapOptions = this.mmpService.getAdditionalMapOptions();
   }
 

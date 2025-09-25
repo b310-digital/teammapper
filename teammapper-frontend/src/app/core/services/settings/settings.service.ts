@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
@@ -11,6 +11,10 @@ import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 })
 // Global per user settings service
 export class SettingsService {
+  private storageService = inject(StorageService);
+  private httpService = inject(HttpService);
+  private translateService = inject(TranslateService);
+
   public static readonly LANGUAGES = [
     'en',
     'fr',
@@ -26,11 +30,7 @@ export class SettingsService {
   private settingsSubject: BehaviorSubject<Settings | null>;
   private readonly editModeSubject: BehaviorSubject<boolean | null>;
 
-  constructor(
-    private storageService: StorageService,
-    private httpService: HttpService,
-    private translateService: TranslateService
-  ) {
+  constructor() {
     // Initialization of the behavior subjects.
     this.settingsSubject = new BehaviorSubject(null);
     this.editModeSubject = new BehaviorSubject(null);

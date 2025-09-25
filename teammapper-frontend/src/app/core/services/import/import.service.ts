@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { v4 as uuidv4 } from 'uuid';
 import { ToastrService } from 'ngx-toastr';
@@ -20,12 +20,12 @@ import { COLORS } from '../mmp/mmp-utils';
   providedIn: 'root',
 })
 export class ImportService {
-  constructor(
-    private readonly mmpService: MmpService,
-    private readonly toastrService: ToastrService,
-    private readonly utilsService: UtilsService,
-    private readonly settingsService: SettingsService
-  ) {
+  private readonly mmpService = inject(MmpService);
+  private readonly toastrService = inject(ToastrService);
+  private readonly utilsService = inject(UtilsService);
+  private readonly settingsService = inject(SettingsService);
+
+  constructor() {
     mermaidMindmapParser.yy = mindmapDb;
   }
 

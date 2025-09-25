@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Settings } from '../../../../shared/models/settings.model';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
@@ -64,20 +64,20 @@ import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
   ],
 })
 export class SettingsComponent implements OnInit {
+  private settingsService = inject(SettingsService);
+  private mmpService = inject(MmpService);
+  private mapSyncService = inject(MapSyncService);
+  private translateService = inject(TranslateService);
+  private router = inject(Router);
+  private location = inject(Location);
+
   public readonly languages: string[];
   public settings: Settings;
   public mapOptions: CachedMapOptions;
   public editMode: Observable<boolean>;
   public cachedAdminMapEntries: CachedAdminMapEntry[];
 
-  constructor(
-    private settingsService: SettingsService,
-    private mmpService: MmpService,
-    private mapSyncService: MapSyncService,
-    private translateService: TranslateService,
-    private router: Router,
-    private location: Location
-  ) {
+  constructor() {
     this.languages = SettingsService.LANGUAGES;
     this.settings = this.settingsService.getCachedSettings();
     this.mapOptions = this.mmpService.getAdditionalMapOptions();

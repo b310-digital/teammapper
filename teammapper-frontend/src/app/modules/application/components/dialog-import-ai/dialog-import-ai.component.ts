@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {
   MatDialogRef,
   MatDialogTitle,
@@ -46,14 +46,13 @@ export class DialogImportAiComponent {
   public mindmapDescription = '';
   public isGenerating = false;
 
-  constructor(
-    private importService: ImportService,
-    private settingsService: SettingsService,
-    private toastService: ToastrService,
-    private httpService: HttpService,
-    private utilsService: UtilsService,
-    private dialogRef: MatDialogRef<DialogImportAiComponent>
-  ) {}
+  private importService = inject(ImportService);
+  private settingsService = inject(SettingsService);
+  private toastService = inject(ToastrService);
+  private httpService = inject(HttpService);
+  private utilsService = inject(UtilsService);
+  private dialogRef =
+    inject<MatDialogRef<DialogImportAiComponent>>(MatDialogRef);
 
   async generateAndImport(): Promise<void> {
     if (!this.mindmapDescription.trim()) {
