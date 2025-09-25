@@ -101,7 +101,7 @@
       "LABEL_TEXT_AREA": "Mermaid"
     },
     "IMPORT_AI": {
-      "TITLE": "KI Mindmap Generator",
+      "TITLE": "KI-Mindmap-Generator",
       "CONTENT": "Generiere eine Mindmap direkt aus deiner Beschreibung mit KI. Beschreibe einfach, was du visualisieren möchtest und die KI erstellt es für dich.",
       "LABEL_DESCRIPTION": "Beschreibe deine Mindmap",
       "PLACEHOLDER": "Zum Beispiel: Geschichte des Reisens",
@@ -231,7 +231,7 @@
     "SAVED_MAPS": "Gespeicherte Mindmaps",
     "MERMAID": "Mermaid (.mmd)",
     "JSON": "Datei (.json)",
-    "AI": "KI Generator",
+    "AI": "KI-Generator",
     "PNG": "Bild (.png)",
     "SVG": "Bild (.svg)",
     "JPG": "Bild (.jpg)",
