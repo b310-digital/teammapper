@@ -333,28 +333,56 @@ export class MmpService implements OnDestroy {
   /**
    * Update a property of the current selected node.
    */
-  public updateNode(
+  public async updateNode(
     property: string,
     value?: any,
     notifyWithEvent?: boolean,
     updateHistory?: boolean,
     id?: string
   ) {
-    this.currentMap.instance.updateNode(
-      property,
-      value,
-      notifyWithEvent,
-      updateHistory,
-      id
-    );
+    try {
+      this.currentMap.instance.updateNode(
+        property,
+        value,
+        notifyWithEvent,
+        updateHistory,
+        id
+      );
+    } catch (e) {
+      if (e.message == 'The root node can not be locked') {
+        const rootNodeFailureMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.ROOT_NODE_LOCKED'
+        );
+        this.toastrService.error(rootNodeFailureMessage);
+      } else {
+        const genericErrorMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
+        );
+        this.toastrService.error(genericErrorMessage);
+      }
+    }
   }
 
   /**
    * Remove the node with the id passed as parameter or, if the id is
    * not defined, the current selected node.
    */
-  public removeNode(nodeId?: string, notifyWithEvent = true) {
-    this.currentMap.instance.removeNode(nodeId, notifyWithEvent);
+  public async removeNode(nodeId?: string, notifyWithEvent = true) {
+    try{
+      this.currentMap.instance.removeNode(nodeId, notifyWithEvent);
+    } catch (e) {
+      if (e.message == 'The root node can not be deleted') {
+        const rootNodeFailureMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.ROOT_NODE_DELETED'
+        );
+        this.toastrService.error(rootNodeFailureMessage);
+      } else {
+        const genericErrorMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.NODE_DELETION_GENERIC'
+        );
+        this.toastrService.error(genericErrorMessage);
+      }
+    }
   }
 
   /**
@@ -413,8 +441,22 @@ export class MmpService implements OnDestroy {
    * Paste the node of the mmp clipboard in the map. If id is not specified,
    * paste the nodes of the mmp clipboard in the selected node.
    */
-  public pasteNode(nodeId?: string) {
-    this.currentMap.instance.pasteNode(nodeId);
+  public async pasteNode(nodeId?: string) {
+    try {
+      this.currentMap.instance.pasteNode(nodeId);
+    } catch (e) {
+      if (e.message == 'There are not nodes in the mmp clipboard') {
+        const rootNodeFailureMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.NO_NODES_IN_CLIPBOARD'
+        );
+        this.toastrService.error(rootNodeFailureMessage);
+      } else {
+        const genericErrorMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.NODE_PASTE_GENERIC'
+        );
+        this.toastrService.error(genericErrorMessage);
+      }
+    }
   }
 
   /**
