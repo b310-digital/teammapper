@@ -368,7 +368,7 @@ export class MmpService implements OnDestroy {
    * not defined, the current selected node.
    */
   public async removeNode(nodeId?: string, notifyWithEvent = true) {
-    try{
+    try {
       this.currentMap.instance.removeNode(nodeId, notifyWithEvent);
     } catch (e) {
       if (e.message == 'The root node can not be deleted') {
