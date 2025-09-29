@@ -85,7 +85,7 @@
     "eslint-plugin-nestjs": "1.2.3",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-typeorm": "0.0.19",
-    "globals": "^16.2.0",
+    "globals": "^16.4.0",
     "jest": "29.7.0",
     "jest-jasmine2": "29.7.0",
     "prettier": "^3.6.2",
