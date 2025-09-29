@@ -85,8 +85,10 @@ describe('AppController (e2e)', () => {
     })
 
     it('lets a user update a map', async () => {
+      const modificationSecret = crypto.randomUUID()
+
       const oldMap = await mapRepo.save({
-        modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+        modificationSecret: modificationSecret,
       })
 
       const map: IMmpClientMap = {
@@ -107,7 +109,7 @@ describe('AppController (e2e)', () => {
             image: { size: 60, src: '' },
             parent: '',
             k: -15.361675447001142,
-            id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+            id: modificationSecret,
             link: { href: '' },
             locked: false,
             isRoot: true,
@@ -119,7 +121,7 @@ describe('AppController (e2e)', () => {
         {
           map,
           mapId: map.uuid,
-          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+          modificationSecret: modificationSecret,
         },
         async () => {
           const mapInDb = await mapRepo.findOne({
@@ -135,10 +137,13 @@ describe('AppController (e2e)', () => {
         expect(result.nodes[0].name).toEqual('test')
         done()
       })
+
+      const mapId = crypto.randomUUID()
+
       mapRepo
         .save({
-          id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+          id: mapId,
+          modificationSecret: mapId,
         })
         .then((map) => {
           socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => {
@@ -162,33 +167,39 @@ describe('AppController (e2e)', () => {
     })
 
     it('notifies a user about a node update', (done) => {
+      const mapId = crypto.randomUUID()
+      const nodeId = crypto.randomUUID()
+
       socket.on('nodeUpdated', (result: any) => {
         expect(result.property).toEqual('nodeName')
-        expect(result.node.id).toEqual('51271bf2-81fa-477a-b0bd-10cecf8d6b65')
+        expect(result.node.id).toEqual(nodeId)
         expect(result.node.coordinates.x).toEqual(3)
         done()
       })
+
       mapRepo
         .save({
-          id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+          id: mapId,
+          modificationSecret: mapId,
+          nodes: [
+            nodesRepo.create({
+              id: nodeId,
+              coordinatesX: 1,
+              coordinatesY: 2,
+              nodeMapId: mapId,
+              detached: false,
+              root: true,
+            }),
+          ],
         })
-        .then(async (map) => {
-          await nodesRepo.save({
-            id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-            coordinatesX: 1,
-            coordinatesY: 2,
-            nodeMapId: map.id,
-            detached: false,
-            root: true,
-          })
+        .then((map) => {
           socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => {
             socket.emit('updateNode', {
               mapId: map.id,
               modificationSecret: map.modificationSecret,
               updatedProperty: 'nodeName',
               node: {
-                id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+                id: nodeId,
                 name: 'test',
                 coordinates: { x: 3, y: 4 },
                 font: {},

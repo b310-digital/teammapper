@@ -24,6 +24,7 @@ export class MmpNode {
 
   @ManyToOne(() => MmpMap, (map) => map.nodes, {
     onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
   })
   @JoinColumn()
   nodeMap: MmpMap
