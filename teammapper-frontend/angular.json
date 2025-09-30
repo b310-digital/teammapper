@@ -84,7 +84,6 @@
             },
             "development": {
               "buildTarget": "teammapper:build:development",
-              "disableHostCheck": true
             }
           },
           "defaultConfiguration": "development"

@@ -1,4 +1,4 @@
-FROM node:22-alpine3.19 as base
+FROM node:22-alpine3.19 AS base
 
 RUN apk add --no-cache postgresql-client make g++ python3 py3-pip curl && npm install -g pnpm
 
@@ -12,7 +12,7 @@ ENV APP_FRONTEND_PATH=${APP_PATH}/teammapper-frontend
 RUN mkdir -p $APP_PATH
 WORKDIR $APP_PATH
 
-FROM base as production
+FROM base AS production
 USER node
 
 COPY --chown=node:node package.json pnpm-workspace.yaml pnpm-lock.yaml $APP_PATH/
@@ -32,5 +32,5 @@ RUN mv $APP_FRONTEND_PATH/dist $APP_BACKEND_PATH/client
 COPY --chown=node:node entrypoint.prod.sh $APP_PATH/
 CMD ["./entrypoint.prod.sh"]
 
-FROM base as development
+FROM base AS development
 USER node
