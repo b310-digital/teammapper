@@ -92,7 +92,7 @@
     "@compodoc/compodoc": "^1.1.26",
     "@eslint/js": "^9.34.0",
     "@playwright/test": "^1.55.0",
-    "@schematics/angular": "^19.2.12",
+    "@schematics/angular": "^20.3.4",
     "@types/d3": "7.1.0",
     "@types/jasmine": "~5.1.4",
     "@types/jest": "29.5.14",
