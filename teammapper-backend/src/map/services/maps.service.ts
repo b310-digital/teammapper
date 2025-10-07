@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Repository, QueryFailedError } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
@@ -35,6 +35,20 @@ export class MapsService {
     @InjectRepository(MmpMap)
     private mapsRepository: Repository<MmpMap>
   ) {}
+
+  private isConstraintError(error: unknown): boolean {
+    if (!(error instanceof QueryFailedError)) {
+      return false
+    }
+
+    // Check for foreign key constraint violations (PostgreSQL error codes)
+    const pgError = error.driverError as { code?: string }
+    return (
+      pgError?.code === '23503' || // foreign_key_violation
+      pgError?.code === '23505' || // unique_violation
+      pgError?.code === '23514' // check_violation
+    )
+  }
 
   findMap(uuid: string): Promise<MmpMap | null> {
     if (!uuidValidate(uuid))
@@ -112,10 +126,17 @@ export class MapsService {
     try {
       return await this.nodesRepository.save(newNode)
     } catch (error) {
-      this.logger.error(
-        `${error instanceof Error ? error.constructor.name : 'Unknown'} addNode(): Failed to add node ${newNode.id}: ${error instanceof Error ? error.message : String(error)}`
-      )
-      return Promise.reject(error)
+      // Log with appropriate detail based on error type
+      if (this.isConstraintError(error)) {
+        this.logger.warn(
+          `addNode(): Constraint violation when adding node ${newNode.id} - likely invalid parent reference`
+        )
+      } else {
+        this.logger.error(
+          `${error instanceof Error ? error.constructor.name : 'Unknown'} addNode(): Failed to add node ${newNode.id}: ${error instanceof Error ? error.message : String(error)}`
+        )
+      }
+      throw error
     }
   }
 
@@ -257,7 +278,7 @@ export class MapsService {
       this.logger.error(
         `${error instanceof Error ? error.constructor.name : 'Unknown'} updateNode(): Failed to update node ${existingNode.id}: ${error instanceof Error ? error.message : String(error)}`
       )
-      return Promise.reject(error)
+      throw error
     }
   }
 
@@ -291,7 +312,7 @@ export class MapsService {
       this.logger.error(
         `${error instanceof Error ? error.constructor.name : 'Unknown'} createEmptyMap(): Failed to create root node ${newRootNode.id}: ${error instanceof Error ? error.message : String(error)}`
       )
-      return Promise.reject(error)
+      throw error
     }
   }
 
@@ -308,12 +329,50 @@ export class MapsService {
 
   // updates map nodes
   async updateMap(clientMap: IMmpClientMap): Promise<MmpMap | null> {
-    // remove existing nodes, otherwise we will end up with multiple roots
-    await this.nodesRepository.delete({ nodeMapId: clientMap.uuid })
-    // Add new nodes from given map
-    await this.addNodesFromClient(clientMap.uuid, clientMap.data)
-    // reload map
-    return this.findMap(clientMap.uuid)
+    // Use a transaction to ensure atomicity - either all changes succeed or none do
+    const queryRunner =
+      this.nodesRepository.manager.connection.createQueryRunner()
+    await queryRunner.connect()
+    await queryRunner.startTransaction()
+
+    try {
+      // Remove existing nodes, otherwise we will end up with multiple roots
+      await queryRunner.manager.delete(MmpNode, { nodeMapId: clientMap.uuid })
+
+      // Add new nodes from given map
+      const mmpNodes = clientMap.data.map((x) =>
+        mapClientNodeToMmpNode(x, clientMap.uuid)
+      )
+
+      // Validate and add nodes sequentially to avoid race conditions
+      for (const node of mmpNodes) {
+        // Cast to MmpNode since mapClientNodeToMmpNode returns Partial<MmpNode>
+        const fullNode = node as MmpNode
+        if (await this.validatesNodeParentForNode(clientMap.uuid, fullNode)) {
+          const newNode = queryRunner.manager.create(MmpNode, {
+            ...fullNode,
+            nodeMapId: clientMap.uuid,
+          })
+          await queryRunner.manager.save(newNode)
+        }
+      }
+
+      // Commit transaction
+      await queryRunner.commitTransaction()
+
+      // Reload map
+      return this.findMap(clientMap.uuid)
+    } catch (error) {
+      // Rollback transaction on error
+      await queryRunner.rollbackTransaction()
+      this.logger.error(
+        `updateMap(): Failed to update map ${clientMap.uuid}: ${error instanceof Error ? error.message : String(error)}`
+      )
+      throw error
+    } finally {
+      // Release query runner
+      await queryRunner.release()
+    }
   }
 
   async updateMapByDiff(mapId: string, diff: IMmpClientMapDiff) {
@@ -358,18 +417,17 @@ export class MapsService {
         this.logger.error(
           `${error instanceof Error ? error.constructor.name : 'Unknown'} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error instanceof Error ? error.message : String(error)}`
         )
-        return Promise.reject(error)
+        // Don't reject - just log and continue with other updates
       }
     }
 
     const diffUpdatedCallback: DiffCallback = async (
       diff: IMmpClientSnapshotChanges
     ) => {
-      await Promise.all(
-        Object.keys(diff).map(async (key) =>
-          updateSingleNodeFromDiff(key, diff[key])
-        )
-      )
+      // Process updates sequentially to avoid race conditions with parent-child relationships
+      for (const key of Object.keys(diff)) {
+        await updateSingleNodeFromDiff(key, diff[key])
+      }
     }
 
     const diffDeletedCallback: DiffCallback = async (

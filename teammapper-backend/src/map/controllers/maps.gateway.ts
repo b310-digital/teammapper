@@ -62,25 +62,34 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientJoinRequest
   ): Promise<IMmpClientMap | undefined> {
-    const map = await this.mapsService.findMap(request.mapId)
-    if (!map) {
-      this.logger.warn(
-        `onJoin(): Could not find map ${request.mapId} when client ${client.id} tried to join`
+    try {
+      const map = await this.mapsService.findMap(request.mapId)
+      if (!map) {
+        this.logger.warn(
+          `onJoin(): Could not find map ${request.mapId} when client ${client.id} tried to join`
+        )
+        return
+      }
+
+      client.join(request.mapId)
+      this.cacheManager.set(client.id, request.mapId, 10000)
+      const updatedClientCache: IClientCache = await this.addClientForMap(
+        request.mapId,
+        client.id,
+        request.color
       )
-      return
+
+      this.server
+        .to(request.mapId)
+        .emit('clientListUpdated', updatedClientCache)
+
+      return await this.mapsService.exportMapToClient(request.mapId)
+    } catch (error) {
+      this.logger.error(
+        `Failed to join map: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return undefined
     }
-
-    client.join(request.mapId)
-    this.cacheManager.set(client.id, request.mapId, 10000)
-    const updatedClientCache: IClientCache = await this.addClientForMap(
-      request.mapId,
-      client.id,
-      request.color
-    )
-
-    this.server.to(request.mapId).emit('clientListUpdated', updatedClientCache)
-
-    return await this.mapsService.exportMapToClient(request.mapId)
   }
 
   @SubscribeMessage('checkModificationSecret')
@@ -88,10 +97,17 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientEditingRequest
   ): Promise<boolean> {
-    const map = await this.mapsService.findMap(request.mapId)
-    if (!map || !map.modificationSecret) return true
+    try {
+      const map = await this.mapsService.findMap(request.mapId)
+      if (!map || !map.modificationSecret) return true
 
-    return request.modificationSecret === map?.modificationSecret
+      return request.modificationSecret === map?.modificationSecret
+    } catch (error) {
+      this.logger.error(
+        `Failed to check modification secret: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
+    }
   }
 
   @UseGuards(EditGuard)
@@ -114,13 +130,22 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() _client: Socket,
     @MessageBody() request: IMmpClientDeleteRequest
   ): Promise<boolean> {
-    const mmpMap: MmpMap | null = await this.mapsService.findMap(request.mapId)
-    if (mmpMap && mmpMap.adminId === request.adminId) {
-      this.mapsService.deleteMap(request.mapId)
-      this.server.to(request.mapId).emit('mapDeleted')
-      return true
+    try {
+      const mmpMap: MmpMap | null = await this.mapsService.findMap(
+        request.mapId
+      )
+      if (mmpMap && mmpMap.adminId === request.adminId) {
+        this.mapsService.deleteMap(request.mapId)
+        this.server.to(request.mapId).emit('mapDeleted')
+        return true
+      }
+      return false
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete map: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
     }
-    return false
   }
 
   @UseGuards(EditGuard)
@@ -272,17 +297,22 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientNodeRequest
   ): Promise<MmpNode | undefined> {
-    const removedNode: MmpNode | undefined = await this.mapsService.removeNode(
-      request.node,
-      request.mapId
-    )
+    try {
+      const removedNode: MmpNode | undefined =
+        await this.mapsService.removeNode(request.node, request.mapId)
 
-    this.server.to(request.mapId).emit('nodeRemoved', {
-      clientId: client.id,
-      nodeId: request?.node?.id,
-    })
+      this.server.to(request.mapId).emit('nodeRemoved', {
+        clientId: client.id,
+        nodeId: request?.node?.id,
+      })
 
-    return removedNode
+      return removedNode
+    } catch (error) {
+      this.logger.error(
+        `Failed to remove node: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return undefined
+    }
   }
 
   @SubscribeMessage('updateNodeSelection')
