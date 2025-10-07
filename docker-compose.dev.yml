@@ -6,3 +6,5 @@ services:
       target: development
     tty: true
     stdin_open: true
+    volumes:
+      - ${DEV_BUILD_CONTEXT}/.claude:/home/node/app/.claude

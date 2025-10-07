@@ -17,6 +17,10 @@ import {
   mapMmpMapToClient,
   mergeClientNodeIntoMmpNode,
 } from '../utils/clientServerMapping'
+import {
+  shouldValidateParent,
+  createParentNotFoundWarning,
+} from '../utils/nodeValidation'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid'
 import MalformedUUIDError from './uuid.error'
@@ -67,27 +71,33 @@ export class MapsService {
     }
   }
 
-  async addNode(mapId: string, node: MmpNode): Promise<MmpNode | undefined> {
-    // detached nodes are not allowed to have a parent
+  private validateNodeParentConstraints(node: MmpNode): boolean {
     if (node.detached && node.nodeParentId) {
       this.logger.warn(
         `addNode(): Detached node ${node.id} is not allowed to have a parent.`
       )
-      return
+      return false
     }
-    // root nodes are not allowed to have a parent
+
     if (node.root && node.nodeParentId) {
       this.logger.warn(
         `addNode(): Root node ${node.id} is not allowed to have a parent.`
       )
-      return
+      return false
     }
+
+    return true
+  }
+
+  async addNode(mapId: string, node: MmpNode): Promise<MmpNode | undefined> {
     if (!mapId || !node) {
       this.logger.warn(
         `addNode(): Required arguments mapId or node not supplied`
       )
       return
     }
+
+    if (!this.validateNodeParentConstraints(node)) return
 
     const existingNode = await this.nodesRepository.findOne({
       where: { id: node.id, nodeMapId: mapId },
@@ -100,10 +110,10 @@ export class MapsService {
     })
 
     try {
-      return this.nodesRepository.save(newNode)
+      return await this.nodesRepository.save(newNode)
     } catch (error) {
-      this.logger.warn(
-        `${error.constructor.name} addNode(): Failed to add node ${newNode.id}: ${error}`
+      this.logger.error(
+        `${error instanceof Error ? error.constructor.name : 'Unknown'} addNode(): Failed to add node ${newNode.id}: ${error instanceof Error ? error.message : String(error)}`
       )
       return Promise.reject(error)
     }
@@ -173,6 +183,46 @@ export class MapsService {
     })
   }
 
+  private async validateNodeParentExists(
+    mapId: string,
+    nodeId: string,
+    updatedNodeData: Partial<MmpNode>,
+    context: string
+  ): Promise<boolean> {
+    if (!shouldValidateParent(updatedNodeData)) {
+      return true
+    }
+
+    const parentExists = await this.existsNode(
+      mapId,
+      updatedNodeData.nodeParentId!
+    )
+
+    if (!parentExists) {
+      this.logger.warn(
+        createParentNotFoundWarning(
+          nodeId,
+          updatedNodeData.nodeParentId!,
+          mapId,
+          context
+        )
+      )
+    }
+
+    return parentExists
+  }
+
+  private async saveUpdatedNode(
+    existingNode: MmpNode,
+    updatedNodeData: Partial<MmpNode>
+  ): Promise<MmpNode> {
+    return await this.nodesRepository.save({
+      ...existingNode,
+      ...updatedNodeData,
+      lastModified: new Date(),
+    })
+  }
+
   async updateNode(
     mapId: string,
     clientNode: IMmpClientNode
@@ -188,15 +238,24 @@ export class MapsService {
       return
     }
 
+    const updatedNodeData = mapClientNodeToMmpNode(clientNode, mapId)
+
+    const parentIsValid = await this.validateNodeParentExists(
+      mapId,
+      clientNode.id,
+      updatedNodeData,
+      'updateNode()'
+    )
+
+    if (!parentIsValid) {
+      return undefined
+    }
+
     try {
-      return this.nodesRepository.save({
-        ...existingNode,
-        ...mapClientNodeToMmpNode(clientNode, mapId),
-        lastModified: new Date(),
-      })
+      return await this.saveUpdatedNode(existingNode, updatedNodeData)
     } catch (error) {
-      this.logger.warn(
-        `${error.constructor.name} updateNode(): Failed to update node ${existingNode.id}: ${error}`
+      this.logger.error(
+        `${error instanceof Error ? error.constructor.name : 'Unknown'} updateNode(): Failed to update node ${existingNode.id}: ${error instanceof Error ? error.message : String(error)}`
       )
       return Promise.reject(error)
     }
@@ -218,22 +277,30 @@ export class MapsService {
     return this.nodesRepository.remove(existingNode)
   }
 
+  private async createRootNodeForMap(
+    rootNode: IMmpClientNodeBasics,
+    mapId: string
+  ): Promise<void> {
+    const newRootNode = this.nodesRepository.create(
+      mapClientBasicNodeToMmpRootNode(rootNode, mapId)
+    )
+
+    try {
+      await this.nodesRepository.save(newRootNode)
+    } catch (error) {
+      this.logger.error(
+        `${error instanceof Error ? error.constructor.name : 'Unknown'} createEmptyMap(): Failed to create root node ${newRootNode.id}: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return Promise.reject(error)
+    }
+  }
+
   async createEmptyMap(rootNode?: IMmpClientNodeBasics): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create()
     const savedNewMap: MmpMap = await this.mapsRepository.save(newMap)
 
     if (rootNode) {
-      const newRootNode = this.nodesRepository.create(
-        mapClientBasicNodeToMmpRootNode(rootNode, savedNewMap.id)
-      )
-      try {
-        await this.nodesRepository.save(newRootNode)
-      } catch (error) {
-        this.logger.warn(
-          `${error.constructor.name} createEmptyMap(): Failed to create root node ${newRootNode.id}: ${error}`
-        )
-        return Promise.reject(error)
-      }
+      await this.createRootNodeForMap(rootNode, savedNewMap.id)
     }
 
     return newMap
@@ -260,35 +327,48 @@ export class MapsService {
       await this.addNodesFromClient(mapId, nodes as IMmpClientNode[])
     }
 
+    const updateSingleNodeFromDiff = async (
+      key: string,
+      clientNode: Partial<IMmpClientNode> | undefined
+    ): Promise<void> => {
+      if (!clientNode) return
+
+      const serverNode = await this.nodesRepository.findOne({
+        where: { nodeMapId: mapId, id: key },
+      })
+
+      if (!serverNode) return
+
+      const mergedNode = mergeClientNodeIntoMmpNode(clientNode, serverNode)
+
+      const parentIsValid = await this.validateNodeParentExists(
+        mapId,
+        key,
+        mergedNode,
+        'diffUpdatedCallback()'
+      )
+
+      if (!parentIsValid) return
+
+      Object.assign(serverNode, mergedNode)
+
+      try {
+        await this.nodesRepository.save(serverNode)
+      } catch (error) {
+        this.logger.error(
+          `${error instanceof Error ? error.constructor.name : 'Unknown'} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error instanceof Error ? error.message : String(error)}`
+        )
+        return Promise.reject(error)
+      }
+    }
+
     const diffUpdatedCallback: DiffCallback = async (
       diff: IMmpClientSnapshotChanges
     ) => {
       await Promise.all(
-        Object.keys(diff).map(async (key) => {
-          const clientNode = diff[key]
-
-          if (clientNode) {
-            const serverNode = await this.nodesRepository.findOne({
-              where: { nodeMapId: mapId, id: key },
-            })
-
-            if (serverNode) {
-              const mergedNode = mergeClientNodeIntoMmpNode(
-                clientNode,
-                serverNode
-              )
-              Object.assign(serverNode, mergedNode)
-              try {
-                await this.nodesRepository.save(serverNode)
-              } catch (error) {
-                this.logger.warn(
-                  `${error.constructor.name} diffUpdatedCallback(): Failed to update node ${serverNode.id}: ${error}`
-                )
-                return Promise.reject(error)
-              }
-            }
-          }
-        })
+        Object.keys(diff).map(async (key) =>
+          updateSingleNodeFromDiff(key, diff[key])
+        )
       )
     }
 
@@ -319,12 +399,19 @@ export class MapsService {
 
     const diffKeys: DiffKey[] = ['added', 'updated', 'deleted']
 
-    diffKeys.forEach((key) => {
+    for (const key of diffKeys) {
       const changes = diff[key]
       if (changes && Object.keys(changes).length > 0) {
-        callbacks[key](changes)
+        try {
+          await callbacks[key](changes)
+        } catch (error) {
+          this.logger.error(
+            `Failed to apply ${key} changes in updateMapByDiff: ${error instanceof Error ? error.message : String(error)}`
+          )
+          // Continue processing other changes even if one fails
+        }
       }
-    })
+    }
   }
 
   async updateMapOptions(

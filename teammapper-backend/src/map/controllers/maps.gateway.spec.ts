@@ -224,8 +224,116 @@ describe('WebSocketGateway', () => {
     })
   })
 
+  describe('error handling in gateway methods', () => {
+    it('addNodes returns false when service throws error', (done) => {
+      socket = io('http://localhost:3000')
+
+      // Mock service to throw error
+      jest
+        .spyOn(mapsService, 'addNodesFromClient')
+        .mockRejectedValueOnce(new Error('Database error'))
+
+      socket.emit(
+        'addNodes',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          nodes: [
+            {
+              name: 'test',
+              coordinates: { x: 1, y: 2 },
+              isRoot: true,
+            },
+          ],
+        },
+        (result: boolean) => {
+          expect(result).toEqual(false)
+          done()
+        }
+      )
+    })
+
+    it('updateNode returns false when service throws error', (done) => {
+      socket = io('http://localhost:3000')
+
+      // Mock service to throw error
+      jest
+        .spyOn(mapsService, 'updateNode')
+        .mockRejectedValueOnce(new Error('Database error'))
+
+      socket.emit(
+        'updateNode',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          node: {
+            id: crypto.randomUUID(),
+            name: 'test',
+            coordinates: { x: 1, y: 2 },
+          },
+        },
+        (result: boolean) => {
+          expect(result).toEqual(false)
+          done()
+        }
+      )
+    })
+
+    it('applyMapChangesByDiff returns false when service throws error', (done) => {
+      socket = io('http://localhost:3000')
+
+      // Mock service to throw error
+      jest
+        .spyOn(mapsService, 'updateMapByDiff')
+        .mockRejectedValueOnce(new Error('Database error'))
+
+      socket.emit(
+        'applyMapChangesByDiff',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          diff: {
+            added: {},
+            updated: {},
+            deleted: {},
+          },
+        },
+        (result: boolean) => {
+          expect(result).toEqual(false)
+          done()
+        }
+      )
+    })
+
+    it('updateMap returns false when service throws error', (done) => {
+      socket = io('http://localhost:3000')
+
+      // Mock service to throw error
+      jest
+        .spyOn(mapsService, 'updateMap')
+        .mockRejectedValueOnce(new Error('Database error'))
+
+      socket.emit(
+        'updateMap',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          map: {
+            uuid: map.id,
+            data: [],
+          },
+        },
+        (result: boolean) => {
+          expect(result).toEqual(false)
+          done()
+        }
+      )
+    })
+  })
+
   afterEach(async () => {
     socket.close()
+    jest.restoreAllMocks()
   })
 
   afterAll(async () => {
