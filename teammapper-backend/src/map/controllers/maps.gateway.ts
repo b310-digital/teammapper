@@ -62,25 +62,34 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientJoinRequest
   ): Promise<IMmpClientMap | undefined> {
-    const map = await this.mapsService.findMap(request.mapId)
-    if (!map) {
-      this.logger.warn(
-        `onJoin(): Could not find map ${request.mapId} when client ${client.id} tried to join`
+    try {
+      const map = await this.mapsService.findMap(request.mapId)
+      if (!map) {
+        this.logger.warn(
+          `onJoin(): Could not find map ${request.mapId} when client ${client.id} tried to join`
+        )
+        return
+      }
+
+      client.join(request.mapId)
+      this.cacheManager.set(client.id, request.mapId, 10000)
+      const updatedClientCache: IClientCache = await this.addClientForMap(
+        request.mapId,
+        client.id,
+        request.color
       )
-      return
+
+      this.server
+        .to(request.mapId)
+        .emit('clientListUpdated', updatedClientCache)
+
+      return await this.mapsService.exportMapToClient(request.mapId)
+    } catch (error) {
+      this.logger.error(
+        `Failed to join map: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return undefined
     }
-
-    client.join(request.mapId)
-    this.cacheManager.set(client.id, request.mapId, 10000)
-    const updatedClientCache: IClientCache = await this.addClientForMap(
-      request.mapId,
-      client.id,
-      request.color
-    )
-
-    this.server.to(request.mapId).emit('clientListUpdated', updatedClientCache)
-
-    return await this.mapsService.exportMapToClient(request.mapId)
   }
 
   @SubscribeMessage('checkModificationSecret')
@@ -88,10 +97,17 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientEditingRequest
   ): Promise<boolean> {
-    const map = await this.mapsService.findMap(request.mapId)
-    if (!map || !map.modificationSecret) return true
+    try {
+      const map = await this.mapsService.findMap(request.mapId)
+      if (!map || !map.modificationSecret) return true
 
-    return request.modificationSecret === map?.modificationSecret
+      return request.modificationSecret === map?.modificationSecret
+    } catch (error) {
+      this.logger.error(
+        `Failed to check modification secret: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
+    }
   }
 
   @UseGuards(EditGuard)
@@ -114,13 +130,22 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() _client: Socket,
     @MessageBody() request: IMmpClientDeleteRequest
   ): Promise<boolean> {
-    const mmpMap: MmpMap | null = await this.mapsService.findMap(request.mapId)
-    if (mmpMap && mmpMap.adminId === request.adminId) {
-      this.mapsService.deleteMap(request.mapId)
-      this.server.to(request.mapId).emit('mapDeleted')
-      return true
+    try {
+      const mmpMap: MmpMap | null = await this.mapsService.findMap(
+        request.mapId
+      )
+      if (mmpMap && mmpMap.adminId === request.adminId) {
+        this.mapsService.deleteMap(request.mapId)
+        this.server.to(request.mapId).emit('mapDeleted')
+        return true
+      }
+      return false
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete map: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
     }
-    return false
   }
 
   @UseGuards(EditGuard)
@@ -129,27 +154,34 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientNodeAddRequest
   ): Promise<boolean> {
-    const newNodes = await this.mapsService.addNodesFromClient(
-      request.mapId,
-      request.nodes
-    )
-    if (!newNodes || newNodes.length === 0) return false
+    try {
+      const newNodes = await this.mapsService.addNodesFromClient(
+        request.mapId,
+        request.nodes
+      )
+      if (!newNodes || newNodes.length === 0) return false
 
-    this.server.to(request.mapId).emit('nodesAdded', {
-      clientId: client.id,
-      nodes: newNodes.map((newNode) => mapMmpNodeToClient(newNode)),
-    })
-
-    // when pasting (inserting multiple nodes), do not update selection
-    if (newNodes.length === 1) {
-      this.server.to(request.mapId).emit('selectionUpdated', {
+      this.server.to(request.mapId).emit('nodesAdded', {
         clientId: client.id,
-        nodeId: newNodes[newNodes.length - 1]?.id,
-        selected: true,
+        nodes: newNodes.map((newNode) => mapMmpNodeToClient(newNode)),
       })
-    }
 
-    return true
+      // when pasting (inserting multiple nodes), do not update selection
+      if (newNodes.length === 1) {
+        this.server.to(request.mapId).emit('selectionUpdated', {
+          clientId: client.id,
+          nodeId: newNodes[newNodes.length - 1]?.id,
+          selected: true,
+        })
+      }
+
+      return true
+    } catch (error) {
+      this.logger.error(
+        `Failed to add nodes: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
+    }
   }
 
   @UseGuards(EditGuard)
@@ -158,22 +190,29 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientNodeRequest
   ): Promise<boolean> {
-    if (!request.node) return false
+    try {
+      if (!request.node) return false
 
-    const updatedNode = await this.mapsService.updateNode(
-      request.mapId,
-      request.node
-    )
+      const updatedNode = await this.mapsService.updateNode(
+        request.mapId,
+        request.node
+      )
 
-    if (!updatedNode) return false
+      if (!updatedNode) return false
 
-    this.server.to(request.mapId).emit('nodeUpdated', {
-      clientId: client.id,
-      property: request.updatedProperty,
-      node: mapMmpNodeToClient(updatedNode),
-    })
+      this.server.to(request.mapId).emit('nodeUpdated', {
+        clientId: client.id,
+        property: request.updatedProperty,
+        node: mapMmpNodeToClient(updatedNode),
+      })
 
-    return true
+      return true
+    } catch (error) {
+      this.logger.error(
+        `Failed to update node: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
+    }
   }
 
   @UseGuards(EditGuard)
@@ -182,17 +221,23 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientUndoRedoRequest
   ): Promise<boolean> {
-    if (!(await this.mapsService.findMap(request.mapId)))
-      return Promise.resolve(false)
-    if (!request.diff) return Promise.resolve(false)
+    try {
+      if (!(await this.mapsService.findMap(request.mapId))) return false
+      if (!request.diff) return false
 
-    await this.mapsService.updateMapByDiff(request.mapId, request.diff)
+      await this.mapsService.updateMapByDiff(request.mapId, request.diff)
 
-    this.server
-      .to(request.mapId)
-      .emit('mapChangesUndoRedo', { clientId: client.id, diff: request.diff })
+      this.server
+        .to(request.mapId)
+        .emit('mapChangesUndoRedo', { clientId: client.id, diff: request.diff })
 
-    return true
+      return true
+    } catch (error) {
+      this.logger.error(
+        `Failed to apply map changes by diff: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
+    }
   }
 
   @UseGuards(EditGuard)
@@ -201,43 +246,49 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientMapRequest
   ): Promise<boolean> {
-    if (!(await this.mapsService.findMap(request.mapId)))
-      return Promise.resolve(false)
+    try {
+      if (!(await this.mapsService.findMap(request.mapId))) return false
 
-    const mmpMap: IMmpClientMap = request.map
+      const mmpMap: IMmpClientMap = request.map
 
-    // Disconnect all clients temporarily
-    // Emit an event so clients can display a notification
-    this.server.to(mmpMap.uuid).emit('clientNotification', {
-      clientId: client.id,
-      message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS',
-      type: 'warning',
-    })
+      // Disconnect all clients temporarily
+      // Emit an event so clients can display a notification
+      this.server.to(mmpMap.uuid).emit('clientNotification', {
+        clientId: client.id,
+        message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS',
+        type: 'warning',
+      })
 
-    const sockets = await this.server.in(request.mapId).fetchSockets()
-    this.server.in(request.mapId).socketsLeave(request.mapId)
+      const sockets = await this.server.in(request.mapId).fetchSockets()
+      this.server.in(request.mapId).socketsLeave(request.mapId)
 
-    await this.mapsService.updateMap(mmpMap)
+      await this.mapsService.updateMap(mmpMap)
 
-    // Reconnect clients once map is updated
-    sockets.forEach((socket) => {
-      // socketsJoin() doesn't work here as the sockets have left the room and this.server.in(request.mapId) would return nothing
-      socket.join(request.mapId)
-    })
+      // Reconnect clients once map is updated
+      sockets.forEach((socket) => {
+        // socketsJoin() doesn't work here as the sockets have left the room and this.server.in(request.mapId) would return nothing
+        socket.join(request.mapId)
+      })
 
-    const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid)
+      const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid)
 
-    this.server
-      .to(mmpMap.uuid)
-      .emit('mapUpdated', { clientId: client.id, map: exportMap })
+      this.server
+        .to(mmpMap.uuid)
+        .emit('mapUpdated', { clientId: client.id, map: exportMap })
 
-    this.server.to(mmpMap.uuid).emit('clientNotification', {
-      clientId: client.id,
-      message: 'TOASTS.MAP_IMPORT_SUCCESS',
-      type: 'success',
-    })
+      this.server.to(mmpMap.uuid).emit('clientNotification', {
+        clientId: client.id,
+        message: 'TOASTS.MAP_IMPORT_SUCCESS',
+        type: 'success',
+      })
 
-    return true
+      return true
+    } catch (error) {
+      this.logger.error(
+        `Failed to update map: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return false
+    }
   }
 
   @UseGuards(EditGuard)
@@ -246,17 +297,22 @@ export class MapsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() request: IMmpClientNodeRequest
   ): Promise<MmpNode | undefined> {
-    const removedNode: MmpNode | undefined = await this.mapsService.removeNode(
-      request.node,
-      request.mapId
-    )
+    try {
+      const removedNode: MmpNode | undefined =
+        await this.mapsService.removeNode(request.node, request.mapId)
 
-    this.server.to(request.mapId).emit('nodeRemoved', {
-      clientId: client.id,
-      nodeId: request?.node?.id,
-    })
+      this.server.to(request.mapId).emit('nodeRemoved', {
+        clientId: client.id,
+        nodeId: request?.node?.id,
+      })
 
-    return removedNode
+      return removedNode
+    } catch (error) {
+      this.logger.error(
+        `Failed to remove node: ${error instanceof Error ? error.message : String(error)}`
+      )
+      return undefined
+    }
   }
 
   @SubscribeMessage('updateNodeSelection')

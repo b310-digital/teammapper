@@ -109,6 +109,27 @@ describe('MapsService', () => {
       expect(loggerSpyWarn).toHaveBeenCalled()
     })
 
+    it('catches an FK error when trying to assign a nodeParentId to a detached node', async () => {
+      const map = await mapsRepo.save({})
+      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn')
+
+      const node = await nodesRepo.create({
+        id: '3288e653-776e-579d-cba6-8631cec6c592',
+        nodeMapId: map.id,
+        detached: true,
+        coordinatesX: 2,
+        coordinatesY: 1,
+        nodeParentId: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+      })
+
+      const nodes = await mapsService.addNodes(map.id, [node])
+
+      expect(nodes).toEqual([])
+      expect(loggerSpyWarn).toHaveBeenCalledWith(
+        expect.stringContaining('Detached node')
+      )
+    })
+
     it('catches an FK error when trying to assign a nodeParentId from a different map', async () => {
       const map = await mapsRepo.save({})
       const mapTwo = await mapsRepo.save({})
@@ -161,6 +182,59 @@ describe('MapsService', () => {
       expect(updatedNode?.lastModified).not.toEqual(oldDate)
       expect(updatedNode?.lastModified!.getTime()).toBeGreaterThan(
         timeBeforeUpdate.getTime()
+      )
+    })
+
+    it('returns undefined when trying to update node with non-existent parent', async () => {
+      const map = await mapsRepo.save({})
+      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn')
+
+      const node = await nodesRepo.save({
+        id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        root: false,
+        detached: false,
+      })
+
+      const clientNode = mapMmpNodeToClient(node)
+      // Use a valid UUID format but non-existent parent
+      clientNode.parent = '99999999-9999-9999-9999-999999999999'
+
+      const result = await mapsService.updateNode(map.id, clientNode)
+
+      expect(result).toBeUndefined()
+      expect(loggerSpyWarn).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot update node')
+      )
+    })
+
+    it('rejects promise when save operation fails', async () => {
+      const map = await mapsRepo.save({})
+      const loggerSpyError = jest.spyOn(Logger.prototype, 'error')
+
+      const node = await nodesRepo.save({
+        id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        root: true,
+      })
+
+      const clientNode = mapMmpNodeToClient(node)
+      clientNode.name = 'updated'
+
+      // Mock save to throw an error
+      jest
+        .spyOn(nodesRepo, 'save')
+        .mockRejectedValueOnce(new Error('Database error'))
+
+      await expect(mapsService.updateNode(map.id, clientNode)).rejects.toThrow(
+        'Database error'
+      )
+      expect(loggerSpyError).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to update node')
       )
     })
   })
@@ -406,6 +480,166 @@ describe('MapsService', () => {
       expect(await nodesRepo.findOne({ where: { id: nodeTwo.id } })).toEqual(
         null
       )
+    })
+  })
+
+  describe('createEmptyMap', () => {
+    it('rejects promise when root node creation fails', async () => {
+      const loggerSpyError = jest.spyOn(Logger.prototype, 'error')
+
+      // Mock the save operation to throw an error
+      jest
+        .spyOn(nodesRepo, 'save')
+        .mockRejectedValueOnce(new Error('Database error'))
+
+      const rootNode = {
+        name: 'Root',
+        colors: { branch: '#000000', background: '#FFFFFF', name: '#000000' },
+        font: { size: 14, style: 'normal', weight: 'normal' },
+        image: { src: null, size: null },
+      }
+
+      await expect(mapsService.createEmptyMap(rootNode)).rejects.toThrow(
+        'Database error'
+      )
+      expect(loggerSpyError).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to create root node')
+      )
+    })
+  })
+
+  describe('addNode - duplicate handling', () => {
+    it('returns existing node when trying to add duplicate', async () => {
+      const map = await mapsRepo.save({})
+
+      const node = await nodesRepo.create({
+        id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        root: true,
+        detached: false,
+      })
+
+      const firstAdd = await mapsService.addNode(map.id, node)
+      expect(firstAdd).not.toBeUndefined()
+
+      // Try to add the same node again
+      const secondAdd = await mapsService.addNode(map.id, node)
+      expect(secondAdd).not.toBeUndefined()
+      expect(secondAdd?.id).toEqual(firstAdd?.id)
+
+      // Verify only one node exists in database
+      const allNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
+      expect(allNodes.length).toEqual(1)
+    })
+  })
+
+  describe('updateMapByDiff', () => {
+    it('handles errors in diff callbacks gracefully', async () => {
+      const map = await mapsRepo.save({})
+      const loggerSpy = jest.spyOn(Logger.prototype, 'error')
+
+      // Mock addNodesFromClient to throw an error
+      jest
+        .spyOn(mapsService, 'addNodesFromClient')
+        .mockRejectedValueOnce(new Error('Validation error'))
+
+      // Create a diff that will trigger the mocked error
+      const diff = {
+        added: {
+          'some-node': {
+            id: 'some-node',
+            name: 'Test',
+            coordinates: { x: 1, y: 1 },
+            isRoot: true,
+          },
+        },
+        updated: {},
+        deleted: {},
+      }
+
+      // Should not throw, but log errors
+      await mapsService.updateMapByDiff(map.id, diff)
+
+      // Verify error was logged (not thrown)
+      expect(loggerSpy).toHaveBeenCalled()
+    })
+
+    it('processes all diff callbacks sequentially', async () => {
+      const map = await mapsRepo.save({})
+
+      const rootNode = await nodesRepo.save({
+        id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        root: true,
+      })
+
+      const diff = {
+        added: {},
+        updated: {
+          [rootNode.id]: {
+            name: 'Updated Name',
+          },
+        },
+        deleted: {},
+      }
+
+      await mapsService.updateMapByDiff(map.id, diff)
+
+      const updatedNode = await nodesRepo.findOne({
+        where: { id: rootNode.id },
+      })
+      expect(updatedNode?.name).toEqual('Updated Name')
+    })
+
+    it('continues processing after one callback fails', async () => {
+      const map = await mapsRepo.save({})
+      const loggerSpy = jest.spyOn(Logger.prototype, 'error')
+
+      const validNode = await nodesRepo.save({
+        id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        root: true,
+      })
+
+      // Mock addNodesFromClient to fail, but other operations should continue
+      jest
+        .spyOn(mapsService, 'addNodesFromClient')
+        .mockRejectedValueOnce(new Error('Add failed'))
+
+      // Mix failing add with valid update
+      const diff = {
+        added: {
+          'some-node': {
+            id: 'some-node',
+            name: 'Test',
+            coordinates: { x: 1, y: 1 },
+            isRoot: true,
+          },
+        },
+        updated: {
+          [validNode.id]: {
+            name: 'Updated Successfully',
+          },
+        },
+        deleted: {},
+      }
+
+      await mapsService.updateMapByDiff(map.id, diff)
+
+      // Valid update should still succeed despite invalid add
+      const updatedNode = await nodesRepo.findOne({
+        where: { id: validNode.id },
+      })
+      expect(updatedNode?.name).toEqual('Updated Successfully')
+
+      // Error should be logged for the failed operation
+      expect(loggerSpy).toHaveBeenCalled()
     })
   })
 })
