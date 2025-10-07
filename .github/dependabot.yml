@@ -5,14 +5,26 @@
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
+  - package-ecosystem: "pnpm" # See documentation for possible values
     directory: "/teammapper-backend" # Location of package manifests
     schedule:
       interval: "weekly"
-  - package-ecosystem: "npm" # See documentation for possible values
+    open-pull-requests-limit: 15
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
+  - package-ecosystem: "pnpm" # See documentation for possible values
     directory: "/teammapper-frontend" # Location of package manifests
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 15
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
   - package-ecosystem: "docker" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
