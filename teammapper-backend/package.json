@@ -49,6 +49,7 @@
     "ai": "5.0.40",
     "cache-manager": "^6.4.0",
     "class-validator": "^0.14.1",
+    "deepmerge": "^4.3.1",
     "dotenv": "16.5.0",
     "http-proxy-middleware": "3.0.5",
     "pg": "^8.16.0",

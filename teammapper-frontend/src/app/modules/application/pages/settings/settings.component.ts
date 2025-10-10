@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Settings } from '../../../../shared/models/settings.model';
+import { UserSettings } from '../../../../shared/models/settings.model';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
@@ -72,14 +72,14 @@ export class SettingsComponent implements OnInit {
   private location = inject(Location);
 
   public readonly languages: string[];
-  public settings: Settings;
+  public settings: UserSettings;
   public mapOptions: CachedMapOptions;
   public editMode: Observable<boolean>;
   public cachedAdminMapEntries: CachedAdminMapEntry[];
 
   constructor() {
     this.languages = SettingsService.LANGUAGES;
-    this.settings = this.settingsService.getCachedSettings();
+    this.settings = this.settingsService.getCachedUserSettings();
     this.mapOptions = this.mmpService.getAdditionalMapOptions();
     this.editMode = this.settingsService.getEditModeObservable();
     this.cachedAdminMapEntries = [];
@@ -122,8 +122,9 @@ export class SettingsComponent implements OnInit {
   }
 
   private async validateMapOptionsInput() {
-    const defaultSettings: Settings =
-      await this.settingsService.getDefaultSettings();
+    const defaultSettings: UserSettings = (
+      await this.settingsService.getDefaultSettings()
+    ).userSettings;
     if (
       this.mapOptions.fontIncrement > this.mapOptions.fontMaxSize ||
       this.mapOptions.fontIncrement < 1

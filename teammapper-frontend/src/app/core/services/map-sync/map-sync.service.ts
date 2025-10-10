@@ -362,7 +362,8 @@ export class MapSyncService implements OnDestroy {
       API_URL.ROOT,
       '/maps/',
       JSON.stringify({
-        rootNode: this.settingsService.getCachedSettings().mapOptions.rootNode,
+        rootNode:
+          this.settingsService.getCachedUserSettings().mapOptions.rootNode,
       })
     );
 

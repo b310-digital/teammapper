@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
-import { Settings } from '../../../../shared/models/settings.model';
+import { UserSettings } from '../../../../shared/models/settings.model';
 import { MatSelect, MatOption } from '@angular/material/select';
 import { NgFor } from '@angular/common';
 
@@ -15,13 +15,13 @@ export class FooterComponent implements OnInit {
   private settingsService = inject(SettingsService);
   private translateService = inject(TranslateService);
 
-  public settings: Settings;
+  public settings: UserSettings;
   public languages: string[];
 
   public currentYear: string;
 
   public ngOnInit() {
-    this.settings = this.settingsService.getCachedSettings();
+    this.settings = this.settingsService.getCachedUserSettings();
     this.languages = SettingsService.LANGUAGES;
 
     this.currentYear = new Date().getFullYear().toString();

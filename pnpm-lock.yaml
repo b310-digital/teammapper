@@ -65,6 +65,9 @@ importers:
       class-validator:
         specifier: ^0.14.1
         version: 0.14.2
+      deepmerge:
+        specifier: ^4.3.1
+        version: 4.3.1
       dotenv:
         specifier: 16.5.0
         version: 16.5.0
