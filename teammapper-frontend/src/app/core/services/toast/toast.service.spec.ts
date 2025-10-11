@@ -19,7 +19,9 @@ describe('ToastService', () => {
     });
 
     service = TestBed.inject(ToastService);
-    toastrSpy = TestBed.inject(ToastrService) as unknown as jest.Mocked<ToastrService>;
+    toastrSpy = TestBed.inject(
+      ToastrService
+    ) as unknown as jest.Mocked<ToastrService>;
   });
 
   describe('showValidationCorrection()', () => {
@@ -58,7 +60,8 @@ describe('ToastService', () => {
 
       tick(500);
 
-      const call = toastrSpy.warning.mock.calls[toastrSpy.warning.mock.calls.length - 1];
+      const call =
+        toastrSpy.warning.mock.calls[toastrSpy.warning.mock.calls.length - 1];
       expect(call[0]).toContain('invalid reference removed');
     }));
 
@@ -67,7 +70,8 @@ describe('ToastService', () => {
 
       tick(500);
 
-      const call = toastrSpy.warning.mock.calls[toastrSpy.warning.mock.calls.length - 1];
+      const call =
+        toastrSpy.warning.mock.calls[toastrSpy.warning.mock.calls.length - 1];
       expect(call[2]).toEqual({ timeOut: 4000 });
     }));
   });
