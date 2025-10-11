@@ -45,7 +45,14 @@ import { NodePropertyMapping } from '@mmp/index';
  * Private methods contain important logic that needs unit testing.
  */
 interface MapSyncServicePrivate {
-  socket: jasmine.SpyObj<unknown>;
+  socket: {
+    emit: jest.Mock;
+    removeAllListeners: jest.Mock;
+    on?: jest.Mock;
+    io?: {
+      on: jest.Mock;
+    };
+  };
   getUserFriendlyErrorMessage: (code: string, msg: string) => Promise<string>;
 }
 
@@ -84,14 +91,14 @@ function createMockNode(
 
 describe('MapSyncService', () => {
   let service: MapSyncService;
-  let mmpService: jasmine.SpyObj<MmpService>;
-  let httpService: jasmine.SpyObj<HttpService>;
-  let storageService: jasmine.SpyObj<StorageService>;
-  let settingsService: jasmine.SpyObj<SettingsService>;
-  let utilsService: jasmine.SpyObj<UtilsService>;
-  let toastService: jasmine.SpyObj<ToastService>;
-  let dialogService: jasmine.SpyObj<DialogService>;
-  let toastrService: jasmine.SpyObj<ToastrService>;
+  let mmpService: jest.Mocked<MmpService>;
+  let httpService: jest.Mocked<HttpService>;
+  let storageService: jest.Mocked<StorageService>;
+  let settingsService: jest.Mocked<SettingsService>;
+  let utilsService: jest.Mocked<UtilsService>;
+  let toastService: jest.Mocked<ToastService>;
+  let dialogService: jest.Mocked<DialogService>;
+  let toastrService: jest.Mocked<ToastrService>;
 
   const mockNode: ExportNodeProperties = {
     id: 'node-1',
@@ -123,45 +130,56 @@ describe('MapSyncService', () => {
 
   beforeEach(() => {
     // Only mock methods that are actually used in these tests
-    mmpService = jasmine.createSpyObj('MmpService', [
-      'new',
-      'selectNode',
-      'getRootNode',
-      'on',
-    ]);
+    mmpService = {
+      new: jest.fn(),
+      selectNode: jest.fn(),
+      getRootNode: jest.fn(),
+      on: jest.fn(),
+    } as unknown as jest.Mocked<MmpService>;
 
-    httpService = jasmine.createSpyObj('HttpService', ['get', 'post']);
-    storageService = jasmine.createSpyObj('StorageService', ['get', 'set']);
-    settingsService = jasmine.createSpyObj('SettingsService', [
-      'getCachedSettings',
-    ]);
-    toastService = jasmine.createSpyObj('ToastService', [
-      'showValidationCorrection',
-    ]);
-    dialogService = jasmine.createSpyObj('DialogService', [
-      'openCriticalErrorDialog',
-    ]);
-    toastrService = jasmine.createSpyObj('ToastrService', [
-      'error',
-      'success',
-      'warning',
-    ]);
+    httpService = {
+      get: jest.fn(),
+      post: jest.fn(),
+    } as unknown as jest.Mocked<HttpService>;
+
+    storageService = {
+      get: jest.fn(),
+      set: jest.fn(),
+    } as unknown as jest.Mocked<StorageService>;
+
+    settingsService = {
+      getCachedSettings: jest.fn(),
+    } as unknown as jest.Mocked<SettingsService>;
+
+    toastService = {
+      showValidationCorrection: jest.fn(),
+    } as unknown as jest.Mocked<ToastService>;
+
+    dialogService = {
+      openCriticalErrorDialog: jest.fn(),
+    } as unknown as jest.Mocked<DialogService>;
+
+    toastrService = {
+      error: jest.fn(),
+      success: jest.fn(),
+      warning: jest.fn(),
+    } as unknown as jest.Mocked<ToastrService>;
 
     // Create mock UtilsService using shared test utility
     utilsService = createMockUtilsService();
 
-    mmpService.on.and.returnValue({
-      subscribe: jasmine
-        .createSpy('subscribe')
-        .and.returnValue({ unsubscribe: jasmine.createSpy() }),
-    });
-    mmpService.getRootNode.and.returnValue(
+    const subscribeMock = jest.fn().mockReturnValue({ unsubscribe: jest.fn() });
+    mmpService.on.mockReturnValue({
+      subscribe: subscribeMock,
+    } as any);
+
+    mmpService.getRootNode.mockReturnValue(
       createMockNode({ id: 'root', name: 'Root', isRoot: true })
     );
-    mmpService.selectNode.and.returnValue(mockNode);
-    settingsService.getCachedSettings.and.returnValue({
+    mmpService.selectNode.mockReturnValue(mockNode);
+    settingsService.getCachedSettings.mockReturnValue({
       mapOptions: { rootNode: 'Root' },
-    } as unknown);
+    } as any);
 
     TestBed.configureTestingModule({
       providers: [
@@ -202,7 +220,7 @@ describe('MapSyncService', () => {
         emit: emitSpy,
         removeAllListeners: jest.fn(),
       };
-      asPrivate(service).socket = socketSpy as jasmine.SpyObj<unknown>;
+      asPrivate(service).socket = socketSpy;
       jest.spyOn(service, 'getAttachedMap').mockReturnValue({
         key: 'map-test',
         cachedMap: {
@@ -275,7 +293,7 @@ describe('MapSyncService', () => {
 
       expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
         code: 'SERVER_ERROR',
-        message: jasmine.stringContaining('server encountered an error'),
+        message: expect.stringContaining('server encountered an error'),
       });
     });
 
@@ -288,13 +306,13 @@ describe('MapSyncService', () => {
 
       expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
         code: 'MALFORMED_RESPONSE',
-        message: jasmine.stringContaining('invalid response'),
+        message: expect.stringContaining('invalid response'),
       });
     });
 
     it('malformed response with translation failure uses fallback message', async () => {
       // Simulate translation service failure
-      utilsService.translate.and.callFake(async () => {
+      utilsService.translate.mockImplementation(async () => {
         throw new Error('Translation failed');
       });
 
@@ -328,14 +346,14 @@ describe('MapSyncService', () => {
       // Should treat as malformed response since fullMapState is invalid
       expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
         code: 'MALFORMED_RESPONSE',
-        message: jasmine.stringContaining('invalid response'),
+        message: expect.stringContaining('invalid response'),
       });
       expect(mmpService.new).not.toHaveBeenCalled();
     });
 
     it('error without fullMapState with translation failure uses fallback', async () => {
       // Simulate translation service failure
-      utilsService.translate.and.callFake(async () => {
+      utilsService.translate.mockImplementation(async () => {
         throw new Error('Translation failed');
       });
 
@@ -392,17 +410,14 @@ describe('MapSyncService', () => {
 
       jest.spyOn(service, 'getAttachedMap').mockReturnValue(mockCachedMapEntry);
 
-      const socketSpy = jasmine.createSpyObj('Socket', [
-        'emit',
-        'on',
-        'removeAllListeners',
-      ]);
-      socketSpy.on.and.returnValue(socketSpy);
-      socketSpy.emit.and.stub();
-
-      const socketIoSpy = jasmine.createSpyObj('SocketIO', ['on']);
-      socketIoSpy.on.and.returnValue(socketIoSpy);
-      socketSpy.io = socketIoSpy;
+      const socketSpy = {
+        emit: jest.fn(),
+        on: jest.fn().mockReturnThis(),
+        removeAllListeners: jest.fn(),
+        io: {
+          on: jest.fn().mockReturnThis(),
+        },
+      };
 
       asPrivate(service).socket = socketSpy;
     });
@@ -419,8 +434,8 @@ describe('MapSyncService', () => {
         name: 'Root',
         isRoot: true,
       });
-      mmpService.getRootNode.and.returnValue(rootNode);
-      mmpService.selectNode.and.returnValue(rootNode);
+      mmpService.getRootNode.mockReturnValue(rootNode);
+      mmpService.selectNode.mockReturnValue(rootNode);
 
       service.initMap();
 

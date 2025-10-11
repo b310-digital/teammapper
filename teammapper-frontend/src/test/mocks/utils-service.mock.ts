@@ -27,25 +27,25 @@ export const MOCK_TRANSLATIONS: Record<string, string> = {
  * Creates a properly configured mock UtilsService for testing
  * Includes all instance methods with sensible defaults
  *
- * @returns Jasmine spy object with configured translate method
+ * @returns Jest mock object with configured translate method
  */
-export function createMockUtilsService(): jasmine.SpyObj<UtilsService> {
-  const mock = jasmine.createSpyObj('UtilsService', [
-    'translate',
-    'confirmDialog',
-    'blobToBase64',
-  ]);
+export function createMockUtilsService(): jest.Mocked<UtilsService> {
+  const mock = {
+    translate: jest.fn(),
+    confirmDialog: jest.fn(),
+    blobToBase64: jest.fn(),
+  } as unknown as jest.Mocked<UtilsService>;
 
   // Configure translate spy with realistic return values
-  mock.translate.and.callFake(async (key: string) => {
+  mock.translate.mockImplementation(async (key: string) => {
     return MOCK_TRANSLATIONS[key] || key;
   });
 
   // Configure confirmDialog with default behavior (returns true)
-  mock.confirmDialog.and.resolveTo(true);
+  mock.confirmDialog.mockResolvedValue(true);
 
   // Configure blobToBase64 with default behavior
-  mock.blobToBase64.and.resolveTo('data:image/png;base64,mock');
+  mock.blobToBase64.mockResolvedValue('data:image/png;base64,mock');
 
   return mock;
 }

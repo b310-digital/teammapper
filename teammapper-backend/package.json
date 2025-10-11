@@ -87,7 +87,6 @@
     "eslint-plugin-typeorm": "0.0.19",
     "globals": "^16.4.0",
     "jest": "30.2.0",
-    "jest-jasmine2": "30.2.0",
     "prettier": "^3.6.2",
     "socket.io-client": "^4.8.1",
     "supertest": "^7.1.1",
@@ -115,7 +114,6 @@
     "modulePaths": [
       "<rootDir>"
     ],
-    "testRunner": "jest-jasmine2",
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   }
