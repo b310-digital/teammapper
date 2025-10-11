@@ -134,6 +134,11 @@
     },
     "LINK": {
       "URL": "Link URL (https://...)"
+    },
+    "CRITICAL_ERROR": {
+      "TITLE": "連線問題",
+      "WARNING": "您最近的變更可能未儲存。",
+      "RELOAD_BUTTON": "重新載入頁面"
     }
   },
   "PAGES": {
@@ -220,7 +225,15 @@
       "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!",
       "IMPORT_ERROR": "Mindmap could not be imported!",
-      "AI_MERMAID_ERROR": "無法生成Mermaid"
+      "AI_MERMAID_ERROR": "無法生成Mermaid",
+      "OPERATION_FAILED_MAP_RELOADED": "操作失敗 - 已從伺服器重新載入地圖",
+      "NETWORK_TIMEOUT": "我們與伺服器失去連接。您的變更可能尚未儲存。",
+      "SERVER_ERROR": "伺服器遇到錯誤。您最近的變更可能尚未儲存。",
+      "AUTH_FAILED": "身份驗證失敗。您可能需要重新載入頁面並重新登入。",
+      "MALFORMED_REQUEST": "您的請求出現問題。請重試。",
+      "RATE_LIMIT_EXCEEDED": "請求過多。請稍等片刻再試。",
+      "MALFORMED_RESPONSE": "從伺服器收到無效回應。請重新載入頁面。",
+      "UNEXPECTED_ERROR": "發生意外錯誤。請重新載入頁面。"
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",

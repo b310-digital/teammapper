@@ -6,6 +6,10 @@ import { DialogImportMermaidComponent } from 'src/app/modules/application/compon
 import { DialogImportAiComponent } from 'src/app/modules/application/components/dialog-import-ai/dialog-import-ai.component';
 import { DialogPictogramsComponent } from 'src/app/modules/application/components/dialog-pictograms/dialog-pictograms.component';
 import { DialogShareComponent } from 'src/app/modules/application/components/dialog-share/dialog-share.component';
+import {
+  DialogCriticalErrorComponent,
+  CriticalErrorData,
+} from 'src/app/modules/application/components/dialog-critical-error/dialog-critical-error.component';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +23,7 @@ export class DialogService {
   private pictogramsModalRef: MatDialogRef<DialogPictogramsComponent>;
   private importMermaidModalRef: MatDialogRef<DialogImportMermaidComponent>;
   private importAiModalRef: MatDialogRef<DialogImportAiComponent>;
+  private criticalErrorModalRef: MatDialogRef<DialogCriticalErrorComponent>;
 
   openPictogramDialog() {
     this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent);
@@ -83,5 +88,33 @@ export class DialogService {
     if (!this.shareModalRef) return;
 
     this.shareModalRef.close();
+  }
+
+  /**
+   * Open critical error dialog
+   * This modal is blocking and cannot be dismissed except by reloading the page
+   * @param errorData Critical error data to display
+   * @returns Dialog reference
+   */
+  openCriticalErrorDialog(
+    errorData: CriticalErrorData
+  ): MatDialogRef<DialogCriticalErrorComponent> {
+    // Only open one critical error dialog at a time
+    if (this.criticalErrorModalRef) {
+      return this.criticalErrorModalRef;
+    }
+
+    this.criticalErrorModalRef = this.dialog.open(
+      DialogCriticalErrorComponent,
+      {
+        data: errorData,
+        disableClose: true, // Prevent closing by clicking outside or pressing escape
+        hasBackdrop: true,
+        backdropClass: 'critical-error-backdrop',
+        panelClass: 'critical-error-dialog',
+      }
+    );
+
+    return this.criticalErrorModalRef;
   }
 }

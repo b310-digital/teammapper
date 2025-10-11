@@ -134,6 +134,11 @@
     },
     "LINK": {
       "URL": "Link URL (https://...)"
+    },
+    "CRITICAL_ERROR": {
+      "TITLE": "Problème de connexion",
+      "WARNING": "Vos modifications récentes n'ont peut-être pas été enregistrées.",
+      "RELOAD_BUTTON": "Recharger la page"
     }
   },
   "PAGES": {
@@ -211,7 +216,7 @@
       "ROOT_NODE_CUT": "Il n'est pas possible de couper le nœud racine !",
       "ROOT_NODE_DELETED": "Il est impossible de supprimer le nœud racine !",
       "ROOT_NODE_LOCKED": "Il est impossible de verrouiller le nœud racine !",
-      "NO_NODES_IN_CLIPBOARD": "Il n’y a aucun nœud dans le presse-papiers !",
+      "NO_NODES_IN_CLIPBOARD": "Il n'y a aucun nœud dans le presse-papiers !",
       "NODE_COPY_GENERIC": "Une erreur s'est produite lors de la copie du nœud.",
       "NODE_CUT_GENERIC": "Une erreur s'est produite lors de la découpe du nœud.",
       "NODE_DELETION_GENERIC": "Une erreur est survenue lors de la suppression du nœud.",
@@ -220,7 +225,15 @@
       "EXPORT_IMAGE_ERROR": "Une erreur s'est produite lors de l'exportation de l'image. Il se peut que la mind map soit trop grande.",
       "MAP_COULD_NOT_BE_FOUND": "La carte heuristique est introuvable !",
       "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !",
-      "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré"
+      "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré",
+      "OPERATION_FAILED_MAP_RELOADED": "Opération échouée - carte rechargée depuis le serveur",
+      "NETWORK_TIMEOUT": "Nous avons perdu la connexion au serveur. Vos modifications n'ont peut-être pas été enregistrées.",
+      "SERVER_ERROR": "Le serveur a rencontré une erreur. Vos modifications récentes n'ont peut-être pas été enregistrées.",
+      "AUTH_FAILED": "Échec de l'authentification. Vous devrez peut-être recharger la page et vous reconnecter.",
+      "MALFORMED_REQUEST": "Il y a eu un problème avec votre demande. Veuillez réessayer.",
+      "RATE_LIMIT_EXCEEDED": "Trop de demandes. Veuillez patienter un instant avant de réessayer.",
+      "MALFORMED_RESPONSE": "Réponse invalide reçue du serveur. Veuillez recharger la page.",
+      "UNEXPECTED_ERROR": "Une erreur inattendue s'est produite. Veuillez recharger la page."
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",

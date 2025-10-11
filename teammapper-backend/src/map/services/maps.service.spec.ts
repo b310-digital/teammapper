@@ -4,7 +4,7 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Logger } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
-import { Repository } from 'typeorm'
+import { Repository, QueryFailedError } from 'typeorm'
 import { ConfigModule } from '@nestjs/config'
 import AppModule from '../../app.module'
 import {
@@ -79,6 +79,8 @@ describe('MapsService', () => {
         nodeMapId: map.id,
         coordinatesX: 3,
         coordinatesY: 1,
+        root: false,
+        detached: true,
       })
 
       await mapsService.addNodes(map.id, [node])
@@ -105,7 +107,14 @@ describe('MapsService', () => {
 
       const nodes = await mapsService.addNodes(map.id, [node])
 
-      expect(nodes).toEqual([])
+      // Now returns ValidationErrorResponse instead of empty array
+      expect(Array.isArray(nodes)).toBe(true)
+      expect(nodes).toHaveLength(1)
+      if ('errorType' in nodes[0]) {
+        expect(nodes[0].success).toBe(false)
+        expect(nodes[0].errorType).toBe('validation')
+        expect(nodes[0].code).toBe('CONSTRAINT_VIOLATION')
+      }
       expect(loggerSpyWarn).toHaveBeenCalled()
     })
 
@@ -124,7 +133,14 @@ describe('MapsService', () => {
 
       const nodes = await mapsService.addNodes(map.id, [node])
 
-      expect(nodes).toEqual([])
+      // Now returns ValidationErrorResponse instead of empty array
+      expect(Array.isArray(nodes)).toBe(true)
+      expect(nodes).toHaveLength(1)
+      if ('errorType' in nodes[0]) {
+        expect(nodes[0].success).toBe(false)
+        expect(nodes[0].errorType).toBe('validation')
+        expect(nodes[0].code).toBe('CONSTRAINT_VIOLATION')
+      }
       expect(loggerSpyWarn).toHaveBeenCalledWith(
         expect.stringContaining('Detached node')
       )
@@ -133,30 +149,41 @@ describe('MapsService', () => {
     it('catches an FK error when trying to assign a nodeParentId from a different map', async () => {
       const map = await mapsRepo.save({})
       const mapTwo = await mapsRepo.save({})
-      const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn')
 
-      const parentNode = await nodesRepo.create({
+      // First add parent node to map
+      const parentNode = await nodesRepo.save({
         id: '2177d542-665d-468c-bea5-7520bdc5b481',
         nodeMapId: map.id,
         coordinatesX: 2,
         coordinatesY: 1,
+        root: true,
+        detached: false,
       })
 
+      // Try to add child node to mapTwo that references parent in map
       const childNodeFromDifferentMap = await nodesRepo.create({
         id: 'cf65f9cc-0050-4e23-ac4d-effb61cb1731',
         nodeMapId: mapTwo.id,
         coordinatesX: 1,
         coordinatesY: 1,
         nodeParentId: parentNode.id,
+        root: false,
+        detached: false,
       })
 
-      const nodes = await mapsService.addNodes(map.id, [
-        parentNode,
+      const nodes = await mapsService.addNodes(mapTwo.id, [
         childNodeFromDifferentMap,
       ])
 
-      expect(nodes).toEqual([])
-      expect(loggerSpyWarn).toHaveBeenCalled()
+      // Should fail with INVALID_PARENT because parent is in different map
+      expect(Array.isArray(nodes)).toBe(true)
+      expect(nodes.length).toBe(1)
+      expect('errorType' in nodes[0]).toBe(true)
+      if ('errorType' in nodes[0]) {
+        expect(nodes[0].success).toBe(false)
+        expect(nodes[0].errorType).toBe('validation')
+        expect(nodes[0].code).toBe('INVALID_PARENT')
+      }
     })
   })
 
@@ -185,7 +212,7 @@ describe('MapsService', () => {
       )
     })
 
-    it('returns undefined when trying to update node with non-existent parent', async () => {
+    it('returns ValidationErrorResponse when trying to update node with non-existent parent', async () => {
       const map = await mapsRepo.save({})
       const loggerSpyWarn = jest.spyOn(Logger.prototype, 'warn')
 
@@ -204,7 +231,13 @@ describe('MapsService', () => {
 
       const result = await mapsService.updateNode(map.id, clientNode)
 
-      expect(result).toBeUndefined()
+      // Now returns ValidationErrorResponse instead of undefined
+      expect(result).toBeDefined()
+      if (result && 'errorType' in result) {
+        expect(result.success).toBe(false)
+        expect(result.errorType).toBe('validation')
+        expect(result.code).toBe('CONSTRAINT_VIOLATION')
+      }
       expect(loggerSpyWarn).toHaveBeenCalledWith(
         expect.stringContaining('Cannot update node')
       )
@@ -523,11 +556,15 @@ describe('MapsService', () => {
 
       const firstAdd = await mapsService.addNode(map.id, node)
       expect(firstAdd).not.toBeUndefined()
+      expect('id' in firstAdd!).toBe(true)
 
       // Try to add the same node again
       const secondAdd = await mapsService.addNode(map.id, node)
       expect(secondAdd).not.toBeUndefined()
-      expect(secondAdd?.id).toEqual(firstAdd?.id)
+      expect('id' in secondAdd!).toBe(true)
+      if ('id' in firstAdd! && 'id' in secondAdd!) {
+        expect(secondAdd.id).toEqual(firstAdd.id)
+      }
 
       // Verify only one node exists in database
       const allNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
@@ -536,37 +573,60 @@ describe('MapsService', () => {
   })
 
   describe('updateMapByDiff', () => {
-    it('handles errors in diff callbacks gracefully', async () => {
+    it('rolls back all changes when any operation fails (atomic transaction)', async () => {
       const map = await mapsRepo.save({})
       const loggerSpy = jest.spyOn(Logger.prototype, 'error')
 
-      // Mock addNodesFromClient to throw an error
-      jest
-        .spyOn(mapsService, 'addNodesFromClient')
-        .mockRejectedValueOnce(new Error('Validation error'))
+      const existingNode = await nodesRepo.save({
+        id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 1,
+        root: true,
+        name: 'Original Name',
+      })
 
-      // Create a diff that will trigger the mocked error
+      // Create a diff with valid update but invalid add (invalid UUID will cause error)
       const diff = {
         added: {
-          'some-node': {
-            id: 'some-node',
-            name: 'Test',
+          'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa': {
+            id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            name: 'New Node',
             coordinates: { x: 1, y: 1 },
-            isRoot: true,
+            isRoot: false,
+            detached: false,
+            // Invalid parent reference will cause transaction to fail
+            parent: '99999999-9999-9999-9999-999999999999',
           },
         },
-        updated: {},
+        updated: {
+          [existingNode.id]: {
+            name: 'Updated Name',
+          },
+        },
         deleted: {},
       }
 
-      // Should not throw, but log errors
-      await mapsService.updateMapByDiff(map.id, diff)
+      // Should throw error and roll back ALL changes (atomic behavior)
+      await expect(mapsService.updateMapByDiff(map.id, diff)).rejects.toThrow()
 
-      // Verify error was logged (not thrown)
+      // Verify error was logged
       expect(loggerSpy).toHaveBeenCalled()
+
+      // Verify the update was rolled back - name should still be original
+      const nodeAfterRollback = await nodesRepo.findOne({
+        where: { id: existingNode.id },
+      })
+      expect(nodeAfterRollback?.name).toEqual('Original Name')
+
+      // Verify the new node was not added
+      const newNode = await nodesRepo.findOne({
+        where: { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
+      })
+      expect(newNode).toBeNull()
     })
 
-    it('processes all diff callbacks sequentially', async () => {
+    it('successfully applies all changes when all operations succeed (atomic transaction)', async () => {
       const map = await mapsRepo.save({})
 
       const rootNode = await nodesRepo.save({
@@ -575,13 +635,77 @@ describe('MapsService', () => {
         coordinatesX: 3,
         coordinatesY: 1,
         root: true,
+        name: 'Original Name',
+      })
+
+      const nodeToDelete = await nodesRepo.save({
+        id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        nodeMapId: map.id,
+        coordinatesX: 4,
+        coordinatesY: 2,
+        root: false,
+        detached: true,
+      })
+
+      const diff = {
+        added: {
+          'cccccccc-cccc-4ccc-8ccc-cccccccccccc': {
+            id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+            name: 'New Node',
+            coordinates: { x: 5, y: 3 },
+            isRoot: false,
+            detached: true,
+          },
+        },
+        updated: {
+          [rootNode.id]: {
+            name: 'Updated Name',
+          },
+        },
+        deleted: {
+          [nodeToDelete.id]: {},
+        },
+      }
+
+      // Should succeed atomically
+      await mapsService.updateMapByDiff(map.id, diff)
+
+      // Verify update was applied
+      const updatedNode = await nodesRepo.findOne({
+        where: { id: rootNode.id },
+      })
+      expect(updatedNode?.name).toEqual('Updated Name')
+
+      // Verify node was added
+      const newNode = await nodesRepo.findOne({
+        where: { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' },
+      })
+      expect(newNode).not.toBeNull()
+      expect(newNode?.name).toEqual('New Node')
+
+      // Verify node was deleted
+      const deletedNode = await nodesRepo.findOne({
+        where: { id: nodeToDelete.id },
+      })
+      expect(deletedNode).toBeNull()
+    })
+
+    it('processes updates sequentially to maintain parent-child relationships', async () => {
+      const map = await mapsRepo.save({})
+
+      const rootNode = await nodesRepo.save({
+        id: '11111111-1111-1111-1111-111111111111',
+        nodeMapId: map.id,
+        coordinatesX: 1,
+        coordinatesY: 1,
+        root: true,
       })
 
       const diff = {
         added: {},
         updated: {
           [rootNode.id]: {
-            name: 'Updated Name',
+            name: 'Updated Root',
           },
         },
         deleted: {},
@@ -592,14 +716,191 @@ describe('MapsService', () => {
       const updatedNode = await nodesRepo.findOne({
         where: { id: rootNode.id },
       })
-      expect(updatedNode?.name).toEqual('Updated Name')
+      expect(updatedNode?.name).toEqual('Updated Root')
+    })
+  })
+
+  describe('mapConstraintErrorToValidationResponse', () => {
+    it('returns ValidationErrorResponse for invalid parent constraint', async () => {
+      const map = await mapsRepo.save({})
+
+      // Try to add a node with invalid but valid-UUID-format parent
+      const invalidNode = nodesRepo.create({
+        id: '00000000-0000-4000-8000-000000000002',
+        nodeMapId: map.id,
+        nodeParentId: '99999999-9999-9999-9999-999999999999',
+        coordinatesX: 1,
+        coordinatesY: 1,
+      })
+
+      // This should throw a QueryFailedError
+      try {
+        await nodesRepo.save(invalidNode)
+        fail('Expected QueryFailedError to be thrown')
+      } catch (error) {
+        if (error instanceof Error && error.name === 'QueryFailedError') {
+          const response =
+            await mapsService.mapConstraintErrorToValidationResponse(
+              error as QueryFailedError,
+              invalidNode,
+              map.id
+            )
+
+          expect(response.success).toBe(false)
+          expect(response.errorType).toBe('validation')
+          expect(response.code).toBe('INVALID_PARENT')
+          expect(response.message).toBe('VALIDATION_ERROR.INVALID_PARENT')
+        }
+      }
+    })
+  })
+
+  describe('addNode with ValidationErrorResponse', () => {
+    it('returns ValidationErrorResponse when addNode fails with constraint violation', async () => {
+      const map = await mapsRepo.save({})
+
+      // Create a node with invalid parent reference (valid UUID format but doesn't exist)
+      const nodeWithInvalidParent = nodesRepo.create({
+        id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
+        nodeMapId: map.id,
+        nodeParentId: '99999999-9999-4999-8999-999999999999',
+        coordinatesX: 3,
+        coordinatesY: 1,
+        root: false,
+        detached: false,
+      })
+
+      const result = await mapsService.addNode(map.id, nodeWithInvalidParent)
+
+      // Should return ValidationErrorResponse, not throw
+      expect(result).toBeDefined()
+      if (result && 'errorType' in result) {
+        expect(result.success).toBe(false)
+        expect(result.errorType).toBe('validation')
+        expect(result.code).toBe('INVALID_PARENT')
+      }
+    })
+  })
+
+  describe('addNodes - atomic transaction behavior', () => {
+    it('rolls back all nodes if one node fails validation (atomic operation)', async () => {
+      const map = await mapsRepo.save({})
+
+      // Create a valid root node
+      const validRootNode = nodesRepo.create({
+        id: '11111111-1111-1111-1111-111111111111',
+        nodeMapId: map.id,
+        coordinatesX: 1,
+        coordinatesY: 1,
+        root: true,
+        detached: false,
+      })
+
+      // Create another valid detached node
+      const validDetachedNode = nodesRepo.create({
+        id: '22222222-2222-2222-2222-222222222222',
+        nodeMapId: map.id,
+        coordinatesX: 2,
+        coordinatesY: 2,
+        root: false,
+        detached: true,
+      })
+
+      // Create an invalid node with non-existent parent (valid UUID format)
+      const invalidNode = nodesRepo.create({
+        id: '33333333-3333-4333-8333-333333333333',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 3,
+        root: false,
+        detached: false,
+        nodeParentId: '99999999-9999-4999-8999-999999999999', // Valid UUID but doesn't exist
+      })
+
+      // Try to add all three nodes at once
+      const result = await mapsService.addNodes(map.id, [
+        validRootNode,
+        validDetachedNode,
+        invalidNode,
+      ])
+
+      // Should return a single ValidationErrorResponse
+      expect(Array.isArray(result)).toBe(true)
+      expect(result.length).toBe(1)
+      expect('errorType' in result[0]).toBe(true)
+      if ('errorType' in result[0]) {
+        expect(result[0].success).toBe(false)
+        expect(result[0].errorType).toBe('validation')
+        expect(result[0].code).toBe('INVALID_PARENT')
+      }
+
+      // Verify NO nodes were created in the database (atomic rollback)
+      const allNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
+      expect(allNodes.length).toBe(0)
     })
 
-    it('continues processing after one callback fails', async () => {
+    it('successfully adds all nodes when all pass validation (atomic success)', async () => {
       const map = await mapsRepo.save({})
-      const loggerSpy = jest.spyOn(Logger.prototype, 'error')
 
-      const validNode = await nodesRepo.save({
+      // Create a valid root node
+      const rootNode = nodesRepo.create({
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        nodeMapId: map.id,
+        coordinatesX: 1,
+        coordinatesY: 1,
+        root: true,
+        detached: false,
+      })
+
+      // Create a valid detached node
+      const detachedNode = nodesRepo.create({
+        id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+        nodeMapId: map.id,
+        coordinatesX: 3,
+        coordinatesY: 3,
+        root: false,
+        detached: true,
+      })
+
+      // Add root node first
+      const rootResult = await mapsService.addNodes(map.id, [rootNode])
+      expect(rootResult.length).toBe(1)
+      expect('id' in rootResult[0]).toBe(true)
+
+      // Add detached node
+      const detachedResult = await mapsService.addNodes(map.id, [detachedNode])
+      expect(Array.isArray(detachedResult)).toBe(true)
+      expect(detachedResult.length).toBe(1)
+      expect('id' in detachedResult[0]).toBe(true)
+
+      // Create a child node with reference to rootNode (after root is saved)
+      const childNode = nodesRepo.create({
+        id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        nodeMapId: map.id,
+        coordinatesX: 2,
+        coordinatesY: 2,
+        root: false,
+        detached: false,
+        nodeParentId: rootNode.id,
+      })
+
+      // Add child node (has parent reference to rootNode)
+      const childResult = await mapsService.addNodes(map.id, [childNode])
+      expect(Array.isArray(childResult)).toBe(true)
+      expect(childResult.length).toBe(1)
+      expect('id' in childResult[0]).toBe(true)
+
+      // Verify all nodes exist in database
+      const allNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
+      expect(allNodes.length).toBe(3)
+    })
+  })
+
+  describe('updateNode with ValidationErrorResponse', () => {
+    it('returns ValidationErrorResponse for invalid parent on update', async () => {
+      const map = await mapsRepo.save({})
+
+      const node = await nodesRepo.save({
         id: '78a2ae85-1815-46da-a2bc-a41de6bdd5cc',
         nodeMapId: map.id,
         coordinatesX: 3,
@@ -607,39 +908,21 @@ describe('MapsService', () => {
         root: true,
       })
 
-      // Mock addNodesFromClient to fail, but other operations should continue
-      jest
-        .spyOn(mapsService, 'addNodesFromClient')
-        .mockRejectedValueOnce(new Error('Add failed'))
+      const clientNode = mapMmpNodeToClient(node)
+      // Set invalid parent (non-existent UUID)
+      clientNode.parent = '99999999-9999-9999-9999-999999999999'
+      clientNode.isRoot = false
 
-      // Mix failing add with valid update
-      const diff = {
-        added: {
-          'some-node': {
-            id: 'some-node',
-            name: 'Test',
-            coordinates: { x: 1, y: 1 },
-            isRoot: true,
-          },
-        },
-        updated: {
-          [validNode.id]: {
-            name: 'Updated Successfully',
-          },
-        },
-        deleted: {},
+      const result = await mapsService.updateNode(map.id, clientNode)
+
+      // Should return ValidationErrorResponse
+      expect(result).toBeDefined()
+      if (result && 'errorType' in result) {
+        expect(result.success).toBe(false)
+        expect(result.errorType).toBe('validation')
+        // updateNode returns CONSTRAINT_VIOLATION for invalid parent
+        expect(result.code).toBe('CONSTRAINT_VIOLATION')
       }
-
-      await mapsService.updateMapByDiff(map.id, diff)
-
-      // Valid update should still succeed despite invalid add
-      const updatedNode = await nodesRepo.findOne({
-        where: { id: validNode.id },
-      })
-      expect(updatedNode?.name).toEqual('Updated Successfully')
-
-      // Error should be logged for the failed operation
-      expect(loggerSpy).toHaveBeenCalled()
     })
   })
 })

@@ -44,7 +44,10 @@ export default defineConfig({
   projects: [
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: {
+        ...devices['Desktop Safari'],
+        headless: true, // Force headless mode for Docker environment
+      },
     },
   ],
   outputDir: './playwright/output',
@@ -53,15 +56,16 @@ export default defineConfig({
   webServer: [
     {
       port: 3000,
-      command: 'npm run --prefix ../teammapper-backend start',
+      command: 'pnpm --filter teammapper-backend start:dev',
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',
       stderr: 'pipe',
       timeout: 120 * 1000, // 2 minutes timeout
+      cwd: '..',
     },
     {
       port: 4200,
-      command: 'npm run start',
+      command: 'pnpm run start',
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',
       stderr: 'pipe',

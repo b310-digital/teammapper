@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
@@ -14,7 +14,9 @@ export class UtilsService {
   public static get = (obj: any, path: string[]) =>
     path.reduce(
       (nestedObj, currentPath) =>
-        nestedObj && nestedObj[currentPath] ? nestedObj[currentPath] : null,
+        nestedObj != null && currentPath in nestedObj
+          ? nestedObj[currentPath]
+          : null,
       obj
     );
 
@@ -135,7 +137,7 @@ export class UtilsService {
    * Return a translated string with given message and values.
    */
   public translate(message: string, values?: any): Promise<string> {
-    return this.translateService.get(message, values).toPromise();
+    return firstValueFrom(this.translateService.get(message, values));
   }
 
   /**

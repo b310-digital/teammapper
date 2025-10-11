@@ -1,10 +1,10 @@
 services:
   app:
     build:
-      context: ${DEV_BUILD_CONTEXT}
+      context: ${DEV_BUILD_CONTEXT}/teammapper
       dockerfile: Dockerfile
       target: development
     tty: true
     stdin_open: true
     volumes:
-      - ${DEV_BUILD_CONTEXT}/.claude:/home/node/app/.claude
+      - ${DEV_BUILD_CONTEXT}/teammapper/.claude:/home/node/app/.claude

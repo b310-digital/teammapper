@@ -134,6 +134,11 @@
     },
     "LINK": {
       "URL": "链接 URL (https://...)"
+    },
+    "CRITICAL_ERROR": {
+      "TITLE": "连接问题",
+      "WARNING": "您最近的更改可能未保存。",
+      "RELOAD_BUTTON": "重新加载页面"
     }
   },
   "PAGES": {
@@ -220,7 +225,15 @@
       "EXPORT_IMAGE_ERROR": "导出图像时发生错误。思维导图可能过大。",
       "MAP_COULD_NOT_BE_FOUND": "找不到思维导图！",
       "IMPORT_ERROR": "无法导入思维导图！",
-      "AI_MERMAID_ERROR": "无法生成Mermaid"
+      "AI_MERMAID_ERROR": "无法生成Mermaid",
+      "OPERATION_FAILED_MAP_RELOADED": "操作失败 - 已从服务器重新加载地图",
+      "NETWORK_TIMEOUT": "我们与服务器失去了连接。您的更改可能尚未保存。",
+      "SERVER_ERROR": "服务器遇到错误。您最近的更改可能尚未保存。",
+      "AUTH_FAILED": "身份验证失败。您可能需要重新加载页面并重新登录。",
+      "MALFORMED_REQUEST": "您的请求出现问题。请重试。",
+      "RATE_LIMIT_EXCEEDED": "请求过多。请稍等片刻再试。",
+      "MALFORMED_RESPONSE": "从服务器收到无效响应。请重新加载页面。",
+      "UNEXPECTED_ERROR": "发生意外错误。请重新加载页面。"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",

@@ -76,14 +76,15 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "proxyConfig": "src/proxy.conf.json",
-            "buildTarget": "teammapper:build"
+            "buildTarget": "teammapper:build",
+            "allowedHosts": ["localhost", "127.0.0.1", "app", ".app"]
           },
           "configurations": {
             "production": {
               "buildTarget": "teammapper:build:production"
             },
             "development": {
-              "buildTarget": "teammapper:build:development",
+              "buildTarget": "teammapper:build:development"
             }
           },
           "defaultConfiguration": "development"

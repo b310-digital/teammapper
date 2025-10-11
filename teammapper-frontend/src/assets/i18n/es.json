@@ -134,6 +134,11 @@
     },
     "LINK": {
       "URL": "Link URL (https://...)"
+    },
+    "CRITICAL_ERROR": {
+      "TITLE": "Problema de conexión",
+      "WARNING": "Es posible que sus cambios recientes no se hayan guardado.",
+      "RELOAD_BUTTON": "Recargar página"
     }
   },
   "PAGES": {
@@ -220,7 +225,15 @@
       "EXPORT_IMAGE_ERROR": "Se ha producido un error durante la exportación de la imagen. El mapa mental puede ser demasiado grande.",
       "MAP_COULD_NOT_BE_FOUND": "No se ha encontrado el mapa mental.",
       "IMPORT_ERROR": "No se ha podido importar el mapa mental.",
-      "AI_MERMAID_ERROR": "No se pudo generar Mermaid"
+      "AI_MERMAID_ERROR": "No se pudo generar Mermaid",
+      "OPERATION_FAILED_MAP_RELOADED": "Operación fallida - mapa recargado desde el servidor",
+      "NETWORK_TIMEOUT": "Perdimos la conexión con el servidor. Es posible que sus cambios no se hayan guardado.",
+      "SERVER_ERROR": "El servidor encontró un error. Es posible que sus cambios recientes no se hayan guardado.",
+      "AUTH_FAILED": "Autenticación fallida. Es posible que deba recargar la página e iniciar sesión nuevamente.",
+      "MALFORMED_REQUEST": "Hubo un problema con su solicitud. Por favor, inténtelo de nuevo.",
+      "RATE_LIMIT_EXCEEDED": "Demasiadas solicitudes. Espere un momento antes de intentarlo de nuevo.",
+      "MALFORMED_RESPONSE": "Se recibió una respuesta inválida del servidor. Por favor, recargue la página.",
+      "UNEXPECTED_ERROR": "Ocurrió un error inesperado. Por favor, recargue la página."
     },
     "DELETE_MAP_SUCCESS": "¡Mapa mental borrado con éxito!",
     "AI_MERMAID_GENERATED_SUCCESS": "¡Mermaid generado con éxito!",
