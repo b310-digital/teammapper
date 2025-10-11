@@ -3,7 +3,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "types": ["jest"]
+    "types": ["jest", "node"]
   },
   "files": ["polyfills.ts"],
   "include": ["./**/*.spec.ts", "./**/*.d.ts"]

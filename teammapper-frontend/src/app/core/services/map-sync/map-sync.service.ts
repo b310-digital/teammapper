@@ -280,8 +280,8 @@ export class MapSyncService implements OnDestroy {
         nodes: [newNode],
         modificationSecret: this.modificationSecret,
       },
-      (response: OperationResponse<ExportNodeProperties[]>) => {
-        this.handleOperationResponse(response, 'add node');
+      async (response: OperationResponse<ExportNodeProperties[]>) => {
+        await this.handleOperationResponse(response, 'add node');
       }
     );
   }
@@ -299,8 +299,8 @@ export class MapSyncService implements OnDestroy {
         nodes: newNodes,
         modificationSecret: this.modificationSecret,
       },
-      (response: OperationResponse<ExportNodeProperties[]>) => {
-        this.handleOperationResponse(response, 'add nodes');
+      async (response: OperationResponse<ExportNodeProperties[]>) => {
+        await this.handleOperationResponse(response, 'add nodes');
       }
     );
   }
@@ -318,8 +318,8 @@ export class MapSyncService implements OnDestroy {
         updatedProperty: nodeUpdate.changedProperty,
         modificationSecret: this.modificationSecret,
       },
-      (response: OperationResponse<ExportNodeProperties>) => {
-        this.handleOperationResponse(response, 'update node');
+      async (response: OperationResponse<ExportNodeProperties>) => {
+        await this.handleOperationResponse(response, 'update node');
       }
     );
   }
@@ -336,8 +336,8 @@ export class MapSyncService implements OnDestroy {
         node: removedNode,
         modificationSecret: this.modificationSecret,
       },
-      (response: OperationResponse<ExportNodeProperties | null>) => {
-        this.handleOperationResponse(response, 'remove node');
+      async (response: OperationResponse<ExportNodeProperties | null>) => {
+        await this.handleOperationResponse(response, 'remove node');
       }
     );
   }
@@ -356,8 +356,11 @@ export class MapSyncService implements OnDestroy {
         diff,
         modificationSecret: this.modificationSecret,
       },
-      (response: OperationResponse<MapDiff>) => {
-        this.handleOperationResponse(response, `${operationType} operation`);
+      async (response: OperationResponse<MapDiff>) => {
+        await this.handleOperationResponse(
+          response,
+          `${operationType} operation`
+        );
       }
     );
   }
@@ -880,6 +883,28 @@ export class MapSyncService implements OnDestroy {
   }
 
   /**
+   * Validate ServerMap structure at runtime
+   * Ensures fullMapState has required properties before using
+   */
+  private isValidServerMap(map: unknown): map is ServerMap {
+    if (!map || typeof map !== 'object') return false;
+
+    const serverMap = map as ServerMap;
+
+    return (
+      typeof serverMap.uuid === 'string' &&
+      serverMap.uuid.length > 0 &&
+      Array.isArray(serverMap.data) &&
+      serverMap.data.length > 0 &&
+      typeof serverMap.lastModified === 'string' &&
+      typeof serverMap.createdAt === 'string' &&
+      typeof serverMap.deletedAt === 'string' &&
+      typeof serverMap.deleteAfterDays === 'number' &&
+      typeof serverMap.options === 'object'
+    );
+  }
+
+  /**
    * Type guard to validate error response structure at runtime
    */
   private isValidErrorResponse(
@@ -891,13 +916,22 @@ export class MapSyncService implements OnDestroy {
       | ValidationErrorResponse
       | CriticalErrorResponse;
 
-    return (
+    const isBasicStructureValid =
       typeof errorResponse.errorType === 'string' &&
       (errorResponse.errorType === 'validation' ||
         errorResponse.errorType === 'critical') &&
       typeof errorResponse.code === 'string' &&
-      typeof errorResponse.message === 'string'
-    );
+      errorResponse.code.trim() !== '' &&
+      typeof errorResponse.message === 'string';
+
+    if (!isBasicStructureValid) return false;
+
+    // Validate fullMapState if present
+    if (errorResponse.fullMapState) {
+      return this.isValidServerMap(errorResponse.fullMapState);
+    }
+
+    return true;
   }
 
   /**
@@ -915,9 +949,14 @@ export class MapSyncService implements OnDestroy {
 
     // Validate error response structure before processing
     if (!this.isValidErrorResponse(response)) {
-      const malformedResponseMessage = await this.utilsService.translate(
-        'TOASTS.ERRORS.MALFORMED_RESPONSE'
-      );
+      let malformedResponseMessage: string;
+      try {
+        malformedResponseMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.MALFORMED_RESPONSE'
+        );
+      } catch {
+        malformedResponseMessage = 'Invalid server response. Please try again.';
+      }
       this.dialogService.openCriticalErrorDialog({
         code: 'MALFORMED_RESPONSE',
         message: malformedResponseMessage,
@@ -931,9 +970,14 @@ export class MapSyncService implements OnDestroy {
       this.mmpService.new(response.fullMapState.data, false);
 
       // Show appropriate error notification
-      const operationFailedMessage = await this.utilsService.translate(
-        'TOASTS.ERRORS.OPERATION_FAILED_MAP_RELOADED'
-      );
+      let operationFailedMessage: string;
+      try {
+        operationFailedMessage = await this.utilsService.translate(
+          'TOASTS.ERRORS.OPERATION_FAILED_MAP_RELOADED'
+        );
+      } catch {
+        operationFailedMessage = 'Operation failed - map reloaded';
+      }
       this.toastService.showValidationCorrection(
         `${operationName}`,
         operationFailedMessage
@@ -969,7 +1013,12 @@ export class MapSyncService implements OnDestroy {
 
     const translationKey =
       errorKeyMapping[code] || 'TOASTS.ERRORS.UNEXPECTED_ERROR';
-    return await this.utilsService.translate(translationKey);
+
+    try {
+      return await this.utilsService.translate(translationKey);
+    } catch {
+      return 'An error occurred. Please try again.';
+    }
   }
 
   private createMapListeners() {

@@ -15,6 +15,7 @@ import {
   OperationResponse,
 } from './server-types';
 import { ExportNodeProperties } from '@mmp/map/types';
+import { createMockUtilsService } from '../../../../test/mocks/utils-service.mock';
 
 // Mock the NodePropertyMapping module
 jest.mock('@mmp/index', () => ({
@@ -45,7 +46,7 @@ import { NodePropertyMapping } from '@mmp/index';
  */
 interface MapSyncServicePrivate {
   socket: jasmine.SpyObj<unknown>;
-  getUserFriendlyErrorMessage: (code: string, msg: string) => string;
+  getUserFriendlyErrorMessage: (code: string, msg: string) => Promise<string>;
 }
 
 /**
@@ -87,6 +88,7 @@ describe('MapSyncService', () => {
   let httpService: jasmine.SpyObj<HttpService>;
   let storageService: jasmine.SpyObj<StorageService>;
   let settingsService: jasmine.SpyObj<SettingsService>;
+  let utilsService: jasmine.SpyObj<UtilsService>;
   let toastService: jasmine.SpyObj<ToastService>;
   let dialogService: jasmine.SpyObj<DialogService>;
   let toastrService: jasmine.SpyObj<ToastrService>;
@@ -120,27 +122,17 @@ describe('MapSyncService', () => {
   };
 
   beforeEach(() => {
+    // Only mock methods that are actually used in these tests
     mmpService = jasmine.createSpyObj('MmpService', [
       'new',
-      'addNode',
-      'updateNode',
-      'removeNode',
-      'addNodesFromServer',
-      'updateAdditionalMapOptions',
-      'highlightNode',
-      'existNode',
-      'getNode',
       'selectNode',
       'getRootNode',
-      'exportAsJSON',
-      'editNode',
       'on',
     ]);
 
     httpService = jasmine.createSpyObj('HttpService', ['get', 'post']);
     storageService = jasmine.createSpyObj('StorageService', ['get', 'set']);
     settingsService = jasmine.createSpyObj('SettingsService', [
-      'setEditMode',
       'getCachedSettings',
     ]);
     toastService = jasmine.createSpyObj('ToastService', [
@@ -154,6 +146,9 @@ describe('MapSyncService', () => {
       'success',
       'warning',
     ]);
+
+    // Create mock UtilsService using shared test utility
+    utilsService = createMockUtilsService();
 
     mmpService.on.and.returnValue({
       subscribe: jasmine
@@ -175,10 +170,10 @@ describe('MapSyncService', () => {
         { provide: HttpService, useValue: httpService },
         { provide: StorageService, useValue: storageService },
         { provide: SettingsService, useValue: settingsService },
+        { provide: UtilsService, useValue: utilsService },
         { provide: ToastService, useValue: toastService },
         { provide: DialogService, useValue: dialogService },
         { provide: ToastrService, useValue: toastrService },
-        { provide: UtilsService, useValue: {} },
       ],
     });
 
@@ -190,14 +185,14 @@ describe('MapSyncService', () => {
   });
 
   describe('operation response handling', () => {
-    let handleResponse: (response: OperationResponse<unknown>) => void;
+    let handleResponse: (response: OperationResponse<unknown>) => Promise<void>;
 
     beforeEach(() => {
       const emitSpy = jest.fn(
         (
           _event: string,
           _data: unknown,
-          callback?: (response: OperationResponse<unknown>) => void
+          callback?: (response: OperationResponse<unknown>) => Promise<void>
         ) => {
           if (callback) handleResponse = callback;
         }
@@ -224,20 +219,20 @@ describe('MapSyncService', () => {
       service.addNode(mockNode);
     });
 
-    it('success response does nothing', () => {
+    it('success response does nothing', async () => {
       const successResponse: SuccessResponse<ExportNodeProperties[]> = {
         success: true,
         data: [mockNode],
       };
 
-      handleResponse(successResponse);
+      await handleResponse(successResponse);
 
       expect(mmpService.new).not.toHaveBeenCalled();
       expect(toastService.showValidationCorrection).not.toHaveBeenCalled();
       expect(dialogService.openCriticalErrorDialog).not.toHaveBeenCalled();
     });
 
-    it('error with fullMapState reloads map', () => {
+    it('error with fullMapState reloads map', async () => {
       const errorResponse: ValidationErrorResponse = {
         success: false,
         errorType: 'validation',
@@ -246,12 +241,12 @@ describe('MapSyncService', () => {
         fullMapState: mockServerMap,
       };
 
-      handleResponse(errorResponse);
+      await handleResponse(errorResponse);
 
       expect(mmpService.new).toHaveBeenCalledWith(mockMapSnapshot, false);
     });
 
-    it('error with fullMapState shows toast', () => {
+    it('error with fullMapState shows toast', async () => {
       const errorResponse: CriticalErrorResponse = {
         success: false,
         errorType: 'critical',
@@ -260,7 +255,7 @@ describe('MapSyncService', () => {
         fullMapState: mockServerMap,
       };
 
-      handleResponse(errorResponse);
+      await handleResponse(errorResponse);
 
       expect(toastService.showValidationCorrection).toHaveBeenCalledWith(
         'add node',
@@ -268,7 +263,7 @@ describe('MapSyncService', () => {
       );
     });
 
-    it('error without fullMapState shows critical dialog', () => {
+    it('error without fullMapState shows critical dialog', async () => {
       const errorResponse: CriticalErrorResponse = {
         success: false,
         errorType: 'critical',
@@ -276,7 +271,7 @@ describe('MapSyncService', () => {
         message: 'Server error',
       };
 
-      handleResponse(errorResponse);
+      await handleResponse(errorResponse);
 
       expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
         code: 'SERVER_ERROR',
@@ -284,23 +279,85 @@ describe('MapSyncService', () => {
       });
     });
 
-    it('malformed response shows critical dialog', () => {
+    it('malformed response shows critical dialog', async () => {
       const malformedResponse = {
         invalid: 'response',
       } as unknown as OperationResponse<unknown>;
 
-      handleResponse(malformedResponse);
+      await handleResponse(malformedResponse);
 
       expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
         code: 'MALFORMED_RESPONSE',
         message: jasmine.stringContaining('invalid response'),
       });
     });
+
+    it('malformed response with translation failure uses fallback message', async () => {
+      // Simulate translation service failure
+      utilsService.translate.and.callFake(async () => {
+        throw new Error('Translation failed');
+      });
+
+      const malformedResponse = {
+        invalid: 'response',
+      } as unknown as OperationResponse<unknown>;
+
+      await handleResponse(malformedResponse);
+
+      expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
+        code: 'MALFORMED_RESPONSE',
+        message: 'Invalid server response. Please try again.',
+      });
+    });
+
+    it('error with malformed fullMapState shows critical dialog', async () => {
+      const errorResponse: ValidationErrorResponse = {
+        success: false,
+        errorType: 'validation',
+        code: 'INVALID_PARENT',
+        message: 'Invalid parent',
+        fullMapState: {
+          // Missing required fields - malformed
+          uuid: 'test-uuid',
+          data: [],
+        } as unknown as typeof mockServerMap,
+      };
+
+      await handleResponse(errorResponse);
+
+      // Should treat as malformed response since fullMapState is invalid
+      expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
+        code: 'MALFORMED_RESPONSE',
+        message: jasmine.stringContaining('invalid response'),
+      });
+      expect(mmpService.new).not.toHaveBeenCalled();
+    });
+
+    it('error without fullMapState with translation failure uses fallback', async () => {
+      // Simulate translation service failure
+      utilsService.translate.and.callFake(async () => {
+        throw new Error('Translation failed');
+      });
+
+      const errorResponse: CriticalErrorResponse = {
+        success: false,
+        errorType: 'critical',
+        code: 'SERVER_ERROR',
+        message: 'Server error',
+      };
+
+      await handleResponse(errorResponse);
+
+      expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
+        code: 'SERVER_ERROR',
+        message: 'An error occurred. Please try again.',
+      });
+    });
   });
 
   describe('getUserFriendlyErrorMessage', () => {
-    it('returns user-friendly message for known codes', () => {
-      const message = asPrivate(service).getUserFriendlyErrorMessage(
+    it('returns user-friendly message for known codes', async () => {
+      const message = await asPrivate(service).getUserFriendlyErrorMessage(
         'SERVER_ERROR',
         'CRITICAL_ERROR.SERVER_ERROR'
       );
@@ -308,8 +365,8 @@ describe('MapSyncService', () => {
       expect(message).toContain('server encountered an error');
     });
 
-    it('returns default message for unknown codes', () => {
-      const message = asPrivate(service).getUserFriendlyErrorMessage(
+    it('returns default message for unknown codes', async () => {
+      const message = await asPrivate(service).getUserFriendlyErrorMessage(
         'UNKNOWN_CODE',
         'CRITICAL_ERROR.UNKNOWN'
       );
