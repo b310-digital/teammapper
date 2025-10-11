@@ -1,0 +1,19 @@
+<h2 mat-dialog-title class="error-title">
+  <mat-icon class="error-icon">warning</mat-icon>
+  Connection Issue
+</h2>
+
+<mat-dialog-content cdkScrollable>
+  <p class="error-message">{{ data.message }}</p>
+  <p class="warning-text">Your recent changes may not have been saved.</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="reloadPage()"
+    class="reload-button">
+    Reload Page
+  </button>
+</mat-dialog-actions>

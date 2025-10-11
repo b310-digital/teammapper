@@ -222,7 +222,15 @@
       "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!",
       "IMPORT_ERROR": "Could not import mindmap",
-      "AI_MERMAID_ERROR": "Mermaid could not be generated"
+      "AI_MERMAID_ERROR": "Mermaid could not be generated",
+      "OPERATION_FAILED_MAP_RELOADED": "Operation failed - map reloaded from server",
+      "NETWORK_TIMEOUT": "We lost connection to the server. Your changes may not have been saved.",
+      "SERVER_ERROR": "The server encountered an error. Your recent changes may not have been saved.",
+      "AUTH_FAILED": "Authentication failed. You may need to reload and sign in again.",
+      "MALFORMED_REQUEST": "There was a problem with your request. Please try again.",
+      "RATE_LIMIT_EXCEEDED": "Too many requests. Please wait a moment before trying again.",
+      "MALFORMED_RESPONSE": "Received invalid response from server. Please reload the page.",
+      "UNEXPECTED_ERROR": "An unexpected error occurred. Please reload the page."
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",

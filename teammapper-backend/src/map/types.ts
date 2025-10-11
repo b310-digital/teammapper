@@ -127,3 +127,78 @@ export interface IMermaidCreateRequest {
   mindmapDescription: string
   language: string
 }
+
+// Operation tracking types for optimistic updates
+export type OperationType = 'create' | 'update' | 'delete' | 'updateProperty'
+
+export type OperationStatus = 'pending' | 'confirmed' | 'rejected' | 'timedout'
+
+// Error response types for structured error handling
+export interface BaseErrorResponse {
+  /** Success indicator (always false for errors) */
+  success: false
+
+  /** Type of error for classification */
+  errorType: 'validation' | 'critical'
+
+  /** Machine-readable error code */
+  code: string
+
+  /** i18n key for user-facing message */
+  message: string
+
+  /** Optional additional context (not shown to user) */
+  context?: Record<string, unknown>
+}
+
+export interface ValidationErrorResponse extends BaseErrorResponse {
+  errorType: 'validation'
+
+  /** Specific validation error codes */
+  code:
+    | 'INVALID_PARENT'
+    | 'CONSTRAINT_VIOLATION'
+    | 'MISSING_REQUIRED_FIELD'
+    | 'CIRCULAR_REFERENCE'
+    | 'DUPLICATE_NODE'
+
+  /** Full map state for client synchronization after errors */
+  fullMapState?: IMmpClientMap
+}
+
+export interface CriticalErrorResponse extends BaseErrorResponse {
+  errorType: 'critical'
+
+  /** Specific critical error codes */
+  code:
+    | 'SERVER_ERROR'
+    | 'NETWORK_TIMEOUT'
+    | 'AUTH_FAILED'
+    | 'MALFORMED_REQUEST'
+    | 'RATE_LIMIT_EXCEEDED'
+
+  /** Optional retry-after value for rate limiting */
+  retryAfter?: number
+
+  /** Full map state for client synchronization after errors */
+  fullMapState?: IMmpClientMap
+}
+
+export interface SuccessResponse<T = unknown> {
+  /** Success indicator */
+  success: true
+
+  /** Result data from the operation */
+  data: T
+
+  /** Optional metadata */
+  meta?: {
+    timestamp: number
+    operationId?: string
+  }
+}
+
+export type OperationResponse<T = unknown> =
+  | SuccessResponse<T>
+  | ValidationErrorResponse
+  | CriticalErrorResponse

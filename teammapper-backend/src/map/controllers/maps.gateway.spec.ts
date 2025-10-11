@@ -9,7 +9,7 @@ import { MapsService } from '../services/maps.service'
 import { MapsGateway } from './maps.gateway'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
-import { IMmpClientNode } from '../types'
+import { IMmpClientNode, OperationResponse } from '../types'
 
 const crypto = require('crypto') // eslint-disable-line @typescript-eslint/no-require-imports
 
@@ -94,7 +94,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('addNode', () => {
-    it(`will return false if no new nodes are being added`, (done) => {
+    it(`will return error response if no new nodes are being added`, (done) => {
       socket = io('http://localhost:3000')
 
       socket.emit(
@@ -104,8 +104,11 @@ describe('WebSocketGateway', () => {
           modificationSecret: map.modificationSecret,
           nodes: [{}],
         },
-        (result: boolean) => {
-          expect(result).toEqual(false)
+        (result: OperationResponse<IMmpClientNode[]>) => {
+          expect(result.success).toEqual(false)
+          if (!result.success) {
+            expect(result.errorType).toEqual('validation')
+          }
           done()
         }
       )
@@ -116,15 +119,22 @@ describe('WebSocketGateway', () => {
     it(`allows request when modification secret is set`, (done) => {
       socket = io('http://localhost:3000')
 
+      const mockNode = new MmpNode()
+      mockNode.id = crypto.randomUUID()
+      mockNode.name = 'Test'
+
+      jest.spyOn(mapsService, 'updateNode').mockResolvedValueOnce(mockNode)
+
       socket.emit(
         'updateNode',
         {
           mapId: map.id,
           modificationSecret: map.modificationSecret,
-          node: {},
+          node: { id: mockNode.id, name: 'Test' },
+          updatedProperty: 'name',
         },
-        (result: boolean) => {
-          expect(result).toEqual(true)
+        (result: OperationResponse<IMmpClientNode>) => {
+          expect(result.success).toEqual(true)
           done()
         }
       )
@@ -137,6 +147,7 @@ describe('WebSocketGateway', () => {
 
       // Date objects are serialised to JSON in the result, so we'll need to be explicit in setting these here
       const defaultNode = {
+        id: crypto.randomUUID(),
         createdAt: new Date('2021-01-31T00:00:00.000Z').toISOString(),
         lastModified: new Date('2021-01-31T00:00:00.000Z').toISOString(),
       }
@@ -148,8 +159,8 @@ describe('WebSocketGateway', () => {
           modificationSecret: map.modificationSecret,
           node: defaultNode,
         },
-        (result: MmpNode | undefined) => {
-          expect(result).toEqual(defaultNode)
+        (result: OperationResponse<IMmpClientNode | null>) => {
+          expect(result.success).toEqual(true)
           done()
         }
       )
@@ -197,8 +208,11 @@ describe('WebSocketGateway', () => {
           diff,
           modificationSecret: map.modificationSecret,
         },
-        (result: boolean) => {
-          expect(result).toEqual(true)
+        (result: OperationResponse<unknown>) => {
+          expect(result.success).toEqual(true)
+          if (result.success) {
+            expect(result.data).toEqual(diff)
+          }
           done()
         }
       )
@@ -225,7 +239,7 @@ describe('WebSocketGateway', () => {
   })
 
   describe('error handling in gateway methods', () => {
-    it('addNodes returns false when service throws error', (done) => {
+    it('addNodes returns CriticalErrorResponse when service throws error', (done) => {
       socket = io('http://localhost:3000')
 
       // Mock service to throw error
@@ -246,14 +260,17 @@ describe('WebSocketGateway', () => {
             },
           ],
         },
-        (result: boolean) => {
-          expect(result).toEqual(false)
+        (result: OperationResponse<IMmpClientNode[]>) => {
+          expect(result.success).toEqual(false)
+          if (!result.success) {
+            expect(result.errorType).toEqual('critical')
+          }
           done()
         }
       )
     })
 
-    it('updateNode returns false when service throws error', (done) => {
+    it('updateNode returns CriticalErrorResponse when service throws error', (done) => {
       socket = io('http://localhost:3000')
 
       // Mock service to throw error
@@ -271,15 +288,19 @@ describe('WebSocketGateway', () => {
             name: 'test',
             coordinates: { x: 1, y: 2 },
           },
+          updatedProperty: 'name',
         },
-        (result: boolean) => {
-          expect(result).toEqual(false)
+        (result: OperationResponse<IMmpClientNode>) => {
+          expect(result.success).toEqual(false)
+          if (!result.success) {
+            expect(result.errorType).toEqual('critical')
+          }
           done()
         }
       )
     })
 
-    it('applyMapChangesByDiff returns false when service throws error', (done) => {
+    it('applyMapChangesByDiff returns CriticalErrorResponse when service throws error', (done) => {
       socket = io('http://localhost:3000')
 
       // Mock service to throw error
@@ -298,8 +319,12 @@ describe('WebSocketGateway', () => {
             deleted: {},
           },
         },
-        (result: boolean) => {
-          expect(result).toEqual(false)
+        (result: OperationResponse<unknown>) => {
+          expect(result.success).toEqual(false)
+          if (!result.success) {
+            expect(result.errorType).toEqual('critical')
+            expect(result.code).toEqual('SERVER_ERROR')
+          }
           done()
         }
       )
@@ -325,6 +350,316 @@ describe('WebSocketGateway', () => {
         },
         (result: boolean) => {
           expect(result).toEqual(false)
+          done()
+        }
+      )
+    })
+  })
+
+  describe('addNodes - additional OperationResponse handling', () => {
+    it('returns SuccessResponse on successful node addition', (done) => {
+      socket = io('http://localhost:3000')
+
+      const mockNode = new MmpNode()
+      mockNode.id = crypto.randomUUID()
+      mockNode.nodeMapId = map.id
+      mockNode.name = 'Test Node'
+
+      jest
+        .spyOn(mapsService, 'addNodesFromClient')
+        .mockResolvedValueOnce([mockNode])
+
+      socket.emit(
+        'addNodes',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          nodes: [
+            {
+              id: mockNode.id,
+              name: 'Test Node',
+              coordinates: { x: 1, y: 2 },
+              isRoot: true,
+            },
+          ],
+        },
+        (result: OperationResponse<IMmpClientNode[]>) => {
+          expect(result.success).toBe(true)
+          if (result.success) {
+            expect(result.data).toBeDefined()
+            expect(Array.isArray(result.data)).toBe(true)
+            expect(result.data.length).toBe(1)
+          }
+          done()
+        }
+      )
+    })
+
+    it('returns ValidationErrorResponse when validation fails', (done) => {
+      socket = io('http://localhost:3000')
+
+      jest.spyOn(mapsService, 'addNodesFromClient').mockResolvedValueOnce([])
+
+      socket.emit(
+        'addNodes',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          nodes: [
+            {
+              id: crypto.randomUUID(),
+              name: 'Invalid Node',
+              coordinates: { x: 1, y: 2 },
+            },
+          ],
+        },
+        (result: OperationResponse<IMmpClientNode[]>) => {
+          expect(result.success).toBe(false)
+          if (!result.success) {
+            expect(result.errorType).toBe('validation')
+            expect(result.code).toBe('CONSTRAINT_VIOLATION')
+          }
+          done()
+        }
+      )
+    })
+
+    it('does not broadcast when validation error occurs', (done) => {
+      socket = io('http://localhost:3000')
+
+      jest.spyOn(mapsService, 'addNodesFromClient').mockResolvedValueOnce([])
+
+      socket.emit(
+        'addNodes',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          nodes: [
+            {
+              id: crypto.randomUUID(),
+              name: 'Invalid Node',
+              coordinates: { x: 1, y: 2 },
+            },
+          ],
+        },
+        (result: OperationResponse<IMmpClientNode[]>) => {
+          expect(result.success).toBe(false)
+          // Validation errors should not result in broadcast
+          if (!result.success) {
+            expect(result.errorType).toBe('validation')
+          }
+          done()
+        }
+      )
+    })
+
+    it('atomic operation: if one node fails, no nodes are created', (done) => {
+      socket = io('http://localhost:3000')
+
+      // Mock service to return a validation error (atomic failure)
+      const validationError = {
+        success: false as const,
+        errorType: 'validation' as const,
+        code: 'INVALID_PARENT' as const,
+        message: 'VALIDATION_ERROR.INVALID_PARENT',
+      }
+
+      jest
+        .spyOn(mapsService, 'addNodesFromClient')
+        .mockResolvedValueOnce([validationError])
+
+      // Mock exportMapToClient to return a valid map for fullMapState
+      jest.spyOn(mapsService, 'exportMapToClient').mockResolvedValueOnce({
+        uuid: map.id,
+        data: [],
+        options: {
+          fontMaxSize: 24,
+          fontMinSize: 10,
+          fontIncrement: 2,
+        },
+        deletedAt: new Date(),
+        deleteAfterDays: 30,
+        lastModified: new Date(),
+        lastAccessed: new Date(),
+        createdAt: new Date(),
+      })
+
+      socket.emit(
+        'addNodes',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          nodes: [
+            {
+              id: crypto.randomUUID(),
+              name: 'Valid Node 1',
+              coordinates: { x: 1, y: 2 },
+              isRoot: true,
+            },
+            {
+              id: crypto.randomUUID(),
+              name: 'Invalid Node - Bad Parent',
+              coordinates: { x: 2, y: 3 },
+              parent: 'nonexistent-parent',
+            },
+            {
+              id: crypto.randomUUID(),
+              name: 'Valid Node 2',
+              coordinates: { x: 3, y: 4 },
+              isRoot: false,
+            },
+          ],
+        },
+        (result: OperationResponse<IMmpClientNode[]>) => {
+          // The entire operation should fail
+          expect(result.success).toBe(false)
+          if (!result.success) {
+            expect(result.errorType).toBe('validation')
+            expect(result.code).toBe('INVALID_PARENT')
+            // Should include full map state for recovery
+            expect(result.fullMapState).toBeDefined()
+          }
+          done()
+        }
+      )
+    })
+  })
+
+  describe('updateNode - additional OperationResponse handling', () => {
+    it('returns SuccessResponse on successful node update', (done) => {
+      socket = io('http://localhost:3000')
+
+      const mockNode = new MmpNode()
+      mockNode.id = crypto.randomUUID()
+      mockNode.nodeMapId = map.id
+      mockNode.name = 'Updated Node'
+
+      jest.spyOn(mapsService, 'updateNode').mockResolvedValueOnce(mockNode)
+
+      socket.emit(
+        'updateNode',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          node: {
+            id: mockNode.id,
+            name: 'Updated Node',
+            coordinates: { x: 1, y: 2 },
+          },
+          updatedProperty: 'name',
+        },
+        (result: OperationResponse<IMmpClientNode>) => {
+          expect(result.success).toBe(true)
+          if (result.success) {
+            expect(result.data).toBeDefined()
+            expect(result.data.id).toBe(mockNode.id)
+          }
+          done()
+        }
+      )
+    })
+
+    it('returns ValidationErrorResponse when service returns validation error', (done) => {
+      socket = io('http://localhost:3000')
+
+      const validationError = {
+        success: false as const,
+        errorType: 'validation' as const,
+        code: 'INVALID_PARENT' as const,
+        message: 'VALIDATION_ERROR.INVALID_PARENT',
+      }
+
+      jest
+        .spyOn(mapsService, 'updateNode')
+        .mockResolvedValueOnce(validationError)
+
+      socket.emit(
+        'updateNode',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          node: {
+            id: crypto.randomUUID(),
+            name: 'Test',
+            coordinates: { x: 1, y: 2 },
+            parent: 'invalid-parent',
+          },
+          updatedProperty: 'parent',
+        },
+        (result: OperationResponse<IMmpClientNode>) => {
+          expect(result.success).toBe(false)
+          if (!result.success) {
+            expect(result.errorType).toBe('validation')
+            expect(result.code).toBe('INVALID_PARENT')
+          }
+          done()
+        }
+      )
+    })
+
+    it('does not broadcast when validation error occurs', (done) => {
+      socket = io('http://localhost:3000')
+
+      const nodeId = crypto.randomUUID()
+      const validationError = {
+        success: false as const,
+        errorType: 'validation' as const,
+        code: 'INVALID_PARENT' as const,
+        message: 'VALIDATION_ERROR.INVALID_PARENT',
+      }
+
+      jest
+        .spyOn(mapsService, 'updateNode')
+        .mockResolvedValueOnce(validationError)
+
+      socket.emit(
+        'updateNode',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          node: {
+            id: nodeId,
+            name: 'Test',
+            coordinates: { x: 1, y: 2 },
+          },
+          updatedProperty: 'name',
+        },
+        (result: OperationResponse<IMmpClientNode[]>) => {
+          expect(result.success).toBe(false)
+          // Validation errors should not result in broadcast
+          if (!result.success) {
+            expect(result.errorType).toBe('validation')
+          }
+          done()
+        }
+      )
+    })
+
+    it('returns CriticalErrorResponse when service throws error', (done) => {
+      socket = io('http://localhost:3000')
+
+      jest
+        .spyOn(mapsService, 'updateNode')
+        .mockRejectedValueOnce(new Error('Server error'))
+
+      socket.emit(
+        'updateNode',
+        {
+          mapId: map.id,
+          modificationSecret: map.modificationSecret,
+          node: {
+            id: crypto.randomUUID(),
+            name: 'Test',
+            coordinates: { x: 1, y: 2 },
+          },
+          updatedProperty: 'name',
+        },
+        (result: OperationResponse<IMmpClientNode>) => {
+          expect(result.success).toBe(false)
+          if (!result.success) {
+            expect(result.errorType).toBe('critical')
+            expect(result.code).toBe('SERVER_ERROR')
+          }
           done()
         }
       )

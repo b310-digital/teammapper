@@ -67,7 +67,7 @@ test('adds a node and drags it - screenshot test', async ({ page }) => {
   // Take a screenshot of the map after dragging
   await expect(page.locator('.map')).toHaveScreenshot('node-before-drag.png', {
     timeout: 500,
-    maxDiffPixels: 150, 
+    maxDiffPixels: 150,
     animations: 'disabled',
     mask: [page.locator('.mat-toolbar')], // Mask the toolbar as it may vary
   });
@@ -94,7 +94,7 @@ test('adds a node and drags it - screenshot test', async ({ page }) => {
   // Take a screenshot of the map after dragging
   await expect(page.locator('.map')).toHaveScreenshot('node-after-drag.png', {
     timeout: 500,
-    maxDiffPixels: 150, 
+    maxDiffPixels: 150,
     animations: 'disabled',
     mask: [page.locator('.mat-toolbar')], // Mask the toolbar as it may vary
   });
