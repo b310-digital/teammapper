@@ -46,6 +46,7 @@ export class MapsGateway implements OnGatewayDisconnect {
   server: Server
 
   private readonly logger = new Logger(MapsService.name)
+  private readonly CACHE_TTL_MS = 10000
 
   constructor(
     private mapsService: MapsService,
@@ -220,20 +221,21 @@ export class MapsGateway implements OnGatewayDisconnect {
   ): Promise<OperationResponse<IMmpClientNode>> {
     try {
       if (!request.node) {
-        return this.buildValidationErrorResponse(
+        return this.buildErrorResponse(
+          'validation',
           'MISSING_REQUIRED_FIELD',
           'VALIDATION_ERROR.MISSING_REQUIRED_FIELD',
           request.mapId
         )
       }
 
-      const updatedNode = await this.executeNodeUpdateOperation(
+      const updatedNode = await this.mapsService.updateNode(
         request.mapId,
         request.node
       )
 
       const processedResult = await this.handleNodeUpdateResult(
-        updatedNode,
+        updatedNode ?? null,
         request.mapId
       )
 
@@ -244,12 +246,11 @@ export class MapsGateway implements OnGatewayDisconnect {
       const { validNode } = processedResult
       const clientNode = mapMmpNodeToClient(validNode)
 
-      this.broadcastNodeUpdatedToRoom(
-        request.mapId,
-        client.id,
-        clientNode,
-        request.updatedProperty
-      )
+      this.broadcastToRoom(request.mapId, 'nodeUpdated', {
+        clientId: client.id,
+        property: request.updatedProperty,
+        node: clientNode,
+      })
 
       return this.buildSuccessResponse(clientNode)
     } catch (error) {
@@ -278,7 +279,8 @@ export class MapsGateway implements OnGatewayDisconnect {
   ): Promise<OperationResponse<IMmpClientMapDiff>> {
     try {
       if (!(await this.mapsService.findMap(request.mapId))) {
-        return this.buildCriticalErrorResponse(
+        return this.buildErrorResponse(
+          'critical',
           'MALFORMED_REQUEST',
           'CRITICAL_ERROR.MAP_NOT_FOUND',
           request.mapId
@@ -286,7 +288,8 @@ export class MapsGateway implements OnGatewayDisconnect {
       }
 
       if (!request.diff) {
-        return this.buildCriticalErrorResponse(
+        return this.buildErrorResponse(
+          'critical',
           'MALFORMED_REQUEST',
           'CRITICAL_ERROR.MISSING_REQUIRED_FIELD',
           request.mapId
@@ -295,7 +298,10 @@ export class MapsGateway implements OnGatewayDisconnect {
 
       await this.mapsService.updateMapByDiff(request.mapId, request.diff)
 
-      this.broadcastMapDiffChangesToRoom(request.mapId, client.id, request.diff)
+      this.broadcastToRoom(request.mapId, 'mapChangesUndoRedo', {
+        clientId: client.id,
+        diff: request.diff,
+      })
 
       return this.buildSuccessResponse(request.diff)
     } catch (error) {
@@ -318,12 +324,11 @@ export class MapsGateway implements OnGatewayDisconnect {
 
       const mmpMap: IMmpClientMap = request.map
 
-      this.broadcastNotificationToRoom(
-        mmpMap.uuid,
-        client.id,
-        'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS',
-        'warning'
-      )
+      this.broadcastToRoom(mmpMap.uuid, 'clientNotification', {
+        clientId: client.id,
+        message: 'TOASTS.WARNINGS.MAP_IMPORT_IN_PROGRESS',
+        type: 'warning',
+      })
 
       const sockets = await this.disconnectAllClientsFromMap(request.mapId)
 
@@ -334,15 +339,17 @@ export class MapsGateway implements OnGatewayDisconnect {
       const exportMap = await this.mapsService.exportMapToClient(mmpMap.uuid)
 
       if (exportMap) {
-        this.broadcastFullMapUpdate(mmpMap.uuid, client.id, exportMap)
+        this.broadcastToRoom(mmpMap.uuid, 'mapUpdated', {
+          clientId: client.id,
+          map: exportMap,
+        })
       }
 
-      this.broadcastNotificationToRoom(
-        mmpMap.uuid,
-        client.id,
-        'TOASTS.MAP_IMPORT_SUCCESS',
-        'success'
-      )
+      this.broadcastToRoom(mmpMap.uuid, 'clientNotification', {
+        clientId: client.id,
+        message: 'TOASTS.MAP_IMPORT_SUCCESS',
+        type: 'success',
+      })
 
       return true
     } catch (error) {
@@ -361,27 +368,32 @@ export class MapsGateway implements OnGatewayDisconnect {
   ): Promise<OperationResponse<IMmpClientNode | null>> {
     try {
       if (!this.hasRequiredNodeFields(request.node)) {
-        return this.buildCriticalErrorResponse(
+        return this.buildErrorResponse(
+          'critical',
           'MALFORMED_REQUEST',
           'CRITICAL_ERROR.MISSING_REQUIRED_FIELD',
           request.mapId
         )
       }
 
-      const removedNode = await this.executeNodeRemovalOperation(
+      const removedNode = await this.mapsService.removeNode(
         request.node,
         request.mapId
       )
 
       if (!removedNode) {
-        return this.buildCriticalErrorResponse(
+        return this.buildErrorResponse(
+          'critical',
           'MALFORMED_REQUEST',
           'CRITICAL_ERROR.NODE_NOT_FOUND',
           request.mapId
         )
       }
 
-      this.broadcastNodeRemovedToRoom(request.mapId, client.id, request.node.id)
+      this.broadcastToRoom(request.mapId, 'nodeRemoved', {
+        clientId: client.id,
+        nodeId: request.node.id,
+      })
 
       return this.buildSuccessResponse(mapMmpNodeToClient(removedNode))
     } catch (error) {
@@ -407,28 +419,43 @@ export class MapsGateway implements OnGatewayDisconnect {
     return true
   }
 
+  /**
+   * Updates client cache for a map with a transformation function
+   * @param mapId - The map ID
+   * @param updateFn - Function to transform the cache
+   * @returns The updated cache
+   */
+  private async updateClientCache(
+    mapId: string,
+    updateFn: (cache: IClientCache) => IClientCache
+  ): Promise<IClientCache> {
+    const currentCache: IClientCache =
+      (await this.cacheManager.get(mapId)) || {}
+    const updatedCache = updateFn(currentCache)
+    await this.cacheManager.set(mapId, updatedCache, this.CACHE_TTL_MS)
+    return updatedCache
+  }
+
   private async addClientForMap(
     mapId: string,
     clientId: string,
     color: string
   ): Promise<IClientCache> {
-    const currentClientCache: IClientCache =
-      (await this.cacheManager.get(mapId)) || {}
-    const overwriteColor = this.chooseColor(currentClientCache, color)
-
-    const newClientCache: IClientCache = {
-      ...currentClientCache,
-      [clientId]: overwriteColor,
-    }
-    await this.cacheManager.set(mapId, newClientCache, 10000)
-    return newClientCache
+    return this.updateClientCache(mapId, (cache) => ({
+      ...cache,
+      [clientId]: this.chooseColor(cache, color),
+    }))
   }
 
-  private async removeClientForMap(mapId: string, clientId: string) {
-    const currentClientCache: IClientCache =
-      (await this.cacheManager.get(mapId)) || {}
-    delete currentClientCache[clientId]
-    this.cacheManager.set(mapId, currentClientCache, 10000)
+  private async removeClientForMap(
+    mapId: string,
+    clientId: string
+  ): Promise<IClientCache> {
+    return this.updateClientCache(mapId, (cache) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [clientId]: _, ...rest } = cache
+      return rest
+    })
   }
 
   private chooseColor(currentClientCache: IClientCache, color: string): string {
@@ -463,7 +490,8 @@ export class MapsGateway implements OnGatewayDisconnect {
   /**
    * Creates a validation error response with full map state for client recovery
    */
-  private async buildValidationErrorResponse<T>(
+  private async buildErrorResponse<T>(
+    errorType: 'validation',
     code:
       | 'INVALID_PARENT'
       | 'CONSTRAINT_VIOLATION'
@@ -472,21 +500,13 @@ export class MapsGateway implements OnGatewayDisconnect {
       | 'DUPLICATE_NODE',
     message: string,
     mapId: string
-  ): Promise<OperationResponse<T>> {
-    const fullMapState = await this.safeExportMapToClient(mapId)
-    return {
-      success: false,
-      errorType: 'validation',
-      code,
-      message,
-      fullMapState,
-    }
-  }
+  ): Promise<OperationResponse<T>>
 
   /**
    * Creates a critical error response with full map state for client recovery
    */
-  private async buildCriticalErrorResponse<T>(
+  private async buildErrorResponse<T>(
+    errorType: 'critical',
     code:
       | 'SERVER_ERROR'
       | 'NETWORK_TIMEOUT'
@@ -495,15 +515,25 @@ export class MapsGateway implements OnGatewayDisconnect {
       | 'RATE_LIMIT_EXCEEDED',
     message: string,
     mapId: string
+  ): Promise<OperationResponse<T>>
+
+  /**
+   * Implementation of error response builder
+   */
+  private async buildErrorResponse<T>(
+    errorType: 'validation' | 'critical',
+    code: string,
+    message: string,
+    mapId: string
   ): Promise<OperationResponse<T>> {
     const fullMapState = await this.safeExportMapToClient(mapId)
     return {
       success: false,
-      errorType: 'critical',
+      errorType,
       code,
       message,
       fullMapState,
-    }
+    } as OperationResponse<T>
   }
 
   /**
@@ -538,7 +568,8 @@ export class MapsGateway implements OnGatewayDisconnect {
     this.logger.error(
       `${operationContext}: ${error instanceof Error ? error.message : String(error)}`
     )
-    return this.buildCriticalErrorResponse(
+    return this.buildErrorResponse(
+      'critical',
       'SERVER_ERROR',
       'CRITICAL_ERROR.SERVER_UNAVAILABLE',
       mapId
@@ -584,107 +615,17 @@ export class MapsGateway implements OnGatewayDisconnect {
   // ============================================================
 
   /**
-   * Broadcasts added nodes to all clients in the map room
+   * Generic method to broadcast events to all clients in a map room
+   * @param mapId - The map room ID
+   * @param eventName - The socket event name to emit
+   * @param payload - The event payload (can include clientId and any other data)
    */
-  private broadcastNodesAddedToRoom(
+  private broadcastToRoom<T extends Record<string, unknown>>(
     mapId: string,
-    clientId: string,
-    nodes: IMmpClientNode[]
+    eventName: string,
+    payload: T
   ): void {
-    this.server.to(mapId).emit('nodesAdded', {
-      clientId,
-      nodes,
-    })
-  }
-
-  /**
-   * Broadcasts updated node to all clients in the map room
-   */
-  private broadcastNodeUpdatedToRoom(
-    mapId: string,
-    clientId: string,
-    node: IMmpClientNode,
-    updatedProperty?: string
-  ): void {
-    this.server.to(mapId).emit('nodeUpdated', {
-      clientId,
-      property: updatedProperty,
-      node,
-    })
-  }
-
-  /**
-   * Broadcasts removed node to all clients in the map room
-   */
-  private broadcastNodeRemovedToRoom(
-    mapId: string,
-    clientId: string,
-    nodeId: string
-  ): void {
-    this.server.to(mapId).emit('nodeRemoved', {
-      clientId,
-      nodeId,
-    })
-  }
-
-  /**
-   * Broadcasts map changes from undo/redo operation to all clients
-   */
-  private broadcastMapDiffChangesToRoom(
-    mapId: string,
-    clientId: string,
-    diff: IMmpClientMapDiff
-  ): void {
-    this.server.to(mapId).emit('mapChangesUndoRedo', {
-      clientId,
-      diff,
-    })
-  }
-
-  /**
-   * Broadcasts node selection update to all clients in the map room
-   */
-  private broadcastNodeSelectionUpdate(
-    mapId: string,
-    clientId: string,
-    nodeId: string,
-    selected: boolean
-  ): void {
-    this.server.to(mapId).emit('selectionUpdated', {
-      clientId,
-      nodeId,
-      selected,
-    })
-  }
-
-  /**
-   * Broadcasts notification message to all clients in the map room
-   */
-  private broadcastNotificationToRoom(
-    mapId: string,
-    clientId: string,
-    message: string,
-    type: 'info' | 'warning' | 'success' | 'error'
-  ): void {
-    this.server.to(mapId).emit('clientNotification', {
-      clientId,
-      message,
-      type,
-    })
-  }
-
-  /**
-   * Broadcasts full map update to all clients in the map room
-   */
-  private broadcastFullMapUpdate(
-    mapId: string,
-    clientId: string,
-    map: IMmpClientMap
-  ): void {
-    this.server.to(mapId).emit('mapUpdated', {
-      clientId,
-      map,
-    })
+    this.server.to(mapId).emit(eventName, payload)
   }
 
   // ============================================================
@@ -704,7 +645,8 @@ export class MapsGateway implements OnGatewayDisconnect {
     | { successfulNodes: MmpNode[] }
   > {
     if (!results || results.length === 0) {
-      return this.buildValidationErrorResponse(
+      return this.buildErrorResponse(
+        'validation',
         'CONSTRAINT_VIOLATION',
         'VALIDATION_ERROR.CONSTRAINT_VIOLATION',
         mapId
@@ -729,27 +671,20 @@ export class MapsGateway implements OnGatewayDisconnect {
     nodes: MmpNode[]
   ): void {
     const clientNodes = nodes.map((node) => mapMmpNodeToClient(node))
-    this.broadcastNodesAddedToRoom(mapId, clientId, clientNodes)
+    this.broadcastToRoom(mapId, 'nodesAdded', { clientId, nodes: clientNodes })
 
     if (nodes.length === 1 && nodes[0]?.id) {
-      this.broadcastNodeSelectionUpdate(mapId, clientId, nodes[0].id, true)
+      this.broadcastToRoom(mapId, 'selectionUpdated', {
+        clientId,
+        nodeId: nodes[0].id,
+        selected: true,
+      })
     }
   }
 
   // ============================================================
   // UpdateNode Operation Helpers
   // ============================================================
-
-  /**
-   * Validates and executes node update operation
-   */
-  private async executeNodeUpdateOperation(
-    mapId: string,
-    node: IMmpClientNode
-  ): Promise<MmpNode | ValidationErrorResponse | null> {
-    const result = await this.mapsService.updateNode(mapId, node)
-    return result ?? null
-  }
 
   /**
    * Processes the result of a node update operation
@@ -759,7 +694,8 @@ export class MapsGateway implements OnGatewayDisconnect {
     mapId: string
   ): Promise<OperationResponse<IMmpClientNode> | { validNode: MmpNode }> {
     if (!result) {
-      return this.buildValidationErrorResponse(
+      return this.buildErrorResponse(
+        'validation',
         'INVALID_PARENT',
         'VALIDATION_ERROR.INVALID_PARENT',
         mapId
@@ -787,16 +723,6 @@ export class MapsGateway implements OnGatewayDisconnect {
     node: IMmpClientNode | undefined
   ): node is IMmpClientNode & { id: string } {
     return !!node && !!node.id
-  }
-
-  /**
-   * Executes node removal and returns the removed node or undefined
-   */
-  private async executeNodeRemovalOperation(
-    node: IMmpClientNode,
-    mapId: string
-  ): Promise<MmpNode | undefined> {
-    return await this.mapsService.removeNode(node, mapId)
   }
 
   // ============================================================
@@ -837,7 +763,7 @@ export class MapsGateway implements OnGatewayDisconnect {
     color: string
   ): Promise<IClientCache> {
     client.join(mapId)
-    this.cacheManager.set(client.id, mapId, 10000)
+    this.cacheManager.set(client.id, mapId, this.CACHE_TTL_MS)
     return await this.addClientForMap(mapId, client.id, color)
   }
 }
