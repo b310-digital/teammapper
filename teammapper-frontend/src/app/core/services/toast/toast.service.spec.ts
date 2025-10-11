@@ -4,15 +4,15 @@ import { ToastService } from './toast.service';
 
 describe('ToastService', () => {
   let service: ToastService;
-  let toastrSpy: jasmine.SpyObj<ToastrService>;
+  let toastrSpy: jest.Mocked<ToastrService>;
 
   beforeEach(() => {
-    const spy = jasmine.createSpyObj('ToastrService', [
-      'error',
-      'warning',
-      'info',
-      'success',
-    ]);
+    const spy = {
+      error: jest.fn(),
+      warning: jest.fn(),
+      info: jest.fn(),
+      success: jest.fn(),
+    } as unknown as jest.Mocked<ToastrService>;
 
     TestBed.configureTestingModule({
       providers: [ToastService, { provide: ToastrService, useValue: spy }],
@@ -21,7 +21,7 @@ describe('ToastService', () => {
     service = TestBed.inject(ToastService);
     toastrSpy = TestBed.inject(
       ToastrService
-    ) as unknown as jasmine.SpyObj<ToastrService>;
+    ) as unknown as jest.Mocked<ToastrService>;
   });
 
   describe('showValidationCorrection()', () => {
@@ -34,7 +34,7 @@ describe('ToastService', () => {
       expect(toastrSpy.warning).toHaveBeenCalledWith(
         'Node "Test Node" was auto-corrected: parent was reset to root',
         '',
-        jasmine.objectContaining({
+        expect.objectContaining({
           timeOut: 4000,
         })
       );
@@ -48,7 +48,7 @@ describe('ToastService', () => {
       expect(toastrSpy.warning).toHaveBeenCalledWith(
         'Node was auto-corrected: parent was reset to root',
         '',
-        jasmine.anything()
+        expect.anything()
       );
     }));
 
@@ -60,8 +60,9 @@ describe('ToastService', () => {
 
       tick(500);
 
-      const call = toastrSpy.warning.calls.mostRecent();
-      expect(call.args[0]).toContain('invalid reference removed');
+      const call =
+        toastrSpy.warning.mock.calls[toastrSpy.warning.mock.calls.length - 1];
+      expect(call[0]).toContain('invalid reference removed');
     }));
 
     it('should use 4 second duration', fakeAsync(() => {
@@ -69,8 +70,9 @@ describe('ToastService', () => {
 
       tick(500);
 
-      const call = toastrSpy.warning.calls.mostRecent();
-      expect(call.args[2]).toEqual({ timeOut: 4000 });
+      const call =
+        toastrSpy.warning.mock.calls[toastrSpy.warning.mock.calls.length - 1];
+      expect(call[2]).toEqual({ timeOut: 4000 });
     }));
   });
 
@@ -89,9 +91,9 @@ describe('ToastService', () => {
       // Only the FIRST toast should be shown (throttle behavior, not debounce)
       expect(toastrSpy.warning).toHaveBeenCalledTimes(1);
       expect(toastrSpy.warning).toHaveBeenCalledWith(
-        jasmine.stringContaining('Node 1'),
-        jasmine.anything(),
-        jasmine.anything()
+        expect.stringContaining('Node 1'),
+        expect.anything(),
+        expect.anything()
       );
     }));
 
@@ -120,8 +122,8 @@ describe('ToastService', () => {
       expect(toastrSpy.error).toHaveBeenCalledTimes(0);
       expect(toastrSpy.info).toHaveBeenCalledWith(
         'Info message',
-        jasmine.anything(),
-        jasmine.anything()
+        expect.anything(),
+        expect.anything()
       );
     }));
   });
@@ -135,7 +137,7 @@ describe('ToastService', () => {
       expect(toastrSpy.info).toHaveBeenCalledWith(
         'Information message',
         '',
-        jasmine.objectContaining({
+        expect.objectContaining({
           timeOut: 4000,
         })
       );
@@ -151,7 +153,7 @@ describe('ToastService', () => {
       expect(toastrSpy.warning).toHaveBeenCalledWith(
         'Warning message',
         '',
-        jasmine.objectContaining({
+        expect.objectContaining({
           timeOut: 4000,
         })
       );
@@ -167,7 +169,7 @@ describe('ToastService', () => {
       expect(toastrSpy.error).toHaveBeenCalledWith(
         'Error message',
         '',
-        jasmine.objectContaining({
+        expect.objectContaining({
           timeOut: 4000,
         })
       );
@@ -201,9 +203,9 @@ describe('ToastService', () => {
       // Only one toast should be shown (the first one due to throttling)
       expect(toastrSpy.warning).toHaveBeenCalledTimes(1);
       expect(toastrSpy.warning).toHaveBeenCalledWith(
-        jasmine.stringContaining('Node 0'),
-        jasmine.anything(),
-        jasmine.anything()
+        expect.stringContaining('Node 0'),
+        expect.anything(),
+        expect.anything()
       );
     }));
   });
