@@ -4,11 +4,6 @@ import Map from '../map';
 import Node from '../models/node';
 import { Event } from './events';
 
-interface CoordinatesCache {
-  x: number;
-  y: number;
-}
-
 /**
  * Manage the drag events of the nodes.
  */
@@ -19,7 +14,6 @@ export default class Drag {
   private dragging: boolean;
   private orientation: boolean;
   private descendants: Node[];
-  private previousCoordinates: { [nodeId: string]: CoordinatesCache };
 
   /**
    * Get the associated map instance and initialize the d3 drag behavior.
@@ -27,7 +21,6 @@ export default class Drag {
    */
   constructor(map: Map) {
     this.map = map;
-    this.previousCoordinates = {};
 
     this.dragBehavior = d3
       .drag()
@@ -57,22 +50,6 @@ export default class Drag {
   private started(_: D3DragEvent<any, any, any>, node: Node) {
     this.orientation = this.map.nodes.getOrientation(node);
     this.descendants = this.map.nodes.getDescendants(node);
-
-    // Capture previous coordinates before dragging starts
-    this.previousCoordinates[node.id] = {
-      x: node.coordinates.x,
-      y: node.coordinates.y,
-    };
-
-    // Capture previous coordinates for locked descendants
-    if (node.locked) {
-      for (const descendant of this.descendants) {
-        this.previousCoordinates[descendant.id] = {
-          x: descendant.coordinates.x,
-          y: descendant.coordinates.y,
-        };
-      }
-    }
 
     this.map.nodes.selectNode(node.id);
   }
@@ -136,24 +113,18 @@ export default class Drag {
       this.map.history.save();
 
       if (node.locked) {
-        for (const descendant of this.descendants) {
-          const previousValue = this.previousCoordinates[descendant.id];
-          this.map.events.call(Event.nodeUpdate, descendant.dom, {
-            nodeProperties: this.map.nodes.getNodeProperties(descendant),
+        for (const node of this.descendants) {
+          this.map.events.call(Event.nodeUpdate, node.dom, {
+            nodeProperties: this.map.nodes.getNodeProperties(node),
             changedProperty: 'coordinates',
-            previousValue,
           });
-          delete this.previousCoordinates[descendant.id];
         }
       }
 
-      const previousValue = this.previousCoordinates[node.id];
       this.map.events.call(Event.nodeUpdate, node.dom, {
         nodeProperties: this.map.nodes.getNodeProperties(node),
         changedProperty: 'coordinates',
-        previousValue,
       });
-      delete this.previousCoordinates[node.id];
     }
   }
 }
