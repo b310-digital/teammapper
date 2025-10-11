@@ -6,6 +6,5 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "modulePaths": ["<rootDir>"],
-  "testRunner": "jest-jasmine2"
+  "modulePaths": ["<rootDir>"]
 }
