@@ -8,7 +8,15 @@ import {
 } from '@angular/material/dialog';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { CriticalErrorData } from '../../../../shared/models/error-types.model';
+import { TranslatePipe } from '@ngx-translate/core';
+
+/**
+ * Data passed to critical error dialog component
+ */
+export interface CriticalErrorData {
+  code: string;
+  message: string;
+}
 
 /**
  * Critical Error Dialog Component
@@ -25,6 +33,7 @@ import { CriticalErrorData } from '../../../../shared/models/error-types.model';
     MatDialogActions,
     MatButton,
     MatIcon,
+    TranslatePipe,
   ],
 })
 export class DialogCriticalErrorComponent {

@@ -134,6 +134,11 @@
     },
     "LINK": {
       "URL": "链接 URL (https://...)"
+    },
+    "CRITICAL_ERROR": {
+      "TITLE": "连接问题",
+      "WARNING": "您最近的更改可能未保存。",
+      "RELOAD_BUTTON": "重新加载页面"
     }
   },
   "PAGES": {

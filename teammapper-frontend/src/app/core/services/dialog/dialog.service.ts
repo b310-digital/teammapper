@@ -6,8 +6,10 @@ import { DialogImportMermaidComponent } from 'src/app/modules/application/compon
 import { DialogImportAiComponent } from 'src/app/modules/application/components/dialog-import-ai/dialog-import-ai.component';
 import { DialogPictogramsComponent } from 'src/app/modules/application/components/dialog-pictograms/dialog-pictograms.component';
 import { DialogShareComponent } from 'src/app/modules/application/components/dialog-share/dialog-share.component';
-import { DialogCriticalErrorComponent } from 'src/app/modules/application/components/dialog-critical-error/dialog-critical-error.component';
-import { CriticalErrorData } from 'src/app/shared/models/error-types.model';
+import {
+  DialogCriticalErrorComponent,
+  CriticalErrorData,
+} from 'src/app/modules/application/components/dialog-critical-error/dialog-critical-error.component';
 
 @Injectable({
   providedIn: 'root',

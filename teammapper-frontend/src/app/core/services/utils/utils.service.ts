@@ -21,29 +21,6 @@ export class UtilsService {
     );
 
   /**
-   * Sets the nested property of object
-   */
-  public static set = (obj: any, path: string[], value: any): void => {
-    if (path.length === 0) return;
-
-    // Navigate to the parent of the property we want to set
-    const lastIndex = path.length - 1;
-    let current = obj;
-
-    for (let i = 0; i < lastIndex; i++) {
-      const key = path[i];
-      // Ensure intermediate objects exist
-      if (!(key in current) || typeof current[key] !== 'object') {
-        current[key] = {};
-      }
-      current = current[key];
-    }
-
-    // Set the final property
-    current[path[lastIndex]] = value;
-  };
-
-  /**
    * Return the word with the first letter capitalized.
    */
   public static capitalizeWord(word: string): string {

@@ -134,6 +134,11 @@
     },
     "LINK": {
       "URL": "Link URL (https://...)"
+    },
+    "CRITICAL_ERROR": {
+      "TITLE": "Problème de connexion",
+      "WARNING": "Vos modifications récentes n'ont peut-être pas été enregistrées.",
+      "RELOAD_BUTTON": "Recharger la page"
     }
   },
   "PAGES": {
