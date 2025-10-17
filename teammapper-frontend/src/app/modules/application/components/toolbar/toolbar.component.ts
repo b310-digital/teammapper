@@ -3,13 +3,13 @@ import { ExportNodeProperties } from '@mmp/map/types';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
-import { environment } from 'src/environments/environment';
 import { MatToolbar } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { NgClass, NgIf } from '@angular/common';
+import { SettingsService } from 'src/app/core/services/settings/settings.service';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -35,8 +35,15 @@ export class ToolbarComponent {
 
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
-  public featureFlagPictograms: boolean = environment.featureFlagPictograms;
-  public featureFlagAI: boolean = environment.featureFlagAI;
+  public featureFlagPictograms: boolean;
+
+  private settingsService = inject(SettingsService);
+  public featureFlagAI: boolean;
+
+  constructor() {
+    this.featureFlagPictograms =
+      this.settingsService.getCachedSystemSettings()?.featureFlags?.pictograms;
+  }
 
   public async exportMap(format: string) {
     const result = await this.mmpService.exportMap(format);

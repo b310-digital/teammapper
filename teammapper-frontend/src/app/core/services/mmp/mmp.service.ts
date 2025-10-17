@@ -222,7 +222,7 @@ export class MmpService implements OnDestroy {
     if (this.selectNode()?.detached) {
       return;
     }
-    const settings = this.settingsService.getCachedSettings();
+    const settings = this.settingsService.getCachedUserSettings();
 
     if (properties?.colors?.branch) {
       newProps.colors = {
@@ -599,7 +599,8 @@ export class MmpService implements OnDestroy {
    * Initialize additional map settings with defaults
    */
   private async defaultAdditionalOptions(): Promise<CachedMapOptions> {
-    const defaultSettings = await this.settingsService.getDefaultSettings();
+    const defaultSettings = (await this.settingsService.getDefaultSettings())
+      .userSettings;
 
     return {
       fontMinSize: defaultSettings.mapOptions.fontMinSize,

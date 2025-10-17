@@ -23,6 +23,8 @@ services:
       - "${APP_PROD_PORT:-80}:3000"
     depends_on:
       - postgres_prod
+    volumes:
+      - ./config/settings.override.json:/home/node/app/teammapper-backend/config/settings.override.json:ro
 
   postgres_prod:
     image: postgres:15-alpine
