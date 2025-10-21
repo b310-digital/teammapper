@@ -32,7 +32,7 @@
     "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {
-    "@ai-sdk/openai": "2.0.28",
+    "@ai-sdk/openai": "2.0.53",
     "@ai-sdk/openai-compatible": "1.0.15",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/cli": "^11.0.10",
