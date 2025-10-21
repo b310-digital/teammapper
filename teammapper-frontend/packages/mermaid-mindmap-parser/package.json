@@ -27,7 +27,7 @@
     "dist"
   ],
   "dependencies": {
-    "dompurify": "3.2.4"
+    "dompurify": "3.3.0"
   },
   "devDependencies": {
     "typescript": "~5.9.3",
