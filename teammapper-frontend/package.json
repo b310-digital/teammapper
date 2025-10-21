@@ -58,7 +58,7 @@
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@material-design-icons/font": "^0.14.15",
-    "@ngx-translate/core": "^16.0.4",
+    "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^16.0.1",
     "@teammapper/mermaid-mindmap-parser": "workspace:^",
     "@types/uuid": "^10.0.0",
