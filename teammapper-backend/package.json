@@ -36,7 +36,7 @@
     "@ai-sdk/openai-compatible": "1.0.15",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/cli": "^11.0.10",
-    "@nestjs/common": "^11.1.6",
+    "@nestjs/common": "^11.1.7",
     "@nestjs/config": "4.0.2",
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
