@@ -96,9 +96,9 @@
     "@types/d3": "7.1.0",
     "@types/jest": "30.0.0",
     "@types/mousetrap": "1.6.15",
-    "@types/node": "^24.8.1",
-    "@typescript-eslint/eslint-plugin": "^8.46.1",
-    "@typescript-eslint/parser": "^8.46.1",
+    "@types/node": "^24.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "angular-eslint": "^20.4.0",
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
@@ -112,7 +112,7 @@
     "prettier": "^3.6.2",
     "ts-node": "~10.9.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.1"
+    "typescript-eslint": "^8.46.2"
   },
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "21.2.0",
