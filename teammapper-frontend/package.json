@@ -116,7 +116,7 @@
   },
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "21.2.0",
-    "@nx/nx-darwin-x64": "21.6.5",
+    "@nx/nx-darwin-x64": "22.0.1",
     "@nx/nx-linux-x64-gnu": "19.8.2",
     "@nx/nx-win32-x64-msvc": "19.8.4"
   },
