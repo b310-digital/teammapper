@@ -426,8 +426,8 @@ importers:
         specifier: 21.6.5
         version: 21.6.5
       '@nx/nx-linux-x64-gnu':
-        specifier: 19.8.2
-        version: 19.8.2
+        specifier: 22.0.1
+        version: 22.0.1
       '@nx/nx-win32-x64-msvc':
         specifier: 19.8.4
         version: 19.8.4
@@ -2707,9 +2707,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@nx/nx-linux-x64-gnu@19.8.2':
-    resolution: {integrity: sha512-3h4dmIi5Muym18dsiiXQBygPlSAHZNe3PaYo8mLsUsvuAt2ye0XUDcAlHWXOt/FeuVDG1NEGI05vZJvbIIGikQ==}
-    engines: {node: '>= 10'}
+  '@nx/nx-linux-x64-gnu@22.0.1':
+    resolution: {integrity: sha512-HRtVR9g57gzjikXsUHVcP6UsrHWMzXq+WJz7PzgcRU1RT/AP/4QxV6HegA1O2filcGLxSYwt5JOYwy73OYuYDg==}
     cpu: [x64]
     os: [linux]
 
@@ -11828,7 +11827,7 @@ snapshots:
   '@nx/nx-darwin-x64@21.6.5':
     optional: true
 
-  '@nx/nx-linux-x64-gnu@19.8.2':
+  '@nx/nx-linux-x64-gnu@22.0.1':
     optional: true
 
   '@nx/nx-win32-x64-msvc@19.8.4':
