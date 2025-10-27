@@ -70,7 +70,7 @@
     "@stylistic/eslint-plugin": "^5.5.0",
     "@types/cache-manager": "5.0.0",
     "@types/cron": "^2.4.3",
-    "@types/express": "^5.0.3",
+    "@types/express": "^5.0.4",
     "@types/express-serve-static-core": "^5.1.0",
     "@types/jest": "30.0.0",
     "@types/node": "^24.9.1",
