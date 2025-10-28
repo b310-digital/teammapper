@@ -41,7 +41,7 @@
     "@nestjs/core": "^11.1.7",
     "@nestjs/platform-express": "^11.1.7",
     "@nestjs/platform-socket.io": "^11.1.7",
-    "@nestjs/schedule": "^5.0.1",
+    "@nestjs/schedule": "^6.0.1",
     "@nestjs/serve-static": "^5.0.4",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.7",
