@@ -292,8 +292,8 @@ importers:
         specifier: 1.10.0
         version: 1.10.0
       ngx-color-picker:
-        specifier: ^17.0.0
-        version: 17.0.0(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/forms@20.3.7(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.3.7(@angular/animations@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2))
+        specifier: ^20.1.1
+        version: 20.1.1(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/forms@20.3.7(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.3.7(@angular/animations@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2))
       ngx-toastr:
         specifier: ^19.1.0
         version: 19.1.0(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.3.7(@angular/animations@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))
@@ -6708,12 +6708,12 @@ packages:
     resolution: {integrity: sha512-Z4SmBUweYa09+o6pG+eASabEpP6QkQ70yHj351pQoEXIs8uHbaU2DWVmzBANKgflPa47A50PtB2+NgRpQvr7vA==}
     engines: {node: '>= 10'}
 
-  ngx-color-picker@17.0.0:
-    resolution: {integrity: sha512-kHuhW4vErpb0LlBlgTnf1+cYWdaq0gOvDwiX9LeaFKNvhV5li+YEyk7tC3o1Sbhqd4lsFKb8zHyqi1teLWN4Zg==}
+  ngx-color-picker@20.1.1:
+    resolution: {integrity: sha512-wFk1L9F3JBd1Th+auYexN4uyynaT2dhxVRn0Dd55HrhfVcxfylExITDJ+Bhrcl0W+QHtX6gVbfZuX2hBXeVMFA==}
     peerDependencies:
-      '@angular/common': '>=9.0.0'
-      '@angular/core': '>=9.0.0'
-      '@angular/forms': '>=9.0.0'
+      '@angular/common': '>=19.0.0'
+      '@angular/core': '>=19.0.0'
+      '@angular/forms': '>=19.0.0'
 
   ngx-toastr@19.1.0:
     resolution: {integrity: sha512-Qa7Kg7QzGKNtp1v04hu3poPKKx8BGBD/Onkhm6CdH5F0vSMdq+BdR/f8DTpZnGFksW891tAFufpiWb9UZX+3vg==}
@@ -16525,7 +16525,7 @@ snapshots:
 
   neotraverse@0.6.18: {}
 
-  ngx-color-picker@17.0.0(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/forms@20.3.7(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.3.7(@angular/animations@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)):
+  ngx-color-picker@20.1.1(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/forms@20.3.7(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.3.7(@angular/animations@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)):
     dependencies:
       '@angular/common': 20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
       '@angular/core': 20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)
