@@ -420,8 +420,8 @@ importers:
         version: 8.46.2(eslint@9.39.0(jiti@1.21.7))(typescript@5.9.3)
     optionalDependencies:
       '@nx/nx-darwin-arm64':
-        specifier: 21.2.0
-        version: 21.2.0
+        specifier: 22.0.2
+        version: 22.0.2
       '@nx/nx-darwin-x64':
         specifier: 21.6.5
         version: 21.6.5
@@ -2871,8 +2871,8 @@ packages:
     engines: {node: ^14.18.0 || >=16.10.0, npm: '>=5.10.0'}
     hasBin: true
 
-  '@nx/nx-darwin-arm64@21.2.0':
-    resolution: {integrity: sha512-vfGvQ9IKinXo785jB1gTa9pAFRfxkZGeK/4P5hQNxYNLyROGu9caujrseXTLjZvF1hDuStvnUfoaBlcfhP36hQ==}
+  '@nx/nx-darwin-arm64@22.0.2':
+    resolution: {integrity: sha512-2xrjMN4oJcZg8D3yzM3UGENBqelyMvmLjfHZgwXwyp2j6WexYaU0UusS2EmVTOCi9q7k3knQCWuSa2Y9uk2sTQ==}
     cpu: [arm64]
     os: [darwin]
 
@@ -12135,7 +12135,7 @@ snapshots:
     dependencies:
       consola: 3.4.2
 
-  '@nx/nx-darwin-arm64@21.2.0':
+  '@nx/nx-darwin-arm64@22.0.2':
     optional: true
 
   '@nx/nx-darwin-x64@21.6.5':
