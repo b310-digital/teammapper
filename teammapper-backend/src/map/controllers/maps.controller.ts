@@ -1,5 +1,6 @@
 import {
   Body,
+  Req,
   Controller,
   Get,
   Delete,
@@ -53,9 +54,20 @@ export default class MapsController {
 
   @Post()
   async create(
-    @Body() body: IMmpClientMapCreateRequest
+    @Body() body: IMmpClientMapCreateRequest,
+    @Req() req: Request
   ): Promise<IMmpClientPrivateMap | undefined> {
-    const newMap = await this.mapsService.createEmptyMap(body.rootNode)
+
+    const pid = (req as any).cookies?.person_id;
+
+    let newMap;
+
+    if(pid){
+      newMap = await this.mapsService.createEmptyMap(body.rootNode, pid)
+    } else {
+      newMap = await this.mapsService.createEmptyMap(body.rootNode)
+    }
+    
     const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
 
     if (exportedMap) {

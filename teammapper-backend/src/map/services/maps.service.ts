@@ -608,12 +608,16 @@ export class MapsService {
     }
   }
 
-  async createEmptyMap(rootNode?: IMmpClientNodeBasics): Promise<MmpMap> {
+  async createEmptyMap(rootNode?: IMmpClientNodeBasics, userId?: string): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create()
     const savedNewMap: MmpMap = await this.mapsRepository.save(newMap)
 
     if (rootNode) {
       await this.createRootNodeForMap(rootNode, savedNewMap.id)
+    }
+
+    if (userId) {
+      await this.mapsRepository.update(savedNewMap.id, { owner: userId })
     }
 
     return newMap
