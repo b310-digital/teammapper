@@ -440,14 +440,14 @@ export class MapSyncService implements OnDestroy {
     const response = await this.httpService.get(API_URL.ROOT, '/maps');
     if (!response.ok) return [];
     const json: ServerMapInfo[] = await response.json();
-    const mapEntries: CachedAdminMapEntry[] = json.map((map) => ({
+    const mapEntries: CachedAdminMapEntry[] = json.map(map => ({
       id: map.uuid,
       cachedAdminMapValue: {
         adminId: map.adminId,
         modificationSecret: map.modificationSecret,
         ttl: map.ttl ? new Date(map.ttl) : new Date(),
         rootName: map.rootName,
-      }
+      },
     }));
     return mapEntries;
   }

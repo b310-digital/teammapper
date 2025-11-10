@@ -94,7 +94,7 @@ export class SettingsComponent implements OnInit {
   public async ngOnInit() {
     this.cachedAdminMapEntries =
       await this.settingsService.getCachedAdminMapEntries();
-    this.ownedEntries = await this.mapSyncService.fetchUserMapsFromServer()
+    this.ownedEntries = await this.mapSyncService.fetchUserMapsFromServer();
   }
 
   public async updateMapOptions() {

@@ -6,7 +6,7 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter'
 import { Logger } from '@nestjs/common'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { join } from 'path'
-import cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser'
 
 async function bootstrap() {
   const logger = new Logger('Main Process')
@@ -29,7 +29,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(new GlobalExceptionFilter())
 
-  app.use(cookieParser());
+  app.use(cookieParser())
 
   app.use(
     '/arasaac/api',
