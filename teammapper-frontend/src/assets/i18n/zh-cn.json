@@ -183,6 +183,8 @@
       "GENERAL": "一般",
       "MAIN": "主界面",
       "MAP_LIST": "已创建思维导图列表",
+      "OWNED_MAPS": "我的思维导图",
+      "LAST_MAPS": "最近打开的思维导图",
       "MAP_OPTIONS": "思维导图选项",
       "ROOT_NODE_NAME": "根节点名称",
       "NODE_NAME": "节点名称",

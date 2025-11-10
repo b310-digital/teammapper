@@ -183,6 +183,8 @@
       "GENERAL": "一般",
       "MAIN": "主畫面",
       "MAP_LIST": "List of created maps",
+      "OWNED_MAPS": "我的心智圖",
+      "LAST_MAPS": "最近開啟的心智圖",
       "MAP_OPTIONS": "地圖選項",
       "ROOT_NODE_NAME": "根節點名稱",
       "NODE_NAME": "節點名稱",
