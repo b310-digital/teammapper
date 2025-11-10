@@ -73,22 +73,22 @@ export class MapsService {
   }
 
   async getMapsOfUser(userId: string): Promise<IMmpClientMapInfo[]> {
-    if (!userId) return [];
+    if (!userId) return []
     const mapsOfUser = await this.mapsRepository.find({
       where: { owner: userId },
     })
 
     const mapsInfo: IMmpClientMapInfo[] = await Promise.all(
-      mapsOfUser.map(async (map:MmpMap) => {
+      mapsOfUser.map(async (map: MmpMap) => {
         return {
           uuid: map.id,
           adminId: map.adminId,
           modificationSecret: map.modificationSecret,
           ttl: await this.getDeletedAt(map, configService.deleteAfterDays()),
           rootName: (await this.findRootNode(map.id))?.name || null,
-        };
+        }
       })
-    );
+    )
 
     return mapsInfo
   }
@@ -630,7 +630,10 @@ export class MapsService {
     }
   }
 
-  async createEmptyMap(rootNode?: IMmpClientNodeBasics, userId?: string): Promise<MmpMap> {
+  async createEmptyMap(
+    rootNode?: IMmpClientNodeBasics,
+    userId?: string
+  ): Promise<MmpMap> {
     const newMap: MmpMap = this.mapsRepository.create()
     const savedNewMap: MmpMap = await this.mapsRepository.save(newMap)
 

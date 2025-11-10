@@ -33,11 +33,11 @@ export interface IMmpClientMap {
 }
 
 export interface IMmpClientMapInfo {
-  uuid: string;
-  adminId: string | null;
-  modificationSecret: string | null;
-  ttl: Date | undefined;
-  rootName: string | null;
+  uuid: string
+  adminId: string | null
+  modificationSecret: string | null
+  ttl: Date | undefined
+  rootName: string | null
 }
 
 export interface IMmpClientPrivateMap {
