@@ -14,6 +14,7 @@ import {
   IMmpClientDeleteRequest,
   IMmpClientMap,
   IMmpClientMapCreateRequest,
+  IMmpClientMapInfo,
   IMmpClientPrivateMap,
 } from '../types'
 import MalformedUUIDError from '../services/uuid.error'
@@ -40,6 +41,13 @@ export default class MapsController {
         throw e
       }
     }
+  }
+
+  @Get()
+  async findAll(@Req() req: Request): Promise<IMmpClientMapInfo[]> {
+    const pid = (req as any).cookies?.person_id
+    const maps = await this.mapsService.getMapsOfUser(pid)
+    return maps
   }
 
   @Delete(':id')

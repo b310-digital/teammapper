@@ -132,6 +132,14 @@ interface PrivateServerMap {
   modificationSecret: string;
 }
 
+interface ServerMapInfo {
+  uuid: string;
+  adminId: string | null;
+  modificationSecret: string | null;
+  ttl: string | null;
+  rootName: string | null;
+}
+
 const ReversePropertyMapping = {
   name: 'name',
   locked: 'locked',
@@ -166,6 +174,7 @@ export {
   ResponseSelectionUpdated,
   ResponseClientNotification,
   ServerMap,
+  ServerMapInfo,
   PrivateServerMap,
   ReversePropertyMapping,
 };

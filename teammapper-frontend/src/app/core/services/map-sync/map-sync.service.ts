@@ -2,6 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
+  CachedAdminMapEntry,
   CachedAdminMapValue,
   CachedMap,
   CachedMapEntry,
@@ -25,6 +26,7 @@ import {
   ResponseSelectionUpdated,
   ResponseClientNotification,
   ServerMap,
+  ServerMapInfo,
   ResponseUndoRedoChanges,
   ReversePropertyMapping,
   OperationResponse,
@@ -432,6 +434,22 @@ export class MapSyncService implements OnDestroy {
     if (!response.ok) return null;
     const json: ServerMap = await response.json();
     return json;
+  }
+
+  public async fetchUserMapsFromServer(): Promise<CachedAdminMapEntry[]> {
+    const response = await this.httpService.get(API_URL.ROOT, '/maps');
+    if (!response.ok) return [];
+    const json: ServerMapInfo[] = await response.json();
+    const mapEntries: CachedAdminMapEntry[] = json.map((map) => ({
+      id: map.uuid,
+      cachedAdminMapValue: {
+        adminId: map.adminId,
+        modificationSecret: map.modificationSecret,
+        ttl: map.ttl ? new Date(map.ttl) : new Date(),
+        rootName: map.rootName,
+      }
+    }));
+    return mapEntries;
   }
 
   private async postMapToServer(): Promise<PrivateServerMap> {

@@ -32,6 +32,14 @@ export interface IMmpClientMap {
   createdAt: Date | null
 }
 
+export interface IMmpClientMapInfo {
+  uuid: string;
+  adminId: string | null;
+  modificationSecret: string | null;
+  ttl: Date | undefined;
+  rootName: string | null;
+}
+
 export interface IMmpClientPrivateMap {
   map: IMmpClientMap
   adminId: string | null

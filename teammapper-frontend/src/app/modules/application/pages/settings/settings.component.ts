@@ -76,6 +76,7 @@ export class SettingsComponent implements OnInit {
   public mapOptions: CachedMapOptions;
   public editMode: Observable<boolean>;
   public cachedAdminMapEntries: CachedAdminMapEntry[];
+  public ownedEntries: CachedAdminMapEntry[];
 
   constructor() {
     this.languages = SettingsService.LANGUAGES;
@@ -83,6 +84,7 @@ export class SettingsComponent implements OnInit {
     this.mapOptions = this.mmpService.getAdditionalMapOptions();
     this.editMode = this.settingsService.getEditModeObservable();
     this.cachedAdminMapEntries = [];
+    this.ownedEntries = [];
   }
 
   public async updateGeneralMapOptions() {
@@ -92,6 +94,7 @@ export class SettingsComponent implements OnInit {
   public async ngOnInit() {
     this.cachedAdminMapEntries =
       await this.settingsService.getCachedAdminMapEntries();
+    this.ownedEntries = await this.mapSyncService.fetchUserMapsFromServer()
   }
 
   public async updateMapOptions() {
