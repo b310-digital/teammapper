@@ -74,11 +74,7 @@ export default class MapsController {
 
     let newMap:MmpMap
 
-    if (pid) {
-      newMap = await this.mapsService.createEmptyMap(body.rootNode, pid)
-    } else {
-      newMap = await this.mapsService.createEmptyMap(body.rootNode)
-    }
+    newMap = await this.mapsService.createEmptyMap(body.rootNode, pid)
 
     const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
 
