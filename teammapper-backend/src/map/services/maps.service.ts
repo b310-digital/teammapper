@@ -75,7 +75,7 @@ export class MapsService {
   async getMapsOfUser(userId: string): Promise<IMmpClientMapInfo[]> {
     if (!userId) return []
     const mapsOfUser = await this.mapsRepository.find({
-      where: { owner: userId },
+      where: { owner_external_id: userId },
     })
 
     const mapsInfo: IMmpClientMapInfo[] = await Promise.all(
@@ -634,7 +634,7 @@ export class MapsService {
     rootNode?: IMmpClientNodeBasics,
     userId?: string
   ): Promise<MmpMap> {
-    const newMap: MmpMap = this.mapsRepository.create({ owner: userId })
+    const newMap: MmpMap = this.mapsRepository.create({ owner_external_id: userId })
     const savedNewMap: MmpMap = await this.mapsRepository.save(newMap)
 
     if (rootNode) {
