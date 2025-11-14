@@ -10,6 +10,7 @@ import {
   IMmpClientNodeBasics,
   IMmpClientMapDiff,
   IMmpClientSnapshotChanges,
+  IMmpClientMapInfo,
   ValidationErrorResponse,
 } from '../types'
 import {
@@ -69,6 +70,27 @@ export class MapsService {
     return await this.nodesRepository.findOne({
       where: { nodeMapId: mapId, root: true },
     })
+  }
+
+  async getMapsOfUser(userId: string): Promise<IMmpClientMapInfo[]> {
+    if (!userId) return []
+    const mapsOfUser = await this.mapsRepository.find({
+      where: { owner_external_id: userId },
+    })
+
+    const mapsInfo: IMmpClientMapInfo[] = await Promise.all(
+      mapsOfUser.map(async (map: MmpMap) => {
+        return {
+          uuid: map.id,
+          adminId: map.adminId,
+          modificationSecret: map.modificationSecret,
+          ttl: await this.getDeletedAt(map, configService.deleteAfterDays()),
+          rootName: (await this.findRootNode(map.id))?.name || null,
+        }
+      })
+    )
+
+    return mapsInfo
   }
 
   /**
@@ -608,15 +630,18 @@ export class MapsService {
     }
   }
 
-  async createEmptyMap(rootNode?: IMmpClientNodeBasics): Promise<MmpMap> {
-    const newMap: MmpMap = this.mapsRepository.create()
+  async createEmptyMap(
+    rootNode?: IMmpClientNodeBasics,
+    userId?: string
+  ): Promise<MmpMap> {
+    const newMap: MmpMap = this.mapsRepository.create({ owner_external_id: userId })
     const savedNewMap: MmpMap = await this.mapsRepository.save(newMap)
 
     if (rootNode) {
       await this.createRootNodeForMap(rootNode, savedNewMap.id)
     }
 
-    return newMap
+    return savedNewMap
   }
 
   /**

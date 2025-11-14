@@ -183,6 +183,8 @@
       "GENERAL": "Geral",
       "MAIN": "Principal",
       "MAP_LIST": "List of created maps",
+      "OWNED_MAPS": "Meus mapas mentais",
+      "LAST_MAPS": "Mapas mentais recentes",
       "MAP_OPTIONS": "Opções de mapa",
       "ROOT_NODE_NAME": "Nome do nó raiz",
       "NODE_NAME": "Nome do nó",

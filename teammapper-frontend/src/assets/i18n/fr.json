@@ -183,6 +183,8 @@
       "GENERAL": "Général",
       "MAIN": "Principale",
       "MAP_LIST": "List of created maps",
+      "OWNED_MAPS": "Mes cartes mentales",
+      "LAST_MAPS": "Cartes mentales récentes",
       "MAP_OPTIONS": "Options de carte",
       "ROOT_NODE_NAME": "Nom du noeud racine",
       "NODE_NAME": "Nom du noeud",

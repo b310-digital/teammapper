@@ -184,6 +184,8 @@
       "GENERAL": "Allgemein",
       "MAIN": "Grundeinstellungen",
       "MAP_LIST": "Liste erstellter Mindmaps",
+      "OWNED_MAPS": "Meine Mindmaps",
+      "LAST_MAPS": "Zuletzt geöffnete Mindmaps",
       "MAP_OPTIONS": "Mindmap Optionen",
       "NODE_NAME": "Bezeichnung von Knoten",
       "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",

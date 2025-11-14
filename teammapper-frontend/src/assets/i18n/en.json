@@ -184,6 +184,8 @@
       "GENERAL": "General",
       "MAIN": "Main",
       "MAP_LIST": "List of created maps",
+      "OWNED_MAPS": "My mindmaps",
+      "LAST_MAPS": "Recently opened mindmaps",
       "MAP_OPTIONS": "Map options",
       "ROOT_NODE_NAME": "Root node name",
       "NODE_NAME": "Node name",
