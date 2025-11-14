@@ -48,6 +48,7 @@ export default class MapsController {
   async findAll(@Req() req?: Request): Promise<IMmpClientMapInfo[]> {
     if (!req) return []
     const pid = (req as any).cookies?.person_id
+    if (!pid) return []
     const maps = await this.mapsService.getMapsOfUser(pid)
     return maps
   }
