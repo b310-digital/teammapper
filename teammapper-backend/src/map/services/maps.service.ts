@@ -634,18 +634,14 @@ export class MapsService {
     rootNode?: IMmpClientNodeBasics,
     userId?: string
   ): Promise<MmpMap> {
-    const newMap: MmpMap = this.mapsRepository.create()
+    const newMap: MmpMap = this.mapsRepository.create({ owner: userId })
     const savedNewMap: MmpMap = await this.mapsRepository.save(newMap)
 
     if (rootNode) {
       await this.createRootNodeForMap(rootNode, savedNewMap.id)
     }
 
-    if (userId) {
-      await this.mapsRepository.update(savedNewMap.id, { owner: userId })
-    }
-
-    return newMap
+    return savedNewMap
   }
 
   /**
