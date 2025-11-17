@@ -16,10 +16,10 @@ import {
   IMmpClientMapCreateRequest,
   IMmpClientMapInfo,
   IMmpClientPrivateMap,
+  Request
 } from '../types'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
-import { MmpMap } from '../entities/mmpMap.entity'
 
 @Controller('api/maps')
 export default class MapsController {
@@ -47,7 +47,7 @@ export default class MapsController {
   @Get()
   async findAll(@Req() req?: Request): Promise<IMmpClientMapInfo[]> {
     if (!req) return []
-    const pid = (req as any).cookies?.person_id
+    const pid = req.cookies?.person_id
     if (!pid) return []
     const maps = await this.mapsService.getMapsOfUser(pid)
     return maps
@@ -70,12 +70,10 @@ export default class MapsController {
   ): Promise<IMmpClientPrivateMap | undefined> {
     let pid: string | undefined = undefined
     if (req) {
-      pid = (req as any).cookies?.person_id
+      pid = req.cookies?.person_id
     }
 
-    let newMap:MmpMap
-
-    newMap = await this.mapsService.createEmptyMap(body.rootNode, pid)
+    const newMap = await this.mapsService.createEmptyMap(body.rootNode, pid)
 
     const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
 

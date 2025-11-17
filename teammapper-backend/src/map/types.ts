@@ -206,6 +206,13 @@ export interface SuccessResponse<T = unknown> {
   }
 }
 
+export interface Request {
+  cookies: {
+    access_token?: string;
+    person_id?: string;
+  }
+}
+
 export type OperationResponse<T = unknown> =
   | SuccessResponse<T>
   | ValidationErrorResponse
