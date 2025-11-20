@@ -47,7 +47,7 @@ export default class MapsController {
   @Get()
   async findAll(@Req() req?: Request): Promise<IMmpClientMapInfo[]> {
     if (!req) return []
-    const pid = req.cookies?.person_id
+    const pid = req.pid
     if (!pid) return []
     const maps = await this.mapsService.getMapsOfUser(pid)
     return maps
@@ -68,10 +68,7 @@ export default class MapsController {
     @Body() body: IMmpClientMapCreateRequest,
     @Req() req?: Request
   ): Promise<IMmpClientPrivateMap | undefined> {
-    let pid: string | undefined = undefined
-    if (req) {
-      pid = req.cookies?.person_id
-    }
+    const pid = req?.pid
 
     const newMap = await this.mapsService.createEmptyMap(body.rootNode, pid)
 

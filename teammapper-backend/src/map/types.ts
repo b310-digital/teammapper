@@ -211,6 +211,7 @@ export interface Request {
     access_token?: string;
     person_id?: string;
   }
+  pid: string | undefined;
 }
 
 export type OperationResponse<T = unknown> =
