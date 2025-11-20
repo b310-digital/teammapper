@@ -28,7 +28,7 @@ export class MmpMap {
   adminId: string | null
 
   @Column({ type: 'varchar', nullable: true })
-  owner_external_id?: string | null
+  ownerExternalId?: string | null
 
   @Column({ type: 'uuid', nullable: true, default: null })
   @Generated('uuid')

@@ -539,6 +539,18 @@ describe('MapsService', () => {
         expect.stringContaining('Failed to create root node')
       )
     })
+    it('creates a map with a specified userId as owner', async () => {
+      const testUserId = 'test-person-id'
+
+      const newMap = await mapsService.createEmptyMap(undefined, testUserId)
+
+      expect(newMap.ownerExternalId).toBe(testUserId)
+
+      const savedMap = await mapsRepo.findOne({ where: { id: newMap.id } })
+
+      expect(savedMap).toBeDefined()
+      expect(savedMap?.ownerExternalId).toBe(testUserId)
+    })
   })
 
   describe('addNode - duplicate handling', () => {
@@ -923,6 +935,29 @@ describe('MapsService', () => {
         // updateNode returns CONSTRAINT_VIOLATION for invalid parent
         expect(result.code).toBe('CONSTRAINT_VIOLATION')
       }
+    })
+  })
+
+  describe('getMapsOfUser', () => {
+    it('returns [] if no userId is provided', async () => {
+      const result = await mapsService.getMapsOfUser('')
+      expect(result).toEqual([])
+    })
+
+    it('returns only maps belonging to the given userId', async () => {
+      const user1 = 'user1'
+      const user2 = 'user2'
+
+      const map1 = await mapsRepo.save({ ownerExternalId: user1 })
+      const map2 = await mapsRepo.save({ ownerExternalId: user1 })
+      await mapsRepo.save({ ownerExternalId: user2 })
+
+      const maps = await mapsService.getMapsOfUser(user1)
+
+      expect(maps).toHaveLength(2)
+      expect(maps.map((m) => m.uuid)).toEqual(
+        expect.arrayContaining([map1.id, map2.id])
+      )
     })
   })
 })

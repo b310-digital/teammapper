@@ -3,7 +3,7 @@ import MapsController from './maps.controller'
 import { MapsService } from '../services/maps.service'
 import { NotFoundException } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
-import { IMmpClientMap, IMmpClientPrivateMap } from '../types'
+import { IMmpClientMap, IMmpClientPrivateMap, Request } from '../types'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
   createClientRootNode,
@@ -30,6 +30,7 @@ describe('MapsController', () => {
             exportMapToClient: jest.fn(),
             deleteMap: jest.fn(),
             updateLastAccessed: jest.fn(),
+            getMapsOfUser: jest.fn(),
           },
         },
       ],
@@ -116,6 +117,25 @@ describe('MapsController', () => {
     })
   })
 
+  describe('findAll', () => {
+    it('should return user maps when pid is provided', async () => {
+      const pid = 'test-person-id'
+
+      await mapsController.findAll({ pid } as Request)
+      expect(mapsService.getMapsOfUser).toHaveBeenCalledWith(pid)
+    })
+
+    it('should return an empty array when pid is missing', async () => {
+      const response = await mapsController.findAll({} as Request)
+      expect(response).toEqual([])
+    })
+
+    it('should return an empty array when req is undefined', async () => {
+      const response = await mapsController.findAll(undefined)
+      expect(response).toEqual([])
+    })
+  })
+
   describe('delete', () => {
     it('should delete an existing map successfully', async () => {
       const existingMap = createMmpMap()
@@ -171,7 +191,37 @@ describe('MapsController', () => {
         rootNode,
       })
 
-      expect(mapsService.createEmptyMap).toHaveBeenCalledWith(rootNode)
+      expect(mapsService.createEmptyMap).toHaveBeenCalledWith(
+        rootNode,
+        undefined
+      )
+      expect(response).toEqual(result)
+    })
+
+    it('should create a new map with a specified pid', async () => {
+      const pid = 'test-person-id'
+
+      const newMap: MmpMap = createMmpMap({ ownerExternalId: pid })
+      const exportedMap: IMmpClientMap = createMmpClientMap({ uuid: newMap.id })
+
+      const result: IMmpClientPrivateMap = {
+        map: exportedMap,
+        adminId: 'admin-id',
+        modificationSecret: 'modification-secret',
+      }
+
+      const rootNode = createClientRootNode()
+
+      jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValueOnce(newMap)
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+
+      const response = await mapsController.create({ rootNode }, {
+        pid,
+      } as Request)
+
+      expect(mapsService.createEmptyMap).toHaveBeenCalledWith(rootNode, pid)
       expect(response).toEqual(result)
     })
   })
