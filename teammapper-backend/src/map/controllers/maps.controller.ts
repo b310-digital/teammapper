@@ -16,7 +16,7 @@ import {
   IMmpClientMapCreateRequest,
   IMmpClientMapInfo,
   IMmpClientPrivateMap,
-  Request
+  Request,
 } from '../types'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'

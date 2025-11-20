@@ -634,7 +634,9 @@ export class MapsService {
     rootNode?: IMmpClientNodeBasics,
     userId?: string
   ): Promise<MmpMap> {
-    const newMap: MmpMap = this.mapsRepository.create({ owner_external_id: userId })
+    const newMap: MmpMap = this.mapsRepository.create({
+      owner_external_id: userId,
+    })
     const savedNewMap: MmpMap = await this.mapsRepository.save(newMap)
 
     if (rootNode) {

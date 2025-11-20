@@ -6,9 +6,8 @@ import { MapModule } from './map/map.module'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { join } from 'path'
 import { SettingsModule } from './settings/settings.module'
-import { APP_GUARD } from '@nestjs/core';
-import { PersonIdGuard } from './auth/person-id.guard';
-
+import { APP_GUARD } from '@nestjs/core'
+import { PersonIdGuard } from './auth/person-id.guard'
 
 @Module({
   imports: [

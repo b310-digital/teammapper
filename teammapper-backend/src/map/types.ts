@@ -208,10 +208,10 @@ export interface SuccessResponse<T = unknown> {
 
 export interface Request {
   cookies: {
-    access_token?: string;
-    person_id?: string;
+    access_token?: string
+    person_id?: string
   }
-  pid: string | undefined;
+  pid: string | undefined
 }
 
 export type OperationResponse<T = unknown> =
