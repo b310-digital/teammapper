@@ -13,9 +13,6 @@ export class PersonIdGuard implements CanActivate {
     const secret = process.env.JWT_SECRET;
     const cookie = req.cookies?.person_id;
 
-    console.log('PersonIdGuard: Verifying person_id cookie:', cookie);
-    console.log('Secret used:', secret)
-
     if (!cookie || !secret) {
       req.pid = undefined;
       return true;
