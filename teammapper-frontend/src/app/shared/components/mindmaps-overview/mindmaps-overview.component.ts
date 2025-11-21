@@ -1,9 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CachedAdminMapEntry } from '../../models/cached-map.model';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { Router } from '@angular/router';
-import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
+import {
+  MatCard,
+  MatCardContent,
+  MatCardHeader,
+  MatCardTitle,
+} from '@angular/material/card';
 import { MatList, MatListItem } from '@angular/material/list';
 import { MatLine } from '@angular/material/core';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -11,8 +16,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'teammapper-mindmaps-overview',
-  templateUrl: './mindmaps-overview.html',
-  styleUrl: './mindmaps-overview.scss',
+  templateUrl: './mindmaps-overview.component.html',
+  styleUrl: './mindmaps-overview.component.scss',
   imports: [
     MatCard,
     MatCardHeader,
@@ -23,10 +28,10 @@ import { TranslatePipe } from '@ngx-translate/core';
     MatLine,
     DatePipe,
     TranslatePipe,
-    CommonModule
+    CommonModule,
   ],
 })
-export class MindmapsOverview {
+export class MindmapsOverview implements OnInit {
   private settingsService = inject(SettingsService);
   private mapSyncService = inject(MapSyncService);
   private router = inject(Router);
