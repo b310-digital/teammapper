@@ -90,7 +90,9 @@ export class MapsService {
       })
     )
 
-    return mapsInfo
+    mapsInfo.sort((a, b) => (b.ttl?.getTime() ?? 0) - (a.ttl?.getTime() ?? 0))
+
+    return mapsInfo.slice(0, 20)
   }
 
   /**
