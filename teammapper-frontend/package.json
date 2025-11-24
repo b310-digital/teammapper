@@ -62,12 +62,12 @@
     "@ngx-translate/http-loader": "^16.0.1",
     "@teammapper/mermaid-mindmap-parser": "workspace:^",
     "@types/uuid": "^10.0.0",
-    "ai": "^5.0.80",
+    "ai": "^5.0.100",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.9.0",
     "deep-object-diff": "^1.1.9",
     "dompurify": "3.3.0",
-    "jspdf": "^3.0.3",
+    "jspdf": "^3.0.4",
     "localforage": "1.10.0",
     "ngx-color-picker": "^17.0.0",
     "ngx-toastr": "^19.1.0",
@@ -76,7 +76,7 @@
     "socket.io-client": "~4.8.1",
     "tslib": "^2.8.1",
     "uuid": "11.1.0",
-    "zone.js": "^0.15.1"
+    "zone.js": "^0.16.0"
   },
   "devDependencies": {
     "@angular-builders/jest": "^20.0.0",
