@@ -120,10 +120,11 @@ export class DialogPictogramsComponent {
   async onCardClick(event: Event) {
     const customEvent = event as CustomEvent<OerCardClickEvent>;
     const oer = customEvent.detail.oer;
-    const url = oer.url;
-    const blob = await (await fetch(url)).blob();
+    const url = oer?.img_proxy?.small;
+    const blob = url ? await (await fetch(url)).blob() : null;
     if (blob) {
       this.mmpService.addNodeImage(await this.utilsService.blobToBase64(blob));
+      this.onPictogramAdd.emit();
     } else {
       alert(`OER: ${oer.amb_metadata?.name || 'Unknown'}\nNo URL available`);
     }

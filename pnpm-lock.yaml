@@ -244,11 +244,11 @@ importers:
         specifier: 20.3.7
         version: 20.3.7(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.3.7(@angular/animations@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(@angular/common@20.3.7(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)
       '@edufeed-org/oer-finder-api-client':
-        specifier: 0.0.1
-        version: 0.0.1
-      '@edufeed-org/oer-finder-plugin':
         specifier: 0.0.2
         version: 0.0.2
+      '@edufeed-org/oer-finder-plugin':
+        specifier: 0.0.3
+        version: 0.0.3
       '@fortawesome/angular-fontawesome':
         specifier: ^2.0.1
         version: 2.0.1(@angular/core@20.3.7(@angular/compiler@20.3.7)(rxjs@7.8.2)(zone.js@0.15.1))
@@ -1545,11 +1545,11 @@ packages:
     resolution: {integrity: sha512-4B4OijXeVNOPZlYA2oEwWOTkzyltLao+xbotHQeqN++Rv27Y6s818+n2Qkp8q+Fxhn0t/5lA5X1Mxktud8eayQ==}
     engines: {node: '>=14.17.0'}
 
-  '@edufeed-org/oer-finder-api-client@0.0.1':
-    resolution: {integrity: sha512-yE9Xyi6//sCO+VZCxow1s56uB1CTX2GbYpYSrz8VghYdn3rMUod7pTv+BoL2OmYMvPgd6f4JN1fPQv/b2rTs+g==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-api-client/0.0.1/993e7ec18322b27c5afc606772a4501082bd4dc9}
+  '@edufeed-org/oer-finder-api-client@0.0.2':
+    resolution: {integrity: sha512-rze9lhbVzELtQoOyQPChVJW5YU4ZOqen8fLiduJ2Y8041NNud3ohVFvi0bkQgjr1888Y5dyr9T0iGFRoVodqmQ==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-api-client/0.0.2/62eb2ae5ba5138205bd8a01567a4cad4a5eb9cf7}
 
-  '@edufeed-org/oer-finder-plugin@0.0.2':
-    resolution: {integrity: sha512-urrZGrLT6mqjtirzMdGHhGav2qZVcwfL+ENyRz7oQ48Whi9JN5dDuUGC+2geSLvn/fhHD8mUb/4vG9p8hjDH5A==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-plugin/0.0.2/7591f887fca60535986c6b935d3f83f3ee00314f}
+  '@edufeed-org/oer-finder-plugin@0.0.3':
+    resolution: {integrity: sha512-LuJvM5ZOgxKRxI0Fh8IWntQk0aE4oofQJRgndVQcUR8L1+n+HlGIA3WAXOvb4zsQQHQIqxhrOorZ+n6kxh02Yg==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-plugin/0.0.3/135b7722d1a52ebf1d36d02317f720e99bcd9473}
 
   '@egjs/hammerjs@2.0.17':
     resolution: {integrity: sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==}
@@ -10961,13 +10961,13 @@ snapshots:
 
   '@discoveryjs/json-ext@0.6.3': {}
 
-  '@edufeed-org/oer-finder-api-client@0.0.1':
+  '@edufeed-org/oer-finder-api-client@0.0.2':
     dependencies:
       openapi-fetch: 0.13.8
 
-  '@edufeed-org/oer-finder-plugin@0.0.2':
+  '@edufeed-org/oer-finder-plugin@0.0.3':
     dependencies:
-      '@edufeed-org/oer-finder-api-client': 0.0.1
+      '@edufeed-org/oer-finder-api-client': 0.0.2
       '@lit/context': 1.1.6
       lit: 3.3.1
 
