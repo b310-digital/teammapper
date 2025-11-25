@@ -2,7 +2,7 @@
 <mat-dialog-content>
       <oer-theme-provider id="custom-theme-provider">
       <div class="demo-section">
-        <oer-search id="oer-search-custom" (search-results)="onSearchResults($event)"  (search-error)="onSearchError($event)" (search-cleared)="onSearchCleared($event)" api-url="https://oer-finder-plugin.osc-fr1.scalingo.io" language="de" page-size="5"></oer-search>
+        <oer-search id="oer-search-custom" (search-results)="onSearchResults($event)"  (search-error)="onSearchError($event)" (search-cleared)="onSearchCleared($event)" api-url="http://localhost:3001" language="de" page-size="5"></oer-search>
         <oer-list #listElement id="oer-list-custom" language="de" (card-click)="onCardClick($event)"></oer-list>
       </div>
     </oer-theme-provider>
