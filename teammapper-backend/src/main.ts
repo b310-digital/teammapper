@@ -7,6 +7,7 @@ import { Logger } from '@nestjs/common'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { join } from 'path'
 import cookieParser from 'cookie-parser'
+import { PersonIdMiddleware } from './auth/person-id.middleware'
 
 async function bootstrap() {
   const logger = new Logger('Main Process')
@@ -30,6 +31,8 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter())
 
   app.use(cookieParser())
+
+  app.use(new PersonIdMiddleware().use)
 
   app.use(
     '/arasaac/api',

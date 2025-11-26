@@ -6,8 +6,6 @@ import { MapModule } from './map/map.module'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { join } from 'path'
 import { SettingsModule } from './settings/settings.module'
-import { APP_GUARD } from '@nestjs/core'
-import { PersonIdGuard } from './auth/person-id.guard'
 
 @Module({
   imports: [
@@ -19,12 +17,6 @@ import { PersonIdGuard } from './auth/person-id.guard'
       rootPath: join(__dirname, '..', 'client', 'browser'),
       exclude: ['/assets/'],
     }),
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: PersonIdGuard,
-    },
   ],
 })
 export default class AppModule {}
