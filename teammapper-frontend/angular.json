@@ -77,7 +77,7 @@
           "options": {
             "proxyConfig": "src/proxy.conf.json",
             "buildTarget": "teammapper:build",
-            "allowedHosts": ["localhost", "127.0.0.1", "app", ".app"]
+            "allowedHosts": ["localhost", "127.0.0.1", "app", ".app", "host.docker.internal"]
           },
           "configurations": {
             "production": {
