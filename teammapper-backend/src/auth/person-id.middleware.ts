@@ -19,8 +19,6 @@ export class PersonIdMiddleware implements NestMiddleware {
       } catch {
         console.warn('Invalid person_id cookie')
       }
-    } else {
-      console.warn('No JWT_SECRET or person_id cookie set')
     }
 
     next()

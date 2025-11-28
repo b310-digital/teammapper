@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { MiddlewareConsumer, Module } from '@nestjs/common'
 import { CacheModule } from '@nestjs/cache-manager'
 import { ScheduleModule } from '@nestjs/schedule'
 import { TypeOrmModule } from '@nestjs/typeorm'
@@ -10,6 +10,8 @@ import { MapsService } from './services/maps.service'
 import { TasksService } from './services/tasks.service'
 import MermaidController from './controllers/mermaid.controller'
 import { AiService } from './services/ai.service'
+import cookieParser from 'cookie-parser'
+import { PersonIdMiddleware } from '../auth/person-id.middleware'
 
 @Module({
   imports: [
@@ -21,4 +23,10 @@ import { AiService } from './services/ai.service'
   providers: [MapsService, MapsGateway, TasksService, AiService],
   exports: [MapsService],
 })
-export class MapModule {}
+export class MapModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(cookieParser(), new PersonIdMiddleware().use)
+      .forRoutes('api/maps')
+  }
+}

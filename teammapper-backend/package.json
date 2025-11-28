@@ -51,7 +51,6 @@
     "class-validator": "^0.14.2",
     "deepmerge": "^4.3.1",
     "cookie-parser": "^1.4.7",
-    "dotenv": "17.2.3",
     "http-proxy-middleware": "3.0.5",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
