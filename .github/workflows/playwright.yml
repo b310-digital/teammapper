@@ -53,5 +53,5 @@ jobs:
       if: ${{ !cancelled() }}
       with:
         name: playwright
-        path: playwright
+        path: teammapper-frontend/playwright
         retention-days: 7
