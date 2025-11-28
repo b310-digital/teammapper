@@ -1,55 +1,11 @@
 <h2 mat-dialog-title>{{ 'MODALS.PICTOGRAMS.TITLE' | translate }}</h2>
 <mat-dialog-content>
-  <mat-form-field>
-    <mat-label>{{
-      'MODALS.PICTOGRAMS.FORM_INPUT_LABEL_SEARCH' | translate
-    }}</mat-label>
-    <input matInput [(ngModel)]="searchTerm" required />
-    <button matSuffix mat-button (click)="search()">
-      <mat-icon>search</mat-icon>
-    </button>
-  </mat-form-field>
-  <br />
-  <ng-container *ngIf="cardLayout | async as layout">
-    <mat-grid-list rowHeight="2:1" [cols]="layout.columns">
-      <div *ngIf="!pictos">{{ 'MODALS.PICTOGRAMS.EMPTY' | translate }}</div>
-      @for (picto of pictos; track picto) {
-        <mat-grid-tile
-          [colspan]="layout.miniCard.cols"
-          [rowspan]="layout.miniCard.rows"
-          class="image-wrapper">
-          <img
-            src="{{ getImageUrlOfId(picto._id) }}"
-            (click)="getImageFileOfId(picto._id)"
-            (keydown.enter)="getImageFileOfId(picto._id)"
-            width="150"
-            height="150"
-            alt="Pictogram"
-            role="img" />
-        </mat-grid-tile>
-      }
-    </mat-grid-list>
-  </ng-container>
-  <mat-divider class="my-1"></mat-divider>
-  <span class="text-sm">
-    {{ 'MODALS.PICTOGRAMS.TERMS_TEXT.0' | translate }}
-    <a href="{{ 'MODALS.PICTOGRAMS.TERMS_TEXT.1' | translate }}">{{
-      'MODALS.PICTOGRAMS.TERMS_TEXT.1' | translate
-    }}</a>
-    {{ 'MODALS.PICTOGRAMS.TERMS_TEXT.2' | translate }}
-    <a href="{{ 'MODALS.PICTOGRAMS.TERMS_TEXT.4' | translate }}">{{
-      'MODALS.PICTOGRAMS.TERMS_TEXT.3' | translate
-    }}</a>
-    {{ 'MODALS.PICTOGRAMS.TERMS_TEXT.5' | translate }}
-  </span>
-  <br />
-  <a href="https://arasaac.org/"
-    ><img
-      src="assets/images/logo_ARASAAC.png"
-      width="200"
-      height="50"
-      alt="ARASAAC Logo" /></a
-  ><br />
+      <oer-theme-provider id="custom-theme-provider">
+      <div class="demo-section">
+        <oer-search id="oer-search-custom" (search-results)="onSearchResults($event)"  (search-error)="onSearchError($event)" (search-cleared)="onSearchCleared($event)" api-url="http://localhost:3001" language="de" page-size="5"></oer-search>
+        <oer-list #listElement id="oer-list-custom" language="de" (card-click)="onCardClick($event)"></oer-list>
+      </div>
+    </oer-theme-provider>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-raised-button [mat-dialog-close]="true">

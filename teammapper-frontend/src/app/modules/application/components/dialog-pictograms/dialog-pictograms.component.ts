@@ -1,4 +1,12 @@
-import { Component, EventEmitter, HostListener, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  inject,
+  CUSTOM_ELEMENTS_SCHEMA,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import {
@@ -30,10 +38,19 @@ import { MatGridList, MatGridTile } from '@angular/material/grid-list';
 import { MatDivider } from '@angular/material/divider';
 import { TranslatePipe } from '@ngx-translate/core';
 
+import type {
+  OerItem,
+  OerSearchResultEvent,
+  OerCardClickEvent,
+} from '@edufeed-org/oer-finder-plugin';
+// Import the OER Finder Plugin to register all web components
+import '@edufeed-org/oer-finder-plugin';
+
 @Component({
   selector: 'teammapper-dialog-pictograms',
   templateUrl: 'dialog-pictograms.component.html',
   styleUrls: ['./dialog-pictograms.component.scss'],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     MatDialogTitle,
     CdkScrollable,
@@ -61,6 +78,10 @@ export class DialogPictogramsComponent {
   private mmpService = inject(MmpService);
   private utilsService = inject(UtilsService);
 
+  @ViewChild('listElement', { static: false }) listElement!: ElementRef;
+
+  public oers: OerItem[] = [];
+  public loading = true;
   public pictos: IPictogramResponse[];
   public onPictogramAdd = new EventEmitter();
   public searchTerm = '';
@@ -94,6 +115,46 @@ export class DialogPictogramsComponent {
     this.pictoService.getPictos(this.searchTerm).subscribe(pictos => {
       this.pictos = pictos;
     });
+  }
+
+  async onCardClick(event: Event) {
+    const customEvent = event as CustomEvent<OerCardClickEvent>;
+    const oer = customEvent.detail.oer;
+    const url = oer?.img_proxy?.small;
+    const blob = url ? await (await fetch(url)).blob() : null;
+    if (blob) {
+      this.mmpService.addNodeImage(await this.utilsService.blobToBase64(blob));
+      this.onPictogramAdd.emit();
+    } else {
+      alert(`OER: ${oer.amb_metadata?.name || 'Unknown'}\nNo URL available`);
+    }
+  }
+
+  onSearchResults(event: Event) {
+    const customEvent = event as CustomEvent<OerSearchResultEvent>;
+    const { data, meta } = customEvent.detail;
+
+    const listEl = this.listElement.nativeElement;
+    listEl.oers = data;
+  }
+
+  onSearchError(event: Event) {
+    const customEvent = event as CustomEvent<{ error: string }>;
+    const listEl = this.listElement.nativeElement;
+    listEl.oers = [];
+    listEl.loading = false;
+    listEl.error = customEvent.detail.error;
+    listEl.showPagination = false;
+    listEl.metadata = null;
+  }
+
+  onSearchCleared(_event: Event) {
+    const listEl = this.listElement.nativeElement;
+    listEl.oers = [];
+    listEl.loading = false;
+    listEl.error = null;
+    listEl.showPagination = false;
+    listEl.metadata = null;
   }
 
   async getImageFileOfId(id: number) {

@@ -1,6 +1,6 @@
 FROM node:22-alpine3.19 AS base
 
-RUN apk add --no-cache postgresql-client make g++ python3 py3-pip curl && npm install -g pnpm
+RUN apk add --no-cache postgresql-client make g++ python3 py3-pip curl git && npm install -g pnpm
 
 # Ensuring that all npm packages and commands are executed with a non-root user
 USER node
