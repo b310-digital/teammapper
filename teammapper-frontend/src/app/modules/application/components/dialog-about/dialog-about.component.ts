@@ -5,7 +5,6 @@ import { MapProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
-import { environment } from 'src/environments/environment';
 import { Router } from '@angular/router';
 import {
   MatDialogRef,
@@ -46,14 +45,15 @@ export class DialogAboutComponent {
   private router = inject(Router);
 
   public faGithub = faGithub;
-  public version: string;
-  public applicationName: string;
+  public version = '';
+  public applicationName = 'TeamMapper';
   public map: MapProperties;
   public mapAdminId: Promise<string>;
 
   constructor() {
-    this.version = environment.version;
-    this.applicationName = environment.name;
+    const settings = this.settingsService.getCachedSystemSettings();
+    this.version = settings.info?.version || this.version;
+    this.applicationName = settings.info?.name || this.applicationName;
     this.map = this.mapSyncService.getAttachedMap().cachedMap;
     this.mapAdminId = this.getMapAdminId();
   }
@@ -76,7 +76,7 @@ export class DialogAboutComponent {
   }
 
   language(): string {
-    return this.settingsService.getCachedSettings().general.language;
+    return this.settingsService.getCachedUserSettings().general.language;
   }
 
   async getMapAdminId(): Promise<string> {

@@ -1,5 +1,5 @@
-
 # TeamMapper
+
 ![TeamMapper Screenshot](docs/teammapper-logo.png "TeamMapper Logo")
 
 Mindmapping made simple: Host and create your own mindmaps. Share your mindmap sessions with your team and collaborate on mindmaps.
@@ -11,7 +11,7 @@ TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinu
 ## Features:
 
 -   **Creation**: Host and create your own mindmaps
--   **Customization**: Add images, pictograms*, colors, font properties and links to nodes
+-   **Customization**: Add images, pictograms\*, colors, font properties and links to nodes
 -   **Collaboration**: Share your mindmap with friends and collegues, using either a view-only or modification invite!
 -   **Interoperability**: Import and export functionality (JSON, Mermaid, SVG, PDF, PNG...)
 -   **Shareability**: Use a QR Code or URL to share your maps
@@ -128,6 +128,7 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
     ```
 
 ### Production
+
 -   Duplicate and rename `.env.default`
 
     ```bash
@@ -162,13 +163,15 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
     ```bash
     docker compose --file docker-compose-prod.yml --env-file .env.prod down -v
     ```
-    
+
     If you want to run prod migrations (again):
 
     ```bash
     docker compose exec app_prod pnpm --filter teammapper-backend run prod:typeorm:migrate
     ```
+
 #### Postgres and SSL
+
 If needed, you can make the connection to Postgres more secure by using a SSL connection.
 
 -   Generate self-signed ssl sertificate for the postgres server on the host machine; the generated files are mounted into the docker container
@@ -206,10 +209,32 @@ Example of running sql via typeorm:
 docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend exec typeorm query "select * from mmp_node" --dataSource ./dist/data-source.js
 ```
 
-### Frontend feature flags
-See file /teammapper-frontend/src/envrionments/environment.prod.ts to configure feature flags:
-- `featureFlagPictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time!
-- `featureFlagAI`: Disables/Enables AI functionality like generating mindmaps with AI
+### Default Settings
+
+The following files contain configurations for default settings:
+
+1. `/teammapper-backend/config/settings.dev.json`
+
+    - Contains the default values for development mode
+
+2. `/teammapper-backend/config/settings.prod.json`
+
+    - Contains the default values for production mode
+    - Changes here require rebuilding the Docker image
+
+3. `/config/settings.override.json`
+    - Values defined in `settings.override.json` override the values in `settings.prod.json`
+    - Values can be adjusted at runtime
+
+The settings are conceptually divided into:
+
+-   **System Settings**: Settings provided by the application, which are not cached by the frontend and can only be adjusted in the backend
+-   **User Settings**: values configured by the user in the frontend, which persist separately and override system defaults where applicable.
+
+The settings configuration includes the following feature flags:
+
+-   `featureFlagPictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time!
+-   `featureFlagAI`: Disables/Enables AI functionality like generating mindmaps with AI
 
 ### Further details
 
@@ -238,8 +263,12 @@ Logos and text provided with courtesy of kits.
 
 ## Acknowledgements
 
--   *Pictograms author: Sergio Palao. Origin: ARASAAC (http://www.arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain)
+-   \*Pictograms author: Sergio Palao. Origin: ARASAAC (http://www.arasaac.org). License: CC (BY-NC-SA). Owner: Government of Aragon (Spain)
 -   Mindmapp: https://github.com/cedoor/mindmapp (discontinued)
 -   mmp: https://github.com/cedoor/mmp (discontinued)
 -   D3: https://github.com/d3/d3
 -   DomPurify: https://github.com/cure53/DOMPurify
+
+```
+
+```

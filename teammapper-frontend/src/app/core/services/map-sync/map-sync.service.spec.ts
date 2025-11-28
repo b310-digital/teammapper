@@ -17,7 +17,7 @@ import {
 import { ExportNodeProperties } from '@mmp/map/types';
 import { createMockUtilsService } from '../../../../test/mocks/utils-service.mock';
 import { Observable } from 'rxjs';
-import { Settings } from '../../../shared/models/settings.model';
+import { UserSettings } from '../../../shared/models/settings.model';
 
 // Mock the NodePropertyMapping module
 jest.mock('@mmp/index', () => ({
@@ -150,7 +150,7 @@ describe('MapSyncService', () => {
     } as unknown as jest.Mocked<StorageService>;
 
     settingsService = {
-      getCachedSettings: jest.fn(),
+      getCachedUserSettings: jest.fn(),
     } as unknown as jest.Mocked<SettingsService>;
 
     toastService = {
@@ -179,9 +179,9 @@ describe('MapSyncService', () => {
       createMockNode({ id: 'root', name: 'Root', isRoot: true })
     );
     mmpService.selectNode.mockReturnValue(mockNode);
-    settingsService.getCachedSettings.mockReturnValue({
+    settingsService.getCachedUserSettings.mockReturnValue({
       mapOptions: { rootNode: 'Root' },
-    } as unknown as Settings);
+    } as unknown as UserSettings);
 
     TestBed.configureTestingModule({
       providers: [

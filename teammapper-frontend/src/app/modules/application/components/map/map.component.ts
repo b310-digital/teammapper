@@ -28,7 +28,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private mapSyncServiceSubscription: Subscription;
 
   public async ngAfterViewInit() {
-    const settings = this.settingsService.getCachedSettings();
+    const settings = this.settingsService.getCachedUserSettings();
 
     this.mapSyncServiceSubscription = this.mapSyncService
       .getAttachedMapObservable()
