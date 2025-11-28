@@ -17,8 +17,6 @@ export interface LLMProps {
   rpm?: string
 }
 
-require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-imports
-
 class ConfigService {
   private env: EnvProps
 
