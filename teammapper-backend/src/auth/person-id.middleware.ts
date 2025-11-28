@@ -8,8 +8,6 @@ export class PersonIdMiddleware implements NestMiddleware {
     const secret = process.env.JWT_SECRET
     const cookie = req.cookies?.person_id
 
-    console.warn('Secret and person_id cookie: ' + secret + ' / ' + cookie)
-
     req.pid = undefined
 
     if (secret && cookie) {
@@ -18,7 +16,6 @@ export class PersonIdMiddleware implements NestMiddleware {
           algorithms: ['HS256'],
         }) as { pid: string }
         req.pid = decoded.pid
-        console.log('Decoded person_id: ' + req.pid)
       } catch {
         console.warn('Invalid person_id cookie')
       }
