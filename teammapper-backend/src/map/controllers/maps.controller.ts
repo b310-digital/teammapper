@@ -1,5 +1,6 @@
 import {
   Body,
+  Req,
   Controller,
   Get,
   Delete,
@@ -13,7 +14,9 @@ import {
   IMmpClientDeleteRequest,
   IMmpClientMap,
   IMmpClientMapCreateRequest,
+  IMmpClientMapInfo,
   IMmpClientPrivateMap,
+  Request,
 } from '../types'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
@@ -41,6 +44,15 @@ export default class MapsController {
     }
   }
 
+  @Get()
+  async findAll(@Req() req?: Request): Promise<IMmpClientMapInfo[]> {
+    if (!req) return []
+    const pid = req.pid
+    if (!pid) return []
+    const maps = await this.mapsService.getMapsOfUser(pid)
+    return maps
+  }
+
   @Delete(':id')
   async delete(
     @Param('id') mapId: string,
@@ -53,9 +65,13 @@ export default class MapsController {
 
   @Post()
   async create(
-    @Body() body: IMmpClientMapCreateRequest
+    @Body() body: IMmpClientMapCreateRequest,
+    @Req() req?: Request
   ): Promise<IMmpClientPrivateMap | undefined> {
-    const newMap = await this.mapsService.createEmptyMap(body.rootNode)
+    const pid = req?.pid
+
+    const newMap = await this.mapsService.createEmptyMap(body.rootNode, pid)
+
     const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
 
     if (exportedMap) {
