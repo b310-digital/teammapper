@@ -5,7 +5,7 @@ import deepmerge from 'deepmerge'
 
 @Injectable()
 export class SettingsService {
-  private readonly mode = process.env.MODE == 'DEV' ? 'dev' : 'prod'
+  private readonly mode = process.env.MODE === 'PROD' ? 'prod' : 'dev'
   private readonly defaultSettingsPath = path.join(
     __dirname,
     '../..',
