@@ -118,7 +118,7 @@
     "@nx/nx-darwin-arm64": "21.2.0",
     "@nx/nx-darwin-x64": "21.6.5",
     "@nx/nx-linux-x64-gnu": "19.8.2",
-    "@nx/nx-win32-x64-msvc": "19.8.4"
+    "@nx/nx-win32-x64-msvc": "22.1.3"
   },
   "workspaces": [
     "packages/*"
