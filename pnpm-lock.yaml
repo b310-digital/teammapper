@@ -15,8 +15,8 @@ importers:
   teammapper-backend:
     dependencies:
       '@ai-sdk/openai':
-        specifier: 2.0.74
-        version: 2.0.74(zod@3.25.76)
+        specifier: 2.0.75
+        version: 2.0.75(zod@3.25.76)
       '@ai-sdk/openai-compatible':
         specifier: 1.0.28
         version: 1.0.28(zod@3.25.76)
@@ -477,8 +477,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/openai@2.0.74':
-    resolution: {integrity: sha512-vvsL7rGoBEyQIePs630p31ebLeF+xxwLOrRKeIArHko8w7Wh9Kj3wL4Ns+PCzrEpAij31OKKDcxLQ1dSIg/qMw==}
+  '@ai-sdk/openai@2.0.75':
+    resolution: {integrity: sha512-ThDHg1+Jes7S0AOXa01EyLBSzZiZwzB5do9vAlufNkoiRHGTH1BmoShrCyci/TUsg4ky1HwbK4hPK+Z0isiE6g==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -9075,7 +9075,7 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.18(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/openai@2.0.74(zod@3.25.76)':
+  '@ai-sdk/openai@2.0.75(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.18(zod@3.25.76)
