@@ -91,7 +91,7 @@
     "eslint-plugin-typeorm": "0.0.19",
     "globals": "^16.5.0",
     "jest": "30.2.0",
-    "prettier": "^3.7.1",
+    "prettier": "^3.7.3",
     "socket.io-client": "^4.8.1",
     "supertest": "^7.1.4",
     "ts-jest": "29.4.5",
