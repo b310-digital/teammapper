@@ -441,8 +441,8 @@ importers:
         specifier: 19.8.2
         version: 19.8.2
       '@nx/nx-win32-x64-msvc':
-        specifier: 19.8.4
-        version: 19.8.4
+        specifier: 22.1.3
+        version: 22.1.3
 
   teammapper-frontend/packages/mermaid-mindmap-parser:
     dependencies:
@@ -3029,9 +3029,8 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@nx/nx-win32-x64-msvc@19.8.4':
-    resolution: {integrity: sha512-//JntLrN3L7WL/WgP3D0FE34caYTPcG/GIMBguC9w7YDyTlEikLgLbobjdCPz+2f9OWGvIZbJgGmtHNjnETM/g==}
-    engines: {node: '>= 10'}
+  '@nx/nx-win32-x64-msvc@22.1.3':
+    resolution: {integrity: sha512-G90Sp409ypeOUbmj6nmEbdy043KJUKaZ7pffxmM6i63yEe2F2WdmMgdi525vUEgmq+pfB9zQQOX1sDR/rPFvtg==}
     cpu: [x64]
     os: [win32]
 
@@ -12522,7 +12521,7 @@ snapshots:
   '@nx/nx-linux-x64-gnu@19.8.2':
     optional: true
 
-  '@nx/nx-win32-x64-msvc@19.8.4':
+  '@nx/nx-win32-x64-msvc@22.1.3':
     optional: true
 
   '@opentelemetry/api@1.9.0': {}
