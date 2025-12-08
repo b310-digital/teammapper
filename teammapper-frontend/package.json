@@ -80,7 +80,7 @@
   },
   "devDependencies": {
     "@angular-builders/jest": "^20.0.0",
-    "@angular-devkit/architect": "0.2100.1",
+    "@angular-devkit/architect": "0.2100.2",
     "@angular-devkit/core": "20.3.8",
     "@angular-devkit/schematics": "20.3.8",
     "@angular-eslint/builder": "20.5.0",
@@ -97,8 +97,8 @@
     "@types/jest": "30.0.0",
     "@types/mousetrap": "1.6.15",
     "@types/node": "^24.10.1",
-    "@typescript-eslint/eslint-plugin": "^8.48.0",
-    "@typescript-eslint/parser": "^8.48.0",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
     "angular-eslint": "^20.5.0",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
@@ -109,10 +109,10 @@
     "jest-canvas-mock": "^2.5.2",
     "jest-preset-angular": "^15.0.3",
     "minimist": "^1.2.8",
-    "prettier": "^3.7.1",
+    "prettier": "^3.7.4",
     "ts-node": "~10.9.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.48.0"
+    "typescript-eslint": "^8.48.1"
   },
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "21.2.0",
