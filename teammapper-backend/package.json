@@ -32,7 +32,7 @@
     "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {
-    "@ai-sdk/openai": "2.0.74",
+    "@ai-sdk/openai": "2.0.79",
     "@ai-sdk/openai-compatible": "1.0.28",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/cli": "^11.0.14",
@@ -46,20 +46,20 @@
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.9",
     "@types/uuid": "^10.0.0",
-    "ai": "5.0.104",
-    "cache-manager": "^7.2.5",
+    "ai": "5.0.108",
+    "cache-manager": "^7.2.6",
     "class-validator": "^0.14.3",
     "deepmerge": "^4.3.1",
     "cookie-parser": "^1.4.7",
     "http-proxy-middleware": "3.0.5",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3",
     "pq": "^0.0.3",
     "reflect-metadata": "^0.2.2",
     "rimraf": "^6.1.2",
     "rxjs": "^7.8.2",
     "socket.io": "4.8.1",
-    "typeorm": "^0.3.27",
+    "typeorm": "^0.3.28",
     "uuid": "11.1.0"
   },
   "devDependencies": {
