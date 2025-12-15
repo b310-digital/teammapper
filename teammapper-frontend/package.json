@@ -55,7 +55,7 @@
     "@angular/router": "20.3.7",
     "@fortawesome/angular-fontawesome": "^2.0.1",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
-    "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^7.1.0",
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@material-design-icons/font": "^0.14.15",
     "@ngx-translate/core": "^16.0.4",
