@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddNodeMapIdAsPrimaryColumnOnNodes1644079415806
-  implements MigrationInterface
-{
+export class AddNodeMapIdAsPrimaryColumnOnNodes1644079415806 implements MigrationInterface {
   name = 'AddNodeMapIdAsPrimaryColumnOnNodes1644079415806'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
