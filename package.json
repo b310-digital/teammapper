@@ -6,8 +6,8 @@
   "private": false,
   "license": "MIT",
   "engines": {
-    "npm": "~10.7.0",
-    "node": "~22.12"
+    "npm": "~10.9.0",
+    "node": "~25.0"
   },
   "scripts": {
     "dev": "concurrently \"pnpm --filter teammapper-backend start:dev\" \"pnpm --filter teammapper-frontend start\"",
