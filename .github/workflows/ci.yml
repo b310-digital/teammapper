@@ -30,7 +30,7 @@ jobs:
 
             - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -50,7 +50,7 @@ jobs:
 
             - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -66,7 +66,7 @@ jobs:
 
             - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -82,7 +82,7 @@ jobs:
 
             - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -99,7 +99,7 @@ jobs:
 
             - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -128,7 +128,7 @@ jobs:
 
             - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -156,7 +156,7 @@ jobs:
             - uses: actions/checkout@v6
             - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
