@@ -1,11 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import {
+  TranslateModule,
+  TranslateService,
+  TranslateLoader,
+} from '@ngx-translate/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
-import { of } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import { FooterComponent } from './footer.component';
+
+class FakeTranslateLoader implements TranslateLoader {
+  getTranslation(): Observable<Record<string, string>> {
+    return of({});
+  }
+}
 
 describe('FooterComponent', () => {
   let component: FooterComponent;
@@ -29,23 +39,12 @@ describe('FooterComponent', () => {
       getCachedUserSettings: jest.fn().mockReturnValue(mockSettings),
       updateCachedSettings: jest.fn().mockResolvedValue(undefined),
     };
-    mockTranslateService = {
-      use: jest.fn().mockReturnValue(Promise.resolve('en')),
-      get: jest.fn().mockReturnValue(of('translated value')),
-      instant: jest.fn().mockReturnValue('translated value'),
-      onLangChange: of({ lang: 'en' }),
-      onTranslationChange: of({}),
-      onDefaultLangChange: of({}),
-    } as unknown as jest.Mocked<TranslateService>;
-
     await TestBed.configureTestingModule({
-      providers: [
-        { provide: SettingsService, useValue: mockSettingsService },
-        { provide: TranslateService, useValue: mockTranslateService },
-      ],
+      providers: [{ provide: SettingsService, useValue: mockSettingsService }],
       imports: [
         TranslateModule.forRoot({
-          defaultLanguage: 'en',
+          loader: { provide: TranslateLoader, useClass: FakeTranslateLoader },
+          fallbackLang: 'en',
         }),
         MatIconModule,
         MatSelectModule,
@@ -53,6 +52,13 @@ describe('FooterComponent', () => {
         FooterComponent,
       ],
     }).compileComponents();
+
+    mockTranslateService = TestBed.inject(
+      TranslateService
+    ) as unknown as jest.Mocked<TranslateService>;
+    jest
+      .spyOn(mockTranslateService, 'use')
+      .mockImplementation(() => of({ lang: 'en' }));
 
     fixture = TestBed.createComponent(FooterComponent);
     component = fixture.componentInstance;

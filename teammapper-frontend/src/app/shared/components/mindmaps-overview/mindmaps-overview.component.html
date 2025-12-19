@@ -1,56 +1,50 @@
 <div class="content map-list">
-    <mat-card class="map-list-main" *ngIf="ownedEntries && ownedEntries.length > 0">
-        <mat-card-header>
-            <mat-card-title>{{
-            'PAGES.SETTINGS.OWNED_MAPS' | translate
-            }}</mat-card-title>
-        </mat-card-header>
-        <hr />
-        <mat-card-content>
-            <mat-list>
-                <mat-list-item
-                    *ngFor="let ownedEntry of ownedEntries">
-                    <span matLine>
-                        <a href="{{ getMapUrl(ownedEntry) }}">{{
-                            getMapTitle(ownedEntry)
-                        }}</a>
-                    </span>
-                    <span matLine>
-                        {{ 'PAGES.SETTINGS.TTL' | translate }}:
-                        {{
-                            ownedEntry.cachedAdminMapValue.ttl
-                            | date: 'yyyy-MM-dd'
-                        }}
-                    </span>
-                </mat-list-item>
-            </mat-list>
-        </mat-card-content>
-    </mat-card>
-    <mat-card class="map-list-main">
-        <mat-card-header>
-            <mat-card-title>{{
-            'PAGES.SETTINGS.LAST_MAPS' | translate
-            }}</mat-card-title>
-        </mat-card-header>
-        <hr />
-        <mat-card-content>
-            <mat-list>
-                <mat-list-item
-                    *ngFor="let cachedMapEntry of cachedAdminMapEntries">
-                    <span matLine>
-                    <a href="{{ getMapUrl(cachedMapEntry) }}">{{
-                        getMapTitle(cachedMapEntry)
-                    }}</a>
-                    </span>
-                    <span matLine>
-                        {{ 'PAGES.SETTINGS.TTL' | translate }}:
-                        {{
-                            cachedMapEntry.cachedAdminMapValue.ttl
-                            | date: 'yyyy-MM-dd'
-                        }}
-                    </span>
-                </mat-list-item>
-            </mat-list>
-        </mat-card-content>
-    </mat-card>
+  <mat-card
+    class="map-list-main"
+    *ngIf="ownedEntries && ownedEntries.length > 0">
+    <mat-card-header>
+      <mat-card-title>{{
+        'PAGES.SETTINGS.OWNED_MAPS' | translate
+      }}</mat-card-title>
+    </mat-card-header>
+    <hr />
+    <mat-card-content>
+      <mat-list>
+        <mat-list-item *ngFor="let ownedEntry of ownedEntries">
+          <span matLine>
+            <a href="{{ getMapUrl(ownedEntry) }}">{{
+              getMapTitle(ownedEntry)
+            }}</a>
+          </span>
+          <span matLine>
+            {{ 'PAGES.SETTINGS.TTL' | translate }}:
+            {{ ownedEntry.cachedAdminMapValue.ttl | date: 'yyyy-MM-dd' }}
+          </span>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+  <mat-card class="map-list-main">
+    <mat-card-header>
+      <mat-card-title>{{
+        'PAGES.SETTINGS.LAST_MAPS' | translate
+      }}</mat-card-title>
+    </mat-card-header>
+    <hr />
+    <mat-card-content>
+      <mat-list>
+        <mat-list-item *ngFor="let cachedMapEntry of cachedAdminMapEntries">
+          <span matLine>
+            <a href="{{ getMapUrl(cachedMapEntry) }}">{{
+              getMapTitle(cachedMapEntry)
+            }}</a>
+          </span>
+          <span matLine>
+            {{ 'PAGES.SETTINGS.TTL' | translate }}:
+            {{ cachedMapEntry.cachedAdminMapValue.ttl | date: 'yyyy-MM-dd' }}
+          </span>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
 </div>

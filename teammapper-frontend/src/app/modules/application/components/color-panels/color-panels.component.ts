@@ -9,14 +9,14 @@ import {
 import { ExportNodeProperties } from '@mmp/map/types';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { NgIf } from '@angular/common';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerDirective } from 'ngx-color-picker';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'teammapper-colors-panel',
   templateUrl: './color-panels.component.html',
   styleUrls: ['./color-panels.component.scss'],
-  imports: [NgIf, ColorPickerModule, TranslatePipe],
+  imports: [NgIf, ColorPickerDirective, TranslatePipe],
 })
 export class ColorPanelsComponent implements OnInit {
   mmpService = inject(MmpService);

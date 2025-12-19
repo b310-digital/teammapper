@@ -28,7 +28,9 @@ module.exports = {
     '@mmp/map/map': '<rootDir>/src/test/mocks/mmp-map.ts',
   },
   testEnvironment: 'jsdom',
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(.+\\.mjs$|.*uuid.*|zone\\.js.*|d3.*|internmap|delaunator|robust-predicates))',
+  ],
   maxWorkers: '50%',
   cacheDirectory: '<rootDir>/.jest-cache',
 };

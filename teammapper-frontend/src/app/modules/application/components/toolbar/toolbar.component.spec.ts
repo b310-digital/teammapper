@@ -1,5 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService, TranslateModule } from '@ngx-translate/core';
+import {
+  TranslateService,
+  TranslateModule,
+  TranslateLoader,
+} from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { ToolbarComponent } from './toolbar.component';
@@ -8,8 +12,14 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { ExportNodeProperties } from '@mmp/map/types';
 import Node, { Font } from 'mmp/src/map/models/node';
-import { of } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import { provideRouter } from '@angular/router';
+
+class FakeTranslateLoader implements TranslateLoader {
+  getTranslation(): Observable<Record<string, string>> {
+    return of({});
+  }
+}
 
 describe('ToolbarComponent', () => {
   let component: ToolbarComponent;
@@ -39,30 +49,31 @@ describe('ToolbarComponent', () => {
       openPictogramDialog: jest.fn(),
     } as unknown as jest.Mocked<DialogService>;
 
-    mockTranslateService = {
-      use: jest.fn().mockReturnValue(Promise.resolve('en')),
-      get: jest.fn().mockReturnValue(of('translated value')),
-      instant: jest.fn().mockReturnValue('translated value'),
-      onLangChange: of({ lang: 'en' }),
-      onTranslationChange: of({}),
-      onDefaultLangChange: of({}),
-    } as unknown as jest.Mocked<TranslateService>;
-
     await TestBed.configureTestingModule({
       imports: [
         MatMenuModule,
         MatToolbarModule,
-        TranslateModule.forRoot(),
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: FakeTranslateLoader },
+          fallbackLang: 'en',
+        }),
         MatIconModule,
         ToolbarComponent,
       ],
       providers: [
         { provide: MmpService, useValue: mockMmpService },
         { provide: DialogService, useValue: mockDialogService },
-        { provide: TranslateService, useValue: mockTranslateService },
         provideRouter([]),
       ],
     }).compileComponents();
+
+    mockTranslateService = TestBed.inject(
+      TranslateService
+    ) as unknown as jest.Mocked<TranslateService>;
+    jest.spyOn(mockTranslateService, 'instant').mockReturnValue('translated');
+    jest
+      .spyOn(mockTranslateService, 'use')
+      .mockImplementation(() => of({ lang: 'en' }));
 
     fixture = TestBed.createComponent(ToolbarComponent);
     component = fixture.componentInstance;
@@ -193,7 +204,9 @@ describe('ToolbarComponent', () => {
         result: 'data:image/jpeg;base64,test',
         onload: null,
       };
-      window.FileReader = jest.fn(() => mockFileReader) as any;
+      window.FileReader = jest.fn(
+        () => mockFileReader
+      ) as unknown as typeof FileReader;
 
       component.initImageUpload(mockEvent);
       expect(mockFileReader.readAsDataURL).toHaveBeenCalledWith(mockFile);
@@ -212,7 +225,9 @@ describe('ToolbarComponent', () => {
         result: '{}',
         onload: null,
       };
-      window.FileReader = jest.fn(() => mockFileReader) as any;
+      window.FileReader = jest.fn(
+        () => mockFileReader
+      ) as unknown as typeof FileReader;
 
       component.initJSONUpload(mockEvent);
       expect(mockFileReader.readAsText).toHaveBeenCalledWith(mockFile);

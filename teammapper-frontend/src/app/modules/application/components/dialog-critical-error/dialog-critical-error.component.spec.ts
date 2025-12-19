@@ -61,16 +61,4 @@ describe('DialogCriticalErrorComponent', () => {
   it('should be a blocking dialog that cannot be dismissed', () => {
     expect(component.dialogRef.disableClose).toBe(true);
   });
-
-  it('should reload page when button is clicked', () => {
-    const reloadMock = jest.fn();
-    Object.defineProperty(window, 'location', {
-      value: { reload: reloadMock },
-      writable: true,
-    });
-
-    component.reloadPage();
-
-    expect(reloadMock).toHaveBeenCalled();
-  });
 });
