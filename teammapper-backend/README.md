@@ -81,7 +81,7 @@ pnpm run dev:typeorm migration:run
 Generate new migration based on current changes
 
 ```bash
-pnpm run dev:typeorm migration:generate -n AddSomethingHere
+pnpm run dev:typeorm migration:generate AddSomethingHere
 ```
 
 ## License

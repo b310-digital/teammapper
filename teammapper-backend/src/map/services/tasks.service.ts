@@ -15,7 +15,7 @@ export class TasksService {
   constructor(private mapsService: MapsService) {}
 
   // every day midnight
-  @Cron('0 0 * * *')
+  @Cron('0 0 * * *', { timeZone: 'UTC' })
   async handleCron() {
     this.logger.log('--- Deleting old maps ... ---')
     const affected = await this.mapsService.deleteOutdatedMaps(

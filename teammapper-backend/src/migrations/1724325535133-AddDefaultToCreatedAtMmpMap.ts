@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddDefaultToCreatedAtMmpMap1724325535133
-  implements MigrationInterface
-{
+export class AddDefaultToCreatedAtMmpMap1724325535133 implements MigrationInterface {
   name = 'AddDefaultToCreatedAtMmpMap1724325535133'
 
   public async up(queryRunner: QueryRunner): Promise<void> {

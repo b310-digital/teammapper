@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddLastAccessedFieldToMap1718959806227
-  implements MigrationInterface
-{
+export class AddLastAccessedFieldToMap1718959806227 implements MigrationInterface {
   name = 'AddLastAccessedFieldToMap1718959806227'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
