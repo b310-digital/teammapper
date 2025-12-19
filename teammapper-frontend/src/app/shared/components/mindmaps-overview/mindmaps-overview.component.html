@@ -9,10 +9,7 @@
       <hr />
       <mat-card-content>
         <mat-list>
-          @for (
-            ownedEntry of ownedEntries;
-            track ownedEntry.cachedAdminMapValue.id
-          ) {
+          @for (ownedEntry of ownedEntries; track ownedEntry.id) {
             <mat-list-item>
               <span matLine>
                 <a href="{{ getMapUrl(ownedEntry) }}">{{
@@ -40,7 +37,7 @@
       <mat-list>
         @for (
           cachedMapEntry of cachedAdminMapEntries;
-          track cachedMapEntry.cachedAdminMapValue.id
+          track cachedMapEntry.id
         ) {
           <mat-list-item>
             <span matLine>

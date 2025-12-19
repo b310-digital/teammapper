@@ -3,7 +3,7 @@ import { UserSettings } from '../../../../shared/models/settings.model';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
-import { Location, NgFor, NgIf, AsyncPipe } from '@angular/common';
+import { Location, AsyncPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
@@ -44,9 +44,7 @@ import { MindmapsOverview } from 'src/app/shared/components/mindmaps-overview/mi
     MatCardContent,
     MatFormField,
     MatSelect,
-    NgFor,
     MatOption,
-    NgIf,
     MatSlideToggle,
     FormsModule,
     MatInput,

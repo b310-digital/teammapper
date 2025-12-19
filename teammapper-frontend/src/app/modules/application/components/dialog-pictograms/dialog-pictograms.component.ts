@@ -25,7 +25,7 @@ import { MatInput } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { NgIf, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { MatGridList, MatGridTile } from '@angular/material/grid-list';
 import { MatDivider } from '@angular/material/divider';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -45,7 +45,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     MatButton,
     MatSuffix,
     MatIcon,
-    NgIf,
     MatGridList,
     MatGridTile,
     MatDivider,

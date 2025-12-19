@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
-import { NgClass, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 
 @Component({
@@ -24,7 +24,6 @@ import { SettingsService } from 'src/app/core/services/settings/settings.service
     MatMenu,
     MatMenuItem,
     NgClass,
-    NgIf,
     TranslatePipe,
   ],
 })
