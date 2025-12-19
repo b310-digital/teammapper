@@ -79,7 +79,10 @@ export class DialogAboutComponent {
     return this.settingsService.getCachedUserSettings().general.language;
   }
 
-  async getMapAdminId(): Promise<string> {
-    return (await this.storageService.get(this.map.uuid))?.adminId;
+  async getMapAdminId(): Promise<string | undefined> {
+    const mapData = (await this.storageService.get(this.map.uuid)) as {
+      adminId?: string;
+    } | null;
+    return mapData?.adminId;
   }
 }

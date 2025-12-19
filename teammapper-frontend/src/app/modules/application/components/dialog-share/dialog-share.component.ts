@@ -22,7 +22,6 @@ import {
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { FormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
 import {
   MatFormField,
   MatLabel,
@@ -44,7 +43,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     MatDialogContent,
     MatSlideToggle,
     FormsModule,
-    NgIf,
     MatFormField,
     MatLabel,
     MatInput,
@@ -150,8 +148,8 @@ export class DialogShareComponent implements OnInit {
     return this.showEditableLink ? this.editorLink : this.viewerLink;
   }
 
-  isShareable() {
-    return !!(window.navigator as any)?.share;
+  isShareable(): boolean {
+    return !!(navigator as Navigator & { share?: unknown })?.share;
   }
 
   setShowEditableLink(value: boolean) {
@@ -160,8 +158,11 @@ export class DialogShareComponent implements OnInit {
   }
 
   async share() {
-    if ((window.navigator as any)?.share) {
-      await (window.navigator as any)?.share({
+    const nav = navigator as Navigator & {
+      share?: (data: { title: string; url: string }) => Promise<void>;
+    };
+    if (nav?.share) {
+      await nav.share({
         title: 'TeamMapper',
         url: this.getLink(),
       });

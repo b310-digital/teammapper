@@ -51,9 +51,9 @@ export class SettingsService {
     defaultSettings.userSettings.general.language =
       this.translateService.getBrowserLang() ??
       defaultSettings.userSettings.general.language;
-    const loadedSettings: UserSettings = await this.storageService.get(
+    const loadedSettings = (await this.storageService.get(
       STORAGE_KEYS.SETTINGS
-    );
+    )) as UserSettings | null;
     const userSettings = loadedSettings || defaultSettings.userSettings;
 
     // Save the default settings.

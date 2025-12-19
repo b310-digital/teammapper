@@ -11,11 +11,16 @@ export class UtilsService {
   /**
    * Gets the nested property of object
    */
-  public static get = (obj: any, path: string[]) =>
+  public static get = (
+    obj: Record<string, unknown> | object,
+    path: string[]
+  ): unknown =>
     path.reduce(
-      (nestedObj, currentPath) =>
-        nestedObj != null && currentPath in nestedObj
-          ? nestedObj[currentPath]
+      (nestedObj: unknown, currentPath: string) =>
+        nestedObj != null &&
+        typeof nestedObj === 'object' &&
+        currentPath in nestedObj
+          ? (nestedObj as Record<string, unknown>)[currentPath]
           : null,
       obj
     );
@@ -136,7 +141,10 @@ export class UtilsService {
   /**
    * Return a translated string with given message and values.
    */
-  public translate(message: string, values?: any): Promise<string> {
+  public translate(
+    message: string,
+    values?: Record<string, unknown>
+  ): Promise<string> {
     return firstValueFrom(this.translateService.get(message, values));
   }
 

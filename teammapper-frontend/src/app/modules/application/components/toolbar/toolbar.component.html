@@ -46,16 +46,17 @@
       <span>{{ 'GENERAL.MERMAID' | translate }}</span>
     </button>
 
-    <button
-      *ngIf="featureFlagAI"
-      id="ai-upload"
-      (click)="importFromAi()"
-      [title]="'TOOLTIPS.IMPORT_AI' | translate"
-      color="primary"
-      mat-menu-item>
-      <mat-icon>auto_awesome</mat-icon>
-      <span>{{ 'GENERAL.AI' | translate }}</span>
-    </button>
+    @if (featureFlagAI) {
+      <button
+        id="ai-upload"
+        (click)="importFromAi()"
+        [title]="'TOOLTIPS.IMPORT_AI' | translate"
+        color="primary"
+        mat-menu-item>
+        <mat-icon>auto_awesome</mat-icon>
+        <span>{{ 'GENERAL.AI' | translate }}</span>
+      </button>
+    }
   </mat-menu>
 
   <button
@@ -205,8 +206,7 @@
     <mat-icon>{{ node?.locked ? 'deselect' : 'select_all' }}</mat-icon>
   </button>
 
-  <div *ngIf="node?.image?.src; then renderRemove; else renderInput"></div>
-  <ng-template #renderRemove>
+  @if (node?.image?.src) {
     <button
       (click)="mmpService.removeNodeImage()"
       [title]="'TOOLTIPS.NODE_IMAGE_REMOVE' | translate"
@@ -215,8 +215,7 @@
       mat-icon-button>
       <mat-icon>broken_image</mat-icon>
     </button>
-  </ng-template>
-  <ng-template #renderInput>
+  } @else {
     <button
       (click)="imageUpload.click()"
       [title]="'TOOLTIPS.NODE_IMAGE' | translate"
@@ -232,17 +231,19 @@
       accept="image/*"
       [disabled]="editDisabled"
       #imageUpload />
-  </ng-template>
-  <div *ngIf="featureFlagPictograms">
-    <button
-      (click)="pictogram()"
-      [title]="'TOOLTIPS.PICTOGRAM' | translate"
-      [disabled]="editDisabled"
-      color="primary"
-      mat-icon-button>
-      <mat-icon>nature_people</mat-icon>
-    </button>
-  </div>
+  }
+  @if (featureFlagPictograms) {
+    <div>
+      <button
+        (click)="pictogram()"
+        [title]="'TOOLTIPS.PICTOGRAM' | translate"
+        [disabled]="editDisabled"
+        color="primary"
+        mat-icon-button>
+        <mat-icon>nature_people</mat-icon>
+      </button>
+    </div>
+  }
 
   <div class="vertical-line">
     <div></div>
@@ -267,9 +268,7 @@
     <mat-icon>format_italic</mat-icon>
   </button>
 
-  <div
-    *ngIf="node?.link?.href; then renderLinkRemove; else renderLinkInput"></div>
-  <ng-template #renderLinkRemove>
+  @if (node?.link?.href) {
     <button
       (click)="removeLink()"
       [title]="'TOOLTIPS.LINK_REMOVE' | translate"
@@ -278,8 +277,7 @@
       mat-icon-button>
       <mat-icon>link_off</mat-icon>
     </button>
-  </ng-template>
-  <ng-template #renderLinkInput>
+  } @else {
     <button
       id="add-link-button"
       (click)="addLink()"
@@ -289,7 +287,7 @@
       mat-icon-button>
       <mat-icon>insert_link</mat-icon>
     </button>
-  </ng-template>
+  }
 
   <span class="toolbar-spacer"></span>
 
