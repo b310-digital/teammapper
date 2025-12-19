@@ -4,24 +4,28 @@
     {{ 'MODALS.IMPORT_MERMAID.CONTENT' | translate }}
   </div>
   <br />
-  <mat-form-field *ngIf="featureFlagAI" class="max-width">
-    <mat-label>{{
-      'MODALS.IMPORT_MERMAID.LABEL_CREATE_FROM_AI' | translate
-    }}</mat-label>
-    <textarea
-      matInput
-      [(ngModel)]="mindmapDescription"
-      cdkTextareaAutosize
-      #autosize="cdkTextareaAutosize"
-      cdkAutosizeMinRows="5"
-      cdkAutosizeMaxRows="10">
-    </textarea>
-    <button matSuffix mat-button (click)="createMermaidMindmapFromServer()">
-      <mat-icon>construction</mat-icon>
-      {{ 'MODALS.IMPORT_MERMAID.BUTTON_CREATE_FROM_AI' | translate }}
-    </button>
-  </mat-form-field>
-  <br *ngIf="featureFlagAI" /><br *ngIf="featureFlagAI" />
+  @if (featureFlagAI) {
+    <mat-form-field class="max-width">
+      <mat-label>{{
+        'MODALS.IMPORT_MERMAID.LABEL_CREATE_FROM_AI' | translate
+      }}</mat-label>
+      <textarea
+        matInput
+        [(ngModel)]="mindmapDescription"
+        cdkTextareaAutosize
+        #autosize="cdkTextareaAutosize"
+        cdkAutosizeMinRows="5"
+        cdkAutosizeMaxRows="10">
+      </textarea>
+      <button matSuffix mat-button (click)="createMermaidMindmapFromServer()">
+        <mat-icon>construction</mat-icon>
+        {{ 'MODALS.IMPORT_MERMAID.BUTTON_CREATE_FROM_AI' | translate }}
+      </button>
+    </mat-form-field>
+  }
+  @if (featureFlagAI) {
+    <br /><br />
+  }
   {{ 'MODALS.IMPORT_MERMAID.LABEL_TEXT_AREA' | translate }}
   <mat-form-field class="max-width">
     <textarea

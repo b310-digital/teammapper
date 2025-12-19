@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ShortcutsService } from '../../../../core/services/shortcuts/shortcuts.service';
 import { Hotkey } from 'angular2-hotkeys';
-import { Location, NgFor, NgIf } from '@angular/common';
+import { Location } from '@angular/common';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatDialogTitle } from '@angular/material/dialog';
 import { MatIconButton } from '@angular/material/button';
@@ -25,9 +25,7 @@ interface Shortcut {
     MatIconButton,
     MatIcon,
     MatList,
-    NgFor,
     MatListItem,
-    NgIf,
     TranslatePipe,
   ],
 })

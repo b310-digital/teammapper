@@ -1,17 +1,17 @@
 div.content {
-    mat-card {
-        margin-bottom: 20px;
+  mat-card {
+    margin-bottom: 20px;
 
-        hr {
-            margin-top: 0;
-            margin-bottom: 20px;
-            border: 0;
-            height: 1px;
-            background-color: lightgray;
-        }
+    hr {
+      margin-top: 0;
+      margin-bottom: 20px;
+      border: 0;
+      height: 1px;
+      background-color: lightgray;
     }
+  }
 
-    mat-card:last-child {
-        margin-bottom: 0;
-    }
+  mat-card:last-child {
+    margin-bottom: 0;
+  }
 }

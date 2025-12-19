@@ -21,7 +21,6 @@ import { MatButton } from '@angular/material/button';
 import { TranslatePipe } from '@ngx-translate/core';
 import { API_URL, HttpService } from 'src/app/core/http/http.service';
 import { MatIcon } from '@angular/material/icon';
-import { NgIf } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
@@ -45,7 +44,6 @@ import { UtilsService } from 'src/app/core/services/utils/utils.service';
     MatButton,
     MatDialogClose,
     TranslatePipe,
-    NgIf,
   ],
 })
 export class DialogImportMermaidComponent {

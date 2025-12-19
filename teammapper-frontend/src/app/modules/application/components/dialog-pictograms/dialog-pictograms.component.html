@@ -10,9 +10,11 @@
     </button>
   </mat-form-field>
   <br />
-  <ng-container *ngIf="cardLayout | async as layout">
+  @if (cardLayout | async; as layout) {
     <mat-grid-list rowHeight="2:1" [cols]="layout.columns">
-      <div *ngIf="!pictos">{{ 'MODALS.PICTOGRAMS.EMPTY' | translate }}</div>
+      @if (!pictos) {
+        <div>{{ 'MODALS.PICTOGRAMS.EMPTY' | translate }}</div>
+      }
       @for (picto of pictos; track picto) {
         <mat-grid-tile
           [colspan]="layout.miniCard.cols"
@@ -29,7 +31,7 @@
         </mat-grid-tile>
       }
     </mat-grid-list>
-  </ng-container>
+  }
   <mat-divider class="my-1"></mat-divider>
   <span class="text-sm">
     {{ 'MODALS.PICTOGRAMS.TERMS_TEXT.0' | translate }}

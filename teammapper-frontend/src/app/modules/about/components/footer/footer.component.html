@@ -15,9 +15,11 @@
         (selectionChange)="updateLanguage()"
         [(value)]="settings.general.language"
         [title]="'TOOLTIPS.LANGUAGE' | translate">
-        <mat-option *ngFor="let language of languages" [value]="language">
-          {{ 'LANGUAGES.' + language.toUpperCase() | translate }}
-        </mat-option>
+        @for (language of languages; track language) {
+          <mat-option [value]="language">
+            {{ 'LANGUAGES.' + language.toUpperCase() | translate }}
+          </mat-option>
+        }
       </mat-select>
     </div>
   </div>

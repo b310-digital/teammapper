@@ -1,14 +1,14 @@
 import { Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { Observable } from 'rxjs';
-import { NgFor, NgStyle, AsyncPipe } from '@angular/common';
+import { NgStyle, AsyncPipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'teammapper-client-colors-panel',
   templateUrl: './client-color-panels.component.html',
   styleUrls: ['./client-color-panels.component.scss'],
-  imports: [NgFor, MatIcon, NgStyle, AsyncPipe],
+  imports: [MatIcon, NgStyle, AsyncPipe],
 })
 export class ClientColorPanelsComponent {
   mapSyncService = inject(MapSyncService);

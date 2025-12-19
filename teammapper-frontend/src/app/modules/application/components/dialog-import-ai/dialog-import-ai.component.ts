@@ -19,8 +19,6 @@ import { MatIcon } from '@angular/material/icon';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
-import { NgIf } from '@angular/common';
-
 @Component({
   selector: 'teammapper-dialog-import-ai',
   templateUrl: 'dialog-import-ai.component.html',
@@ -39,7 +37,6 @@ import { NgIf } from '@angular/common';
     MatButton,
     MatDialogClose,
     TranslatePipe,
-    NgIf,
   ],
 })
 export class DialogImportAiComponent {

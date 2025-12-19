@@ -124,7 +124,7 @@ export class MmpService implements OnDestroy {
   /**
    * Update the mind mmp option properties.
    */
-  public updateOptions(property: string, value: any) {
+  public updateOptions(property: string, value: boolean | string | number) {
     this.currentMap.instance.updateOptions(property, value);
   }
 
@@ -185,6 +185,7 @@ export class MmpService implements OnDestroy {
   /**
    * Return the subscribe of the mind mmp event with the node or nothing.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public on(event: string): Observable<any> {
     return new Observable(observer => {
       this.currentMap.instance.on(event, args => {
@@ -335,7 +336,13 @@ export class MmpService implements OnDestroy {
    */
   public async updateNode(
     property: string,
-    value?: any,
+    value?:
+      | boolean
+      | string
+      | number
+      | ArrayBuffer
+      | { x: number; y: number }
+      | unknown,
     notifyWithEvent?: boolean,
     updateHistory?: boolean,
     id?: string

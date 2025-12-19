@@ -16,12 +16,14 @@ export class StorageService {
   /**
    * Return the value or the values based on the keys passed as parameters.
    */
-  public async get(keys: string | string[]): Promise<any | any[] | null> {
+  public async get(
+    keys: string | string[]
+  ): Promise<unknown | unknown[] | null> {
     if (typeof keys === 'string') {
       return localforage.getItem(keys);
     }
 
-    const items: any[] = [];
+    const items: unknown[] = [];
 
     for (const key of keys) {
       if (keys.includes(key)) {
@@ -35,12 +37,12 @@ export class StorageService {
   /**
    * Return all the saved values in the storage.
    */
-  public async getAll(): Promise<any[] | null> {
+  public async getAll(): Promise<unknown[] | null> {
     const keys = await localforage.keys();
     const values = await Promise.all(
       keys.map(async (key: string) => {
         return new Promise((resolve, _reject) => {
-          this.get(key).then((value: any) => {
+          this.get(key).then((value: unknown) => {
             resolve(value);
           });
         });
@@ -53,12 +55,12 @@ export class StorageService {
   /**
    * Return all the saved keys in the storage.
    */
-  public async getAllEntries(): Promise<any[] | null> {
+  public async getAllEntries(): Promise<[string, unknown][] | null> {
     const keys = await localforage.keys();
     const entries = await Promise.all(
       keys.map(async (key: string) => {
-        return new Promise((resolve, _reject) => {
-          this.get(key).then((value: any) => {
+        return new Promise<[string, unknown]>((resolve, _reject) => {
+          this.get(key).then((value: unknown) => {
             resolve([key, value]);
           });
         });
@@ -82,7 +84,7 @@ export class StorageService {
   /**
    * Save an item in the storage.
    */
-  public async set(key: string, item: any): Promise<void> {
+  public async set(key: string, item: unknown): Promise<void> {
     localforage.setItem(key, item);
   }
 
@@ -111,7 +113,7 @@ export class StorageService {
    * Check if there are items in the storage. Return true if there are items, false otherwise.
    */
   public async isEmpty(): Promise<boolean> {
-    const items: any[] = await this.getAll();
+    const items: unknown[] = await this.getAll();
 
     return items && items.length > 0;
   }
@@ -123,10 +125,11 @@ export class StorageService {
     const today = new Date();
     const time: number = today.getTime();
     const entries = await this.getAllEntries();
-    entries.forEach(([key, value]: [any, any]) => {
-      if (!value?.ttl) return;
+    entries.forEach(([key, value]: [string, unknown]) => {
+      const entryValue = value as { ttl?: number };
+      if (!entryValue?.ttl) return;
 
-      if (time > value?.ttl) this.remove(key);
+      if (time > entryValue.ttl) this.remove(key);
     });
   }
 }

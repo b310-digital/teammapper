@@ -30,11 +30,11 @@
                   [(value)]="settings.general.language"
                   [placeholder]="'GENERAL.LANGUAGE' | translate"
                   [title]="'TOOLTIPS.LANGUAGE' | translate">
-                  <mat-option
-                    *ngFor="let language of languages"
-                    [value]="language">
-                    {{ 'LANGUAGES.' + language.toUpperCase() | translate }}
-                  </mat-option>
+                  @for (language of languages; track language) {
+                    <mat-option [value]="language">
+                      {{ 'LANGUAGES.' + language.toUpperCase() | translate }}
+                    </mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
             </mat-card-content>
@@ -42,118 +42,122 @@
         </div>
       </mat-tab>
 
-      <mat-tab
-        *ngIf="mapOptions"
-        [label]="'PAGES.SETTINGS.MAP_OPTIONS' | translate">
-        <div class="content map-options">
-          <mat-card class="map-options-map">
-            <mat-card-header>
-              <mat-card-title>{{
-                'PAGES.SETTINGS.MAP_OPTIONS' | translate
-              }}</mat-card-title>
-            </mat-card-header>
-            <hr />
-            <mat-card-content>
-              <mat-slide-toggle
-                (change)="updateGeneralMapOptions()"
-                [(ngModel)]="settings.mapOptions.centerOnResize"
-                [title]="'TOOLTIPS.CENTER_ON_RESIZING' | translate"
-                color="primary">
-                {{ 'PAGES.SETTINGS.CENTER_ON_RESIZING' | translate }}
-              </mat-slide-toggle>
-              <mat-slide-toggle
-                (change)="updateGeneralMapOptions()"
-                [(ngModel)]="settings.mapOptions.autoBranchColors"
-                [title]="'TOOLTIPS.AUTO_BRANCH_COLORS' | translate"
-                color="primary">
-                {{ 'PAGES.SETTINGS.AUTO_BRANCH_COLORS' | translate }}
-              </mat-slide-toggle>
-              <mat-form-field>
-                <input
-                  (change)="updateMapOptions()"
-                  [(ngModel)]="mapOptions.fontMinSize"
-                  [placeholder]="'PAGES.SETTINGS.FONT_MIN_SIZE' | translate"
-                  [title]="'TOOLTIPS.FONT_MIN_SIZE' | translate"
-                  [disabled]="editMode | async | inverseBool"
-                  type="number"
-                  min="15"
-                  max="100"
-                  matInput
-                  name="fontMinSize" />
-              </mat-form-field>
-              <br />
-              <mat-form-field>
-                <input
-                  (change)="updateMapOptions()"
-                  [(ngModel)]="mapOptions.fontMaxSize"
-                  [placeholder]="'PAGES.SETTINGS.FONT_MAX_SIZE' | translate"
-                  [title]="'TOOLTIPS.FONT_MAX_SIZE' | translate"
-                  [disabled]="editMode | async | inverseBool"
-                  type="number"
-                  min="15"
-                  max="100"
-                  matInput
-                  name="fontMaxSize" />
-              </mat-form-field>
-              <br />
-              <mat-form-field>
-                <input
-                  (change)="updateMapOptions()"
-                  [(ngModel)]="mapOptions.fontIncrement"
-                  [placeholder]="'PAGES.SETTINGS.FONT_INCREMENT' | translate"
-                  [title]="'TOOLTIPS.FONT_INCREMENT' | translate"
-                  [disabled]="editMode | async | inverseBool"
-                  type="number"
-                  min="1"
-                  max="100"
-                  matInput
-                  name="fontIncrement" />
-              </mat-form-field>
-            </mat-card-content>
-          </mat-card>
-          <mat-card class="map-options-nodes">
-            <mat-card-header>
-              <mat-card-title>{{ 'GENERAL.NODES' | translate }}</mat-card-title>
-            </mat-card-header>
-            <hr />
-            <mat-card-content>
-              <mat-form-field>
-                <input
+      @if (mapOptions) {
+        <mat-tab [label]="'PAGES.SETTINGS.MAP_OPTIONS' | translate">
+          <div class="content map-options">
+            <mat-card class="map-options-map">
+              <mat-card-header>
+                <mat-card-title>{{
+                  'PAGES.SETTINGS.MAP_OPTIONS' | translate
+                }}</mat-card-title>
+              </mat-card-header>
+              <hr />
+              <mat-card-content>
+                <mat-slide-toggle
                   (change)="updateGeneralMapOptions()"
-                  [(ngModel)]="settings.mapOptions.rootNode.name"
-                  [placeholder]="'PAGES.SETTINGS.ROOT_NODE_NAME' | translate"
-                  [title]="'TOOLTIPS.ROOT_NODE_NAME_INPUT' | translate"
-                  matInput
-                  name="rootNodeName" />
-              </mat-form-field>
-              <mat-form-field>
-                <input
+                  [(ngModel)]="settings.mapOptions.centerOnResize"
+                  [title]="'TOOLTIPS.CENTER_ON_RESIZING' | translate"
+                  color="primary">
+                  {{ 'PAGES.SETTINGS.CENTER_ON_RESIZING' | translate }}
+                </mat-slide-toggle>
+                <mat-slide-toggle
                   (change)="updateGeneralMapOptions()"
-                  [(ngModel)]="settings.mapOptions.defaultNode.name"
-                  [placeholder]="'PAGES.SETTINGS.NODE_NAME' | translate"
-                  [title]="'TOOLTIPS.NODE_NAME_INPUT' | translate"
-                  matInput
-                  name="defaultNodeName" />
-              </mat-form-field>
-            </mat-card-content>
-          </mat-card>
-          <mat-card>
-            <mat-card-header>
-              <mat-card-title>{{ 'GENERAL.LINKS' | translate }}</mat-card-title>
-            </mat-card-header>
-            <hr />
-            <mat-card-content>
-              <mat-slide-toggle
-                (change)="updateGeneralMapOptions()"
-                [(ngModel)]="settings.mapOptions.showLinktext"
-                [title]="'TOOLTIPS.SHOW_LINKTEXT' | translate"
-                color="primary">
-                {{ 'PAGES.SETTINGS.SHOW_LINKTEXT' | translate }}
-              </mat-slide-toggle>
-            </mat-card-content>
-          </mat-card>
-        </div>
-      </mat-tab>
+                  [(ngModel)]="settings.mapOptions.autoBranchColors"
+                  [title]="'TOOLTIPS.AUTO_BRANCH_COLORS' | translate"
+                  color="primary">
+                  {{ 'PAGES.SETTINGS.AUTO_BRANCH_COLORS' | translate }}
+                </mat-slide-toggle>
+                <mat-form-field>
+                  <input
+                    (change)="updateMapOptions()"
+                    [(ngModel)]="mapOptions.fontMinSize"
+                    [placeholder]="'PAGES.SETTINGS.FONT_MIN_SIZE' | translate"
+                    [title]="'TOOLTIPS.FONT_MIN_SIZE' | translate"
+                    [disabled]="editMode | async | inverseBool"
+                    type="number"
+                    min="15"
+                    max="100"
+                    matInput
+                    name="fontMinSize" />
+                </mat-form-field>
+                <br />
+                <mat-form-field>
+                  <input
+                    (change)="updateMapOptions()"
+                    [(ngModel)]="mapOptions.fontMaxSize"
+                    [placeholder]="'PAGES.SETTINGS.FONT_MAX_SIZE' | translate"
+                    [title]="'TOOLTIPS.FONT_MAX_SIZE' | translate"
+                    [disabled]="editMode | async | inverseBool"
+                    type="number"
+                    min="15"
+                    max="100"
+                    matInput
+                    name="fontMaxSize" />
+                </mat-form-field>
+                <br />
+                <mat-form-field>
+                  <input
+                    (change)="updateMapOptions()"
+                    [(ngModel)]="mapOptions.fontIncrement"
+                    [placeholder]="'PAGES.SETTINGS.FONT_INCREMENT' | translate"
+                    [title]="'TOOLTIPS.FONT_INCREMENT' | translate"
+                    [disabled]="editMode | async | inverseBool"
+                    type="number"
+                    min="1"
+                    max="100"
+                    matInput
+                    name="fontIncrement" />
+                </mat-form-field>
+              </mat-card-content>
+            </mat-card>
+            <mat-card class="map-options-nodes">
+              <mat-card-header>
+                <mat-card-title>{{
+                  'GENERAL.NODES' | translate
+                }}</mat-card-title>
+              </mat-card-header>
+              <hr />
+              <mat-card-content>
+                <mat-form-field>
+                  <input
+                    (change)="updateGeneralMapOptions()"
+                    [(ngModel)]="settings.mapOptions.rootNode.name"
+                    [placeholder]="'PAGES.SETTINGS.ROOT_NODE_NAME' | translate"
+                    [title]="'TOOLTIPS.ROOT_NODE_NAME_INPUT' | translate"
+                    matInput
+                    name="rootNodeName" />
+                </mat-form-field>
+                <mat-form-field>
+                  <input
+                    (change)="updateGeneralMapOptions()"
+                    [(ngModel)]="settings.mapOptions.defaultNode.name"
+                    [placeholder]="'PAGES.SETTINGS.NODE_NAME' | translate"
+                    [title]="'TOOLTIPS.NODE_NAME_INPUT' | translate"
+                    matInput
+                    name="defaultNodeName" />
+                </mat-form-field>
+              </mat-card-content>
+            </mat-card>
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title>{{
+                  'GENERAL.LINKS' | translate
+                }}</mat-card-title>
+              </mat-card-header>
+              <hr />
+              <mat-card-content>
+                <mat-slide-toggle
+                  (change)="updateGeneralMapOptions()"
+                  [(ngModel)]="settings.mapOptions.showLinktext"
+                  [title]="'TOOLTIPS.SHOW_LINKTEXT' | translate"
+                  color="primary">
+                  {{ 'PAGES.SETTINGS.SHOW_LINKTEXT' | translate }}
+                </mat-slide-toggle>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </mat-tab>
+      }
       <mat-tab [label]="'PAGES.SETTINGS.MAP_LIST' | translate">
         <teammapper-mindmaps-overview></teammapper-mindmaps-overview>
       </mat-tab>

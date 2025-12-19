@@ -113,7 +113,7 @@ describe('SettingsService', () => {
 
       httpService.get.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
-      });
+      } as unknown as Response);
       storageService.get.mockResolvedValue(null);
 
       await settingsService.init();
@@ -130,7 +130,7 @@ describe('SettingsService', () => {
 
       httpService.get.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
-      });
+      } as unknown as Response);
       storageService.get.mockResolvedValue(cachedSettings);
 
       await settingsService.init();

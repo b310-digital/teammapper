@@ -487,20 +487,30 @@ export class MapsService {
       .getMany()
   }
 
-  async existsNode(mapId: string, parentId: string): Promise<boolean> {
-    if (!mapId || !parentId) return false
+  async existsNode(
+    mapId: string,
+    nodeId: string,
+    queryRunner?: QueryRunner
+  ): Promise<boolean> {
+    if (!mapId || !nodeId) return false
 
     // Validate UUID format before querying to avoid database errors
-    if (!uuidValidate(parentId)) {
+    if (!uuidValidate(nodeId)) {
       this.logger.warn(
-        `existsNode(): Invalid UUID format for parentId: ${parentId}`
+        `existsNode(): Invalid UUID format for nodeId: ${nodeId}`
       )
       return false
     }
 
-    return await this.nodesRepository.exist({
-      where: { id: parentId, nodeMapId: mapId },
-    })
+    if (queryRunner) {
+      return await queryRunner.manager.exists(MmpNode, {
+        where: { id: nodeId, nodeMapId: mapId },
+      })
+    } else {
+      return await this.nodesRepository.exists({
+        where: { id: nodeId, nodeMapId: mapId },
+      })
+    }
   }
 
   private async validateNodeParentExists(
@@ -701,7 +711,7 @@ export class MapsService {
 
   /**
    * Adds new nodes from client map with validation
-   * Validates parent relationships before adding each node
+   * Validates parent relationships and order before adding each node
    */
   private async addValidatedNodes(
     queryRunner: QueryRunner,
@@ -734,20 +744,25 @@ export class MapsService {
   }
 
   /**
-   * Saves a single node if it passes validation
+   * Saves a single node if it passes validation within the transaction context
    */
   private async saveNodeIfValid(
     queryRunner: QueryRunner,
     node: MmpNode,
     mapId: string
   ): Promise<void> {
-    if (await this.validatesNodeParentForNode(mapId, node)) {
-      const newNode = queryRunner.manager.create(MmpNode, {
-        ...node,
-        nodeMapId: mapId,
-      })
-      await queryRunner.manager.save(newNode)
-    }
+    const isValid = await this.validatesNodeParentForNode(
+      mapId,
+      node,
+      queryRunner
+    )
+    if (!isValid) return
+
+    const newNode = queryRunner.manager.create(MmpNode, {
+      ...node,
+      nodeMapId: mapId,
+    })
+    await queryRunner.manager.save(newNode)
   }
 
   /**
@@ -1027,12 +1042,14 @@ export class MapsService {
 
   async validatesNodeParentForNode(
     mapId: string,
-    node: MmpNode
+    node: MmpNode,
+    queryRunner?: QueryRunner
   ): Promise<boolean> {
     return (
       node.root ||
       node.detached ||
-      (!!node.nodeParentId && (await this.existsNode(mapId, node.nodeParentId)))
+      (!!node.nodeParentId &&
+        (await this.existsNode(mapId, node.nodeParentId, queryRunner)))
     )
   }
 }

@@ -16,7 +16,7 @@ import {
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatButton } from '@angular/material/button';
-import { NgIf, AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'teammapper-dialog-about',
@@ -30,7 +30,6 @@ import { NgIf, AsyncPipe, DatePipe } from '@angular/common';
     MatDialogActions,
     MatButton,
     MatDialogClose,
-    NgIf,
     AsyncPipe,
     DatePipe,
     TranslatePipe,
@@ -79,7 +78,10 @@ export class DialogAboutComponent {
     return this.settingsService.getCachedUserSettings().general.language;
   }
 
-  async getMapAdminId(): Promise<string> {
-    return (await this.storageService.get(this.map.uuid))?.adminId;
+  async getMapAdminId(): Promise<string | undefined> {
+    const mapData = (await this.storageService.get(this.map.uuid)) as {
+      adminId?: string;
+    } | null;
+    return mapData?.adminId;
   }
 }
