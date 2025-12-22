@@ -61,7 +61,7 @@
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "@teammapper/mermaid-mindmap-parser": "workspace:^",
-    "ai": "^5.0.115",
+    "ai": "^5.0.116",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.9.0",
     "deep-object-diff": "^1.1.9",
@@ -115,10 +115,10 @@
     "typescript-eslint": "^8.50.0"
   },
   "optionalDependencies": {
-    "@nx/nx-darwin-arm64": "22.3.1",
-    "@nx/nx-darwin-x64": "22.3.1",
-    "@nx/nx-linux-x64-gnu": "22.3.1",
-    "@nx/nx-win32-x64-msvc": "22.3.1"
+    "@nx/nx-darwin-arm64": "22.3.3",
+    "@nx/nx-darwin-x64": "22.3.3",
+    "@nx/nx-linux-x64-gnu": "22.3.3",
+    "@nx/nx-win32-x64-msvc": "22.3.3"
   },
   "workspaces": [
     "packages/*"
