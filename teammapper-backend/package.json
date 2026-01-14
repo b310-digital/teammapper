@@ -89,7 +89,7 @@
     "eslint-plugin-nestjs": "1.2.3",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-typeorm": "0.0.19",
-    "globals": "^16.5.0",
+    "globals": "^17.0.0",
     "jest": "30.2.0",
     "prettier": "^3.7.4",
     "socket.io-client": "^4.8.3",
