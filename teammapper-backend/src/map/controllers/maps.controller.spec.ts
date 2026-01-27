@@ -131,7 +131,7 @@ describe('MapsController', () => {
     })
 
     it('should return an empty array when req is undefined', async () => {
-      const response = await mapsController.findAll(undefined)
+      const response = await mapsController.findAll()
       expect(response).toEqual([])
     })
   })

@@ -947,19 +947,25 @@ describe('MapsService', () => {
 
     it('returns [] if the id is the string undefined', async () => {
       await mapsRepo.save({ ownerExternalId: undefined })
-      const result = await mapsService.getMapsOfUser('undefined')
+      const result = await mapsService.getMapsOfUser(undefined as unknown as string)
       expect(result).toEqual([])
     })
 
     it('returns [] if the id is the string null', async () => {
       await mapsRepo.save({ ownerExternalId: null })
-      const result = await mapsService.getMapsOfUser('null')
+      const result = await mapsService.getMapsOfUser(null as unknown as string)
       expect(result).toEqual([])
     })
 
-    it('returns [] if the id is an empty array []', async () => {
+    it('returns [] if the id is an empty string', async () => {
       await mapsRepo.save({ ownerExternalId: undefined })
-      const result = await mapsService.getMapsOfUser('[]')
+      const result = await mapsService.getMapsOfUser('')
+      expect(result).toEqual([])
+    })
+
+    it('returns [] if the id is an empty array', async () => {
+      await mapsRepo.save({ ownerExternalId: undefined })
+      const result = await mapsService.getMapsOfUser([] as unknown as string)
       expect(result).toEqual([])
     })
 
