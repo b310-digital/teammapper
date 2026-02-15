@@ -947,7 +947,9 @@ describe('MapsService', () => {
 
     it('returns [] if the id is the string undefined', async () => {
       await mapsRepo.save({ ownerExternalId: undefined })
-      const result = await mapsService.getMapsOfUser(undefined as unknown as string)
+      const result = await mapsService.getMapsOfUser(
+        undefined as unknown as string
+      )
       expect(result).toEqual([])
     })
 

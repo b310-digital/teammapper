@@ -51,6 +51,11 @@ class ConfigService {
     return parseInt(this.getValue('DELETE_AFTER_DAYS', false) || '30')
   }
 
+  public isYjsEnabled(): boolean {
+    const value = this.getValue('YJS_ENABLED', false)
+    return value?.toLowerCase() === 'true'
+  }
+
   public getLLMConfig(): LLMProps {
     return {
       url: this.getValue('AI_LLM_URL', false),

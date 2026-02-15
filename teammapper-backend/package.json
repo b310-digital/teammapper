@@ -60,7 +60,11 @@
     "rxjs": "^7.8.2",
     "socket.io": "4.8.3",
     "typeorm": "^0.3.28",
-    "uuid": "11.1.0"
+    "uuid": "11.1.0",
+    "ws": "^8.19.0",
+    "y-protocols": "^1.0.7",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.1",
@@ -79,6 +83,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.6",
     "@types/supertest": "^6.0.3",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.52.0",
     "@typescript-eslint/parser": "^8.52.0",
     "eslint": "^9.39.2",
