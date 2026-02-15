@@ -1,20 +1,21 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  TeamMapper: collaborative web-based mind mapping application (real-time, multi-user)
+  Monorepo with pnpm workspaces (teammapper-backend, teammapper-frontend)
+  Backend: NestJS, TypeORM, PostgreSQL, Socket.IO, TypeScript
+  Frontend: Angular 21, Angular Material, D3.js, Socket.IO client, TypeScript
+  Real-time collaboration via WebSockets (Socket.IO)
+  Testing: Jest (unit), Playwright (e2e)
+  Linting/formatting: ESLint, Prettier
+  Methods max 10 lines, no `any` types, reuse existing code
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Keep proposals under 500 words
+    - Always include a "Non-goals" section
+  tasks:
+    - Structure tasks in sections that are good estimates for common pull / merge requests
+    - Use feature flags if needed, so that after each section the app is still working
