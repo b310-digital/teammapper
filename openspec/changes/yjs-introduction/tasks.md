@@ -20,12 +20,12 @@
 > **PR scope**: Add all new packages, introduce feature flags, add proxy config. No behavioral change.
 > **App state after merge**: Identical to before. New dependencies installed but unused.
 
-- [ ] 1.1 Add `yjs`, `y-protocols`, `y-websocket`, and `ws` (+ `@types/ws`) to backend dependencies
-- [ ] 1.2 Add `yjs` and `y-websocket` to frontend dependencies
-- [ ] 1.3 Add `YJS_ENABLED` env var support to backend `ConfigService` (default: `false`), with a `isYjsEnabled()` method
-- [ ] 1.4 Add `featureFlagYjs: false` to frontend `environment.ts` and `environment.prod.ts`
-- [ ] 1.5 Add `/yjs` entry to frontend `proxy.conf.json` forwarding to backend with `ws: true`
-- [ ] 1.6 Verify both frontend and backend build, lint, and tests pass with no behavioral change
+- [x] 1.1 Add `yjs`, `y-protocols`, `y-websocket`, and `ws` (+ `@types/ws`) to backend dependencies
+- [x] 1.2 Add `yjs` and `y-websocket` to frontend dependencies
+- [x] 1.3 Add `YJS_ENABLED` env var support to backend `ConfigService` (default: `false`), with a `isYjsEnabled()` method
+- [x] 1.4 Add `featureFlagYjs: false` to frontend `environment.ts` and `environment.prod.ts`
+- [x] 1.5 Add `/yjs` entry to frontend `proxy.conf.json` forwarding to backend with `ws: true`
+- [x] 1.6 Verify both frontend and backend build, lint, and tests pass with no behavioral change
 
 ## 2. Backend: Y.Doc Management & Persistence Services
 
