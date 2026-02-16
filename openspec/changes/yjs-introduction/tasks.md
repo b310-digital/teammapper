@@ -51,16 +51,16 @@
 > **PR scope**: New WebSocket endpoint at `/yjs` with auth. Integrate map deletion with Y.Doc cleanup. Wire new services into MapModule. Gated by `YJS_ENABLED` — when disabled, the ws.Server does not accept upgrades. Socket.io continues to work.
 > **App state after merge**: Identical to before (flag is off). The `/yjs` endpoint exists but rejects connections when flag is off.
 
-- [ ] 3.1 Create `YjsGateway` NestJS provider: initialize a `ws.Server` on the NestJS HTTP server at path `/yjs`, only accepting WebSocket upgrades when `YJS_ENABLED=true`
-- [ ] 3.2 Implement WebSocket `connection` handler: parse `mapId` and `secret` from URL query params, validate map exists via `MapsService.findMap()`, close connection with error if map not found
-- [ ] 3.3 Implement authentication at handshake: verify modification secret (reuse logic from `EditGuard.validateRequest()`), tag connection as read-write or read-only
-- [ ] 3.4 On authenticated connection: call `YjsDocManagerService.getOrCreateDoc(mapId)` and `setupWSConnection(ws, doc)` from `y-websocket`
-- [ ] 3.5 Implement read-only enforcement: for read-only clients, intercept and drop incoming Y.Doc sync update messages
-- [ ] 3.6 Implement connection close handler: decrement client count in `YjsDocManagerService`, trigger eviction logic
-- [ ] 3.7 Integrate map deletion with Y.Doc: update `MapsGateway.onDeleteMap` (or `MapsController`) to call `YjsDocManagerService.destroyDoc(mapId)` which closes all WebSocket connections for that map — only when `YJS_ENABLED=true`
-- [ ] 3.8 Register `YjsGateway`, `YjsDocManagerService`, `YjsPersistenceService` in `MapModule` providers
-- [ ] 3.9 Write integration tests: WebSocket connection with valid/invalid map ID, auth with valid/invalid secret, read-only client cannot write, map deletion closes connections
-- [ ] 3.10 Verify backend builds, lints, and all tests pass (Socket.io gateway still active and functional)
+- [x] 3.1 Create `YjsGateway` NestJS provider: initialize a `ws.Server` on the NestJS HTTP server at path `/yjs`, only accepting WebSocket upgrades when `YJS_ENABLED=true`
+- [x] 3.2 Implement WebSocket `connection` handler: parse `mapId` and `secret` from URL query params, validate map exists via `MapsService.findMap()`, close connection with error if map not found
+- [x] 3.3 Implement authentication at handshake: verify modification secret (reuse logic from `EditGuard.validateRequest()`), tag connection as read-write or read-only
+- [x] 3.4 On authenticated connection: call `YjsDocManagerService.getOrCreateDoc(mapId)` and `setupWSConnection(ws, doc)` from `y-websocket`
+- [x] 3.5 Implement read-only enforcement: for read-only clients, intercept and drop incoming Y.Doc sync update messages
+- [x] 3.6 Implement connection close handler: decrement client count in `YjsDocManagerService`, trigger eviction logic
+- [x] 3.7 Integrate map deletion with Y.Doc: update `MapsGateway.onDeleteMap` (or `MapsController`) to call `YjsDocManagerService.destroyDoc(mapId)` which closes all WebSocket connections for that map — only when `YJS_ENABLED=true`
+- [x] 3.8 Register `YjsGateway`, `YjsDocManagerService`, `YjsPersistenceService` in `MapModule` providers
+- [x] 3.9 Write integration tests: WebSocket connection with valid/invalid map ID, auth with valid/invalid secret, read-only client cannot write, map deletion closes connections
+- [x] 3.10 Verify backend builds, lints, and all tests pass (Socket.io gateway still active and functional)
 
 ## 4. Frontend: Yjs Bridge & Awareness (behind feature flag)
 

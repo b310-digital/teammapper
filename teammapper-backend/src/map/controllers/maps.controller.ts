@@ -10,6 +10,8 @@ import {
   Logger,
 } from '@nestjs/common'
 import { MapsService } from '../services/maps.service'
+import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
+import { YjsGateway } from '../services/yjs-gateway.service'
 import {
   IMmpClientDeleteRequest,
   IMmpClientMap,
@@ -20,11 +22,16 @@ import {
 } from '../types'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
+import configService from '../../config.service'
 
 @Controller('api/maps')
 export default class MapsController {
   private readonly logger = new Logger(MapsController.name)
-  constructor(private mapsService: MapsService) {}
+  constructor(
+    private mapsService: MapsService,
+    private yjsDocManager: YjsDocManagerService,
+    private yjsGateway: YjsGateway
+  ) {}
 
   @Get(':id')
   async findOne(@Param('id') mapId: string): Promise<IMmpClientMap | void> {
@@ -59,8 +66,13 @@ export default class MapsController {
     @Body() body: IMmpClientDeleteRequest
   ): Promise<void> {
     const mmpMap = await this.mapsService.findMap(mapId)
-    if (mmpMap && mmpMap.adminId === body.adminId)
+    if (mmpMap && mmpMap.adminId === body.adminId) {
+      if (configService.isYjsEnabled()) {
+        this.yjsGateway.closeConnectionsForMap(mapId)
+        this.yjsDocManager.destroyDoc(mapId)
+      }
       this.mapsService.deleteMap(mapId)
+    }
   }
 
   @Post()

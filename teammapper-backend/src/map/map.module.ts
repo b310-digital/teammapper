@@ -7,6 +7,9 @@ import { MapsGateway } from './controllers/maps.gateway'
 import { MmpMap } from './entities/mmpMap.entity'
 import { MmpNode } from './entities/mmpNode.entity'
 import { MapsService } from './services/maps.service'
+import { YjsDocManagerService } from './services/yjs-doc-manager.service'
+import { YjsPersistenceService } from './services/yjs-persistence.service'
+import { YjsGateway } from './services/yjs-gateway.service'
 import { TasksService } from './services/tasks.service'
 import MermaidController from './controllers/mermaid.controller'
 import { AiService } from './services/ai.service'
@@ -20,7 +23,15 @@ import { PersonIdMiddleware } from '../auth/person-id.middleware'
     ScheduleModule.forRoot(),
   ],
   controllers: [MapsController, MermaidController],
-  providers: [MapsService, MapsGateway, TasksService, AiService],
+  providers: [
+    MapsService,
+    MapsGateway,
+    YjsDocManagerService,
+    YjsPersistenceService,
+    YjsGateway,
+    TasksService,
+    AiService,
+  ],
   exports: [MapsService],
 })
 export class MapModule {

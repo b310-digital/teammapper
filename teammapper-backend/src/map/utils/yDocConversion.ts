@@ -120,7 +120,11 @@ export const yMapToMapOptions = (
 }
 
 // Hydrates a Y.Doc from database entities
-export const hydrateYDoc = (doc: Y.Doc, nodes: MmpNode[], map: MmpMap): void => {
+export const hydrateYDoc = (
+  doc: Y.Doc,
+  nodes: MmpNode[],
+  map: MmpMap
+): void => {
   doc.transact(() => {
     const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
     for (const node of nodes) {
@@ -130,4 +134,3 @@ export const hydrateYDoc = (doc: Y.Doc, nodes: MmpNode[], map: MmpMap): void => 
     populateYMapFromMapOptions(optionsMap, map)
   })
 }
-

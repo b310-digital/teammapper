@@ -10,6 +10,8 @@ test('navigates to settings page and back to map', async ({ page }) => {
   await expect(page.locator('.settings')).toBeVisible();
   // Check for the settings title - the text might be translated
   await expect(page.locator('h2[mat-dialog-title]')).toBeVisible();
+  // Wait for route animation to finish so old map component is fully removed
+  await expect(page.locator('.map')).toHaveCount(0);
 
   // Navigate back
   await page.locator('.close-button').click();
