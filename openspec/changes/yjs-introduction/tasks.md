@@ -32,19 +32,19 @@
 > **PR scope**: New backend services for Y.Doc lifecycle and persistence. Fully self-contained, not wired to any WebSocket endpoint yet. Gated by feature flag.
 > **App state after merge**: Identical to before. New services exist but are not invoked.
 
-- [ ] 2.1 Create shared Y.Doc conversion utilities: functions to convert MmpNode entities ↔ Y.Map entries and MmpMap options ↔ Y.Map entries (reuse `mapClientNodeToMmpNode` / `mapMmpNodeToClient` patterns)
-- [ ] 2.2 Create `YjsDocManagerService`: maintains an in-memory `Map<string, Y.Doc>` keyed by map UUID
-- [ ] 2.3 Implement `getOrCreateDoc(mapId)`: returns existing Y.Doc or hydrates a new one from database by loading MmpNode rows via `MapsService.findNodes()` and MmpMap via `MapsService.findMap()`, populating `Y.Map("nodes")` and `Y.Map("mapOptions")`
-- [ ] 2.4 Implement client connection tracking per Y.Doc (increment/decrement count on connect/disconnect)
-- [ ] 2.5 Implement Y.Doc eviction: on last client disconnect, persist to DB, start a 30-second grace period timer, then evict Y.Doc from memory if no new connections arrive
-- [ ] 2.6 Implement `destroyDoc(mapId)`: force-destroy a Y.Doc (cancel timers, close connections) — used by map deletion
-- [ ] 2.7 Create `YjsPersistenceService` with `persistDoc(mapId, yDoc)`: decode Y.Doc nodes/options and write to existing MmpNode/MmpMap tables using delete-all-then-insert in a transaction (same pattern as existing `MapsService.updateMap()`)
-- [ ] 2.8 Implement debounced persistence: register a Y.Doc `update` observer that resets a 2-second timer, then calls `persistDoc()` on expiry
-- [ ] 2.9 Implement immediate persistence on last client disconnect (called before eviction grace period)
-- [ ] 2.10 Implement persistence error handling: log errors, do not crash, retry on next debounce cycle
-- [ ] 2.11 Update `lastModified` timestamps on MmpMap and MmpNode when persisting
-- [ ] 2.12 Write unit tests for: Y.Doc hydration from DB, Y.Doc eviction lifecycle, grace period, persistence decode, transaction atomicity, debounce coalescing, error recovery
-- [ ] 2.13 Verify backend builds, lints, and all tests pass
+- [x] 2.1 Create shared Y.Doc conversion utilities: functions to convert MmpNode entities ↔ Y.Map entries and MmpMap options ↔ Y.Map entries (reuse `mapClientNodeToMmpNode` / `mapMmpNodeToClient` patterns)
+- [x] 2.2 Create `YjsDocManagerService`: maintains an in-memory `Map<string, Y.Doc>` keyed by map UUID
+- [x] 2.3 Implement `getOrCreateDoc(mapId)`: returns existing Y.Doc or hydrates a new one from database by loading MmpNode rows via `MapsService.findNodes()` and MmpMap via `MapsService.findMap()`, populating `Y.Map("nodes")` and `Y.Map("mapOptions")`
+- [x] 2.4 Implement client connection tracking per Y.Doc (increment/decrement count on connect/disconnect)
+- [x] 2.5 Implement Y.Doc eviction: on last client disconnect, persist to DB, start a 30-second grace period timer, then evict Y.Doc from memory if no new connections arrive
+- [x] 2.6 Implement `destroyDoc(mapId)`: force-destroy a Y.Doc (cancel timers, close connections) — used by map deletion
+- [x] 2.7 Create `YjsPersistenceService` with `persistDoc(mapId, yDoc)`: decode Y.Doc nodes/options and write to existing MmpNode/MmpMap tables using delete-all-then-insert in a transaction (same pattern as existing `MapsService.updateMap()`)
+- [x] 2.8 Implement debounced persistence: register a Y.Doc `update` observer that resets a 2-second timer, then calls `persistDoc()` on expiry
+- [x] 2.9 Implement immediate persistence on last client disconnect (called before eviction grace period)
+- [x] 2.10 Implement persistence error handling: log errors, do not crash, retry on next debounce cycle
+- [x] 2.11 Update `lastModified` timestamps on MmpMap and MmpNode when persisting
+- [x] 2.12 Write unit tests for: Y.Doc hydration from DB, Y.Doc eviction lifecycle, grace period, persistence decode, transaction atomicity, debounce coalescing, error recovery
+- [x] 2.13 Verify backend builds, lints, and all tests pass
 
 ## 3. Backend: Yjs WebSocket Server & Map Deletion
 
