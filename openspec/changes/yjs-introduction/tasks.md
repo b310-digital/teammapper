@@ -90,12 +90,12 @@
 > **PR scope**: Enable the feature flags, verify end-to-end functionality with Yjs active. Both backends (Socket.io gateway + Yjs gateway) are still running, but the frontend now uses Yjs by default.
 > **App state after merge**: App uses Yjs for real-time sync. Socket.io code still present but unused.
 
-- [ ] 5.1 Set `YJS_ENABLED=true` as the default in backend configuration (or `.env` / docker-compose)
-- [ ] 5.2 Set `featureFlagYjs: true` in `environment.ts` and `environment.prod.ts`
-- [ ] 5.3 Update E2E tests to work with the Yjs WebSocket transport (update any test helpers that depend on Socket.io events or connection patterns)
-- [ ] 5.4 Run E2E tests (`pnpm run playwright test --reporter=list`)
+- [x] 5.1 Set `YJS_ENABLED=true` as the default in backend configuration (or `.env` / docker-compose)
+- [x] 5.2 Set `featureFlagYjs: true` in `environment.ts`
+- [x] 5.3 Update E2E tests to work with the Yjs WebSocket transport (update any test helpers that depend on Socket.io events or connection patterns)
+- [x] 5.4 Run E2E tests (`pnpm run playwright test --reporter=list`)
 - [ ] 5.5 Manual smoke test: open two browser tabs on the same map and verify real-time sync of node create, update, delete, selection highlighting, undo/redo, map import, and map deletion
-- [ ] 5.6 Verify backend and frontend build, lint, and all tests pass
+- [x] 5.6 Verify backend and frontend build, lint, and all tests pass
 
 ## 6. Cleanup: Remove Socket.io & Dead Code
 

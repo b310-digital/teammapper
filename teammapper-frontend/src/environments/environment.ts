@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  featureFlagYjs: false,
+  featureFlagYjs: true,
 };
