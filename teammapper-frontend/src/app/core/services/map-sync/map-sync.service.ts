@@ -104,6 +104,7 @@ export class MapSyncService implements OnDestroy {
   private modificationSecret: string;
 
   constructor() {
+    // Initialization of the behavior subjects.
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null);
     this.attachedNodeSubject = new BehaviorSubject<ExportNodeProperties | null>(
       null
@@ -130,6 +131,10 @@ export class MapSyncService implements OnDestroy {
 
   // ─── Public API ──────────────────────────────────────────────
 
+  /**
+   * Creates a new map on server and prepares it locally
+   * Stores admin data and enables edit mode
+   */
   public async prepareNewMap(): Promise<PrivateServerMap> {
     const privateServerMap: PrivateServerMap = await this.postMapToServer();
     this.storePrivateMapData(privateServerMap);
@@ -153,6 +158,9 @@ export class MapSyncService implements OnDestroy {
     return serverMap;
   }
 
+  // In case the component is destroyed or will be reinitialized it is important to reset state
+  // that might cause problems or performance issues, e.g. removing listeners, cleanup state.
+  // The current map is used inside the settings component and should stay therefore as it was.
   public reset() {
     if (environment.featureFlagYjs) {
       this.resetYjs();
@@ -204,6 +212,7 @@ export class MapSyncService implements OnDestroy {
     return this.connectionStatusSubject.getValue();
   }
 
+  // update the attached map from outside control flow
   public async updateAttachedMap(): Promise<void> {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
 
@@ -395,6 +404,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   private emitAddNode(newNode: ExportNodeProperties) {
+    // Emit with acknowledgment callback for error handling
     this.socket.emit(
       'addNodes',
       {
@@ -408,7 +418,12 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Add multiple nodes with server validation and error handling
+   * Used for bulk operations like paste
+   */
   private emitAddNodes(newNodes: ExportNodeProperties[]) {
+    // Emit with acknowledgment callback for error handling
     this.socket.emit(
       'addNodes',
       {
@@ -422,7 +437,11 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Update node property with server validation and error handling
+   */
   private emitUpdateNode(nodeUpdate: NodeUpdateEvent) {
+    // Emit with acknowledgment callback for error handling
     this.socket.emit(
       'updateNode',
       {
@@ -437,7 +456,11 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Remove node with server validation and error handling
+   */
   private emitRemoveNode(removedNode: ExportNodeProperties) {
+    // Emit with acknowledgment callback for error handling
     this.socket.emit(
       'removeNode',
       {
@@ -451,10 +474,14 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Apply undo/redo changes with server validation and error handling
+   */
   private emitApplyMapChangesByDiff(
     diff: MapDiff,
     operationType: 'undo' | 'redo'
   ) {
+    // Emit with acknowledgment callback for error handling
     this.socket.emit(
       'applyMapChangesByDiff',
       {
@@ -497,6 +524,7 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  // Remember all clients selections with the dedicated colors to switch between colors when clients change among nodes
   private updateNodeSelectionSocketIo(id: string, selected: boolean) {
     if (selected) {
       this.colorMapping[this.socket.id] = {
@@ -533,6 +561,10 @@ export class MapSyncService implements OnDestroy {
 
   // ─── Socket.io server event handlers ─────────────────────────
 
+  /**
+   * Setup all server event listeners and join the map
+   * Orchestrates socket event handlers for real-time collaboration
+   */
   private listenServerEvents(uuid: string): Promise<MapProperties> {
     this.checkModificationSecret();
     this.setupReconnectionHandler(uuid);
@@ -545,6 +577,10 @@ export class MapSyncService implements OnDestroy {
     return this.joinMap(uuid, this.clientColor);
   }
 
+  /**
+   * Setup socket reconnection handler
+   * Re-joins map and syncs state on reconnect
+   */
   private setupReconnectionHandler(uuid: string): void {
     this.socket.io.on('reconnect', async () => {
       const serverMap: MapProperties = await this.joinMap(
@@ -556,6 +592,10 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Setup notification event handlers
+   * Displays toasts for client notifications from server
+   */
   private setupNotificationHandlers(): void {
     this.socket.on(
       'clientNotification',
@@ -566,6 +606,10 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Handle individual client notification
+   * Translates message and shows appropriate toast type
+   */
   private async handleClientNotification(
     notification: ResponseClientNotification
   ): Promise<void> {
@@ -580,12 +624,19 @@ export class MapSyncService implements OnDestroy {
     toastHandlers[notification.type]?.();
   }
 
+  /**
+   * Setup node-related event handlers
+   * Handles node additions, updates, and removals
+   */
   private setupNodeEventHandlers(): void {
     this.setupNodesAddedHandler();
     this.setupNodeUpdatedHandler();
     this.setupNodeRemovedHandler();
   }
 
+  /**
+   * Setup handler for nodes being added
+   */
   private setupNodesAddedHandler(): void {
     this.socket.on('nodesAdded', (result: ResponseNodesAdded) => {
       if (result.clientId === this.socket.id) return;
@@ -593,6 +644,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Setup handler for node property updates
+   */
   private setupNodeUpdatedHandler(): void {
     this.socket.on('nodeUpdated', (result: ResponseNodeUpdated) => {
       if (result.clientId === this.socket.id) return;
@@ -600,6 +654,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Handle individual node property update
+   */
   private handleNodeUpdate(result: ResponseNodeUpdated): void {
     const newNode = result.node;
     const existingNode = this.mmpService.getNode(newNode.id);
@@ -615,6 +672,9 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Setup handler for node removal
+   */
   private setupNodeRemovedHandler(): void {
     this.socket.on('nodeRemoved', (result: ResponseNodeRemoved) => {
       if (result.clientId === this.socket.id) return;
@@ -624,6 +684,10 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Setup map-related event handlers
+   * Handles map updates, undo/redo, and options
+   */
   private setupMapEventHandlers(): void {
     this.setupMapUpdatedHandler();
     this.setupMapChangesHandler();
@@ -631,6 +695,9 @@ export class MapSyncService implements OnDestroy {
     this.setupMapDeletedHandler();
   }
 
+  /**
+   * Setup handler for full map updates
+   */
   private setupMapUpdatedHandler(): void {
     this.socket.on('mapUpdated', (result: ResponseMapUpdated) => {
       if (result.clientId === this.socket.id) return;
@@ -638,6 +705,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Setup handler for map undo/redo changes
+   */
   private setupMapChangesHandler(): void {
     this.socket.on('mapChangesUndoRedo', (result: ResponseUndoRedoChanges) => {
       if (result.clientId === this.socket.id) return;
@@ -645,12 +715,18 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Apply map diff for undo/redo operations
+   */
   private applyMapDiff(diff: MapDiff): void {
     this.applyAddedNodes(diff.added);
     this.applyUpdatedNodes(diff.updated);
     this.applyDeletedNodes(diff.deleted);
   }
 
+  /**
+   * Apply added nodes from diff
+   */
   private applyAddedNodes(added: SnapshotChanges): void {
     if (!added) return;
     for (const nodeId in added) {
@@ -658,6 +734,9 @@ export class MapSyncService implements OnDestroy {
     }
   }
 
+  /**
+   * Apply updated nodes from diff
+   */
   private applyUpdatedNodes(updated: SnapshotChanges): void {
     if (!updated) return;
     for (const nodeId in updated) {
@@ -667,6 +746,9 @@ export class MapSyncService implements OnDestroy {
     }
   }
 
+  /**
+   * Apply property updates to a single node
+   */
   private applyNodePropertyUpdates(
     nodeId: string,
     nodeUpdates: Partial<ExportNodeProperties>
@@ -690,6 +772,9 @@ export class MapSyncService implements OnDestroy {
     }
   }
 
+  /**
+   * Convert server property to client property format
+   */
   private getClientProperty(
     serverProperty: string,
     value: unknown
@@ -714,6 +799,9 @@ export class MapSyncService implements OnDestroy {
     return;
   }
 
+  /**
+   * Apply deleted nodes from diff
+   */
   private applyDeletedNodes(deleted: SnapshotChanges): void {
     if (!deleted) return;
     for (const nodeId in deleted) {
@@ -723,6 +811,9 @@ export class MapSyncService implements OnDestroy {
     }
   }
 
+  /**
+   * Setup handler for map options updates
+   */
   private setupMapOptionsHandler(): void {
     this.socket.on('mapOptionsUpdated', (result: ResponseMapOptionsUpdated) => {
       if (result.clientId === this.socket.id) return;
@@ -730,18 +821,28 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Setup handler for map deletion
+   */
   private setupMapDeletedHandler(): void {
     this.socket.on('mapDeleted', () => {
       window.location.reload();
     });
   }
 
+  /**
+   * Setup client-related event handlers
+   * Handles selection updates and client list changes
+   */
   private setupClientEventHandlers(): void {
     this.setupSelectionHandler();
     this.setupClientListHandler();
     this.setupClientDisconnectHandler();
   }
 
+  /**
+   * Setup handler for selection updates
+   */
   private setupSelectionHandler(): void {
     this.socket.on('selectionUpdated', (result: ResponseSelectionUpdated) => {
       if (result.clientId === this.socket.id) return;
@@ -750,6 +851,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Handle individual selection update
+   */
   private handleSelectionUpdate(result: ResponseSelectionUpdated): void {
     this.ensureClientInMapping(result.clientId);
     this.updateClientNodeSelection(
@@ -761,6 +865,9 @@ export class MapSyncService implements OnDestroy {
     this.mmpService.highlightNode(result.nodeId, colorForNode, false);
   }
 
+  /**
+   * Ensure client exists in color mapping
+   */
   private ensureClientInMapping(clientId: string): void {
     if (!this.colorMapping[clientId]) {
       this.colorMapping[clientId] = { color: DEFAULT_COLOR, nodeId: '' };
@@ -768,6 +875,9 @@ export class MapSyncService implements OnDestroy {
     }
   }
 
+  /**
+   * Update client's selected node in mapping
+   */
   private updateClientNodeSelection(
     clientId: string,
     nodeId: string,
@@ -776,6 +886,9 @@ export class MapSyncService implements OnDestroy {
     this.colorMapping[clientId].nodeId = selected ? nodeId : '';
   }
 
+  /**
+   * Setup handler for client list updates
+   */
   private setupClientListHandler(): void {
     this.socket.on('clientListUpdated', (clients: ServerClientList) => {
       this.updateColorMapping(clients);
@@ -783,6 +896,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Update color mapping from server client list
+   */
   private updateColorMapping(clients: ServerClientList): void {
     this.colorMapping = Object.keys(clients).reduce<ClientColorMapping>(
       (acc: ClientColorMapping, key: string) => {
@@ -796,6 +912,9 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Setup handler for client disconnection
+   */
   private setupClientDisconnectHandler(): void {
     this.socket.on('clientDisconnect', (clientId: string) => {
       delete this.colorMapping[clientId];
@@ -803,6 +922,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Setup connection event handlers
+   */
   private setupConnectionEventHandlers(): void {
     this.socket.on('disconnect', () => {
       this.setConnectionStatusSubject('disconnected');
@@ -811,6 +933,10 @@ export class MapSyncService implements OnDestroy {
 
   // ─── Socket.io error handling ────────────────────────────────
 
+  /**
+   * Validate ServerMap structure at runtime
+   * Ensures fullMapState has required properties before using
+   */
   private isValidServerMap(map: unknown): map is ServerMap {
     if (!map || typeof map !== 'object') return false;
 
@@ -829,6 +955,9 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Type guard to validate error response structure at runtime
+   */
   private isValidErrorResponse(
     response: OperationResponse<unknown>
   ): response is ValidationErrorResponse | CriticalErrorResponse {
@@ -848,6 +977,7 @@ export class MapSyncService implements OnDestroy {
 
     if (!isBasicStructureValid) return false;
 
+    // Validate fullMapState if present
     if (errorResponse.fullMapState) {
       return this.isValidServerMap(errorResponse.fullMapState);
     }
@@ -855,22 +985,30 @@ export class MapSyncService implements OnDestroy {
     return true;
   }
 
+  /**
+   * Simplified handler for all operation responses
+   * If error with fullMapState, reload from server state
+   */
   private async handleOperationResponse(
     response: OperationResponse<unknown>,
     operationName: string
   ): Promise<void> {
+    // Success - operation confirmed by server
     if (response.success) {
       return;
     }
 
+    // Validate error response structure before processing
     if (!this.isValidErrorResponse(response)) {
       await this.showMalformedResponseError();
       return;
     }
 
+    // Error occurred - reload from fullMapState if available
     if (response.fullMapState) {
       await this.handleRecoverableError(response, operationName);
     } else {
+      // No fullMapState provided - show critical error
       await this.handleCriticalError(response);
     }
   }
@@ -894,6 +1032,7 @@ export class MapSyncService implements OnDestroy {
     response: ValidationErrorResponse | CriticalErrorResponse,
     operationName: string
   ): Promise<void> {
+    // Reload entire map from server's authoritative state
     this.mmpService.new(response.fullMapState.data, false);
 
     let message: string;
@@ -904,6 +1043,7 @@ export class MapSyncService implements OnDestroy {
     } catch {
       message = 'Operation failed - map reloaded';
     }
+    // Show appropriate error notification
     this.toastService.showValidationCorrection(operationName, message);
   }
 
@@ -921,6 +1061,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Convert error code to user-friendly translated message
+   */
   private async getUserFriendlyErrorMessage(
     code: string,
     _messageKey: string
@@ -1511,6 +1654,9 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
+  /**
+   * Store private map data locally for admin access
+   */
   private storePrivateMapData(privateServerMap: PrivateServerMap): void {
     const serverMap = privateServerMap.map;
     this.storageService.set(serverMap.uuid, {
@@ -1522,6 +1668,9 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  /**
+   * Setup state for newly created map
+   */
   private setupNewMapState(privateServerMap: PrivateServerMap): void {
     this.prepareMap(privateServerMap.map);
     this.settingsService.setEditMode(true);
@@ -1548,10 +1697,16 @@ export class MapSyncService implements OnDestroy {
     return response.json();
   }
 
+  /**
+   * Return the key of the map in the storage
+   */
   private createKey(uuid: string): string {
     return `map-${uuid}`;
   }
 
+  /**
+   * Converts server map
+   */
   private convertServerMapToMmp(serverMap: ServerMap): MapProperties {
     return Object.assign({}, serverMap, {
       lastModified: Date.parse(serverMap.lastModified),
