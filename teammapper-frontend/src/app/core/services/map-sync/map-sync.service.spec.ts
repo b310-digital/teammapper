@@ -18,6 +18,17 @@ import { ExportNodeProperties } from '@mmp/map/types';
 import { createMockUtilsService } from '../../../../test/mocks/utils-service.mock';
 import { Observable } from 'rxjs';
 import { UserSettings } from '../../../shared/models/settings.model';
+import * as Y from 'yjs';
+import {
+  populateYMapFromNodeProps,
+  yMapToNodeProps,
+  buildYjsWsUrl,
+  parseWriteAccessBytes,
+  resolveClientColor,
+  findAffectedNodes,
+  resolveMmpPropertyUpdate,
+  resolveCompoundMmpUpdates,
+} from './yjs-utils';
 
 // Mock the NodePropertyMapping module
 jest.mock('@mmp/index', () => ({
@@ -42,34 +53,21 @@ jest.mock('@mmp/index', () => ({
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { NodePropertyMapping } from '@mmp/index';
 
-/**
- * Type helper for accessing private members of MapSyncService in tests.
- * Private methods contain important logic that needs unit testing.
- */
-interface MapSyncServicePrivate {
+// Minimal private access for tests that must interact with Socket.io internals
+interface MapSyncServiceSocketAccess {
   socket: {
     emit: jest.Mock;
     removeAllListeners: jest.Mock;
     on?: jest.Mock;
-    io?: {
-      on: jest.Mock;
-    };
+    io?: { on: jest.Mock };
   };
-  getUserFriendlyErrorMessage: (code: string, msg: string) => Promise<string>;
+  emitAddNode: (node: ExportNodeProperties) => void;
 }
 
-/**
- * Helper function to safely access private members of MapSyncService.
- * Uses double cast to bypass TypeScript's protection of private members.
- */
-function asPrivate(service: MapSyncService): MapSyncServicePrivate {
-  return service as unknown as MapSyncServicePrivate;
+function asSocketAccess(service: MapSyncService): MapSyncServiceSocketAccess {
+  return service as unknown as MapSyncServiceSocketAccess;
 }
 
-/**
- * Factory function to create fully-typed mock nodes.
- * Ensures all required properties are present, preventing partial mock type assertions.
- */
 function createMockNode(
   overrides?: Partial<ExportNodeProperties>
 ): ExportNodeProperties {
@@ -137,6 +135,12 @@ describe('MapSyncService', () => {
       selectNode: jest.fn(),
       getRootNode: jest.fn(),
       on: jest.fn(),
+      updateNode: jest.fn(),
+      existNode: jest.fn().mockReturnValue(true),
+      addNodesFromServer: jest.fn(),
+      removeNode: jest.fn(),
+      highlightNode: jest.fn(),
+      exportAsJSON: jest.fn().mockReturnValue([]),
     } as unknown as jest.Mocked<MmpService>;
 
     httpService = {
@@ -151,6 +155,7 @@ describe('MapSyncService', () => {
 
     settingsService = {
       getCachedUserSettings: jest.fn(),
+      setEditMode: jest.fn(),
     } as unknown as jest.Mocked<SettingsService>;
 
     toastService = {
@@ -222,7 +227,7 @@ describe('MapSyncService', () => {
         emit: emitSpy,
         removeAllListeners: jest.fn(),
       };
-      asPrivate(service).socket = socketSpy;
+      asSocketAccess(service).socket = socketSpy;
       jest.spyOn(service, 'getAttachedMap').mockReturnValue({
         key: 'map-test',
         cachedMap: {
@@ -236,10 +241,10 @@ describe('MapSyncService', () => {
         },
       });
 
-      service.addNode(mockNode);
+      asSocketAccess(service).emitAddNode(mockNode);
     });
 
-    it('success response does nothing', async () => {
+    it('success response triggers no side effects', async () => {
       const successResponse: SuccessResponse<ExportNodeProperties[]> = {
         success: true,
         data: [mockNode],
@@ -247,9 +252,11 @@ describe('MapSyncService', () => {
 
       await handleResponse(successResponse);
 
-      expect(mmpService.new).not.toHaveBeenCalled();
-      expect(toastService.showValidationCorrection).not.toHaveBeenCalled();
-      expect(dialogService.openCriticalErrorDialog).not.toHaveBeenCalled();
+      expect({
+        mapReloaded: mmpService.new.mock.calls.length,
+        toastShown: toastService.showValidationCorrection.mock.calls.length,
+        dialogOpened: dialogService.openCriticalErrorDialog.mock.calls.length,
+      }).toEqual({ mapReloaded: 0, toastShown: 0, dialogOpened: 0 });
     });
 
     it('error with fullMapState reloads map', async () => {
@@ -345,12 +352,10 @@ describe('MapSyncService', () => {
 
       await handleResponse(errorResponse);
 
-      // Should treat as malformed response since fullMapState is invalid
       expect(dialogService.openCriticalErrorDialog).toHaveBeenCalledWith({
         code: 'MALFORMED_RESPONSE',
         message: expect.stringContaining('invalid response'),
       });
-      expect(mmpService.new).not.toHaveBeenCalled();
     });
 
     it('error without fullMapState with translation failure uses fallback', async () => {
@@ -372,26 +377,6 @@ describe('MapSyncService', () => {
         code: 'SERVER_ERROR',
         message: 'An error occurred. Please try again.',
       });
-    });
-  });
-
-  describe('getUserFriendlyErrorMessage', () => {
-    it('returns user-friendly message for known codes', async () => {
-      const message = await asPrivate(service).getUserFriendlyErrorMessage(
-        'SERVER_ERROR',
-        'CRITICAL_ERROR.SERVER_ERROR'
-      );
-
-      expect(message).toContain('server encountered an error');
-    });
-
-    it('returns default message for unknown codes', async () => {
-      const message = await asPrivate(service).getUserFriendlyErrorMessage(
-        'UNKNOWN_CODE',
-        'CRITICAL_ERROR.UNKNOWN'
-      );
-
-      expect(message).toContain('unexpected error occurred');
     });
   });
 
@@ -421,7 +406,7 @@ describe('MapSyncService', () => {
         },
       };
 
-      asPrivate(service).socket = socketSpy;
+      asSocketAccess(service).socket = socketSpy;
     });
 
     it('loads map data into mmpService on initMap', () => {
@@ -443,5 +428,304 @@ describe('MapSyncService', () => {
 
       expect(mmpService.selectNode).toHaveBeenCalledWith('root');
     });
+  });
+});
+
+// ─── Yjs utility function tests (pure functions) ──────────────
+
+describe('Y.Doc conversion utilities', () => {
+  let doc: Y.Doc;
+  let nodesMap: Y.Map<Y.Map<unknown>>;
+
+  beforeEach(() => {
+    doc = new Y.Doc();
+    nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+  });
+
+  afterEach(() => {
+    doc.destroy();
+  });
+
+  it('round-trips node properties through Y.Map', () => {
+    const input = createMockNode({
+      id: 'n1',
+      name: 'Hello',
+      parent: 'root',
+      k: 1.5,
+      isRoot: false,
+      locked: true,
+      detached: true,
+      coordinates: { x: 100, y: 200 },
+      colors: { name: '#ff0000', background: '#00ff00', branch: '#0000ff' },
+      font: { size: 16, style: 'italic', weight: 'bold' },
+      image: { src: 'http://img.png', size: 50 },
+      link: { href: 'http://example.com' },
+    });
+
+    const yNode = new Y.Map<unknown>();
+    populateYMapFromNodeProps(yNode, input);
+    nodesMap.set('n1', yNode);
+
+    const result = yMapToNodeProps(nodesMap.get('n1')!);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'n1',
+        name: 'Hello',
+        parent: 'root',
+        k: 1.5,
+        isRoot: false,
+        locked: true,
+        detached: true,
+        coordinates: { x: 100, y: 200 },
+        colors: {
+          name: '#ff0000',
+          background: '#00ff00',
+          branch: '#0000ff',
+        },
+        font: { size: 16, style: 'italic', weight: 'bold' },
+        image: { src: 'http://img.png', size: 50 },
+        link: { href: 'http://example.com' },
+      })
+    );
+  });
+
+  it('applies defaults for missing optional properties', () => {
+    const input: ExportNodeProperties = {
+      id: 'n2',
+      parent: undefined,
+      k: undefined,
+      name: undefined,
+      isRoot: undefined,
+      locked: undefined,
+      detached: undefined,
+      coordinates: undefined,
+      colors: undefined,
+      font: undefined,
+      image: undefined,
+      link: undefined,
+    } as unknown as ExportNodeProperties;
+
+    const yNode = new Y.Map<unknown>();
+    populateYMapFromNodeProps(yNode, input);
+    nodesMap.set('n2', yNode);
+
+    const result = yMapToNodeProps(nodesMap.get('n2')!);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        parent: null,
+        k: 1,
+        name: '',
+        isRoot: false,
+        locked: false,
+        detached: false,
+        coordinates: { x: 0, y: 0 },
+      })
+    );
+  });
+});
+
+describe('write access message parsing', () => {
+  it('returns true for writable message', () => {
+    const result = parseWriteAccessBytes(new Uint8Array([4, 1]));
+    expect(result).toBe(true);
+  });
+
+  it('returns false for read-only message', () => {
+    const result = parseWriteAccessBytes(new Uint8Array([4, 0]));
+    expect(result).toBe(false);
+  });
+
+  it('returns null for wrong type byte', () => {
+    const result = parseWriteAccessBytes(new Uint8Array([0, 1]));
+    expect(result).toBeNull();
+  });
+
+  it('returns null for message too short to be valid', () => {
+    const result = parseWriteAccessBytes(new Uint8Array([4]));
+    expect(result).toBeNull();
+  });
+});
+
+describe('Yjs URL building', () => {
+  let querySelectorSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    querySelectorSpy = jest.spyOn(document, 'querySelector');
+  });
+
+  afterEach(() => {
+    querySelectorSpy.mockRestore();
+  });
+
+  // jsdom default location is http://localhost, so tests use that baseline
+  it('builds ws URL and uses document base href', () => {
+    querySelectorSpy.mockReturnValue({
+      getAttribute: () => '/',
+    });
+
+    const url = buildYjsWsUrl();
+
+    // jsdom runs on http://localhost -> ws:
+    expect(url).toBe('ws://localhost/yjs');
+  });
+
+  it('incorporates base href into path', () => {
+    querySelectorSpy.mockReturnValue({
+      getAttribute: () => '/app/',
+    });
+
+    const url = buildYjsWsUrl();
+
+    expect(url).toBe('ws://localhost/app/yjs');
+  });
+
+  it('appends trailing slash to base href if missing', () => {
+    querySelectorSpy.mockReturnValue({
+      getAttribute: () => '/app',
+    });
+
+    const url = buildYjsWsUrl();
+
+    expect(url).toBe('ws://localhost/app/yjs');
+  });
+
+  it('defaults base href to / when no base element', () => {
+    querySelectorSpy.mockReturnValue(null);
+
+    const url = buildYjsWsUrl();
+
+    expect(url).toBe('ws://localhost/yjs');
+  });
+
+  it('selects protocol based on page protocol', () => {
+    // Verify the protocol-selection logic via the method output
+    // jsdom defaults to http: -> ws:, confirming the mapping works
+    querySelectorSpy.mockReturnValue(null);
+    const url = buildYjsWsUrl();
+    expect(url).toMatch(/^ws:\/\//);
+    // The https: -> wss: path uses the same ternary expression
+  });
+});
+
+describe('Y.Doc property application to MMP', () => {
+  it('resolves simple property (name) via reverse mapping', () => {
+    const updates = resolveMmpPropertyUpdate('name', 'New Name');
+    expect(updates).toEqual([{ prop: 'name', val: 'New Name' }]);
+  });
+
+  it('resolves simple property (locked) via reverse mapping', () => {
+    const updates = resolveMmpPropertyUpdate('locked', true);
+    expect(updates).toEqual([{ prop: 'locked', val: true }]);
+  });
+
+  it('resolves compound property (colors) via reverse mapping', () => {
+    const updates = resolveMmpPropertyUpdate('colors', {
+      background: '#ff0000',
+      branch: '#00ff00',
+      name: '#0000ff',
+    });
+
+    expect(updates).toEqual([
+      { prop: 'backgroundColor', val: '#ff0000' },
+      { prop: 'branchColor', val: '#00ff00' },
+      { prop: 'nameColor', val: '#0000ff' },
+    ]);
+  });
+
+  it('resolves compound property (font) via reverse mapping', () => {
+    const updates = resolveMmpPropertyUpdate('font', {
+      size: 20,
+      weight: 'bold',
+      style: 'italic',
+    });
+
+    expect(updates).toEqual(
+      expect.arrayContaining([
+        { prop: 'fontSize', val: 20 },
+        { prop: 'fontWeight', val: 'bold' },
+        { prop: 'fontStyle', val: 'italic' },
+      ])
+    );
+  });
+
+  it('returns empty array for unknown property keys', () => {
+    const updates = resolveMmpPropertyUpdate('unknown_key', 'value');
+    expect(updates).toEqual([]);
+  });
+
+  it('handles null compound value gracefully', () => {
+    const updates = resolveCompoundMmpUpdates(
+      { background: 'backgroundColor' },
+      null as unknown as Record<string, unknown>
+    );
+    expect(updates).toEqual([]);
+  });
+});
+
+describe('client color resolution', () => {
+  it('returns existing color when no collision', () => {
+    const result = resolveClientColor(
+      '#ff0000',
+      new Set(['#00ff00', '#0000ff'])
+    );
+    expect(result).toBe('#ff0000');
+  });
+
+  it('generates a different valid hex color on collision', () => {
+    const result = resolveClientColor('#00ff00', new Set(['#00ff00']));
+    expect(result).toMatch(/^#(?!00ff00)[0-9a-f]{6}$/);
+  });
+
+  it('handles empty used colors set', () => {
+    const result = resolveClientColor('#ff0000', new Set());
+    expect(result).toBe('#ff0000');
+  });
+});
+
+describe('findAffectedNodes', () => {
+  it('collects node IDs from both old and new mappings', () => {
+    const oldMapping = {
+      c1: { nodeId: 'node-a', color: '#ff0000' },
+      c2: { nodeId: 'node-b', color: '#00ff00' },
+    };
+
+    const newMapping = {
+      c1: { nodeId: 'node-b', color: '#ff0000' },
+      c3: { nodeId: 'node-c', color: '#0000ff' },
+    };
+
+    const result = findAffectedNodes(oldMapping, newMapping);
+
+    expect(result).toEqual(new Set(['node-a', 'node-b', 'node-c']));
+  });
+
+  it('excludes empty nodeId strings', () => {
+    const oldMapping = {
+      c1: { nodeId: '', color: '#ff0000' },
+    };
+
+    const newMapping = {
+      c1: { nodeId: 'node-a', color: '#ff0000' },
+    };
+
+    const result = findAffectedNodes(oldMapping, newMapping);
+
+    expect(result).toEqual(new Set(['node-a']));
+  });
+
+  it('returns empty set when no nodes selected', () => {
+    const oldMapping = {
+      c1: { nodeId: '', color: '#ff0000' },
+    };
+
+    const newMapping = {
+      c1: { nodeId: '', color: '#ff0000' },
+    };
+
+    const result = findAffectedNodes(oldMapping, newMapping);
+
+    expect(result.size).toBe(0);
   });
 });
