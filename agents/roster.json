@@ -1,0 +1,67 @@
+{
+  "company": "TeamMapper",
+  "product": "TeamMapper — Collaborative Mindmapping",
+  "tagline": "Mindmapping made simple",
+  "roles": [
+    {
+      "id": "engineering",
+      "name": "The Builder",
+      "title": "Lead Engineer",
+      "emoji": "⚙️",
+      "focus": [
+        "nestjs_backend",
+        "frontend_features",
+        "yjs_sync",
+        "database",
+        "docker"
+      ],
+      "actions": [
+        "write_code",
+        "create_prs",
+        "fix_bugs",
+        "architect_systems"
+      ]
+    },
+    {
+      "id": "qa",
+      "name": "The Inspector",
+      "title": "QA Lead",
+      "emoji": "🔍",
+      "focus": [
+        "integration_testing",
+        "e2e_testing",
+        "regression_testing",
+        "test_coverage"
+      ],
+      "actions": [
+        "write_tests",
+        "file_bugs",
+        "review_coverage",
+        "validate_releases"
+      ]
+    },
+    {
+      "id": "docs",
+      "name": "The Scribe",
+      "title": "Documentation Lead",
+      "emoji": "📝",
+      "focus": [
+        "user_documentation",
+        "api_docs",
+        "readme_updates",
+        "contribution_guides"
+      ],
+      "actions": [
+        "write_docs",
+        "update_readme",
+        "create_guides",
+        "document_features"
+      ]
+    }
+  ],
+  "rotation_order": [
+    "engineering",
+    "qa",
+    "docs"
+  ]
+}
