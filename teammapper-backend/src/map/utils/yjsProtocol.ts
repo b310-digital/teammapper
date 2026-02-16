@@ -7,6 +7,9 @@ import * as decoding from 'lib0/decoding'
 // Message types matching y-websocket client protocol
 export const MESSAGE_SYNC = 0
 export const MESSAGE_AWARENESS = 1
+// Custom message type for communicating write access to clients
+// (types 2=auth and 3=queryAwareness are reserved by y-websocket)
+export const MESSAGE_WRITE_ACCESS = 4
 
 // WebSocket close codes (4000-4999 private-use range per RFC 6455)
 export const WS_CLOSE_MISSING_PARAM = 4000
@@ -56,6 +59,14 @@ export const encodeAwarenessMessage = (
   return encoding.toUint8Array(encoder)
 }
 
+// Encodes a write-access message to inform the client of its permissions
+export const encodeWriteAccessMessage = (writable: boolean): Uint8Array => {
+  const encoder = encoding.createEncoder()
+  encoding.writeVarUint(encoder, MESSAGE_WRITE_ACCESS)
+  encoding.writeVarUint(encoder, writable ? 1 : 0)
+  return encoding.toUint8Array(encoder)
+}
+
 // For read-only clients: process SyncStep1 (state request), drop writes
 export const processReadOnlySyncMessage = (
   decoder: decoding.Decoder,
@@ -93,17 +104,19 @@ export const extractPathname = (url: string | undefined): string => {
   }
 }
 
-// Parses mapId and secret from WebSocket URL query params
+// Parses mapId and secret from WebSocket URL query or path params
+// Supports both legacy (/yjs?mapId=<id>) and y-websocket (/yjs/<id>?secret=...)
 export const parseQueryParams = (
   url: string | undefined
 ): ParsedQueryParams => {
   if (!url) return { mapId: null, secret: null }
   try {
-    const params = new URL(url, 'http://localhost').searchParams
-    return {
-      mapId: params.get('mapId'),
-      secret: params.get('secret'),
-    }
+    const parsed = new URL(url, 'http://localhost')
+    const pathParts = parsed.pathname.split('/').filter(Boolean)
+    const mapId =
+      parsed.searchParams.get('mapId') ??
+      (pathParts.length >= 2 ? pathParts[1] : null)
+    return { mapId, secret: parsed.searchParams.get('secret') }
   } catch {
     return { mapId: null, secret: null }
   }

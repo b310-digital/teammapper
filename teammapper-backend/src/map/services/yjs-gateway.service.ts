@@ -33,6 +33,7 @@ import {
   encodeSyncStep1Message,
   encodeSyncUpdateMessage,
   encodeAwarenessMessage,
+  encodeWriteAccessMessage,
   processReadOnlySyncMessage,
   parseAwarenessClientIds,
 } from '../utils/yjsProtocol'
@@ -76,7 +77,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     server.on(
       'upgrade',
       (request: IncomingMessage, socket: Duplex, head: Buffer) => {
-        if (extractPathname(request.url) === '/yjs') {
+        if (extractPathname(request.url).startsWith('/yjs')) {
           this.wss!.handleUpgrade(request, socket, head, (ws) => {
             this.wss!.emit('connection', ws, request)
           })
@@ -223,6 +224,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
 
     this.send(ws, encodeSyncStep1Message(doc))
     this.sendAwarenessStates(ws, awareness)
+    this.send(ws, encodeWriteAccessMessage(writable))
   }
 
   private handleMessage(

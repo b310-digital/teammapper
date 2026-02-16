@@ -67,23 +67,23 @@
 > **PR scope**: Full frontend Yjs integration behind `featureFlagYjs`. When flag is off, the existing Socket.io code path runs unchanged. When flag is on, MapSyncService uses Y.Doc + WebsocketProvider. Both code paths coexist.
 > **App state after merge**: Identical to before (flag is off). Yjs path is testable by setting flag to true.
 
-- [ ] 4.1 Refactor `MapSyncService` to branch on `featureFlagYjs`: extract current Socket.io logic into a private `initSocketIo()` path, create a parallel `initYjs()` path. The `initMap()` and `listenServerEvents()` methods call one or the other based on the flag.
-- [ ] 4.2 In the Yjs path: create a `Y.Doc` instance and a `WebsocketProvider` connecting to `/yjs` with map UUID as room name and modification secret as `params` query parameter
-- [ ] 4.3 Configure `WebsocketProvider` with reconnection support (reconnectionDelay matching current Socket.io config)
-- [ ] 4.4 Derive connection status from `WebsocketProvider` status events (`'connected'` / `'disconnected'`) and emit to `connectionStatusSubject`
-- [ ] 4.5 Implement bridge — MMP events to Y.Doc writes: `nodeCreate` → set in `nodes` Y.Map, `nodeUpdate` → update Y.Map entry, `nodeRemove` → delete from Y.Map, `nodePaste` → batch add in `yDoc.transact()`, `updateMapOptions` → update `mapOptions` Y.Map
-- [ ] 4.6 Implement bridge — Y.Doc observations to MMP: observe `nodes` Y.Map for remote changes (add → `mmpService.addNode()`, update → `mmpService.updateNode()`, delete → `mmpService.removeNode()`), all with `notifyWithEvent: false`
-- [ ] 4.7 Implement echo prevention: in Y.Doc observers, check `transaction.local` and skip local changes
-- [ ] 4.8 Implement initial map load: on first Y.Doc sync, extract all nodes from `nodes` map, convert to `ExportNodeProperties[]`, call `mmpService.new(snapshot)` to initialize MMP
-- [ ] 4.9 Implement map import in Yjs path: clear and repopulate Y.Doc `nodes` map in a `yDoc.transact()` call (replacing the Socket.io `updateMap` flow)
-- [ ] 4.10 Implement undo/redo in Yjs path: after MMP redraws from history snapshot, write the resulting node changes (adds, updates, deletes) to Y.Doc instead of `socket.emit('applyMapChangesByDiff')`
-- [ ] 4.11 Implement map deletion handling in Yjs path: detect WebSocket close by server → redirect or show notification (replacing Socket.io `mapDeleted` handler)
-- [ ] 4.12 Implement Yjs Awareness — presence: set initial awareness state `{ color, selectedNodeId: null }` on connect, with color collision detection via `awareness.getStates()`
-- [ ] 4.13 Implement Yjs Awareness — selection: update `selectedNodeId` on MMP `nodeSelect`/`nodeDeselect` events
-- [ ] 4.14 Implement Yjs Awareness — client list: observe awareness changes, derive client colors from `awareness.getStates()`, emit to `clientListSubject`
-- [ ] 4.15 Implement Yjs Awareness — node highlighting: observe remote clients' `selectedNodeId` changes, call `mmpService.highlightNode()` with their color, ignore references to non-existent nodes
-- [ ] 4.16 Implement cleanup on destroy: disconnect `WebsocketProvider`, destroy Y.Doc, remove observers
-- [ ] 4.17 Verify frontend builds, lints, and unit tests pass with flag off (Socket.io path unchanged)
+- [x] 4.1 Refactor `MapSyncService` to branch on `featureFlagYjs`: extract current Socket.io logic into a private `initSocketIo()` path, create a parallel `initYjs()` path. The `initMap()` and `listenServerEvents()` methods call one or the other based on the flag.
+- [x] 4.2 In the Yjs path: create a `Y.Doc` instance and a `WebsocketProvider` connecting to `/yjs` with map UUID as room name and modification secret as `params` query parameter
+- [x] 4.3 Configure `WebsocketProvider` with reconnection support (reconnectionDelay matching current Socket.io config)
+- [x] 4.4 Derive connection status from `WebsocketProvider` status events (`'connected'` / `'disconnected'`) and emit to `connectionStatusSubject`
+- [x] 4.5 Implement bridge — MMP events to Y.Doc writes: `nodeCreate` → set in `nodes` Y.Map, `nodeUpdate` → update Y.Map entry, `nodeRemove` → delete from Y.Map, `nodePaste` → batch add in `yDoc.transact()`, `updateMapOptions` → update `mapOptions` Y.Map
+- [x] 4.6 Implement bridge — Y.Doc observations to MMP: observe `nodes` Y.Map for remote changes (add → `mmpService.addNode()`, update → `mmpService.updateNode()`, delete → `mmpService.removeNode()`), all with `notifyWithEvent: false`
+- [x] 4.7 Implement echo prevention: in Y.Doc observers, check `transaction.local` and skip local changes
+- [x] 4.8 Implement initial map load: on first Y.Doc sync, extract all nodes from `nodes` map, convert to `ExportNodeProperties[]`, call `mmpService.new(snapshot)` to initialize MMP
+- [x] 4.9 Implement map import in Yjs path: clear and repopulate Y.Doc `nodes` map in a `yDoc.transact()` call (replacing the Socket.io `updateMap` flow)
+- [x] 4.10 Implement undo/redo in Yjs path: after MMP redraws from history snapshot, write the resulting node changes (adds, updates, deletes) to Y.Doc instead of `socket.emit('applyMapChangesByDiff')`
+- [x] 4.11 Implement map deletion handling in Yjs path: detect WebSocket close by server → redirect or show notification (replacing Socket.io `mapDeleted` handler)
+- [x] 4.12 Implement Yjs Awareness — presence: set initial awareness state `{ color, selectedNodeId: null }` on connect, with color collision detection via `awareness.getStates()`
+- [x] 4.13 Implement Yjs Awareness — selection: update `selectedNodeId` on MMP `nodeSelect`/`nodeDeselect` events
+- [x] 4.14 Implement Yjs Awareness — client list: observe awareness changes, derive client colors from `awareness.getStates()`, emit to `clientListSubject`
+- [x] 4.15 Implement Yjs Awareness — node highlighting: observe remote clients' `selectedNodeId` changes, call `mmpService.highlightNode()` with their color, ignore references to non-existent nodes
+- [x] 4.16 Implement cleanup on destroy: disconnect `WebsocketProvider`, destroy Y.Doc, remove observers
+- [x] 4.17 Verify frontend builds, lints, and unit tests pass with flag off (Socket.io path unchanged)
 
 ## 5. Integration Testing & Flag Activation
 
