@@ -55,6 +55,7 @@ import {
   resolveClientColor,
   findAffectedNodes,
   resolveMmpPropertyUpdate,
+  sortParentFirst,
 } from './yjs-utils';
 
 const DEFAULT_COLOR = '#000000';
@@ -1255,7 +1256,7 @@ export class MapSyncService implements OnDestroy {
     nodesMap.forEach((yNode: Y.Map<unknown>) => {
       nodes.push(this.yMapToNodeProps(yNode));
     });
-    return nodes;
+    return sortParentFirst(nodes);
   }
 
   // ─── Yjs: MMP event listeners (MMP → Y.Doc) ─────────────────

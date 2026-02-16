@@ -35,6 +35,7 @@ export const populateYMapFromNode = (
     size: node.imageSize ?? 0,
   })
   yNode.set('link', { href: node.linkHref ?? '' })
+  yNode.set('orderNumber', node.orderNumber ?? 0)
   nodesMap.set(node.id, yNode)
 }
 
@@ -88,6 +89,7 @@ export const yMapToMmpNode = (
     imageSrc: image?.src ?? '',
     imageSize: image?.size ?? 0,
     linkHref: link?.href ?? '',
+    orderNumber: (yNode.get('orderNumber') as number) ?? undefined,
     nodeMapId: mapId,
   }
 }
