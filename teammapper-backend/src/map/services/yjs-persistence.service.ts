@@ -5,6 +5,7 @@ import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { yMapToMmpNode, yMapToMapOptions } from '../utils/yDocConversion'
+import { orderNodesFromRoot } from '../utils/nodeOrdering'
 
 interface DebounceEntry {
   doc: Y.Doc
@@ -128,6 +129,7 @@ export class YjsPersistenceService {
     }
   }
 
+  // Extracts nodes from Y.Doc, ensuring root is first with stable orderNumbers
   private extractNodesFromYDoc(
     nodesMap: Y.Map<Y.Map<unknown>>,
     mapId: string,
@@ -137,7 +139,7 @@ export class YjsPersistenceService {
     nodesMap.forEach((yNode) => {
       nodes.push({ ...yMapToMmpNode(yNode, mapId), lastModified: now })
     })
-    return nodes
+    return orderNodesFromRoot(nodes)
   }
 
   private async deleteRemovedNodes(

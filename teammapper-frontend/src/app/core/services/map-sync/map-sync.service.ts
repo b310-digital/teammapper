@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import {
   CachedAdminMapEntry,
   CachedAdminMapValue,
@@ -42,7 +42,6 @@ import { ToastrService } from 'ngx-toastr';
 import { MapDiff, SnapshotChanges } from '@mmp/map/handlers/history';
 import { ToastService } from '../toast/toast.service';
 import { DialogService } from '../dialog/dialog.service';
-import { environment } from '../../../../environments/environment';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import {
@@ -55,6 +54,7 @@ import {
   resolveClientColor,
   findAffectedNodes,
   resolveMmpPropertyUpdate,
+  sortParentFirst,
 } from './yjs-utils';
 
 const DEFAULT_COLOR = '#000000';
@@ -88,20 +88,29 @@ export class MapSyncService implements OnDestroy {
   // inform other parts of the app about the connection state
   private readonly connectionStatusSubject: BehaviorSubject<ConnectionStatus>;
 
-  // Socket.io fields (used when featureFlagYjs is false)
+  // Socket.io fields (used when yjs feature flag is false)
   private socket: Socket;
 
-  // Yjs fields (used when featureFlagYjs is true)
+  // Yjs fields (used when yjs feature flag is true)
   private yDoc: Y.Doc | null = null;
   private wsProvider: WebsocketProvider | null = null;
   private yjsSynced = false;
   private yjsWritable = false;
+  private yjsSubscriptions: Subscription[] = [];
+  private yjsMapId: string | null = null;
+  private yjsNodesObserver:
+    | Parameters<Y.Map<unknown>['observeDeep']>[0]
+    | null = null;
+  private yjsOptionsObserver: Parameters<Y.Map<unknown>['observe']>[0] | null =
+    null;
+  private yjsAwarenessHandler: (() => void) | null = null;
 
   // Common fields
   private colorMapping: ClientColorMapping;
   private availableColors: string[];
   private clientColor: string;
   private modificationSecret: string;
+  private readonly yjsEnabled: boolean;
 
   constructor() {
     // Initialization of the behavior subjects.
@@ -119,14 +128,21 @@ export class MapSyncService implements OnDestroy {
       ];
     this.modificationSecret = '';
     this.colorMapping = {};
+    this.yjsEnabled =
+      this.settingsService.getCachedSystemSettings()?.featureFlags?.yjs ??
+      false;
 
-    if (!environment.featureFlagYjs) {
+    if (!this.yjsEnabled) {
       this.initSocketConnection();
     }
   }
 
   ngOnDestroy() {
-    this.reset();
+    if (this.yjsEnabled) {
+      this.resetYjs();
+    } else {
+      this.resetSocketIo();
+    }
   }
 
   // ─── Public API ──────────────────────────────────────────────
@@ -158,12 +174,11 @@ export class MapSyncService implements OnDestroy {
     return serverMap;
   }
 
-  // In case the component is destroyed or will be reinitialized it is important to reset state
-  // that might cause problems or performance issues, e.g. removing listeners, cleanup state.
-  // The current map is used inside the settings component and should stay therefore as it was.
+  // Detach MMP listeners but keep the Yjs connection alive for reuse
   public reset() {
-    if (environment.featureFlagYjs) {
-      this.resetYjs();
+    if (this.yjsEnabled) {
+      this.detachYjsObservers();
+      this.unsubscribeYjsListeners();
     } else {
       this.resetSocketIo();
     }
@@ -176,7 +191,7 @@ export class MapSyncService implements OnDestroy {
       this.mmpService.selectNode(this.mmpService.getRootNode().id)
     );
 
-    if (environment.featureFlagYjs) {
+    if (this.yjsEnabled) {
       this.initYjs();
     } else {
       this.createSocketIoListeners();
@@ -230,7 +245,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   public updateMapOptions(options?: CachedMapOptions) {
-    if (environment.featureFlagYjs) {
+    if (this.yjsEnabled) {
       this.writeMapOptionsToYDoc(options);
     } else {
       this.emitUpdateMapOptions(options);
@@ -238,7 +253,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   public async deleteMap(adminId: string): Promise<void> {
-    if (environment.featureFlagYjs) {
+    if (this.yjsEnabled) {
       await this.deleteMapViaHttp(adminId);
     } else {
       this.deleteMapViaSocket(adminId);
@@ -1090,10 +1105,37 @@ export class MapSyncService implements OnDestroy {
 
   private initYjs(): void {
     const uuid = this.getAttachedMap().cachedMap.uuid;
+
+    if (this.hasActiveYjsConnection(uuid)) {
+      this.reattachYjsListeners();
+      return;
+    }
+
+    this.resetYjs();
+    this.yjsMapId = uuid;
     this.yDoc = new Y.Doc();
     this.setupYjsConnection(uuid);
     this.setupYjsConnectionStatus();
     this.setupYjsMapDeletionHandler();
+    this.createYjsListeners();
+  }
+
+  private hasActiveYjsConnection(mapId: string): boolean {
+    return (
+      this.yDoc !== null && this.wsProvider !== null && this.yjsMapId === mapId
+    );
+  }
+
+  private reattachYjsListeners(): void {
+    this.createYjsListeners();
+    if (this.yjsSynced) {
+      this.loadMapFromYDoc();
+      this.setupYjsNodesObserver();
+      this.setupYjsMapOptionsObserver();
+      this.setupYjsAwareness();
+      this.settingsService.setEditMode(this.yjsWritable);
+      this.setConnectionStatusSubject('connected');
+    }
   }
 
   private setupYjsConnection(mapId: string): void {
@@ -1120,7 +1162,6 @@ export class MapSyncService implements OnDestroy {
   private handleFirstYjsSync(): void {
     this.yjsSynced = true;
     this.loadMapFromYDoc();
-    this.createYjsListeners();
     this.setupYjsNodesObserver();
     this.setupYjsMapOptionsObserver();
     this.setupYjsAwareness();
@@ -1132,6 +1173,7 @@ export class MapSyncService implements OnDestroy {
     this.wsProvider.on(
       'status',
       (event: { status: 'connected' | 'disconnected' | 'connecting' }) => {
+        if (!this.wsProvider) return;
         if (event.status === 'connected') {
           this.setConnectionStatusSubject('connected');
         } else if (event.status === 'disconnected') {
@@ -1183,10 +1225,13 @@ export class MapSyncService implements OnDestroy {
   }
 
   private resetYjs(): void {
-    if (this.wsProvider) {
-      this.wsProvider.disconnect();
-      this.wsProvider.destroy();
-      this.wsProvider = null;
+    this.unsubscribeYjsListeners();
+    this.detachYjsObservers();
+    const provider = this.wsProvider;
+    this.wsProvider = null;
+    if (provider) {
+      provider.disconnect();
+      provider.destroy();
     }
     if (this.yDoc) {
       this.yDoc.destroy();
@@ -1194,6 +1239,7 @@ export class MapSyncService implements OnDestroy {
     }
     this.yjsSynced = false;
     this.yjsWritable = false;
+    this.yjsMapId = null;
   }
 
   // ─── Yjs: initial map load ───────────────────────────────────
@@ -1213,12 +1259,13 @@ export class MapSyncService implements OnDestroy {
     nodesMap.forEach((yNode: Y.Map<unknown>) => {
       nodes.push(this.yMapToNodeProps(yNode));
     });
-    return nodes;
+    return sortParentFirst(nodes);
   }
 
   // ─── Yjs: MMP event listeners (MMP → Y.Doc) ─────────────────
 
   private createYjsListeners(): void {
+    this.unsubscribeYjsListeners();
     this.setupYjsCreateHandler();
     this.setupYjsSelectionHandlers();
     this.setupYjsNodeUpdateHandler();
@@ -1228,82 +1275,113 @@ export class MapSyncService implements OnDestroy {
     this.setupYjsNodeRemoveHandler();
   }
 
+  private unsubscribeYjsListeners(): void {
+    this.yjsSubscriptions.forEach(sub => sub.unsubscribe());
+    this.yjsSubscriptions = [];
+  }
+
   // Handles map import: clear and repopulate Y.Doc nodes
   private setupYjsCreateHandler(): void {
-    this.mmpService.on('create').subscribe((_result: MapCreateEvent) => {
-      this.attachedNodeSubject.next(this.mmpService.selectNode());
-      this.updateAttachedMap();
-      if (this.yjsSynced) {
-        this.writeImportToYDoc();
-      }
-    });
+    this.yjsSubscriptions.push(
+      this.mmpService.on('create').subscribe((_result: MapCreateEvent) => {
+        this.attachedNodeSubject.next(this.mmpService.selectNode());
+        this.updateAttachedMap();
+        if (this.yjsSynced) {
+          this.writeImportToYDoc();
+        }
+      })
+    );
   }
 
   private setupYjsSelectionHandlers(): void {
-    this.mmpService
-      .on('nodeSelect')
-      .subscribe((nodeProps: ExportNodeProperties) => {
-        this.updateYjsAwarenessSelection(nodeProps.id);
-        this.attachedNodeSubject.next(nodeProps);
-      });
+    this.yjsSubscriptions.push(
+      this.mmpService
+        .on('nodeSelect')
+        .subscribe((nodeProps: ExportNodeProperties) => {
+          if (!this.yDoc) return;
+          this.updateYjsAwarenessSelection(nodeProps.id);
+          this.attachedNodeSubject.next(nodeProps);
+        })
+    );
 
-    this.mmpService
-      .on('nodeDeselect')
-      .subscribe((nodeProps: ExportNodeProperties) => {
-        this.updateYjsAwarenessSelection(null);
-        this.attachedNodeSubject.next(nodeProps);
-      });
+    this.yjsSubscriptions.push(
+      this.mmpService
+        .on('nodeDeselect')
+        .subscribe((nodeProps: ExportNodeProperties) => {
+          if (!this.yDoc) return;
+          this.updateYjsAwarenessSelection(null);
+          this.attachedNodeSubject.next(nodeProps);
+        })
+    );
   }
 
   private setupYjsNodeUpdateHandler(): void {
-    this.mmpService.on('nodeUpdate').subscribe((result: NodeUpdateEvent) => {
-      this.attachedNodeSubject.next(result.nodeProperties);
-      this.writeNodeUpdateToYDoc(result);
-      this.updateAttachedMap();
-    });
+    this.yjsSubscriptions.push(
+      this.mmpService.on('nodeUpdate').subscribe((result: NodeUpdateEvent) => {
+        if (!this.yDoc) return;
+        this.attachedNodeSubject.next(result.nodeProperties);
+        this.writeNodeUpdateToYDoc(result);
+        this.updateAttachedMap();
+      })
+    );
   }
 
   private setupYjsUndoRedoHandlers(): void {
-    this.mmpService.on('undo').subscribe((diff?: MapDiff) => {
-      this.attachedNodeSubject.next(this.mmpService.selectNode());
-      this.updateAttachedMap();
-      this.writeUndoRedoDiffToYDoc(diff);
-    });
+    this.yjsSubscriptions.push(
+      this.mmpService.on('undo').subscribe((diff?: MapDiff) => {
+        if (!this.yDoc) return;
+        this.attachedNodeSubject.next(this.mmpService.selectNode());
+        this.updateAttachedMap();
+        this.writeUndoRedoDiffToYDoc(diff);
+      })
+    );
 
-    this.mmpService.on('redo').subscribe((diff?: MapDiff) => {
-      this.attachedNodeSubject.next(this.mmpService.selectNode());
-      this.updateAttachedMap();
-      this.writeUndoRedoDiffToYDoc(diff);
-    });
+    this.yjsSubscriptions.push(
+      this.mmpService.on('redo').subscribe((diff?: MapDiff) => {
+        if (!this.yDoc) return;
+        this.attachedNodeSubject.next(this.mmpService.selectNode());
+        this.updateAttachedMap();
+        this.writeUndoRedoDiffToYDoc(diff);
+      })
+    );
   }
 
   private setupYjsNodeCreateHandler(): void {
-    this.mmpService
-      .on('nodeCreate')
-      .subscribe((newNode: ExportNodeProperties) => {
-        this.writeNodeCreateToYDoc(newNode);
-        this.updateAttachedMap();
-        this.mmpService.selectNode(newNode.id);
-        this.mmpService.editNode();
-      });
+    this.yjsSubscriptions.push(
+      this.mmpService
+        .on('nodeCreate')
+        .subscribe((newNode: ExportNodeProperties) => {
+          if (!this.yDoc) return;
+          this.writeNodeCreateToYDoc(newNode);
+          this.updateAttachedMap();
+          this.mmpService.selectNode(newNode.id);
+          this.mmpService.editNode();
+        })
+    );
   }
 
   private setupYjsPasteHandler(): void {
-    this.mmpService
-      .on('nodePaste')
-      .subscribe((newNodes: ExportNodeProperties[]) => {
-        this.writeNodesPasteToYDoc(newNodes);
-        this.updateAttachedMap();
-      });
+    this.yjsSubscriptions.push(
+      this.mmpService
+        .on('nodePaste')
+        .subscribe((newNodes: ExportNodeProperties[]) => {
+          if (!this.yDoc) return;
+          this.writeNodesPasteToYDoc(newNodes);
+          this.updateAttachedMap();
+        })
+    );
   }
 
   private setupYjsNodeRemoveHandler(): void {
-    this.mmpService
-      .on('nodeRemove')
-      .subscribe((removedNode: ExportNodeProperties) => {
-        this.writeNodeRemoveFromYDoc(removedNode.id);
-        this.updateAttachedMap();
-      });
+    this.yjsSubscriptions.push(
+      this.mmpService
+        .on('nodeRemove')
+        .subscribe((removedNode: ExportNodeProperties) => {
+          if (!this.yDoc) return;
+          this.writeNodeRemoveFromYDoc(removedNode.id);
+          this.updateAttachedMap();
+        })
+    );
   }
 
   // ─── Yjs: write operations (MMP → Y.Doc) ────────────────────
@@ -1440,19 +1518,35 @@ export class MapSyncService implements OnDestroy {
 
   // ─── Yjs: Y.Doc observers (Y.Doc → MMP) ─────────────────────
 
+  private detachYjsObservers(): void {
+    if (this.yDoc && this.yjsNodesObserver) {
+      const nodesMap = this.yDoc.getMap('nodes');
+      nodesMap.unobserveDeep(this.yjsNodesObserver);
+      this.yjsNodesObserver = null;
+    }
+    if (this.yDoc && this.yjsOptionsObserver) {
+      const optionsMap = this.yDoc.getMap('mapOptions');
+      optionsMap.unobserve(this.yjsOptionsObserver);
+      this.yjsOptionsObserver = null;
+    }
+    if (this.wsProvider && this.yjsAwarenessHandler) {
+      this.wsProvider.awareness.off('change', this.yjsAwarenessHandler);
+      this.yjsAwarenessHandler = null;
+    }
+  }
+
   private setupYjsNodesObserver(): void {
     const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-    nodesMap.observeDeep(
-      (
-        events: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>[],
-        transaction: Y.Transaction
-      ) => {
-        if (transaction.local) return;
-        for (const event of events) {
-          this.handleYjsNodeEvent(event, nodesMap);
-        }
+    this.yjsNodesObserver = (
+      events: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>[],
+      transaction: Y.Transaction
+    ) => {
+      if (transaction.local) return;
+      for (const event of events) {
+        this.handleYjsNodeEvent(event, nodesMap);
       }
-    );
+    };
+    nodesMap.observeDeep(this.yjsNodesObserver);
   }
 
   private handleYjsNodeEvent(
@@ -1526,10 +1620,11 @@ export class MapSyncService implements OnDestroy {
 
   private setupYjsMapOptionsObserver(): void {
     const optionsMap = this.yDoc.getMap('mapOptions');
-    optionsMap.observe((_, transaction: Y.Transaction) => {
+    this.yjsOptionsObserver = (_: unknown, transaction: Y.Transaction) => {
       if (transaction.local) return;
       this.applyRemoteMapOptions();
-    });
+    };
+    optionsMap.observe(this.yjsOptionsObserver);
   }
 
   private applyRemoteMapOptions(): void {
@@ -1554,9 +1649,13 @@ export class MapSyncService implements OnDestroy {
       selectedNodeId: null,
     });
 
-    awareness.on('change', () => {
+    this.yjsAwarenessHandler = () => {
       this.updateFromAwareness();
-    });
+    };
+    awareness.on('change', this.yjsAwarenessHandler);
+
+    // Process awareness states already received before the listener was registered
+    this.updateFromAwareness();
   }
 
   // Pick a color that doesn't collide with other clients

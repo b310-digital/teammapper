@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common'
 import { MapsService } from '../services/maps.service'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
-import { YjsGateway } from '../services/yjs-gateway.service'
+import { YjsGateway } from './yjs-gateway.service'
 import {
   IMmpClientDeleteRequest,
   IMmpClientMap,

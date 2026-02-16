@@ -14,9 +14,9 @@ import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
 import configService from '../../config.service'
-import { YjsDocManagerService } from './yjs-doc-manager.service'
-import { YjsPersistenceService } from './yjs-persistence.service'
-import { MapsService } from './maps.service'
+import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
+import { YjsPersistenceService } from '../services/yjs-persistence.service'
+import { MapsService } from '../services/maps.service'
 import {
   MESSAGE_SYNC,
   MESSAGE_AWARENESS,

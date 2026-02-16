@@ -28,6 +28,7 @@ import {
   findAffectedNodes,
   resolveMmpPropertyUpdate,
   resolveCompoundMmpUpdates,
+  sortParentFirst,
 } from './yjs-utils';
 
 // Mock the NodePropertyMapping module
@@ -155,6 +156,9 @@ describe('MapSyncService', () => {
 
     settingsService = {
       getCachedUserSettings: jest.fn(),
+      getCachedSystemSettings: jest.fn().mockReturnValue({
+        featureFlags: { yjs: false, pictograms: false, ai: false },
+      }),
       setEditMode: jest.fn(),
     } as unknown as jest.Mocked<SettingsService>;
 
@@ -727,5 +731,105 @@ describe('findAffectedNodes', () => {
     const result = findAffectedNodes(oldMapping, newMapping);
 
     expect(result.size).toBe(0);
+  });
+});
+
+describe('sortParentFirst', () => {
+  it('places root node first when children appear before parent', () => {
+    const child = createMockNode({
+      id: 'child-1',
+      parent: 'root-1',
+      isRoot: false,
+    });
+    const root = createMockNode({ id: 'root-1', parent: '', isRoot: true });
+
+    const result = sortParentFirst([child, root]);
+
+    expect(result.map(n => n.id)).toEqual(['root-1', 'child-1']);
+  });
+
+  it('ensures grandchild nodes come after their parent', () => {
+    const grandchild = createMockNode({
+      id: 'gc-1',
+      parent: 'child-1',
+      isRoot: false,
+    });
+    const child = createMockNode({
+      id: 'child-1',
+      parent: 'root-1',
+      isRoot: false,
+    });
+    const root = createMockNode({ id: 'root-1', parent: '', isRoot: true });
+
+    const result = sortParentFirst([grandchild, child, root]);
+
+    expect(result.map(n => n.id)).toEqual(['root-1', 'child-1', 'gc-1']);
+  });
+
+  it('handles already-sorted input without changing order', () => {
+    const root = createMockNode({ id: 'root-1', parent: '', isRoot: true });
+    const child1 = createMockNode({
+      id: 'c1',
+      parent: 'root-1',
+      isRoot: false,
+    });
+    const child2 = createMockNode({
+      id: 'c2',
+      parent: 'root-1',
+      isRoot: false,
+    });
+
+    const result = sortParentFirst([root, child1, child2]);
+
+    expect(result.map(n => n.id)).toEqual(['root-1', 'c1', 'c2']);
+  });
+
+  it('returns original array when no root is found', () => {
+    const node1 = createMockNode({ id: 'n1', parent: 'n2', isRoot: false });
+    const node2 = createMockNode({ id: 'n2', parent: 'n1', isRoot: false });
+
+    const result = sortParentFirst([node1, node2]);
+
+    expect(result.map(n => n.id)).toEqual(['n1', 'n2']);
+  });
+
+  it('groups sibling nodes under their shared parent', () => {
+    const root = createMockNode({ id: 'root', parent: '', isRoot: true });
+    const b = createMockNode({ id: 'b', parent: 'root', isRoot: false });
+    const a = createMockNode({ id: 'a', parent: 'root', isRoot: false });
+    const bChild = createMockNode({
+      id: 'b-child',
+      parent: 'b',
+      isRoot: false,
+    });
+
+    const result = sortParentFirst([bChild, a, b, root]);
+
+    expect(result[0].id).toBe('root');
+    expect(result.indexOf(b)).toBeLessThan(result.indexOf(bChild));
+  });
+
+  it('returns empty array for empty input', () => {
+    const result = sortParentFirst([]);
+
+    expect(result).toEqual([]);
+  });
+
+  it('appends orphaned nodes not reachable from root', () => {
+    const root = createMockNode({ id: 'root', parent: '', isRoot: true });
+    const child = createMockNode({
+      id: 'child',
+      parent: 'root',
+      isRoot: false,
+    });
+    const orphan = createMockNode({
+      id: 'orphan',
+      parent: 'deleted-parent',
+      isRoot: false,
+    });
+
+    const result = sortParentFirst([orphan, child, root]);
+
+    expect(result.map(n => n.id)).toEqual(['root', 'child', 'orphan']);
   });
 });

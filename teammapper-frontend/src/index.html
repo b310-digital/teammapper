@@ -26,6 +26,7 @@
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self';
+        worker-src 'self' blob:;
         connect-src 'self' https://api.arasaac.org https://static.arasaac.org ws: wss:;
         style-src 'self' 'unsafe-inline';
         img-src 'self' https://static.arasaac.org data:;
