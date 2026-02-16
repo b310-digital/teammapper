@@ -42,7 +42,6 @@ import { ToastrService } from 'ngx-toastr';
 import { MapDiff, SnapshotChanges } from '@mmp/map/handlers/history';
 import { ToastService } from '../toast/toast.service';
 import { DialogService } from '../dialog/dialog.service';
-import { environment } from '../../../../environments/environment';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import {
@@ -89,10 +88,10 @@ export class MapSyncService implements OnDestroy {
   // inform other parts of the app about the connection state
   private readonly connectionStatusSubject: BehaviorSubject<ConnectionStatus>;
 
-  // Socket.io fields (used when featureFlagYjs is false)
+  // Socket.io fields (used when yjs feature flag is false)
   private socket: Socket;
 
-  // Yjs fields (used when featureFlagYjs is true)
+  // Yjs fields (used when yjs feature flag is true)
   private yDoc: Y.Doc | null = null;
   private wsProvider: WebsocketProvider | null = null;
   private yjsSynced = false;
@@ -111,6 +110,7 @@ export class MapSyncService implements OnDestroy {
   private availableColors: string[];
   private clientColor: string;
   private modificationSecret: string;
+  private readonly yjsEnabled: boolean;
 
   constructor() {
     // Initialization of the behavior subjects.
@@ -128,14 +128,17 @@ export class MapSyncService implements OnDestroy {
       ];
     this.modificationSecret = '';
     this.colorMapping = {};
+    this.yjsEnabled =
+      this.settingsService.getCachedSystemSettings()?.featureFlags?.yjs ??
+      false;
 
-    if (!environment.featureFlagYjs) {
+    if (!this.yjsEnabled) {
       this.initSocketConnection();
     }
   }
 
   ngOnDestroy() {
-    if (environment.featureFlagYjs) {
+    if (this.yjsEnabled) {
       this.resetYjs();
     } else {
       this.resetSocketIo();
@@ -173,7 +176,7 @@ export class MapSyncService implements OnDestroy {
 
   // Detach MMP listeners but keep the Yjs connection alive for reuse
   public reset() {
-    if (environment.featureFlagYjs) {
+    if (this.yjsEnabled) {
       this.detachYjsObservers();
       this.unsubscribeYjsListeners();
     } else {
@@ -188,7 +191,7 @@ export class MapSyncService implements OnDestroy {
       this.mmpService.selectNode(this.mmpService.getRootNode().id)
     );
 
-    if (environment.featureFlagYjs) {
+    if (this.yjsEnabled) {
       this.initYjs();
     } else {
       this.createSocketIoListeners();
@@ -242,7 +245,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   public updateMapOptions(options?: CachedMapOptions) {
-    if (environment.featureFlagYjs) {
+    if (this.yjsEnabled) {
       this.writeMapOptionsToYDoc(options);
     } else {
       this.emitUpdateMapOptions(options);
@@ -250,7 +253,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   public async deleteMap(adminId: string): Promise<void> {
-    if (environment.featureFlagYjs) {
+    if (this.yjsEnabled) {
       await this.deleteMapViaHttp(adminId);
     } else {
       this.deleteMapViaSocket(adminId);

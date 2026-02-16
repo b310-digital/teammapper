@@ -6,8 +6,6 @@ import { getRepositoryToken } from '@nestjs/typeorm'
 import { io, Socket } from 'socket.io-client'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MapsService } from '../services/maps.service'
-import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
-import { YjsGateway } from '../services/yjs-gateway.service'
 import { MapsGateway } from './maps.gateway'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { createMock } from '@golevelup/ts-jest'
@@ -53,14 +51,6 @@ describe('WebSocketGateway', () => {
         {
           provide: CACHE_MANAGER,
           useValue: createMock<Cache>(),
-        },
-        {
-          provide: YjsDocManagerService,
-          useValue: createMock<YjsDocManagerService>(),
-        },
-        {
-          provide: YjsGateway,
-          useValue: createMock<YjsGateway>(),
         },
       ],
     }).compile()

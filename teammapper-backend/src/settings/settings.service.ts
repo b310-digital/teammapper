@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import * as fs from 'fs'
 import * as path from 'path'
 import deepmerge from 'deepmerge'
+import configService from '../config.service'
 
 @Injectable()
 export class SettingsService {
@@ -35,6 +36,10 @@ export class SettingsService {
       overrideSettings = JSON.parse(overrideFileData)
     }
 
-    return deepmerge(defaultSettings, overrideSettings)
+    const settings = deepmerge(defaultSettings, overrideSettings) as {
+      systemSettings: { featureFlags: { yjs: boolean } }
+    }
+    settings.systemSettings.featureFlags.yjs = configService.isYjsEnabled()
+    return settings
   }
 }

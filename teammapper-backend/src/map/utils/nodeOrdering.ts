@@ -21,7 +21,10 @@ const collectBreadthFirst = (
   if (queue.length === 0) return collected
   const [current, ...rest] = queue
   const kids = childrenOf.get(current.id ?? '') ?? []
-  return collectBreadthFirst([...rest, ...kids], childrenOf, [...collected, current])
+  return collectBreadthFirst([...rest, ...kids], childrenOf, [
+    ...collected,
+    current,
+  ])
 }
 
 // Assigns sequential orderNumbers starting from 1

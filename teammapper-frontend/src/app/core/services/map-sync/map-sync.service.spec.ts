@@ -156,6 +156,9 @@ describe('MapSyncService', () => {
 
     settingsService = {
       getCachedUserSettings: jest.fn(),
+      getCachedSystemSettings: jest.fn().mockReturnValue({
+        featureFlags: { yjs: false, pictograms: false, ai: false },
+      }),
       setEditMode: jest.fn(),
     } as unknown as jest.Mocked<SettingsService>;
 
