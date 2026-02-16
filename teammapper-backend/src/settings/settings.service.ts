@@ -3,6 +3,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import deepmerge from 'deepmerge'
 import configService from '../config.service'
+import { Settings } from './settings.types'
 
 @Injectable()
 export class SettingsService {
@@ -19,7 +20,7 @@ export class SettingsService {
     'config/settings.override.json'
   )
 
-  getSettings() {
+  getSettings(): Settings {
     const defaultFileData = fs.readFileSync(this.defaultSettingsPath, 'utf-8')
     const defaultSettings = JSON.parse(defaultFileData)
 
@@ -36,9 +37,7 @@ export class SettingsService {
       overrideSettings = JSON.parse(overrideFileData)
     }
 
-    const settings = deepmerge(defaultSettings, overrideSettings) as {
-      systemSettings: { featureFlags: { yjs: boolean } }
-    }
+    const settings = deepmerge(defaultSettings, overrideSettings) as Settings
     settings.systemSettings.featureFlags.yjs = configService.isYjsEnabled()
     return settings
   }

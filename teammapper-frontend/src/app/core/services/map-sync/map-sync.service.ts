@@ -1653,6 +1653,9 @@ export class MapSyncService implements OnDestroy {
       this.updateFromAwareness();
     };
     awareness.on('change', this.yjsAwarenessHandler);
+
+    // Process awareness states already received before the listener was registered
+    this.updateFromAwareness();
   }
 
   // Pick a color that doesn't collide with other clients

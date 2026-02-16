@@ -94,7 +94,7 @@
 - [x] 5.2 Set `featureFlagYjs: true` in `environment.ts`
 - [x] 5.3 Update E2E tests to work with the Yjs WebSocket transport (update any test helpers that depend on Socket.io events or connection patterns)
 - [x] 5.4 Run E2E tests (`pnpm run playwright test --reporter=list`)
-- [ ] 5.5 Manual smoke test: open two browser tabs on the same map and verify real-time sync of node create, update, delete, selection highlighting, undo/redo, map import, and map deletion
+- [x] 5.5 Manual smoke test: open two browser tabs on the same map and verify real-time sync of node create, update, delete, selection highlighting, undo/redo, map import, and map deletion
 - [x] 5.6 Verify backend and frontend build, lint, and all tests pass
 
 ## 6. Cleanup: Remove Socket.io & Dead Code
