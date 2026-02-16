@@ -16,6 +16,9 @@ import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { EditGuard } from '../guards/edit.guard'
 import { MapsService } from '../services/maps.service'
+import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
+import { YjsGateway } from '../services/yjs-gateway.service'
+import configService from '../../config.service'
 import {
   IClientCache,
   IMmpClientDeleteRequest,
@@ -50,7 +53,9 @@ export class MapsGateway implements OnGatewayDisconnect {
 
   constructor(
     private mapsService: MapsService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private yjsDocManager: YjsDocManagerService,
+    private yjsGateway: YjsGateway
   ) {}
 
   @SubscribeMessage('leave')
@@ -142,6 +147,10 @@ export class MapsGateway implements OnGatewayDisconnect {
         request.mapId
       )
       if (mmpMap && mmpMap.adminId === request.adminId) {
+        if (configService.isYjsEnabled()) {
+          this.yjsGateway.closeConnectionsForMap(request.mapId)
+          this.yjsDocManager.destroyDoc(request.mapId)
+        }
         this.mapsService.deleteMap(request.mapId)
         this.server.to(request.mapId).emit('mapDeleted')
         return true

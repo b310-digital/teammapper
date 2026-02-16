@@ -77,6 +77,9 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
+      lib0:
+        specifier: ^0.2.117
+        version: 0.2.117
       pg:
         specifier: ^8.16.3
         version: 8.16.3
