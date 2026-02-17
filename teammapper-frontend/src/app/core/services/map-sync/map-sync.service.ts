@@ -1591,9 +1591,7 @@ export class MapSyncService implements OnDestroy {
 
   // Show toast to inform the user that a remote client imported a map
   private async showImportToast(): Promise<void> {
-    const msg = await this.utilsService.translate(
-      'TOASTS.MAP_IMPORT_SUCCESS'
-    );
+    const msg = await this.utilsService.translate('TOASTS.MAP_IMPORT_SUCCESS');
     if (msg) this.toastrService.success(msg);
   }
 
