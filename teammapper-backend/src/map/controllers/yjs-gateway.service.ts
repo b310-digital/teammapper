@@ -25,6 +25,8 @@ import {
   WS_CLOSE_MAP_NOT_FOUND,
   WS_CLOSE_INTERNAL_ERROR,
   WS_CLOSE_SERVER_SHUTDOWN,
+  WS_MAX_PAYLOAD,
+  HEARTBEAT_INTERVAL_MS,
   ConnectionMeta,
   extractPathname,
   parseQueryParams,
@@ -42,6 +44,7 @@ import {
 export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(YjsGateway.name)
   private wss: WebSocketServer | null = null
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null
 
   // Connections per map
   private readonly mapConnections = new Map<string, Set<WebSocket>>()
@@ -72,7 +75,10 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     const server = this.httpAdapterHost.httpAdapter.getHttpServer()
-    this.wss = new WebSocketServer({ noServer: true })
+    this.wss = new WebSocketServer({
+      noServer: true,
+      maxPayload: WS_MAX_PAYLOAD,
+    })
 
     server.on(
       'upgrade',
@@ -93,6 +99,11 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       )
     })
 
+    this.heartbeatInterval = setInterval(
+      () => this.runHeartbeat(),
+      HEARTBEAT_INTERVAL_MS
+    )
+
     this.logger.log('Yjs WebSocket server started on /yjs')
   }
 
@@ -107,6 +118,18 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
 
     for (const ws of connections) {
       ws.close(WS_CLOSE_MAP_DELETED, 'Map deleted')
+    }
+  }
+
+  private runHeartbeat(): void {
+    for (const [ws, meta] of this.connectionMeta) {
+      if (!meta.isAlive) {
+        ws.terminate()
+        continue
+      }
+
+      meta.isAlive = false
+      ws.ping()
     }
   }
 
@@ -155,6 +178,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       mapId,
       writable,
       awarenessClientIds: new Set(),
+      isAlive: true,
     })
   }
 
@@ -216,6 +240,16 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
         writable,
         toUint8Array(data)
       )
+    })
+
+    ws.on('pong', () => {
+      const meta = this.connectionMeta.get(ws)
+      if (meta) meta.isAlive = true
+    })
+
+    ws.on('error', (error: Error) => {
+      this.logger.error(`WebSocket error on map ${mapId}: ${error.message}`)
+      ws.terminate()
     })
 
     ws.on('close', () => {
@@ -408,6 +442,11 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     }
     this.mapConnections.clear()
     this.connectionMeta.clear()
+
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval)
+      this.heartbeatInterval = null
+    }
 
     if (this.wss) {
       this.wss.close()
