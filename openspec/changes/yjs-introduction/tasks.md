@@ -144,13 +144,13 @@
 > **App state after merge**: Server rejects connections exceeding configured limits.
 > **PRODUCTION-BLOCKING**: Without this, a single client can open unlimited connections and exhaust server resources.
 
-- [ ] 8.1 Add connection limit constants to `config.service.ts` (global max 500, per-IP max 50, rate limit 10/10s) with env var overrides
-- [ ] 8.2 Add in-memory tracking state to gateway: global count, per-IP count map, per-IP rate window map
-- [ ] 8.3 Add limit checks in the `server.on('upgrade')` handler — reject with HTTP 503 (global) or 429 (per-IP / rate)
-- [ ] 8.4 Decrement per-IP count on connection close in `handleClose`; clean up entries at zero
-- [ ] 8.5 Add periodic cleanup of expired rate-limit window entries (piggyback on heartbeat interval)
-- [ ] 8.6 Add unit tests: connection rejected at global limit (503), per-IP limit (429), rate limit (429); counts decrement on close; IP entry removed at zero
-- [ ] 8.7 Run lint, test, format — verify app still works
+- [x] 8.1 Add connection limit constants to `config.service.ts` (global max 500, per-IP max 50, rate limit 10/10s) with env var overrides
+- [x] 8.2 Add in-memory tracking state to gateway: global count, per-IP count map, per-IP rate window map
+- [x] 8.3 Add limit checks in the `server.on('upgrade')` handler — reject with HTTP 503 (global) or 429 (per-IP / rate)
+- [x] 8.4 Decrement per-IP count on connection close in `handleClose`; clean up entries at zero
+- [x] 8.5 Add periodic cleanup of expired rate-limit window entries (piggyback on heartbeat interval)
+- [x] 8.6 Add unit tests: connection rejected at global limit (503), per-IP limit (429), rate limit (429); counts decrement on close; IP entry removed at zero
+- [x] 8.7 Run lint, test, format — verify app still works
 
 ## 9. Connection Setup Timeout
 

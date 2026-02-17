@@ -56,6 +56,40 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
+  public isWsTrustProxy(): boolean {
+    const value = this.getValue('WS_TRUST_PROXY', false)
+    return value?.toLowerCase() === 'true'
+  }
+
+  public isYjsRateLimitingEnabled(): boolean {
+    const value = this.getValue('FEATURE_YJS_RATE_LIMITING', false)
+    return value?.toLowerCase() === 'true'
+  }
+
+  public getWsGlobalMaxConnections(): number {
+    return this.parsePositiveInt('WS_GLOBAL_MAX_CONNECTIONS', 500)
+  }
+
+  public getWsPerIpMaxConnections(): number {
+    return this.parsePositiveInt('WS_PER_IP_MAX_CONNECTIONS', 50)
+  }
+
+  public getWsPerIpRateLimit(): number {
+    return this.parsePositiveInt('WS_PER_IP_RATE_LIMIT', 10)
+  }
+
+  public getWsPerIpRateWindowMs(): number {
+    return this.parsePositiveInt('WS_PER_IP_RATE_WINDOW_MS', 10000)
+  }
+
+  private parsePositiveInt(key: string, fallback: number): number {
+    const raw = this.getValue(key, false)
+    if (!raw) return fallback
+    const parsed = parseInt(raw, 10)
+    if (isNaN(parsed) || parsed < 1) return fallback
+    return parsed
+  }
+
   public getLLMConfig(): LLMProps {
     return {
       url: this.getValue('AI_LLM_URL', false),

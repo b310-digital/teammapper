@@ -29,6 +29,7 @@ export interface ConnectionMeta {
   writable: boolean
   awarenessClientIds: Set<number>
   isAlive: boolean
+  ip: string
 }
 
 export interface ParsedQueryParams {
