@@ -137,6 +137,7 @@ describe('YjsGateway', () => {
         .mockResolvedValue(undefined),
       destroyDoc: jest.fn(),
       hasDoc: jest.fn<YjsDocManagerService['hasDoc']>().mockReturnValue(true),
+      restoreGraceTimer: jest.fn(),
     } as unknown as jest.Mocked<YjsDocManagerService>
 
     const persistenceService = {
@@ -611,6 +612,61 @@ describe('YjsGateway', () => {
       expect(ws2.close).not.toHaveBeenCalled()
 
       doc2.destroy()
+    })
+  })
+
+  describe('decrementClientCount error handling', () => {
+    it('logs persistence errors on disconnect without crashing', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      docManager.decrementClientCount.mockRejectedValue(
+        new Error('DB connection lost')
+      )
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      // Close should not throw even when decrementClientCount rejects
+      expect(() => ws._triggerClose()).not.toThrow()
+
+      // Allow the promise rejection to be caught
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(docManager.decrementClientCount).toHaveBeenCalledWith('map-1')
+    })
+  })
+
+  describe('grace timer restoration on setup failure', () => {
+    it('restores grace timer when incrementClientCount throws', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      docManager.incrementClientCount.mockImplementation(() => {
+        throw new Error('Unexpected error')
+      })
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      expect(docManager.restoreGraceTimer).toHaveBeenCalledWith('map-1')
+    })
+
+    it('does not restore grace timer on successful setup', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      expect(docManager.restoreGraceTimer).not.toHaveBeenCalled()
     })
   })
 })

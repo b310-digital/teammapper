@@ -81,6 +81,14 @@ export class YjsDocManagerService implements OnModuleDestroy {
     this.forceDestroyDoc(mapId)
   }
 
+  // Restores the grace timer if no clients are connected (used on setup failure)
+  restoreGraceTimer(mapId: string): void {
+    const entry = this.docs.get(mapId)
+    if (!entry || entry.clientCount > 0) return
+
+    this.startGraceTimer(mapId, entry)
+  }
+
   hasDoc(mapId: string): boolean {
     return this.docs.has(mapId)
   }

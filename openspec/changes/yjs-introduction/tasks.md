@@ -169,11 +169,11 @@
 > **App state after merge**: Clean shutdown with no orphaned timers, no silently swallowed errors.
 > **PRODUCTION-BLOCKING**: Without this, grace timer race can orphan Y.Docs in memory permanently.
 
-- [ ] 10.1 Implement `OnModuleDestroy` in `YjsPersistenceService`: clear all debounce timers, unregister observers, best-effort flush with 5-second timeout
-- [ ] 10.2 Add `.catch()` error handling on `decrementClientCount` call in `handleClose` to log persistence errors with mapId
-- [ ] 10.3 Add try/finally in `handleConnection` around `getOrCreateDoc` → `trackConnection` → `incrementClientCount` to restore grace timer on failure
-- [ ] 10.4 Add unit tests: persistence shutdown clears timers and flushes, decrement errors are logged not swallowed, grace timer restored on setup failure
-- [ ] 10.5 Run lint, test, format — verify app still works
+- [x] 10.1 Implement `OnModuleDestroy` in `YjsPersistenceService`: clear all debounce timers, unregister observers, best-effort flush with 5-second timeout
+- [x] 10.2 Add `.catch()` error handling on `decrementClientCount` call in `handleClose` to log persistence errors with mapId
+- [x] 10.3 Add try/finally in `handleConnection` around `getOrCreateDoc` → `trackConnection` → `incrementClientCount` to restore grace timer on failure
+- [x] 10.4 Add unit tests: persistence shutdown clears timers and flushes, decrement errors are logged not swallowed, grace timer restored on setup failure
+- [x] 10.5 Run lint, test, format — verify app still works
 
 ## 11. Unified Client Count Tracking
 

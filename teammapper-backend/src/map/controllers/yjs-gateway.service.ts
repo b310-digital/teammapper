@@ -219,12 +219,23 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       }
 
       const doc = await this.docManager.getOrCreateDoc(mapId)
-      if (signal.aborted) return
+      if (signal.aborted) {
+        this.docManager.restoreGraceTimer(mapId)
+        return
+      }
 
-      const writable = checkWriteAccess(map.modificationSecret, secret)
-      this.trackConnection(ws, mapId, writable, ip)
-      this.docManager.incrementClientCount(mapId)
-      this.setupSync(ws, doc, mapId, writable)
+      let setupComplete = false
+      try {
+        const writable = checkWriteAccess(map.modificationSecret, secret)
+        this.trackConnection(ws, mapId, writable, ip)
+        this.docManager.incrementClientCount(mapId)
+        this.setupSync(ws, doc, mapId, writable)
+        setupComplete = true
+      } finally {
+        if (!setupComplete) {
+          this.docManager.restoreGraceTimer(mapId)
+        }
+      }
     } catch (error) {
       if (signal.aborted) return
       this.logger.error(
@@ -437,7 +448,11 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    this.docManager.decrementClientCount(mapId)
+    this.docManager.decrementClientCount(mapId).catch((error) => {
+      this.logger.error(
+        `Persistence error during disconnect for map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
+      )
+    })
   }
 
   private cleanupMapResources(mapId: string): void {
