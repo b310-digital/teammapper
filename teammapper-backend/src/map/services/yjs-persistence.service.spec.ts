@@ -335,4 +335,81 @@ describe('YjsPersistenceService', () => {
       doc.destroy()
     })
   })
+
+  describe('onModuleDestroy', () => {
+    it('clears active timers and flushes pending docs', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const persistSpy = jest
+        .spyOn(service, 'persistDoc')
+        .mockResolvedValue(undefined)
+
+      service.registerDebounce(map.id, doc)
+      const yRoot = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
+        rootNode.id
+      )!
+      yRoot.set('name', 'Pending Change')
+
+      await service.onModuleDestroy()
+
+      expect(persistSpy).toHaveBeenCalledWith(map.id, doc)
+
+      doc.destroy()
+    })
+
+    it('does not fire debounce timers after shutdown', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const persistSpy = jest
+        .spyOn(service, 'persistDoc')
+        .mockResolvedValue(undefined)
+
+      service.registerDebounce(map.id, doc)
+      const yRoot = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
+        rootNode.id
+      )!
+      yRoot.set('name', 'Change')
+
+      await service.onModuleDestroy()
+      persistSpy.mockClear()
+
+      await jest.advanceTimersByTimeAsync(3_000)
+
+      expect(persistSpy).not.toHaveBeenCalled()
+
+      doc.destroy()
+    })
+
+    it('unregisters observers so subsequent doc changes do not trigger persist', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const persistSpy = jest
+        .spyOn(service, 'persistDoc')
+        .mockResolvedValue(undefined)
+
+      service.registerDebounce(map.id, doc)
+      await service.onModuleDestroy()
+      persistSpy.mockClear()
+
+      const yRoot = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
+        rootNode.id
+      )!
+      yRoot.set('name', 'After Shutdown')
+      await jest.advanceTimersByTimeAsync(3_000)
+
+      expect(persistSpy).not.toHaveBeenCalled()
+
+      doc.destroy()
+    })
+
+    it('skips flush when no timers are active', async () => {
+      const persistSpy = jest
+        .spyOn(service, 'persistDoc')
+        .mockResolvedValue(undefined)
+
+      await service.onModuleDestroy()
+
+      expect(persistSpy).not.toHaveBeenCalled()
+    })
+  })
 })

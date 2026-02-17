@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Not, In, QueryRunner, Repository } from 'typeorm'
 import * as Y from 'yjs'
@@ -14,10 +14,11 @@ interface DebounceEntry {
 }
 
 @Injectable()
-export class YjsPersistenceService {
+export class YjsPersistenceService implements OnModuleDestroy {
   private readonly logger = new Logger(YjsPersistenceService.name)
   private readonly debounceTimers = new Map<string, DebounceEntry>()
   private readonly DEBOUNCE_MS = 2_000
+  private readonly FLUSH_TIMEOUT_MS = 5_000
 
   constructor(
     @InjectRepository(MmpNode)
@@ -25,6 +26,15 @@ export class YjsPersistenceService {
     @InjectRepository(MmpMap)
     private readonly mapsRepository: Repository<MmpMap>
   ) {}
+
+  async onModuleDestroy(): Promise<void> {
+    const pendingFlush = this.clearAllTimersAndObservers()
+
+    if (pendingFlush.length === 0) return
+
+    this.logger.log(`Flushing ${pendingFlush.length} pending docs on shutdown`)
+    await this.flushWithTimeout(pendingFlush)
+  }
 
   // Persists a Y.Doc's nodes and options to the database in a transaction
   async persistDoc(mapId: string, doc: Y.Doc): Promise<void> {
@@ -208,5 +218,37 @@ export class YjsPersistenceService {
         `Release failed: ${error instanceof Error ? error.message : String(error)}`
       )
     }
+  }
+
+  private clearAllTimersAndObservers(): Array<{
+    mapId: string
+    doc: Y.Doc
+  }> {
+    const pendingFlush: Array<{ mapId: string; doc: Y.Doc }> = []
+
+    for (const [mapId, entry] of this.debounceTimers) {
+      entry.doc.off('update', entry.observer)
+      if (entry.timer) {
+        clearTimeout(entry.timer)
+        pendingFlush.push({ mapId, doc: entry.doc })
+      }
+    }
+    this.debounceTimers.clear()
+
+    return pendingFlush
+  }
+
+  private async flushWithTimeout(
+    entries: Array<{ mapId: string; doc: Y.Doc }>
+  ): Promise<void> {
+    const flushPromise = Promise.allSettled(
+      entries.map(({ mapId, doc }) => this.persistDoc(mapId, doc))
+    )
+
+    const timeoutPromise = new Promise<void>((resolve) =>
+      setTimeout(resolve, this.FLUSH_TIMEOUT_MS)
+    )
+
+    await Promise.race([flushPromise, timeoutPromise])
   }
 }
