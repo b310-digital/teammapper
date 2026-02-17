@@ -17,6 +17,7 @@ import configService from '../../config.service'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsPersistenceService } from '../services/yjs-persistence.service'
 import { MapsService } from '../services/maps.service'
+import { WsConnectionLimiterService } from '../services/ws-connection-limiter.service'
 import {
   MESSAGE_SYNC,
   MESSAGE_AWARENESS,
@@ -65,7 +66,8 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     private readonly httpAdapterHost: HttpAdapterHost,
     private readonly docManager: YjsDocManagerService,
     private readonly persistenceService: YjsPersistenceService,
-    private readonly mapsService: MapsService
+    private readonly mapsService: MapsService,
+    private readonly limiter: WsConnectionLimiterService
   ) {}
 
   onModuleInit(): void {
@@ -83,11 +85,20 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     server.on(
       'upgrade',
       (request: IncomingMessage, socket: Duplex, head: Buffer) => {
-        if (extractPathname(request.url).startsWith('/yjs')) {
-          this.wss!.handleUpgrade(request, socket, head, (ws) => {
-            this.wss!.emit('connection', ws, request)
-          })
+        if (!extractPathname(request.url).startsWith('/yjs')) return
+
+        const rejection = this.limiter.checkLimits(request)
+        if (rejection) {
+          socket.write(
+            `HTTP/1.1 ${rejection.status} ${rejection.reason}\r\n\r\n`
+          )
+          socket.destroy()
+          return
         }
+
+        this.wss!.handleUpgrade(request, socket, head, (ws) => {
+          this.wss!.emit('connection', ws, request)
+        })
       }
     )
 
@@ -122,31 +133,43 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   }
 
   private runHeartbeat(): void {
+    const zombies: WebSocket[] = []
+
     for (const [ws, meta] of this.connectionMeta) {
       if (!meta.isAlive) {
-        ws.terminate()
+        zombies.push(ws)
         continue
       }
 
-      meta.isAlive = false
+      this.connectionMeta.set(ws, { ...meta, isAlive: false })
       ws.ping()
     }
+
+    for (const ws of zombies) {
+      ws.terminate()
+    }
+
+    this.limiter.cleanupExpiredRateWindows()
   }
 
   private async handleConnection(
     ws: WebSocket,
     req: IncomingMessage
   ): Promise<void> {
+    const ip = this.limiter.getClientIp(req)
+
     try {
       const { mapId, secret } = parseQueryParams(req.url)
 
       if (!mapId) {
+        this.limiter.releaseConnection(ip)
         ws.close(WS_CLOSE_MISSING_PARAM, 'Missing mapId parameter')
         return
       }
 
       const map = await this.mapsService.findMap(mapId)
       if (!map) {
+        this.limiter.releaseConnection(ip)
         ws.close(WS_CLOSE_MAP_NOT_FOUND, 'Map not found')
         return
       }
@@ -154,10 +177,11 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       const writable = checkWriteAccess(map.modificationSecret, secret)
       const doc = await this.docManager.getOrCreateDoc(mapId)
 
-      this.trackConnection(ws, mapId, writable)
+      this.trackConnection(ws, mapId, writable, ip)
       this.docManager.incrementClientCount(mapId)
       this.setupSync(ws, doc, mapId, writable)
     } catch (error) {
+      this.limiter.releaseConnection(ip)
       this.logger.error(
         `Connection error: ${error instanceof Error ? error.message : String(error)}`
       )
@@ -168,7 +192,8 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   private trackConnection(
     ws: WebSocket,
     mapId: string,
-    writable: boolean
+    writable: boolean,
+    ip: string
   ): void {
     if (!this.mapConnections.has(mapId)) {
       this.mapConnections.set(mapId, new Set())
@@ -179,6 +204,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       writable,
       awarenessClientIds: new Set(),
       isAlive: true,
+      ip,
     })
   }
 
@@ -244,7 +270,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
 
     ws.on('pong', () => {
       const meta = this.connectionMeta.get(ws)
-      if (meta) meta.isAlive = true
+      if (meta) this.connectionMeta.set(ws, { ...meta, isAlive: true })
     })
 
     ws.on('error', (error: Error) => {
@@ -352,6 +378,10 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       )
     }
 
+    if (meta) {
+      this.limiter.releaseConnection(meta.ip)
+    }
+
     this.connectionMeta.delete(ws)
     const connections = this.mapConnections.get(mapId)
     if (connections) {
@@ -442,6 +472,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     }
     this.mapConnections.clear()
     this.connectionMeta.clear()
+    this.limiter.reset()
 
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval)

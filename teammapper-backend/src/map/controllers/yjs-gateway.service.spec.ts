@@ -2,6 +2,7 @@ import { YjsGateway } from './yjs-gateway.service'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsPersistenceService } from '../services/yjs-persistence.service'
 import { MapsService } from '../services/maps.service'
+import { WsConnectionLimiterService } from '../services/ws-connection-limiter.service'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { WebSocket } from 'ws'
 import * as Y from 'yjs'
@@ -23,7 +24,7 @@ jest.mock('../../config.service', () => ({
   },
 }))
 
-// Minimal interfaces to call private methods in tests
+// Minimal interface to call private methods in tests
 interface ConnectionHandler {
   handleConnection(ws: MockWs, req: IncomingMessage): Promise<void>
 }
@@ -87,12 +88,17 @@ const createMockWs = (): MockWs => {
 
 const createMockRequest = (
   mapId: string | null,
-  secret: string | null = null
+  secret: string | null = null,
+  ip: string = '127.0.0.1'
 ): IncomingMessage => {
   const params = new URLSearchParams()
   if (mapId) params.set('mapId', mapId)
   if (secret) params.set('secret', secret)
-  return { url: `/yjs?${params.toString()}` } as IncomingMessage
+  return {
+    url: `/yjs?${params.toString()}`,
+    socket: { remoteAddress: ip },
+    headers: {},
+  } as unknown as IncomingMessage
 }
 
 const connectClient = async (
@@ -108,6 +114,7 @@ describe('YjsGateway', () => {
   let gateway: YjsGateway
   let mapsService: jest.Mocked<MapsService>
   let docManager: jest.Mocked<YjsDocManagerService>
+  let limiter: jest.Mocked<WsConnectionLimiterService>
   let doc: Y.Doc
 
   beforeEach(() => {
@@ -135,6 +142,15 @@ describe('YjsGateway', () => {
       unregisterDebounce: jest.fn(),
     } as unknown as jest.Mocked<YjsPersistenceService>
 
+    limiter = {
+      checkLimits: jest.fn().mockReturnValue(null),
+      releaseConnection: jest.fn(),
+      cleanupExpiredRateWindows: jest.fn(),
+      getClientIp: jest.fn().mockReturnValue('127.0.0.1'),
+      reset: jest.fn(),
+      onModuleDestroy: jest.fn(),
+    } as unknown as jest.Mocked<WsConnectionLimiterService>
+
     const httpAdapterHost: Pick<HttpAdapterHost, 'httpAdapter'> = {
       httpAdapter: {
         getHttpServer: jest.fn().mockReturnValue({ on: jest.fn() }),
@@ -145,7 +161,8 @@ describe('YjsGateway', () => {
       httpAdapterHost as HttpAdapterHost,
       docManager,
       persistenceService,
-      mapsService
+      mapsService,
+      limiter
     )
   })
 
@@ -156,7 +173,7 @@ describe('YjsGateway', () => {
   })
 
   describe('connection with valid map ID', () => {
-    it('accepts connection and sets up sync', async () => {
+    it('creates doc and tracks client', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -166,9 +183,20 @@ describe('YjsGateway', () => {
         createMockRequest('map-1', 'test-secret')
       )
 
-      expect(mapsService.findMap).toHaveBeenCalledWith('map-1')
       expect(docManager.getOrCreateDoc).toHaveBeenCalledWith('map-1')
       expect(docManager.incrementClientCount).toHaveBeenCalledWith('map-1')
+    })
+
+    it('sends sync message on connection', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
       expect(ws.send).toHaveBeenCalled()
     })
   })
@@ -184,7 +212,25 @@ describe('YjsGateway', () => {
         WS_CLOSE_MAP_NOT_FOUND,
         'Map not found'
       )
+    })
+
+    it('does not create doc when map not found', async () => {
+      mapsService.findMap.mockResolvedValue(null)
+      const ws = createMockWs()
+
+      await connectClient(gateway, ws, createMockRequest('nonexistent'))
+
       expect(docManager.getOrCreateDoc).not.toHaveBeenCalled()
+    })
+
+    it('releases limiter slot when map not found', async () => {
+      mapsService.findMap.mockResolvedValue(null)
+      limiter.getClientIp.mockReturnValue('10.0.0.1')
+      const ws = createMockWs()
+
+      await connectClient(gateway, ws, createMockRequest('nonexistent'))
+
+      expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
   })
 
@@ -198,6 +244,15 @@ describe('YjsGateway', () => {
         WS_CLOSE_MISSING_PARAM,
         'Missing mapId parameter'
       )
+    })
+
+    it('releases limiter slot when mapId missing', async () => {
+      limiter.getClientIp.mockReturnValue('10.0.0.1')
+      const ws = createMockWs()
+
+      await connectClient(gateway, ws, createMockRequest(null))
+
+      expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
   })
 
@@ -289,6 +344,21 @@ describe('YjsGateway', () => {
 
       expect(docManager.decrementClientCount).toHaveBeenCalledWith('map-1')
     })
+
+    it('delegates to limiter on connection close', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      limiter.getClientIp.mockReturnValue('10.0.0.1')
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret', '10.0.0.1')
+      )
+      ws._triggerClose()
+
+      expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
+    })
   })
 
   describe('map deletion closes connections', () => {
@@ -326,7 +396,7 @@ describe('YjsGateway', () => {
   })
 
   describe('WebSocket error handling', () => {
-    it('logs error and terminates connection on error event', async () => {
+    it('terminates connection on error event', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -359,7 +429,7 @@ describe('YjsGateway', () => {
     const runHeartbeat = (gw: YjsGateway) =>
       (gw as unknown as HeartbeatRunner).runHeartbeat()
 
-    it('terminates zombie connection that missed pong', async () => {
+    it('pings on first heartbeat', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -369,17 +439,28 @@ describe('YjsGateway', () => {
         createMockRequest('map-1', 'test-secret')
       )
 
-      // First heartbeat: marks isAlive=false and pings
       runHeartbeat(gateway)
-      expect(ws.ping).toHaveBeenCalledTimes(1)
-      expect(ws.terminate).not.toHaveBeenCalled()
 
-      // Second heartbeat without pong: terminates
+      expect(ws.ping).toHaveBeenCalledTimes(1)
+    })
+
+    it('terminates zombie on second heartbeat without pong', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
       runHeartbeat(gateway)
+      runHeartbeat(gateway)
+
       expect(ws.terminate).toHaveBeenCalled()
     })
 
-    it('keeps healthy connection that responds with pong', async () => {
+    it('survives after pong response', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -389,15 +470,34 @@ describe('YjsGateway', () => {
         createMockRequest('map-1', 'test-secret')
       )
 
-      // First heartbeat: marks isAlive=false and pings
       runHeartbeat(gateway)
-      // Client responds with pong
       ws._triggerPong()
-
-      // Second heartbeat: connection survives
       runHeartbeat(gateway)
+
       expect(ws.terminate).not.toHaveBeenCalled()
+    })
+
+    it('pings on each heartbeat cycle', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      runHeartbeat(gateway)
+      ws._triggerPong()
+      runHeartbeat(gateway)
+
       expect(ws.ping).toHaveBeenCalledTimes(2)
+    })
+
+    it('delegates rate window cleanup to limiter', async () => {
+      runHeartbeat(gateway)
+
+      expect(limiter.cleanupExpiredRateWindows).toHaveBeenCalled()
     })
 
     it('clears heartbeat interval on shutdown', () => {

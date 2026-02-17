@@ -10,6 +10,7 @@ import { MapsService } from './services/maps.service'
 import { YjsDocManagerService } from './services/yjs-doc-manager.service'
 import { YjsPersistenceService } from './services/yjs-persistence.service'
 import { YjsGateway } from './controllers/yjs-gateway.service'
+import { WsConnectionLimiterService } from './services/ws-connection-limiter.service'
 import { TasksService } from './services/tasks.service'
 import MermaidController from './controllers/mermaid.controller'
 import { AiService } from './services/ai.service'
@@ -23,6 +24,7 @@ const baseProviders: Provider[] = [
   MapsService,
   YjsDocManagerService,
   YjsPersistenceService,
+  WsConnectionLimiterService,
   YjsGateway,
   TasksService,
   AiService,
