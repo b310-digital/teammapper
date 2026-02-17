@@ -181,6 +181,44 @@ export const sortParentFirst = (
   return appendOrphans(ordered, nodes);
 };
 
+// Collects all descendant node IDs by building a parent-to-children
+// index in a single O(N) pass, then BFS-traversing from the given node.
+export function collectDescendantIds(
+  nodesMap: Y.Map<Y.Map<unknown>>,
+  nodeId: string
+): string[] {
+  const childrenOf = new Map<string, string[]>();
+  nodesMap.forEach((yNode: Y.Map<unknown>, key: string) => {
+    const parent = yNode.get('parent') as string | null;
+    if (parent != null) {
+      const siblings = childrenOf.get(parent);
+      if (siblings) {
+        siblings.push(key);
+      } else {
+        childrenOf.set(parent, [key]);
+      }
+    }
+  });
+
+  const descendants: string[] = [];
+  const visited = new Set<string>([nodeId]);
+  const queue = [nodeId];
+  let i = 0;
+
+  while (i < queue.length) {
+    const children = childrenOf.get(queue[i++]) ?? [];
+    for (const child of children) {
+      if (!visited.has(child)) {
+        visited.add(child);
+        descendants.push(child);
+        queue.push(child);
+      }
+    }
+  }
+
+  return descendants;
+}
+
 export function resolveCompoundMmpUpdates(
   mapping: Record<string, string>,
   value: Record<string, unknown>

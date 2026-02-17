@@ -29,6 +29,7 @@ import {
   resolveMmpPropertyUpdate,
   resolveCompoundMmpUpdates,
   sortParentFirst,
+  collectDescendantIds,
 } from './yjs-utils';
 
 // Mock the NodePropertyMapping module
@@ -831,5 +832,103 @@ describe('sortParentFirst', () => {
     const result = sortParentFirst([orphan, child, root]);
 
     expect(result.map(n => n.id)).toEqual(['root', 'child', 'orphan']);
+  });
+});
+
+describe('collectDescendantIds', () => {
+  let doc: Y.Doc;
+  let nodesMap: Y.Map<Y.Map<unknown>>;
+
+  function addNode(id: string, parent: string | null): void {
+    const yNode = new Y.Map<unknown>();
+    populateYMapFromNodeProps(
+      yNode,
+      createMockNode({ id, parent, isRoot: !parent })
+    );
+    nodesMap.set(id, yNode);
+  }
+
+  beforeEach(() => {
+    doc = new Y.Doc();
+    nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+  });
+
+  afterEach(() => {
+    doc.destroy();
+  });
+
+  it('collects direct children of deleted node', () => {
+    addNode('root', null);
+    addNode('A', 'root');
+    addNode('B', 'A');
+
+    const result = collectDescendantIds(nodesMap, 'A');
+
+    expect(result).toEqual(['B']);
+  });
+
+  it('collects all nested descendants (A=>B=>C, delete A)', () => {
+    addNode('root', null);
+    addNode('A', 'root');
+    addNode('B', 'A');
+    addNode('C', 'B');
+
+    const result = collectDescendantIds(nodesMap, 'A');
+
+    expect(result).toEqual(['B', 'C']);
+  });
+
+  it('collects multi-branch descendants', () => {
+    addNode('root', null);
+    addNode('B', 'root');
+    addNode('C1', 'B');
+    addNode('C2', 'B');
+    addNode('D', 'C1');
+
+    const result = collectDescendantIds(nodesMap, 'B');
+
+    expect(result).toEqual(expect.arrayContaining(['C1', 'C2', 'D']));
+    expect(result).toHaveLength(3);
+  });
+
+  it('returns empty array for leaf node', () => {
+    addNode('root', null);
+    addNode('A', 'root');
+
+    const result = collectDescendantIds(nodesMap, 'A');
+
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty array for non-existent node', () => {
+    addNode('root', null);
+
+    const result = collectDescendantIds(nodesMap, 'nonexistent');
+
+    expect(result).toEqual([]);
+  });
+
+  it('collects all nodes when starting from root', () => {
+    addNode('root', null);
+    addNode('A', 'root');
+    addNode('B', 'root');
+    addNode('C', 'A');
+
+    const result = collectDescendantIds(nodesMap, 'root');
+
+    expect(result).toEqual(expect.arrayContaining(['A', 'B', 'C']));
+    expect(result).toHaveLength(3);
+  });
+
+  it('handles cycles without infinite loop', () => {
+    addNode('root', null);
+    addNode('A', 'root');
+    addNode('B', 'A');
+    // Create cycle: make A point to B
+    nodesMap.get('A')!.set('parent', 'B');
+
+    const result = collectDescendantIds(nodesMap, 'A');
+
+    expect(result).toEqual(['B']);
   });
 });
