@@ -24,6 +24,12 @@ export const WS_MAX_PAYLOAD = 1_048_576
 // Heartbeat interval for zombie connection detection (ms)
 export const HEARTBEAT_INTERVAL_MS = 30_000
 
+// Connection setup timeout (ms) — slow DB responses close with 1013
+export const CONNECTION_SETUP_TIMEOUT_MS = 10_000
+
+// Standard WebSocket close code: Try Again Later (RFC 6455)
+export const WS_CLOSE_TRY_AGAIN = 1013
+
 export interface ConnectionMeta {
   mapId: string
   writable: boolean
