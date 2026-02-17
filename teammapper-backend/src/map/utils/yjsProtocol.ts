@@ -18,10 +18,17 @@ export const WS_CLOSE_MAP_NOT_FOUND = 4004
 export const WS_CLOSE_INTERNAL_ERROR = 4500
 export const WS_CLOSE_SERVER_SHUTDOWN = 1001
 
+// 1 MiB — generous for mind map sync messages (typically 1–50 KB)
+export const WS_MAX_PAYLOAD = 1_048_576
+
+// Heartbeat interval for zombie connection detection (ms)
+export const HEARTBEAT_INTERVAL_MS = 30_000
+
 export interface ConnectionMeta {
   mapId: string
   writable: boolean
   awarenessClientIds: Set<number>
+  isAlive: boolean
 }
 
 export interface ParsedQueryParams {

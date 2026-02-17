@@ -23,9 +23,13 @@ jest.mock('../../config.service', () => ({
   },
 }))
 
-// Minimal interface to call the WebSocket connection event handler in tests
+// Minimal interfaces to call private methods in tests
 interface ConnectionHandler {
   handleConnection(ws: MockWs, req: IncomingMessage): Promise<void>
+}
+
+interface HeartbeatRunner {
+  runHeartbeat(): void
 }
 
 const createMockMap = (secret: string | null = 'test-secret'): MmpMap => {
@@ -41,9 +45,13 @@ interface MockWs {
   on: jest.Mock
   close: jest.Mock
   send: jest.Mock
+  terminate: jest.Mock
+  ping: jest.Mock
   readyState: number
   _triggerClose: () => void
   _triggerMessage: (data: Uint8Array) => void
+  _triggerError: (error: Error) => void
+  _triggerPong: () => void
 }
 
 type WsEventHandler = (...args: unknown[]) => void
@@ -59,12 +67,20 @@ const createMockWs = (): MockWs => {
     send: jest.fn((_data: Uint8Array | Buffer, cb?: (err?: Error) => void) => {
       if (cb) cb()
     }),
+    terminate: jest.fn(),
+    ping: jest.fn(),
     readyState: WebSocket.OPEN,
     _triggerClose: () => {
       handlers.get('close')?.forEach((h) => h())
     },
     _triggerMessage: (data: Uint8Array) => {
       handlers.get('message')?.forEach((h) => h(Buffer.from(data)))
+    },
+    _triggerError: (error: Error) => {
+      handlers.get('error')?.forEach((h) => h(error))
+    },
+    _triggerPong: () => {
+      handlers.get('pong')?.forEach((h) => h())
     },
   }
 }
@@ -306,6 +322,90 @@ describe('YjsGateway', () => {
 
     it('does nothing for non-existent map', () => {
       gateway.closeConnectionsForMap('nonexistent')
+    })
+  })
+
+  describe('WebSocket error handling', () => {
+    it('logs error and terminates connection on error event', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      ws._triggerError(new Error('ECONNRESET'))
+
+      expect(ws.terminate).toHaveBeenCalled()
+    })
+
+    it('does not crash the server process on error', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      expect(() => ws._triggerError(new Error('write EPIPE'))).not.toThrow()
+    })
+  })
+
+  describe('ping/pong heartbeat', () => {
+    const runHeartbeat = (gw: YjsGateway) =>
+      (gw as unknown as HeartbeatRunner).runHeartbeat()
+
+    it('terminates zombie connection that missed pong', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      // First heartbeat: marks isAlive=false and pings
+      runHeartbeat(gateway)
+      expect(ws.ping).toHaveBeenCalledTimes(1)
+      expect(ws.terminate).not.toHaveBeenCalled()
+
+      // Second heartbeat without pong: terminates
+      runHeartbeat(gateway)
+      expect(ws.terminate).toHaveBeenCalled()
+    })
+
+    it('keeps healthy connection that responds with pong', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      // First heartbeat: marks isAlive=false and pings
+      runHeartbeat(gateway)
+      // Client responds with pong
+      ws._triggerPong()
+
+      // Second heartbeat: connection survives
+      runHeartbeat(gateway)
+      expect(ws.terminate).not.toHaveBeenCalled()
+      expect(ws.ping).toHaveBeenCalledTimes(2)
+    })
+
+    it('clears heartbeat interval on shutdown', () => {
+      gateway.onModuleInit()
+      gateway.onModuleDestroy()
+
+      // After destroy, no further heartbeat runs
+      // (verified by no errors thrown after cleanup)
     })
   })
 

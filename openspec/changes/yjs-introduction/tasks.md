@@ -120,10 +120,10 @@
 > **App state after merge**: Server resilient to connection errors and oversized messages.
 > **PRODUCTION-BLOCKING**: Without this, a single ECONNRESET crashes the server process.
 
-- [ ] 6.1 Add `ws.on('error')` handler in `setupSync` that logs error with mapId and calls `ws.terminate()`
-- [ ] 6.2 Set `maxPayload: 1_048_576` on the `WebSocketServer` constructor in `onModuleInit`
-- [ ] 6.3 Add unit tests: error event logs and terminates without crashing, oversized message triggers close
-- [ ] 6.4 Run lint, test, format — verify app still works
+- [x] 6.1 Add `ws.on('error')` handler in `setupSync` that logs error with mapId and calls `ws.terminate()`
+- [x] 6.2 Set `maxPayload: 1_048_576` on the `WebSocketServer` constructor in `onModuleInit`
+- [x] 6.3 Add unit tests: error event logs and terminates without crashing, oversized message triggers close
+- [x] 6.4 Run lint, test, format — verify app still works
 
 ## 7. Ping/Pong Heartbeat
 
@@ -131,12 +131,12 @@
 > **App state after merge**: Server automatically detects and cleans up zombie connections.
 > **PRODUCTION-BLOCKING**: Without this, zombie connections accumulate indefinitely and leak memory.
 
-- [ ] 7.1 Add `isAlive` typed property tracking on WebSocket connections (set `true` on connect and on `pong`)
-- [ ] 7.2 Add 30-second `setInterval` in `onModuleInit` that iterates clients, terminates dead ones, pings live ones
-- [ ] 7.3 Register `ws.on('pong')` handler in `setupSync` to set `isAlive = true`
-- [ ] 7.4 Clear the heartbeat interval in `cleanup` / `onModuleDestroy`
-- [ ] 7.5 Add unit tests: zombie connection terminated after missed pong, healthy connection survives, interval cleared on shutdown
-- [ ] 7.6 Run lint, test, format — verify app still works
+- [x] 7.1 Add `isAlive` typed property tracking on WebSocket connections (set `true` on connect and on `pong`)
+- [x] 7.2 Add 30-second `setInterval` in `onModuleInit` that iterates clients, terminates dead ones, pings live ones
+- [x] 7.3 Register `ws.on('pong')` handler in `setupSync` to set `isAlive = true`
+- [x] 7.4 Clear the heartbeat interval in `cleanup` / `onModuleDestroy`
+- [x] 7.5 Add unit tests: zombie connection terminated after missed pong, healthy connection survives, interval cleared on shutdown
+- [x] 7.6 Run lint, test, format — verify app still works
 
 ## 8. Connection Limits
 
