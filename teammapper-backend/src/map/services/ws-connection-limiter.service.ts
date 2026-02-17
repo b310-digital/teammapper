@@ -33,12 +33,18 @@ export class WsConnectionLimiterService implements OnModuleDestroy {
     if (rateRejection) return rateRejection
 
     this.acceptConnection(ip)
+    this.logger.debug(
+      `Connection accepted — global: ${this.globalConnectionCount}, unique IPs: ${this.perIpConnectionCount.size}`
+    )
     return null
   }
 
   releaseConnection(ip: string): void {
     this.globalConnectionCount = Math.max(0, this.globalConnectionCount - 1)
     this.decrementIpCount(ip)
+    this.logger.debug(
+      `Connection released — global: ${this.globalConnectionCount}, unique IPs: ${this.perIpConnectionCount.size}`
+    )
   }
 
   cleanupExpiredRateWindows(): void {
@@ -46,6 +52,7 @@ export class WsConnectionLimiterService implements OnModuleDestroy {
 
     const windowMs = configService.getWsPerIpRateWindowMs()
     const now = Date.now()
+    const sizeBefore = this.perIpRateWindows.size
     for (const [ip, timestamps] of this.perIpRateWindows) {
       const recent = timestamps.filter((t) => now - t < windowMs)
       if (recent.length === 0) {
@@ -53,6 +60,12 @@ export class WsConnectionLimiterService implements OnModuleDestroy {
       } else {
         this.perIpRateWindows.set(ip, recent)
       }
+    }
+    const removed = sizeBefore - this.perIpRateWindows.size
+    if (removed > 0) {
+      this.logger.debug(
+        `Rate window cleanup — removed: ${removed}, remaining: ${this.perIpRateWindows.size}`
+      )
     }
   }
 
@@ -73,7 +86,9 @@ export class WsConnectionLimiterService implements OnModuleDestroy {
   private checkGlobalLimit(): Rejection | null {
     const globalMax = configService.getWsGlobalMaxConnections()
     if (this.globalConnectionCount >= globalMax) {
-      this.logger.warn(`Global connection limit reached (${globalMax})`)
+      this.logger.warn(
+        `Global connection limit reached — max: ${globalMax}, unique IPs: ${this.perIpConnectionCount.size}`
+      )
       return { status: 503, reason: 'Service Unavailable' }
     }
     return null
@@ -83,9 +98,7 @@ export class WsConnectionLimiterService implements OnModuleDestroy {
     const perIpMax = configService.getWsPerIpMaxConnections()
     const currentIpCount = this.perIpConnectionCount.get(ip) ?? 0
     if (currentIpCount >= perIpMax) {
-      this.logger.warn(
-        `Per-IP connection limit reached for ${ip} (${perIpMax})`
-      )
+      this.logger.warn(`Per-IP connection limit reached — max: ${perIpMax}`)
       return { status: 429, reason: 'Too Many Requests' }
     }
     return null
@@ -93,7 +106,7 @@ export class WsConnectionLimiterService implements OnModuleDestroy {
 
   private checkRateLimit(ip: string): Rejection | null {
     if (this.isRateLimited(ip)) {
-      this.logger.warn(`Rate limit exceeded for ${ip}`)
+      this.logger.warn('Rate limit exceeded for a client')
       return { status: 429, reason: 'Too Many Requests' }
     }
     return null
