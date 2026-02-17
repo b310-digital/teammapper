@@ -88,6 +88,13 @@ export class MapSyncService implements OnDestroy {
   private readonly attachedNodeSubject: BehaviorSubject<ExportNodeProperties | null>;
   // inform other parts of the app about the connection state
   private readonly connectionStatusSubject: BehaviorSubject<ConnectionStatus>;
+  // Yjs undo/redo state
+  private readonly canUndoSubject = new BehaviorSubject<boolean>(false);
+  private readonly canRedoSubject = new BehaviorSubject<boolean>(false);
+  public readonly canUndo$: Observable<boolean> =
+    this.canUndoSubject.asObservable();
+  public readonly canRedo$: Observable<boolean> =
+    this.canRedoSubject.asObservable();
 
   // Socket.io fields (used when yjs feature flag is false)
   private socket: Socket;
@@ -105,6 +112,7 @@ export class MapSyncService implements OnDestroy {
   private yjsOptionsObserver: Parameters<Y.Map<unknown>['observe']>[0] | null =
     null;
   private yjsAwarenessHandler: (() => void) | null = null;
+  private yUndoManager: Y.UndoManager | null = null;
 
   // Common fields
   private colorMapping: ClientColorMapping;
@@ -243,6 +251,14 @@ export class MapSyncService implements OnDestroy {
     };
 
     this.attachMap({ key: cachedMapEntry.key, cachedMap });
+  }
+
+  public undo(): void {
+    this.yUndoManager?.undo();
+  }
+
+  public redo(): void {
+    this.yUndoManager?.redo();
   }
 
   public updateMapOptions(options?: CachedMapOptions) {
@@ -1165,9 +1181,28 @@ export class MapSyncService implements OnDestroy {
     this.loadMapFromYDoc();
     this.setupYjsNodesObserver();
     this.setupYjsMapOptionsObserver();
+    this.initYjsUndoManager();
     this.setupYjsAwareness();
     this.settingsService.setEditMode(this.yjsWritable);
     this.setConnectionStatusSubject('connected');
+  }
+
+  private initYjsUndoManager(): void {
+    const nodesMap = this.yDoc.getMap('nodes');
+    this.yUndoManager = new Y.UndoManager(nodesMap, {
+      trackedOrigins: new Set(['local']),
+    });
+    this.setupUndoManagerListeners();
+  }
+
+  private setupUndoManagerListeners(): void {
+    const updateUndoRedoState = () => {
+      this.canUndoSubject.next(this.yUndoManager.undoStack.length > 0);
+      this.canRedoSubject.next(this.yUndoManager.redoStack.length > 0);
+    };
+
+    this.yUndoManager.on('stack-item-added', updateUndoRedoState);
+    this.yUndoManager.on('stack-item-popped', updateUndoRedoState);
   }
 
   private setupYjsConnectionStatus(): void {
@@ -1228,6 +1263,12 @@ export class MapSyncService implements OnDestroy {
   private resetYjs(): void {
     this.unsubscribeYjsListeners();
     this.detachYjsObservers();
+    if (this.yUndoManager) {
+      this.yUndoManager.destroy();
+      this.yUndoManager = null;
+      this.canUndoSubject.next(false);
+      this.canRedoSubject.next(false);
+    }
     const provider = this.wsProvider;
     this.wsProvider = null;
     if (provider) {
@@ -1270,7 +1311,6 @@ export class MapSyncService implements OnDestroy {
     this.setupYjsCreateHandler();
     this.setupYjsSelectionHandlers();
     this.setupYjsNodeUpdateHandler();
-    this.setupYjsUndoRedoHandlers();
     this.setupYjsNodeCreateHandler();
     this.setupYjsPasteHandler();
     this.setupYjsNodeRemoveHandler();
@@ -1327,26 +1367,6 @@ export class MapSyncService implements OnDestroy {
     );
   }
 
-  private setupYjsUndoRedoHandlers(): void {
-    this.yjsSubscriptions.push(
-      this.mmpService.on('undo').subscribe((diff?: MapDiff) => {
-        if (!this.yDoc) return;
-        this.attachedNodeSubject.next(this.mmpService.selectNode());
-        this.updateAttachedMap();
-        this.writeUndoRedoDiffToYDoc(diff);
-      })
-    );
-
-    this.yjsSubscriptions.push(
-      this.mmpService.on('redo').subscribe((diff?: MapDiff) => {
-        if (!this.yDoc) return;
-        this.attachedNodeSubject.next(this.mmpService.selectNode());
-        this.updateAttachedMap();
-        this.writeUndoRedoDiffToYDoc(diff);
-      })
-    );
-  }
-
   private setupYjsNodeCreateHandler(): void {
     this.yjsSubscriptions.push(
       this.mmpService
@@ -1389,9 +1409,11 @@ export class MapSyncService implements OnDestroy {
 
   private writeNodeCreateToYDoc(nodeProps: ExportNodeProperties): void {
     const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-    const yNode = new Y.Map<unknown>();
-    this.populateYMapFromNodeProps(yNode, nodeProps);
-    nodesMap.set(nodeProps.id, yNode);
+    this.yDoc.transact(() => {
+      const yNode = new Y.Map<unknown>();
+      this.populateYMapFromNodeProps(yNode, nodeProps);
+      nodesMap.set(nodeProps.id, yNode);
+    }, 'local');
   }
 
   private writeNodeUpdateToYDoc(event: NodeUpdateEvent): void {
@@ -1399,10 +1421,12 @@ export class MapSyncService implements OnDestroy {
     const yNode = nodesMap.get(event.nodeProperties.id);
     if (!yNode) return;
 
-    const topLevelKey = NodePropertyMapping[event.changedProperty][0];
-    const value =
-      event.nodeProperties[topLevelKey as keyof ExportNodeProperties];
-    yNode.set(topLevelKey, value);
+    this.yDoc.transact(() => {
+      const topLevelKey = NodePropertyMapping[event.changedProperty][0];
+      const value =
+        event.nodeProperties[topLevelKey as keyof ExportNodeProperties];
+      yNode.set(topLevelKey, value);
+    }, 'local');
   }
 
   private writeNodeRemoveFromYDoc(nodeId: string): void {
@@ -1416,7 +1440,7 @@ export class MapSyncService implements OnDestroy {
       for (const id of descendantIds) {
         nodesMap.delete(id);
       }
-    });
+    }, 'local');
   }
 
   private writeNodesPasteToYDoc(nodes: ExportNodeProperties[]): void {
@@ -1427,7 +1451,7 @@ export class MapSyncService implements OnDestroy {
         this.populateYMapFromNodeProps(yNode, node);
         nodesMap.set(node.id, yNode);
       }
-    });
+    }, 'local');
   }
 
   private writeImportToYDoc(): void {
@@ -1437,7 +1461,7 @@ export class MapSyncService implements OnDestroy {
 
     this.yDoc.transact(() => {
       this.clearAndRepopulateNodes(nodesMap, sorted);
-    });
+    }, 'import');
   }
 
   private clearAndRepopulateNodes(
@@ -1454,68 +1478,14 @@ export class MapSyncService implements OnDestroy {
     }
   }
 
-  private writeUndoRedoDiffToYDoc(diff: MapDiff): void {
-    if (!diff) return;
-    const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-
-    this.yDoc.transact(() => {
-      this.writeAddedNodesToYDoc(nodesMap, diff.added);
-      this.writeUpdatedNodesToYDoc(nodesMap, diff.updated);
-      this.writeDeletedNodesFromYDoc(nodesMap, diff.deleted);
-    });
-  }
-
-  private writeAddedNodesToYDoc(
-    nodesMap: Y.Map<Y.Map<unknown>>,
-    added: SnapshotChanges
-  ): void {
-    if (!added) return;
-    for (const nodeId in added) {
-      const nodeProps = added[nodeId] as ExportNodeProperties;
-      const yNode = new Y.Map<unknown>();
-      this.populateYMapFromNodeProps(yNode, nodeProps);
-      nodesMap.set(nodeId, yNode);
-    }
-  }
-
-  private writeUpdatedNodesToYDoc(
-    nodesMap: Y.Map<Y.Map<unknown>>,
-    updated: SnapshotChanges
-  ): void {
-    if (!updated) return;
-    for (const nodeId in updated) {
-      const yNode = nodesMap.get(nodeId);
-      if (!yNode) continue;
-      this.applyPropertyUpdatesToYMap(yNode, updated[nodeId]);
-    }
-  }
-
-  private applyPropertyUpdatesToYMap(
-    yNode: Y.Map<unknown>,
-    updates: Partial<ExportNodeProperties>
-  ): void {
-    if (!updates) return;
-    for (const key in updates) {
-      yNode.set(key, (updates as Record<string, unknown>)[key]);
-    }
-  }
-
-  private writeDeletedNodesFromYDoc(
-    nodesMap: Y.Map<Y.Map<unknown>>,
-    deleted: SnapshotChanges
-  ): void {
-    if (!deleted) return;
-    for (const nodeId in deleted) {
-      nodesMap.delete(nodeId);
-    }
-  }
-
   private writeMapOptionsToYDoc(options?: CachedMapOptions): void {
     if (!this.yDoc || !options) return;
     const optionsMap = this.yDoc.getMap('mapOptions');
-    optionsMap.set('fontMaxSize', options.fontMaxSize);
-    optionsMap.set('fontMinSize', options.fontMinSize);
-    optionsMap.set('fontIncrement', options.fontIncrement);
+    this.yDoc.transact(() => {
+      optionsMap.set('fontMaxSize', options.fontMaxSize);
+      optionsMap.set('fontMinSize', options.fontMinSize);
+      optionsMap.set('fontIncrement', options.fontIncrement);
+    }, 'local');
   }
 
   private async deleteMapViaHttp(adminId: string): Promise<void> {
@@ -1552,7 +1522,7 @@ export class MapSyncService implements OnDestroy {
       events: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>[],
       transaction: Y.Transaction
     ) => {
-      if (transaction.local) return;
+      if (transaction.local && transaction.origin !== this.yUndoManager) return;
       for (const event of events) {
         this.handleYjsNodeEvent(event, nodesMap);
       }
@@ -1660,7 +1630,7 @@ export class MapSyncService implements OnDestroy {
   private setupYjsMapOptionsObserver(): void {
     const optionsMap = this.yDoc.getMap('mapOptions');
     this.yjsOptionsObserver = (_: unknown, transaction: Y.Transaction) => {
-      if (transaction.local) return;
+      if (transaction.local && transaction.origin !== this.yUndoManager) return;
       this.applyRemoteMapOptions();
     };
     optionsMap.observe(this.yjsOptionsObserver);

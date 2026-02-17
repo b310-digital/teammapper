@@ -175,9 +175,9 @@
 
   <button
     id="undo-button"
-    (click)="mmpService.undo()"
+    (click)="handleUndo()"
     [title]="'TOOLTIPS.UNDO_MAP' | translate"
-    [disabled]="editDisabled || !canUndoRedo"
+    [disabled]="editDisabled || (yjsEnabled ? !canYjsUndo : !canUndoRedo)"
     color="primary"
     mat-icon-button>
     <mat-icon>undo</mat-icon>
@@ -185,9 +185,9 @@
 
   <button
     id="redo-button"
-    (click)="mmpService.redo()"
+    (click)="handleRedo()"
     [title]="'TOOLTIPS.REDO_MAP' | translate"
-    [disabled]="editDisabled || !canUndoRedo"
+    [disabled]="editDisabled || (yjsEnabled ? !canYjsRedo : !canUndoRedo)"
     color="primary"
     mat-icon-button>
     <mat-icon>redo</mat-icon>
