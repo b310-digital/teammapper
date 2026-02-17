@@ -55,6 +55,7 @@ import {
   findAffectedNodes,
   resolveMmpPropertyUpdate,
   sortParentFirst,
+  collectDescendantIds,
 } from './yjs-utils';
 
 const DEFAULT_COLOR = '#000000';
@@ -1406,7 +1407,16 @@ export class MapSyncService implements OnDestroy {
 
   private writeNodeRemoveFromYDoc(nodeId: string): void {
     const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-    nodesMap.delete(nodeId);
+    if (!nodesMap.has(nodeId)) return;
+
+    const descendantIds = collectDescendantIds(nodesMap, nodeId);
+
+    this.yDoc.transact(() => {
+      nodesMap.delete(nodeId);
+      for (const id of descendantIds) {
+        nodesMap.delete(id);
+      }
+    });
   }
 
   private writeNodesPasteToYDoc(nodes: ExportNodeProperties[]): void {
