@@ -13,6 +13,8 @@ import {
   WS_CLOSE_MISSING_PARAM,
   WS_CLOSE_MAP_DELETED,
   WS_CLOSE_MAP_NOT_FOUND,
+  WS_CLOSE_TRY_AGAIN,
+  CONNECTION_SETUP_TIMEOUT_MS,
   encodeSyncStep1Message,
   encodeSyncUpdateMessage,
 } from '../utils/yjsProtocol'
@@ -242,7 +244,7 @@ describe('YjsGateway', () => {
 
       expect(ws.close).toHaveBeenCalledWith(
         WS_CLOSE_MISSING_PARAM,
-        'Missing mapId parameter'
+        'Missing mapId'
       )
     })
 
@@ -506,6 +508,72 @@ describe('YjsGateway', () => {
 
       // After destroy, no further heartbeat runs
       // (verified by no errors thrown after cleanup)
+    })
+  })
+
+  describe('connection setup timeout', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('closes with 1013 when setup exceeds timeout', async () => {
+      mapsService.findMap.mockReturnValue(new Promise(() => {}))
+      const ws = createMockWs()
+
+      const promise = connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      jest.advanceTimersByTime(CONNECTION_SETUP_TIMEOUT_MS + 1)
+      await promise
+
+      expect(ws.close).toHaveBeenCalledWith(
+        WS_CLOSE_TRY_AGAIN,
+        'Connection setup timeout'
+      )
+      expect(limiter.releaseConnection).toHaveBeenCalledWith('127.0.0.1')
+    })
+
+    it('completes normally when setup finishes within timeout', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      expect(ws.close).not.toHaveBeenCalledWith(
+        WS_CLOSE_TRY_AGAIN,
+        expect.any(String)
+      )
+      expect(docManager.getOrCreateDoc).toHaveBeenCalledWith('map-1')
+    })
+
+    it('cancels timer on early completion', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      jest.advanceTimersByTime(15_000)
+      await Promise.resolve()
+
+      expect(ws.close).not.toHaveBeenCalledWith(
+        WS_CLOSE_TRY_AGAIN,
+        expect.any(String)
+      )
     })
   })
 

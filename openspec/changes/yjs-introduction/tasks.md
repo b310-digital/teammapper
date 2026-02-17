@@ -158,10 +158,10 @@
 > **App state after merge**: Connections that stall during setup are closed after 10 seconds.
 > **PRODUCTION-BLOCKING**: Without this, slow DB responses hang connections indefinitely.
 
-- [ ] 9.1 Wrap async operations in `handleConnection` with `Promise.race` against a 10-second timeout using `AbortController`
-- [ ] 9.2 Close WebSocket with code 1013 on timeout; cancel timer on success/failure via `AbortController`
-- [ ] 9.3 Add unit tests: setup completes within timeout (normal), setup exceeds timeout (closed with 1013), timer canceled on early completion
-- [ ] 9.4 Run lint, test, format — verify app still works
+- [x] 9.1 Wrap async operations in `handleConnection` with `Promise.race` against a 10-second timeout using `AbortController`
+- [x] 9.2 Close WebSocket with code 1013 on timeout; cancel timer on success/failure via `AbortController`
+- [x] 9.3 Add unit tests: setup completes within timeout (normal), setup exceeds timeout (closed with 1013), timer canceled on early completion
+- [x] 9.4 Run lint, test, format — verify app still works
 
 ## 10. Persistence Shutdown and Async Close Fixes
 

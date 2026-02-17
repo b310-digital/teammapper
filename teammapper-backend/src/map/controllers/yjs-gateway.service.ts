@@ -28,6 +28,8 @@ import {
   WS_CLOSE_SERVER_SHUTDOWN,
   WS_MAX_PAYLOAD,
   HEARTBEAT_INTERVAL_MS,
+  CONNECTION_SETUP_TIMEOUT_MS,
+  WS_CLOSE_TRY_AGAIN,
   ConnectionMeta,
   extractPathname,
   parseQueryParams,
@@ -157,35 +159,78 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     req: IncomingMessage
   ): Promise<void> {
     const ip = this.limiter.getClientIp(req)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      CONNECTION_SETUP_TIMEOUT_MS
+    )
 
     try {
-      const { mapId, secret } = parseQueryParams(req.url)
+      await Promise.race([
+        this.performConnectionSetup(ws, ip, req, controller.signal),
+        this.rejectOnAbort(controller.signal),
+      ])
+    } catch {
+      this.limiter.releaseConnection(ip)
+      ws.close(WS_CLOSE_TRY_AGAIN, 'Connection setup timeout')
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
 
+  private rejectOnAbort(signal: AbortSignal): Promise<never> {
+    return new Promise<never>((_, reject) => {
+      signal.addEventListener(
+        'abort',
+        () => reject(new Error('Connection setup timeout')),
+        { once: true }
+      )
+    })
+  }
+
+  private rejectConnection(
+    ws: WebSocket,
+    ip: string,
+    code: number,
+    reason: string
+  ): void {
+    this.limiter.releaseConnection(ip)
+    ws.close(code, reason)
+  }
+
+  private async performConnectionSetup(
+    ws: WebSocket,
+    ip: string,
+    req: IncomingMessage,
+    signal: AbortSignal
+  ): Promise<void> {
+    try {
+      const { mapId, secret } = parseQueryParams(req.url)
       if (!mapId) {
-        this.limiter.releaseConnection(ip)
-        ws.close(WS_CLOSE_MISSING_PARAM, 'Missing mapId parameter')
+        this.rejectConnection(ws, ip, WS_CLOSE_MISSING_PARAM, 'Missing mapId')
         return
       }
 
       const map = await this.mapsService.findMap(mapId)
+      if (signal.aborted) return
       if (!map) {
-        this.limiter.releaseConnection(ip)
-        ws.close(WS_CLOSE_MAP_NOT_FOUND, 'Map not found')
+        this.rejectConnection(ws, ip, WS_CLOSE_MAP_NOT_FOUND, 'Map not found')
         return
       }
 
-      const writable = checkWriteAccess(map.modificationSecret, secret)
       const doc = await this.docManager.getOrCreateDoc(mapId)
+      if (signal.aborted) return
 
+      const writable = checkWriteAccess(map.modificationSecret, secret)
       this.trackConnection(ws, mapId, writable, ip)
       this.docManager.incrementClientCount(mapId)
       this.setupSync(ws, doc, mapId, writable)
     } catch (error) {
-      this.limiter.releaseConnection(ip)
+      if (signal.aborted) return
       this.logger.error(
         `Connection error: ${error instanceof Error ? error.message : String(error)}`
       )
-      ws.close(WS_CLOSE_INTERNAL_ERROR, 'Internal server error')
+      this.rejectConnection(ws, ip, WS_CLOSE_INTERNAL_ERROR, 'Internal error')
     }
   }
 
