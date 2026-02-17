@@ -6,7 +6,6 @@ import { hydrateYDoc } from '../utils/yDocConversion'
 
 interface DocEntry {
   doc: Y.Doc
-  clientCount: number
   graceTimer: ReturnType<typeof setTimeout> | null
 }
 
@@ -52,29 +51,18 @@ export class YjsDocManagerService implements OnModuleDestroy {
     }
   }
 
-  incrementClientCount(mapId: string): void {
+  async notifyClientCount(mapId: string, count: number): Promise<void> {
     const entry = this.docs.get(mapId)
     if (!entry) return
 
-    this.cancelGraceTimer(entry)
-    entry.clientCount++
-    this.logger.debug(
-      `Client connected to map ${mapId} (count: ${entry.clientCount})`
-    )
-  }
+    this.logger.debug(`Map ${mapId} client count: ${count}`)
 
-  async decrementClientCount(mapId: string): Promise<void> {
-    const entry = this.docs.get(mapId)
-    if (!entry) return
-
-    entry.clientCount = Math.max(0, entry.clientCount - 1)
-    this.logger.debug(
-      `Client disconnected from map ${mapId} (count: ${entry.clientCount})`
-    )
-
-    if (entry.clientCount === 0) {
-      await this.onLastClientDisconnect(mapId, entry)
+    if (count > 0) {
+      this.cancelGraceTimer(entry)
+      return
     }
+
+    await this.onLastClientDisconnect(mapId, entry)
   }
 
   destroyDoc(mapId: string): void {
@@ -82,19 +70,17 @@ export class YjsDocManagerService implements OnModuleDestroy {
   }
 
   // Restores the grace timer if no clients are connected (used on setup failure)
-  restoreGraceTimer(mapId: string): void {
+  restoreGraceTimer(mapId: string, connectionCount: number): void {
+    if (connectionCount > 0) return
+
     const entry = this.docs.get(mapId)
-    if (!entry || entry.clientCount > 0) return
+    if (!entry) return
 
     this.startGraceTimer(mapId, entry)
   }
 
   hasDoc(mapId: string): boolean {
     return this.docs.has(mapId)
-  }
-
-  getClientCount(mapId: string): number {
-    return this.docs.get(mapId)?.clientCount ?? 0
   }
 
   private async hydrateDocFromDb(mapId: string): Promise<Y.Doc> {
@@ -112,7 +98,6 @@ export class YjsDocManagerService implements OnModuleDestroy {
 
     this.docs.set(mapId, {
       doc,
-      clientCount: 0,
       graceTimer: null,
     })
 
@@ -146,7 +131,7 @@ export class YjsDocManagerService implements OnModuleDestroy {
 
   private evictDoc(mapId: string): void {
     const entry = this.docs.get(mapId)
-    if (!entry || entry.clientCount > 0) return
+    if (!entry) return
 
     entry.doc.destroy()
     this.docs.delete(mapId)

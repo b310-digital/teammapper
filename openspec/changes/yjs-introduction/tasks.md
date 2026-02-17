@@ -181,13 +181,13 @@
 > **App state after merge**: Client count always matches actual connection count — no drift possible.
 > **PRODUCTION-BLOCKING**: Without this, client count drift can cause premature or delayed Y.Doc eviction.
 
-- [ ] 11.1 Remove `clientCount` field from `DocEntry` in `yjs-doc-manager.service.ts`
-- [ ] 11.2 Replace `incrementClientCount` / `decrementClientCount` with a `notifyClientCount(mapId: string, count: number)` method that accepts the count from the gateway
-- [ ] 11.3 Update gateway's `handleClose` to pass `mapConnections.get(mapId)?.size ?? 0` to doc manager after removing the connection
-- [ ] 11.4 Update gateway's `handleConnection` to pass connection count after `trackConnection`
-- [ ] 11.5 Update `getClientCount` to accept count from gateway or return 0 if doc not tracked
-- [ ] 11.6 Update existing unit tests in `yjs-doc-manager.service.spec.ts` and `yjs-gateway.service.spec.ts` for the new interface
-- [ ] 11.7 Run lint, test, format — verify app still works
+- [x] 11.1 Remove `clientCount` field from `DocEntry` in `yjs-doc-manager.service.ts`
+- [x] 11.2 Replace `incrementClientCount` / `decrementClientCount` with a `notifyClientCount(mapId: string, count: number)` method that accepts the count from the gateway
+- [x] 11.3 Update gateway's `handleClose` to pass `mapConnections.get(mapId)?.size ?? 0` to doc manager after removing the connection
+- [x] 11.4 Update gateway's `handleConnection` to pass connection count after `trackConnection`
+- [x] 11.5 Update `getClientCount` to accept count from gateway or return 0 if doc not tracked
+- [x] 11.6 Update existing unit tests in `yjs-doc-manager.service.spec.ts` and `yjs-gateway.service.spec.ts` for the new interface
+- [x] 11.7 Run lint, test, format — verify app still works
 
 ## 12. Async deleteMap
 
@@ -195,11 +195,11 @@
 > **App state after merge**: Map deletion errors properly propagate to callers.
 > **PRODUCTION-BLOCKING**: Without this, deletion errors are silently swallowed and callers respond before delete completes.
 
-- [ ] 12.1 Change `deleteMap` in `maps.service.ts` to `async deleteMap(uuid: string): Promise<void>` with `await` on the repository delete
-- [ ] 12.2 Update `maps.controller.ts` to `await this.mapsService.deleteMap(mapId)`
-- [ ] 12.3 Update `maps.gateway.ts` to `await this.mapsService.deleteMap(request.mapId)`
-- [ ] 12.4 Update `maps.controller.spec.ts` mock to return a resolved promise
-- [ ] 12.5 Run lint, test, format — verify app still works
+- [x] 12.1 Change `deleteMap` in `maps.service.ts` to `async deleteMap(uuid: string): Promise<void>` with `await` on the repository delete
+- [x] 12.2 Update `maps.controller.ts` to `await this.mapsService.deleteMap(mapId)`
+- [x] 12.3 Update `maps.gateway.ts` to `await this.mapsService.deleteMap(request.mapId)`
+- [x] 12.4 Update `maps.controller.spec.ts` mock to return a resolved promise
+- [x] 12.5 Run lint, test, format — verify app still works
 
 ## 13. Cleanup: Remove Socket.io & Dead Code
 

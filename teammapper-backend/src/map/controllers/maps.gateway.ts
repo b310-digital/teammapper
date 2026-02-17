@@ -143,7 +143,7 @@ export class MapsGateway implements OnGatewayDisconnect {
         request.mapId
       )
       if (mmpMap && mmpMap.adminId === request.adminId) {
-        this.mapsService.deleteMap(request.mapId)
+        await this.mapsService.deleteMap(request.mapId)
         this.server.to(request.mapId).emit('mapDeleted')
         return true
       }

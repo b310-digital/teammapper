@@ -69,7 +69,7 @@ describe('YjsDocManagerService', () => {
   const setupConnectedDoc = async (mapId = 'map-1') => {
     setupWithNodes()
     await service.getOrCreateDoc(mapId)
-    service.incrementClientCount(mapId)
+    await service.notifyClientCount(mapId, 1)
   }
 
   describe('getOrCreateDoc', () => {
@@ -124,33 +124,35 @@ describe('YjsDocManagerService', () => {
     })
   })
 
-  describe('client connection tracking', () => {
-    it('increments client count on connect', async () => {
+  describe('notifyClientCount', () => {
+    it('cancels grace timer when count is positive', async () => {
       setupWithNodes()
       await service.getOrCreateDoc('map-1')
+      await service.notifyClientCount('map-1', 0)
 
-      service.incrementClientCount('map-1')
-      service.incrementClientCount('map-1')
+      jest.advanceTimersByTime(15_000)
+      await service.notifyClientCount('map-1', 1)
+      jest.advanceTimersByTime(20_000)
 
-      expect(service.getClientCount('map-1')).toBe(2)
+      expect(service.hasDoc('map-1')).toBe(true)
     })
 
-    it('decrements client count on disconnect', async () => {
+    it('persists and starts grace timer when count reaches zero', async () => {
       await setupConnectedDoc()
-      service.incrementClientCount('map-1')
 
-      await service.decrementClientCount('map-1')
+      await service.notifyClientCount('map-1', 0)
 
-      expect(service.getClientCount('map-1')).toBe(1)
+      expect(persistenceService.persistImmediately).toHaveBeenCalledWith(
+        'map-1',
+        expect.anything()
+      )
+      expect(service.hasDoc('map-1')).toBe(true)
     })
 
-    it('does not decrement below zero', async () => {
-      setupWithNodes()
-      await service.getOrCreateDoc('map-1')
+    it('does nothing for untracked map', async () => {
+      await service.notifyClientCount('nonexistent', 0)
 
-      await service.decrementClientCount('map-1')
-
-      expect(service.getClientCount('map-1')).toBe(0)
+      expect(persistenceService.persistImmediately).not.toHaveBeenCalled()
     })
   })
 
@@ -158,7 +160,7 @@ describe('YjsDocManagerService', () => {
     it('persists on last client disconnect', async () => {
       await setupConnectedDoc()
 
-      await service.decrementClientCount('map-1')
+      await service.notifyClientCount('map-1', 0)
 
       expect(persistenceService.persistImmediately).toHaveBeenCalledWith(
         'map-1',
@@ -169,14 +171,14 @@ describe('YjsDocManagerService', () => {
     it('retains doc during grace period after last disconnect', async () => {
       await setupConnectedDoc()
 
-      await service.decrementClientCount('map-1')
+      await service.notifyClientCount('map-1', 0)
 
       expect(service.hasDoc('map-1')).toBe(true)
     })
 
     it('evicts doc after grace period expires', async () => {
       await setupConnectedDoc()
-      await service.decrementClientCount('map-1')
+      await service.notifyClientCount('map-1', 0)
 
       jest.advanceTimersByTime(31_000)
 
@@ -185,10 +187,10 @@ describe('YjsDocManagerService', () => {
 
     it('cancels grace timer if client reconnects', async () => {
       await setupConnectedDoc()
-      await service.decrementClientCount('map-1')
+      await service.notifyClientCount('map-1', 0)
 
       jest.advanceTimersByTime(15_000)
-      service.incrementClientCount('map-1')
+      await service.notifyClientCount('map-1', 1)
       jest.advanceTimersByTime(20_000)
 
       expect(service.hasDoc('map-1')).toBe(true)
@@ -197,8 +199,8 @@ describe('YjsDocManagerService', () => {
     it('reuses in-memory doc during grace period', async () => {
       setupWithNodes()
       const doc1 = await service.getOrCreateDoc('map-1')
-      service.incrementClientCount('map-1')
-      await service.decrementClientCount('map-1')
+      await service.notifyClientCount('map-1', 1)
+      await service.notifyClientCount('map-1', 0)
 
       jest.advanceTimersByTime(10_000)
       const doc2 = await service.getOrCreateDoc('map-1')
@@ -208,19 +210,40 @@ describe('YjsDocManagerService', () => {
     })
   })
 
+  describe('restoreGraceTimer', () => {
+    it('starts grace timer when connection count is zero', async () => {
+      setupWithNodes()
+      await service.getOrCreateDoc('map-1')
+
+      service.restoreGraceTimer('map-1', 0)
+      jest.advanceTimersByTime(31_000)
+
+      expect(service.hasDoc('map-1')).toBe(false)
+    })
+
+    it('does not start grace timer when connections exist', async () => {
+      setupWithNodes()
+      await service.getOrCreateDoc('map-1')
+
+      service.restoreGraceTimer('map-1', 2)
+      jest.advanceTimersByTime(31_000)
+
+      expect(service.hasDoc('map-1')).toBe(true)
+    })
+  })
+
   describe('destroyDoc', () => {
-    it('removes doc and resets client count', async () => {
+    it('removes doc from memory', async () => {
       await setupConnectedDoc()
 
       service.destroyDoc('map-1')
 
       expect(service.hasDoc('map-1')).toBe(false)
-      expect(service.getClientCount('map-1')).toBe(0)
     })
 
     it('cancels grace timer on destroy', async () => {
       await setupConnectedDoc()
-      await service.decrementClientCount('map-1')
+      await service.notifyClientCount('map-1', 0)
 
       service.destroyDoc('map-1')
 
