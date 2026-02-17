@@ -97,23 +97,127 @@
 - [x] 5.5 Manual smoke test: open two browser tabs on the same map and verify real-time sync of node create, update, delete, selection highlighting, undo/redo, map import, and map deletion
 - [x] 5.6 Verify backend and frontend build, lint, and all tests pass
 
-## 6. Cleanup: Remove Socket.io & Dead Code
+---
+
+<!--
+  PRODUCTION-BLOCKING: Tasks 6–12
+  ================================
+  The following hardening tasks address critical stability and security gaps
+  in the Yjs WebSocket backend. They MUST be completed before enabling
+  YJS_ENABLED=true in production. Without them:
+  - A single connection error can crash the server process (task 6)
+  - Zombie connections accumulate indefinitely (task 7)
+  - No protection against connection flooding or oversized messages (tasks 6, 8)
+  - Slow database responses hang connections forever (task 9)
+  - Race conditions can orphan Y.Docs in memory (task 10)
+  - Client count can drift causing premature/delayed eviction (task 11)
+  - Map deletion errors are silently swallowed (task 12)
+-->
+
+## 6. WebSocket Error Handler and maxPayload
+
+> **PR scope**: Add error handling on individual connections and message size limits. No behavioral change for normal clients.
+> **App state after merge**: Server resilient to connection errors and oversized messages.
+> **PRODUCTION-BLOCKING**: Without this, a single ECONNRESET crashes the server process.
+
+- [ ] 6.1 Add `ws.on('error')` handler in `setupSync` that logs error with mapId and calls `ws.terminate()`
+- [ ] 6.2 Set `maxPayload: 1_048_576` on the `WebSocketServer` constructor in `onModuleInit`
+- [ ] 6.3 Add unit tests: error event logs and terminates without crashing, oversized message triggers close
+- [ ] 6.4 Run lint, test, format — verify app still works
+
+## 7. Ping/Pong Heartbeat
+
+> **PR scope**: Add zombie connection detection via WebSocket ping/pong. Self-contained addition.
+> **App state after merge**: Server automatically detects and cleans up zombie connections.
+> **PRODUCTION-BLOCKING**: Without this, zombie connections accumulate indefinitely and leak memory.
+
+- [ ] 7.1 Add `isAlive` typed property tracking on WebSocket connections (set `true` on connect and on `pong`)
+- [ ] 7.2 Add 30-second `setInterval` in `onModuleInit` that iterates clients, terminates dead ones, pings live ones
+- [ ] 7.3 Register `ws.on('pong')` handler in `setupSync` to set `isAlive = true`
+- [ ] 7.4 Clear the heartbeat interval in `cleanup` / `onModuleDestroy`
+- [ ] 7.5 Add unit tests: zombie connection terminated after missed pong, healthy connection survives, interval cleared on shutdown
+- [ ] 7.6 Run lint, test, format — verify app still works
+
+## 8. Connection Limits
+
+> **PR scope**: Add per-IP and global connection limits to prevent resource exhaustion. Self-contained addition.
+> **App state after merge**: Server rejects connections exceeding configured limits.
+> **PRODUCTION-BLOCKING**: Without this, a single client can open unlimited connections and exhaust server resources.
+
+- [ ] 8.1 Add connection limit constants to `config.service.ts` (global max 500, per-IP max 50, rate limit 10/10s) with env var overrides
+- [ ] 8.2 Add in-memory tracking state to gateway: global count, per-IP count map, per-IP rate window map
+- [ ] 8.3 Add limit checks in the `server.on('upgrade')` handler — reject with HTTP 503 (global) or 429 (per-IP / rate)
+- [ ] 8.4 Decrement per-IP count on connection close in `handleClose`; clean up entries at zero
+- [ ] 8.5 Add periodic cleanup of expired rate-limit window entries (piggyback on heartbeat interval)
+- [ ] 8.6 Add unit tests: connection rejected at global limit (503), per-IP limit (429), rate limit (429); counts decrement on close; IP entry removed at zero
+- [ ] 8.7 Run lint, test, format — verify app still works
+
+## 9. Connection Setup Timeout
+
+> **PR scope**: Add timeout on async connection setup to handle slow/unresponsive database. Self-contained addition.
+> **App state after merge**: Connections that stall during setup are closed after 10 seconds.
+> **PRODUCTION-BLOCKING**: Without this, slow DB responses hang connections indefinitely.
+
+- [ ] 9.1 Wrap async operations in `handleConnection` with `Promise.race` against a 10-second timeout using `AbortController`
+- [ ] 9.2 Close WebSocket with code 1013 on timeout; cancel timer on success/failure via `AbortController`
+- [ ] 9.3 Add unit tests: setup completes within timeout (normal), setup exceeds timeout (closed with 1013), timer canceled on early completion
+- [ ] 9.4 Run lint, test, format — verify app still works
+
+## 10. Persistence Shutdown and Async Close Fixes
+
+> **PR scope**: Fix persistence service shutdown lifecycle and async error handling in close handler. Fix grace timer race condition.
+> **App state after merge**: Clean shutdown with no orphaned timers, no silently swallowed errors.
+> **PRODUCTION-BLOCKING**: Without this, grace timer race can orphan Y.Docs in memory permanently.
+
+- [ ] 10.1 Implement `OnModuleDestroy` in `YjsPersistenceService`: clear all debounce timers, unregister observers, best-effort flush with 5-second timeout
+- [ ] 10.2 Add `.catch()` error handling on `decrementClientCount` call in `handleClose` to log persistence errors with mapId
+- [ ] 10.3 Add try/finally in `handleConnection` around `getOrCreateDoc` → `trackConnection` → `incrementClientCount` to restore grace timer on failure
+- [ ] 10.4 Add unit tests: persistence shutdown clears timers and flushes, decrement errors are logged not swallowed, grace timer restored on setup failure
+- [ ] 10.5 Run lint, test, format — verify app still works
+
+## 11. Unified Client Count Tracking
+
+> **PR scope**: Refactor client count to derive from connection set (single source of truth). Touches gateway and doc manager.
+> **App state after merge**: Client count always matches actual connection count — no drift possible.
+> **PRODUCTION-BLOCKING**: Without this, client count drift can cause premature or delayed Y.Doc eviction.
+
+- [ ] 11.1 Remove `clientCount` field from `DocEntry` in `yjs-doc-manager.service.ts`
+- [ ] 11.2 Replace `incrementClientCount` / `decrementClientCount` with a `notifyClientCount(mapId: string, count: number)` method that accepts the count from the gateway
+- [ ] 11.3 Update gateway's `handleClose` to pass `mapConnections.get(mapId)?.size ?? 0` to doc manager after removing the connection
+- [ ] 11.4 Update gateway's `handleConnection` to pass connection count after `trackConnection`
+- [ ] 11.5 Update `getClientCount` to accept count from gateway or return 0 if doc not tracked
+- [ ] 11.6 Update existing unit tests in `yjs-doc-manager.service.spec.ts` and `yjs-gateway.service.spec.ts` for the new interface
+- [ ] 11.7 Run lint, test, format — verify app still works
+
+## 12. Async deleteMap
+
+> **PR scope**: Make `deleteMap` properly async with awaited database calls. Small change touching callers.
+> **App state after merge**: Map deletion errors properly propagate to callers.
+> **PRODUCTION-BLOCKING**: Without this, deletion errors are silently swallowed and callers respond before delete completes.
+
+- [ ] 12.1 Change `deleteMap` in `maps.service.ts` to `async deleteMap(uuid: string): Promise<void>` with `await` on the repository delete
+- [ ] 12.2 Update `maps.controller.ts` to `await this.mapsService.deleteMap(mapId)`
+- [ ] 12.3 Update `maps.gateway.ts` to `await this.mapsService.deleteMap(request.mapId)`
+- [ ] 12.4 Update `maps.controller.spec.ts` mock to return a resolved promise
+- [ ] 12.5 Run lint, test, format — verify app still works
+
+## 13. Cleanup: Remove Socket.io & Dead Code
 
 > **PR scope**: Remove all Socket.io code paths, dependencies, and feature flag branching. The Yjs path becomes the only path.
 > **App state after merge**: App uses Yjs exclusively. Codebase is clean — no dual code paths, no unused dependencies.
 
-- [ ] 6.1 Remove `MapsGateway` (Socket.io gateway with all `@SubscribeMessage` handlers)
-- [ ] 6.2 Remove `EditGuard` (auth now at WebSocket handshake in `YjsGateway`)
-- [ ] 6.3 Remove `cache-manager` client tracking logic from backend (replaced by Yjs Awareness)
-- [ ] 6.4 Remove per-operation validation methods from `MapsService` that are only used by the Socket.io path (`mapConstraintErrorToValidationResponse`, `validateBusinessRules`, `handleDatabaseConstraintError`, `addNode`, `addNodes`, `addNodesFromClient`, `updateNode`, `removeNode`, `updateMapByDiff`) — keep methods used by REST API, persistence, or `updateMap`
-- [ ] 6.5 Remove `@nestjs/platform-socket.io`, `socket.io`, `@nestjs/cache-manager`, and `cache-manager` from backend dependencies
-- [ ] 6.6 Remove Socket.io types from backend `types.ts` that are no longer referenced (`IMmpClientNodeRequest`, `IMmpClientNodeAddRequest`, `IMmpClientUndoRedoRequest`, `IMmpClientEditingRequest`, `OperationResponse`, `ValidationErrorResponse`, etc.) — keep types still used
-- [ ] 6.7 Remove the Socket.io code path from frontend `MapSyncService`: delete `initSocketIo()`, all `socket.emit` methods, all `socket.on` listener setup methods, `handleOperationResponse`, error handling helpers, `isValidServerMap`, `isValidErrorResponse`
-- [ ] 6.8 Remove Socket.io types from frontend `server-types.ts` that are no longer used
-- [ ] 6.9 Remove `socket.io-client` from frontend dependencies
-- [ ] 6.10 Remove the `/socket.io` entry from frontend `proxy.conf.json`
-- [ ] 6.11 Remove `featureFlagYjs` from frontend environments (no longer needed — Yjs is the only path)
-- [ ] 6.12 Remove `YJS_ENABLED` from backend `ConfigService` and `YjsGateway` flag check (no longer needed)
-- [ ] 6.13 Simplify `MapSyncService`: remove the branching logic, make the Yjs path the direct implementation
-- [ ] 6.14 Verify backend and frontend build, lint, and all tests pass
-- [ ] 6.15 Run E2E tests (`pnpm run playwright test --reporter=list`)
+- [ ] 13.1 Remove `MapsGateway` (Socket.io gateway with all `@SubscribeMessage` handlers)
+- [ ] 13.2 Remove `EditGuard` (auth now at WebSocket handshake in `YjsGateway`)
+- [ ] 13.3 Remove `cache-manager` client tracking logic from backend (replaced by Yjs Awareness)
+- [ ] 13.4 Remove per-operation validation methods from `MapsService` that are only used by the Socket.io path (`mapConstraintErrorToValidationResponse`, `validateBusinessRules`, `handleDatabaseConstraintError`, `addNode`, `addNodes`, `addNodesFromClient`, `updateNode`, `removeNode`, `updateMapByDiff`) — keep methods used by REST API, persistence, or `updateMap`
+- [ ] 13.5 Remove `@nestjs/platform-socket.io`, `socket.io`, `@nestjs/cache-manager`, and `cache-manager` from backend dependencies
+- [ ] 13.6 Remove Socket.io types from backend `types.ts` that are no longer referenced (`IMmpClientNodeRequest`, `IMmpClientNodeAddRequest`, `IMmpClientUndoRedoRequest`, `IMmpClientEditingRequest`, `OperationResponse`, `ValidationErrorResponse`, etc.) — keep types still used
+- [ ] 13.7 Remove the Socket.io code path from frontend `MapSyncService`: delete `initSocketIo()`, all `socket.emit` methods, all `socket.on` listener setup methods, `handleOperationResponse`, error handling helpers, `isValidServerMap`, `isValidErrorResponse`
+- [ ] 13.8 Remove Socket.io types from frontend `server-types.ts` that are no longer used
+- [ ] 13.9 Remove `socket.io-client` from frontend dependencies
+- [ ] 13.10 Remove the `/socket.io` entry from frontend `proxy.conf.json`
+- [ ] 13.11 Remove `featureFlagYjs` from frontend environments (no longer needed — Yjs is the only path)
+- [ ] 13.12 Remove `YJS_ENABLED` from backend `ConfigService` and `YjsGateway` flag check (no longer needed)
+- [ ] 13.13 Simplify `MapSyncService`: remove the branching logic, make the Yjs path the direct implementation
+- [ ] 13.14 Verify backend and frontend build, lint, and all tests pass
+- [ ] 13.15 Run E2E tests (`pnpm run playwright test --reporter=list`)

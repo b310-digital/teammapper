@@ -4,6 +4,8 @@ TeamMapper is a collaborative mind mapping application (NestJS backend, Angular 
 
 The codebase has clear separation: the MMP library handles rendering (D3) and internal state, `MapSyncService` handles all network sync, `MapsGateway` handles server-side WebSocket logic, and `MapsService` handles persistence. The proposal calls for replacing the Socket.io sync layer with Yjs while keeping MMP, the DB schema, and the REST API unchanged.
 
+The new Yjs WebSocket backend (`yjs-gateway.service.ts`, `yjs-doc-manager.service.ts`, `yjs-persistence.service.ts`) also requires hardening for production stability. The system is single-instance (no horizontal scaling), uses the `ws` library in `noServer` mode attached to NestJS's HTTP server, and persists Y.Doc state to PostgreSQL via TypeORM. An audit identified 11 actionable stability issues across these three services.
+
 Key constraints:
 - MMP library must not be modified (it stays as the renderer with its own internal state)
 - DB schema (MmpMap, MmpNode tables) must remain unchanged
@@ -19,6 +21,11 @@ Key constraints:
 - Maintain the existing DB schema for backward compatibility and REST API access
 - Support the existing auth model (modification secret) at the connection level
 - Preserve presence features (client colors, selection highlighting)
+- Prevent process crashes from unhandled WebSocket errors
+- Detect and clean up zombie connections automatically
+- Protect against resource exhaustion from malicious or buggy clients
+- Eliminate race conditions in connection lifecycle state management
+- Ensure clean shutdown with no lost data or orphaned timers
 
 **Non-Goals:**
 - Replacing MMP's internal state management or history system (Phase 2)
@@ -27,6 +34,9 @@ Key constraints:
 - Changing the MMP library in any way
 - Modifying the REST API or MapsController
 - Multi-server / horizontal scaling (single-server Y.Doc hosting is sufficient for now)
+- CRDT document compaction or tombstone cleanup
+- Distributed/multi-instance connection tracking (Redis, etc.)
+- Frontend client changes (beyond Yjs migration)
 
 ## Decisions
 
@@ -149,6 +159,85 @@ Y.Doc (one per map)
 - Server destroys the Y.Doc instance and closes all WebSocket connections for that map
 - Frontend detects WebSocket close → handles cleanup (same as current `mapDeleted` behavior)
 
+---
+
+### WebSocket Hardening Decisions (not yet implemented)
+
+Decisions 8–17 address stability gaps identified in an audit of the Yjs WebSocket backend. These are required before production deployment but are not yet implemented. See tasks 6–12 for implementation plan.
+
+---
+
+### 8. WebSocket error handling — log-and-terminate pattern
+
+Register `ws.on('error', handler)` in `setupSync` that logs the error and calls `ws.terminate()`. Termination (not `close()`) is deliberate — errors indicate a broken connection where the close handshake may not complete. The existing `close` handler already handles cleanup, and `terminate()` triggers it.
+
+**Alternative considered:** Attempting recovery on certain error codes. Rejected because WebSocket errors indicate transport-level failures where the connection is already unusable.
+
+### 9. Heartbeat — ws library ping/pong with `isAlive` flag
+
+Use the standard `ws` ping/pong pattern: a 30-second `setInterval` on the server iterates all clients, terminates those that haven't responded since the last ping, marks survivors as `isAlive = false`, and sends a new ping. Each connection registers a `pong` listener that sets `isAlive = true`.
+
+The interval is stored on the gateway and cleared in `onModuleDestroy`. The `isAlive` flag is stored on the WebSocket instance via a typed wrapper property.
+
+**Why 30 seconds:** Balances responsiveness (zombie detected in 30–60s) against network overhead. This is the standard interval used by the `ws` library examples.
+
+**Alternative considered:** Application-level heartbeat messages within the Yjs protocol. Rejected because ping/pong is a WebSocket standard (RFC 6455 §5.5.2), handled at the frame level with no application payload overhead, and `ws` provides native support.
+
+### 10. maxPayload — 1 MiB limit on WebSocketServer
+
+Set `maxPayload: 1_048_576` (1 MiB) in the `WebSocketServer` constructor options. The `ws` library automatically closes connections that exceed this with code 1009 (Message Too Big). No application-level enforcement needed.
+
+**Why 1 MiB:** Yjs sync messages for mind maps are typically 1–50 KB. A 1 MiB limit provides generous headroom for large initial syncs while blocking the 100 MiB default that enables memory attacks.
+
+### 11. Connection limits — in-memory tracking in the gateway
+
+Add three limit mechanisms to the `upgrade` handler in `onModuleInit`:
+
+1. **Global connection cap** (configurable, default 500): reject with HTTP 503 when exceeded
+2. **Per-IP connection limit** (configurable, default 50): reject with HTTP 429 when exceeded
+3. **Per-IP rate limit** (max 10 connections per 10-second window): reject rapid reconnect loops with HTTP 429
+
+Track state using `Map<string, number>` for per-IP counts (incremented on upgrade, decremented on close) and a simple sliding-window counter for rate limiting. Clean up IP entries when counts reach zero.
+
+**Why in-memory, not Redis:** TeamMapper is single-instance. In-memory tracking has zero latency and no external dependency. If horizontal scaling becomes a goal, this can be extracted to Redis later.
+
+**Alternative considered:** Using a middleware library like `express-rate-limit`. Rejected because the WebSocket upgrade path bypasses Express middleware — limits must be applied in the raw `server.on('upgrade')` handler.
+
+### 12. Connection setup timeout — Promise.race with AbortController
+
+Wrap the async `handleConnection` database operations (`findMap`, `getOrCreateDoc`) in a `Promise.race` against a 10-second timeout. On timeout, close the WebSocket with code 1013 (Try Again Later).
+
+Use `AbortController` to cancel the timeout timer when the operation completes successfully, avoiding timer leaks.
+
+### 13. Client count — derive from connection set (single source of truth)
+
+Replace the separate `clientCount` field in `DocEntry` with a method that returns `mapConnections.get(mapId)?.size ?? 0`. This eliminates the dual-tracking bug where `clientCount` in `yjs-doc-manager.service.ts` and the connection set in `yjs-gateway.service.ts` can drift.
+
+**Approach:** Pass the connection count into `decrementClientCount` / the eviction check from the gateway rather than maintaining an independent counter. The doc manager's `getClientCount` method will accept the count from the gateway. The gateway is the sole owner of connection state.
+
+**Alternative considered:** Making the doc manager own the connection set. Rejected because the gateway already tracks connections for broadcasting and awareness — moving that state would create a larger refactor with no benefit.
+
+### 14. Persistence service shutdown — OnModuleDestroy with flush
+
+Add `OnModuleDestroy` to `YjsPersistenceService`. On shutdown:
+1. Clear all debounce timers
+2. Unregister all doc observers
+3. Flush pending persistence synchronously (best-effort) for any docs with active timers
+
+This runs before the gateway's `onModuleDestroy` (NestJS destroys in reverse dependency order), ensuring timers don't fire after database connections close.
+
+### 15. Grace timer race fix — try/finally in handleConnection
+
+Wrap the `getOrCreateDoc` → `trackConnection` → `incrementClientCount` sequence in `handleConnection` with a try/finally. If an error occurs after `getOrCreateDoc` but before the connection is fully tracked, the finally block checks whether the connection was tracked and, if not, ensures the doc manager can still start its grace timer (by not leaving the doc in a state where `clientCount` was never incremented but the grace timer was already canceled).
+
+### 16. Await decrementClientCount — add error handling
+
+Change the `handleClose` method to properly handle the async `decrementClientCount` call. Rather than `await` (which would require making `handleClose` async and changing the event listener), add `.catch()` to log and handle persistence errors explicitly. This prevents silent error swallowing while keeping the close handler non-blocking.
+
+### 17. Async deleteMap — await repository call
+
+Make `deleteMap` in `MapsService` return `Promise<void>` and `await` the repository delete. Update both callers (`maps.controller.ts` line 74 and `maps.gateway.ts` line 146) to `await` the result. This is a **BREAKING** change to the method signature but all callers are already in async contexts.
+
 ## Risks / Trade-offs
 
 **[Data loss window on server crash]** → The Y.Doc is persisted every ~2s. A server crash could lose up to 2 seconds of edits. Mitigation: This is acceptable for a collaborative mind mapping tool. The debounce interval can be tuned. Binary Y.Doc snapshots (future work) would enable faster, more frequent persistence.
@@ -163,8 +252,20 @@ Y.Doc (one per map)
 
 **[Sub-property conflicts on nested objects]** → Two users changing different sub-properties of the same nested object (e.g., `colors.name` vs `colors.background`) will result in last-write-wins at the object level since nested objects are stored as plain JS objects, not nested Y.Maps. Mitigation: This is a rare scenario for mind map editing. If it becomes an issue, specific nested objects can be promoted to nested Y.Maps.
 
+**[Connection limits too aggressive]** → Make limits configurable via environment variables with sensible defaults. Log rejections at `warn` level so operators can tune.
+
+**[Heartbeat adds network overhead]** → Ping frames are 2 bytes + framing. At 30-second intervals with typical connection counts (<100), overhead is negligible.
+
+**[Client count refactor touches multiple files]** → The gateway and doc manager interfaces change, requiring test updates. Mitigated by keeping the change mechanical — derive count from set size instead of maintaining separately.
+
+**[Persistence flush on shutdown may timeout]** → Use a maximum 5-second flush timeout. After that, accept data loss for in-flight debounces (the data is already persisted from the most recent `persistImmediately` on last-client-disconnect).
+
+**[Rate limit state grows unbounded with many IPs]** → Clean up IP entries when connection count reaches zero. For the sliding-window rate limiter, expire old entries periodically (piggyback on the heartbeat interval).
+
 ## Open Questions
 
 - **Debounce interval tuning**: Is 2 seconds the right default? Should it be configurable via settings?
 - **Grace period on disconnect**: 30 seconds before Y.Doc eviction — sufficient for reconnection scenarios?
 - **Map import notification**: The current flow shows a toast ("import in progress") to other clients. With Y.Doc transactions, the change is near-instant. Do we still need a notification? Could use Awareness to broadcast a transient "importing" state.
+- **Configurable limits**: Should connection limits be configurable via `config.service.ts` or hardcoded? Recommendation: configurable with env vars and sensible defaults.
+- **Metrics/observability**: Should we add counters for rejected connections, zombie kills, and timeout events? Useful for operators but adds scope. Recommendation: defer to a follow-up unless trivial to add.

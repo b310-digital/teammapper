@@ -74,10 +74,12 @@ The frontend SHALL connect to the Yjs WebSocket endpoint using `y-websocket`'s `
 ### Requirement: Socket.io removal
 The server SHALL NOT use Socket.io for any data synchronization or presence operations. The `@nestjs/platform-socket.io`, `socket.io`, and `socket.io-client` dependencies SHALL be removed. The frontend SHALL NOT import or use `socket.io-client`.
 
+Note: During the phased rollout, both Socket.io and Yjs code paths coexist behind feature flags (`YJS_ENABLED` backend, `featureFlagYjs` frontend). This requirement is fully satisfied after the cleanup phase (task 13) removes all Socket.io code and feature flag branching.
+
 #### Scenario: No Socket.io listeners on the server
-- **WHEN** the server is running
+- **WHEN** the server is running after the cleanup phase is complete
 - **THEN** there SHALL be no Socket.io gateway or `@SubscribeMessage` handlers registered
 
 #### Scenario: No Socket.io client on the frontend
-- **WHEN** the frontend application is built
+- **WHEN** the frontend application is built after the cleanup phase is complete
 - **THEN** the `socket.io-client` package SHALL NOT be included in the bundle
