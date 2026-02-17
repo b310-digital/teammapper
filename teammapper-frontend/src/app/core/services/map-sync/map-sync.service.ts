@@ -1423,9 +1423,10 @@ export class MapSyncService implements OnDestroy {
   private writeImportToYDoc(): void {
     const snapshot = this.mmpService.exportAsJSON();
     const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+    const sorted = sortParentFirst(snapshot);
 
     this.yDoc.transact(() => {
-      this.clearAndRepopulateNodes(nodesMap, snapshot);
+      this.clearAndRepopulateNodes(nodesMap, sorted);
     });
   }
 
@@ -1566,6 +1567,13 @@ export class MapSyncService implements OnDestroy {
     nodesMap: Y.Map<Y.Map<unknown>>
   ): void {
     const mapEvent = event as unknown as Y.YMapEvent<Y.Map<unknown>>;
+
+    if (this.isFullMapReplacement(mapEvent, nodesMap)) {
+      this.loadMapFromYDoc();
+      this.showImportToast();
+      return;
+    }
+
     mapEvent.keysChanged.forEach(key => {
       const change = mapEvent.changes.keys.get(key);
       if (!change) return;
@@ -1579,6 +1587,29 @@ export class MapSyncService implements OnDestroy {
         this.applyRemoteNodeDelete(key);
       }
     });
+  }
+
+  // Show toast to inform the user that a remote client imported a map
+  private async showImportToast(): Promise<void> {
+    const msg = await this.utilsService.translate(
+      'TOASTS.MAP_IMPORT_SUCCESS'
+    );
+    if (msg) this.toastrService.success(msg);
+  }
+
+  // Detects a full map import by checking if a root node is being added/replaced.
+  // Normal operations never add root nodes, so this reliably identifies imports.
+  private isFullMapReplacement(
+    mapEvent: Y.YMapEvent<Y.Map<unknown>>,
+    nodesMap: Y.Map<Y.Map<unknown>>
+  ): boolean {
+    for (const [key, change] of mapEvent.changes.keys) {
+      if (change.action === 'add' || change.action === 'update') {
+        const yNode = nodesMap.get(key);
+        if (yNode?.get('isRoot')) return true;
+      }
+    }
+    return false;
   }
 
   // Handles property changes on individual node Y.Maps
