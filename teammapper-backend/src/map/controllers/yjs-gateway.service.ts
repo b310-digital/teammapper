@@ -220,7 +220,8 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
 
       const doc = await this.docManager.getOrCreateDoc(mapId)
       if (signal.aborted) {
-        this.docManager.restoreGraceTimer(mapId)
+        const count = this.mapConnections.get(mapId)?.size ?? 0
+        this.docManager.restoreGraceTimer(mapId, count)
         return
       }
 
@@ -228,12 +229,14 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       try {
         const writable = checkWriteAccess(map.modificationSecret, secret)
         this.trackConnection(ws, mapId, writable, ip)
-        this.docManager.incrementClientCount(mapId)
+        const count = this.mapConnections.get(mapId)!.size
+        await this.docManager.notifyClientCount(mapId, count)
         this.setupSync(ws, doc, mapId, writable)
         setupComplete = true
       } finally {
         if (!setupComplete) {
-          this.docManager.restoreGraceTimer(mapId)
+          const count = this.mapConnections.get(mapId)?.size ?? 0
+          this.docManager.restoreGraceTimer(mapId, count)
         }
       }
     } catch (error) {
@@ -442,13 +445,16 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     const connections = this.mapConnections.get(mapId)
     if (connections) {
       connections.delete(ws)
-      if (connections.size === 0) {
-        this.mapConnections.delete(mapId)
-        this.cleanupMapResources(mapId)
-      }
     }
 
-    this.docManager.decrementClientCount(mapId).catch((error) => {
+    const remainingCount = this.mapConnections.get(mapId)?.size ?? 0
+
+    if (remainingCount === 0) {
+      this.mapConnections.delete(mapId)
+      this.cleanupMapResources(mapId)
+    }
+
+    this.docManager.notifyClientCount(mapId, remainingCount).catch((error) => {
       this.logger.error(
         `Persistence error during disconnect for map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
       )

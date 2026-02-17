@@ -152,7 +152,7 @@ describe('MapsController', () => {
 
       jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(existingMap)
       // We're not interested in testing the repository at this stage, only if the request gets past the admin ID check
-      jest.spyOn(mapsService, 'deleteMap').mockImplementation(() => {})
+      jest.spyOn(mapsService, 'deleteMap').mockResolvedValue(undefined)
 
       await mapsController.delete(existingMap.id, {
         adminId: existingMap.adminId,

@@ -1036,8 +1036,8 @@ export class MapsService {
     return 0
   }
 
-  deleteMap(uuid: string) {
-    this.mapsRepository.delete({ id: uuid })
+  async deleteMap(uuid: string): Promise<void> {
+    await this.mapsRepository.delete({ id: uuid })
   }
 
   async validatesNodeParentForNode(

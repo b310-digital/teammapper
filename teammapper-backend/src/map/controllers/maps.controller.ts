@@ -71,7 +71,7 @@ export default class MapsController {
         this.yjsGateway.closeConnectionsForMap(mapId)
         this.yjsDocManager.destroyDoc(mapId)
       }
-      this.mapsService.deleteMap(mapId)
+      await this.mapsService.deleteMap(mapId)
     }
   }
 

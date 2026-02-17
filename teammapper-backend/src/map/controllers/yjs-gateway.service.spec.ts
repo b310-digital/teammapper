@@ -131,9 +131,8 @@ describe('YjsGateway', () => {
         .fn<YjsDocManagerService['getOrCreateDoc']>()
         .mockResolvedValue(doc),
       getDoc: jest.fn<YjsDocManagerService['getDoc']>().mockReturnValue(doc),
-      incrementClientCount: jest.fn(),
-      decrementClientCount: jest
-        .fn<YjsDocManagerService['decrementClientCount']>()
+      notifyClientCount: jest
+        .fn<YjsDocManagerService['notifyClientCount']>()
         .mockResolvedValue(undefined),
       destroyDoc: jest.fn(),
       hasDoc: jest.fn<YjsDocManagerService['hasDoc']>().mockReturnValue(true),
@@ -176,7 +175,7 @@ describe('YjsGateway', () => {
   })
 
   describe('connection with valid map ID', () => {
-    it('creates doc and tracks client', async () => {
+    it('creates doc and notifies client count', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -187,7 +186,7 @@ describe('YjsGateway', () => {
       )
 
       expect(docManager.getOrCreateDoc).toHaveBeenCalledWith('map-1')
-      expect(docManager.incrementClientCount).toHaveBeenCalledWith('map-1')
+      expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 1)
     })
 
     it('sends sync message on connection', async () => {
@@ -334,7 +333,7 @@ describe('YjsGateway', () => {
   })
 
   describe('connection close handler', () => {
-    it('decrements client count on disconnect', async () => {
+    it('notifies doc manager with remaining count on disconnect', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -343,9 +342,36 @@ describe('YjsGateway', () => {
         ws,
         createMockRequest('map-1', 'test-secret')
       )
+      docManager.notifyClientCount.mockClear()
       ws._triggerClose()
 
-      expect(docManager.decrementClientCount).toHaveBeenCalledWith('map-1')
+      // Allow the async notifyClientCount promise to settle
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 0)
+    })
+
+    it('passes correct remaining count with multiple clients', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws1 = createMockWs()
+      const ws2 = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws1,
+        createMockRequest('map-1', 'test-secret')
+      )
+      await connectClient(
+        gateway,
+        ws2,
+        createMockRequest('map-1', 'test-secret')
+      )
+      docManager.notifyClientCount.mockClear()
+      ws1._triggerClose()
+
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 1)
     })
 
     it('delegates to limiter on connection close', async () => {
@@ -615,12 +641,9 @@ describe('YjsGateway', () => {
     })
   })
 
-  describe('decrementClientCount error handling', () => {
+  describe('notifyClientCount error handling', () => {
     it('logs persistence errors on disconnect without crashing', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
-      docManager.decrementClientCount.mockRejectedValue(
-        new Error('DB connection lost')
-      )
       const ws = createMockWs()
 
       await connectClient(
@@ -629,22 +652,27 @@ describe('YjsGateway', () => {
         createMockRequest('map-1', 'test-secret')
       )
 
-      // Close should not throw even when decrementClientCount rejects
+      // Mock to reject for the close handler call
+      docManager.notifyClientCount.mockRejectedValue(
+        new Error('DB connection lost')
+      )
+
+      // Close should not throw even when notifyClientCount rejects
       expect(() => ws._triggerClose()).not.toThrow()
 
       // Allow the promise rejection to be caught
       await new Promise((r) => setTimeout(r, 0))
 
-      expect(docManager.decrementClientCount).toHaveBeenCalledWith('map-1')
+      expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 0)
     })
   })
 
   describe('grace timer restoration on setup failure', () => {
-    it('restores grace timer when incrementClientCount throws', async () => {
+    it('restores grace timer when notifyClientCount throws', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
-      docManager.incrementClientCount.mockImplementation(() => {
-        throw new Error('Unexpected error')
-      })
+      docManager.notifyClientCount.mockRejectedValue(
+        new Error('Unexpected error')
+      )
       const ws = createMockWs()
 
       await connectClient(
@@ -653,7 +681,10 @@ describe('YjsGateway', () => {
         createMockRequest('map-1', 'test-secret')
       )
 
-      expect(docManager.restoreGraceTimer).toHaveBeenCalledWith('map-1')
+      expect(docManager.restoreGraceTimer).toHaveBeenCalledWith(
+        'map-1',
+        expect.any(Number)
+      )
     })
 
     it('does not restore grace timer on successful setup', async () => {
