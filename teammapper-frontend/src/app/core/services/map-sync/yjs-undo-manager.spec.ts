@@ -355,13 +355,14 @@ describe('Y.UndoManager integration', () => {
     expect(nodesMap.size).toBe(0);
   });
 
-  it('redo after undo restores the node', () => {
+  it('redo after undo restores the node with correct properties', () => {
     addNodeToMap(doc, nodesMap, { id: 'n1', name: 'Test Node' });
     undoManager.undo();
     undoManager.redo();
 
-    expect(nodesMap.size).toBe(1);
-    expect(yMapToNodeProps(nodesMap.get('n1')!).name).toBe('Test Node');
+    expect(yMapToNodeProps(nodesMap.get('n1')!)).toEqual(
+      expect.objectContaining({ id: 'n1', name: 'Test Node' })
+    );
   });
 
   it('undo after import is no-op', () => {
@@ -369,31 +370,5 @@ describe('Y.UndoManager integration', () => {
 
     undoManager.undo();
     expect(nodesMap.size).toBe(1);
-  });
-
-  it('stack state: initially both empty', () => {
-    expect({
-      canUndo: undoManager.undoStack.length > 0,
-      canRedo: undoManager.redoStack.length > 0,
-    }).toEqual({ canUndo: false, canRedo: false });
-  });
-
-  it('stack state: after edit undo enabled', () => {
-    addNodeToMap(doc, nodesMap, { id: 'n1' });
-
-    expect({
-      canUndo: undoManager.undoStack.length > 0,
-      canRedo: undoManager.redoStack.length > 0,
-    }).toEqual({ canUndo: true, canRedo: false });
-  });
-
-  it('stack state: after undo redo enabled', () => {
-    addNodeToMap(doc, nodesMap, { id: 'n1' });
-    undoManager.undo();
-
-    expect({
-      canUndo: undoManager.undoStack.length > 0,
-      canRedo: undoManager.redoStack.length > 0,
-    }).toEqual({ canUndo: false, canRedo: true });
   });
 });

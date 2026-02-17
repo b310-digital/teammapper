@@ -170,26 +170,26 @@ describe('ToolbarComponent', () => {
   });
 
   describe('font style toggle', () => {
-    it('should toggle font style between italic and normal', () => {
-      const mockFont: Font = {
-        size: 14,
-        weight: 'normal',
-        style: 'normal',
-      };
+    it('should set italic when current style is normal', () => {
       mockMmpService.selectNode.mockReturnValue({
-        font: mockFont,
+        font: { size: 14, weight: 'normal', style: 'normal' },
       } as ExportNodeProperties);
+
       component.toogleNodeFontStyle();
+
       expect(mockMmpService.updateNode).toHaveBeenCalledWith(
         'fontStyle',
         'italic'
       );
+    });
 
-      mockFont.style = 'italic';
+    it('should set normal when current style is italic', () => {
       mockMmpService.selectNode.mockReturnValue({
-        font: mockFont,
+        font: { size: 14, weight: 'normal', style: 'italic' },
       } as ExportNodeProperties);
+
       component.toogleNodeFontStyle();
+
       expect(mockMmpService.updateNode).toHaveBeenCalledWith(
         'fontStyle',
         'normal'
