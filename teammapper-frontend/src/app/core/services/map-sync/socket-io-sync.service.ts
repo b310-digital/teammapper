@@ -86,6 +86,10 @@ export class SocketIoSyncService implements SyncStrategy {
     this.listenServerEvents(uuid);
   }
 
+  setWritable(): void {
+    // No-op: Socket.io strategy handles write access differently
+  }
+
   undo(): void {
     this.mmpService.undo();
     this.updateCanUndoRedo();

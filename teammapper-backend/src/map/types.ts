@@ -30,6 +30,7 @@ export interface IMmpClientMap {
   data: IMmpClientNode[]
   options: IMmpClientMapOptions
   createdAt: Date | null
+  writable?: boolean
 }
 
 export interface IMmpClientMapInfo {

@@ -94,14 +94,16 @@ describe('MapsController', () => {
       const exportedMap: IMmpClientMap = createMmpClientMap({
         id: mapId,
       })
+      const mmpMap = createMmpMap({ modificationSecret: null })
 
       jest
         .spyOn(mapsService, 'exportMapToClient')
         .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
 
       const response = await mapsController.findOne(mapId)
 
-      expect(response).toEqual(exportedMap)
+      expect(response).toEqual({ ...exportedMap, writable: true })
     })
 
     it("should throw a NotFoundException if the map wasn't found", async () => {
@@ -114,6 +116,66 @@ describe('MapsController', () => {
       await expect(mapsController.findOne(invalidMapId)).rejects.toThrow(
         NotFoundException
       )
+    })
+
+    it('returns writable true when map has no modification secret', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: null })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      const response = await mapsController.findOne(mapId)
+
+      expect(response).toEqual({ ...exportedMap, writable: true })
+    })
+
+    it('returns writable true when correct secret is provided', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      const response = await mapsController.findOne(mapId, 'my-secret')
+
+      expect(response).toEqual({ ...exportedMap, writable: true })
+    })
+
+    it('returns writable false when wrong secret is provided', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      const response = await mapsController.findOne(mapId, 'wrong-secret')
+
+      expect(response).toEqual({ ...exportedMap, writable: false })
+    })
+
+    it('returns writable false when no secret is provided for protected map', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      const response = await mapsController.findOne(mapId)
+
+      expect(response).toEqual({ ...exportedMap, writable: false })
     })
   })
 

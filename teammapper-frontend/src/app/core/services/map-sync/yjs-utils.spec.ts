@@ -4,7 +4,6 @@ import {
   populateYMapFromNodeProps,
   yMapToNodeProps,
   buildYjsWsUrl,
-  parseWriteAccessBytes,
   resolveClientColor,
   findAffectedNodes,
   resolveMmpPropertyUpdate,
@@ -149,30 +148,6 @@ describe('Y.Doc conversion utilities', () => {
         coordinates: { x: 0, y: 0 },
       })
     );
-  });
-});
-
-// ─── Write access message parsing ────────────────────────────
-
-describe('write access message parsing', () => {
-  it('returns true for writable message', () => {
-    const result = parseWriteAccessBytes(new Uint8Array([4, 1]));
-    expect(result).toBe(true);
-  });
-
-  it('returns false for read-only message', () => {
-    const result = parseWriteAccessBytes(new Uint8Array([4, 0]));
-    expect(result).toBe(false);
-  });
-
-  it('returns null for wrong type byte', () => {
-    const result = parseWriteAccessBytes(new Uint8Array([0, 1]));
-    expect(result).toBeNull();
-  });
-
-  it('returns null for message too short to be valid', () => {
-    const result = parseWriteAccessBytes(new Uint8Array([4]));
-    expect(result).toBeNull();
   });
 });
 

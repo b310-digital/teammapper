@@ -55,6 +55,7 @@ describe('MapSyncService', () => {
       getRootNode: jest.fn(),
       on: jest.fn(),
       updateNode: jest.fn(),
+      updateAdditionalMapOptions: jest.fn(),
       existNode: jest.fn().mockReturnValue(true),
       addNodesFromServer: jest.fn(),
       removeNode: jest.fn(),
@@ -179,6 +180,88 @@ describe('MapSyncService', () => {
       service.redo();
 
       expect(mmpService.redo).toHaveBeenCalled();
+    });
+  });
+
+  describe('prepareExistingMap', () => {
+    let httpService: jest.Mocked<HttpService>;
+
+    const mockServerMap = {
+      uuid: 'test-uuid',
+      lastModified: '2026-01-01',
+      deletedAt: '2026-02-01',
+      deleteAfterDays: 30,
+      data: [createMockNode({ id: 'root', isRoot: true })],
+      options: { fontMaxSize: 18, fontMinSize: 10, fontIncrement: 2 },
+      createdAt: '2026-01-01',
+    };
+
+    beforeEach(() => {
+      httpService = TestBed.inject(HttpService) as jest.Mocked<HttpService>;
+    });
+
+    it('appends secret param to HTTP request when secret is set', async () => {
+      httpService.get.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ ...mockServerMap, writable: true }),
+      } as unknown as Response);
+
+      await service.prepareExistingMap('test-uuid', 'my-secret');
+
+      expect(httpService.get).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.stringContaining('?secret=my-secret')
+      );
+    });
+
+    it('omits secret param when modification secret is empty', async () => {
+      httpService.get.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ ...mockServerMap, writable: true }),
+      } as unknown as Response);
+
+      await service.prepareExistingMap('test-uuid', '');
+
+      expect(httpService.get).toHaveBeenCalledWith(
+        expect.anything(),
+        '/maps/test-uuid'
+      );
+    });
+
+    it('sets writable true on strategy when response writable is true', async () => {
+      httpService.get.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ ...mockServerMap, writable: true }),
+      } as unknown as Response);
+      const setWritableSpy = jest.spyOn(getStrategy(service), 'setWritable');
+
+      await service.prepareExistingMap('test-uuid', 'secret');
+
+      expect(setWritableSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('sets writable false on strategy when response writable is false', async () => {
+      httpService.get.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ ...mockServerMap, writable: false }),
+      } as unknown as Response);
+      const setWritableSpy = jest.spyOn(getStrategy(service), 'setWritable');
+
+      await service.prepareExistingMap('test-uuid', 'wrong');
+
+      expect(setWritableSpy).toHaveBeenCalledWith(false);
+    });
+
+    it('defaults to writable true when response writable is undefined', async () => {
+      httpService.get.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockServerMap),
+      } as unknown as Response);
+      const setWritableSpy = jest.spyOn(getStrategy(service), 'setWritable');
+
+      await service.prepareExistingMap('test-uuid', '');
+
+      expect(setWritableSpy).toHaveBeenCalledWith(true);
     });
   });
 

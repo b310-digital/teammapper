@@ -28,15 +28,11 @@ function createMockContext(): MapSyncContext {
 }
 
 describe('YjsSyncService', () => {
-  describe('parseWriteAccessMessage edit mode behavior', () => {
+  describe('setWritable', () => {
     let service: YjsSyncService;
-    let settingsService: jest.Mocked<SettingsService>;
 
-    // Access private members for testing write-access parsing
     interface YjsSyncInternals {
-      parseWriteAccessMessage: (e: MessageEvent) => void;
       yjsWritable: boolean;
-      yjsSynced: boolean;
     }
 
     beforeEach(() => {
@@ -49,16 +45,12 @@ describe('YjsSyncService', () => {
         exportAsJSON: jest.fn().mockReturnValue([]),
       } as unknown as jest.Mocked<MmpService>;
 
-      settingsService = {
-        setEditMode: jest.fn(),
-      } as unknown as jest.Mocked<SettingsService>;
-
       const ctx = createMockContext();
 
       service = new YjsSyncService(
         ctx,
         mmpService,
-        settingsService,
+        {} as SettingsService,
         {} as UtilsService,
         {} as ToastrService,
         {} as HttpService
@@ -69,42 +61,15 @@ describe('YjsSyncService', () => {
       return service as unknown as YjsSyncInternals;
     }
 
-    it('does not call setEditMode when not yet synced', () => {
-      const data = new Uint8Array([4, 1]).buffer;
-      const event = new MessageEvent('message', { data });
+    it('sets yjsWritable to true', () => {
+      service.setWritable(true);
 
-      internals().parseWriteAccessMessage(event);
-
-      expect(settingsService.setEditMode).not.toHaveBeenCalled();
+      expect(internals().yjsWritable).toBe(true);
     });
 
-    it('calls setEditMode when already synced', () => {
-      internals().yjsSynced = true;
+    it('sets yjsWritable to false', () => {
+      service.setWritable(false);
 
-      const data = new Uint8Array([4, 1]).buffer;
-      const event = new MessageEvent('message', { data });
-
-      internals().parseWriteAccessMessage(event);
-
-      expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
-    });
-
-    it('does not call setEditMode for read-only when not synced', () => {
-      const data = new Uint8Array([4, 0]).buffer;
-      const event = new MessageEvent('message', { data });
-
-      internals().parseWriteAccessMessage(event);
-
-      expect(settingsService.setEditMode).not.toHaveBeenCalled();
-    });
-
-    it('ignores non-write-access messages', () => {
-      const data = new Uint8Array([0, 1]).buffer;
-      const event = new MessageEvent('message', { data });
-
-      internals().parseWriteAccessMessage(event);
-
-      expect(settingsService.setEditMode).not.toHaveBeenCalled();
       expect(internals().yjsWritable).toBe(false);
     });
   });

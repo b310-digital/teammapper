@@ -18,7 +18,6 @@ import {
   populateYMapFromNodeProps,
   yMapToNodeProps,
   buildYjsWsUrl,
-  parseWriteAccessBytes,
   resolveClientColor,
   findAffectedNodes,
   resolveMmpPropertyUpdate,
@@ -33,7 +32,6 @@ import {
 import { SyncStrategy } from './sync-strategy';
 
 const WS_CLOSE_MAP_DELETED = 4001;
-const MESSAGE_WRITE_ACCESS = 4;
 
 export class YjsSyncService implements SyncStrategy {
   private yDoc: Y.Doc | null = null;
@@ -60,6 +58,10 @@ export class YjsSyncService implements SyncStrategy {
   ) {}
 
   // ─── Public API ─────────────────────────────────────────────
+
+  setWritable(writable: boolean): void {
+    this.yjsWritable = writable;
+  }
 
   undo(): void {
     this.yUndoManager?.undo();
@@ -124,8 +126,6 @@ export class YjsSyncService implements SyncStrategy {
       disableBc: true,
     });
 
-    this.setupWriteAccessListener();
-
     this.wsProvider.on('sync', (synced: boolean) => {
       if (synced && !this.yjsSynced) {
         this.handleFirstSync();
@@ -183,42 +183,6 @@ export class YjsSyncService implements SyncStrategy {
         window.location.reload();
       }
     });
-  }
-
-  // ─── Write-access listener ──────────────────────────────────
-
-  private setupWriteAccessListener(): void {
-    // Prevent "Unable to compute message" warning in y-websocket
-    this.wsProvider.messageHandlers[MESSAGE_WRITE_ACCESS] = () => {
-      // no-op: handled via raw WebSocket listener below
-    };
-
-    this.wsProvider.on(
-      'status',
-      (event: { status: 'connected' | 'disconnected' | 'connecting' }) => {
-        if (event.status !== 'connected') return;
-        this.attachWriteAccessListener();
-      }
-    );
-  }
-
-  private attachWriteAccessListener(): void {
-    const ws = this.wsProvider?.ws;
-    if (!ws) return;
-    ws.addEventListener('message', (event: MessageEvent) => {
-      this.parseWriteAccessMessage(event);
-    });
-  }
-
-  private parseWriteAccessMessage(event: MessageEvent): void {
-    const data = new Uint8Array(event.data as ArrayBuffer);
-    const result = parseWriteAccessBytes(data);
-    if (result !== null) {
-      this.yjsWritable = result;
-      if (this.yjsSynced) {
-        this.settingsService.setEditMode(result);
-      }
-    }
   }
 
   // ─── Cleanup ────────────────────────────────────────────────
