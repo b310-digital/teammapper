@@ -146,7 +146,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   public reset() {
-    this.syncStrategy.detach();
+    this.syncStrategy.destroy();
     this.colorMapping = {};
   }
 

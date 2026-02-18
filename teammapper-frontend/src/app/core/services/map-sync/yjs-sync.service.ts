@@ -91,9 +91,6 @@ export class YjsSyncService implements SyncStrategy {
       return;
     }
 
-    const writable = this.yjsWritable;
-    this.destroy();
-    this.yjsWritable = writable;
     this.yjsMapId = uuid;
     this.yDoc = new Y.Doc();
     this.setupConnection(uuid);
@@ -188,11 +185,6 @@ export class YjsSyncService implements SyncStrategy {
   }
 
   // ─── Cleanup ────────────────────────────────────────────────
-
-  detach(): void {
-    this.unsubscribeListeners();
-    this.detachObservers();
-  }
 
   destroy(): void {
     this.unsubscribeListeners();

@@ -70,7 +70,7 @@ export class SocketIoSyncService implements SyncStrategy {
           });
   }
 
-  detach(): void {
+  private detach(): void {
     if (this.socket) {
       this.socket.removeAllListeners();
       this.leaveMap();

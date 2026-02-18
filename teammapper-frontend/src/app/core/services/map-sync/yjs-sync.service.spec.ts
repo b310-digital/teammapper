@@ -74,11 +74,12 @@ describe('YjsSyncService', () => {
     });
   });
 
-  describe('initMap preserves writable state', () => {
+  describe('initMap does not alter writable state', () => {
     let service: YjsSyncService;
 
     interface YjsSyncInternals {
       yjsWritable: boolean;
+      yDoc: unknown;
     }
 
     beforeEach(() => {
@@ -111,18 +112,25 @@ describe('YjsSyncService', () => {
       return service as unknown as YjsSyncInternals;
     }
 
-    it('preserves yjsWritable true across initMap', () => {
+    it('does not reset yjsWritable when called', () => {
       service.setWritable(true);
       service.initMap('test-uuid');
 
       expect(internals().yjsWritable).toBe(true);
     });
 
-    it('preserves yjsWritable false across initMap', () => {
-      service.setWritable(false);
+    it('creates a new yDoc', () => {
       service.initMap('test-uuid');
 
-      expect(internals().yjsWritable).toBe(false);
+      expect(internals().yDoc).not.toBeNull();
+    });
+
+    it('retains writable after destroy-setWritable-initMap sequence', () => {
+      service.destroy();
+      service.setWritable(true);
+      service.initMap('test-uuid');
+
+      expect(internals().yjsWritable).toBe(true);
     });
   });
 });

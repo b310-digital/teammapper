@@ -274,12 +274,12 @@ describe('MapSyncService', () => {
       expect(destroySpy).toHaveBeenCalled();
     });
 
-    it('reset calls detach on strategy', () => {
-      const detachSpy = jest.spyOn(getStrategy(service), 'detach');
+    it('reset calls destroy on strategy', () => {
+      const destroySpy = jest.spyOn(getStrategy(service), 'destroy');
 
       service.reset();
 
-      expect(detachSpy).toHaveBeenCalled();
+      expect(destroySpy).toHaveBeenCalled();
     });
   });
 });
