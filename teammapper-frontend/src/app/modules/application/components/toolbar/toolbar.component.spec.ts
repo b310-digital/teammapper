@@ -13,7 +13,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { ExportNodeProperties } from '@mmp/map/types';
-import Node from 'mmp/src/map/models/node';
 import { of, Observable, BehaviorSubject } from 'rxjs';
 import { provideRouter } from '@angular/router';
 
@@ -23,224 +22,238 @@ class FakeTranslateLoader implements TranslateLoader {
   }
 }
 
-describe('ToolbarComponent', () => {
-  let component: ToolbarComponent;
-  let fixture: ComponentFixture<ToolbarComponent>;
-  let mockMmpService: jest.Mocked<MmpService>;
-  let mockMapSyncService: jest.Mocked<Partial<MapSyncService>>;
-  let mockSettingsService: jest.Mocked<Partial<SettingsService>>;
-  let mockDialogService: jest.Mocked<DialogService>;
-  let mockTranslateService: jest.Mocked<TranslateService>;
+// Stub with only the methods ToolbarComponent actually uses
+class MmpServiceStub {
+  exportMap = jest.fn();
+  nodeChildren = jest.fn().mockReturnValue([]);
+  getSelectedNode = jest.fn();
+  selectNode = jest.fn();
+  updateNode = jest.fn();
+  addNodeLink = jest.fn();
+  addNode = jest.fn();
+  removeNodeLink = jest.fn();
+  toggleBranchVisibility = jest.fn();
+  addNodeImage = jest.fn();
+  importMap = jest.fn();
+  undo = jest.fn();
+  redo = jest.fn();
+  history = jest.fn();
+}
 
-  beforeEach(async () => {
-    mockMmpService = {
-      exportMap: jest.fn(),
-      nodeChildren: jest.fn(),
-      getSelectedNode: jest.fn(),
-      selectNode: jest.fn(),
-      updateNode: jest.fn(),
-      addNodeLink: jest.fn(),
-      addNode: jest.fn(),
-      removeNodeLink: jest.fn(),
-      toggleBranchVisibility: jest.fn(),
-      addNodeImage: jest.fn(),
-      importMap: jest.fn(),
-      undo: jest.fn(),
-      redo: jest.fn(),
-    } as unknown as jest.Mocked<MmpService>;
+interface TestContext {
+  component: ToolbarComponent;
+  fixture: ComponentFixture<ToolbarComponent>;
+  mmpService: MmpServiceStub;
+  mapSyncService: {
+    undo: jest.Mock;
+    redo: jest.Mock;
+    canUndo$: Observable<boolean>;
+    canRedo$: Observable<boolean>;
+  };
+  translateService: TranslateService;
+  canUndoSubject: BehaviorSubject<boolean>;
+  canRedoSubject: BehaviorSubject<boolean>;
+}
 
-    mockDialogService = {
-      openAboutDialog: jest.fn(),
-      openShareDialog: jest.fn(),
-      openPictogramDialog: jest.fn(),
-    } as unknown as jest.Mocked<DialogService>;
+async function setupTestBed(yjsEnabled: boolean): Promise<TestContext> {
+  const mmpService = new MmpServiceStub();
+  const canUndoSubject = new BehaviorSubject<boolean>(false);
+  const canRedoSubject = new BehaviorSubject<boolean>(false);
 
-    mockMapSyncService = {
-      undo: jest.fn(),
-      redo: jest.fn(),
-      canUndo$: new BehaviorSubject<boolean>(false).asObservable(),
-      canRedo$: new BehaviorSubject<boolean>(false).asObservable(),
-    } as unknown as jest.Mocked<Partial<MapSyncService>>;
+  const mapSyncService = {
+    undo: jest.fn(),
+    redo: jest.fn(),
+    canUndo$: canUndoSubject.asObservable(),
+    canRedo$: canRedoSubject.asObservable(),
+  };
 
-    mockSettingsService = {
-      getCachedSystemSettings: jest.fn().mockReturnValue({
-        featureFlags: { yjs: false, pictograms: false, ai: false },
+  await TestBed.configureTestingModule({
+    imports: [
+      MatMenuModule,
+      MatToolbarModule,
+      TranslateModule.forRoot({
+        loader: { provide: TranslateLoader, useClass: FakeTranslateLoader },
+        fallbackLang: 'en',
       }),
-    } as unknown as jest.Mocked<Partial<SettingsService>>;
+      MatIconModule,
+      ToolbarComponent,
+    ],
+    providers: [
+      { provide: MmpService, useValue: mmpService },
+      { provide: MapSyncService, useValue: mapSyncService },
+      {
+        provide: SettingsService,
+        useValue: {
+          getCachedSystemSettings: jest.fn().mockReturnValue({
+            featureFlags: { yjs: yjsEnabled, pictograms: false, ai: false },
+          }),
+        },
+      },
+      {
+        provide: DialogService,
+        useValue: {
+          openAboutDialog: jest.fn(),
+          openShareDialog: jest.fn(),
+          openPictogramDialog: jest.fn(),
+        },
+      },
+      provideRouter([]),
+    ],
+  }).compileComponents();
 
-    await TestBed.configureTestingModule({
-      imports: [
-        MatMenuModule,
-        MatToolbarModule,
-        TranslateModule.forRoot({
-          loader: { provide: TranslateLoader, useClass: FakeTranslateLoader },
-          fallbackLang: 'en',
-        }),
-        MatIconModule,
-        ToolbarComponent,
-      ],
-      providers: [
-        { provide: MmpService, useValue: mockMmpService },
-        { provide: MapSyncService, useValue: mockMapSyncService },
-        { provide: SettingsService, useValue: mockSettingsService },
-        { provide: DialogService, useValue: mockDialogService },
-        provideRouter([]),
-      ],
-    }).compileComponents();
+  const translateService = TestBed.inject(TranslateService);
+  jest.spyOn(translateService, 'instant').mockReturnValue('translated');
+  jest
+    .spyOn(translateService, 'use')
+    .mockImplementation(() => of({ lang: 'en' }));
 
-    mockTranslateService = TestBed.inject(
-      TranslateService
-    ) as unknown as jest.Mocked<TranslateService>;
-    jest.spyOn(mockTranslateService, 'instant').mockReturnValue('translated');
-    jest
-      .spyOn(mockTranslateService, 'use')
-      .mockImplementation(() => of({ lang: 'en' }));
+  const fixture = TestBed.createComponent(ToolbarComponent);
+  const component = fixture.componentInstance;
+  fixture.detectChanges();
 
-    fixture = TestBed.createComponent(ToolbarComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+  return {
+    component,
+    fixture,
+    mmpService,
+    mapSyncService,
+    translateService,
+    canUndoSubject,
+    canRedoSubject,
+  };
+}
+
+describe('ToolbarComponent', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+  describe('with Yjs disabled', () => {
+    let ctx: TestContext;
+    const originalFileReader = window.FileReader;
 
-  describe('exportMap', () => {
-    it('should show alert for large JSON files', async () => {
-      const mockResult = { success: true, size: 1001 };
-      mockMmpService.exportMap.mockResolvedValue(mockResult);
-      mockTranslateService.instant.mockReturnValue('Large file warning');
-      window.alert = jest.fn();
-
-      await component.exportMap('json');
-
-      expect(window.alert).toHaveBeenCalledWith('Large file warning');
-    });
-  });
-
-  describe('hasHiddenNodes', () => {
-    it('should return true when hidden nodes exist', () => {
-      const mockNode: ExportNodeProperties = {
-        id: '1',
-        name: 'test',
-        k: 1,
-        parent: null,
-        hidden: true,
-      };
-      const mockNode2: ExportNodeProperties = {
-        id: '2',
-        name: 'test2',
-        k: 1,
-        parent: null,
-        hidden: false,
-      };
-      mockMmpService.nodeChildren.mockReturnValue([mockNode, mockNode2]);
-
-      expect(component.hasHiddenNodes).toBeTruthy();
+    beforeEach(async () => {
+      ctx = await setupTestBed(false);
     });
 
-    it('should return false when no hidden nodes exist', () => {
-      const mockNode: ExportNodeProperties = {
-        id: '1',
-        name: 'test',
-        k: 1,
-        parent: null,
-        hidden: false,
-      };
-      mockMmpService.nodeChildren.mockReturnValue([mockNode]);
-
-      expect(component.hasHiddenNodes).toBeFalsy();
-    });
-  });
-
-  describe('canHideNodes', () => {
-    it('should return false for root node', () => {
-      mockMmpService.getSelectedNode.mockReturnValue({
-        isRoot: true,
-      } as Node);
-      expect(component.canHideNodes).toBeFalsy();
+    afterEach(() => {
+      ctx.fixture.destroy();
+      window.FileReader = originalFileReader;
     });
 
-    it('should return true for non-root node', () => {
-      mockMmpService.getSelectedNode.mockReturnValue({
-        isRoot: false,
-      } as Node);
-      expect(component.canHideNodes).toBeTruthy();
+    it('should create', () => {
+      expect(ctx.component).toBeTruthy();
     });
-  });
 
-  describe('font style toggle', () => {
-    it('should set italic when current style is normal', () => {
-      mockMmpService.selectNode.mockReturnValue({
-        font: { size: 14, weight: 'normal', style: 'normal' },
+    it('should show alert for large JSON export', async () => {
+      ctx.mmpService.exportMap.mockResolvedValue({
+        success: true,
+        size: 1001,
+      });
+      (ctx.translateService.instant as jest.Mock).mockReturnValue(
+        'Large file warning'
+      );
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      await ctx.component.exportMap('json');
+
+      expect(alertSpy).toHaveBeenCalledWith('Large file warning');
+    });
+
+    it('should detect hidden nodes', () => {
+      ctx.mmpService.nodeChildren.mockReturnValue([
+        { id: '1', hidden: true } as ExportNodeProperties,
+        { id: '2', hidden: false } as ExportNodeProperties,
+      ]);
+
+      expect(ctx.component.hasHiddenNodes).toBe(true);
+    });
+
+    it('should detect no hidden nodes', () => {
+      ctx.mmpService.nodeChildren.mockReturnValue([
+        { id: '1', hidden: false } as ExportNodeProperties,
+      ]);
+
+      expect(ctx.component.hasHiddenNodes).toBe(false);
+    });
+
+    it('should not allow hiding root node', () => {
+      ctx.mmpService.getSelectedNode.mockReturnValue({ isRoot: true });
+
+      expect(ctx.component.canHideNodes).toBeFalsy();
+    });
+
+    it('should allow hiding non-root node', () => {
+      ctx.mmpService.getSelectedNode.mockReturnValue({ isRoot: false });
+
+      expect(ctx.component.canHideNodes).toBeTruthy();
+    });
+
+    it('should toggle font style from normal to italic', () => {
+      ctx.mmpService.selectNode.mockReturnValue({
+        font: { style: 'normal' },
       } as ExportNodeProperties);
 
-      component.toogleNodeFontStyle();
+      ctx.component.toogleNodeFontStyle();
 
-      expect(mockMmpService.updateNode).toHaveBeenCalledWith(
+      expect(ctx.mmpService.updateNode).toHaveBeenCalledWith(
         'fontStyle',
         'italic'
       );
     });
 
-    it('should set normal when current style is italic', () => {
-      mockMmpService.selectNode.mockReturnValue({
-        font: { size: 14, weight: 'normal', style: 'italic' },
+    it('should toggle font style from italic to normal', () => {
+      ctx.mmpService.selectNode.mockReturnValue({
+        font: { style: 'italic' },
       } as ExportNodeProperties);
 
-      component.toogleNodeFontStyle();
+      ctx.component.toogleNodeFontStyle();
 
-      expect(mockMmpService.updateNode).toHaveBeenCalledWith(
+      expect(ctx.mmpService.updateNode).toHaveBeenCalledWith(
         'fontStyle',
         'normal'
       );
     });
-  });
 
-  describe('link handling', () => {
     it('should add valid link', () => {
-      window.prompt = jest.fn().mockReturnValue('https://example.com');
-      component.addLink();
-      expect(mockMmpService.addNodeLink).toHaveBeenCalledWith(
+      jest.spyOn(window, 'prompt').mockReturnValue('https://example.com');
+
+      ctx.component.addLink();
+
+      expect(ctx.mmpService.addNodeLink).toHaveBeenCalledWith(
         'https://example.com'
       );
     });
 
-    it('should not add invalid link', () => {
-      window.prompt = jest.fn().mockReturnValue('invalid-url');
-      component.addLink();
-      expect(mockMmpService.addNodeLink).not.toHaveBeenCalled();
+    it('should reject invalid link', () => {
+      jest.spyOn(window, 'prompt').mockReturnValue('invalid-url');
+
+      ctx.component.addLink();
+
+      expect(ctx.mmpService.addNodeLink).not.toHaveBeenCalled();
     });
-  });
 
-  describe('file upload handling', () => {
-    it('should handle image upload', () => {
+    it('should read image file as data URL', () => {
       const mockFile = new File([''], 'test.jpg', { type: 'image/jpeg' });
-      const mockEvent = {
-        target: { files: [mockFile] },
-      } as unknown as InputEvent;
-
       const mockFileReader = {
         readAsDataURL: jest.fn(),
-        result: 'data:image/jpeg;base64,test',
+        result: '',
         onload: null,
       };
       window.FileReader = jest.fn(
         () => mockFileReader
       ) as unknown as typeof FileReader;
 
-      component.initImageUpload(mockEvent);
+      ctx.component.initImageUpload({
+        target: { files: [mockFile] },
+      } as unknown as InputEvent);
+
       expect(mockFileReader.readAsDataURL).toHaveBeenCalledWith(mockFile);
     });
 
-    it('should handle JSON upload', () => {
+    it('should read JSON file as text', () => {
       const mockFile = new File(['{}'], 'test.json', {
         type: 'application/json',
       });
-      const mockEvent = {
-        target: { files: [mockFile] },
-      } as unknown as InputEvent;
-
       const mockFileReader = {
         readAsText: jest.fn(),
         result: '{}',
@@ -250,126 +263,73 @@ describe('ToolbarComponent', () => {
         () => mockFileReader
       ) as unknown as typeof FileReader;
 
-      component.initJSONUpload(mockEvent);
+      ctx.component.initJSONUpload({
+        target: { files: [mockFile] },
+      } as unknown as InputEvent);
+
       expect(mockFileReader.readAsText).toHaveBeenCalledWith(mockFile);
     });
-  });
 
-  describe('undo/redo conditional routing (Yjs disabled)', () => {
-    it('handleUndo calls mmpService.undo when yjs disabled', () => {
-      component.handleUndo();
-      expect(mockMmpService.undo).toHaveBeenCalled();
-      expect(mockMapSyncService.undo).not.toHaveBeenCalled();
+    it('should call mmpService.undo when Yjs disabled', () => {
+      ctx.component.handleUndo();
+
+      expect(ctx.mmpService.undo).toHaveBeenCalled();
+      expect(ctx.mapSyncService.undo).not.toHaveBeenCalled();
     });
 
-    it('handleRedo calls mmpService.redo when yjs disabled', () => {
-      component.handleRedo();
-      expect(mockMmpService.redo).toHaveBeenCalled();
-      expect(mockMapSyncService.redo).not.toHaveBeenCalled();
+    it('should call mmpService.redo when Yjs disabled', () => {
+      ctx.component.handleRedo();
+
+      expect(ctx.mmpService.redo).toHaveBeenCalled();
+      expect(ctx.mapSyncService.redo).not.toHaveBeenCalled();
     });
 
-    it('canUndoRedo uses mmpService.history when yjs disabled', () => {
-      mockMmpService.history = jest.fn().mockReturnValue({
-        snapshots: [[], []],
-      });
-      expect(component.canUndoRedo).toBe(true);
+    it('should report canUndoRedo when history has multiple snapshots', () => {
+      ctx.mmpService.history.mockReturnValue({ snapshots: [[], []] });
+
+      expect(ctx.component.canUndoRedo).toBe(true);
     });
   });
-});
 
-describe('ToolbarComponent (Yjs enabled)', () => {
-  let component: ToolbarComponent;
-  let fixture: ComponentFixture<ToolbarComponent>;
-  let mockMmpService: jest.Mocked<MmpService>;
-  let canUndoSubject: BehaviorSubject<boolean>;
-  let canRedoSubject: BehaviorSubject<boolean>;
-  let mockMapSyncService: jest.Mocked<Partial<MapSyncService>>;
+  describe('with Yjs enabled', () => {
+    let ctx: TestContext;
 
-  beforeEach(async () => {
-    canUndoSubject = new BehaviorSubject<boolean>(false);
-    canRedoSubject = new BehaviorSubject<boolean>(false);
+    beforeEach(async () => {
+      ctx = await setupTestBed(true);
+    });
 
-    mockMmpService = {
-      exportMap: jest.fn(),
-      nodeChildren: jest.fn(),
-      getSelectedNode: jest.fn(),
-      selectNode: jest.fn(),
-      updateNode: jest.fn(),
-      addNodeLink: jest.fn(),
-      addNode: jest.fn(),
-      removeNodeLink: jest.fn(),
-      toggleBranchVisibility: jest.fn(),
-      addNodeImage: jest.fn(),
-      importMap: jest.fn(),
-      undo: jest.fn(),
-      redo: jest.fn(),
-    } as unknown as jest.Mocked<MmpService>;
+    afterEach(() => {
+      ctx.fixture.destroy();
+    });
 
-    mockMapSyncService = {
-      undo: jest.fn(),
-      redo: jest.fn(),
-      canUndo$: canUndoSubject.asObservable(),
-      canRedo$: canRedoSubject.asObservable(),
-    } as unknown as jest.Mocked<Partial<MapSyncService>>;
+    it('should call mapSyncService.undo when Yjs enabled', () => {
+      ctx.component.handleUndo();
 
-    const mockSettingsService = {
-      getCachedSystemSettings: jest.fn().mockReturnValue({
-        featureFlags: { yjs: true, pictograms: false, ai: false },
-      }),
-    };
+      expect(ctx.mapSyncService.undo).toHaveBeenCalled();
+      expect(ctx.mmpService.undo).not.toHaveBeenCalled();
+    });
 
-    const mockDialogService = {
-      openAboutDialog: jest.fn(),
-      openShareDialog: jest.fn(),
-      openPictogramDialog: jest.fn(),
-    };
+    it('should call mapSyncService.redo when Yjs enabled', () => {
+      ctx.component.handleRedo();
 
-    await TestBed.configureTestingModule({
-      imports: [
-        MatMenuModule,
-        MatToolbarModule,
-        TranslateModule.forRoot({
-          loader: { provide: TranslateLoader, useClass: FakeTranslateLoader },
-          fallbackLang: 'en',
-        }),
-        MatIconModule,
-        ToolbarComponent,
-      ],
-      providers: [
-        { provide: MmpService, useValue: mockMmpService },
-        { provide: MapSyncService, useValue: mockMapSyncService },
-        { provide: SettingsService, useValue: mockSettingsService },
-        { provide: DialogService, useValue: mockDialogService },
-        provideRouter([]),
-      ],
-    }).compileComponents();
+      expect(ctx.mapSyncService.redo).toHaveBeenCalled();
+      expect(ctx.mmpService.redo).not.toHaveBeenCalled();
+    });
 
-    fixture = TestBed.createComponent(ToolbarComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    it('should reflect canUndo$ observable in canYjsUndo', () => {
+      expect(ctx.component.canYjsUndo).toBe(false);
 
-  it('handleUndo calls mapSyncService.undo when yjs enabled', () => {
-    component.handleUndo();
-    expect(mockMapSyncService.undo).toHaveBeenCalled();
-    expect(mockMmpService.undo).not.toHaveBeenCalled();
-  });
+      ctx.canUndoSubject.next(true);
 
-  it('handleRedo calls mapSyncService.redo when yjs enabled', () => {
-    component.handleRedo();
-    expect(mockMapSyncService.redo).toHaveBeenCalled();
-    expect(mockMmpService.redo).not.toHaveBeenCalled();
-  });
+      expect(ctx.component.canYjsUndo).toBe(true);
+    });
 
-  it('canYjsUndo reflects canUndo$ when yjs enabled', () => {
-    expect(component.canYjsUndo).toBe(false);
-    canUndoSubject.next(true);
-    expect(component.canYjsUndo).toBe(true);
-  });
+    it('should reflect canRedo$ observable in canYjsRedo', () => {
+      expect(ctx.component.canYjsRedo).toBe(false);
 
-  it('canYjsRedo reflects canRedo$ when yjs enabled', () => {
-    expect(component.canYjsRedo).toBe(false);
-    canRedoSubject.next(true);
-    expect(component.canYjsRedo).toBe(true);
+      ctx.canRedoSubject.next(true);
+
+      expect(ctx.component.canYjsRedo).toBe(true);
+    });
   });
 });

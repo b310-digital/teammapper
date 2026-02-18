@@ -71,22 +71,21 @@ The frontend SHALL connect to the Yjs WebSocket endpoint using `y-websocket`'s `
 - **WHEN** the `WebsocketProvider` reconnects after a disconnection
 - **THEN** the Yjs sync protocol SHALL automatically reconcile the local Y.Doc with the server Y.Doc without a full map reload
 
-### Requirement: Sync progress indication
-The frontend SHALL display a non-auto-dismissing info toast while waiting for the initial Yjs sync to complete. The map is rendered from the REST API in read-only mode before sync finishes, and the toast communicates that syncing is in progress. The toast message SHALL be translatable via `TOASTS.WARNINGS.YJS_SYNC_IN_PROGRESS`.
-
-#### Scenario: Sync in progress indication
-- **WHEN** the frontend creates a `WebsocketProvider` for a map
-- **THEN** an info toast SHALL be displayed with `timeOut: 0` and `extendedTimeOut: 0` (no auto-dismiss)
-- **AND** the toast ID SHALL be stored for later removal
+### Requirement: Connection status observable
+The frontend SHALL expose a reactive `ConnectionStatus` observable (`'connected' | 'disconnected' | null`) via `MapSyncService`. UI components SHALL subscribe to this observable to present connection state (e.g., showing a disconnect dialog). The service SHALL NOT directly control UI elements like toasts or dialogs.
 
 #### Scenario: Initial sync completes
 - **WHEN** the `WebsocketProvider` fires its first `sync` event with `synced: true`
-- **THEN** the sync progress toast SHALL be dismissed via `toastrService.remove(toastId)`
-- **AND** edit mode and Y.Doc observers SHALL be initialized as normal
+- **THEN** the connection status SHALL transition to `'connected'`
+- **AND** edit mode and Y.Doc observers SHALL be initialized
 
-#### Scenario: Connection reset before sync completes
-- **WHEN** the Yjs connection is reset (e.g., navigating away or switching maps) before the initial sync completes
-- **THEN** the sync progress toast SHALL be dismissed as part of `resetYjs()` cleanup
+#### Scenario: WebSocket disconnects
+- **WHEN** the WebSocket connection is lost
+- **THEN** the connection status SHALL transition to `'disconnected'`
+
+#### Scenario: Connection reset during cleanup
+- **WHEN** the Yjs connection is reset (e.g., navigating away or switching maps)
+- **THEN** the connection status SHALL be reset to `null` as part of `resetYjs()` cleanup
 
 ### Requirement: Socket.io removal
 The server SHALL NOT use Socket.io for any data synchronization or presence operations. The `@nestjs/platform-socket.io`, `socket.io`, and `socket.io-client` dependencies SHALL be removed. The frontend SHALL NOT import or use `socket.io-client`.
