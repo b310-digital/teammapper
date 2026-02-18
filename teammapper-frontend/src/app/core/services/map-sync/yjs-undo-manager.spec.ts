@@ -252,7 +252,11 @@ describe('undo/redo operations', () => {
 
   it('undo removes created node, redo restores it with properties', () => {
     const coords = { x: 200, y: -120 };
-    addNodeToMap(doc, nodesMap, { id: 'n1', name: 'Test', coordinates: coords });
+    addNodeToMap(doc, nodesMap, {
+      id: 'n1',
+      name: 'Test',
+      coordinates: coords,
+    });
 
     undoManager.undo();
     expect(nodesMap.has('n1')).toBe(false);
@@ -265,7 +269,11 @@ describe('undo/redo operations', () => {
 
   it('undo restores deleted node at original coordinates', () => {
     const coords = { x: 200, y: -120 };
-    addNodeToMap(doc, nodesMap, { id: 'n1', parent: 'root', coordinates: coords });
+    addNodeToMap(doc, nodesMap, {
+      id: 'n1',
+      parent: 'root',
+      coordinates: coords,
+    });
     undoManager.stopCapturing();
 
     doc.transact(() => nodesMap.delete('n1'), ORIGIN_LOCAL);
@@ -278,7 +286,11 @@ describe('undo/redo operations', () => {
   it('undo restores deleted subtree as single stack item', () => {
     const coordsA = { x: 200, y: -120 };
     const coordsB = { x: 400, y: -80 };
-    addNodeToMap(doc, nodesMap, { id: 'A', parent: 'root', coordinates: coordsA });
+    addNodeToMap(doc, nodesMap, {
+      id: 'A',
+      parent: 'root',
+      coordinates: coordsA,
+    });
     addNodeToMap(doc, nodesMap, { id: 'B', parent: 'A', coordinates: coordsB });
     undoManager.stopCapturing();
 
