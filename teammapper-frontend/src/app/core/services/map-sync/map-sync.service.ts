@@ -75,8 +75,8 @@ export class MapSyncService implements OnDestroy {
   private httpService = inject(HttpService);
   private storageService = inject(StorageService);
   private settingsService = inject(SettingsService);
-  utilsService = inject(UtilsService);
-  toastrService = inject(ToastrService);
+  private utilsService = inject(UtilsService);
+  private toastrService = inject(ToastrService);
   private toastService = inject(ToastService);
   private dialogService = inject(DialogService);
 

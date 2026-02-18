@@ -111,7 +111,7 @@ describe('MapsController', () => {
         .spyOn(mapsService, 'exportMapToClient')
         .mockRejectedValueOnce(new MalformedUUIDError('MalformedUUIDError'))
 
-      expect(mapsController.findOne(invalidMapId)).rejects.toThrow(
+      await expect(mapsController.findOne(invalidMapId)).rejects.toThrow(
         NotFoundException
       )
     })

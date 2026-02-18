@@ -599,13 +599,11 @@ export default class Nodes {
     node: Node | ExportNodeProperties,
     rootNode?: Node | ExportNodeProperties
   ): boolean | undefined {
-    // isRoot exists only on Node type, so type guard is needed
-    if ('isRoot' in node && node.isRoot) {
+    if (node.isRoot) {
       return;
     }
 
-    // For Node type, use this.getRoot() if rootNode not provided
-    const root = rootNode ?? ('isRoot' in node ? this.getRoot() : undefined);
+    const root = rootNode ?? (node instanceof Node ? this.getRoot() : undefined);
     if (!root) {
       return;
     }

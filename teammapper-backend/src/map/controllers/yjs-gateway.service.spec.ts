@@ -24,7 +24,9 @@ import * as syncProtocol from 'y-protocols/sync'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
 
-// Minimal interface to call private methods in tests
+// WARNING: These interfaces mirror private method signatures of YjsGateway.
+// TypeScript cannot verify they stay in sync. If the private methods change
+// signature, update these interfaces to match.
 interface ConnectionHandler {
   handleConnection(ws: MockWs, req: IncomingMessage): Promise<void>
 }

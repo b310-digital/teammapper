@@ -52,7 +52,8 @@ export const encodeSyncStep1Message = (doc: Y.Doc): Uint8Array => {
 }
 
 // Encodes a SyncStep2 message (full doc state) for immediate client hydration.
-// Prevents race condition where client's SyncStep1 arrives before server registers its handler.
+// Called without a client state vector, so it encodes the entire doc — not a
+// diff. This is intentional: see setupSync() in yjs-gateway for rationale.
 export const encodeSyncStep2Message = (doc: Y.Doc): Uint8Array => {
   const encoder = encoding.createEncoder()
   encoding.writeVarUint(encoder, MESSAGE_SYNC)

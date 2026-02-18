@@ -336,8 +336,25 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       this.handleClose(ws, mapId, awareness)
     })
 
-    // Send write-access BEFORE SyncStep2 so the client knows its
-    // permission level before the sync event fires and sets edit mode.
+    // Sync strategy: we proactively push the full doc state to the client
+    // rather than waiting for the standard SyncStep1/SyncStep2 handshake.
+    //
+    // Why: handleConnection is async (DB lookup, doc creation) so the
+    // ws.on('message') handler above is registered late. The y-websocket
+    // client sends its SyncStep1 immediately on open, which may arrive
+    // before the handler exists and get silently dropped. Without a
+    // proactive push the client would never receive the doc.
+    //
+    // Trade-off: the proactive SyncStep2 always sends the full doc state
+    // (not a diff), so reconnecting clients receive redundant data. For
+    // mind-map-sized documents this is negligible. A message-buffering
+    // approach would be more efficient for large documents.
+    //
+    // Message order:
+    //   1. Write-access — client knows its permissions before sync fires
+    //   2. SyncStep1   — server state vector (triggers client's SyncStep2)
+    //   3. SyncStep2   — full doc state for immediate hydration
+    //   4. Awareness   — existing cursors/presence
     this.send(ws, encodeWriteAccessMessage(writable))
     this.send(ws, encodeSyncStep1Message(doc))
     this.send(ws, encodeSyncStep2Message(doc))
