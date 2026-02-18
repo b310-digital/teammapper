@@ -113,7 +113,6 @@ export class MapSyncService implements OnDestroy {
     null;
   private yjsAwarenessHandler: (() => void) | null = null;
   private yUndoManager: Y.UndoManager | null = null;
-  private yjsSyncToastId: number | null = null;
 
   // Common fields
   private colorMapping: ClientColorMapping;
@@ -1165,7 +1164,6 @@ export class MapSyncService implements OnDestroy {
     });
 
     this.setupYjsWriteAccessListener();
-    this.showSyncLoadingToast();
 
     this.wsProvider.on('sync', (synced: boolean) => {
       if (synced && !this.yjsSynced) {
@@ -1174,30 +1172,11 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
-  private async showSyncLoadingToast(): Promise<void> {
-    const msg = await this.utilsService.translate(
-      'TOASTS.WARNINGS.YJS_SYNC_IN_PROGRESS'
-    );
-    const toast = this.toastrService.info(msg, '', {
-      timeOut: 0,
-      extendedTimeOut: 0,
-    });
-    this.yjsSyncToastId = toast.toastId;
-  }
-
-  private dismissSyncLoadingToast(): void {
-    if (this.yjsSyncToastId !== null) {
-      this.toastrService.remove(this.yjsSyncToastId);
-      this.yjsSyncToastId = null;
-    }
-  }
-
   private buildYjsWsUrl(): string {
     return buildYjsWsUrl();
   }
 
   private handleFirstYjsSync(): void {
-    this.dismissSyncLoadingToast();
     this.yjsSynced = true;
     this.loadMapFromYDoc();
     this.setupYjsNodesObserver();
@@ -1287,7 +1266,6 @@ export class MapSyncService implements OnDestroy {
   }
 
   private resetYjs(): void {
-    this.dismissSyncLoadingToast();
     this.unsubscribeYjsListeners();
     this.detachYjsObservers();
     if (this.yUndoManager) {

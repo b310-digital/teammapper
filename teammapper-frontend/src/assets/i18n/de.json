@@ -214,8 +214,7 @@
     "MAP_UPDATE_SUCCESS": "Mindmap erfolgreich aktualisiert!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert...",
-      "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert...",
-      "YJS_SYNC_IN_PROGRESS": "Karte wird synchronisiert..."
+      "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert..."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",

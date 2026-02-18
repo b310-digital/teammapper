@@ -211,8 +211,7 @@
     "MAP_UPDATE_SUCCESS": "思维导图更新成功",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "心智图导入中",
-      "MAP_UPDATE_IN_PROGRESS": "更新思维导图",
-      "YJS_SYNC_IN_PROGRESS": "正在同步地图..."
+      "MAP_UPDATE_IN_PROGRESS": "更新思维导图"
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "无法复制根节点！",

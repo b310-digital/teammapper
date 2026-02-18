@@ -175,8 +175,6 @@ describe('MapSyncService', () => {
       error: jest.fn(),
       success: jest.fn(),
       warning: jest.fn(),
-      info: jest.fn().mockReturnValue({ toastId: 42 }),
-      remove: jest.fn(),
     } as unknown as jest.Mocked<ToastrService>;
 
     // Create mock UtilsService using shared test utility
@@ -434,71 +432,6 @@ describe('MapSyncService', () => {
       service.initMap();
 
       expect(mmpService.selectNode).toHaveBeenCalledWith('root');
-    });
-  });
-
-  describe('sync loading toast', () => {
-    let servicePrivate: {
-      showSyncLoadingToast: () => Promise<void>;
-      dismissSyncLoadingToast: () => void;
-      handleFirstYjsSync: () => void;
-      yjsSyncToastId: number | null;
-      yjsSynced: boolean;
-      yDoc: Y.Doc | null;
-      wsProvider: unknown;
-      yjsWritable: boolean;
-    };
-
-    beforeEach(() => {
-      servicePrivate = service as unknown as typeof servicePrivate;
-      servicePrivate.yDoc = new Y.Doc();
-      servicePrivate.yjsSynced = false;
-      servicePrivate.yjsWritable = false;
-    });
-
-    afterEach(() => {
-      servicePrivate.yDoc?.destroy();
-      servicePrivate.yDoc = null;
-    });
-
-    it('showSyncLoadingToast calls toastrService.info with no auto-dismiss', async () => {
-      await servicePrivate.showSyncLoadingToast();
-
-      expect(toastrService.info).toHaveBeenCalledWith(expect.any(String), '', {
-        timeOut: 0,
-        extendedTimeOut: 0,
-      });
-      expect(servicePrivate.yjsSyncToastId).toBe(42);
-    });
-
-    it('dismissSyncLoadingToast calls toastrService.remove with stored ID', async () => {
-      await servicePrivate.showSyncLoadingToast();
-      servicePrivate.dismissSyncLoadingToast();
-
-      expect(toastrService.remove).toHaveBeenCalledWith(42);
-      expect(servicePrivate.yjsSyncToastId).toBeNull();
-    });
-
-    it('dismissSyncLoadingToast does nothing when no toast is active', () => {
-      servicePrivate.yjsSyncToastId = null;
-      servicePrivate.dismissSyncLoadingToast();
-
-      expect(toastrService.remove).not.toHaveBeenCalled();
-    });
-
-    it('handleFirstYjsSync dismisses the loading toast', async () => {
-      const mockAwareness = {
-        getStates: jest.fn().mockReturnValue(new Map()),
-        setLocalStateField: jest.fn(),
-        on: jest.fn(),
-      };
-      servicePrivate.wsProvider = { awareness: mockAwareness };
-
-      await servicePrivate.showSyncLoadingToast();
-      servicePrivate.handleFirstYjsSync();
-
-      expect(toastrService.remove).toHaveBeenCalledWith(42);
-      expect(servicePrivate.yjsSyncToastId).toBeNull();
     });
   });
 });
