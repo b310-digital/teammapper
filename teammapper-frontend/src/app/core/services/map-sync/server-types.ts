@@ -124,6 +124,7 @@ interface ServerMap {
   data: MapSnapshot;
   options: CachedMapOptions;
   createdAt: string;
+  writable?: boolean;
 }
 
 interface PrivateServerMap {

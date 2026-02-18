@@ -2,8 +2,6 @@ import * as Y from 'yjs';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { ReversePropertyMapping } from './server-types';
 
-const MESSAGE_WRITE_ACCESS = 4;
-
 export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 
 export interface ClientColorMappingValue {
@@ -71,14 +69,6 @@ export function buildYjsWsUrl(): string {
   const baseHref = document.querySelector('base')?.getAttribute('href') ?? '/';
   const path = baseHref.endsWith('/') ? baseHref : baseHref + '/';
   return `${protocol}//${host}${path}yjs`;
-}
-
-// Returns true for writable, false for read-only, null if not a write-access message
-export function parseWriteAccessBytes(data: Uint8Array): boolean | null {
-  if (data.length >= 2 && data[0] === MESSAGE_WRITE_ACCESS) {
-    return data[1] === 1;
-  }
-  return null;
 }
 
 export function resolveClientColor(

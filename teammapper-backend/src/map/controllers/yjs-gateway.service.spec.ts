@@ -16,7 +16,6 @@ import {
   WS_CLOSE_TRY_AGAIN,
   CONNECTION_SETUP_TIMEOUT_MS,
   MESSAGE_SYNC,
-  MESSAGE_WRITE_ACCESS,
   encodeSyncUpdateMessage,
 } from '../utils/yjsProtocol'
 import * as syncProtocol from 'y-protocols/sync'
@@ -195,7 +194,7 @@ describe('YjsGateway', () => {
       clientDoc.destroy()
     })
 
-    it('sends write-access before sync messages', async () => {
+    it('does not send a write-access message over WebSocket', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -209,11 +208,9 @@ describe('YjsGateway', () => {
         const data = new Uint8Array(call[0] as Buffer)
         return decoding.readVarUint(decoding.createDecoder(data))
       })
-      const writeIdx = messageTypes.indexOf(MESSAGE_WRITE_ACCESS)
-      const syncIdx = messageTypes.indexOf(MESSAGE_SYNC)
 
-      expect(writeIdx).toBeGreaterThanOrEqual(0)
-      expect(writeIdx).toBeLessThan(syncIdx)
+      expect(messageTypes).not.toContain(4)
+      expect(messageTypes[0]).toBe(MESSAGE_SYNC)
     })
 
     it('closes and cleans up when map not found', async () => {

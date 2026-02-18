@@ -38,7 +38,6 @@ import {
   encodeSyncStep2Message,
   encodeSyncUpdateMessage,
   encodeAwarenessMessage,
-  encodeWriteAccessMessage,
   processReadOnlySyncMessage,
   parseAwarenessClientIds,
 } from '../utils/yjsProtocol'
@@ -351,11 +350,11 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     // approach would be more efficient for large documents.
     //
     // Message order:
-    //   1. Write-access — client knows its permissions before sync fires
-    //   2. SyncStep1   — server state vector (triggers client's SyncStep2)
-    //   3. SyncStep2   — full doc state for immediate hydration
-    //   4. Awareness   — existing cursors/presence
-    this.send(ws, encodeWriteAccessMessage(writable))
+    //   1. SyncStep1   — server state vector (triggers client's SyncStep2)
+    //   2. SyncStep2   — full doc state for immediate hydration
+    //   3. Awareness   — existing cursors/presence
+    //
+    // Write-access is communicated via the HTTP GET /api/maps/:id response.
     this.send(ws, encodeSyncStep1Message(doc))
     this.send(ws, encodeSyncStep2Message(doc))
     this.sendAwarenessStates(ws, awareness)

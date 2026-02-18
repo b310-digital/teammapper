@@ -139,6 +139,7 @@ export class MapSyncService implements OnDestroy {
       return;
     }
 
+    this.syncStrategy.setWritable(serverMap.writable !== false);
     this.updateCachedMapForAdmin(serverMap);
     this.prepareMap(serverMap);
     return serverMap;
@@ -297,7 +298,13 @@ export class MapSyncService implements OnDestroy {
   }
 
   private async fetchMapFromServer(id: string): Promise<ServerMap> {
-    const response = await this.httpService.get(API_URL.ROOT, '/maps/' + id);
+    const secretParam = this.modificationSecret
+      ? `?secret=${encodeURIComponent(this.modificationSecret)}`
+      : '';
+    const response = await this.httpService.get(
+      API_URL.ROOT,
+      '/maps/' + id + secretParam
+    );
     if (!response.ok) return null;
     const json: ServerMap = await response.json();
     return json;

@@ -7,11 +7,13 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
   Logger,
   Optional,
   Inject,
 } from '@nestjs/common'
 import { MapsService } from '../services/maps.service'
+import { checkWriteAccess } from '../utils/yjsProtocol'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import {
@@ -39,14 +41,22 @@ export default class MapsController {
   ) {}
 
   @Get(':id')
-  async findOne(@Param('id') mapId: string): Promise<IMmpClientMap | void> {
+  async findOne(
+    @Param('id') mapId: string,
+    @Query('secret') secret?: string
+  ): Promise<IMmpClientMap | void> {
     try {
-      // If we update lastAccessed first, we guarantee that the exportMapToClient returns a fresh map that includes an up-to-date lastAccessed field
       await this.mapsService.updateLastAccessed(mapId)
       const map = await this.mapsService.exportMapToClient(mapId)
       if (!map) throw new NotFoundException()
 
-      return map
+      const fullMap = await this.mapsService.findMap(mapId)
+      const writable = checkWriteAccess(
+        fullMap?.modificationSecret ?? null,
+        secret ?? null
+      )
+
+      return { ...map, writable }
     } catch (e) {
       if (e instanceof MalformedUUIDError || e instanceof EntityNotFoundError) {
         throw new NotFoundException()

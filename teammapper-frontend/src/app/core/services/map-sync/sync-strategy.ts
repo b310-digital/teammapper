@@ -24,4 +24,7 @@ export interface SyncStrategy {
 
   /** Delete the map by admin ID. */
   deleteMap(adminId: string): Promise<void>;
+
+  /** Set write-access status from HTTP response. */
+  setWritable(writable: boolean): void;
 }
