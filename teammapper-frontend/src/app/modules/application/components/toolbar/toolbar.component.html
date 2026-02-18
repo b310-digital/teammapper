@@ -177,7 +177,7 @@
     id="undo-button"
     (click)="handleUndo()"
     [title]="'TOOLTIPS.UNDO_MAP' | translate"
-    [disabled]="editDisabled || (yjsEnabled ? !canYjsUndo : !canUndoRedo)"
+    [disabled]="editDisabled || (canUndo$ | async) === false"
     color="primary"
     mat-icon-button>
     <mat-icon>undo</mat-icon>
@@ -187,7 +187,7 @@
     id="redo-button"
     (click)="handleRedo()"
     [title]="'TOOLTIPS.REDO_MAP' | translate"
-    [disabled]="editDisabled || (yjsEnabled ? !canYjsRedo : !canUndoRedo)"
+    [disabled]="editDisabled || (canRedo$ | async) === false"
     color="primary"
     mat-icon-button>
     <mat-icon>redo</mat-icon>

@@ -31,10 +31,11 @@ import {
   DEFAULT_SELF_COLOR,
 } from './map-sync-context';
 import { MapSyncErrorHandler } from './map-sync-error-handler';
+import { SyncStrategy } from './sync-strategy';
 
 type ServerClientList = Record<string, string>;
 
-export class SocketIoSyncService {
+export class SocketIoSyncService implements SyncStrategy {
   private socket: Socket;
 
   constructor(
@@ -48,7 +49,7 @@ export class SocketIoSyncService {
 
   // ─── Connection ─────────────────────────────────────────────
 
-  initConnection(): void {
+  connect(): void {
     const reconnectOptions = {
       reconnection: true,
       reconnectionDelay: 1000,
@@ -70,16 +71,52 @@ export class SocketIoSyncService {
           });
   }
 
-  reset(): void {
+  detach(): void {
     if (this.socket) {
       this.socket.removeAllListeners();
       this.leaveMap();
     }
   }
 
+  destroy(): void {
+    this.detach();
+  }
+
+  initMap(uuid: string): void {
+    this.createListeners();
+    this.listenServerEvents(uuid);
+  }
+
+  undo(): void {
+    this.mmpService.undo();
+    this.updateCanUndoRedo();
+  }
+
+  redo(): void {
+    this.mmpService.redo();
+    this.updateCanUndoRedo();
+  }
+
+  updateMapOptions(options?: CachedMapOptions): void {
+    const cachedMapEntry = this.ctx.getAttachedMap();
+    this.socket.emit('updateMapOptions', {
+      mapId: cachedMapEntry.cachedMap.uuid,
+      options,
+      modificationSecret: this.ctx.getModificationSecret(),
+    });
+  }
+
+  async deleteMap(adminId: string): Promise<void> {
+    const cachedMapEntry = this.ctx.getAttachedMap();
+    this.socket.emit('deleteMap', {
+      adminId,
+      mapId: cachedMapEntry.cachedMap.uuid,
+    });
+  }
+
   // ─── MMP event listeners (MMP → Socket.io) ─────────────────
 
-  createListeners(): void {
+  private createListeners(): void {
     this.setupCreateHandler();
     this.setupSelectionHandlers();
     this.setupNodeUpdateHandler();
@@ -126,13 +163,23 @@ export class SocketIoSyncService {
       this.ctx.setAttachedNode(this.mmpService.selectNode());
       this.ctx.updateAttachedMap();
       this.emitApplyMapChangesByDiff(diff, 'undo');
+      this.updateCanUndoRedo();
     });
 
     this.mmpService.on('redo').subscribe((diff?: MapDiff) => {
       this.ctx.setAttachedNode(this.mmpService.selectNode());
       this.ctx.updateAttachedMap();
       this.emitApplyMapChangesByDiff(diff, 'redo');
+      this.updateCanUndoRedo();
     });
+  }
+
+  private updateCanUndoRedo(): void {
+    if (typeof this.mmpService.history !== 'function') return;
+    const history = this.mmpService.history();
+    const hasHistory = history?.snapshots?.length > 1;
+    this.ctx.setCanUndo(hasHistory);
+    this.ctx.setCanRedo(hasHistory);
   }
 
   private setupNodeCreateHandler(): void {
@@ -272,29 +319,17 @@ export class SocketIoSyncService {
     });
   }
 
-  emitUpdateMapOptions(options?: CachedMapOptions): void {
-    const cachedMapEntry = this.ctx.getAttachedMap();
-    this.socket.emit('updateMapOptions', {
-      mapId: cachedMapEntry.cachedMap.uuid,
-      options,
-      modificationSecret: this.ctx.getModificationSecret(),
-    });
-  }
-
-  deleteMap(adminId: string): void {
-    const cachedMapEntry = this.ctx.getAttachedMap();
-    this.socket.emit('deleteMap', {
-      adminId,
-      mapId: cachedMapEntry.cachedMap.uuid,
-    });
-  }
-
   private updateNodeSelection(id: string, selected: boolean): void {
     const mapping = this.ctx.getColorMapping();
-    if (selected) {
-      mapping[this.socket.id] = { color: DEFAULT_SELF_COLOR, nodeId: id };
-    } else {
-      mapping[this.socket.id] = { color: DEFAULT_SELF_COLOR, nodeId: '' };
+    this.ctx.setColorMapping({
+      ...mapping,
+      [this.socket.id]: {
+        color: DEFAULT_SELF_COLOR,
+        nodeId: selected ? id : '',
+      },
+    });
+
+    if (!selected) {
       const colorForNode = this.ctx.colorForNode(id);
       if (colorForNode !== '')
         this.mmpService.highlightNode(id, colorForNode, false);
@@ -320,7 +355,7 @@ export class SocketIoSyncService {
 
   // ─── Server event handlers ──────────────────────────────────
 
-  listenServerEvents(uuid: string): Promise<MapProperties> {
+  private listenServerEvents(uuid: string): Promise<MapProperties> {
     this.checkModificationSecret();
     this.setupReconnectionHandler(uuid);
     this.setupNotificationHandlers();
@@ -548,7 +583,10 @@ export class SocketIoSyncService {
   private ensureClientInMapping(clientId: string): void {
     const mapping = this.ctx.getColorMapping();
     if (!mapping[clientId]) {
-      mapping[clientId] = { color: DEFAULT_COLOR, nodeId: '' };
+      this.ctx.setColorMapping({
+        ...mapping,
+        [clientId]: { color: DEFAULT_COLOR, nodeId: '' },
+      });
       this.ctx.emitClientList();
     }
   }
@@ -558,7 +596,13 @@ export class SocketIoSyncService {
     nodeId: string,
     selected: boolean
   ): void {
-    this.ctx.getColorMapping()[clientId].nodeId = selected ? nodeId : '';
+    const mapping = this.ctx.getColorMapping();
+    const client = mapping[clientId];
+    if (!client) return;
+    this.ctx.setColorMapping({
+      ...mapping,
+      [clientId]: { ...client, nodeId: selected ? nodeId : '' },
+    });
   }
 
   private setupClientListHandler(): void {
@@ -587,7 +631,13 @@ export class SocketIoSyncService {
   private setupClientDisconnectHandler(): void {
     this.socket.on('clientDisconnect', (clientId: string) => {
       const mapping = this.ctx.getColorMapping();
-      delete mapping[clientId];
+      const remaining = Object.keys(mapping)
+        .filter(key => key !== clientId)
+        .reduce<ClientColorMapping>((acc, key) => {
+          acc[key] = mapping[key];
+          return acc;
+        }, {});
+      this.ctx.setColorMapping(remaining);
       this.ctx.emitClientList();
     });
   }

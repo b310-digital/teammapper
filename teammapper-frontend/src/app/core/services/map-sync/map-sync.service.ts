@@ -23,6 +23,7 @@ import { MapSyncErrorHandler } from './map-sync-error-handler';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
 import { SocketIoSyncService } from './socket-io-sync.service';
 import { YjsSyncService } from './yjs-sync.service';
+import { SyncStrategy } from './sync-strategy';
 
 export { ConnectionStatus } from './map-sync-context';
 
@@ -55,17 +56,14 @@ export class MapSyncService implements OnDestroy {
   public readonly canRedo$: Observable<boolean> =
     this.canRedoSubject.asObservable();
 
-  // Sub-services
-  private readonly socketIoSync: SocketIoSyncService;
-  private readonly yjsSync: YjsSyncService;
-  private readonly errorHandler: MapSyncErrorHandler;
+  // Sync strategy (only one instantiated based on feature flag)
+  private readonly syncStrategy: SyncStrategy;
 
   // Common fields
   private colorMapping: ClientColorMapping;
   private availableColors: string[];
   private clientColor: string;
   private modificationSecret: string;
-  private readonly yjsEnabled: boolean;
 
   constructor() {
     this.attachedMapSubject = new BehaviorSubject<CachedMapEntry | null>(null);
@@ -82,48 +80,43 @@ export class MapSyncService implements OnDestroy {
       ];
     this.modificationSecret = '';
     this.colorMapping = {};
-    this.yjsEnabled =
+    const yjsEnabled =
       this.settingsService.getCachedSystemSettings()?.featureFlags?.yjs ??
       false;
 
-    this.errorHandler = new MapSyncErrorHandler(
-      this.mmpService,
-      this.utilsService,
-      this.toastService,
-      this.dialogService
-    );
-
     const ctx = this.createContext();
 
-    this.socketIoSync = new SocketIoSyncService(
-      ctx,
-      this.mmpService,
-      this.settingsService,
-      this.utilsService,
-      this.toastrService,
-      this.errorHandler
-    );
-
-    this.yjsSync = new YjsSyncService(
-      ctx,
-      this.mmpService,
-      this.settingsService,
-      this.utilsService,
-      this.toastrService,
-      this.httpService
-    );
-
-    if (!this.yjsEnabled) {
-      this.socketIoSync.initConnection();
+    if (yjsEnabled) {
+      this.syncStrategy = new YjsSyncService(
+        ctx,
+        this.mmpService,
+        this.settingsService,
+        this.utilsService,
+        this.toastrService,
+        this.httpService
+      );
+    } else {
+      const errorHandler = new MapSyncErrorHandler(
+        this.mmpService,
+        this.utilsService,
+        this.toastService,
+        this.dialogService
+      );
+      this.syncStrategy = new SocketIoSyncService(
+        ctx,
+        this.mmpService,
+        this.settingsService,
+        this.utilsService,
+        this.toastrService,
+        errorHandler
+      );
     }
+
+    this.syncStrategy.connect();
   }
 
   ngOnDestroy() {
-    if (this.yjsEnabled) {
-      this.yjsSync.reset();
-    } else {
-      this.socketIoSync.reset();
-    }
+    this.syncStrategy.destroy();
   }
 
   // ─── Public API ──────────────────────────────────────────────
@@ -152,12 +145,7 @@ export class MapSyncService implements OnDestroy {
   }
 
   public reset() {
-    if (this.yjsEnabled) {
-      this.yjsSync.detachObservers();
-      this.yjsSync.unsubscribeListeners();
-    } else {
-      this.socketIoSync.reset();
-    }
+    this.syncStrategy.detach();
     this.colorMapping = {};
   }
 
@@ -166,15 +154,7 @@ export class MapSyncService implements OnDestroy {
     this.attachedNodeSubject.next(
       this.mmpService.selectNode(this.mmpService.getRootNode().id)
     );
-
-    if (this.yjsEnabled) {
-      this.yjsSync.init();
-    } else {
-      this.socketIoSync.createListeners();
-      this.socketIoSync.listenServerEvents(
-        this.getAttachedMap().cachedMap.uuid
-      );
-    }
+    this.syncStrategy.initMap(this.getAttachedMap().cachedMap.uuid);
   }
 
   public attachMap(cachedMapEntry: CachedMapEntry): void {
@@ -222,27 +202,19 @@ export class MapSyncService implements OnDestroy {
   }
 
   public undo(): void {
-    this.yjsSync.undo();
+    this.syncStrategy.undo();
   }
 
   public redo(): void {
-    this.yjsSync.redo();
+    this.syncStrategy.redo();
   }
 
   public updateMapOptions(options?: CachedMapOptions) {
-    if (this.yjsEnabled) {
-      this.yjsSync.writeMapOptions(options);
-    } else {
-      this.socketIoSync.emitUpdateMapOptions(options);
-    }
+    this.syncStrategy.updateMapOptions(options);
   }
 
   public async deleteMap(adminId: string): Promise<void> {
-    if (this.yjsEnabled) {
-      await this.yjsSync.deleteMap(adminId);
-    } else {
-      this.socketIoSync.deleteMap(adminId);
-    }
+    await this.syncStrategy.deleteMap(adminId);
   }
 
   public async fetchUserMapsFromServer(): Promise<CachedAdminMapEntry[]> {

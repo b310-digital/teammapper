@@ -1,4 +1,4 @@
-import { Component, Input, inject, OnDestroy } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
@@ -9,9 +9,8 @@ import { RouterLink } from '@angular/router';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
-import { NgClass } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -27,9 +26,10 @@ import { Subscription } from 'rxjs';
     MatMenuItem,
     NgClass,
     TranslatePipe,
+    AsyncPipe,
   ],
 })
-export class ToolbarComponent implements OnDestroy {
+export class ToolbarComponent {
   private translationService = inject(TranslateService);
   mmpService = inject(MmpService);
   private mapSyncService = inject(MapSyncService);
@@ -40,29 +40,13 @@ export class ToolbarComponent implements OnDestroy {
   @Input() public editDisabled: boolean;
   public featureFlagPictograms: boolean;
   public featureFlagAI: boolean;
-  public readonly yjsEnabled: boolean;
 
-  private canUndo = false;
-  private canRedo = false;
-  private undoRedoSubscriptions: Subscription[] = [];
+  public canUndo$ = this.mapSyncService.canUndo$;
+  public canRedo$ = this.mapSyncService.canRedo$;
 
   constructor() {
     this.featureFlagPictograms =
       this.settingsService.getCachedSystemSettings()?.featureFlags?.pictograms;
-    this.yjsEnabled =
-      this.settingsService.getCachedSystemSettings()?.featureFlags?.yjs ??
-      false;
-
-    if (this.yjsEnabled) {
-      this.undoRedoSubscriptions.push(
-        this.mapSyncService.canUndo$.subscribe(v => (this.canUndo = v)),
-        this.mapSyncService.canRedo$.subscribe(v => (this.canRedo = v))
-      );
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.undoRedoSubscriptions.forEach(s => s.unsubscribe());
   }
 
   public async exportMap(format: string) {
@@ -87,39 +71,12 @@ export class ToolbarComponent implements OnDestroy {
     }
   }
 
-  get canYjsUndo() {
-    return this.yjsEnabled && this.canUndo;
-  }
-
-  get canYjsRedo() {
-    return this.yjsEnabled && this.canRedo;
-  }
-
-  get canUndoRedo() {
-    if (this.yjsEnabled) {
-      return this.canUndo || this.canRedo;
-    }
-    if (this.mmpService && typeof this.mmpService.history === 'function') {
-      const history = this.mmpService.history();
-      return history?.snapshots?.length > 1;
-    }
-    return false;
-  }
-
   public handleUndo(): void {
-    if (this.yjsEnabled) {
-      this.mapSyncService.undo();
-    } else {
-      this.mmpService.undo();
-    }
+    this.mapSyncService.undo();
   }
 
   public handleRedo(): void {
-    if (this.yjsEnabled) {
-      this.mapSyncService.redo();
-    } else {
-      this.mmpService.redo();
-    }
+    this.mapSyncService.redo();
   }
 
   public async share() {

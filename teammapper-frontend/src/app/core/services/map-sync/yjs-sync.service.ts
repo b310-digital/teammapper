@@ -30,11 +30,12 @@ import {
   DEFAULT_COLOR,
   DEFAULT_SELF_COLOR,
 } from './map-sync-context';
+import { SyncStrategy } from './sync-strategy';
 
 const WS_CLOSE_MAP_DELETED = 4001;
 const MESSAGE_WRITE_ACCESS = 4;
 
-export class YjsSyncService {
+export class YjsSyncService implements SyncStrategy {
   private yDoc: Y.Doc | null = null;
   private wsProvider: WebsocketProvider | null = null;
   private yjsSynced = false;
@@ -68,7 +69,7 @@ export class YjsSyncService {
     this.yUndoManager?.redo();
   }
 
-  writeMapOptions(options?: CachedMapOptions): void {
+  updateMapOptions(options?: CachedMapOptions): void {
     this.writeMapOptionsToYDoc(options);
   }
 
@@ -76,17 +77,19 @@ export class YjsSyncService {
     await this.deleteMapViaHttp(adminId);
   }
 
-  // ─── Initialization ─────────────────────────────────────────
+  // ─── SyncStrategy lifecycle ─────────────────────────────────
 
-  init(): void {
-    const uuid = this.ctx.getAttachedMap().cachedMap.uuid;
+  connect(): void {
+    // Yjs connects lazily in initMap — no-op here
+  }
 
+  initMap(uuid: string): void {
     if (this.hasActiveConnection(uuid)) {
       this.reattachListeners();
       return;
     }
 
-    this.reset();
+    this.destroy();
     this.yjsMapId = uuid;
     this.yDoc = new Y.Doc();
     this.setupConnection(uuid);
@@ -220,7 +223,12 @@ export class YjsSyncService {
 
   // ─── Cleanup ────────────────────────────────────────────────
 
-  reset(): void {
+  detach(): void {
+    this.unsubscribeListeners();
+    this.detachObservers();
+  }
+
+  destroy(): void {
     this.unsubscribeListeners();
     this.detachObservers();
     if (this.yUndoManager) {
@@ -244,7 +252,7 @@ export class YjsSyncService {
     this.yjsMapId = null;
   }
 
-  detachObservers(): void {
+  private detachObservers(): void {
     if (this.yDoc && this.yjsNodesObserver) {
       const nodesMap = this.yDoc.getMap('nodes');
       nodesMap.unobserveDeep(this.yjsNodesObserver);
@@ -261,7 +269,7 @@ export class YjsSyncService {
     }
   }
 
-  unsubscribeListeners(): void {
+  private unsubscribeListeners(): void {
     this.yjsSubscriptions.forEach(sub => sub.unsubscribe());
     this.yjsSubscriptions = [];
   }

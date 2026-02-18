@@ -18,23 +18,22 @@ import { ExportNodeProperties } from '@mmp/map/types';
 import { createMockUtilsService } from '../../../../test/mocks/utils-service.mock';
 import { Observable } from 'rxjs';
 import { UserSettings } from '../../../shared/models/settings.model';
-// Minimal private access for tests that must interact with Socket.io internals
-interface SocketIoSyncAccess {
-  socket: {
-    emit: jest.Mock;
-    removeAllListeners: jest.Mock;
-    on?: jest.Mock;
-    io?: { on: jest.Mock };
+import { SyncStrategy } from './sync-strategy';
+
+// Access the internal syncStrategy for test setup
+interface MapSyncServiceInternal {
+  syncStrategy: SyncStrategy & {
+    socket?: {
+      emit: jest.Mock;
+      removeAllListeners: jest.Mock;
+      on?: jest.Mock;
+      io?: { on: jest.Mock };
+    };
   };
-  emitAddNode: (node: ExportNodeProperties) => void;
 }
 
-interface MapSyncServiceSocketAccess {
-  socketIoSync: SocketIoSyncAccess;
-}
-
-function asSocketAccess(service: MapSyncService): MapSyncServiceSocketAccess {
-  return service as unknown as MapSyncServiceSocketAccess;
+function asSyncAccess(service: MapSyncService): MapSyncServiceInternal {
+  return service as unknown as MapSyncServiceInternal;
 }
 
 function createMockNode(
@@ -61,8 +60,6 @@ function createMockNode(
 describe('MapSyncService', () => {
   let service: MapSyncService;
   let mmpService: jest.Mocked<MmpService>;
-  let httpService: jest.Mocked<HttpService>;
-  let storageService: jest.Mocked<StorageService>;
   let settingsService: jest.Mocked<SettingsService>;
   let utilsService: jest.Mocked<UtilsService>;
   let toastService: jest.Mocked<ToastService>;
@@ -98,7 +95,6 @@ describe('MapSyncService', () => {
   };
 
   beforeEach(() => {
-    // Only mock methods that are actually used in these tests
     mmpService = {
       new: jest.fn(),
       selectNode: jest.fn(),
@@ -110,17 +106,10 @@ describe('MapSyncService', () => {
       removeNode: jest.fn(),
       highlightNode: jest.fn(),
       exportAsJSON: jest.fn().mockReturnValue([]),
+      undo: jest.fn(),
+      redo: jest.fn(),
+      history: jest.fn().mockReturnValue({ snapshots: [] }),
     } as unknown as jest.Mocked<MmpService>;
-
-    httpService = {
-      get: jest.fn(),
-      post: jest.fn(),
-    } as unknown as jest.Mocked<HttpService>;
-
-    storageService = {
-      get: jest.fn(),
-      set: jest.fn(),
-    } as unknown as jest.Mocked<StorageService>;
 
     settingsService = {
       getCachedUserSettings: jest.fn(),
@@ -144,7 +133,6 @@ describe('MapSyncService', () => {
       warning: jest.fn(),
     } as unknown as jest.Mocked<ToastrService>;
 
-    // Create mock UtilsService using shared test utility
     utilsService = createMockUtilsService();
 
     const subscribeMock = jest.fn().mockReturnValue({ unsubscribe: jest.fn() });
@@ -164,8 +152,11 @@ describe('MapSyncService', () => {
       providers: [
         MapSyncService,
         { provide: MmpService, useValue: mmpService },
-        { provide: HttpService, useValue: httpService },
-        { provide: StorageService, useValue: storageService },
+        { provide: HttpService, useValue: { get: jest.fn(), post: jest.fn() } },
+        {
+          provide: StorageService,
+          useValue: { get: jest.fn(), set: jest.fn() },
+        },
         { provide: SettingsService, useValue: settingsService },
         { provide: UtilsService, useValue: utilsService },
         { provide: ToastService, useValue: toastService },
@@ -199,7 +190,7 @@ describe('MapSyncService', () => {
         emit: emitSpy,
         removeAllListeners: jest.fn(),
       };
-      asSocketAccess(service).socketIoSync.socket = socketSpy;
+      asSyncAccess(service).syncStrategy.socket = socketSpy;
       jest.spyOn(service, 'getAttachedMap').mockReturnValue({
         key: 'map-test',
         cachedMap: {
@@ -213,7 +204,13 @@ describe('MapSyncService', () => {
         },
       });
 
-      asSocketAccess(service).socketIoSync.emitAddNode(mockNode);
+      // Trigger an emit to capture the callback
+      const strategy = asSyncAccess(service).syncStrategy;
+      (
+        strategy as unknown as {
+          emitAddNode: (node: ExportNodeProperties) => void;
+        }
+      ).emitAddNode(mockNode);
     });
 
     it('success response triggers no side effects', async () => {
@@ -292,7 +289,6 @@ describe('MapSyncService', () => {
     });
 
     it('malformed response with translation failure uses fallback message', async () => {
-      // Simulate translation service failure
       utilsService.translate.mockImplementation(async () => {
         throw new Error('Translation failed');
       });
@@ -316,7 +312,6 @@ describe('MapSyncService', () => {
         code: 'INVALID_PARENT',
         message: 'Invalid parent',
         fullMapState: {
-          // Missing required fields - malformed
           uuid: 'test-uuid',
           data: [],
         } as unknown as typeof mockServerMap,
@@ -331,7 +326,6 @@ describe('MapSyncService', () => {
     });
 
     it('error without fullMapState with translation failure uses fallback', async () => {
-      // Simulate translation service failure
       utilsService.translate.mockImplementation(async () => {
         throw new Error('Translation failed');
       });
@@ -378,7 +372,7 @@ describe('MapSyncService', () => {
         },
       };
 
-      asSocketAccess(service).socketIoSync.socket = socketSpy;
+      asSyncAccess(service).syncStrategy.socket = socketSpy;
     });
 
     it('loads map data into mmpService on initMap', () => {
@@ -401,6 +395,44 @@ describe('MapSyncService', () => {
       expect(mmpService.selectNode).toHaveBeenCalledWith('root');
     });
   });
+
+  describe('strategy delegation', () => {
+    it('delegates undo to sync strategy', () => {
+      const strategy = asSyncAccess(service).syncStrategy;
+      jest.spyOn(strategy, 'undo');
+
+      service.undo();
+
+      expect(strategy.undo).toHaveBeenCalled();
+    });
+
+    it('delegates redo to sync strategy', () => {
+      const strategy = asSyncAccess(service).syncStrategy;
+      jest.spyOn(strategy, 'redo');
+
+      service.redo();
+
+      expect(strategy.redo).toHaveBeenCalled();
+    });
+
+    it('delegates destroy on ngOnDestroy', () => {
+      const strategy = asSyncAccess(service).syncStrategy;
+      jest.spyOn(strategy, 'destroy');
+
+      service.ngOnDestroy();
+
+      expect(strategy.destroy).toHaveBeenCalled();
+    });
+
+    it('delegates detach on reset', () => {
+      const strategy = asSyncAccess(service).syncStrategy;
+      jest.spyOn(strategy, 'detach');
+
+      service.reset();
+
+      expect(strategy.detach).toHaveBeenCalled();
+    });
+  });
 });
 
 describe('parseWriteAccessMessage edit mode behavior', () => {
@@ -413,8 +445,8 @@ describe('parseWriteAccessMessage edit mode behavior', () => {
     yjsSynced: boolean;
   }
 
-  interface MapSyncServiceWithYjs {
-    yjsSync: YjsSyncInternals;
+  interface MapSyncServiceWithStrategy {
+    syncStrategy: YjsSyncInternals;
   }
 
   beforeEach(() => {
@@ -442,7 +474,7 @@ describe('parseWriteAccessMessage edit mode behavior', () => {
         mapOptions: { rootNode: 'Root' },
       }),
       getCachedSystemSettings: jest.fn().mockReturnValue({
-        featureFlags: { yjs: false, pictograms: false, ai: false },
+        featureFlags: { yjs: true, pictograms: false, ai: false },
       }),
       setEditMode: jest.fn(),
     } as unknown as jest.Mocked<SettingsService>;
@@ -489,21 +521,22 @@ describe('parseWriteAccessMessage edit mode behavior', () => {
     const event = new MessageEvent('message', { data: writeAccessData });
 
     (
-      service as unknown as MapSyncServiceWithYjs
-    ).yjsSync.parseWriteAccessMessage(event);
+      service as unknown as MapSyncServiceWithStrategy
+    ).syncStrategy.parseWriteAccessMessage(event);
 
     expect(settingsService.setEditMode).not.toHaveBeenCalled();
   });
 
   it('calls setEditMode when already synced', () => {
-    (service as unknown as MapSyncServiceWithYjs).yjsSync.yjsSynced = true;
+    (service as unknown as MapSyncServiceWithStrategy).syncStrategy.yjsSynced =
+      true;
 
     const writeAccessData = new Uint8Array([4, 1]).buffer;
     const event = new MessageEvent('message', { data: writeAccessData });
 
     (
-      service as unknown as MapSyncServiceWithYjs
-    ).yjsSync.parseWriteAccessMessage(event);
+      service as unknown as MapSyncServiceWithStrategy
+    ).syncStrategy.parseWriteAccessMessage(event);
 
     expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
   });
@@ -513,8 +546,8 @@ describe('parseWriteAccessMessage edit mode behavior', () => {
     const event = new MessageEvent('message', { data: readOnlyData });
 
     (
-      service as unknown as MapSyncServiceWithYjs
-    ).yjsSync.parseWriteAccessMessage(event);
+      service as unknown as MapSyncServiceWithStrategy
+    ).syncStrategy.parseWriteAccessMessage(event);
 
     expect(settingsService.setEditMode).not.toHaveBeenCalled();
   });
@@ -524,12 +557,13 @@ describe('parseWriteAccessMessage edit mode behavior', () => {
     const event = new MessageEvent('message', { data: nonWriteAccessData });
 
     (
-      service as unknown as MapSyncServiceWithYjs
-    ).yjsSync.parseWriteAccessMessage(event);
+      service as unknown as MapSyncServiceWithStrategy
+    ).syncStrategy.parseWriteAccessMessage(event);
 
     expect(settingsService.setEditMode).not.toHaveBeenCalled();
     expect(
-      (service as unknown as MapSyncServiceWithYjs).yjsSync.yjsWritable
+      (service as unknown as MapSyncServiceWithStrategy).syncStrategy
+        .yjsWritable
     ).toBe(false);
   });
 });
