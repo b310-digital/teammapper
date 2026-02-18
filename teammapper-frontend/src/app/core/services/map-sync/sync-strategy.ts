@@ -4,13 +4,14 @@ export interface SyncStrategy {
   /** One-time connection setup. Socket.io: opens socket. Yjs: no-op. */
   connect(): void;
 
-  /** Attach listeners and join the map room for syncing. */
+  /**
+   * Initialize syncing for the given map.
+   * Caller must call destroy() before initMap() when switching maps.
+   * Caller must call setWritable() before initMap() to set permissions.
+   */
   initMap(uuid: string): void;
 
-  /** Soft reset: detach observers/listeners, leave map. Keep connection alive. */
-  detach(): void;
-
-  /** Hard reset: full cleanup, destroy resources, disconnect. */
+  /** Full cleanup: destroy resources, disconnect, reset all state. Idempotent. */
   destroy(): void;
 
   /** Undo the last operation. */
