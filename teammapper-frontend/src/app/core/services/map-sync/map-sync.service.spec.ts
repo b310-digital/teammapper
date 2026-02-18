@@ -553,6 +553,123 @@ describe('write access message parsing', () => {
   });
 });
 
+describe('parseWriteAccessMessage edit mode behavior', () => {
+  let service: MapSyncService;
+  let settingsService: jest.Mocked<SettingsService>;
+
+  interface ServiceInternals {
+    parseWriteAccessMessage: (e: MessageEvent) => void;
+    yjsWritable: boolean;
+    yjsSynced: boolean;
+  }
+
+  beforeEach(() => {
+    const mmpService = {
+      new: jest.fn(),
+      selectNode: jest.fn(),
+      getRootNode: jest
+        .fn()
+        .mockReturnValue(
+          createMockNode({ id: 'root', name: 'Root', isRoot: true })
+        ),
+      on: jest.fn().mockReturnValue({
+        subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+      }),
+      updateNode: jest.fn(),
+      existNode: jest.fn().mockReturnValue(true),
+      addNodesFromServer: jest.fn(),
+      removeNode: jest.fn(),
+      highlightNode: jest.fn(),
+      exportAsJSON: jest.fn().mockReturnValue([]),
+    } as unknown as jest.Mocked<MmpService>;
+
+    settingsService = {
+      getCachedUserSettings: jest.fn().mockReturnValue({
+        mapOptions: { rootNode: 'Root' },
+      }),
+      getCachedSystemSettings: jest.fn().mockReturnValue({
+        featureFlags: { yjs: false, pictograms: false, ai: false },
+      }),
+      setEditMode: jest.fn(),
+    } as unknown as jest.Mocked<SettingsService>;
+
+    TestBed.configureTestingModule({
+      providers: [
+        MapSyncService,
+        { provide: MmpService, useValue: mmpService },
+        { provide: HttpService, useValue: { get: jest.fn(), post: jest.fn() } },
+        {
+          provide: StorageService,
+          useValue: { get: jest.fn(), set: jest.fn() },
+        },
+        { provide: SettingsService, useValue: settingsService },
+        { provide: UtilsService, useValue: createMockUtilsService() },
+        {
+          provide: ToastService,
+          useValue: { showValidationCorrection: jest.fn() },
+        },
+        {
+          provide: DialogService,
+          useValue: { openCriticalErrorDialog: jest.fn() },
+        },
+        {
+          provide: ToastrService,
+          useValue: {
+            error: jest.fn(),
+            success: jest.fn(),
+            warning: jest.fn(),
+          },
+        },
+      ],
+    });
+
+    service = TestBed.inject(MapSyncService);
+  });
+
+  afterEach(() => {
+    service.ngOnDestroy();
+  });
+
+  it('does not call setEditMode when not yet synced', () => {
+    const writeAccessData = new Uint8Array([4, 1]).buffer;
+    const event = new MessageEvent('message', { data: writeAccessData });
+
+    (service as unknown as ServiceInternals).parseWriteAccessMessage(event);
+
+    expect(settingsService.setEditMode).not.toHaveBeenCalled();
+  });
+
+  it('calls setEditMode when already synced', () => {
+    (service as unknown as ServiceInternals).yjsSynced = true;
+
+    const writeAccessData = new Uint8Array([4, 1]).buffer;
+    const event = new MessageEvent('message', { data: writeAccessData });
+
+    (service as unknown as ServiceInternals).parseWriteAccessMessage(event);
+
+    expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
+  });
+
+  it('stores yjsWritable=false without calling setEditMode when not synced', () => {
+    const readOnlyData = new Uint8Array([4, 0]).buffer;
+    const event = new MessageEvent('message', { data: readOnlyData });
+
+    (service as unknown as ServiceInternals).parseWriteAccessMessage(event);
+
+    expect(settingsService.setEditMode).not.toHaveBeenCalled();
+  });
+
+  it('does not store yjsWritable for non-write-access messages', () => {
+    const nonWriteAccessData = new Uint8Array([0, 1]).buffer;
+    const event = new MessageEvent('message', { data: nonWriteAccessData });
+
+    (service as unknown as ServiceInternals).parseWriteAccessMessage(event);
+
+    expect(settingsService.setEditMode).not.toHaveBeenCalled();
+    expect((service as unknown as ServiceInternals).yjsWritable).toBe(false);
+  });
+});
+
 describe('Yjs URL building', () => {
   let querySelectorSpy: jest.SpyInstance;
 

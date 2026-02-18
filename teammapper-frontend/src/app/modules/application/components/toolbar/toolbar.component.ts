@@ -1,8 +1,9 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, OnDestroy } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
+import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MatToolbar } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 import { MatIconButton } from '@angular/material/button';
@@ -10,6 +11,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { NgClass } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -27,21 +29,40 @@ import { SettingsService } from 'src/app/core/services/settings/settings.service
     TranslatePipe,
   ],
 })
-export class ToolbarComponent {
+export class ToolbarComponent implements OnDestroy {
   private translationService = inject(TranslateService);
   mmpService = inject(MmpService);
+  private mapSyncService = inject(MapSyncService);
   private dialogService = inject(DialogService);
+  private settingsService = inject(SettingsService);
 
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
   public featureFlagPictograms: boolean;
-
-  private settingsService = inject(SettingsService);
   public featureFlagAI: boolean;
+  public readonly yjsEnabled: boolean;
+
+  private canUndo = false;
+  private canRedo = false;
+  private undoRedoSubscriptions: Subscription[] = [];
 
   constructor() {
     this.featureFlagPictograms =
       this.settingsService.getCachedSystemSettings()?.featureFlags?.pictograms;
+    this.yjsEnabled =
+      this.settingsService.getCachedSystemSettings()?.featureFlags?.yjs ??
+      false;
+
+    if (this.yjsEnabled) {
+      this.undoRedoSubscriptions.push(
+        this.mapSyncService.canUndo$.subscribe(v => (this.canUndo = v)),
+        this.mapSyncService.canRedo$.subscribe(v => (this.canRedo = v))
+      );
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.undoRedoSubscriptions.forEach(s => s.unsubscribe());
   }
 
   public async exportMap(format: string) {
@@ -66,12 +87,39 @@ export class ToolbarComponent {
     }
   }
 
+  get canYjsUndo() {
+    return this.yjsEnabled && this.canUndo;
+  }
+
+  get canYjsRedo() {
+    return this.yjsEnabled && this.canRedo;
+  }
+
   get canUndoRedo() {
+    if (this.yjsEnabled) {
+      return this.canUndo || this.canRedo;
+    }
     if (this.mmpService && typeof this.mmpService.history === 'function') {
       const history = this.mmpService.history();
       return history?.snapshots?.length > 1;
     }
     return false;
+  }
+
+  public handleUndo(): void {
+    if (this.yjsEnabled) {
+      this.mapSyncService.undo();
+    } else {
+      this.mmpService.undo();
+    }
+  }
+
+  public handleRedo(): void {
+    if (this.yjsEnabled) {
+      this.mapSyncService.redo();
+    } else {
+      this.mmpService.redo();
+    }
   }
 
   public async share() {

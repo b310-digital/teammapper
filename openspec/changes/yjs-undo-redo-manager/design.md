@@ -102,6 +102,39 @@ resetYjs() → DESTROY Y.UndoManager → unsubscribe listeners → destroy provi
 
 The MMP `undo`/`redo` events are no longer subscribed to in the Yjs path. MMP's `History.undo()` / `History.redo()` are never called when Yjs is active.
 
+### 7. Coordinate preservation on node restore: conditional calculation in `addNode()`
+
+**Problem:** When `Y.UndoManager.undo()` restores deleted nodes, the Yjs observer calls `applyRemoteNodeAdd()` → `addNodesFromServer()` → `addNode()`. At `nodes.ts:124`, `addNode()` unconditionally calls `calculateCoordinates(node)`, overwriting the correct coordinates from Y.Doc with freshly calculated "append to bottom of siblings" positions. This also affects remote node additions from other clients.
+
+**Decision:** Make `calculateCoordinates()` conditional — only recalculate when the incoming properties don't already contain valid coordinates. This is a minimal, targeted change to the MMP library (`nodes.ts:124`).
+
+```typescript
+// Before (bug):
+node.coordinates = this.calculateCoordinates(node);
+
+// After (fix):
+if (!properties.coordinates?.x && !properties.coordinates?.y && !node.isRoot) {
+  node.coordinates = this.calculateCoordinates(node);
+}
+```
+
+**Alternative considered:** Reuse the legacy `history.ts:redraw()` method — on undo/redo, extract a full snapshot from Y.Doc via `extractSnapshotFromYDoc()`, then call `redraw()` to tear down and rebuild the entire MMP node tree. Rejected because:
+- Rebuilds every node even for single-property undos (rename, color change)
+- `redraw()` is private and would need exposure
+- Requires suppressing the Yjs observer during rebuild to avoid event cascading
+- Only fixes undo/redo — remote node additions still lose coordinates through `addNode()`
+- The conditional approach is more surgical and fixes both undo/redo and remote adds
+
+**Precedent:** `applyCoordinatesToMapSnapshot()` (`nodes.ts:830-862`) already uses this pattern — it only calculates coordinates when `!node.coordinates`.
+
+**Undo stack integrity:** The `addNode()` path called from the observer uses `notifyWithEvent=false`, so `Event.nodeCreate` is not fired and `writeNodeCreateToYDoc()` is never called. No `doc.transact(..., 'local')` occurs, so the UndoManager does not capture individual node restores as new tracked changes. Branch delete/restore remains one atomic undo stack item through any number of undo/redo cycles.
+
+### 8. Parent-first ordering on batch node restore
+
+**Problem:** `keysChanged.forEach` in `handleTopLevelNodeChanges` (`map-sync.service.ts:1557`) iterates in Y.Map internal order, which may not be parent-first. A child node processed before its parent causes `getNode(parentId)` to return `undefined`.
+
+**Decision:** When the observer detects multiple node additions in a single transaction, collect all added keys first, then sort parent-first using the existing `sortParentFirst()` utility from `yjs-utils.ts` before applying to MMP.
+
 ## Risks / Trade-offs
 
 **[MMP history accumulates unused snapshots]** → MMP internally calls `history.save()` on node operations, building up a snapshot array that nobody reads. Mitigation: Mind maps are small (tens to hundreds of nodes). Memory overhead is negligible. Fixing this would require MMP modifications, which is out of scope.
@@ -115,4 +148,7 @@ The MMP `undo`/`redo` events are no longer subscribed to in the Yjs path. MMP's 
 ## Open Questions
 
 - **Should `captureTimeout` be configurable?** The default 500ms groups rapid changes. For node dragging this is good, but it could group unrelated edits. Worth tuning based on user testing?
-- **Undo scope for multi-node operations:** When a user deletes a node with descendants, the bridge deletes all descendants in one transaction. UndoManager captures this as one undo step (restores parent + all children). Is this the desired behavior, or should each node be a separate undo step?
+
+## Resolved Questions
+
+- **Undo scope for multi-node operations:** When a user deletes a node with descendants, the bridge deletes all descendants in one transaction. UndoManager captures this as one undo step (restores parent + all children). This IS the desired behavior — the branch should always be treated atomically. The `addNode()` path called from the observer does not write back to Y.Doc (no `'local'` origin transactions), so the undo stack is never corrupted with individual node entries.

@@ -4,7 +4,7 @@ import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
 import { jsPDF } from 'jspdf';
-import { first } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import * as mmp from '@mmp/index';
 import MmpMap from '@mmp/map/map';
 import DOMPurify from 'dompurify';
@@ -47,8 +47,8 @@ export class MmpService implements OnDestroy {
 
     this.settingsSubscription = settingsService
       .getEditModeObservable()
-      .pipe(first((val: boolean | null) => val !== null))
-      .subscribe((result: boolean | null) => {
+      .pipe(filter((val: boolean | null): val is boolean => val !== null))
+      .subscribe((result: boolean) => {
         if (!this.currentMap) return;
 
         this.currentMap.options.update('drag', result);

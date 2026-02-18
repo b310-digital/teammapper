@@ -132,6 +132,16 @@ Y.Doc (one per map)
 - When applying a remote Y.Doc change to MMP, call MMP methods with `notifyWithEvent: false` to suppress the MMP event
 - When writing a local MMP event to Y.Doc, the Y.Doc `observe` callback checks `transaction.local` to distinguish local vs remote changes
 
+### 5a. Sync progress feedback — loading toast during initial sync
+
+**Decision:** Show a non-auto-dismissing info toast ("Syncing map...") from the moment the `WebsocketProvider` is created until the first Y.Doc sync completes (`handleFirstYjsSync`). Dismiss it in `resetYjs()` as well for cleanup on disconnect.
+
+**Rationale:** After the race condition fix that defers edit mode until Yjs sync completes, the user sees the map rendered (from the REST API) in a read-only state with no indication that anything is loading. The toast bridges this gap. Using `toastrService.info()` with `timeOut: 0` follows the same pattern as the existing `MAP_IMPORT_IN_PROGRESS` toast. The toast ID is stored in `yjsSyncToastId` and removed via `toastrService.remove()` — simpler than a custom loading indicator and consistent with the existing UX.
+
+**Alternatives considered:**
+- *Spinner overlay on the map*: More visually prominent but requires new UI component work. The toast is lightweight and already part of the design language.
+- *Disable map rendering until sync*: Would delay the initial visual, making the app feel slower. Showing the REST-loaded map with a toast is a better experience.
+
 ### 6. Presence: Yjs Awareness API
 
 **Decision:** Use the Yjs Awareness protocol (bundled with y-websocket) for client presence, colors, and node selection. Each client sets its awareness state with `{ color, selectedNodeId, userName }`.

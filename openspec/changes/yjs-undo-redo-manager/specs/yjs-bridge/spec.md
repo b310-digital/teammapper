@@ -44,6 +44,43 @@ The bridge SHALL prevent echo loops where a local MMP event writes to Y.Doc, whi
 - **THEN** the Y.Doc observer SHALL detect `transaction.origin === yUndoManager` and SHALL apply the changes to MMP
 - **AND** MMP SHALL re-render the affected nodes
 
+### Requirement: Coordinate preservation on node restore
+When the Y.Doc observer applies a node-add to MMP (from undo/redo or remote sync), and the node's Y.Map contains non-zero coordinates, the bridge SHALL ensure those coordinates are used as the node's position. The MMP layer SHALL NOT recalculate positions for nodes that already have stored coordinates from Y.Doc.
+
+**Bug reference:** `nodes.ts:124` unconditionally calls `calculateCoordinates(node)`, overwriting the coordinates passed in from Y.Doc with freshly calculated positions. This causes restored nodes to appear at "append to bottom of siblings" positions rather than their original locations.
+
+#### Scenario: Undo of delete preserves original coordinates
+- **WHEN** a node at coordinates `{x: 200, y: -120}` is deleted and the user triggers undo
+- **AND** the Y.UndoManager restores the node to Y.Doc with its original coordinates
+- **THEN** the bridge SHALL pass the coordinates from Y.Doc to MMP
+- **AND** MMP SHALL render the node at `{x: 200, y: -120}`, NOT at a recalculated position
+
+#### Scenario: Undo of subtree delete preserves all node coordinates
+- **WHEN** a parent node with descendants is deleted (single transaction) and the user triggers undo
+- **THEN** ALL restored nodes (parent and descendants) SHALL retain their original coordinates from Y.Doc
+- **AND** no node SHALL be repositioned by `calculateCoordinates()`
+
+#### Scenario: Remote node-add with coordinates preserves position
+- **WHEN** a remote client creates a node with specific coordinates
+- **AND** the Y.Doc sync delivers the node with those coordinates
+- **THEN** the bridge SHALL apply the node to MMP at the coordinates from Y.Doc
+
+### Requirement: Parent-first ordering on batch node restore
+When a Y.Doc transaction adds multiple nodes (e.g., undo of a subtree delete), the observer SHALL process parent nodes before their children. This ensures that when `addNode()` is called for a child, the parent already exists in MMP's node map and can be resolved.
+
+**Bug reference:** `keysChanged.forEach` in `handleTopLevelNodeChanges` (`map-sync.service.ts:1557`) iterates in Y.Map internal order, which may not be parent-first. A child node processed before its parent causes `getNode(parentId)` to return `undefined`, corrupting the parent reference and position.
+
+#### Scenario: Subtree restore processes parent before children
+- **GIVEN** a parent node `A` with child `B` and grandchild `C` were deleted in one transaction
+- **WHEN** the user triggers undo and all three nodes are restored in one transaction
+- **THEN** the observer SHALL add `A` to MMP before `B`, and `B` before `C`
+- **AND** each child SHALL have a valid parent reference in MMP at the time of insertion
+
+#### Scenario: Flat siblings restored in any order
+- **GIVEN** two sibling nodes `B` and `C` (both children of `A`) were deleted
+- **WHEN** the undo restores them
+- **THEN** `A` SHALL be added first (parent-first), but `B` and `C` MAY be added in any order relative to each other
+
 ## REMOVED Requirements
 
 ### Requirement: Local undo/redo stays local

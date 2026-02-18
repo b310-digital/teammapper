@@ -69,6 +69,29 @@ When `yjsEnabled` is true, the `MapSyncService` SHALL expose public `undo()` and
 - **WHEN** the user presses undo but the UndoManager's undo stack is empty
 - **THEN** the `undo()` call SHALL be a no-op (Y.UndoManager handles this gracefully)
 
+### Requirement: Full property fidelity on undo/redo of delete
+When a node (or subtree) is deleted and the deletion is undone, ALL node properties stored in Y.Doc SHALL be restored exactly — including coordinates, colors, font, image, link, parent reference, k value, locked state, and detached state. The redo of such an undo (re-delete) and subsequent undo (re-restore) SHALL also preserve full property fidelity.
+
+#### Scenario: Undo of single node delete restores all properties
+- **GIVEN** a node exists with `coordinates: {x: 200, y: -120}`, `colors: {name: '#000', background: '#fff', branch: '#333'}`, and `k: -1`
+- **WHEN** the node is deleted and the user triggers undo
+- **THEN** the Y.Doc SHALL contain the restored node with ALL original properties intact
+- **AND** `coordinates` SHALL be `{x: 200, y: -120}` (not recalculated)
+- **AND** `k` SHALL be `-1` (preserving left/right orientation)
+
+#### Scenario: Undo of subtree delete restores parent and all descendants
+- **GIVEN** node `A` has child `B`, and `B` has child `C`
+- **AND** all three nodes have distinct coordinates and properties
+- **WHEN** `A` is deleted (which cascades to `B` and `C` in a single transaction)
+- **AND** the user triggers undo
+- **THEN** the Y.Doc SHALL contain all three nodes with their original properties
+- **AND** `B.parent` SHALL be `A.id` and `C.parent` SHALL be `B.id`
+
+#### Scenario: Multiple undo/redo cycles preserve properties
+- **GIVEN** a node exists with specific coordinates and properties
+- **WHEN** the node is deleted, then undo, then redo (re-delete), then undo (re-restore)
+- **THEN** after the final undo, the node's properties in Y.Doc SHALL match the original values exactly
+
 ### Requirement: Reactive canUndo and canRedo state
 The `MapSyncService` SHALL expose `canUndo$` and `canRedo$` as `Observable<boolean>` so the toolbar can reactively enable/disable undo/redo buttons when Yjs is active.
 

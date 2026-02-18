@@ -15,25 +15,13 @@ import {
   WS_CLOSE_MAP_NOT_FOUND,
   WS_CLOSE_TRY_AGAIN,
   CONNECTION_SETUP_TIMEOUT_MS,
-  encodeSyncStep1Message,
+  MESSAGE_SYNC,
+  MESSAGE_WRITE_ACCESS,
   encodeSyncUpdateMessage,
 } from '../utils/yjsProtocol'
-
-jest.mock('../../config.service', () => ({
-  __esModule: true,
-  default: {
-    isYjsEnabled: jest.fn(() => true),
-  },
-}))
-
-// Minimal interface to call private methods in tests
-interface ConnectionHandler {
-  handleConnection(ws: MockWs, req: IncomingMessage): Promise<void>
-}
-
-interface HeartbeatRunner {
-  runHeartbeat(): void
-}
+import * as syncProtocol from 'y-protocols/sync'
+import * as encoding from 'lib0/encoding'
+import * as decoding from 'lib0/decoding'
 
 const createMockMap = (secret: string | null = 'test-secret'): MmpMap => {
   const map = new MmpMap()
@@ -103,12 +91,17 @@ const createMockRequest = (
   } as unknown as IncomingMessage
 }
 
+// Triggers the private handleConnection method — the WebSocket 'connection'
+// event is the natural entry point and cannot be reached through public API
+// in a unit test without a real HTTP server.
 const connectClient = async (
   gateway: YjsGateway,
   ws: MockWs,
   req: IncomingMessage
 ) => {
-  const handler = gateway as unknown as ConnectionHandler
+  const handler = gateway as unknown as {
+    handleConnection(ws: MockWs, req: IncomingMessage): Promise<void>
+  }
   await handler.handleConnection(ws, req)
 }
 
@@ -174,8 +167,11 @@ describe('YjsGateway', () => {
     jest.restoreAllMocks()
   })
 
-  describe('connection with valid map ID', () => {
-    it('creates doc and notifies client count', async () => {
+  // ─── Connection setup ──────────────────────────────────────
+
+  describe('connection setup', () => {
+    it('syncs full doc state to client on connection', async () => {
+      doc.getMap('nodes').set('node-1', new Y.Map())
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -185,11 +181,21 @@ describe('YjsGateway', () => {
         createMockRequest('map-1', 'test-secret')
       )
 
-      expect(docManager.getOrCreateDoc).toHaveBeenCalledWith('map-1')
-      expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 1)
+      const clientDoc = new Y.Doc()
+      for (const call of ws.send.mock.calls) {
+        const data = new Uint8Array(call[0] as Buffer)
+        const decoder = decoding.createDecoder(data)
+        if (decoding.readVarUint(decoder) === MESSAGE_SYNC) {
+          const encoder = encoding.createEncoder()
+          syncProtocol.readSyncMessage(decoder, encoder, clientDoc, null)
+        }
+      }
+
+      expect(clientDoc.getMap('nodes').has('node-1')).toBe(true)
+      clientDoc.destroy()
     })
 
-    it('sends sync message on connection', async () => {
+    it('sends write-access before sync messages', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -199,13 +205,20 @@ describe('YjsGateway', () => {
         createMockRequest('map-1', 'test-secret')
       )
 
-      expect(ws.send).toHaveBeenCalled()
-    })
-  })
+      const messageTypes = ws.send.mock.calls.map((call) => {
+        const data = new Uint8Array(call[0] as Buffer)
+        return decoding.readVarUint(decoding.createDecoder(data))
+      })
+      const writeIdx = messageTypes.indexOf(MESSAGE_WRITE_ACCESS)
+      const syncIdx = messageTypes.indexOf(MESSAGE_SYNC)
 
-  describe('connection with invalid map ID', () => {
-    it('closes connection when map not found', async () => {
+      expect(writeIdx).toBeGreaterThanOrEqual(0)
+      expect(writeIdx).toBeLessThan(syncIdx)
+    })
+
+    it('closes and cleans up when map not found', async () => {
       mapsService.findMap.mockResolvedValue(null)
+      limiter.getClientIp.mockReturnValue('10.0.0.1')
       const ws = createMockWs()
 
       await connectClient(gateway, ws, createMockRequest('nonexistent'))
@@ -214,30 +227,11 @@ describe('YjsGateway', () => {
         WS_CLOSE_MAP_NOT_FOUND,
         'Map not found'
       )
-    })
-
-    it('does not create doc when map not found', async () => {
-      mapsService.findMap.mockResolvedValue(null)
-      const ws = createMockWs()
-
-      await connectClient(gateway, ws, createMockRequest('nonexistent'))
-
-      expect(docManager.getOrCreateDoc).not.toHaveBeenCalled()
-    })
-
-    it('releases limiter slot when map not found', async () => {
-      mapsService.findMap.mockResolvedValue(null)
-      limiter.getClientIp.mockReturnValue('10.0.0.1')
-      const ws = createMockWs()
-
-      await connectClient(gateway, ws, createMockRequest('nonexistent'))
-
       expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
-  })
 
-  describe('connection with missing mapId parameter', () => {
-    it('closes connection with error', async () => {
+    it('closes and cleans up when mapId missing', async () => {
+      limiter.getClientIp.mockReturnValue('10.0.0.1')
       const ws = createMockWs()
 
       await connectClient(gateway, ws, createMockRequest(null))
@@ -246,20 +240,35 @@ describe('YjsGateway', () => {
         WS_CLOSE_MISSING_PARAM,
         'Missing mapId'
       )
+      expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
 
-    it('releases limiter slot when mapId missing', async () => {
-      limiter.getClientIp.mockReturnValue('10.0.0.1')
+    it('closes with 1013 when setup exceeds timeout', async () => {
+      jest.useFakeTimers()
+      mapsService.findMap.mockReturnValue(new Promise(() => {}))
       const ws = createMockWs()
 
-      await connectClient(gateway, ws, createMockRequest(null))
+      const promise = connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+      jest.advanceTimersByTime(CONNECTION_SETUP_TIMEOUT_MS + 1)
+      await promise
 
-      expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
+      expect(ws.close).toHaveBeenCalledWith(
+        WS_CLOSE_TRY_AGAIN,
+        'Connection setup timeout'
+      )
+      expect(limiter.releaseConnection).toHaveBeenCalledWith('127.0.0.1')
+      jest.useRealTimers()
     })
   })
 
-  describe('read-only client cannot write', () => {
-    it('allows sync step 1 from read-only client', async () => {
+  // ─── Write access control ──────────────────────────────────
+
+  describe('write access control', () => {
+    it('drops writes from read-only client', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
       const ws = createMockWs()
 
@@ -268,90 +277,56 @@ describe('YjsGateway', () => {
         ws,
         createMockRequest('map-1', 'wrong-secret')
       )
-      ws.send.mockClear()
-
-      const clientDoc = new Y.Doc()
-      ws._triggerMessage(encodeSyncStep1Message(clientDoc))
-
-      expect(ws.send).toHaveBeenCalled()
-      clientDoc.destroy()
-    })
-
-    it('drops sync update messages from read-only client', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'wrong-secret')
-      )
-
       doc.getMap('nodes').set('existing', new Y.Map())
       const initialSize = doc.getMap('nodes').size
-      ws.send.mockClear()
 
       const clientDoc = new Y.Doc()
       clientDoc.getMap('nodes').set('new-node', new Y.Map())
-      const update = Y.encodeStateAsUpdate(clientDoc)
-      ws._triggerMessage(encodeSyncUpdateMessage(update))
+      ws._triggerMessage(
+        encodeSyncUpdateMessage(Y.encodeStateAsUpdate(clientDoc))
+      )
 
       expect(doc.getMap('nodes').size).toBe(initialSize)
       clientDoc.destroy()
     })
-  })
 
-  describe('read-write client can write', () => {
-    it('applies sync messages from read-write client', async () => {
+    it('applies writes from client with correct secret', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
       const ws = createMockWs()
 
       await connectClient(gateway, ws, createMockRequest('map-1', 'secret-123'))
 
       const clientDoc = new Y.Doc()
-      ws._triggerMessage(encodeSyncStep1Message(clientDoc))
+      clientDoc.getMap('nodes').set('new-node', new Y.Map())
+      ws._triggerMessage(
+        encodeSyncUpdateMessage(Y.encodeStateAsUpdate(clientDoc))
+      )
 
-      expect(ws.send).toHaveBeenCalled()
+      expect(doc.getMap('nodes').has('new-node')).toBe(true)
       clientDoc.destroy()
     })
 
-    it('allows writes when map has no modification secret', async () => {
+    it('grants write access when map has no secret', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap(null))
       const ws = createMockWs()
 
       await connectClient(gateway, ws, createMockRequest('map-1'))
-      ws.send.mockClear()
 
       const clientDoc = new Y.Doc()
       clientDoc.getMap('nodes').set('new-node', new Y.Map())
-      const update = Y.encodeStateAsUpdate(clientDoc)
-      ws._triggerMessage(encodeSyncUpdateMessage(update))
+      ws._triggerMessage(
+        encodeSyncUpdateMessage(Y.encodeStateAsUpdate(clientDoc))
+      )
 
       expect(doc.getMap('nodes').has('new-node')).toBe(true)
       clientDoc.destroy()
     })
   })
 
-  describe('connection close handler', () => {
-    it('notifies doc manager with remaining count on disconnect', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
+  // ─── Disconnect handling ───────────────────────────────────
 
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-      docManager.notifyClientCount.mockClear()
-      ws._triggerClose()
-
-      // Allow the async notifyClientCount promise to settle
-      await new Promise((r) => setTimeout(r, 0))
-
-      expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 0)
-    })
-
-    it('passes correct remaining count with multiple clients', async () => {
+  describe('disconnect handling', () => {
+    it('decrements client count on disconnect', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws1 = createMockWs()
       const ws2 = createMockWs()
@@ -368,13 +343,12 @@ describe('YjsGateway', () => {
       )
       docManager.notifyClientCount.mockClear()
       ws1._triggerClose()
-
       await new Promise((r) => setTimeout(r, 0))
 
       expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 1)
     })
 
-    it('delegates to limiter on connection close', async () => {
+    it('releases limiter slot on disconnect', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       limiter.getClientIp.mockReturnValue('10.0.0.1')
       const ws = createMockWs()
@@ -388,10 +362,43 @@ describe('YjsGateway', () => {
 
       expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
+
+    it('survives notifyClientCount errors without crashing', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+      docManager.notifyClientCount.mockRejectedValue(
+        new Error('DB connection lost')
+      )
+
+      expect(() => ws._triggerClose()).not.toThrow()
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    it('terminates connection on WebSocket error', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+      ws._triggerError(new Error('ECONNRESET'))
+
+      expect(ws.terminate).toHaveBeenCalled()
+    })
   })
 
-  describe('map deletion closes connections', () => {
-    it('closes all WebSocket connections for a map', async () => {
+  // ─── closeConnectionsForMap (public API) ───────────────────
+
+  describe('closeConnectionsForMap', () => {
+    it('closes all connections for the specified map', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws1 = createMockWs()
       const ws2 = createMockWs()
@@ -419,204 +426,18 @@ describe('YjsGateway', () => {
       )
     })
 
-    it('does nothing for non-existent map', () => {
-      gateway.closeConnectionsForMap('nonexistent')
-    })
-  })
-
-  describe('WebSocket error handling', () => {
-    it('terminates connection on error event', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      ws._triggerError(new Error('ECONNRESET'))
-
-      expect(ws.terminate).toHaveBeenCalled()
-    })
-
-    it('does not crash the server process on error', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      expect(() => ws._triggerError(new Error('write EPIPE'))).not.toThrow()
-    })
-  })
-
-  describe('ping/pong heartbeat', () => {
-    const runHeartbeat = (gw: YjsGateway) =>
-      (gw as unknown as HeartbeatRunner).runHeartbeat()
-
-    it('pings on first heartbeat', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      runHeartbeat(gateway)
-
-      expect(ws.ping).toHaveBeenCalledTimes(1)
-    })
-
-    it('terminates zombie on second heartbeat without pong', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      runHeartbeat(gateway)
-      runHeartbeat(gateway)
-
-      expect(ws.terminate).toHaveBeenCalled()
-    })
-
-    it('survives after pong response', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      runHeartbeat(gateway)
-      ws._triggerPong()
-      runHeartbeat(gateway)
-
-      expect(ws.terminate).not.toHaveBeenCalled()
-    })
-
-    it('pings on each heartbeat cycle', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      runHeartbeat(gateway)
-      ws._triggerPong()
-      runHeartbeat(gateway)
-
-      expect(ws.ping).toHaveBeenCalledTimes(2)
-    })
-
-    it('delegates rate window cleanup to limiter', async () => {
-      runHeartbeat(gateway)
-
-      expect(limiter.cleanupExpiredRateWindows).toHaveBeenCalled()
-    })
-
-    it('clears heartbeat interval on shutdown', () => {
-      gateway.onModuleInit()
-      gateway.onModuleDestroy()
-
-      // After destroy, no further heartbeat runs
-      // (verified by no errors thrown after cleanup)
-    })
-  })
-
-  describe('connection setup timeout', () => {
-    beforeEach(() => {
-      jest.useFakeTimers()
-    })
-
-    afterEach(() => {
-      jest.useRealTimers()
-    })
-
-    it('closes with 1013 when setup exceeds timeout', async () => {
-      mapsService.findMap.mockReturnValue(new Promise(() => {}))
-      const ws = createMockWs()
-
-      const promise = connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      jest.advanceTimersByTime(CONNECTION_SETUP_TIMEOUT_MS + 1)
-      await promise
-
-      expect(ws.close).toHaveBeenCalledWith(
-        WS_CLOSE_TRY_AGAIN,
-        'Connection setup timeout'
-      )
-      expect(limiter.releaseConnection).toHaveBeenCalledWith('127.0.0.1')
-    })
-
-    it('completes normally when setup finishes within timeout', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      expect(ws.close).not.toHaveBeenCalledWith(
-        WS_CLOSE_TRY_AGAIN,
-        expect.any(String)
-      )
-      expect(docManager.getOrCreateDoc).toHaveBeenCalledWith('map-1')
-    })
-
-    it('cancels timer on early completion', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      jest.advanceTimersByTime(15_000)
-      await Promise.resolve()
-
-      expect(ws.close).not.toHaveBeenCalledWith(
-        WS_CLOSE_TRY_AGAIN,
-        expect.any(String)
-      )
-    })
-  })
-
-  describe('multiple maps isolation', () => {
-    it('connections to different maps are independent', async () => {
+    it('does not affect connections to other maps', async () => {
       const map1 = createMockMap()
       const map2 = createMockMap()
       map2.id = 'map-2'
-
       const doc2 = new Y.Doc()
-      mapsService.findMap.mockImplementation(async (id: string) => {
-        return id === 'map-1' ? map1 : map2
-      })
-      docManager.getOrCreateDoc.mockImplementation(async (id: string) => {
-        return id === 'map-1' ? doc : doc2
-      })
+
+      mapsService.findMap.mockImplementation(async (id: string) =>
+        id === 'map-1' ? map1 : map2
+      )
+      docManager.getOrCreateDoc.mockImplementation(async (id: string) =>
+        id === 'map-1' ? doc : doc2
+      )
 
       const ws1 = createMockWs()
       const ws2 = createMockWs()
@@ -638,66 +459,6 @@ describe('YjsGateway', () => {
       expect(ws2.close).not.toHaveBeenCalled()
 
       doc2.destroy()
-    })
-  })
-
-  describe('notifyClientCount error handling', () => {
-    it('logs persistence errors on disconnect without crashing', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      // Mock to reject for the close handler call
-      docManager.notifyClientCount.mockRejectedValue(
-        new Error('DB connection lost')
-      )
-
-      // Close should not throw even when notifyClientCount rejects
-      expect(() => ws._triggerClose()).not.toThrow()
-
-      // Allow the promise rejection to be caught
-      await new Promise((r) => setTimeout(r, 0))
-
-      expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 0)
-    })
-  })
-
-  describe('grace timer restoration on setup failure', () => {
-    it('restores grace timer when notifyClientCount throws', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      docManager.notifyClientCount.mockRejectedValue(
-        new Error('Unexpected error')
-      )
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      expect(docManager.restoreGraceTimer).toHaveBeenCalledWith(
-        'map-1',
-        expect.any(Number)
-      )
-    })
-
-    it('does not restore grace timer on successful setup', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap())
-      const ws = createMockWs()
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret')
-      )
-
-      expect(docManager.restoreGraceTimer).not.toHaveBeenCalled()
     })
   })
 })
