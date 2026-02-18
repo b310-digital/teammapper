@@ -152,7 +152,9 @@ describe('ToolbarComponent', () => {
       (ctx.translateService.instant as jest.Mock).mockReturnValue(
         'Large file warning'
       );
-      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      const alertSpy = jest
+        .spyOn(window, 'alert')
+        .mockImplementation(jest.fn());
 
       await ctx.component.exportMap('json');
 
