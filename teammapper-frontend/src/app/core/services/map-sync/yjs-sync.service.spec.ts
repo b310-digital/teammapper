@@ -73,4 +73,56 @@ describe('YjsSyncService', () => {
       expect(internals().yjsWritable).toBe(false);
     });
   });
+
+  describe('initMap preserves writable state', () => {
+    let service: YjsSyncService;
+
+    interface YjsSyncInternals {
+      yjsWritable: boolean;
+    }
+
+    beforeEach(() => {
+      const mmpService = {
+        on: jest.fn().mockReturnValue({
+          subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+        }),
+        selectNode: jest.fn(),
+        existNode: jest.fn().mockReturnValue(true),
+        exportAsJSON: jest.fn().mockReturnValue([]),
+      } as unknown as jest.Mocked<MmpService>;
+
+      const ctx = createMockContext();
+
+      service = new YjsSyncService(
+        ctx,
+        mmpService,
+        {} as SettingsService,
+        {} as UtilsService,
+        {} as ToastrService,
+        {} as HttpService
+      );
+    });
+
+    afterEach(() => {
+      service.destroy();
+    });
+
+    function internals(): YjsSyncInternals {
+      return service as unknown as YjsSyncInternals;
+    }
+
+    it('preserves yjsWritable true across initMap', () => {
+      service.setWritable(true);
+      service.initMap('test-uuid');
+
+      expect(internals().yjsWritable).toBe(true);
+    });
+
+    it('preserves yjsWritable false across initMap', () => {
+      service.setWritable(false);
+      service.initMap('test-uuid');
+
+      expect(internals().yjsWritable).toBe(false);
+    });
+  });
 });
