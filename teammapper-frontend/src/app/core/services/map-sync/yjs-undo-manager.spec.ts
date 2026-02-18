@@ -1,5 +1,9 @@
 import * as Y from 'yjs';
-import { populateYMapFromNodeProps, yMapToNodeProps } from './yjs-utils';
+import {
+  populateYMapFromNodeProps,
+  yMapToNodeProps,
+  sortParentFirst,
+} from './yjs-utils';
 import { ExportNodeProperties } from '@mmp/map/types';
 
 const ORIGIN_LOCAL = 'local';
@@ -370,5 +374,295 @@ describe('Y.UndoManager integration', () => {
 
     undoManager.undo();
     expect(nodesMap.size).toBe(1);
+  });
+});
+
+// ─── Coordinate preservation tests ──────────────────────────
+
+describe('coordinate preservation in Y.Doc', () => {
+  let doc: Y.Doc;
+  let nodesMap: Y.Map<Y.Map<unknown>>;
+  let undoManager: Y.UndoManager;
+
+  beforeEach(() => {
+    ({ doc, nodesMap } = createYjsContext());
+    undoManager = createTrackedUndoManager(nodesMap);
+  });
+
+  afterEach(() => {
+    undoManager.destroy();
+    doc.destroy();
+  });
+
+  it('node added with existing coordinates preserves them after undo/redo', () => {
+    const coords = { x: 200, y: -120 };
+    addNodeToMap(doc, nodesMap, { id: 'n1', coordinates: coords });
+
+    undoManager.undo();
+    undoManager.redo();
+
+    const restored = yMapToNodeProps(nodesMap.get('n1')!);
+    expect(restored.coordinates).toEqual(coords);
+  });
+
+  it('root node at (0,0) is preserved after undo/redo', () => {
+    addNodeToMap(doc, nodesMap, {
+      id: 'root',
+      isRoot: true,
+      coordinates: { x: 0, y: 0 },
+    });
+    addNodeToMap(doc, nodesMap, { id: 'n1', parent: 'root' });
+
+    undoManager.undo();
+    undoManager.redo();
+
+    const root = yMapToNodeProps(nodesMap.get('root')!);
+    expect(root.coordinates).toEqual({ x: 0, y: 0 });
+  });
+
+  it('node with k value preserves it after undo/redo', () => {
+    addNodeToMap(doc, nodesMap, {
+      id: 'n1',
+      k: -1,
+      coordinates: { x: -200, y: 50 },
+    });
+
+    undoManager.undo();
+    undoManager.redo();
+
+    const restored = yMapToNodeProps(nodesMap.get('n1')!);
+    expect(restored).toEqual(
+      expect.objectContaining({ k: -1, coordinates: { x: -200, y: 50 } })
+    );
+  });
+});
+
+// ─── Parent-first ordering tests ────────────────────────────
+
+describe('parent-first ordering with sortParentFirst', () => {
+  it('sorts parent before child regardless of input order', () => {
+    const child: ExportNodeProperties = createMockNode({
+      id: 'child',
+      parent: 'parent',
+      isRoot: false,
+    });
+    const parent: ExportNodeProperties = createMockNode({
+      id: 'parent',
+      parent: 'root',
+      isRoot: false,
+    });
+    const root: ExportNodeProperties = createMockNode({
+      id: 'root',
+      parent: undefined,
+      isRoot: true,
+    });
+
+    // Input order: child before parent
+    const sorted = sortParentFirst([child, parent, root]);
+    const ids = sorted.map(n => n.id);
+
+    expect(ids.indexOf('root')).toBeLessThan(ids.indexOf('parent'));
+    expect(ids.indexOf('parent')).toBeLessThan(ids.indexOf('child'));
+  });
+
+  it('sorts grandchild after parent after grandparent in a single transaction batch', () => {
+    const grandchild: ExportNodeProperties = createMockNode({
+      id: 'gc',
+      parent: 'child',
+    });
+    const child: ExportNodeProperties = createMockNode({
+      id: 'child',
+      parent: 'parent',
+    });
+    const parent: ExportNodeProperties = createMockNode({
+      id: 'parent',
+      parent: 'root',
+    });
+    const root: ExportNodeProperties = createMockNode({
+      id: 'root',
+      parent: undefined,
+      isRoot: true,
+    });
+
+    const sorted = sortParentFirst([grandchild, child, root, parent]);
+    const ids = sorted.map(n => n.id);
+
+    expect(ids).toEqual(['root', 'parent', 'child', 'gc']);
+  });
+});
+
+// ─── Undo/redo coordinate preservation integration tests ────
+
+describe('undo/redo coordinate preservation', () => {
+  let doc: Y.Doc;
+  let nodesMap: Y.Map<Y.Map<unknown>>;
+  let undoManager: Y.UndoManager;
+
+  beforeEach(() => {
+    ({ doc, nodesMap } = createYjsContext());
+    // Pre-populate a root node (not tracked by undo)
+    doc.transact(() => {
+      const root = new Y.Map<unknown>();
+      populateYMapFromNodeProps(
+        root,
+        createMockNode({
+          id: 'root',
+          parent: undefined,
+          isRoot: true,
+          coordinates: { x: 0, y: 0 },
+        })
+      );
+      nodesMap.set('root', root);
+    }, ORIGIN_IMPORT);
+
+    undoManager = createTrackedUndoManager(nodesMap);
+  });
+
+  afterEach(() => {
+    undoManager.destroy();
+    doc.destroy();
+  });
+
+  it('delete node, undo restores at original coordinates', () => {
+    const coords = { x: 200, y: -120 };
+    addNodeToMap(doc, nodesMap, {
+      id: 'n1',
+      parent: 'root',
+      coordinates: coords,
+    });
+
+    // Separate add and delete into distinct undo stack items
+    undoManager.stopCapturing();
+
+    // Delete the node
+    doc.transact(() => nodesMap.delete('n1'), ORIGIN_LOCAL);
+
+    expect(nodesMap.has('n1')).toBe(false);
+
+    // Undo the delete
+    undoManager.undo();
+
+    expect(nodesMap.has('n1')).toBe(true);
+    const restored = yMapToNodeProps(nodesMap.get('n1')!);
+    expect(restored.coordinates).toEqual(coords);
+  });
+
+  it('delete subtree, undo restores all nodes at original coordinates', () => {
+    const parentCoords = { x: 200, y: -120 };
+    const childCoords = { x: 400, y: -80 };
+    const grandchildCoords = { x: 600, y: -60 };
+
+    addNodeToMap(doc, nodesMap, {
+      id: 'A',
+      parent: 'root',
+      coordinates: parentCoords,
+    });
+    addNodeToMap(doc, nodesMap, {
+      id: 'B',
+      parent: 'A',
+      coordinates: childCoords,
+    });
+    addNodeToMap(doc, nodesMap, {
+      id: 'C',
+      parent: 'B',
+      coordinates: grandchildCoords,
+    });
+
+    // Separate add and delete into distinct undo stack items
+    undoManager.stopCapturing();
+
+    // Delete entire subtree in one transaction
+    doc.transact(() => {
+      nodesMap.delete('A');
+      nodesMap.delete('B');
+      nodesMap.delete('C');
+    }, ORIGIN_LOCAL);
+
+    expect(nodesMap.size).toBe(1); // only root
+
+    // Undo restores all
+    undoManager.undo();
+
+    expect(nodesMap.size).toBe(4);
+    expect(yMapToNodeProps(nodesMap.get('A')!).coordinates).toEqual(
+      parentCoords
+    );
+    expect(yMapToNodeProps(nodesMap.get('B')!).coordinates).toEqual(
+      childCoords
+    );
+    expect(yMapToNodeProps(nodesMap.get('C')!).coordinates).toEqual(
+      grandchildCoords
+    );
+  });
+
+  it('delete subtree, undo, redo, undo — coordinates preserved across cycles', () => {
+    const coordsA = { x: 200, y: -120 };
+    const coordsB = { x: 400, y: -80 };
+
+    addNodeToMap(doc, nodesMap, {
+      id: 'A',
+      parent: 'root',
+      coordinates: coordsA,
+    });
+    addNodeToMap(doc, nodesMap, {
+      id: 'B',
+      parent: 'A',
+      coordinates: coordsB,
+    });
+
+    // Separate add and delete into distinct undo stack items
+    undoManager.stopCapturing();
+
+    // Delete subtree
+    doc.transact(() => {
+      nodesMap.delete('A');
+      nodesMap.delete('B');
+    }, ORIGIN_LOCAL);
+
+    // Cycle: undo → redo → undo
+    undoManager.undo();
+    undoManager.redo();
+    undoManager.undo();
+
+    expect(yMapToNodeProps(nodesMap.get('A')!).coordinates).toEqual(coordsA);
+    expect(yMapToNodeProps(nodesMap.get('B')!).coordinates).toEqual(coordsB);
+  });
+
+  it('delete subtree is a single undo stack item (not fragmented)', () => {
+    addNodeToMap(doc, nodesMap, {
+      id: 'A',
+      parent: 'root',
+      coordinates: { x: 200, y: -120 },
+    });
+    addNodeToMap(doc, nodesMap, {
+      id: 'B',
+      parent: 'A',
+      coordinates: { x: 400, y: -80 },
+    });
+    addNodeToMap(doc, nodesMap, {
+      id: 'C',
+      parent: 'B',
+      coordinates: { x: 600, y: -60 },
+    });
+
+    // Separate add and delete into distinct undo stack items
+    undoManager.stopCapturing();
+
+    const stackBefore = undoManager.undoStack.length;
+
+    // Delete entire subtree in one transaction
+    doc.transact(() => {
+      nodesMap.delete('A');
+      nodesMap.delete('B');
+      nodesMap.delete('C');
+    }, ORIGIN_LOCAL);
+
+    // Should be exactly one new undo stack item
+    expect(undoManager.undoStack.length).toBe(stackBefore + 1);
+
+    // Single undo restores all three nodes
+    undoManager.undo();
+
+    expect(nodesMap.size).toBe(4); // root + A + B + C
   });
 });

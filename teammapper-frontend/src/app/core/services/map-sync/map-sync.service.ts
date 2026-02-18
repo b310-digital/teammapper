@@ -1559,12 +1559,14 @@ export class MapSyncService implements OnDestroy {
       return;
     }
 
+    const adds: string[] = [];
+
     mapEvent.keysChanged.forEach(key => {
       const change = mapEvent.changes.keys.get(key);
       if (!change) return;
 
       if (change.action === 'add') {
-        this.applyRemoteNodeAdd(nodesMap.get(key));
+        adds.push(key);
       } else if (change.action === 'update') {
         this.applyRemoteNodeDelete(key);
         this.applyRemoteNodeAdd(nodesMap.get(key));
@@ -1572,6 +1574,15 @@ export class MapSyncService implements OnDestroy {
         this.applyRemoteNodeDelete(key);
       }
     });
+
+    if (adds.length > 0) {
+      const nodeProps = adds
+        .map(key => nodesMap.get(key))
+        .filter((yNode): yNode is Y.Map<unknown> => !!yNode)
+        .map(yNode => this.yMapToNodeProps(yNode));
+      const sorted = sortParentFirst(nodeProps);
+      sorted.forEach(props => this.mmpService.addNodesFromServer([props]));
+    }
   }
 
   // Show toast to inform the user that a remote client imported a map

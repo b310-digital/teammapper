@@ -121,7 +121,9 @@ export default class Nodes {
 
     this.counter++;
 
-    node.coordinates = this.calculateCoordinates(node);
+    if (!properties.coordinates?.x && !properties.coordinates?.y && !node.isRoot) {
+      node.coordinates = this.calculateCoordinates(node);
+    }
 
     this.map.draw.update();
 
