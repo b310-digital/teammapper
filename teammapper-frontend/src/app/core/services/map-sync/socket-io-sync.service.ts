@@ -24,7 +24,6 @@ import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { MapDiff, SnapshotChanges } from '@mmp/map/handlers/history';
 import { CachedMapOptions } from '../../../shared/models/cached-map.model';
-import { ClientColorMapping } from './yjs-utils';
 import {
   MapSyncContext,
   DEFAULT_COLOR,
@@ -177,9 +176,9 @@ export class SocketIoSyncService implements SyncStrategy {
   private updateCanUndoRedo(): void {
     if (typeof this.mmpService.history !== 'function') return;
     const history = this.mmpService.history();
-    const hasHistory = history?.snapshots?.length > 1;
-    this.ctx.setCanUndo(hasHistory);
-    this.ctx.setCanRedo(hasHistory);
+    if (!history?.snapshots) return;
+    this.ctx.setCanUndo(history.index > 1);
+    this.ctx.setCanRedo(history.index < history.snapshots.length - 1);
   }
 
   private setupNodeCreateHandler(): void {
@@ -615,15 +614,14 @@ export class SocketIoSyncService implements SyncStrategy {
   private updateColorMapping(clients: ServerClientList): void {
     const currentMapping = this.ctx.getColorMapping();
     this.ctx.setColorMapping(
-      Object.keys(clients).reduce<ClientColorMapping>(
-        (acc: ClientColorMapping, key: string) => {
-          acc[key] = {
+      Object.fromEntries(
+        Object.keys(clients).map(key => [
+          key,
+          {
             nodeId: currentMapping[key]?.nodeId || '',
             color: key === this.socket.id ? DEFAULT_SELF_COLOR : clients[key],
-          };
-          return acc;
-        },
-        {}
+          },
+        ])
       )
     );
   }
@@ -631,13 +629,11 @@ export class SocketIoSyncService implements SyncStrategy {
   private setupClientDisconnectHandler(): void {
     this.socket.on('clientDisconnect', (clientId: string) => {
       const mapping = this.ctx.getColorMapping();
-      const remaining = Object.keys(mapping)
-        .filter(key => key !== clientId)
-        .reduce<ClientColorMapping>((acc, key) => {
-          acc[key] = mapping[key];
-          return acc;
-        }, {});
-      this.ctx.setColorMapping(remaining);
+      this.ctx.setColorMapping(
+        Object.fromEntries(
+          Object.entries(mapping).filter(([key]) => key !== clientId)
+        )
+      );
       this.ctx.emitClientList();
     });
   }
