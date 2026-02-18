@@ -45,8 +45,9 @@ export class ToolbarComponent {
   public canRedo$ = this.mapSyncService.canRedo$;
 
   constructor() {
-    this.featureFlagPictograms =
-      this.settingsService.getCachedSystemSettings()?.featureFlags?.pictograms;
+    const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;
+    this.featureFlagPictograms = flags?.pictograms ?? false;
+    this.featureFlagAI = flags?.ai ?? false;
   }
 
   public async exportMap(format: string) {

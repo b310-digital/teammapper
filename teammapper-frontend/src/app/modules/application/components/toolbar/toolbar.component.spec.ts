@@ -136,6 +136,14 @@ describe('ToolbarComponent', () => {
     expect(ctx.component).toBeTruthy();
   });
 
+  it('should initialize featureFlagAI from settings', () => {
+    expect(ctx.component.featureFlagAI).toBe(false);
+  });
+
+  it('should initialize featureFlagPictograms from settings', () => {
+    expect(ctx.component.featureFlagPictograms).toBe(false);
+  });
+
   it('should show alert for large JSON export', async () => {
     ctx.mmpService.exportMap.mockResolvedValue({
       success: true,
