@@ -51,6 +51,15 @@ export const encodeSyncStep1Message = (doc: Y.Doc): Uint8Array => {
   return encoding.toUint8Array(encoder)
 }
 
+// Encodes a SyncStep2 message (full doc state) for immediate client hydration.
+// Prevents race condition where client's SyncStep1 arrives before server registers its handler.
+export const encodeSyncStep2Message = (doc: Y.Doc): Uint8Array => {
+  const encoder = encoding.createEncoder()
+  encoding.writeVarUint(encoder, MESSAGE_SYNC)
+  syncProtocol.writeSyncStep2(encoder, doc)
+  return encoding.toUint8Array(encoder)
+}
+
 // Encodes a sync update message for broadcasting doc changes
 export const encodeSyncUpdateMessage = (update: Uint8Array): Uint8Array => {
   const encoder = encoding.createEncoder()

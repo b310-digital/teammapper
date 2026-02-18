@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import MapsController from './maps.controller'
 import { MapsService } from '../services/maps.service'
-import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
-import { YjsGateway } from './yjs-gateway.service'
 import { NotFoundException } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { IMmpClientMap, IMmpClientPrivateMap, Request } from '../types'
@@ -34,14 +32,6 @@ describe('MapsController', () => {
             updateLastAccessed: jest.fn(),
             getMapsOfUser: jest.fn(),
           },
-        },
-        {
-          provide: YjsDocManagerService,
-          useValue: { destroyDoc: jest.fn() },
-        },
-        {
-          provide: YjsGateway,
-          useValue: { closeConnectionsForMap: jest.fn() },
         },
       ],
     }).compile()

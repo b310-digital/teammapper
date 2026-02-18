@@ -8,6 +8,8 @@ import {
   Param,
   Post,
   Logger,
+  Optional,
+  Inject,
 } from '@nestjs/common'
 import { MapsService } from '../services/maps.service'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
@@ -22,15 +24,18 @@ import {
 } from '../types'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
-import configService from '../../config.service'
 
 @Controller('api/maps')
 export default class MapsController {
   private readonly logger = new Logger(MapsController.name)
   constructor(
     private mapsService: MapsService,
-    private yjsDocManager: YjsDocManagerService,
-    private yjsGateway: YjsGateway
+    @Optional()
+    @Inject(YjsDocManagerService)
+    private yjsDocManager?: YjsDocManagerService,
+    @Optional()
+    @Inject(YjsGateway)
+    private yjsGateway?: YjsGateway
   ) {}
 
   @Get(':id')
@@ -67,7 +72,7 @@ export default class MapsController {
   ): Promise<void> {
     const mmpMap = await this.mapsService.findMap(mapId)
     if (mmpMap && mmpMap.adminId === body.adminId) {
-      if (configService.isYjsEnabled()) {
+      if (this.yjsGateway && this.yjsDocManager) {
         this.yjsGateway.closeConnectionsForMap(mapId)
         this.yjsDocManager.destroyDoc(mapId)
       }

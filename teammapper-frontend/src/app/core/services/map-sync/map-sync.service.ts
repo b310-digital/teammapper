@@ -113,6 +113,7 @@ export class MapSyncService implements OnDestroy {
     null;
   private yjsAwarenessHandler: (() => void) | null = null;
   private yUndoManager: Y.UndoManager | null = null;
+  private yjsSyncToastId: number | null = null;
 
   // Common fields
   private colorMapping: ClientColorMapping;
@@ -1164,6 +1165,7 @@ export class MapSyncService implements OnDestroy {
     });
 
     this.setupYjsWriteAccessListener();
+    this.showSyncLoadingToast();
 
     this.wsProvider.on('sync', (synced: boolean) => {
       if (synced && !this.yjsSynced) {
@@ -1172,11 +1174,30 @@ export class MapSyncService implements OnDestroy {
     });
   }
 
+  private async showSyncLoadingToast(): Promise<void> {
+    const msg = await this.utilsService.translate(
+      'TOASTS.WARNINGS.YJS_SYNC_IN_PROGRESS'
+    );
+    const toast = this.toastrService.info(msg, '', {
+      timeOut: 0,
+      extendedTimeOut: 0,
+    });
+    this.yjsSyncToastId = toast.toastId;
+  }
+
+  private dismissSyncLoadingToast(): void {
+    if (this.yjsSyncToastId !== null) {
+      this.toastrService.remove(this.yjsSyncToastId);
+      this.yjsSyncToastId = null;
+    }
+  }
+
   private buildYjsWsUrl(): string {
     return buildYjsWsUrl();
   }
 
   private handleFirstYjsSync(): void {
+    this.dismissSyncLoadingToast();
     this.yjsSynced = true;
     this.loadMapFromYDoc();
     this.setupYjsNodesObserver();
@@ -1197,6 +1218,7 @@ export class MapSyncService implements OnDestroy {
 
   private setupUndoManagerListeners(): void {
     const updateUndoRedoState = () => {
+      if (!this.yUndoManager) return;
       this.canUndoSubject.next(this.yUndoManager.undoStack.length > 0);
       this.canRedoSubject.next(this.yUndoManager.redoStack.length > 0);
     };
@@ -1256,11 +1278,16 @@ export class MapSyncService implements OnDestroy {
     const result = parseWriteAccessBytes(data);
     if (result !== null) {
       this.yjsWritable = result;
-      this.settingsService.setEditMode(this.yjsWritable);
+      // If sync already completed, apply edit mode immediately
+      // (defense against message ordering races)
+      if (this.yjsSynced) {
+        this.settingsService.setEditMode(result);
+      }
     }
   }
 
   private resetYjs(): void {
+    this.dismissSyncLoadingToast();
     this.unsubscribeYjsListeners();
     this.detachYjsObservers();
     if (this.yUndoManager) {

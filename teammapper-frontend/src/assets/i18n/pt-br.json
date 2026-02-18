@@ -211,7 +211,8 @@
     "MAP_UPDATE_SUCCESS": "Mindmap atualizado com sucesso",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importação de mapa mental em andamento",
-      "MAP_UPDATE_IN_PROGRESS": "Atualizando o mapa mental"
+      "MAP_UPDATE_IN_PROGRESS": "Atualizando o mapa mental",
+      "YJS_SYNC_IN_PROGRESS": "Sincronizando mapa..."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Não é possível copiar o nó raiz!",

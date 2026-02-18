@@ -13,7 +13,6 @@ import * as syncProtocol from 'y-protocols/sync'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
-import configService from '../../config.service'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsPersistenceService } from '../services/yjs-persistence.service'
 import { MapsService } from '../services/maps.service'
@@ -36,6 +35,7 @@ import {
   checkWriteAccess,
   toUint8Array,
   encodeSyncStep1Message,
+  encodeSyncStep2Message,
   encodeSyncUpdateMessage,
   encodeAwarenessMessage,
   encodeWriteAccessMessage,
@@ -73,11 +73,6 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
-    if (!configService.isYjsEnabled()) {
-      this.logger.log('Yjs disabled, skipping WebSocket server setup')
-      return
-    }
-
     const server = this.httpAdapterHost.httpAdapter.getHttpServer()
     this.wss = new WebSocketServer({
       noServer: true,
@@ -341,9 +336,12 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       this.handleClose(ws, mapId, awareness)
     })
 
-    this.send(ws, encodeSyncStep1Message(doc))
-    this.sendAwarenessStates(ws, awareness)
+    // Send write-access BEFORE SyncStep2 so the client knows its
+    // permission level before the sync event fires and sets edit mode.
     this.send(ws, encodeWriteAccessMessage(writable))
+    this.send(ws, encodeSyncStep1Message(doc))
+    this.send(ws, encodeSyncStep2Message(doc))
+    this.sendAwarenessStates(ws, awareness)
   }
 
   private handleMessage(

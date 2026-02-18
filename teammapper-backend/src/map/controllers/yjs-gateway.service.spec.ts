@@ -15,16 +15,14 @@ import {
   WS_CLOSE_MAP_NOT_FOUND,
   WS_CLOSE_TRY_AGAIN,
   CONNECTION_SETUP_TIMEOUT_MS,
+  MESSAGE_SYNC,
+  MESSAGE_WRITE_ACCESS,
   encodeSyncStep1Message,
   encodeSyncUpdateMessage,
 } from '../utils/yjsProtocol'
-
-jest.mock('../../config.service', () => ({
-  __esModule: true,
-  default: {
-    isYjsEnabled: jest.fn(() => true),
-  },
-}))
+import * as syncProtocol from 'y-protocols/sync'
+import * as encoding from 'lib0/encoding'
+import * as decoding from 'lib0/decoding'
 
 // Minimal interface to call private methods in tests
 interface ConnectionHandler {
@@ -189,7 +187,8 @@ describe('YjsGateway', () => {
       expect(docManager.notifyClientCount).toHaveBeenCalledWith('map-1', 1)
     })
 
-    it('sends sync message on connection', async () => {
+    it('sends full doc state so client syncs even without SyncStep1', async () => {
+      doc.getMap('nodes').set('node-1', new Y.Map())
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()
 
@@ -199,7 +198,71 @@ describe('YjsGateway', () => {
         createMockRequest('map-1', 'test-secret')
       )
 
-      expect(ws.send).toHaveBeenCalled()
+      // Simulate client receiving messages WITHOUT having sent SyncStep1
+      const clientDoc = new Y.Doc()
+      for (const call of ws.send.mock.calls) {
+        const data = new Uint8Array(call[0] as Buffer)
+        const decoder = decoding.createDecoder(data)
+        if (decoding.readVarUint(decoder) === MESSAGE_SYNC) {
+          const encoder = encoding.createEncoder()
+          syncProtocol.readSyncMessage(decoder, encoder, clientDoc, null)
+        }
+      }
+
+      expect(clientDoc.getMap('nodes').has('node-1')).toBe(true)
+      clientDoc.destroy()
+    })
+
+    it('sends SyncStep1 and SyncStep2 on connection', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      const syncMessages = ws.send.mock.calls
+        .map((call) => new Uint8Array(call[0] as Buffer))
+        .filter((data) => {
+          const decoder = decoding.createDecoder(data)
+          return decoding.readVarUint(decoder) === MESSAGE_SYNC
+        })
+        .map((data) => {
+          const decoder = decoding.createDecoder(data)
+          decoding.readVarUint(decoder)
+          return decoding.readVarUint(decoder)
+        })
+
+      expect(syncMessages).toEqual([
+        syncProtocol.messageYjsSyncStep1,
+        syncProtocol.messageYjsSyncStep2,
+      ])
+    })
+
+    it('sends write-access message before sync messages', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+
+      const messageTypes = ws.send.mock.calls.map((call) => {
+        const data = new Uint8Array(call[0] as Buffer)
+        const decoder = decoding.createDecoder(data)
+        return decoding.readVarUint(decoder)
+      })
+
+      const writeAccessIndex = messageTypes.indexOf(MESSAGE_WRITE_ACCESS)
+      const firstSyncIndex = messageTypes.indexOf(MESSAGE_SYNC)
+
+      expect(writeAccessIndex).toBeGreaterThanOrEqual(0)
+      expect(firstSyncIndex).toBeGreaterThanOrEqual(0)
+      expect(writeAccessIndex).toBeLessThan(firstSyncIndex)
     })
   })
 

@@ -84,6 +84,7 @@
 - [x] 4.15 Implement Yjs Awareness — node highlighting: observe remote clients' `selectedNodeId` changes, call `mmpService.highlightNode()` with their color, ignore references to non-existent nodes
 - [x] 4.16 Implement cleanup on destroy: disconnect `WebsocketProvider`, destroy Y.Doc, remove observers
 - [x] 4.17 Verify frontend builds, lints, and unit tests pass with flag off (Socket.io path unchanged)
+- [x] 4.18 Show sync loading toast: display a non-auto-dismissing info toast (`TOASTS.WARNINGS.YJS_SYNC_IN_PROGRESS`) when the `WebsocketProvider` is created, dismiss it in `handleFirstYjsSync` and `resetYjs`. Add `yjsSyncToastId` property, `showSyncLoadingToast()`, and `dismissSyncLoadingToast()` methods. Add i18n keys to all 8 locale files. Add unit tests for toast lifecycle.
 
 ## 5. Integration Testing & Flag Activation
 

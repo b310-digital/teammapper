@@ -13,7 +13,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { ExportNodeProperties } from '@mmp/map/types';
-import Node, { Font } from 'mmp/src/map/models/node';
+import Node from 'mmp/src/map/models/node';
 import { of, Observable, BehaviorSubject } from 'rxjs';
 import { provideRouter } from '@angular/router';
 

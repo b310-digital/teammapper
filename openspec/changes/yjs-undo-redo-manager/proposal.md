@@ -13,8 +13,8 @@ When Yjs is active, undo/redo uses MMP's snapshot-based history which has no con
 
 ## Non-goals
 
-- Modifying the MMP library in any way
-- Disabling MMP's internal `history.save()` calls (would require MMP changes)
+- Making more than minimal, targeted changes to the MMP library (only bug fixes required for correct undo/redo behavior)
+- Disabling MMP's internal `history.save()` calls (would require broader MMP refactoring)
 - Adding undo/redo support when Yjs is disabled (existing MMP history continues to work)
 - Keyboard shortcuts for undo/redo (can be added separately; this change focuses on the undo mechanism)
 - Server-side changes (Y.UndoManager is purely a frontend concern)

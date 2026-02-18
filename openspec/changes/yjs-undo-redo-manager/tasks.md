@@ -53,3 +53,21 @@
 - [x] 7.2 Write integration test: undo after import is no-op (import not captured)
 - [x] 7.3 Write integration test: undo/redo button disabled state matches UndoManager stack
 - [x] 7.4 Verify existing Playwright e2e tests pass (undo/redo toolbar buttons still functional)
+
+## 8. Fix coordinate preservation in `addNode()` (MMP)
+
+- [ ] 8.1 Make `calculateCoordinates()` conditional at `nodes.ts:124` — skip when incoming properties already contain valid (non-zero) coordinates
+- [ ] 8.2 Write unit tests: node added with existing coordinates preserves them; node added without coordinates gets calculated positions; root node at (0,0) is not recalculated
+- [ ] 8.3 Verify `applyCoordinatesToMapSnapshot()` still works correctly (uses same pattern)
+
+## 9. Fix parent-first ordering in observer batch processing
+
+- [ ] 9.1 In `handleTopLevelNodeChanges`, collect all added keys from `keysChanged`, then sort parent-first using `sortParentFirst()` before calling `applyRemoteNodeAdd()`
+- [ ] 9.2 Write unit test: when a parent and child are added in a single transaction, parent is processed before child regardless of Y.Map iteration order
+
+## 10. Undo/redo coordinate preservation tests
+
+- [ ] 10.1 Write integration test: delete node, undo restores node at original coordinates (not recalculated)
+- [ ] 10.2 Write integration test: delete subtree (parent + descendants), undo restores all nodes at original coordinates
+- [ ] 10.3 Write integration test: delete subtree, undo, redo, undo — coordinates preserved across multiple cycles
+- [ ] 10.4 Write integration test: delete subtree, undo, redo, undo — always operates on whole branch (undo stack not fragmented into individual node operations)

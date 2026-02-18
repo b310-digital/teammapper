@@ -18,20 +18,19 @@ import cookieParser from 'cookie-parser'
 import { PersonIdMiddleware } from '../auth/person-id.middleware'
 import configService from '../config.service'
 
-// When Yjs is enabled, the Socket.io gateway (MapsGateway) must be excluded
-// because both cannot bind to the same HTTP upgrade path simultaneously.
-const baseProviders: Provider[] = [
-  MapsService,
+// When Yjs is enabled, the Yjs providers replace the Socket.io MapsGateway.
+// Both cannot bind to the same HTTP upgrade path simultaneously.
+const baseProviders: Provider[] = [MapsService, TasksService, AiService]
+
+const yjsProviders: Provider[] = [
   YjsDocManagerService,
   YjsPersistenceService,
   WsConnectionLimiterService,
   YjsGateway,
-  TasksService,
-  AiService,
 ]
 
 const mapProviders: Provider[] = configService.isYjsEnabled()
-  ? baseProviders
+  ? [...baseProviders, ...yjsProviders]
   : [...baseProviders, MapsGateway]
 
 @Module({

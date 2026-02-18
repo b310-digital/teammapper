@@ -175,6 +175,8 @@ describe('MapSyncService', () => {
       error: jest.fn(),
       success: jest.fn(),
       warning: jest.fn(),
+      info: jest.fn().mockReturnValue({ toastId: 42 }),
+      remove: jest.fn(),
     } as unknown as jest.Mocked<ToastrService>;
 
     // Create mock UtilsService using shared test utility
@@ -434,6 +436,71 @@ describe('MapSyncService', () => {
       expect(mmpService.selectNode).toHaveBeenCalledWith('root');
     });
   });
+
+  describe('sync loading toast', () => {
+    let servicePrivate: {
+      showSyncLoadingToast: () => Promise<void>;
+      dismissSyncLoadingToast: () => void;
+      handleFirstYjsSync: () => void;
+      yjsSyncToastId: number | null;
+      yjsSynced: boolean;
+      yDoc: Y.Doc | null;
+      wsProvider: unknown;
+      yjsWritable: boolean;
+    };
+
+    beforeEach(() => {
+      servicePrivate = service as unknown as typeof servicePrivate;
+      servicePrivate.yDoc = new Y.Doc();
+      servicePrivate.yjsSynced = false;
+      servicePrivate.yjsWritable = false;
+    });
+
+    afterEach(() => {
+      servicePrivate.yDoc?.destroy();
+      servicePrivate.yDoc = null;
+    });
+
+    it('showSyncLoadingToast calls toastrService.info with no auto-dismiss', async () => {
+      await servicePrivate.showSyncLoadingToast();
+
+      expect(toastrService.info).toHaveBeenCalledWith(expect.any(String), '', {
+        timeOut: 0,
+        extendedTimeOut: 0,
+      });
+      expect(servicePrivate.yjsSyncToastId).toBe(42);
+    });
+
+    it('dismissSyncLoadingToast calls toastrService.remove with stored ID', async () => {
+      await servicePrivate.showSyncLoadingToast();
+      servicePrivate.dismissSyncLoadingToast();
+
+      expect(toastrService.remove).toHaveBeenCalledWith(42);
+      expect(servicePrivate.yjsSyncToastId).toBeNull();
+    });
+
+    it('dismissSyncLoadingToast does nothing when no toast is active', () => {
+      servicePrivate.yjsSyncToastId = null;
+      servicePrivate.dismissSyncLoadingToast();
+
+      expect(toastrService.remove).not.toHaveBeenCalled();
+    });
+
+    it('handleFirstYjsSync dismisses the loading toast', async () => {
+      const mockAwareness = {
+        getStates: jest.fn().mockReturnValue(new Map()),
+        setLocalStateField: jest.fn(),
+        on: jest.fn(),
+      };
+      servicePrivate.wsProvider = { awareness: mockAwareness };
+
+      await servicePrivate.showSyncLoadingToast();
+      servicePrivate.handleFirstYjsSync();
+
+      expect(toastrService.remove).toHaveBeenCalledWith(42);
+      expect(servicePrivate.yjsSyncToastId).toBeNull();
+    });
+  });
 });
 
 // ─── Yjs utility function tests (pure functions) ──────────────
@@ -550,6 +617,123 @@ describe('write access message parsing', () => {
   it('returns null for message too short to be valid', () => {
     const result = parseWriteAccessBytes(new Uint8Array([4]));
     expect(result).toBeNull();
+  });
+});
+
+describe('parseWriteAccessMessage edit mode behavior', () => {
+  let service: MapSyncService;
+  let settingsService: jest.Mocked<SettingsService>;
+
+  interface ServiceInternals {
+    parseWriteAccessMessage: (e: MessageEvent) => void;
+    yjsWritable: boolean;
+    yjsSynced: boolean;
+  }
+
+  beforeEach(() => {
+    const mmpService = {
+      new: jest.fn(),
+      selectNode: jest.fn(),
+      getRootNode: jest
+        .fn()
+        .mockReturnValue(
+          createMockNode({ id: 'root', name: 'Root', isRoot: true })
+        ),
+      on: jest.fn().mockReturnValue({
+        subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+      }),
+      updateNode: jest.fn(),
+      existNode: jest.fn().mockReturnValue(true),
+      addNodesFromServer: jest.fn(),
+      removeNode: jest.fn(),
+      highlightNode: jest.fn(),
+      exportAsJSON: jest.fn().mockReturnValue([]),
+    } as unknown as jest.Mocked<MmpService>;
+
+    settingsService = {
+      getCachedUserSettings: jest.fn().mockReturnValue({
+        mapOptions: { rootNode: 'Root' },
+      }),
+      getCachedSystemSettings: jest.fn().mockReturnValue({
+        featureFlags: { yjs: false, pictograms: false, ai: false },
+      }),
+      setEditMode: jest.fn(),
+    } as unknown as jest.Mocked<SettingsService>;
+
+    TestBed.configureTestingModule({
+      providers: [
+        MapSyncService,
+        { provide: MmpService, useValue: mmpService },
+        { provide: HttpService, useValue: { get: jest.fn(), post: jest.fn() } },
+        {
+          provide: StorageService,
+          useValue: { get: jest.fn(), set: jest.fn() },
+        },
+        { provide: SettingsService, useValue: settingsService },
+        { provide: UtilsService, useValue: createMockUtilsService() },
+        {
+          provide: ToastService,
+          useValue: { showValidationCorrection: jest.fn() },
+        },
+        {
+          provide: DialogService,
+          useValue: { openCriticalErrorDialog: jest.fn() },
+        },
+        {
+          provide: ToastrService,
+          useValue: {
+            error: jest.fn(),
+            success: jest.fn(),
+            warning: jest.fn(),
+          },
+        },
+      ],
+    });
+
+    service = TestBed.inject(MapSyncService);
+  });
+
+  afterEach(() => {
+    service.ngOnDestroy();
+  });
+
+  it('does not call setEditMode when not yet synced', () => {
+    const writeAccessData = new Uint8Array([4, 1]).buffer;
+    const event = new MessageEvent('message', { data: writeAccessData });
+
+    (service as unknown as ServiceInternals).parseWriteAccessMessage(event);
+
+    expect(settingsService.setEditMode).not.toHaveBeenCalled();
+  });
+
+  it('calls setEditMode when already synced', () => {
+    (service as unknown as ServiceInternals).yjsSynced = true;
+
+    const writeAccessData = new Uint8Array([4, 1]).buffer;
+    const event = new MessageEvent('message', { data: writeAccessData });
+
+    (service as unknown as ServiceInternals).parseWriteAccessMessage(event);
+
+    expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
+  });
+
+  it('stores yjsWritable=false without calling setEditMode when not synced', () => {
+    const readOnlyData = new Uint8Array([4, 0]).buffer;
+    const event = new MessageEvent('message', { data: readOnlyData });
+
+    (service as unknown as ServiceInternals).parseWriteAccessMessage(event);
+
+    expect(settingsService.setEditMode).not.toHaveBeenCalled();
+  });
+
+  it('does not store yjsWritable for non-write-access messages', () => {
+    const nonWriteAccessData = new Uint8Array([0, 1]).buffer;
+    const event = new MessageEvent('message', { data: nonWriteAccessData });
+
+    (service as unknown as ServiceInternals).parseWriteAccessMessage(event);
+
+    expect(settingsService.setEditMode).not.toHaveBeenCalled();
+    expect((service as unknown as ServiceInternals).yjsWritable).toBe(false);
   });
 });
 

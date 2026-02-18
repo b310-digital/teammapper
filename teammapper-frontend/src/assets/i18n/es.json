@@ -211,7 +211,8 @@
     "MAP_UPDATE_SUCCESS": "¡Mapa mental actualizado correctamente!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importación de mapas mentales en curso",
-      "MAP_UPDATE_IN_PROGRESS": "Actualizando mapa mental..."
+      "MAP_UPDATE_IN_PROGRESS": "Actualizando mapa mental...",
+      "YJS_SYNC_IN_PROGRESS": "Sincronizando mapa..."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "No es posible copiar el nodo raíz.",
