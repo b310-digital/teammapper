@@ -130,6 +130,7 @@ export class SocketIoSyncService implements SyncStrategy {
       this.ctx.setAttachedNode(this.mmpService.selectNode());
       this.ctx.updateAttachedMap();
       this.updateMap();
+      this.updateCanUndoRedo();
     });
   }
 
@@ -154,6 +155,7 @@ export class SocketIoSyncService implements SyncStrategy {
       this.ctx.setAttachedNode(result.nodeProperties);
       this.emitUpdateNode(result);
       this.ctx.updateAttachedMap();
+      this.updateCanUndoRedo();
     });
   }
 
@@ -189,6 +191,7 @@ export class SocketIoSyncService implements SyncStrategy {
         this.ctx.updateAttachedMap();
         this.mmpService.selectNode(newNode.id);
         this.mmpService.editNode();
+        this.updateCanUndoRedo();
       });
   }
 
@@ -198,6 +201,7 @@ export class SocketIoSyncService implements SyncStrategy {
       .subscribe((newNodes: ExportNodeProperties[]) => {
         this.emitAddNodes(newNodes);
         this.ctx.updateAttachedMap();
+        this.updateCanUndoRedo();
       });
   }
 
@@ -207,6 +211,7 @@ export class SocketIoSyncService implements SyncStrategy {
       .subscribe((removedNode: ExportNodeProperties) => {
         this.emitRemoveNode(removedNode);
         this.ctx.updateAttachedMap();
+        this.updateCanUndoRedo();
       });
   }
 
