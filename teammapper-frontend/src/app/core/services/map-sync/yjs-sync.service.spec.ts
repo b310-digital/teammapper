@@ -27,102 +27,80 @@ function createMockContext(): MapSyncContext {
   };
 }
 
+function createMockMmpService(): jest.Mocked<MmpService> {
+  return {
+    on: jest.fn().mockReturnValue({
+      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+    }),
+    selectNode: jest.fn(),
+    existNode: jest.fn().mockReturnValue(true),
+    exportAsJSON: jest.fn().mockReturnValue([]),
+  } as unknown as jest.Mocked<MmpService>;
+}
+
+function createService(): YjsSyncService {
+  return new YjsSyncService(
+    createMockContext(),
+    createMockMmpService(),
+    {} as SettingsService,
+    {} as UtilsService,
+    {} as ToastrService,
+    {} as HttpService
+  );
+}
+
+interface YjsSyncInternals {
+  yjsWritable: boolean;
+  yDoc: unknown;
+}
+
+function internals(service: YjsSyncService): YjsSyncInternals {
+  return service as unknown as YjsSyncInternals;
+}
+
 describe('YjsSyncService', () => {
   describe('setWritable', () => {
     let service: YjsSyncService;
 
-    interface YjsSyncInternals {
-      yjsWritable: boolean;
-    }
-
     beforeEach(() => {
-      const mmpService = {
-        on: jest.fn().mockReturnValue({
-          subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
-        }),
-        selectNode: jest.fn(),
-        existNode: jest.fn().mockReturnValue(true),
-        exportAsJSON: jest.fn().mockReturnValue([]),
-      } as unknown as jest.Mocked<MmpService>;
-
-      const ctx = createMockContext();
-
-      service = new YjsSyncService(
-        ctx,
-        mmpService,
-        {} as SettingsService,
-        {} as UtilsService,
-        {} as ToastrService,
-        {} as HttpService
-      );
+      service = createService();
     });
-
-    function internals(): YjsSyncInternals {
-      return service as unknown as YjsSyncInternals;
-    }
 
     it('sets yjsWritable to true', () => {
       service.setWritable(true);
 
-      expect(internals().yjsWritable).toBe(true);
+      expect(internals(service).yjsWritable).toBe(true);
     });
 
     it('sets yjsWritable to false', () => {
       service.setWritable(false);
 
-      expect(internals().yjsWritable).toBe(false);
+      expect(internals(service).yjsWritable).toBe(false);
     });
   });
 
   describe('initMap does not alter writable state', () => {
     let service: YjsSyncService;
 
-    interface YjsSyncInternals {
-      yjsWritable: boolean;
-      yDoc: unknown;
-    }
-
     beforeEach(() => {
-      const mmpService = {
-        on: jest.fn().mockReturnValue({
-          subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
-        }),
-        selectNode: jest.fn(),
-        existNode: jest.fn().mockReturnValue(true),
-        exportAsJSON: jest.fn().mockReturnValue([]),
-      } as unknown as jest.Mocked<MmpService>;
-
-      const ctx = createMockContext();
-
-      service = new YjsSyncService(
-        ctx,
-        mmpService,
-        {} as SettingsService,
-        {} as UtilsService,
-        {} as ToastrService,
-        {} as HttpService
-      );
+      service = createService();
     });
 
     afterEach(() => {
       service.destroy();
     });
 
-    function internals(): YjsSyncInternals {
-      return service as unknown as YjsSyncInternals;
-    }
-
     it('does not reset yjsWritable when called', () => {
       service.setWritable(true);
       service.initMap('test-uuid');
 
-      expect(internals().yjsWritable).toBe(true);
+      expect(internals(service).yjsWritable).toBe(true);
     });
 
     it('creates a new yDoc', () => {
       service.initMap('test-uuid');
 
-      expect(internals().yDoc).not.toBeNull();
+      expect(internals(service).yDoc).not.toBeNull();
     });
 
     it('retains writable after destroy-setWritable-initMap sequence', () => {
@@ -130,7 +108,7 @@ describe('YjsSyncService', () => {
       service.setWritable(true);
       service.initMap('test-uuid');
 
-      expect(internals().yjsWritable).toBe(true);
+      expect(internals(service).yjsWritable).toBe(true);
     });
   });
 });
