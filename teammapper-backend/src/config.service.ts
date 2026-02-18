@@ -56,6 +56,11 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
+  public isAiEnabled(): boolean {
+    const value = this.getValue('AI_ENABLED', false)
+    return value?.toLowerCase() === 'true'
+  }
+
   public isWsTrustProxy(): boolean {
     const value = this.getValue('WS_TRUST_PROXY', false)
     return value?.toLowerCase() === 'true'

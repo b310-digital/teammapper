@@ -39,6 +39,7 @@ export class SettingsService {
 
     const settings = deepmerge(defaultSettings, overrideSettings) as Settings
     settings.systemSettings.featureFlags.yjs = configService.isYjsEnabled()
+    settings.systemSettings.featureFlags.ai = configService.isAiEnabled()
     return settings
   }
 }
