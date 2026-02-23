@@ -61,7 +61,7 @@
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "@teammapper/mermaid-mindmap-parser": "workspace:^",
-    "ai": "^5.0.116",
+    "ai": "^6.0.97",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.9.0",
     "deep-object-diff": "^1.1.9",

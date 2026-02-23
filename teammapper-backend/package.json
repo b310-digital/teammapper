@@ -46,7 +46,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.13",
     "@types/uuid": "^11.0.0",
-    "ai": "5.0.116",
+    "ai": "6.0.97",
     "cache-manager": "^7.2.8",
     "class-validator": "^0.14.3",
     "cookie-parser": "^1.4.7",
