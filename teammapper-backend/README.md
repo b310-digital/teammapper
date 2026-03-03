@@ -120,6 +120,27 @@ Copy `.env.default` to `.env` and configure the variables below.
 | `POSTGRES_TEST_PASSWORD` | Test database password | - |
 | `POSTGRES_TEST_DATABASE` | Test database name | - |
 
+## Static File Serving & SPA Routing
+
+In production, the compiled frontend is copied into the backend's `client/` directory and served by NestJS:
+
+- **`/assets/*`** — Served directly by Express static middleware with cache headers (24h for images/fonts).
+- **All other known routes** — Served by `ServeStaticModule` which returns `index.html` for client-side routing.
+
+The `ServeStaticModule` uses a `renderPath` regex to restrict the SPA fallback to known frontend routes only:
+
+```
+/            → About page
+/map         → Map landing
+/map/:id     → Map editor
+/app/settings   → Settings
+/app/shortcuts  → Shortcuts
+```
+
+**Why `renderPath` is needed:** Without it, any unknown path returns `index.html` with HTTP 200. This causes bots and crawlers that ignore `<base href="/">` to resolve the relative asset paths in the HTML against the current URL, creating infinitely nesting request loops (e.g. `/map/assets/icons/assets/icons/...`).
+
+**When adding new frontend routes:** If a new top-level route is added to the Angular router (in `root.routes.ts`), the `renderPath` regex in `app.module.ts` must be updated to include it.
+
 ## Typeorm
 For a list of commands check https://github.com/typeorm/typeorm/blob/master/docs/using-cli.md
 
