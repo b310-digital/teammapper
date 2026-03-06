@@ -2,6 +2,7 @@
 .editorconfig
 .env*
 .git
+.npmrc
 .github
 .gitignore
 .prettier*

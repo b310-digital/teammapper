@@ -286,6 +286,9 @@ importers:
       '@angular/router':
         specifier: 21.2.0
         version: 21.2.0(@angular/common@21.2.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0))(rxjs@7.8.2))(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0))(@angular/platform-browser@21.2.0(@angular/animations@21.2.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0)))(@angular/common@21.2.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0))(rxjs@7.8.2))(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0)))(rxjs@7.8.2)
+      '@edufeed-org/oer-finder-plugin':
+        specifier: 0.2.3
+        version: 0.2.3
       '@fortawesome/angular-fontawesome':
         specifier: ^4.0.0
         version: 4.0.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0))
@@ -1601,6 +1604,15 @@ packages:
     resolution: {integrity: sha512-4B4OijXeVNOPZlYA2oEwWOTkzyltLao+xbotHQeqN++Rv27Y6s818+n2Qkp8q+Fxhn0t/5lA5X1Mxktud8eayQ==}
     engines: {node: '>=14.17.0'}
 
+  '@edufeed-org/oer-adapter-core@0.0.1':
+    resolution: {integrity: sha512-i+UjFg8CTAKDFOBOd3etWGSeJVVbNSPi/DoynNgV5nsfg1yrugAEdAEST/3VYoXnthG6Ar/0QOTLfh/ikS0rFA==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-adapter-core/0.0.1/c1505f9d4e6912c53b7c291cfbf48c0839af98ba}
+
+  '@edufeed-org/oer-finder-api-client@0.0.9':
+    resolution: {integrity: sha512-1c30iyOOl/fTCKCXqP77RSnnnX9uVlpB0dsJ4IamTm7CEFyiv1OA4xa3y6+HRD2Za3CQVm37vRRWPb16MNXXpQ==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-api-client/0.0.9/84eca03e064f360e1c694b8ee53babf7768b3620}
+
+  '@edufeed-org/oer-finder-plugin@0.2.3':
+    resolution: {integrity: sha512-TeAJpqFPGdaqS6JGFItqhZLEwoVscynqy5iCQlliWJqYBaMk0zyyGJgwQLXau1IvgRoU99AFBTS1JwORFCsXvA==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-plugin/0.2.3/c6e7c3daa6c06e365f539562d8dfff8086d1b7fa}
+
   '@egjs/hammerjs@2.0.17':
     resolution: {integrity: sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==}
     engines: {node: '>=0.8.0'}
@@ -2443,6 +2455,12 @@ packages:
     peerDependencies:
       '@inquirer/prompts': '>= 3 < 8'
       listr2: 9.0.5
+
+  '@lit-labs/ssr-dom-shim@1.5.1':
+    resolution: {integrity: sha512-Aou5UdlSpr5whQe8AA/bZG0jMj96CoJIWbGfZ91qieWu5AWUMKw8VR/pAkQkJYvBNhmCcWnZlyyk5oze8JIqYA==}
+
+  '@lit/reactive-element@2.1.2':
+    resolution: {integrity: sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==}
 
   '@lmdb/lmdb-darwin-arm64@3.5.1':
     resolution: {integrity: sha512-tpfN4kKrrMpQ+If1l8bhmoNkECJi0iOu6AEdrTJvWVC+32sLxTARX5Rsu579mPImRP9YFWfWgeRQ5oav7zApQQ==}
@@ -6515,6 +6533,15 @@ packages:
     resolution: {integrity: sha512-ME4Fb83LgEgwNw96RKNvKV4VTLuXfoKudAmm2lP8Kk87KaMK0/Xrx/aAkMWmT8mDb+3MlFDspfbCs7adjRxA2g==}
     engines: {node: '>=20.0.0'}
 
+  lit-element@4.2.2:
+    resolution: {integrity: sha512-aFKhNToWxoyhkNDmWZwEva2SlQia+jfG0fjIWV//YeTaWrVnOxD89dPKfigCUspXFmjzOEUQpOkejH5Ly6sG0w==}
+
+  lit-html@3.3.2:
+    resolution: {integrity: sha512-Qy9hU88zcmaxBXcc10ZpdK7cOLXvXpRoBxERdtqV9QOrfpMZZ6pSYP91LhpPtap3sFMUiL7Tw2RImbe0Al2/kw==}
+
+  lit@3.3.2:
+    resolution: {integrity: sha512-NF9zbsP79l4ao2SNrH3NkfmFgN/hBYSQo90saIVI1o5GpjAdCPVstVzO1MrLOakHoEhYkrtRjPK6Ob521aoYWQ==}
+
   lmdb@3.5.1:
     resolution: {integrity: sha512-NYHA0MRPjvNX+vSw8Xxg6FLKxzAG+e7Pt8RqAQA/EehzHVXq9SxDqJIN3JL1hK0dweb884y8kIh6rkWvPyg9Wg==}
     hasBin: true
@@ -6708,6 +6735,10 @@ packages:
 
   mime-types@2.1.35:
     resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
+    engines: {node: '>= 0.6'}
+
+  mime-types@3.0.1:
+    resolution: {integrity: sha512-xRc4oEhT6eaBpU1XF7AjpOFD+xQmXNB5OVKwp4tqCuBpHLS/ZbBDrc07mYTDqVMg6PfxUjjNp85O6Cd2Z/5HWA==}
     engines: {node: '>= 0.6'}
 
   mime-types@3.0.2:
@@ -7024,6 +7055,12 @@ packages:
   open@8.4.0:
     resolution: {integrity: sha512-XgFPPM+B28FtCCgSb9I+s9szOC1vZRSwgWsRUA5ylIxRTgKozqjOCrVOqGsYABPYK5qnfqClxZTFBa8PKt2v6Q==}
     engines: {node: '>=12'}
+
+  openapi-fetch@0.13.8:
+    resolution: {integrity: sha512-yJ4QKRyNxE44baQ9mY5+r/kAzZ8yXMemtNAOFwOzRXJscdjSxxzWSNlyBAr+o5JjkUw9Lc3W7OIoca0cY3PYnQ==}
+
+  openapi-typescript-helpers@0.0.15:
+    resolution: {integrity: sha512-opyTPaunsklCBpTK8JGef6mfPhLSnyy5a0IN9vKtx3+4aExf+KxEqYwIy3hqkedXIB97u357uLMJsOnm3GVjsw==}
 
   opencollective-postinstall@2.0.3:
     resolution: {integrity: sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==}
@@ -10924,6 +10961,18 @@ snapshots:
 
   '@discoveryjs/json-ext@0.6.3': {}
 
+  '@edufeed-org/oer-adapter-core@0.0.1': {}
+
+  '@edufeed-org/oer-finder-api-client@0.0.9':
+    dependencies:
+      openapi-fetch: 0.13.8
+
+  '@edufeed-org/oer-finder-plugin@0.2.3':
+    dependencies:
+      '@edufeed-org/oer-adapter-core': 0.0.1
+      '@edufeed-org/oer-finder-api-client': 0.0.9
+      lit: 3.3.2
+
   '@egjs/hammerjs@2.0.17':
     dependencies:
       '@types/hammerjs': 2.0.46
@@ -11732,6 +11781,12 @@ snapshots:
       listr2: 9.0.5
     transitivePeerDependencies:
       - '@types/node'
+
+  '@lit-labs/ssr-dom-shim@1.5.1': {}
+
+  '@lit/reactive-element@2.1.2':
+    dependencies:
+      '@lit-labs/ssr-dom-shim': 1.5.1
 
   '@lmdb/lmdb-darwin-arm64@3.5.1':
     optional: true
@@ -12888,8 +12943,7 @@ snapshots:
 
   '@types/tough-cookie@4.0.5': {}
 
-  '@types/trusted-types@2.0.7':
-    optional: true
+  '@types/trusted-types@2.0.7': {}
 
   '@types/uuid@11.0.0':
     dependencies:
@@ -13211,7 +13265,7 @@ snapshots:
 
   accepts@2.0.0:
     dependencies:
-      mime-types: 3.0.2
+      mime-types: 3.0.1
       negotiator: 1.0.0
 
   acorn-import-phases@1.0.4(acorn@8.15.0):
@@ -15003,7 +15057,7 @@ snapshots:
       fresh: 2.0.0
       http-errors: 2.0.1
       merge-descriptors: 2.0.0
-      mime-types: 3.0.2
+      mime-types: 3.0.1
       on-finished: 2.4.1
       once: 1.4.0
       parseurl: 1.3.3
@@ -16356,6 +16410,22 @@ snapshots:
       rfdc: 1.4.1
       wrap-ansi: 9.0.2
 
+  lit-element@4.2.2:
+    dependencies:
+      '@lit-labs/ssr-dom-shim': 1.5.1
+      '@lit/reactive-element': 2.1.2
+      lit-html: 3.3.2
+
+  lit-html@3.3.2:
+    dependencies:
+      '@types/trusted-types': 2.0.7
+
+  lit@3.3.2:
+    dependencies:
+      '@lit/reactive-element': 2.1.2
+      lit-element: 4.2.2
+      lit-html: 3.3.2
+
   lmdb@3.5.1:
     dependencies:
       '@harperfast/extended-iterable': 1.0.3
@@ -16553,6 +16623,10 @@ snapshots:
   mime-types@2.1.35:
     dependencies:
       mime-db: 1.52.0
+
+  mime-types@3.0.1:
+    dependencies:
+      mime-db: 1.54.0
 
   mime-types@3.0.2:
     dependencies:
@@ -16892,6 +16966,12 @@ snapshots:
       define-lazy-prop: 2.0.0
       is-docker: 2.2.1
       is-wsl: 2.2.0
+
+  openapi-fetch@0.13.8:
+    dependencies:
+      openapi-typescript-helpers: 0.0.15
+
+  openapi-typescript-helpers@0.0.15: {}
 
   opencollective-postinstall@2.0.3: {}
 
@@ -18299,7 +18379,7 @@ snapshots:
     dependencies:
       content-type: 1.0.5
       media-typer: 1.1.0
-      mime-types: 3.0.2
+      mime-types: 3.0.1
 
   typed-array-buffer@1.0.3:
     dependencies:
@@ -18556,7 +18636,7 @@ snapshots:
     dependencies:
       colorette: 2.0.20
       memfs: 4.56.10(tslib@2.8.1)
-      mime-types: 3.0.2
+      mime-types: 3.0.1
       on-finished: 2.4.1
       range-parser: 1.2.1
       schema-utils: 4.3.3

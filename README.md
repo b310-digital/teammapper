@@ -81,6 +81,16 @@ volumes:
 
 For examples with a reverse proxy, see [documentation about deployment](docs/deployment.md).
 
+### Prerequisites
+
+This project uses packages from the GitHub Package Registry. The `.npmrc` file in the project root is configured to use a `GITHUB_TOKEN` environment variable for authentication. Set it in your shell before installing dependencies:
+
+```bash
+export GITHUB_TOKEN=your_github_personal_access_token
+```
+
+The token needs the `read:packages` scope. You can create one at https://github.com/settings/tokens.
+
 ### Development
 
 -   Start up app necessary services
