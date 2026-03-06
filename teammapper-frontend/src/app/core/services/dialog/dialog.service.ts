@@ -28,6 +28,7 @@ export class DialogService {
   openPictogramDialog() {
     this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent, {
       minWidth: '50%',
+      autoFocus: false,
     });
     this.pictogramsModalRef.componentInstance.onPictogramAdd.subscribe(() => {
       this.closePictogramDialog();

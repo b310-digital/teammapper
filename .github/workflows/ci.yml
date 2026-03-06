@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
     teammapper-backend-build:
         runs-on: ubuntu-latest

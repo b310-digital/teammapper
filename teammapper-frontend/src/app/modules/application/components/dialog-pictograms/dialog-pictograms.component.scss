@@ -18,5 +18,8 @@ oer-search,
 oer-list,
 oer-load-more {
   --primary-color: #{mat.m2-get-color-from-palette(theme.$app-primary)};
-  --primary-hover-color: #{mat.m2-get-color-from-palette(theme.$app-primary, 800)};
+  --primary-hover-color: #{mat.m2-get-color-from-palette(
+      theme.$app-primary,
+      800
+    )};
 }

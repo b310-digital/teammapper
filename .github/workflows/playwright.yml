@@ -7,6 +7,7 @@ on:
 jobs:
   test:
     env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DB_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD != '' && secrets.CI_POSTGRES_PASSWORD || format('fallback_ci_password_{0}', github.run_number) }}
     services:
       postgres:
