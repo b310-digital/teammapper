@@ -35,17 +35,14 @@ jobs:
                   username: ${{ github.repository_owner }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - uses: actions/setup-node@v6
-              with:
-                node-version: '25'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
-
             - name: Build and export to Docker
               uses: docker/build-push-action@v6
               with:
                   context: .
+                  secret-files: |
+                      npmrc=.npmrc
+                  secrets: |
+                      GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
                   tags: |
                       ghcr.io/b310-digital/teammapper:latest
 
@@ -54,15 +51,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@v6
-
-            - uses: actions/setup-node@v6
-              with:
-                node-version: '25'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-node-pnpm
             - run: pnpm --filter teammapper-backend run lint
 
     teammapper-frontend-lint:
@@ -70,15 +59,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@v6
-
-            - uses: actions/setup-node@v6
-              with:
-                node-version: '25'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-node-pnpm
             - run: pnpm --filter teammapper-frontend run lint
 
     teammapper-frontend-tsc:
@@ -86,15 +67,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@v6
-
-            - uses: actions/setup-node@v6
-              with:
-                node-version: '25'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-node-pnpm
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
             - run: pnpm --filter teammapper-frontend run tsc
 
@@ -103,15 +76,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@v6
-
-            - uses: actions/setup-node@v6
-              with:
-                node-version: '25'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-node-pnpm
             - run: pnpm --filter teammapper-backend run tsc
 
     teammapper-backend-test-e2e:
@@ -132,15 +97,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@v6
-
-            - uses: actions/setup-node@v6
-              with:
-                node-version: '25'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-node-pnpm
             - run: pnpm --filter teammapper-backend run test
               env:
                   POSTGRES_DATABASE: "teammapper-backend-test"
@@ -161,13 +118,6 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: actions/setup-node@v6
-              with:
-                node-version: '25'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-node-pnpm
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
             - run: pnpm --filter teammapper-frontend run test

@@ -6,6 +6,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
+      secrets:
+        - npmrc
+        - GITHUB_TOKEN
     environment:
       MODE: ${PROD_MODE:-DEV}
       BINDING: "0.0.0.0"
@@ -45,6 +48,12 @@ services:
       - ./ca/server.crt:/var/lib/postgresql/server.crt
       - ./ca/server.key:/var/lib/postgresql/server.key
       - postgres_prod_data:/var/lib/postgresql/data/pgdata
+
+secrets:
+  npmrc:
+    file: .npmrc
+  GITHUB_TOKEN:
+    environment: GITHUB_TOKEN
 
 volumes:
   postgres_prod_data:

@@ -56,4 +56,3 @@ ca/*.key
 ca/*.req
 
 .env.prod
-.npmrc

@@ -1,0 +1,14 @@
+name: Setup Node and pnpm
+description: Sets up Node.js, pnpm via corepack, and installs dependencies
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v6
+      with:
+        node-version: '25'
+    - run: corepack enable
+      shell: bash
+    - run: corepack prepare pnpm@9 --activate
+      shell: bash
+    - run: pnpm install --frozen-lockfile
+      shell: bash

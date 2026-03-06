@@ -19,7 +19,10 @@ COPY --chown=node:node package.json pnpm-workspace.yaml pnpm-lock.yaml $APP_PATH
 COPY --chown=node:node teammapper-backend/package.json $APP_BACKEND_PATH/
 COPY --chown=node:node teammapper-frontend/package.json $APP_FRONTEND_PATH/
 COPY --chown=node:node teammapper-frontend/packages $APP_FRONTEND_PATH/packages
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=secret,id=npmrc,target=/home/node/app/.npmrc,uid=1000 \
+    --mount=type=secret,id=GITHUB_TOKEN,uid=1000 \
+    GITHUB_TOKEN=$(cat /run/secrets/GITHUB_TOKEN) \
+    pnpm install --frozen-lockfile
 
 COPY --chown=node:node teammapper-backend $APP_BACKEND_PATH/
 RUN pnpm --filter teammapper-backend run build

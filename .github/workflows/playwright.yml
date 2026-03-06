@@ -28,13 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
-      with:
-        node-version: '25'
-    - run: corepack enable
-    - run: corepack prepare pnpm@9 --activate
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+    - uses: ./.github/actions/setup-node-pnpm
     - name: Build packages
       run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
     - name: Install Playwright Browsers
