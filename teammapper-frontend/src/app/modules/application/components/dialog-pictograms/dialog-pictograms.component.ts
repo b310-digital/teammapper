@@ -1,7 +1,7 @@
 import {
+  AfterViewInit,
   Component,
   EventEmitter,
-  HostListener,
   inject,
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
@@ -39,12 +39,17 @@ import { MatDivider } from '@angular/material/divider';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import type {
-  OerItem,
   OerSearchResultEvent,
   OerCardClickEvent,
+  OerSearchElement,
+  SourceConfig,
 } from '@edufeed-org/oer-finder-plugin';
 // Import the OER Finder Plugin to register all web components
 import '@edufeed-org/oer-finder-plugin';
+import { registerArasaacAdapter } from '@edufeed-org/oer-finder-plugin/adapters';
+
+// Register ARASAAC adapter for direct-client mode (no server proxy)
+registerArasaacAdapter();
 
 @Component({
   selector: 'teammapper-dialog-pictograms',
@@ -71,89 +76,94 @@ import '@edufeed-org/oer-finder-plugin';
     TranslatePipe,
   ],
 })
-export class DialogPictogramsComponent {
+export class DialogPictogramsComponent implements AfterViewInit {
   private pictoService = inject(PictogramService);
   private breakpointObserver = inject(BreakpointObserver);
   private mmpService = inject(MmpService);
   private utilsService = inject(UtilsService);
 
-  @ViewChild('listElement', { static: false }) listElement!: ElementRef;
+  @ViewChild('searchElement') searchElement!: ElementRef;
+  @ViewChild('listElement') listElement!: ElementRef;
+  @ViewChild('loadMoreElement') loadMoreElement!: ElementRef;
 
-  public oers: OerItem[] = [];
-  public loading = true;
-  public pictos: IPictogramResponse[];
   public onPictogramAdd = new EventEmitter();
+  public pictos: IPictogramResponse[];
   public searchTerm = '';
   public cardLayout = this.breakpointObserver
     .observe([Breakpoints.WebLandscape, Breakpoints.TabletLandscape])
     .pipe(
       map((state: BreakpointState) => {
         if (state.breakpoints[Breakpoints.TabletLandscape]) {
-          return {
-            columns: 2,
-            miniCard: { cols: 1, rows: 1 },
-          };
+          return { columns: 2, miniCard: { cols: 1, rows: 1 } };
         }
-
         if (state.breakpoints[Breakpoints.WebLandscape]) {
-          return {
-            columns: 4,
-            miniCard: { cols: 1, rows: 1 },
-          };
+          return { columns: 4, miniCard: { cols: 1, rows: 1 } };
         }
-
-        return {
-          columns: 1,
-          miniCard: { cols: 1, rows: 1 },
-        };
+        return { columns: 1, miniCard: { cols: 1, rows: 1 } };
       })
     );
 
-  @HostListener('document:keydown.enter')
-  async search() {
-    this.pictoService.getPictos(this.searchTerm).subscribe(pictos => {
-      this.pictos = pictos;
-    });
+  sources: SourceConfig[] = [
+    { id: 'arasaac', label: 'ARASAAC', checked: true },
+  ];
+
+  ngAfterViewInit(): void {
+    const searchEl = this.searchElement.nativeElement as OerSearchElement;
+    searchEl.sources = this.sources;
+    const stopPropagation = (event: Event) => event.stopPropagation();
+    searchEl.addEventListener('keydown', stopPropagation);
+    searchEl.addEventListener('keyup', stopPropagation);
+    searchEl.addEventListener('keypress', stopPropagation);
   }
 
-  async onCardClick(event: Event) {
-    const customEvent = event as CustomEvent<OerCardClickEvent>;
-    const oer = customEvent.detail.oer;
-    const url = oer?.img_proxy?.small;
-    const blob = url ? await (await fetch(url)).blob() : null;
+  onSearchLoading(): void {
+    const listEl = this.listElement.nativeElement;
+    const loadMoreEl = this.loadMoreElement.nativeElement;
+    listEl.loading = true;
+    loadMoreEl.loading = true;
+  }
+
+  onSearchResults(event: Event): void {
+    const { data, meta } = (event as OerSearchResultEvent).detail;
+    const listEl = this.listElement.nativeElement;
+    const loadMoreEl = this.loadMoreElement.nativeElement;
+    listEl.oers = data;
+    listEl.loading = false;
+    loadMoreEl.metadata = meta;
+    loadMoreEl.loading = false;
+  }
+
+  onSearchError(event: Event): void {
+    const { error } = (event as CustomEvent<{ error: string }>).detail;
+    const listEl = this.listElement.nativeElement;
+    const loadMoreEl = this.loadMoreElement.nativeElement;
+    listEl.oers = [];
+    listEl.error = error;
+    listEl.loading = false;
+    loadMoreEl.metadata = null;
+    loadMoreEl.loading = false;
+  }
+
+  onSearchCleared(): void {
+    const listEl = this.listElement.nativeElement;
+    const loadMoreEl = this.loadMoreElement.nativeElement;
+    listEl.oers = [];
+    listEl.error = null;
+    listEl.loading = false;
+    loadMoreEl.metadata = null;
+    loadMoreEl.loading = false;
+  }
+
+  async onCardClick(event: Event): Promise<void> {
+    const { oer } = (event as OerCardClickEvent).detail;
+    const url = oer?.extensions?.images?.small;
+    const blob = url ? await this.fetchImageBlob(url) : null;
     if (blob) {
       this.mmpService.addNodeImage(await this.utilsService.blobToBase64(blob));
       this.onPictogramAdd.emit();
     } else {
-      alert(`OER: ${oer.amb_metadata?.name || 'Unknown'}\nNo URL available`);
+      alert(`OER: ${oer.amb?.name || 'Unknown'}\nNo URL available`);
     }
-  }
-
-  onSearchResults(event: Event) {
-    const customEvent = event as CustomEvent<OerSearchResultEvent>;
-    const { data, meta } = customEvent.detail;
-
-    const listEl = this.listElement.nativeElement;
-    listEl.oers = data;
-  }
-
-  onSearchError(event: Event) {
-    const customEvent = event as CustomEvent<{ error: string }>;
-    const listEl = this.listElement.nativeElement;
-    listEl.oers = [];
-    listEl.loading = false;
-    listEl.error = customEvent.detail.error;
-    listEl.showPagination = false;
-    listEl.metadata = null;
-  }
-
-  onSearchCleared(_event: Event) {
-    const listEl = this.listElement.nativeElement;
-    listEl.oers = [];
-    listEl.loading = false;
-    listEl.error = null;
-    listEl.showPagination = false;
-    listEl.metadata = null;
   }
 
   async getImageFileOfId(id: number) {
@@ -165,5 +175,10 @@ export class DialogPictogramsComponent {
 
   getImageUrlOfId(id: number): string {
     return this.pictoService.getPictoImageUrl(id);
+  }
+
+  private async fetchImageBlob(url: string): Promise<Blob> {
+    const response = await fetch(url);
+    return response.blob();
   }
 }

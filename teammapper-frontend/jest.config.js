@@ -26,6 +26,10 @@ module.exports = {
   moduleNameMapper: {
     '@mmp/index': '<rootDir>/src/test/mocks/mmp-index.ts',
     '@mmp/map/map': '<rootDir>/src/test/mocks/mmp-map.ts',
+    '@edufeed-org/oer-finder-plugin/adapters':
+      '<rootDir>/src/test/mocks/oer-finder-plugin.ts',
+    '@edufeed-org/oer-finder-plugin':
+      '<rootDir>/src/test/mocks/oer-finder-plugin.ts',
   },
   testEnvironment: 'jsdom',
   transformIgnorePatterns: [

@@ -7,7 +7,6 @@ import { DialogPictogramsComponent } from './dialog-pictograms.component';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
-import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { of } from 'rxjs';
 
 describe('DialogPictogramsComponent', () => {
@@ -16,33 +15,6 @@ describe('DialogPictogramsComponent', () => {
   let mockMmpService: jest.Mocked<MmpService>;
   let mockUtilsService: jest.Mocked<UtilsService>;
   let mockPictoService: jest.Mocked<PictogramService>;
-
-  const mockPictogramResponse: IPictogramResponse[] = [
-    {
-      _id: 1,
-      keywords: [
-        {
-          keyword: 'test',
-          type: 1,
-          plural: 'tests',
-          hasLocation: false,
-        },
-      ],
-      schematic: false,
-      sex: false,
-      violence: false,
-      aac: false,
-      aacColor: false,
-      skin: false,
-      hair: false,
-      downloads: 0,
-      categories: ['test'],
-      synsets: ['test'],
-      tags: ['test'],
-      created: new Date(),
-      lastUpdated: new Date(),
-    },
-  ];
 
   beforeEach(async () => {
     mockMmpService = {
@@ -91,18 +63,21 @@ describe('DialogPictogramsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should call search method when enter key is pressed', async () => {
-    const searchSpy = jest.spyOn(component, 'search');
-    const event = new KeyboardEvent('keydown', { key: 'Enter' });
-    document.dispatchEvent(event);
-    expect(searchSpy).toHaveBeenCalled();
+  it('should stop keydown propagation on search element', () => {
+    const searchEl = component.searchElement.nativeElement;
+    const event = new KeyboardEvent('keydown', {
+      key: 'c',
+      bubbles: true,
+    });
+    const stopSpy = jest.spyOn(event, 'stopPropagation');
+    searchEl.dispatchEvent(event);
+    expect(stopSpy).toHaveBeenCalled();
   });
 
-  it('should update pictos when search is called', async () => {
-    mockPictoService.getPictos.mockReturnValue(of(mockPictogramResponse));
-
-    await component.search();
-    expect(component.pictos).toEqual(mockPictogramResponse);
+  it('should have sources configured', () => {
+    expect(component.sources).toBeDefined();
+    expect(component.sources.length).toBeGreaterThan(0);
+    expect(component.sources[0].id).toBe('arasaac');
   });
 
   it('should get image URL for given ID', () => {

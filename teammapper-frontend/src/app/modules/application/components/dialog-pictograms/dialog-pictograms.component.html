@@ -1,11 +1,19 @@
 <h2 mat-dialog-title>{{ 'MODALS.PICTOGRAMS.TITLE' | translate }}</h2>
 <mat-dialog-content>
-      <oer-theme-provider id="custom-theme-provider">
-      <div class="demo-section">
-        <oer-search id="oer-search-custom" (search-results)="onSearchResults($event)"  (search-error)="onSearchError($event)" (search-cleared)="onSearchCleared($event)" api-url="http://localhost:3001" language="de" page-size="5"></oer-search>
-        <oer-list #listElement id="oer-list-custom" language="de" (card-click)="onCardClick($event)"></oer-list>
-      </div>
-    </oer-theme-provider>
+  <oer-search
+    #searchElement
+    language="de"
+    page-size="20"
+    (search-loading)="onSearchLoading()"
+    (search-results)="onSearchResults($event)"
+    (search-error)="onSearchError($event)"
+    (search-cleared)="onSearchCleared()">
+    <oer-list
+      #listElement
+      language="de"
+      (card-click)="onCardClick($event)"></oer-list>
+    <oer-load-more #loadMoreElement language="de"></oer-load-more>
+  </oer-search>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-raised-button [mat-dialog-close]="true">
