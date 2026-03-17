@@ -1,11 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { MapProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
-import { environment } from 'src/environments/environment';
 import { Router } from '@angular/router';
 import {
   MatDialogRef,
@@ -17,7 +16,7 @@ import {
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatButton } from '@angular/material/button';
-import { NgIf, AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'teammapper-dialog-about',
@@ -31,29 +30,29 @@ import { NgIf, AsyncPipe, DatePipe } from '@angular/common';
     MatDialogActions,
     MatButton,
     MatDialogClose,
-    NgIf,
     AsyncPipe,
     DatePipe,
     TranslatePipe,
   ],
 })
 export class DialogAboutComponent {
+  private translateService = inject(TranslateService);
+  private settingsService = inject(SettingsService);
+  private storageService = inject(StorageService);
+  private mapSyncService = inject(MapSyncService);
+  private dialogRef = inject<MatDialogRef<DialogAboutComponent>>(MatDialogRef);
+  private router = inject(Router);
+
   public faGithub = faGithub;
-  public version: string;
-  public applicationName: string;
+  public version = '';
+  public applicationName = 'TeamMapper';
   public map: MapProperties;
   public mapAdminId: Promise<string>;
 
-  constructor(
-    private translateService: TranslateService,
-    private settingsService: SettingsService,
-    private storageService: StorageService,
-    private mapSyncService: MapSyncService,
-    private dialogRef: MatDialogRef<DialogAboutComponent>,
-    private router: Router
-  ) {
-    this.version = environment.version;
-    this.applicationName = environment.name;
+  constructor() {
+    const settings = this.settingsService.getCachedSystemSettings();
+    this.version = settings.info?.version || this.version;
+    this.applicationName = settings.info?.name || this.applicationName;
     this.map = this.mapSyncService.getAttachedMap().cachedMap;
     this.mapAdminId = this.getMapAdminId();
   }
@@ -76,10 +75,13 @@ export class DialogAboutComponent {
   }
 
   language(): string {
-    return this.settingsService.getCachedSettings().general.language;
+    return this.settingsService.getCachedUserSettings().general.language;
   }
 
-  async getMapAdminId(): Promise<string> {
-    return (await this.storageService.get(this.map.uuid))?.adminId;
+  async getMapAdminId(): Promise<string | undefined> {
+    const mapData = (await this.storageService.get(this.map.uuid)) as {
+      adminId?: string;
+    } | null;
+    return mapData?.adminId;
   }
 }

@@ -7,13 +7,13 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { ConfigModule } from '@nestjs/config'
 import { io, Socket } from 'socket.io-client'
-import { IMmpClientMap } from 'src/map/types'
+import { IMmpClientMap, OperationResponse, IMmpClientNode } from 'src/map/types'
 import { createTestConfiguration, destroyWorkerDatabase } from './db'
 import AppModule from '../src/app.module'
 
 describe('AppController (e2e)', () => {
   let app: INestApplication
-  let server: any
+  let server: ReturnType<INestApplication['getHttpServer']>
   let nodesRepo: Repository<MmpNode>
   let mapRepo: Repository<MmpMap>
 
@@ -85,8 +85,10 @@ describe('AppController (e2e)', () => {
     })
 
     it('lets a user update a map', async () => {
+      const modificationSecret = crypto.randomUUID()
+
       const oldMap = await mapRepo.save({
-        modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+        modificationSecret: modificationSecret,
       })
 
       const map: IMmpClientMap = {
@@ -107,7 +109,7 @@ describe('AppController (e2e)', () => {
             image: { size: 60, src: '' },
             parent: '',
             k: -15.361675447001142,
-            id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+            id: modificationSecret,
             link: { href: '' },
             locked: false,
             isRoot: true,
@@ -119,7 +121,7 @@ describe('AppController (e2e)', () => {
         {
           map,
           mapId: map.uuid,
-          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+          modificationSecret: modificationSecret,
         },
         async () => {
           const mapInDb = await mapRepo.findOne({
@@ -130,74 +132,98 @@ describe('AppController (e2e)', () => {
       )
     })
 
-    it('notifies a user about a new node', (done) => {
-      socket.on('nodesAdded', (result: any) => {
-        expect(result.nodes[0].name).toEqual('test')
-        done()
-      })
+    it('responds with success when adding a new node', (done) => {
+      const mapId = crypto.randomUUID()
+      const nodeId = crypto.randomUUID()
+
       mapRepo
         .save({
-          id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+          id: mapId,
+          modificationSecret: mapId,
         })
         .then((map) => {
           socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => {
-            socket.emit('addNodes', {
-              mapId: map.id,
-              modificationSecret: map.modificationSecret,
-              nodes: [
-                {
-                  name: 'test',
-                  coordinates: { x: 1, y: 2 },
-                  font: {},
-                  colors: {},
-                  link: {},
-                  isRoot: true,
-                  detached: false,
-                },
-              ],
-            })
+            socket.emit(
+              'addNodes',
+              {
+                mapId: map.id,
+                modificationSecret: map.modificationSecret,
+                nodes: [
+                  {
+                    id: nodeId,
+                    name: 'test',
+                    coordinates: { x: 1, y: 2 },
+                    font: {},
+                    colors: {},
+                    link: {},
+                    isRoot: true,
+                    detached: false,
+                  },
+                ],
+              },
+              (result: OperationResponse<IMmpClientNode[]>) => {
+                // Now we check the acknowledgment response
+                expect(result.success).toBe(true)
+                if ('data' in result) {
+                  expect(result.data).toBeDefined()
+                  expect(result.data[0].name).toEqual('test')
+                }
+                done()
+              }
+            )
           })
         })
     })
 
-    it('notifies a user about a node update', (done) => {
-      socket.on('nodeUpdated', (result: any) => {
-        expect(result.property).toEqual('nodeName')
-        expect(result.node.id).toEqual('51271bf2-81fa-477a-b0bd-10cecf8d6b65')
-        expect(result.node.coordinates.x).toEqual(3)
-        done()
-      })
+    it('responds with success when updating a node', (done) => {
+      const mapId = crypto.randomUUID()
+      const nodeId = crypto.randomUUID()
+
       mapRepo
         .save({
-          id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-          modificationSecret: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
+          id: mapId,
+          modificationSecret: mapId,
+          nodes: [
+            nodesRepo.create({
+              id: nodeId,
+              coordinatesX: 1,
+              coordinatesY: 2,
+              nodeMapId: mapId,
+              detached: false,
+              root: true,
+            }),
+          ],
         })
-        .then(async (map) => {
-          await nodesRepo.save({
-            id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-            coordinatesX: 1,
-            coordinatesY: 2,
-            nodeMapId: map.id,
-            detached: false,
-            root: true,
-          })
+        .then((map) => {
           socket.emit('join', { mapId: map.id, color: '#FFFFFF' }, () => {
-            socket.emit('updateNode', {
-              mapId: map.id,
-              modificationSecret: map.modificationSecret,
-              updatedProperty: 'nodeName',
-              node: {
-                id: '51271bf2-81fa-477a-b0bd-10cecf8d6b65',
-                name: 'test',
-                coordinates: { x: 3, y: 4 },
-                font: {},
-                colors: {},
-                link: {},
-                detached: false,
-                root: true,
+            socket.emit(
+              'updateNode',
+              {
+                mapId: map.id,
+                modificationSecret: map.modificationSecret,
+                updatedProperty: 'nodeName',
+                node: {
+                  id: nodeId,
+                  name: 'test',
+                  coordinates: { x: 3, y: 4 },
+                  font: {},
+                  colors: {},
+                  link: {},
+                  detached: false,
+                  root: true,
+                },
               },
-            })
+              (result: OperationResponse<IMmpClientNode>) => {
+                // Now we check the acknowledgment response
+                expect(result.success).toBe(true)
+                if ('data' in result) {
+                  expect(result.data).toBeDefined()
+                  expect(result.data.id).toEqual(nodeId)
+                  expect(result.data.coordinates.x).toEqual(3)
+                }
+                done()
+              }
+            )
           })
         })
     })

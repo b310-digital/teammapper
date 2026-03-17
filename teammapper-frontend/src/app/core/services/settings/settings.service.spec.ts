@@ -3,6 +3,7 @@ import { HttpService } from '../../http/http.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from './settings.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TestBed } from '@angular/core/testing';
 
 describe('SettingsService', () => {
   let settingsService: SettingsService;
@@ -33,11 +34,16 @@ describe('SettingsService', () => {
       getBrowserLang: jest.fn(),
     } as unknown as jest.Mocked<TranslateService>;
 
-    settingsService = new SettingsService(
-      storageService,
-      httpService,
-      translateService
-    );
+    TestBed.configureTestingModule({
+      providers: [
+        SettingsService,
+        { provide: HttpService, useValue: httpService },
+        { provide: StorageService, useValue: storageService },
+        { provide: TranslateService, useValue: translateService },
+      ],
+    });
+
+    settingsService = TestBed.inject(SettingsService);
   });
 
   it('ignores old maps when returning from storage', async () => {
@@ -103,28 +109,28 @@ describe('SettingsService', () => {
   // Additional tests for full coverage
   describe('init', () => {
     it('initializes settings with default values when no cached settings exist', async () => {
-      const defaultSettings = { general: { language: 'en' } };
+      const defaultSettings = { userSettings: { general: { language: 'en' } } };
 
       httpService.get.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
-      });
+      } as unknown as Response);
       storageService.get.mockResolvedValue(null);
 
       await settingsService.init();
 
       expect(storageService.set).toHaveBeenCalledWith(
         'settings',
-        defaultSettings
+        defaultSettings.userSettings
       );
     });
 
     it('initializes settings with cached values when they exist', async () => {
-      const defaultSettings = { general: { language: 'en' } };
+      const defaultSettings = { userSettings: { general: { language: 'en' } } };
       const cachedSettings = { general: { language: 'fr' } };
 
       httpService.get.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
-      });
+      } as unknown as Response);
       storageService.get.mockResolvedValue(cachedSettings);
 
       await settingsService.init();

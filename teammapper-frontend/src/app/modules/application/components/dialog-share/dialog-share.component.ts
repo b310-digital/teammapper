@@ -1,4 +1,10 @@
-import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  ViewChild,
+  OnInit,
+  inject,
+} from '@angular/core';
 import QRCodeStyling from 'qr-code-styling';
 import { qrcodeStyling } from './qrcode-settings';
 import { API_URL, HttpService } from 'src/app/core/http/http.service';
@@ -16,7 +22,6 @@ import {
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { FormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
 import {
   MatFormField,
   MatLabel,
@@ -38,7 +43,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     MatDialogContent,
     MatSlideToggle,
     FormsModule,
-    NgIf,
     MatFormField,
     MatLabel,
     MatInput,
@@ -52,6 +56,13 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
 })
 export class DialogShareComponent implements OnInit {
+  private httpService = inject(HttpService);
+  private toastrService = inject(ToastrService);
+  private utilsService = inject(UtilsService);
+  private storageService = inject(StorageService);
+  private dialogRef = inject<MatDialogRef<DialogShareComponent>>(MatDialogRef);
+  private router = inject(Router);
+
   @ViewChild('qrcodecanvas', { static: true })
   qrCodeCanvas: ElementRef<HTMLCanvasElement>;
   @ViewChild('sharedialog', { static: true })
@@ -68,15 +79,6 @@ export class DialogShareComponent implements OnInit {
     window.location.pathname +
     window.location.search;
   private qrCode: QRCodeStyling;
-
-  constructor(
-    private httpService: HttpService,
-    private toastrService: ToastrService,
-    private utilsService: UtilsService,
-    private storageService: StorageService,
-    private dialogRef: MatDialogRef<DialogShareComponent>,
-    private router: Router
-  ) {}
 
   ngOnInit() {
     this.appendQrCode();
@@ -146,8 +148,8 @@ export class DialogShareComponent implements OnInit {
     return this.showEditableLink ? this.editorLink : this.viewerLink;
   }
 
-  isShareable() {
-    return !!(window.navigator as any)?.share;
+  isShareable(): boolean {
+    return !!(navigator as Navigator & { share?: unknown })?.share;
   }
 
   setShowEditableLink(value: boolean) {
@@ -156,8 +158,11 @@ export class DialogShareComponent implements OnInit {
   }
 
   async share() {
-    if ((window.navigator as any)?.share) {
-      await (window.navigator as any)?.share({
+    const nav = navigator as Navigator & {
+      share?: (data: { title: string; url: string }) => Promise<void>;
+    };
+    if (nav?.share) {
+      await nav.share({
         title: 'TeamMapper',
         url: this.getLink(),
       });

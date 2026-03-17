@@ -30,7 +30,9 @@
       color="primary"
       class="ml-5"
       [disabled]="isGenerating || !mindmapDescription.trim()">
-      <mat-icon *ngIf="!isGenerating">auto_awesome</mat-icon>
+      @if (!isGenerating) {
+        <mat-icon>auto_awesome</mat-icon>
+      }
       {{ 'MODALS.IMPORT_AI.BUTTON_GENERATE' | translate }}
     </button>
   </div>

@@ -1,5 +1,5 @@
 import { PictogramService } from './pictogram.service';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { SettingsService } from '../settings/settings.service';
 import { IPictogramResponse } from './picto-types';
 import { TestBed } from '@angular/core/testing';
@@ -28,7 +28,6 @@ const testData: IPictogramResponse = {
 };
 
 describe('PictogramService', () => {
-  let httpClient: HttpClient;
   let service: PictogramService;
   let httpTesting: HttpTestingController;
 
@@ -42,10 +41,7 @@ describe('PictogramService', () => {
       ],
     });
 
-    httpClient = TestBed.inject(HttpClient);
-    const settingsService = TestBed.inject(SettingsService);
-
-    service = new PictogramService(httpClient, settingsService);
+    service = TestBed.inject(PictogramService);
     httpTesting = TestBed.inject(HttpTestingController);
   });
 

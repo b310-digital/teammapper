@@ -13,7 +13,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3
@@ -28,9 +28,9 @@ jobs:
                   username: ${{ github.repository_owner }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -46,11 +46,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -62,11 +62,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -78,11 +78,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -95,11 +95,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -124,11 +124,11 @@ jobs:
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate
@@ -153,10 +153,10 @@ jobs:
     teammapper-frontend-test:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v6
+            - uses: actions/setup-node@v6
               with:
-                node-version: '22'
+                node-version: '25'
 
             - run: corepack enable
             - run: corepack prepare pnpm@9 --activate

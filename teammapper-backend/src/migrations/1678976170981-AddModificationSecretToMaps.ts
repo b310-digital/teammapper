@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddModificationSecretToMaps1678976170981
-  implements MigrationInterface
-{
+export class AddModificationSecretToMaps1678976170981 implements MigrationInterface {
   name = 'AddModificationSecretToMaps1678976170981'
 
   public async up(queryRunner: QueryRunner): Promise<void> {

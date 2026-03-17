@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ShortcutsService } from '../../../../core/services/shortcuts/shortcuts.service';
 import { Hotkey } from 'angular2-hotkeys';
-import { Location, NgFor, NgIf } from '@angular/common';
+import { Location } from '@angular/common';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatDialogTitle } from '@angular/material/dialog';
 import { MatIconButton } from '@angular/material/button';
@@ -25,19 +25,15 @@ interface Shortcut {
     MatIconButton,
     MatIcon,
     MatList,
-    NgFor,
     MatListItem,
-    NgIf,
     TranslatePipe,
   ],
 })
 export class ShortcutsComponent implements OnInit {
-  public shortcuts: Shortcut[];
+  private shortcutsService = inject(ShortcutsService);
+  private location = inject(Location);
 
-  constructor(
-    private shortcutsService: ShortcutsService,
-    private location: Location
-  ) {}
+  public shortcuts: Shortcut[];
 
   public ngOnInit() {
     const hotKeys: Hotkey[] = this.shortcutsService.getHotKeys();

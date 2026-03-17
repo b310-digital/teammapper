@@ -15,11 +15,15 @@ export class HttpService {
   /**
    * Constructs a `GET` request that returns the response body as a JSON object.
    */
-  public async get(apiUrl: API_URL, endpoint: string): Promise<any> {
+  public async get(apiUrl: API_URL, endpoint: string): Promise<Response> {
     return fetch(`${apiUrl}${endpoint}`);
   }
 
-  public delete(apiUrl: API_URL, endpoint: string, body = ''): Promise<any> {
+  public delete(
+    apiUrl: API_URL,
+    endpoint: string,
+    body = ''
+  ): Promise<Response> {
     return fetch(`${apiUrl}${endpoint}`, {
       method: 'DELETE',
       body,
@@ -35,7 +39,7 @@ export class HttpService {
     apiUrl: API_URL,
     endpoint: string,
     body = ''
-  ): Promise<any> {
+  ): Promise<Response> {
     return fetch(`${apiUrl}${endpoint}`, {
       method: 'POST',
       body,

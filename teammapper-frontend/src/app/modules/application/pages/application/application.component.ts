@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Subscription, Observable } from 'rxjs';
 import {
   ConnectionStatus,
@@ -42,22 +42,20 @@ import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
   ],
 })
 export class ApplicationComponent implements OnInit, OnDestroy {
+  private mmpService = inject(MmpService);
+  private settingsService = inject(SettingsService);
+  private mapSyncService = inject(MapSyncService);
+  private storageService = inject(StorageService);
+  private dialogService = inject(DialogService);
+  private utilsService = inject(UtilsService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
   public node: Observable<ExportNodeProperties>;
   public editMode: Observable<boolean>;
 
   private imageDropSubscription: Subscription;
   private connectionStatusSubscription: Subscription;
-
-  constructor(
-    private mmpService: MmpService,
-    private settingsService: SettingsService,
-    private mapSyncService: MapSyncService,
-    private storageService: StorageService,
-    private dialogService: DialogService,
-    private utilsService: UtilsService,
-    private route: ActivatedRoute,
-    private router: Router
-  ) {}
 
   async ngOnInit() {
     this.storageService.cleanExpired();

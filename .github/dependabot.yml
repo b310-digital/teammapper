@@ -6,13 +6,17 @@
 version: 2
 updates:
   - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/teammapper-backend" # Location of package manifests
+    directory: "/"
     schedule:
       interval: "weekly"
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/teammapper-frontend" # Location of package manifests
-    schedule:
-      interval: "weekly"
+    open-pull-requests-limit: 15
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      development-dependencies:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
   - package-ecosystem: "docker" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
@@ -21,4 +25,3 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-      

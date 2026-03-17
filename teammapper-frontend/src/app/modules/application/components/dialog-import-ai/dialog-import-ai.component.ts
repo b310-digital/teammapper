@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {
   MatDialogRef,
   MatDialogTitle,
@@ -19,8 +19,6 @@ import { MatIcon } from '@angular/material/icon';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
-import { NgIf } from '@angular/common';
-
 @Component({
   selector: 'teammapper-dialog-import-ai',
   templateUrl: 'dialog-import-ai.component.html',
@@ -39,21 +37,19 @@ import { NgIf } from '@angular/common';
     MatButton,
     MatDialogClose,
     TranslatePipe,
-    NgIf,
   ],
 })
 export class DialogImportAiComponent {
   public mindmapDescription = '';
   public isGenerating = false;
 
-  constructor(
-    private importService: ImportService,
-    private settingsService: SettingsService,
-    private toastService: ToastrService,
-    private httpService: HttpService,
-    private utilsService: UtilsService,
-    private dialogRef: MatDialogRef<DialogImportAiComponent>
-  ) {}
+  private importService = inject(ImportService);
+  private settingsService = inject(SettingsService);
+  private toastService = inject(ToastrService);
+  private httpService = inject(HttpService);
+  private utilsService = inject(UtilsService);
+  private dialogRef =
+    inject<MatDialogRef<DialogImportAiComponent>>(MatDialogRef);
 
   async generateAndImport(): Promise<void> {
     if (!this.mindmapDescription.trim()) {
@@ -75,7 +71,8 @@ export class DialogImportAiComponent {
         JSON.stringify({
           mindmapDescription: this.mindmapDescription,
           language:
-            this.settingsService.getCachedSettings().general.language ?? 'en',
+            this.settingsService.getCachedUserSettings().general.language ??
+            'en',
         })
       );
 

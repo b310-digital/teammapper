@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddIndexToForeignKeysOnMmpNode1663839669273
-  implements MigrationInterface
-{
+export class AddIndexToForeignKeysOnMmpNode1663839669273 implements MigrationInterface {
   name = 'AddIndexToForeignKeysOnMmpNode1663839669273'
 
   public async up(queryRunner: QueryRunner): Promise<void> {

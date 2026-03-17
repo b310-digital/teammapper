@@ -1,22 +1,13 @@
-const { fixupConfigRules, fixupPluginRules } = require("@eslint/compat");
-const tseslint = require("typescript-eslint");
-const jest = require("eslint-plugin-jest");
-const importPlugin = require("eslint-plugin-import");
-const globals = require("globals");
-const tsParser = require("@typescript-eslint/parser");
-const js = require("@eslint/js");
-const prettier = require("eslint-plugin-prettier");
-const stylisticTs = require("@stylistic/eslint-plugin-ts");
+import tseslint from "typescript-eslint";
+import jest from "eslint-plugin-jest";
+import importPlugin from "eslint-plugin-import";
+import globals from "globals";
+import tsParser from "@typescript-eslint/parser";
+import js from "@eslint/js";
+import prettier from "eslint-plugin-prettier";
+import stylistic from "@stylistic/eslint-plugin";
 
-const { FlatCompat } = require("@eslint/eslintrc");
-
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
-
-module.exports = [
+export default [
     {
         ignores: ["src/migrations/**/*", "dist/**/*", "src/jobs/**/*"],
     },
@@ -28,7 +19,7 @@ module.exports = [
         plugins: {
             jest: jest,
             prettier: prettier,
-            "@stylistic/ts": stylisticTs
+            "@stylistic": stylistic
         },
         languageOptions: {
             globals: {
@@ -55,7 +46,7 @@ module.exports = [
             "@typescript-eslint/no-explicit-any": "warn",
             "prettier/prettier": "error",
             "no-unused-vars": "off",
-            "@stylistic/ts/member-delimiter-style": ["error", {
+            "@stylistic/member-delimiter-style": ["error", {
                 "multiline": {
                     "delimiter": "none",
                     "requireLast": true

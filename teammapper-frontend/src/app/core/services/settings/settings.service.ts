@@ -1,8 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
-import { Settings } from '../../../shared/models/settings.model';
+import {
+  Settings,
+  SystemSettings,
+  UserSettings,
+} from '../../../shared/models/settings.model';
 import { API_URL, HttpService } from '../../http/http.service';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
@@ -11,21 +15,22 @@ import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 })
 // Global per user settings service
 export class SettingsService {
+  private storageService = inject(StorageService);
+  private httpService = inject(HttpService);
+  private translateService = inject(TranslateService);
   public static readonly LANGUAGES = ['en', 'de'];
 
-  public settings: Observable<Settings | null>;
-  private settingsSubject: BehaviorSubject<Settings | null>;
+  public userSettings: Observable<UserSettings | null>;
+  private userSettingsSubject: BehaviorSubject<UserSettings | null>;
+  private systemSettingsSubject: BehaviorSubject<SystemSettings | null>;
   private readonly editModeSubject: BehaviorSubject<boolean | null>;
 
-  constructor(
-    private storageService: StorageService,
-    private httpService: HttpService,
-    private translateService: TranslateService
-  ) {
+  constructor() {
     // Initialization of the behavior subjects.
-    this.settingsSubject = new BehaviorSubject(null);
+    this.userSettingsSubject = new BehaviorSubject(null);
+    this.systemSettingsSubject = new BehaviorSubject(null);
     this.editModeSubject = new BehaviorSubject(null);
-    this.settings = this.settingsSubject.asObservable();
+    this.userSettings = this.userSettingsSubject.asObservable();
   }
 
   /**
@@ -33,26 +38,27 @@ export class SettingsService {
    */
   public async init() {
     const defaultSettings: Settings = await this.getDefaultSettings();
-    defaultSettings.general.language =
+    defaultSettings.userSettings.general.language =
       this.translateService.getBrowserLang() ??
-      defaultSettings.general.language;
-    const loadedSettings: Settings = await this.storageService.get(
+      defaultSettings.userSettings.general.language;
+    const loadedSettings = (await this.storageService.get(
       STORAGE_KEYS.SETTINGS
-    );
-    const settings = loadedSettings || defaultSettings;
+    )) as UserSettings | null;
+    const userSettings = loadedSettings || defaultSettings.userSettings;
 
     // Save the default settings.
-    await this.storageService.set(STORAGE_KEYS.SETTINGS, settings);
-    this.settingsSubject.next(settings);
+    await this.storageService.set(STORAGE_KEYS.SETTINGS, userSettings);
+    this.userSettingsSubject.next(userSettings);
+    this.systemSettingsSubject.next(defaultSettings.systemSettings);
     return true;
   }
 
   /**
    * Update the settings in the storage.
    */
-  public async updateCachedSettings(settings: Settings): Promise<void> {
+  public async updateCachedSettings(settings: UserSettings): Promise<void> {
     await this.storageService.set(STORAGE_KEYS.SETTINGS, settings);
-    this.settingsSubject.next(settings);
+    this.userSettingsSubject.next(settings);
   }
 
   public async getCachedAdminMapEntries(): Promise<CachedAdminMapEntry[]> {
@@ -78,8 +84,12 @@ export class SettingsService {
   /**
    * Return the current settings.
    */
-  public getCachedSettings(): Settings | null {
-    return this.settingsSubject.getValue();
+  public getCachedUserSettings(): UserSettings | null {
+    return this.userSettingsSubject.getValue();
+  }
+
+  public getCachedSystemSettings(): SystemSettings | null {
+    return this.systemSettingsSubject.getValue();
   }
 
   public getEditModeObservable(): Observable<boolean | null> {
@@ -94,11 +104,8 @@ export class SettingsService {
    * Return the default settings.
    */
   public async getDefaultSettings(): Promise<Settings> {
-    const response = await this.httpService.get(
-      API_URL.LOCAL_ASSETS,
-      'settings.json'
-    );
-    return response.json();
+    const response = await this.httpService.get(API_URL.ROOT, '/settings');
+    return await response.json();
   }
 }
 

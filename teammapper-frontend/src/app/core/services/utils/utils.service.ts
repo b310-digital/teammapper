@@ -1,20 +1,27 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Observable, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UtilsService {
-  constructor(private translateService: TranslateService) {}
+  private translateService = inject(TranslateService);
 
   /**
    * Gets the nested property of object
    */
-  public static get = (obj: any, path: string[]) =>
+  public static get = (
+    obj: Record<string, unknown> | object,
+    path: string[]
+  ): unknown =>
     path.reduce(
-      (nestedObj, currentPath) =>
-        nestedObj && nestedObj[currentPath] ? nestedObj[currentPath] : null,
+      (nestedObj: unknown, currentPath: string) =>
+        nestedObj != null &&
+        typeof nestedObj === 'object' &&
+        currentPath in nestedObj
+          ? (nestedObj as Record<string, unknown>)[currentPath]
+          : null,
       obj
     );
 
@@ -134,8 +141,11 @@ export class UtilsService {
   /**
    * Return a translated string with given message and values.
    */
-  public translate(message: string, values?: any): Promise<string> {
-    return this.translateService.get(message, values).toPromise();
+  public translate(
+    message: string,
+    values?: Record<string, unknown>
+  ): Promise<string> {
+    return firstValueFrom(this.translateService.get(message, values));
   }
 
   /**

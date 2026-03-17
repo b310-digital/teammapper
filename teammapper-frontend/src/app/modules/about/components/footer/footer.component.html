@@ -20,8 +20,7 @@
       <mat-select
         (selectionChange)="updateLanguage()"
         [(value)]="settings.general.language"
-        [title]="'TOOLTIPS.LANGUAGE' | translate"
-        [placeholder]="'TOOLTIPS.LANGUAGE' | translate">
+        [title]="'TOOLTIPS.LANGUAGE' | translate">
         @for (language of languages; track language) {
           <mat-option [value]="language">
             {{ 'LANGUAGES.' + language.toUpperCase() | translate }}

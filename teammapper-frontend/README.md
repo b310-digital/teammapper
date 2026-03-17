@@ -7,9 +7,9 @@ Based on https://github.com/cedoor/mindmapp (discontinued)
 ## Setup
 
 ```
-npm install
+pnpm install
 
-npm run start
+pnpm run start
 ```
 
 ## Dev

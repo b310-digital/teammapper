@@ -78,16 +78,18 @@ describe('MmpService', () => {
 
     settingsService = {
       getEditModeObservable: jest.fn().mockReturnValue(editModeSubject),
-      getCachedSettings: jest.fn().mockReturnValue({
+      getCachedUserSettings: jest.fn().mockReturnValue({
         mapOptions: {
           autoBranchColors: false,
         },
       }),
       getDefaultSettings: jest.fn().mockResolvedValue({
-        mapOptions: {
-          fontMinSize: 12,
-          fontMaxSize: 24,
-          fontIncrement: 2,
+        userSettings: {
+          mapOptions: {
+            fontMinSize: 12,
+            fontMaxSize: 24,
+            fontIncrement: 2,
+          },
         },
       }),
     };

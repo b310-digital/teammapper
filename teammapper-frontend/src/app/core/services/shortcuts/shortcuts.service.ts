@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { Router } from '@angular/router';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
@@ -9,16 +9,14 @@ import { SettingsService } from '../settings/settings.service';
   providedIn: 'root',
 })
 export class ShortcutsService implements OnDestroy {
+  private mmpService = inject(MmpService);
+  private hotkeysService = inject(HotkeysService);
+  private settingsService = inject(SettingsService);
+  private router = inject(Router);
+
   private hotKeys: Hotkey[];
   private editMode: boolean;
   private settingsSubscription: Subscription;
-
-  constructor(
-    private mmpService: MmpService,
-    private hotkeysService: HotkeysService,
-    private settingsService: SettingsService,
-    private router: Router
-  ) {}
 
   /**
    * Add all global hot keys of the application.

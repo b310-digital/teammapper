@@ -1,39 +1,41 @@
 <div class="sliders-panel">
-  <mat-slider
-    *ngIf="node?.font"
-    [value]="node.font.size"
-    [title]="'TOOLTIPS.TEXT_SIZE' | translate"
-    [disabled]="editDisabled"
-    class="font-size slider-vertical"
-    color="primary"
-    [max]="getSettingsFontMaxSize()"
-    [min]="getSettingsFontMinSize()"
-    [tickInterval]="getSettingsFontIncrement()"
-    [step]="getSettingsFontIncrement()"
-    discrete
-    showTickMarks>
-    <input
-      matSliderThumb
-      (input)="updateNodeFontSize($event, false)"
-      [(ngModel)]="node.font.size"
-      #textSlider />
-  </mat-slider>
-  <mat-slider
-    *ngIf="node?.image && node?.image?.src"
-    [value]="node.image.size"
-    [title]="'TOOLTIPS.IMAGE_SIZE' | translate"
-    [disabled]="editDisabled"
-    class="image-size slider-vertical"
-    color="primary"
-    max="350"
-    min="50"
-    tickInterval="1"
-    discrete
-    showTickMarks>
-    <input
-      matSliderThumb
-      (input)="updateNodeImageSize($event, true)"
-      [(ngModel)]="node.image.size"
-      #imageSlider />
-  </mat-slider>
+  @if (node?.font) {
+    <mat-slider
+      [value]="node.font.size"
+      [title]="'TOOLTIPS.TEXT_SIZE' | translate"
+      [disabled]="editDisabled"
+      class="font-size slider-vertical"
+      color="primary"
+      [max]="getSettingsFontMaxSize()"
+      [min]="getSettingsFontMinSize()"
+      [tickInterval]="getSettingsFontIncrement()"
+      [step]="getSettingsFontIncrement()"
+      discrete
+      showTickMarks>
+      <input
+        matSliderThumb
+        (input)="updateNodeFontSize($event, false)"
+        [(ngModel)]="node.font.size"
+        #textSlider />
+    </mat-slider>
+  }
+  @if (node?.image && node?.image?.src) {
+    <mat-slider
+      [value]="node.image.size"
+      [title]="'TOOLTIPS.IMAGE_SIZE' | translate"
+      [disabled]="editDisabled"
+      class="image-size slider-vertical"
+      color="primary"
+      max="350"
+      min="50"
+      tickInterval="1"
+      discrete
+      showTickMarks>
+      <input
+        matSliderThumb
+        (input)="updateNodeImageSize($event, true)"
+        [(ngModel)]="node.image.size"
+        #imageSlider />
+    </mat-slider>
+  }
 </div>

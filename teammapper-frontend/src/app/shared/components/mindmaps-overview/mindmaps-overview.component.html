@@ -1,0 +1,57 @@
+<div class="content map-list">
+  @if (ownedEntries && ownedEntries.length > 0) {
+    <mat-card class="map-list-main">
+      <mat-card-header>
+        <mat-card-title>{{
+          'PAGES.SETTINGS.OWNED_MAPS' | translate
+        }}</mat-card-title>
+      </mat-card-header>
+      <hr />
+      <mat-card-content>
+        <mat-list>
+          @for (ownedEntry of ownedEntries; track ownedEntry.id) {
+            <mat-list-item>
+              <span matLine>
+                <a href="{{ getMapUrl(ownedEntry) }}">{{
+                  getMapTitle(ownedEntry)
+                }}</a>
+              </span>
+              <span matLine>
+                {{ 'PAGES.SETTINGS.TTL' | translate }}:
+                {{ ownedEntry.cachedAdminMapValue.ttl | date: 'yyyy-MM-dd' }}
+              </span>
+            </mat-list-item>
+          }
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+  }
+  <mat-card class="map-list-main">
+    <mat-card-header>
+      <mat-card-title>{{
+        'PAGES.SETTINGS.LAST_MAPS' | translate
+      }}</mat-card-title>
+    </mat-card-header>
+    <hr />
+    <mat-card-content>
+      <mat-list>
+        @for (
+          cachedMapEntry of cachedAdminMapEntries;
+          track cachedMapEntry.id
+        ) {
+          <mat-list-item>
+            <span matLine>
+              <a href="{{ getMapUrl(cachedMapEntry) }}">{{
+                getMapTitle(cachedMapEntry)
+              }}</a>
+            </span>
+            <span matLine>
+              {{ 'PAGES.SETTINGS.TTL' | translate }}:
+              {{ cachedMapEntry.cachedAdminMapValue.ttl | date: 'yyyy-MM-dd' }}
+            </span>
+          </mat-list-item>
+        }
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+</div>

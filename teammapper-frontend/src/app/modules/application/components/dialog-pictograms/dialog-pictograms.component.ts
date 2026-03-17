@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject } from '@angular/core';
 import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import {
@@ -25,7 +25,7 @@ import { MatInput } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { NgIf, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { MatGridList, MatGridTile } from '@angular/material/grid-list';
 import { MatDivider } from '@angular/material/divider';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -45,7 +45,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     MatButton,
     MatSuffix,
     MatIcon,
-    NgIf,
     MatGridList,
     MatGridTile,
     MatDivider,
@@ -56,6 +55,11 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
 })
 export class DialogPictogramsComponent {
+  private pictoService = inject(PictogramService);
+  private breakpointObserver = inject(BreakpointObserver);
+  private mmpService = inject(MmpService);
+  private utilsService = inject(UtilsService);
+
   public pictos: IPictogramResponse[];
   public onPictogramAdd = new EventEmitter();
   public searchTerm = '';
@@ -83,13 +87,6 @@ export class DialogPictogramsComponent {
         };
       })
     );
-
-  constructor(
-    private pictoService: PictogramService,
-    private breakpointObserver: BreakpointObserver,
-    private mmpService: MmpService,
-    private utilsService: UtilsService
-  ) {}
 
   @HostListener('document:keydown.enter')
   async search() {

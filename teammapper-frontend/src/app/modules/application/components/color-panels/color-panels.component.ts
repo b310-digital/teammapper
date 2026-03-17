@@ -1,25 +1,31 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
-import { NgIf } from '@angular/common';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerDirective } from 'ngx-color-picker';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'teammapper-colors-panel',
   templateUrl: './color-panels.component.html',
   styleUrls: ['./color-panels.component.scss'],
-  imports: [NgIf, ColorPickerModule, TranslatePipe],
+  imports: [ColorPickerDirective, TranslatePipe],
 })
 export class ColorPanelsComponent implements OnInit {
+  mmpService = inject(MmpService);
+
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
 
   @ViewChild('background') public background: ElementRef;
 
-  public options: any;
-
-  constructor(public mmpService: MmpService) {}
+  public options: { width: string; presetColors: string[] };
 
   ngOnInit() {
     this.options = {

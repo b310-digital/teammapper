@@ -11,24 +11,19 @@ import {
 import {
   provideHttpClient,
   withInterceptorsFromDi,
-  HttpClient,
 } from '@angular/common/http';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { RootComponent } from './app/root.component';
 import { provideRouter } from '@angular/router';
 import { rootRoutes } from './app/root.routes';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 if (environment.production) {
   enableProdMode();
-}
-
-function createTranslateLoader(http: HttpClient) {
-  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 bootstrapApplication(RootComponent, {
@@ -36,15 +31,13 @@ bootstrapApplication(RootComponent, {
     importProvidersFrom(
       BrowserModule,
       ToastrModule.forRoot(),
-      TranslateModule.forRoot({
-        loader: {
-          provide: TranslateLoader,
-          useFactory: createTranslateLoader,
-          deps: [HttpClient],
-        },
-      }),
+      TranslateModule.forRoot(),
       HotkeyModule.forRoot()
     ),
+    provideTranslateHttpLoader({
+      prefix: './assets/i18n/',
+      suffix: '.json',
+    }),
     provideRouter(rootRoutes),
     {
       provide: APP_INITIALIZER,

@@ -3,7 +3,7 @@ import MapsController from './maps.controller'
 import { MapsService } from '../services/maps.service'
 import { NotFoundException } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
-import { IMmpClientMap, IMmpClientPrivateMap } from '../types'
+import { IMmpClientMap, IMmpClientPrivateMap, Request } from '../types'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
   createClientRootNode,
@@ -30,6 +30,7 @@ describe('MapsController', () => {
             exportMapToClient: jest.fn(),
             deleteMap: jest.fn(),
             updateLastAccessed: jest.fn(),
+            getMapsOfUser: jest.fn(),
           },
         },
       ],
@@ -93,14 +94,16 @@ describe('MapsController', () => {
       const exportedMap: IMmpClientMap = createMmpClientMap({
         id: mapId,
       })
+      const mmpMap = createMmpMap({ modificationSecret: null })
 
       jest
         .spyOn(mapsService, 'exportMapToClient')
         .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
 
       const response = await mapsController.findOne(mapId)
 
-      expect(response).toEqual(exportedMap)
+      expect(response).toEqual({ ...exportedMap, writable: true })
     })
 
     it("should throw a NotFoundException if the map wasn't found", async () => {
@@ -110,9 +113,88 @@ describe('MapsController', () => {
         .spyOn(mapsService, 'exportMapToClient')
         .mockRejectedValueOnce(new MalformedUUIDError('MalformedUUIDError'))
 
-      expect(mapsController.findOne(invalidMapId)).rejects.toThrow(
+      await expect(mapsController.findOne(invalidMapId)).rejects.toThrow(
         NotFoundException
       )
+    })
+
+    it('returns writable true when map has no modification secret', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: null })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      const response = await mapsController.findOne(mapId)
+
+      expect(response).toEqual({ ...exportedMap, writable: true })
+    })
+
+    it('returns writable true when correct secret is provided', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      const response = await mapsController.findOne(mapId, 'my-secret')
+
+      expect(response).toEqual({ ...exportedMap, writable: true })
+    })
+
+    it('returns writable false when wrong secret is provided', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      const response = await mapsController.findOne(mapId, 'wrong-secret')
+
+      expect(response).toEqual({ ...exportedMap, writable: false })
+    })
+
+    it('returns writable false when no secret is provided for protected map', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      const response = await mapsController.findOne(mapId)
+
+      expect(response).toEqual({ ...exportedMap, writable: false })
+    })
+  })
+
+  describe('findAll', () => {
+    it('should return user maps when pid is provided', async () => {
+      const pid = 'test-person-id'
+
+      await mapsController.findAll({ pid } as Request)
+      expect(mapsService.getMapsOfUser).toHaveBeenCalledWith(pid)
+    })
+
+    it('should return an empty array when pid is missing', async () => {
+      const response = await mapsController.findAll({} as Request)
+      expect(response).toEqual([])
+    })
+
+    it('should return an empty array when req is undefined', async () => {
+      const response = await mapsController.findAll()
+      expect(response).toEqual([])
     })
   })
 
@@ -122,7 +204,7 @@ describe('MapsController', () => {
 
       jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(existingMap)
       // We're not interested in testing the repository at this stage, only if the request gets past the admin ID check
-      jest.spyOn(mapsService, 'deleteMap').mockImplementation(() => {})
+      jest.spyOn(mapsService, 'deleteMap').mockResolvedValue(undefined)
 
       await mapsController.delete(existingMap.id, {
         adminId: existingMap.adminId,
@@ -171,7 +253,37 @@ describe('MapsController', () => {
         rootNode,
       })
 
-      expect(mapsService.createEmptyMap).toHaveBeenCalledWith(rootNode)
+      expect(mapsService.createEmptyMap).toHaveBeenCalledWith(
+        rootNode,
+        undefined
+      )
+      expect(response).toEqual(result)
+    })
+
+    it('should create a new map with a specified pid', async () => {
+      const pid = 'test-person-id'
+
+      const newMap: MmpMap = createMmpMap({ ownerExternalId: pid })
+      const exportedMap: IMmpClientMap = createMmpClientMap({ uuid: newMap.id })
+
+      const result: IMmpClientPrivateMap = {
+        map: exportedMap,
+        adminId: 'admin-id',
+        modificationSecret: 'modification-secret',
+      }
+
+      const rootNode = createClientRootNode()
+
+      jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValueOnce(newMap)
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+
+      const response = await mapsController.create({ rootNode }, {
+        pid,
+      } as Request)
+
+      expect(mapsService.createEmptyMap).toHaveBeenCalledWith(rootNode, pid)
       expect(response).toEqual(result)
     })
   })

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { SettingsService } from './core/services/settings/settings.service';
@@ -13,17 +13,15 @@ import { routeAnimation } from './shared/animations/route.animation';
   imports: [RouterOutlet],
 })
 export class RootComponent implements OnInit {
+  private translateService = inject(TranslateService);
+  private router = inject(Router);
+  private settingsService = inject(SettingsService);
+  private shortcutsService = inject(ShortcutsService);
+
   public tapCounter = 0;
 
-  constructor(
-    private translateService: TranslateService,
-    private router: Router,
-    private settingsService: SettingsService,
-    private shortcutsService: ShortcutsService
-  ) {}
-
   public async ngOnInit() {
-    const settings = this.settingsService.getCachedSettings();
+    const settings = this.settingsService.getCachedUserSettings();
 
     await this.initTranslations(settings.general.language);
 

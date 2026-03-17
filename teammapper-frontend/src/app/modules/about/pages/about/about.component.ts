@@ -20,12 +20,14 @@ import {
 } from '@angular/material/card';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { TranslatePipe } from '@ngx-translate/core';
+import { MindmapsOverview } from 'src/app/shared/components/mindmaps-overview/mindmaps-overview.component';
 
 @Component({
   selector: 'teammapper-about',
   templateUrl: './about.component.html',
   styleUrls: ['./about.component.scss'],
   imports: [
+    MindmapsOverview,
     HeaderComponent,
     JumbotronComponent,
     FaIconComponent,

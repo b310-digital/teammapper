@@ -14,28 +14,44 @@
 
   <div class="content container">
     <mat-list>
-      <mat-list-item
-        *ngFor="let shortcut of shortcuts.slice(0, shortcuts.length / 2)">
-        <span *ngFor="let key of shortcut.keys; let last = last">
-          <span class="key">{{ key }}</span
-          ><span *ngIf="!last">&nbsp;+&nbsp;</span>
-        </span>
-        <span class="description">
-          {{ shortcut.description | translate }}
-        </span>
-      </mat-list-item>
+      @for (
+        shortcut of shortcuts.slice(0, shortcuts.length / 2);
+        track shortcut.description
+      ) {
+        <mat-list-item>
+          @for (key of shortcut.keys; track key; let last = $last) {
+            <span>
+              <span class="key">{{ key }}</span>
+              @if (!last) {
+                <span>&nbsp;+&nbsp;</span>
+              }
+            </span>
+          }
+          <span class="description">
+            {{ shortcut.description | translate }}
+          </span>
+        </mat-list-item>
+      }
     </mat-list>
     <mat-list>
-      <mat-list-item
-        *ngFor="let shortcut of shortcuts.slice(shortcuts.length / 2)">
-        <span *ngFor="let key of shortcut.keys; let last = last">
-          <span class="key">{{ key }}</span
-          ><span *ngIf="!last">&nbsp;+&nbsp;</span>
-        </span>
-        <span class="description">
-          {{ shortcut.description | translate }}
-        </span>
-      </mat-list-item>
+      @for (
+        shortcut of shortcuts.slice(shortcuts.length / 2);
+        track shortcut.description
+      ) {
+        <mat-list-item>
+          @for (key of shortcut.keys; track key; let last = $last) {
+            <span>
+              <span class="key">{{ key }}</span>
+              @if (!last) {
+                <span>&nbsp;+&nbsp;</span>
+              }
+            </span>
+          }
+          <span class="description">
+            {{ shortcut.description | translate }}
+          </span>
+        </mat-list-item>
+      }
     </mat-list>
   </div>
 </div>

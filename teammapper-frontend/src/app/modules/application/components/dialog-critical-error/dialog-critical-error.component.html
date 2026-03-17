@@ -1,0 +1,19 @@
+<h2 mat-dialog-title class="error-title">
+  <mat-icon class="error-icon">warning</mat-icon>
+  {{ 'MODALS.CRITICAL_ERROR.TITLE' | translate }}
+</h2>
+
+<mat-dialog-content cdkScrollable>
+  <p class="error-message">{{ data.message }}</p>
+  <p class="warning-text">{{ 'MODALS.CRITICAL_ERROR.WARNING' | translate }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="reloadPage()"
+    class="reload-button">
+    {{ 'MODALS.CRITICAL_ERROR.RELOAD_BUTTON' | translate }}
+  </button>
+</mat-dialog-actions>

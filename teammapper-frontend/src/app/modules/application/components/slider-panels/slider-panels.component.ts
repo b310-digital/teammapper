@@ -1,9 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
-import { NgIf } from '@angular/common';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -12,28 +11,30 @@ import { TranslatePipe } from '@ngx-translate/core';
   selector: 'teammapper-sliders-panel',
   templateUrl: './slider-panels.component.html',
   styleUrls: ['./slider-panels.component.scss'],
-  imports: [NgIf, MatSlider, MatSliderThumb, FormsModule, TranslatePipe],
+  imports: [MatSlider, MatSliderThumb, FormsModule, TranslatePipe],
 })
 export class SliderPanelsComponent {
+  mmpService = inject(MmpService);
+  settingsService = inject(SettingsService);
+
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
   public mapOptions: CachedMapOptions;
 
-  constructor(
-    public mmpService: MmpService,
-    public settingsService: SettingsService
-  ) {
+  constructor() {
     this.mapOptions = this.mmpService.getAdditionalMapOptions();
   }
 
-  public updateNodeFontSize(event: any) {
-    const value = parseInt(event.target.value, 10);
+  public updateNodeFontSize(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const value = parseInt(target.value, 10);
 
     this.mmpService.updateNode('fontSize', value, true);
   }
 
-  public updateNodeImageSize(event: any) {
-    const value = parseInt(event.target.value, 10);
+  public updateNodeImageSize(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const value = parseInt(target.value, 10);
 
     this.mmpService.updateNode('imageSize', value, true);
   }

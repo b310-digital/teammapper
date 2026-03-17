@@ -1,15 +1,16 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
-import { environment } from 'src/environments/environment';
+import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MatToolbar } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
-import { NgClass, NgIf } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
+import { SettingsService } from 'src/app/core/services/settings/settings.service';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -24,21 +25,30 @@ import { NgClass, NgIf } from '@angular/common';
     MatMenu,
     MatMenuItem,
     NgClass,
-    NgIf,
     TranslatePipe,
+    AsyncPipe,
   ],
 })
 export class ToolbarComponent {
+  private translationService = inject(TranslateService);
+  mmpService = inject(MmpService);
+  private mapSyncService = inject(MapSyncService);
+  private dialogService = inject(DialogService);
+  private settingsService = inject(SettingsService);
+
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
-  public featureFlagPictograms: boolean = environment.featureFlagPictograms;
-  public featureFlagAI: boolean = environment.featureFlagAI;
+  public featureFlagPictograms: boolean;
+  public featureFlagAI: boolean;
 
-  constructor(
-    private translationService: TranslateService,
-    public mmpService: MmpService,
-    private dialogService: DialogService
-  ) {}
+  public canUndo$ = this.mapSyncService.canUndo$;
+  public canRedo$ = this.mapSyncService.canRedo$;
+
+  constructor() {
+    const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;
+    this.featureFlagPictograms = flags?.pictograms ?? false;
+    this.featureFlagAI = flags?.ai ?? false;
+  }
 
   public async exportMap(format: string) {
     const result = await this.mmpService.exportMap(format);
@@ -62,12 +72,12 @@ export class ToolbarComponent {
     }
   }
 
-  get canUndoRedo() {
-    if (this.mmpService && typeof this.mmpService.history === 'function') {
-      const history = this.mmpService.history();
-      return history?.snapshots?.length > 1;
-    }
-    return false;
+  public handleUndo(): void {
+    this.mapSyncService.undo();
+  }
+
+  public handleRedo(): void {
+    this.mapSyncService.redo();
   }
 
   public async share() {

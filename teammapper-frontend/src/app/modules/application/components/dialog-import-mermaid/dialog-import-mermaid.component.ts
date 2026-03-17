@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   MatDialogRef,
   MatDialogTitle,
@@ -23,8 +24,6 @@ import { MatIcon } from '@angular/material/icon';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
-import { environment } from 'src/environments/environment';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'teammapper-dialog-import-mermaid',
@@ -45,22 +44,23 @@ import { NgIf } from '@angular/common';
     MatButton,
     MatDialogClose,
     TranslatePipe,
-    NgIf,
   ],
 })
 export class DialogImportMermaidComponent {
+  private importService = inject(ImportService);
+  private toastService = inject(ToastrService);
+  private httpService = inject(HttpService);
+  private utilsService = inject(UtilsService);
+  private settingsService = inject(SettingsService);
+
+  private dialogRef =
+    inject<MatDialogRef<DialogImportMermaidComponent>>(MatDialogRef);
+  private router = inject(Router);
+
   public mermaidInput = '';
   public mindmapDescription = '';
-  public featureFlagAI: boolean = environment.featureFlagAI;
-
-  constructor(
-    private importService: ImportService,
-    private settingsService: SettingsService,
-    private toastService: ToastrService,
-    private httpService: HttpService,
-    private utilsService: UtilsService,
-    private dialogRef: MatDialogRef<DialogImportMermaidComponent>
-  ) {}
+  public featureFlagAI: boolean =
+    this.settingsService.getCachedSystemSettings().featureFlags.ai;
 
   async createMermaidMindmapFromServer(): Promise<void> {
     this.toastService.info(
@@ -72,7 +72,7 @@ export class DialogImportMermaidComponent {
       JSON.stringify({
         mindmapDescription: this.mindmapDescription,
         language:
-          this.settingsService.getCachedSettings().general.language ?? 'en',
+          this.settingsService.getCachedUserSettings().general.language ?? 'en',
       })
     );
     if (response.status === 201) {

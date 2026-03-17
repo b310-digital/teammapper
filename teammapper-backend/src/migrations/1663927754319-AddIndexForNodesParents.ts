@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddIndexForNodesParents1663927754319
-  implements MigrationInterface
-{
+export class AddIndexForNodesParents1663927754319 implements MigrationInterface {
   name = 'AddIndexForNodesParents1663927754319'
 
   public async up(queryRunner: QueryRunner): Promise<void> {

@@ -21,4 +21,10 @@ async function bootstrap() {
   process.exit(0)
 }
 
-bootstrap()
+bootstrap().catch((error) => {
+  const logger = new Logger('TaskRunner')
+  logger.error(
+    `Job failed: ${error instanceof Error ? error.message : String(error)}`
+  )
+  process.exit(1)
+})
