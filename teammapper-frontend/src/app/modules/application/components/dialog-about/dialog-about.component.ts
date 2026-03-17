@@ -5,7 +5,7 @@ import { MapProperties } from '@mmp/map/types';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   MatDialogRef,
   MatDialogTitle,
@@ -33,6 +33,7 @@ import { AsyncPipe, DatePipe } from '@angular/common';
     AsyncPipe,
     DatePipe,
     TranslatePipe,
+    RouterLink,
   ],
 })
 export class DialogAboutComponent {

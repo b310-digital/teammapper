@@ -121,7 +121,11 @@ export default class Nodes {
 
     this.counter++;
 
-    if (!properties.coordinates?.x && !properties.coordinates?.y && !node.isRoot) {
+    if (
+      !properties.coordinates?.x &&
+      !properties.coordinates?.y &&
+      !node.isRoot
+    ) {
       node.coordinates = this.calculateCoordinates(node);
     }
 
@@ -603,7 +607,8 @@ export default class Nodes {
       return;
     }
 
-    const root = rootNode ?? (node instanceof Node ? this.getRoot() : undefined);
+    const root =
+      rootNode ?? (node instanceof Node ? this.getRoot() : undefined);
     if (!root) {
       return;
     }
