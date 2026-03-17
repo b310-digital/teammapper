@@ -3,12 +3,13 @@ import { SettingsService } from '../../../../core/services/settings/settings.ser
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { UserSettings } from '../../../../shared/models/settings.model';
 import { MatSelect, MatOption } from '@angular/material/select';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'teammapper-footer',
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss'],
-  imports: [MatSelect, MatOption, TranslatePipe],
+  imports: [MatSelect, MatOption, TranslatePipe, RouterLink],
 })
 export class FooterComponent implements OnInit {
   private settingsService = inject(SettingsService);

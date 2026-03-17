@@ -21,7 +21,7 @@ import { SettingsModule } from './settings/settings.module'
       // /map/assets/icons/foo.png) returns index.html with HTTP 200,
       // causing bots/crawlers that ignore <base href> to recursively
       // resolve relative paths into ever-deeper nested URLs.
-      renderPath: /^\/($|map(\/[^/]*)?$|app\/(settings|shortcuts)$)/,
+      renderPath: /^\/(|map(\/[^/]*)?|privacy|legal|app(\/( settings|shortcuts))?)$/,
     }),
   ],
 })
