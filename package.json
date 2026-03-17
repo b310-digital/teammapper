@@ -14,7 +14,7 @@
     "backend:dev": "pnpm --filter teammapper-backend start:dev",
     "frontend:dev": "pnpm --filter teammapper-frontend start",
     "build": "pnpm run build:prod",
-    "build:prod": "pnpm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && pnpm run build:backend:prod",
+    "build:prod": "pnpm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && pnpm run build:backend:prod && pnpm run migrate:prod",
     "build:backend:prod": "pnpm --filter teammapper-backend run build",
     "build:frontend:prod": "GENERATE_SOURCEMAP=false pnpm --filter teammapper-frontend run build:prod",
     "clean": "rm -rf teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist",
