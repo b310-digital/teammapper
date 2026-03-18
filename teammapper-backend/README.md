@@ -68,7 +68,7 @@ Copy `.env.default` to `.env` and configure the variables below.
 | Variable | Description | Default |
 |---|---|---|
 | `PORT` | Server port | `3000` |
-| `MODE` | `DEV` disables SSL and enables schema sync | `DEV` |
+| `MODE` | `DEV` disables SSL | `DEV` |
 | `DELETE_AFTER_DAYS` | Days before unused maps are deleted | `30` |
 
 ### PostgreSQL (optional)
@@ -152,22 +152,16 @@ Drop schema
 pnpm run dev:typeorm schema:drop
 ```
 
-For development, sync db structure
-
-```bash
-pnpm run dev:typeorm schema:sync
-```
-
-For pruction environments, run migrations, see https://github.com/typeorm/typeorm/blob/master/docs/migrations.md
-
-```bash
-pnpm run prod:typeorm:migrate
-```
-
-or run migrations on dev:
+Run migrations in development:
 
 ```bash
 pnpm run dev:typeorm migration:run
+```
+
+Run migrations in production (see https://github.com/typeorm/typeorm/blob/master/docs/migrations.md):
+
+```bash
+pnpm run prod:typeorm:migrate
 ```
 
 Generate new migration based on current changes
