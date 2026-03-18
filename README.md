@@ -248,6 +248,7 @@ The following environment variables override the feature flags from the JSON con
 | `AI_ENABLED` | Enable AI features (mindmap generation) | `false` |
 | `YJS_ENABLED` | Enable Yjs-based real-time collaboration | `false` |
 | `DELETE_AFTER_DAYS` | Number of days before mindmaps are deleted | `30` |
+| `LOG_LEVEL` | NestJS log verbosity (`error`, `warn`, `log`, `debug`, `verbose`) | `debug` in DEV, `log` otherwise |
 
 ### Further details
 
