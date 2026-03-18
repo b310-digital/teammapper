@@ -21,7 +21,7 @@
     "format": "pnpm --filter '*' run format",
     "install:frozen": "pnpm install --frozen-lockfile",
     "lint": "pnpm --filter '*' run lint",
-    "migrate:dev": "pnpm --filter teammapper-backend run dev:typeorm schema:sync",
+    "migrate:dev": "pnpm --filter teammapper-backend run dev:typeorm:migrate",
     "migrate:prod": "pnpm --filter teammapper-backend run prod:typeorm:migrate",
     "start": "pnpm run start:prod",
     "start:prod": "pnpm --filter teammapper-backend run start:prod",
