@@ -23,7 +23,7 @@ async function bootstrap() {
   })
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: ['log', 'error', 'warn', 'debug'],
+    logger: configService.getLogLevels(),
   })
 
   app.useGlobalFilters(new GlobalExceptionFilter())

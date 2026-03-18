@@ -61,14 +61,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/pgdata
 
-  playwright:
-    image: mcr.microsoft.com/playwright:v1.58.2-noble
-    container_name: playwright
-    depends_on:
-      - app
-    expose:
-      - "9323"
-    command: ["npx", "playwright", "run-server", "--port=9323"]
+  # playwright:
+  #   image: mcr.microsoft.com/playwright:v1.58.2-noble
+  #   container_name: playwright
+  #   depends_on:
+  #     - app
+  #   expose:
+  #     - "9323"
+  #   command: ["npx", "playwright", "run-server", "--port=9323"]
 
 volumes:
   postgres_data:

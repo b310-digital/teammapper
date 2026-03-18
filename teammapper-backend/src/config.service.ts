@@ -1,6 +1,7 @@
 // Taken from https://github.com/GauSim/nestjs-typeorm
 
 import { DataSourceOptions } from 'typeorm'
+import { LogLevel } from '@nestjs/common'
 import { join } from 'path'
 
 interface EnvProps {
@@ -45,6 +46,22 @@ class ConfigService {
   public isProduction() {
     const mode = this.getValue('MODE', false)
     return mode !== 'DEV'
+  }
+
+  public getLogLevels(): LogLevel[] {
+    const raw = this.getValue('LOG_LEVEL', false)?.toLowerCase()
+    const hierarchy: LogLevel[] = ['error', 'warn', 'log', 'debug', 'verbose']
+    const level = raw && hierarchy.includes(raw as LogLevel) ? raw : null
+
+    if (raw && !level) {
+      console.warn(
+        `Invalid LOG_LEVEL "${raw}", falling back to MODE-based default`
+      )
+    }
+
+    const threshold = level ?? (this.isProduction() ? 'log' : 'debug')
+    const cutoff = hierarchy.indexOf(threshold as LogLevel)
+    return hierarchy.slice(0, cutoff + 1)
   }
 
   public deleteAfterDays() {
