@@ -102,7 +102,7 @@ describe('DialogPictogramsComponent', () => {
     mockPictoService.getPictos.mockReturnValue(of(mockPictogramResponse));
 
     await component.search();
-    expect(component.pictos).toEqual(mockPictogramResponse);
+    expect(component.pictos()).toEqual(mockPictogramResponse);
   });
 
   it('should get image URL for given ID', () => {

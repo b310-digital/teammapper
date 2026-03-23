@@ -1,4 +1,10 @@
-import { Component, EventEmitter, HostListener, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  inject,
+  signal,
+} from '@angular/core';
 import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import {
@@ -60,7 +66,7 @@ export class DialogPictogramsComponent {
   private mmpService = inject(MmpService);
   private utilsService = inject(UtilsService);
 
-  public pictos: IPictogramResponse[];
+  public pictos = signal<IPictogramResponse[]>([]);
   public onPictogramAdd = new EventEmitter();
   public searchTerm = '';
   public cardLayout = this.breakpointObserver
@@ -91,7 +97,7 @@ export class DialogPictogramsComponent {
   @HostListener('document:keydown.enter')
   async search() {
     this.pictoService.getPictos(this.searchTerm).subscribe(pictos => {
-      this.pictos = pictos;
+      this.pictos.set(pictos);
     });
   }
 

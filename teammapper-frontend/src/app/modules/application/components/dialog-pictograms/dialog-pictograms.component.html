@@ -12,10 +12,10 @@
   <br />
   @if (cardLayout | async; as layout) {
     <mat-grid-list rowHeight="2:1" [cols]="layout.columns">
-      @if (!pictos) {
+      @if (!pictos().length) {
         <div>{{ 'MODALS.PICTOGRAMS.EMPTY' | translate }}</div>
       }
-      @for (picto of pictos; track picto) {
+      @for (picto of pictos(); track picto) {
         <mat-grid-tile
           [colspan]="layout.miniCard.cols"
           [rowspan]="layout.miniCard.rows"

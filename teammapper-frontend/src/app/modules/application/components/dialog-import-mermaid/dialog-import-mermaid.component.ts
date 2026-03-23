@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   MatDialogRef,
@@ -52,6 +52,7 @@ export class DialogImportMermaidComponent {
   private httpService = inject(HttpService);
   private utilsService = inject(UtilsService);
   private settingsService = inject(SettingsService);
+  private cdr = inject(ChangeDetectorRef);
 
   private dialogRef =
     inject<MatDialogRef<DialogImportMermaidComponent>>(MatDialogRef);
@@ -63,27 +64,34 @@ export class DialogImportMermaidComponent {
     this.settingsService.getCachedSystemSettings().featureFlags.ai;
 
   async createMermaidMindmapFromServer(): Promise<void> {
-    this.toastService.info(
-      await this.utilsService.translate('TOASTS.AI_MERMAID_GENERATING')
-    );
-    const response = await this.httpService.post(
-      API_URL.ROOT,
-      '/mermaid/create',
-      JSON.stringify({
-        mindmapDescription: this.mindmapDescription,
-        language:
-          this.settingsService.getCachedUserSettings().general.language ?? 'en',
-      })
-    );
-    if (response.status === 201) {
-      this.toastService.success(
-        await this.utilsService.translate('TOASTS.AI_MERMAID_GENERATED_SUCCESS')
+    try {
+      this.toastService.info(
+        await this.utilsService.translate('TOASTS.AI_MERMAID_GENERATING')
       );
-      this.mermaidInput = await response.text();
-    } else {
-      this.toastService.error(
-        await this.utilsService.translate('TOASTS.ERRORS.AI_MERMAID_ERROR')
+      const response = await this.httpService.post(
+        API_URL.ROOT,
+        '/mermaid/create',
+        JSON.stringify({
+          mindmapDescription: this.mindmapDescription,
+          language:
+            this.settingsService.getCachedUserSettings().general.language ??
+            'en',
+        })
       );
+      if (response.status === 201) {
+        this.toastService.success(
+          await this.utilsService.translate(
+            'TOASTS.AI_MERMAID_GENERATED_SUCCESS'
+          )
+        );
+        this.mermaidInput = await response.text();
+      } else {
+        this.toastService.error(
+          await this.utilsService.translate('TOASTS.ERRORS.AI_MERMAID_ERROR')
+        );
+      }
+    } finally {
+      this.cdr.markForCheck();
     }
   }
 

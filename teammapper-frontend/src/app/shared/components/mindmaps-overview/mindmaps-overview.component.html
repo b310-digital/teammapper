@@ -1,5 +1,5 @@
 <div class="content map-list">
-  @if (ownedEntries && ownedEntries.length > 0) {
+  @if (ownedEntries().length > 0) {
     <mat-card class="map-list-main">
       <mat-card-header>
         <mat-card-title>{{
@@ -9,7 +9,7 @@
       <hr />
       <mat-card-content>
         <mat-list>
-          @for (ownedEntry of ownedEntries; track ownedEntry.id) {
+          @for (ownedEntry of ownedEntries(); track ownedEntry.id) {
             <mat-list-item>
               <span matLine>
                 <a href="{{ getMapUrl(ownedEntry) }}">{{
@@ -36,7 +36,7 @@
     <mat-card-content>
       <mat-list>
         @for (
-          cachedMapEntry of cachedAdminMapEntries;
+          cachedMapEntry of cachedAdminMapEntries();
           track cachedMapEntry.id
         ) {
           <mat-list-item>

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import {
   MatDialogRef,
   MatDialogTitle,
@@ -48,6 +48,7 @@ export class DialogImportAiComponent {
   private toastService = inject(ToastrService);
   private httpService = inject(HttpService);
   private utilsService = inject(UtilsService);
+  private cdr = inject(ChangeDetectorRef);
   private dialogRef =
     inject<MatDialogRef<DialogImportAiComponent>>(MatDialogRef);
 
@@ -99,6 +100,7 @@ export class DialogImportAiComponent {
       );
     } finally {
       this.isGenerating = false;
+      this.cdr.markForCheck();
     }
   }
 }
