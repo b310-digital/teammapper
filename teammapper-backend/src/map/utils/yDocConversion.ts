@@ -2,6 +2,7 @@ import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MapOptions } from '../types'
 import { MmpMap } from '../entities/mmpMap.entity'
+import { sanitizeNodeFields } from './sanitization'
 
 // Converts an MmpNode entity to a Y.Map and sets it in the nodes container
 export const populateYMapFromNode = (
@@ -70,7 +71,7 @@ export const yMapToMmpNode = (
   const link = yNode.get('link') as { href: string } | undefined
   const parent = yNode.get('parent') as string | null | undefined
 
-  return {
+  return sanitizeNodeFields({
     id: yNode.get('id') as string,
     nodeParentId: parent || undefined,
     name: (yNode.get('name') as string) ?? '',
@@ -91,7 +92,7 @@ export const yMapToMmpNode = (
     linkHref: link?.href ?? '',
     orderNumber: (yNode.get('orderNumber') as number) ?? undefined,
     nodeMapId: mapId,
-  }
+  })
 }
 
 // Populates the mapOptions Y.Map from an MmpMap entity

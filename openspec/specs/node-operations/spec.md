@@ -38,7 +38,7 @@ The system SHALL allow users to drag nodes to new positions on the map. The node
 - **THEN** the map layout SHALL visually change to reflect the new position
 
 ### Requirement: User can upload images to nodes
-The system SHALL allow users to upload an image file to a selected node. The image SHALL be displayed above the node text with positive dimensions.
+The system SHALL allow users to upload an image file to a selected node. The image SHALL be displayed above the node text with positive dimensions. The file input SHALL only accept raster image formats (PNG, JPEG, GIF, WebP) and SHALL reject SVG files.
 
 #### Scenario: Upload image to a node
 - **WHEN** the user selects a node and uploads an image file
@@ -46,8 +46,18 @@ The system SHALL allow users to upload an image file to a selected node. The ima
 - **AND** the image SHALL have positive width and height
 - **AND** the image SHALL be positioned above the node text
 
+#### Scenario: File picker restricts to raster formats
+- **WHEN** the user opens the image upload file picker
+- **THEN** the file picker SHALL filter for PNG, JPEG, GIF, and WebP formats only
+- **AND** SVG files SHALL NOT be selectable by default
+
+#### Scenario: SVG file type rejected before processing
+- **WHEN** the user bypasses the file picker filter and selects an SVG file
+- **THEN** the system SHALL reject the file before processing
+- **AND** no image SHALL be added to the node
+
 ### Requirement: User can add and remove hyperlinks on nodes
-The system SHALL allow users to attach a URL hyperlink to a selected node. The link SHALL be visible on the node and users SHALL be able to remove it.
+The system SHALL allow users to attach a URL hyperlink to a selected node. The link SHALL be visible on the node and users SHALL be able to remove it. The system SHALL only accept links with `http:` or `https:` protocol.
 
 #### Scenario: Add a link to a node
 - **WHEN** the user selects a node and adds a URL via the add link action
@@ -57,3 +67,20 @@ The system SHALL allow users to attach a URL hyperlink to a selected node. The l
 #### Scenario: Remove a link from a node
 - **WHEN** the user removes a link from a node
 - **THEN** the link SHALL no longer be visible on the node
+
+#### Scenario: Reject javascript protocol link
+- **WHEN** the user attempts to add a link with `javascript:alert(1)` as the URL
+- **THEN** the system SHALL reject the link as invalid
+- **AND** no link SHALL be added to the node
+
+#### Scenario: Reject data protocol link
+- **WHEN** the user attempts to add a link with `data:text/html,...` as the URL
+- **THEN** the system SHALL reject the link as invalid
+
+### Requirement: Paste into node name SHALL insert plain text only
+The system SHALL insert pasted content as plain text when the user pastes into a node name editor. HTML markup in pasted content SHALL NOT be interpreted as HTML.
+
+#### Scenario: Paste HTML content into node name
+- **WHEN** the user pastes text containing HTML tags (e.g., `<b>bold</b>`) into a node name
+- **THEN** the node name SHALL contain the literal text without HTML interpretation
+- **AND** no HTML elements SHALL be created in the DOM from the pasted content

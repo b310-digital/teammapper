@@ -232,6 +232,42 @@ describe('ToolbarComponent', () => {
     expect(ctx.mmpService.addNodeLink).not.toHaveBeenCalled();
   });
 
+  it('should reject javascript: protocol link', () => {
+    jest.spyOn(window, 'prompt').mockReturnValue('javascript:alert(1)');
+
+    ctx.component.addLink();
+
+    expect(ctx.mmpService.addNodeLink).not.toHaveBeenCalled();
+  });
+
+  it('should reject data: protocol link', () => {
+    jest
+      .spyOn(window, 'prompt')
+      .mockReturnValue('data:text/html,<script>alert(1)</script>');
+
+    ctx.component.addLink();
+
+    expect(ctx.mmpService.addNodeLink).not.toHaveBeenCalled();
+  });
+
+  it('should reject SVG file type in image upload', () => {
+    const mockFile = new File([''], 'test.svg', { type: 'image/svg+xml' });
+    const mockFileReader = {
+      readAsDataURL: jest.fn(),
+      result: '',
+      onload: null,
+    };
+    window.FileReader = jest.fn(
+      () => mockFileReader
+    ) as unknown as typeof FileReader;
+
+    ctx.component.initImageUpload({
+      target: { files: [mockFile] },
+    } as unknown as InputEvent);
+
+    expect(mockFileReader.readAsDataURL).not.toHaveBeenCalled();
+  });
+
   it('should read image file as data URL', () => {
     const mockFile = new File([''], 'test.jpg', { type: 'image/jpeg' });
     const mockFileReader = {
