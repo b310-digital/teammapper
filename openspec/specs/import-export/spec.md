@@ -1,11 +1,21 @@
 ## ADDED Requirements
 
-### Requirement: Import menu offers JSON and Mermaid options
-The system SHALL provide an import menu that displays JSON and Mermaid import options when opened.
+### Requirement: Import menu offers JSON, Mermaid, and AI options
+The system SHALL provide an import menu that displays JSON and Mermaid import options when opened. When the AI feature is enabled, an AI generation option SHALL also be visible.
 
 #### Scenario: Open import menu
 - **WHEN** the user opens the import menu
 - **THEN** both "JSON" and "MERMAID" options SHALL be visible
+
+#### Scenario: AI enabled shows AI import option
+- **WHEN** the user opens the import menu
+- **AND** the AI feature flag is enabled
+- **THEN** an "AI" import option SHALL be visible alongside JSON and Mermaid options
+
+#### Scenario: AI disabled hides AI import option
+- **WHEN** the user opens the import menu
+- **AND** the AI feature flag is disabled
+- **THEN** only JSON and Mermaid import options SHALL be visible
 
 ### Requirement: User can import a mind map from a JSON file
 The system SHALL allow users to import a mind map by uploading a JSON file. The imported map SHALL replace the current map and display the nodes defined in the file.
