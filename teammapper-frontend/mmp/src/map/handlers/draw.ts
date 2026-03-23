@@ -469,7 +469,7 @@ export default class Draw {
 
       const text = event.clipboardData.getData('text/plain');
 
-      document.execCommand('insertHTML', false, text);
+      document.execCommand('insertText', false, text);
     };
 
     name.onblur = () => {

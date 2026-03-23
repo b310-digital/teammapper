@@ -135,7 +135,20 @@ export class ToolbarComponent {
     this.dialogService.openAboutDialog();
   }
 
+  private static readonly ALLOWED_IMAGE_TYPES = [
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp',
+  ];
+
   public initImageUpload(event: InputEvent) {
+    const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
+    const file = fileUpload.files?.[0];
+    if (!file || !ToolbarComponent.ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return;
+    }
+
     const fileReader = new FileReader();
 
     fileReader.onload = (_fileEvent: Event) => {
@@ -160,8 +173,7 @@ export class ToolbarComponent {
         this.mmpService.addNodeImage(ctx.canvas.toDataURL('image/jpeg', 0.5));
       };
     };
-    const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
-    fileReader.readAsDataURL(fileUpload.files[0]);
+    fileReader.readAsDataURL(file);
   }
 
   public initJSONUpload(event: InputEvent) {
@@ -175,12 +187,12 @@ export class ToolbarComponent {
     fileReader.readAsText(fileUpload.files[0]);
   }
 
-  private isValidLink(input: string) {
+  private isValidLink(input: string): boolean {
     try {
-      new URL(input);
-    } catch (_) {
+      const url = new URL(input);
+      return ['http:', 'https:'].includes(url.protocol);
+    } catch {
       return false;
     }
-    return true;
   }
 }

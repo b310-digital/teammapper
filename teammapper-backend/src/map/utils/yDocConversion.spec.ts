@@ -21,13 +21,13 @@ const createTestNode = (overrides: Partial<MmpNode> = {}): MmpNode => {
   node.k = 1.5
   node.coordinatesX = 100
   node.coordinatesY = 200
-  node.colorsName = '#333'
-  node.colorsBackground = '#fff'
-  node.colorsBranch = '#999'
+  node.colorsName = '#333333'
+  node.colorsBackground = '#ffffff'
+  node.colorsBranch = '#999999'
   node.fontStyle = 'italic'
   node.fontSize = 16
   node.fontWeight = 'bold'
-  node.imageSrc = 'img.png'
+  node.imageSrc = 'data:image/png;base64,iVBORw0KGgo='
   node.imageSize = 80
   node.linkHref = 'https://example.com'
   node.orderNumber = 1
@@ -87,9 +87,9 @@ describe('yDocConversion', () => {
         detached: false,
         k: 1.5,
         coordinates: { x: 100, y: 200 },
-        colors: { name: '#333', background: '#fff', branch: '#999' },
+        colors: { name: '#333333', background: '#ffffff', branch: '#999999' },
         font: { style: 'italic', size: 16, weight: 'bold' },
-        image: { src: 'img.png', size: 80 },
+        image: { src: 'data:image/png;base64,iVBORw0KGgo=', size: 80 },
         link: { href: 'https://example.com' },
       })
 
@@ -141,13 +141,13 @@ describe('yDocConversion', () => {
         k: 1.5,
         coordinatesX: 100,
         coordinatesY: 200,
-        colorsName: '#333',
-        colorsBackground: '#fff',
-        colorsBranch: '#999',
+        colorsName: '#333333',
+        colorsBackground: '#ffffff',
+        colorsBranch: '#999999',
         fontStyle: 'italic',
         fontSize: 16,
         fontWeight: 'bold',
-        imageSrc: 'img.png',
+        imageSrc: 'data:image/png;base64,iVBORw0KGgo=',
         imageSize: 80,
         linkHref: 'https://example.com',
         nodeMapId: 'map-1',
@@ -242,6 +242,47 @@ describe('yDocConversion', () => {
       )
 
       expect(updateCount).toBe(1)
+
+      doc.destroy()
+    })
+  })
+
+  describe('yMapToMmpNode sanitization', () => {
+    it('should sanitize malicious fields from Y.Map data', () => {
+      const doc = new Y.Doc()
+      const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
+
+      doc.transact(() => {
+        const yNode = new Y.Map<unknown>()
+        yNode.set('id', 'node-xss')
+        yNode.set('parent', null)
+        yNode.set('name', '<img src=x onerror=alert(1)>Hello')
+        yNode.set('isRoot', true)
+        yNode.set('locked', false)
+        yNode.set('detached', false)
+        yNode.set('k', 1)
+        yNode.set('coordinates', { x: 0, y: 0 })
+        yNode.set('colors', {
+          name: '#000000',
+          background: '#ffffff',
+          branch: '#333333',
+        })
+        yNode.set('font', { style: 'normal', size: 14, weight: 'normal' })
+        yNode.set('image', {
+          src: 'data:image/svg+xml;base64,PHN2Zz4=',
+          size: 60,
+        })
+        yNode.set('link', { href: 'javascript:alert(1)' })
+        yNode.set('orderNumber', 1)
+        nodesMap.set('node-xss', yNode)
+      })
+
+      const yNode = nodesMap.get('node-xss')!
+      const result = yMapToMmpNode(yNode, 'map-1')
+
+      expect(result.name).toBe('Hello')
+      expect(result.imageSrc).toBe('')
+      expect(result.linkHref).toBe('')
 
       doc.destroy()
     })
