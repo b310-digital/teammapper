@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CachedAdminMapEntry } from '../../models/cached-map.model';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
@@ -36,18 +36,14 @@ export class MindmapsOverview implements OnInit {
   private mapSyncService = inject(MapSyncService);
   private router = inject(Router);
 
-  public cachedAdminMapEntries: CachedAdminMapEntry[];
-  public ownedEntries: CachedAdminMapEntry[];
-
-  constructor() {
-    this.cachedAdminMapEntries = [];
-    this.ownedEntries = [];
-  }
+  public cachedAdminMapEntries = signal<CachedAdminMapEntry[]>([]);
+  public ownedEntries = signal<CachedAdminMapEntry[]>([]);
 
   public async ngOnInit() {
-    this.cachedAdminMapEntries =
-      await this.settingsService.getCachedAdminMapEntries();
-    this.ownedEntries = await this.mapSyncService.fetchUserMapsFromServer();
+    this.cachedAdminMapEntries.set(
+      await this.settingsService.getCachedAdminMapEntries()
+    );
+    this.ownedEntries.set(await this.mapSyncService.fetchUserMapsFromServer());
   }
 
   public getMapUrl(entry: CachedAdminMapEntry): string {
