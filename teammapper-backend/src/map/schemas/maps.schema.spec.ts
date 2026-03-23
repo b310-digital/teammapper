@@ -33,11 +33,11 @@ describe('MapCreateSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects rootNode with name exceeding 5000 characters', () => {
+  it('rejects rootNode with name exceeding 512 characters', () => {
     const result = v.safeParse(MapCreateSchema, {
       rootNode: {
         ...validCreateInput.rootNode,
-        name: 'a'.repeat(5001),
+        name: 'a'.repeat(513),
       },
     })
     expect(result.success).toBe(false)

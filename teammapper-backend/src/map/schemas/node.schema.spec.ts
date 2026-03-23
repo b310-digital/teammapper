@@ -47,18 +47,18 @@ describe('NodeSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects node name exceeding 5000 characters', () => {
+  it('rejects node name exceeding 512 characters', () => {
     const result = v.safeParse(NodeSchema, {
       ...validNode,
-      name: 'a'.repeat(5001),
+      name: 'a'.repeat(513),
     })
     expect(result.success).toBe(false)
   })
 
-  it('accepts node name at exactly 5000 characters', () => {
+  it('accepts node name at exactly 512 characters', () => {
     const result = v.safeParse(NodeSchema, {
       ...validNode,
-      name: 'a'.repeat(5000),
+      name: 'a'.repeat(512),
     })
     expect(result.success).toBe(true)
   })
@@ -116,10 +116,10 @@ describe('NodeBasicsSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects name exceeding 5000 characters', () => {
+  it('rejects name exceeding 512 characters', () => {
     const result = v.safeParse(NodeBasicsSchema, {
       ...validNodeBasics,
-      name: 'a'.repeat(5001),
+      name: 'a'.repeat(513),
     })
     expect(result.success).toBe(false)
   })
@@ -170,6 +170,24 @@ describe('FontSchema', () => {
   it('rejects non-number size', () => {
     expect(v.safeParse(FontSchema, { size: 'big' }).success).toBe(false)
   })
+
+  it('rejects style exceeding 20 characters', () => {
+    expect(
+      v.safeParse(FontSchema, { style: 'a'.repeat(21) }).success
+    ).toBe(false)
+  })
+
+  it('rejects weight exceeding 20 characters', () => {
+    expect(
+      v.safeParse(FontSchema, { weight: 'a'.repeat(21) }).success
+    ).toBe(false)
+  })
+
+  it('accepts style at 20 characters', () => {
+    expect(
+      v.safeParse(FontSchema, { style: 'a'.repeat(20) }).success
+    ).toBe(true)
+  })
 })
 
 describe('ImageSchema', () => {
@@ -183,10 +201,16 @@ describe('ImageSchema', () => {
     ).toBe(true)
   })
 
-  it('rejects src exceeding 2MB', () => {
+  it('rejects src exceeding 200000 characters', () => {
     expect(
-      v.safeParse(ImageSchema, { src: 'a'.repeat(2_000_001) }).success
+      v.safeParse(ImageSchema, { src: 'a'.repeat(200_001) }).success
     ).toBe(false)
+  })
+
+  it('accepts src at exactly 200000 characters', () => {
+    expect(
+      v.safeParse(ImageSchema, { src: 'a'.repeat(200_000) }).success
+    ).toBe(true)
   })
 
   it('accepts empty object', () => {
@@ -221,6 +245,22 @@ describe('LinkSchema', () => {
     expect(
       v.safeParse(LinkSchema, { href: 'data:text/html,<script>' }).success
     ).toBe(false)
+  })
+
+  it('rejects href exceeding 2048 characters', () => {
+    expect(
+      v.safeParse(LinkSchema, {
+        href: 'https://example.com/' + 'a'.repeat(2030),
+      }).success
+    ).toBe(false)
+  })
+
+  it('accepts href at 2048 characters', () => {
+    expect(
+      v.safeParse(LinkSchema, {
+        href: 'https://x.co/' + 'a'.repeat(2034),
+      }).success
+    ).toBe(true)
   })
 
   it('accepts empty object', () => {

@@ -19,29 +19,31 @@ export const CoordinatesSchema = v.object({
 
 export const FontSchema = v.partial(
   v.object({
-    style: v.nullable(v.string()),
+    style: v.nullable(v.pipe(v.string(), v.maxLength(20))),
     size: v.nullable(v.number()),
-    weight: v.nullable(v.string()),
+    weight: v.nullable(v.pipe(v.string(), v.maxLength(20))),
   })
 )
 
 export const ImageSchema = v.partial(
   v.object({
-    src: v.nullable(v.pipe(v.string(), v.maxLength(2_000_000))),
+    src: v.nullable(v.pipe(v.string(), v.maxLength(200_000))),
     size: v.nullable(v.number()),
   })
 )
 
 export const LinkSchema = v.partial(
   v.object({
-    href: v.nullable(v.pipe(v.string(), v.regex(/^https?:\/\//i))),
+    href: v.nullable(
+      v.pipe(v.string(), v.regex(/^https?:\/\//i), v.maxLength(2048))
+    ),
   })
 )
 
 export const NodeBasicsSchema = v.object({
   colors: ColorSchema,
   font: FontSchema,
-  name: v.nullable(v.pipe(v.string(), v.maxLength(5000))),
+  name: v.nullable(v.pipe(v.string(), v.maxLength(512))),
   image: ImageSchema,
 })
 
