@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { generateText } from 'ai'
-import { systemPrompt, SupportedLanguage } from '../utils/prompts'
+import { SYSTEM_PROMPT, userPrompt, SupportedLanguage } from '../utils/prompts'
 import { createProvider } from '../utils/aiProvider'
 import configService from '../../config.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'
@@ -45,8 +45,8 @@ export class AiService {
     await this.waitForRateLimit(estimated)
     const { text, usage } = await generateText({
       model: provider(this.llmConfig.model),
-      system: systemPrompt(language),
-      prompt: mindmapDescription,
+      system: SYSTEM_PROMPT,
+      prompt: userPrompt(mindmapDescription, language),
     })
     this.tokensUsedPerMinute = [
       ...this.tokensUsedPerMinute,

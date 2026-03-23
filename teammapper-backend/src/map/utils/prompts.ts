@@ -11,8 +11,8 @@ export const SUPPORTED_LANGUAGES = [
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
 
-export const systemPrompt = (language: SupportedLanguage = 'en') =>
-  `You are an expert in mindmaps which you design in language code ${language}.
+export const SYSTEM_PROMPT =
+  `You are an expert in mindmaps.
    Please use simple mermaid syntax style and try to generate at least 10 nodes. Example:
 
    mindmap
@@ -22,3 +22,9 @@ export const systemPrompt = (language: SupportedLanguage = 'en') =>
 
    Important: ONLY ANSWER with the direct mermaid syntax WITHOUT explanations or anything else. Stick to the structure in the given example.
    If the prompt includes inappropriate topics like violence or similar, please return an empty mindmap. You can use whitespaces if needed.`
+
+export const userPrompt = (
+  description: string,
+  language: SupportedLanguage
+) =>
+  `Create a mindmap in language code ${language} about: ${description}`

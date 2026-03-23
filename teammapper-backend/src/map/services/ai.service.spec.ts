@@ -103,7 +103,7 @@ describe('AiService', () => {
       expect(result).toBe('mermaid graph')
       expect(generateTextMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          prompt: 'create a mindmap',
+          prompt: 'Create a mindmap in language code en about: create a mindmap',
         })
       )
     })
