@@ -1,36 +1,55 @@
-export interface MapOptions {
-  fontIncrement: number
-  fontMaxSize: number
-  fontMinSize: number
-}
+import type { IMmpClientNode as _IMmpClientNode } from './schemas/node.schema'
+import type { IMmpClientMapOptions as _IMmpClientMapOptions } from './schemas/gateway.schema'
 
-export interface IMmpClientColor {
-  name: string | null
-  background: string | null
-  branch: string | null
-}
+// Entity/node types — derived from valibot schemas
+export type {
+  IMmpClientColor,
+  IMmpClientCoordinates,
+  IMmpClientFont,
+  IMmpClientNodeBasics,
+  IMmpClientNode,
+} from './schemas/node.schema'
 
-export interface IMmpClientCoordinates {
-  x: number
-  y: number
-}
+// Gateway/request types — derived from valibot schemas
+export type {
+  IMmpClientJoinRequest,
+  IMmpClientEditingRequest,
+  IMmpClientNodeRequest,
+  IMmpClientNodeAddRequest,
+  IMmpClientNodeSelectionRequest,
+  IMmpClientUpdateMapOptionsRequest,
+  IMmpClientMapOptions,
+  IMmpClientMapRequest,
+  IMmpClientUndoRedoRequest,
+  IMmpClientDeleteRequest,
+  IMmpClientSnapshotChanges,
+  IMmpClientMapDiff,
+} from './schemas/gateway.schema'
 
-export interface IMmpClientFont {
-  style: string | null
-  size: number | null
-  weight: string | null
-}
+// Maps controller types — derived from valibot schemas
+export type { IMmpClientMapCreateRequest } from './schemas/maps.schema'
 
+// IMmpClientMap is a domain type used across services/mappers with required fields.
+// The WebSocket MapSchema is intentionally permissive for validation; this interface
+// is the canonical type for internal use.
 export interface IMmpClientMap {
   uuid: string
   lastModified: Date | null
   lastAccessed: Date | null
   deleteAfterDays: number
   deletedAt: Date
-  data: IMmpClientNode[]
-  options: IMmpClientMapOptions
+  data: _IMmpClientNode[]
+  options: _IMmpClientMapOptions
   createdAt: Date | null
   writable?: boolean
+}
+
+// Types that don't have schemas (not user input boundaries)
+
+export interface MapOptions {
+  fontIncrement: number
+  fontMaxSize: number
+  fontMinSize: number
 }
 
 export interface IMmpClientMapInfo {
@@ -47,93 +66,8 @@ export interface IMmpClientPrivateMap {
   modificationSecret: string | null
 }
 
-export interface IMmpClientNodeBasics {
-  colors: IMmpClientColor
-  font: IMmpClientFont
-  name: string | null
-  image: { src: string | null; size: number | null }
-}
-
-export interface IMmpClientNode extends IMmpClientNodeBasics {
-  coordinates: IMmpClientCoordinates
-  detached: boolean
-  id: string
-  k: number
-  link: { href: string | null }
-  locked: boolean
-  parent: string | null
-  isRoot: boolean
-}
-
-export interface IMmpClientMapOptions {
-  fontMaxSize: number
-  fontMinSize: number
-  fontIncrement: number
-}
-
 export interface IClientCache {
   [clientId: string]: string
-}
-
-export interface IMmpClientJoinRequest {
-  mapId: string
-  color: string
-}
-
-export interface IMmpClientNodeSelectionRequest {
-  mapId: string
-  nodeId: string
-  selected: boolean
-}
-
-export interface IMmpClientEditingRequest {
-  modificationSecret: string
-  mapId: string
-}
-
-export interface IMmpClientNodeRequest extends IMmpClientEditingRequest {
-  node: IMmpClientNode
-  updatedProperty: string
-}
-
-export interface IMmpClientNodeAddRequest extends IMmpClientEditingRequest {
-  nodes: IMmpClientNode[]
-}
-
-export interface IMmpClientUpdateMapOptionsRequest extends IMmpClientEditingRequest {
-  options: IMmpClientMapOptions
-}
-
-export interface IMmpClientSnapshotChanges {
-  [k: string]: Partial<IMmpClientNode> | undefined
-}
-
-export interface IMmpClientMapDiff {
-  added: IMmpClientSnapshotChanges
-  deleted: IMmpClientSnapshotChanges
-  updated: IMmpClientSnapshotChanges
-}
-
-export interface IMmpClientMapRequest extends IMmpClientEditingRequest {
-  map: IMmpClientMap
-}
-
-export interface IMmpClientUndoRedoRequest extends IMmpClientEditingRequest {
-  diff: IMmpClientMapDiff
-}
-
-export interface IMmpClientMapCreateRequest {
-  rootNode: IMmpClientNodeBasics
-}
-
-export interface IMmpClientDeleteRequest {
-  adminId: string | null
-  mapId: string
-}
-
-export interface IMermaidCreateRequest {
-  mindmapDescription: string
-  language: string
 }
 
 // Operation tracking types for optimistic updates

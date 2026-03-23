@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { generateText } from 'ai'
-import { systemPrompt } from '../utils/prompts'
+import { systemPrompt, SupportedLanguage } from '../utils/prompts'
 import { createProvider } from '../utils/aiProvider'
 import configService from '../../config.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'
 
-const DEFAULT_ESTIMATED_TOKENS_COUNT = 1000
+const SYSTEM_PROMPT_TOKEN_OVERHEAD = 200
 
 interface RequestTokenEntry {
   time: number
@@ -16,32 +16,53 @@ interface RequestTokenEntry {
 export class AiService {
   private readonly logger = new Logger(AiService.name)
   private readonly llmConfig = configService.getLLMConfig()
+  // NOTE: Rate limiting is per-process. In multi-instance deployments,
+  // effective limits are multiplied by the number of instances.
   private tokensUsedPerMinute: RequestTokenEntry[] = []
   private totalTokensDaily = { count: 0, date: new Date().toLocaleDateString() }
+  private readonly parsedLimits: {
+    tpm: number | undefined
+    rpm: number | undefined
+    tpd: number | undefined
+  }
 
-  constructor() {}
+  constructor() {
+    this.parsedLimits = {
+      tpm: this.llmConfig.tpm ? parseInt(this.llmConfig.tpm, 10) : undefined,
+      rpm: this.llmConfig.rpm ? parseInt(this.llmConfig.rpm, 10) : undefined,
+      tpd: this.llmConfig.tpd ? parseInt(this.llmConfig.tpd, 10) : undefined,
+    }
+  }
 
   async generateMermaid(
     mindmapDescription: string,
-    language: string
+    language: SupportedLanguage
   ): Promise<string> {
     const provider = createProvider(this.llmConfig)
     if (!provider || !this.llmConfig.model) return ''
 
-    await this.waitForRateLimit(DEFAULT_ESTIMATED_TOKENS_COUNT)
+    const estimated = this.estimateTokens(mindmapDescription)
+    await this.waitForRateLimit(estimated)
     const { text, usage } = await generateText({
       model: provider(this.llmConfig.model),
       system: systemPrompt(language),
       prompt: mindmapDescription,
     })
-    this.tokensUsedPerMinute.push({
-      time: Date.now(),
-      count: usage.totalTokens ?? 0,
-    })
-    this.totalTokensDaily.count += usage.totalTokens ?? 0
-    this.logger.log('Daily used token count: ' + this.totalTokensDaily.count)
+    this.tokensUsedPerMinute = [
+      ...this.tokensUsedPerMinute,
+      { time: Date.now(), count: usage.totalTokens ?? 0 },
+    ]
+    this.totalTokensDaily = {
+      ...this.totalTokensDaily,
+      count: this.totalTokensDaily.count + (usage.totalTokens ?? 0),
+    }
+    this.logger.debug(`Daily used token count: ${this.totalTokensDaily.count}`)
 
     return text
+  }
+
+  estimateTokens(input: string): number {
+    return Math.ceil(input.length / 4) + SYSTEM_PROMPT_TOKEN_OVERHEAD
   }
 
   private async waitForRateLimit(estimatedTokens: number) {
@@ -50,11 +71,12 @@ export class AiService {
     this.tokensUsedPerMinute = this.tokensUsedPerMinute.filter(
       (entry) => entry.time > oneMinuteAgo
     )
-    if (new Date().toLocaleDateString() !== this.totalTokensDaily.date)
+    if (new Date().toLocaleDateString() !== this.totalTokensDaily.date) {
       this.totalTokensDaily = {
         count: 0,
         date: new Date().toLocaleDateString(),
       }
+    }
 
     const currentTokens = this.tokensUsedPerMinute.reduce(
       (sum, entry) => sum + entry.count,
@@ -63,23 +85,22 @@ export class AiService {
     const currentRequestCount = this.tokensUsedPerMinute.length
 
     if (
-      this.llmConfig.tpm &&
-      currentTokens + estimatedTokens > parseInt(this.llmConfig.tpm, 10)
+      this.parsedLimits.tpm !== undefined &&
+      currentTokens + estimatedTokens > this.parsedLimits.tpm
     ) {
       throw new RateLimitExceededException('tokens')
     }
 
     if (
-      this.llmConfig.rpm &&
-      currentRequestCount + 1 > parseInt(this.llmConfig.rpm, 10)
+      this.parsedLimits.rpm !== undefined &&
+      currentRequestCount + 1 > this.parsedLimits.rpm
     ) {
       throw new RateLimitExceededException('requests')
     }
 
     if (
-      this.llmConfig.tpd &&
-      this.totalTokensDaily.count + estimatedTokens >
-        parseInt(this.llmConfig.tpd, 10)
+      this.parsedLimits.tpd !== undefined &&
+      this.totalTokensDaily.count + estimatedTokens > this.parsedLimits.tpd
     ) {
       throw new RateLimitExceededException('tokens')
     }
