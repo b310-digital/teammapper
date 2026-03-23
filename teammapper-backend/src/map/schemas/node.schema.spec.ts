@@ -172,21 +172,21 @@ describe('FontSchema', () => {
   })
 
   it('rejects style exceeding 20 characters', () => {
-    expect(
-      v.safeParse(FontSchema, { style: 'a'.repeat(21) }).success
-    ).toBe(false)
+    expect(v.safeParse(FontSchema, { style: 'a'.repeat(21) }).success).toBe(
+      false
+    )
   })
 
   it('rejects weight exceeding 20 characters', () => {
-    expect(
-      v.safeParse(FontSchema, { weight: 'a'.repeat(21) }).success
-    ).toBe(false)
+    expect(v.safeParse(FontSchema, { weight: 'a'.repeat(21) }).success).toBe(
+      false
+    )
   })
 
   it('accepts style at 20 characters', () => {
-    expect(
-      v.safeParse(FontSchema, { style: 'a'.repeat(20) }).success
-    ).toBe(true)
+    expect(v.safeParse(FontSchema, { style: 'a'.repeat(20) }).success).toBe(
+      true
+    )
   })
 })
 
@@ -202,15 +202,15 @@ describe('ImageSchema', () => {
   })
 
   it('rejects src exceeding 200000 characters', () => {
-    expect(
-      v.safeParse(ImageSchema, { src: 'a'.repeat(200_001) }).success
-    ).toBe(false)
+    expect(v.safeParse(ImageSchema, { src: 'a'.repeat(200_001) }).success).toBe(
+      false
+    )
   })
 
   it('accepts src at exactly 200000 characters', () => {
-    expect(
-      v.safeParse(ImageSchema, { src: 'a'.repeat(200_000) }).success
-    ).toBe(true)
+    expect(v.safeParse(ImageSchema, { src: 'a'.repeat(200_000) }).success).toBe(
+      true
+    )
   })
 
   it('accepts empty object', () => {
