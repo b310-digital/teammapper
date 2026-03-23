@@ -35,17 +35,12 @@ jobs:
       run: pnpm install --frozen-lockfile
     - name: Build packages
       run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
-    - name: Get Playwright version
-      id: playwright-version
-      run: |
-        PW_VERSION=$(pnpm --filter teammapper-frontend exec playwright --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-        echo "PLAYWRIGHT_VERSION=$PW_VERSION" >> "$GITHUB_OUTPUT"
     - name: Cache Playwright browsers
       uses: actions/cache@v4
       id: playwright-cache
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-browsers-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}-webkit
+        key: playwright-browsers-${{ hashFiles('pnpm-lock.yaml') }}-webkit
     - name: Install Playwright Browsers
       if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: pnpm --filter teammapper-frontend exec playwright install webkit --with-deps
