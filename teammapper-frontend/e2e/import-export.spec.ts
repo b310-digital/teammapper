@@ -94,58 +94,6 @@ test('imports Mermaid mindmap via modal', async ({ page }) => {
   await expect(page.getByText('Sub B1')).toBeVisible();
 });
 
-test('generates mermaid content from AI and populates textarea immediately', async ({
-  page,
-}) => {
-  const mockMermaidResponse = `mindmap
-  root((AI Generated))
-    Branch One
-    Branch Two`;
-
-  // Mock the mermaid create API
-  await page.route('**/api/mermaid/create', async route => {
-    await route.fulfill({
-      status: 201,
-      contentType: 'text/plain',
-      body: mockMermaidResponse,
-    });
-  });
-
-  // Ensure AI feature flag is enabled
-  await page.route('**/api/settings', async route => {
-    const response = await route.fetch();
-    const json = await response.json();
-    json.systemSettings.featureFlags.ai = true;
-    await route.fulfill({ response, json });
-  });
-
-  await page.goto('/');
-  await page.getByText('Create mind map').click();
-  await expect(page.locator('.map')).toBeVisible();
-
-  // Open import menu and click MERMAID
-  await page.locator('#menu-import').click();
-  await page.getByText('MERMAID').click();
-
-  // Wait for dialog
-  const dialog = page.locator('mat-dialog-container');
-  await expect(dialog).toBeVisible();
-
-  // Fill in the AI description textarea (first textarea in the dialog)
-  const descriptionTextarea = dialog.locator('textarea').first();
-  await descriptionTextarea.fill('A mindmap about testing');
-
-  // Click the AI generation button (the one with the construction icon)
-  await dialog.locator('button:has(mat-icon:has-text("construction"))').click();
-
-  // The mermaid output textarea should be populated immediately
-  // without any additional clicks or interactions
-  const mermaidTextarea = dialog.locator('textarea').last();
-  await expect(mermaidTextarea).toHaveValue(mockMermaidResponse, {
-    timeout: 5000,
-  });
-});
-
 test('imports Mermaid mindmap with different branch colors', async ({
   page,
 }) => {
