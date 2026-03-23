@@ -70,7 +70,7 @@ class ConfigService {
 
   public isYjsEnabled(): boolean {
     const value = this.getValue('YJS_ENABLED', false)
-    return value?.toLowerCase() === 'true'
+    return value?.toLowerCase() !== 'false'
   }
 
   public isAiEnabled(): boolean {

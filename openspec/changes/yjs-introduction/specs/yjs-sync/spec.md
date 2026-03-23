@@ -87,6 +87,21 @@ The frontend SHALL expose a reactive `ConnectionStatus` observable (`'connected'
 - **WHEN** the Yjs connection is reset (e.g., navigating away or switching maps)
 - **THEN** the connection status SHALL be reset to `null` as part of `resetYjs()` cleanup
 
+### Requirement: Yjs enabled by default
+The `YJS_ENABLED` feature flag SHALL default to `true` when the environment variable is not set. The backend `isYjsEnabled()` method SHALL treat a missing or undefined `YJS_ENABLED` environment variable as `true`. Only an explicit value of `false` (case-insensitive) SHALL disable Yjs.
+
+#### Scenario: Environment variable not set
+- **WHEN** the `YJS_ENABLED` environment variable is absent from the runtime environment
+- **THEN** the server SHALL behave as if `YJS_ENABLED=true` and activate the Yjs sync path
+
+#### Scenario: Environment variable explicitly set to false
+- **WHEN** the `YJS_ENABLED` environment variable is set to `false` (any casing)
+- **THEN** the server SHALL disable the Yjs sync path and fall back to Socket.io
+
+#### Scenario: Environment variable explicitly set to true
+- **WHEN** the `YJS_ENABLED` environment variable is set to `true` (any casing)
+- **THEN** the server SHALL activate the Yjs sync path
+
 ### Requirement: Socket.io removal
 The server SHALL NOT use Socket.io for any data synchronization or presence operations. The `@nestjs/platform-socket.io`, `socket.io`, and `socket.io-client` dependencies SHALL be removed. The frontend SHALL NOT import or use `socket.io-client`.
 
