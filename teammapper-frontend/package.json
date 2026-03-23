@@ -40,19 +40,19 @@
     "format": "npx prettier . --write"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "21.2.2",
-    "@angular/animations": "21.2.4",
-    "@angular/cdk": "21.2.2",
-    "@angular/cli": "21.2.2",
-    "@angular/common": "21.2.4",
-    "@angular/compiler": "21.2.4",
-    "@angular/compiler-cli": "21.2.4",
-    "@angular/core": "21.2.4",
-    "@angular/forms": "21.2.4",
-    "@angular/material": "21.2.2",
-    "@angular/platform-browser": "21.2.4",
-    "@angular/platform-browser-dynamic": "21.2.4",
-    "@angular/router": "21.2.4",
+    "@angular-devkit/build-angular": "21.2.3",
+    "@angular/animations": "21.2.5",
+    "@angular/cdk": "21.2.3",
+    "@angular/cli": "21.2.3",
+    "@angular/common": "21.2.5",
+    "@angular/compiler": "21.2.5",
+    "@angular/compiler-cli": "21.2.5",
+    "@angular/core": "21.2.5",
+    "@angular/forms": "21.2.5",
+    "@angular/material": "21.2.3",
+    "@angular/platform-browser": "21.2.5",
+    "@angular/platform-browser-dynamic": "21.2.5",
+    "@angular/router": "21.2.5",
     "@fortawesome/angular-fontawesome": "^4.0.0",
     "@fortawesome/fontawesome-svg-core": "^7.2.0",
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
@@ -117,10 +117,10 @@
     "typescript-eslint": "^8.57.2"
   },
   "optionalDependencies": {
-    "@nx/nx-darwin-arm64": "22.5.4",
-    "@nx/nx-darwin-x64": "22.5.4",
-    "@nx/nx-linux-x64-gnu": "22.5.4",
-    "@nx/nx-win32-x64-msvc": "22.5.4"
+    "@nx/nx-darwin-arm64": "22.6.1",
+    "@nx/nx-darwin-x64": "22.6.1",
+    "@nx/nx-linux-x64-gnu": "22.6.1",
+    "@nx/nx-win32-x64-msvc": "22.6.1"
   },
   "workspaces": [
     "packages/*"
