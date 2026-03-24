@@ -232,7 +232,7 @@
       [disabled]="editDisabled"
       #imageUpload />
   }
-  @if (featureFlagPictograms) {
+  @if (featureFlagPictograms || featureFlagOerFinder) {
     <div>
       <button
         (click)="pictogram()"

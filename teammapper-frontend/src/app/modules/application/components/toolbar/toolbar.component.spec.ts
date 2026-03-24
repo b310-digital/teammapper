@@ -81,7 +81,12 @@ async function setupTestBed(): Promise<TestContext> {
         provide: SettingsService,
         useValue: {
           getCachedSystemSettings: jest.fn().mockReturnValue({
-            featureFlags: { yjs: false, pictograms: false, ai: false },
+            featureFlags: {
+              yjs: false,
+              pictograms: false,
+              ai: false,
+              oerFinder: false,
+            },
           }),
         },
       },
@@ -142,6 +147,10 @@ describe('ToolbarComponent', () => {
 
   it('should initialize featureFlagPictograms from settings', () => {
     expect(ctx.component.featureFlagPictograms).toBe(false);
+  });
+
+  it('should initialize featureFlagOerFinder from settings', () => {
+    expect(ctx.component.featureFlagOerFinder).toBe(false);
   });
 
   it('should show alert for large JSON export', async () => {

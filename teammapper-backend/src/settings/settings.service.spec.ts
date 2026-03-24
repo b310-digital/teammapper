@@ -16,7 +16,7 @@ const defaultSettings: Settings = {
       pictogramApiUrl: 'https://api.example.com',
       pictogramStaticUrl: 'https://static.example.com',
     },
-    featureFlags: { pictograms: true, ai: false, yjs: false },
+    featureFlags: { pictograms: true, ai: false, yjs: false, oerFinder: false },
   },
   userSettings: {
     general: { language: 'en' },
@@ -53,6 +53,7 @@ describe('SettingsService', () => {
     jest.clearAllMocks()
     ;(configService.isYjsEnabled as jest.Mock).mockReturnValue(false)
     ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
+    ;(configService.isOerFinderEnabled as jest.Mock).mockReturnValue(false)
     mockedFs.readFileSync.mockReturnValue(JSON.stringify(defaultSettings))
     mockedFs.existsSync.mockReturnValue(false)
 
@@ -148,17 +149,39 @@ describe('SettingsService', () => {
       expect(settings.systemSettings.featureFlags.yjs).toBe(false)
     })
 
+    it('should set oerFinder flag to true when OER_FINDER_ENABLED is true', () => {
+      ;(configService.isOerFinderEnabled as jest.Mock).mockReturnValue(true)
+
+      const settings = service.getSettings()
+
+      expect(settings.systemSettings.featureFlags.oerFinder).toBe(true)
+    })
+
+    it('should set oerFinder flag to false when OER_FINDER_ENABLED is false', () => {
+      ;(configService.isOerFinderEnabled as jest.Mock).mockReturnValue(false)
+
+      const settings = service.getSettings()
+
+      expect(settings.systemSettings.featureFlags.oerFinder).toBe(false)
+    })
+
     it('should override file-based feature flags with config service values', () => {
       const settingsWithFlags = {
         ...defaultSettings,
         systemSettings: {
           ...defaultSettings.systemSettings,
-          featureFlags: { pictograms: true, ai: true, yjs: true },
+          featureFlags: {
+            pictograms: true,
+            ai: true,
+            yjs: true,
+            oerFinder: true,
+          },
         },
       }
       mockedFs.readFileSync.mockReturnValue(JSON.stringify(settingsWithFlags))
       ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
       ;(configService.isYjsEnabled as jest.Mock).mockReturnValue(false)
+      ;(configService.isOerFinderEnabled as jest.Mock).mockReturnValue(false)
 
       const settings = service.getSettings()
 
@@ -166,6 +189,7 @@ describe('SettingsService', () => {
         pictograms: true,
         ai: false,
         yjs: false,
+        oerFinder: false,
       })
     })
   })

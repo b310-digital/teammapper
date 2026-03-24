@@ -61,6 +61,11 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
+  public isOerFinderEnabled(): boolean {
+    const value = this.getValue('OER_FINDER_ENABLED', false)
+    return value?.toLowerCase() === 'true'
+  }
+
   public isWsTrustProxy(): boolean {
     const value = this.getValue('WS_TRUST_PROXY', false)
     return value?.toLowerCase() === 'true'

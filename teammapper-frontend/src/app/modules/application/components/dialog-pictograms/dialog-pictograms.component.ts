@@ -2,7 +2,9 @@ import {
   AfterViewInit,
   Component,
   EventEmitter,
+  HostListener,
   inject,
+  signal,
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
   ViewChild,
@@ -17,6 +19,7 @@ import {
 import { map } from 'rxjs/operators';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
+import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import {
   MatDialogTitle,
   MatDialogContent,
@@ -48,9 +51,6 @@ import type {
 import '@edufeed-org/oer-finder-plugin';
 import { registerArasaacAdapter } from '@edufeed-org/oer-finder-plugin/adapters';
 
-// Register ARASAAC adapter for direct-client mode (no server proxy)
-registerArasaacAdapter();
-
 @Component({
   selector: 'teammapper-dialog-pictograms',
   templateUrl: 'dialog-pictograms.component.html',
@@ -81,14 +81,17 @@ export class DialogPictogramsComponent implements AfterViewInit {
   private breakpointObserver = inject(BreakpointObserver);
   private mmpService = inject(MmpService);
   private utilsService = inject(UtilsService);
+  private settingsService = inject(SettingsService);
 
   @ViewChild('searchElement') searchElement!: ElementRef;
   @ViewChild('listElement') listElement!: ElementRef;
   @ViewChild('loadMoreElement') loadMoreElement!: ElementRef;
 
   public onPictogramAdd = new EventEmitter();
-  public pictos: IPictogramResponse[];
+  public pictos = signal<IPictogramResponse[]>([]);
   public searchTerm = '';
+  public useOerFinder: boolean;
+
   public cardLayout = this.breakpointObserver
     .observe([Breakpoints.WebLandscape, Breakpoints.TabletLandscape])
     .pipe(
@@ -107,13 +110,30 @@ export class DialogPictogramsComponent implements AfterViewInit {
     { id: 'arasaac', label: 'ARASAAC', checked: true },
   ];
 
+  constructor() {
+    const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;
+    this.useOerFinder = flags?.oerFinder ?? false;
+    if (this.useOerFinder) {
+      registerArasaacAdapter();
+    }
+  }
+
   ngAfterViewInit(): void {
+    if (!this.useOerFinder) return;
     const searchEl = this.searchElement.nativeElement as OerSearchElement;
     searchEl.sources = this.sources;
     const stopPropagation = (event: Event) => event.stopPropagation();
     searchEl.addEventListener('keydown', stopPropagation);
     searchEl.addEventListener('keyup', stopPropagation);
     searchEl.addEventListener('keypress', stopPropagation);
+  }
+
+  // Legacy ARASAAC search
+  @HostListener('document:keydown.enter')
+  search(): void {
+    this.pictoService.getPictos(this.searchTerm).subscribe(pictos => {
+      this.pictos.set(pictos);
+    });
   }
 
   onSearchLoading(): void {

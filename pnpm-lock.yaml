@@ -287,8 +287,8 @@ importers:
         specifier: 21.2.0
         version: 21.2.0(@angular/common@21.2.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0))(rxjs@7.8.2))(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0))(@angular/platform-browser@21.2.0(@angular/animations@21.2.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0)))(@angular/common@21.2.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0))(rxjs@7.8.2))(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0)))(rxjs@7.8.2)
       '@edufeed-org/oer-finder-plugin':
-        specifier: 0.2.3
-        version: 0.2.3
+        specifier: 0.2.6
+        version: 0.2.6
       '@fortawesome/angular-fontawesome':
         specifier: ^4.0.0
         version: 4.0.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.0))
@@ -1607,11 +1607,11 @@ packages:
   '@edufeed-org/oer-adapter-core@0.0.1':
     resolution: {integrity: sha512-i+UjFg8CTAKDFOBOd3etWGSeJVVbNSPi/DoynNgV5nsfg1yrugAEdAEST/3VYoXnthG6Ar/0QOTLfh/ikS0rFA==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-adapter-core/0.0.1/c1505f9d4e6912c53b7c291cfbf48c0839af98ba}
 
-  '@edufeed-org/oer-finder-api-client@0.0.9':
-    resolution: {integrity: sha512-1c30iyOOl/fTCKCXqP77RSnnnX9uVlpB0dsJ4IamTm7CEFyiv1OA4xa3y6+HRD2Za3CQVm37vRRWPb16MNXXpQ==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-api-client/0.0.9/84eca03e064f360e1c694b8ee53babf7768b3620}
+  '@edufeed-org/oer-finder-api-client@0.0.10':
+    resolution: {integrity: sha512-5dseyIe3rh9RimFAWaR8X5jS/VFfCpY6juwcSjPaE3cEC2QJ89U9UDMCtEVgylyvC4MWupYW88HwjrLBcG9WkA==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-api-client/0.0.10/235c60bfd3e32d2b934d9658d7fb306aec636080}
 
-  '@edufeed-org/oer-finder-plugin@0.2.3':
-    resolution: {integrity: sha512-TeAJpqFPGdaqS6JGFItqhZLEwoVscynqy5iCQlliWJqYBaMk0zyyGJgwQLXau1IvgRoU99AFBTS1JwORFCsXvA==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-plugin/0.2.3/c6e7c3daa6c06e365f539562d8dfff8086d1b7fa}
+  '@edufeed-org/oer-finder-plugin@0.2.6':
+    resolution: {integrity: sha512-WWuUS4L+YOWzEAzpV/vAZVrjW1khs2pKaGbo+wmRbqIRJee3k3W6Fa8rR2GCBzXpb9YSgOJSQeSun3OjI4Hdlw==, tarball: https://npm.pkg.github.com/download/@edufeed-org/oer-finder-plugin/0.2.6/e329bd85deca2811f34b2495dcd65d8b6ae20319}
 
   '@egjs/hammerjs@2.0.17':
     resolution: {integrity: sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==}
@@ -7056,11 +7056,11 @@ packages:
     resolution: {integrity: sha512-XgFPPM+B28FtCCgSb9I+s9szOC1vZRSwgWsRUA5ylIxRTgKozqjOCrVOqGsYABPYK5qnfqClxZTFBa8PKt2v6Q==}
     engines: {node: '>=12'}
 
-  openapi-fetch@0.13.8:
-    resolution: {integrity: sha512-yJ4QKRyNxE44baQ9mY5+r/kAzZ8yXMemtNAOFwOzRXJscdjSxxzWSNlyBAr+o5JjkUw9Lc3W7OIoca0cY3PYnQ==}
+  openapi-fetch@0.17.0:
+    resolution: {integrity: sha512-PsbZR1wAPcG91eEthKhN+Zn92FMHxv+/faECIwjXdxfTODGSGegYv0sc1Olz+HYPvKOuoXfp+0pA2XVt2cI0Ig==}
 
-  openapi-typescript-helpers@0.0.15:
-    resolution: {integrity: sha512-opyTPaunsklCBpTK8JGef6mfPhLSnyy5a0IN9vKtx3+4aExf+KxEqYwIy3hqkedXIB97u357uLMJsOnm3GVjsw==}
+  openapi-typescript-helpers@0.1.0:
+    resolution: {integrity: sha512-OKTGPthhivLw/fHz6c3OPtg72vi86qaMlqbJuVJ23qOvQ+53uw1n7HdmkJFibloF7QEjDrDkzJiOJuockM/ljw==}
 
   opencollective-postinstall@2.0.3:
     resolution: {integrity: sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==}
@@ -10963,14 +10963,14 @@ snapshots:
 
   '@edufeed-org/oer-adapter-core@0.0.1': {}
 
-  '@edufeed-org/oer-finder-api-client@0.0.9':
+  '@edufeed-org/oer-finder-api-client@0.0.10':
     dependencies:
-      openapi-fetch: 0.13.8
+      openapi-fetch: 0.17.0
 
-  '@edufeed-org/oer-finder-plugin@0.2.3':
+  '@edufeed-org/oer-finder-plugin@0.2.6':
     dependencies:
       '@edufeed-org/oer-adapter-core': 0.0.1
-      '@edufeed-org/oer-finder-api-client': 0.0.9
+      '@edufeed-org/oer-finder-api-client': 0.0.10
       lit: 3.3.2
 
   '@egjs/hammerjs@2.0.17':
@@ -16967,11 +16967,11 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openapi-fetch@0.13.8:
+  openapi-fetch@0.17.0:
     dependencies:
-      openapi-typescript-helpers: 0.0.15
+      openapi-typescript-helpers: 0.1.0
 
-  openapi-typescript-helpers@0.0.15: {}
+  openapi-typescript-helpers@0.1.0: {}
 
   opencollective-postinstall@2.0.3: {}
 

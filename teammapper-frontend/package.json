@@ -78,7 +78,7 @@
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.29",
     "zone.js": "^0.16.0",
-    "@edufeed-org/oer-finder-plugin": "0.2.3"
+    "@edufeed-org/oer-finder-plugin": "0.2.6"
   },
   "devDependencies": {
     "@angular-builders/jest": "^21.0.3",

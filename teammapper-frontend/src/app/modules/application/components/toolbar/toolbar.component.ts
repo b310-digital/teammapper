@@ -39,6 +39,7 @@ export class ToolbarComponent {
   @Input() public node: ExportNodeProperties;
   @Input() public editDisabled: boolean;
   public featureFlagPictograms: boolean;
+  public featureFlagOerFinder: boolean;
   public featureFlagAI: boolean;
 
   public canUndo$ = this.mapSyncService.canUndo$;
@@ -47,6 +48,7 @@ export class ToolbarComponent {
   constructor() {
     const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;
     this.featureFlagPictograms = flags?.pictograms ?? false;
+    this.featureFlagOerFinder = flags?.oerFinder ?? false;
     this.featureFlagAI = flags?.ai ?? false;
   }
 

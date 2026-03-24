@@ -10,7 +10,8 @@
     },
     "featureFlags": {
       "pictograms": false,
-      "ai": false
+      "ai": false,
+      "oerFinder": false
     }
   },
   "userSettings": {
