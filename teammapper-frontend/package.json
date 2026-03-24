@@ -37,7 +37,8 @@
     "lint": "ng lint",
     "doc": "compodoc -p src/tsconfig.app.json",
     "deploy": "ng deploy",
-    "format": "npx prettier . --write"
+    "format": "npx prettier . --write",
+    "test:e2e": "npx playwright test"
   },
   "dependencies": {
     "@angular-devkit/build-angular": "21.2.3",
