@@ -5,18 +5,18 @@ import {
 import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai'
 import { LLMProps } from 'src/config.service'
 
-const PROVIDER_STACKIT = 'stackit'
+const PROVIDER_OPENAI_COMPATIBLE = 'openai-compatible'
 
 type SupportedProvider = OpenAIProvider | OpenAICompatibleProvider
 
-const createStackitProvider = (
+const createOpenAICompatibleProvider = (
   llmConfig: LLMProps
 ): OpenAICompatibleProvider | undefined => {
   if (!llmConfig.url || !llmConfig.token) return
 
   return createOpenAICompatible({
     baseURL: llmConfig.url,
-    name: 'stackit',
+    name: llmConfig.provider ?? PROVIDER_OPENAI_COMPATIBLE,
     headers: {
       Authorization: `Bearer ${llmConfig.token}`,
     },
@@ -36,6 +36,6 @@ const createDefaultProvider = (
 export const createProvider = (
   llmConfig: LLMProps
 ): SupportedProvider | undefined =>
-  llmConfig.provider === PROVIDER_STACKIT
-    ? createStackitProvider(llmConfig)
+  llmConfig.provider === PROVIDER_OPENAI_COMPATIBLE
+    ? createOpenAICompatibleProvider(llmConfig)
     : createDefaultProvider(llmConfig)

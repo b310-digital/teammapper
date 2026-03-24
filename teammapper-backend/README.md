@@ -98,11 +98,13 @@ Copy `.env.default` to `.env` and configure the variables below.
 |---|---|---|
 | `AI_LLM_URL` | LLM service URL | - |
 | `AI_LLM_TOKEN` | LLM API token | - |
-| `AI_LLM_PROVIDER` | LLM provider | `openai` |
+| `AI_LLM_PROVIDER` | LLM provider (`openai` or `openai-compatible`) | `openai` |
 | `AI_LLM_MODEL` | LLM model name | - |
 | `AI_LLM_TPM` | Tokens per minute limit | - |
 | `AI_LLM_TPD` | Tokens per day limit | - |
 | `AI_LLM_RPM` | Requests per minute limit | - |
+
+> **Migration note:** The previous `stackit` provider value for `AI_LLM_PROVIDER` has been replaced by `openai-compatible`. If you were using `AI_LLM_PROVIDER=stackit`, change it to `AI_LLM_PROVIDER=openai-compatible`.
 
 ### Authentication
 
