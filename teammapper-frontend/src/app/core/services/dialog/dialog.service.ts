@@ -26,9 +26,7 @@ export class DialogService {
   private criticalErrorModalRef: MatDialogRef<DialogCriticalErrorComponent>;
 
   openPictogramDialog() {
-    this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent, {
-      minWidth: '50%'
-    });
+    this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent);
     this.pictogramsModalRef.componentInstance.onPictogramAdd.subscribe(() => {
       this.closePictogramDialog();
     });
