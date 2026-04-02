@@ -1,6 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm'
-import { DataSource } from 'typeorm'
-import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
+import { DataSource, DataSourceOptions } from 'typeorm'
 
 require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-imports
 
@@ -15,15 +14,16 @@ const setupWorkerDatabase = async (workerId: string): Promise<string> => {
   return databaseName
 }
 
-const createDataSourceConfig: PostgresConnectionOptions = {
-  type: 'postgres',
-  host: process.env.POSTGRES_TEST_HOST,
-  port: parseInt(process.env.POSTGRES_TEST_PORT || '3000', 10),
-  username: process.env.POSTGRES_TEST_USER,
-  password: process.env.POSTGRES_TEST_PASSWORD,
-  database: process.env.POSTGRES_TEST_DATABASE,
-  synchronize: false,
-}
+const createDataSourceConfig: Extract<DataSourceOptions, { type: 'postgres' }> =
+  {
+    type: 'postgres',
+    host: process.env.POSTGRES_TEST_HOST,
+    port: parseInt(process.env.POSTGRES_TEST_PORT || '3000', 10),
+    username: process.env.POSTGRES_TEST_USER,
+    password: process.env.POSTGRES_TEST_PASSWORD,
+    database: process.env.POSTGRES_TEST_DATABASE,
+    synchronize: false,
+  }
 
 // this is the configuration for the main test database. this database is not used for actual tests.
 // it is the entrypoint for each worker to be able to create their own worker database

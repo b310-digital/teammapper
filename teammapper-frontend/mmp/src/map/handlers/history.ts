@@ -46,7 +46,7 @@ export default class History {
       updated: {},
     };
 
-    ['added', 'deleted', 'updated'].forEach((key: keyof MapDiff) => {
+    (['added', 'deleted', 'updated'] as (keyof MapDiff)[]).forEach((key: keyof MapDiff) => {
       const diffSection = snapshotDiff[key];
       if (diffSection && typeof diffSection === 'object') {
         updatedSnapshot[key] = Object.entries(diffSection).reduce(

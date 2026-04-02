@@ -10,9 +10,12 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "incremental": true,
+    "rootDir": "./src",
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": ["node", "jest", "express", "cache-manager", "uuid", "supertest", "express-serve-static-core"]
