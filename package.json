@@ -32,7 +32,12 @@
     "tsc": "pnpm --filter '*' run tsc"
   },
   "devDependencies": {
-    "concurrently": "9.2.1"
+    "@secretlint/secretlint-rule-preset-recommend": "^11.4.1",
+    "concurrently": "9.2.1",
+    "eslint": "^10.1.0",
+    "prettier": "^3.8.1",
+    "secretlint": "^11.4.1",
+    "typescript": "~5.9.3"
   },
   "pnpm": {
     "overrides": {
