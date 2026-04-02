@@ -37,7 +37,7 @@
     "eslint": "^10.1.0",
     "prettier": "^3.8.1",
     "secretlint": "^11.4.1",
-    "typescript": "~5.9.3"
+    "typescript": "~6.0.2"
   },
   "pnpm": {
     "overrides": {
