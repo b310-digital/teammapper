@@ -828,7 +828,7 @@ export default class Nodes {
       nodeParent: node.parent,
       getSiblings: () => this.getSiblings(node),
       isRoot: node.parent?.isRoot ?? false,
-      getOrientation: (n: Node) => this.getOrientation(n),
+      getOrientation: (n: Node | ExportNodeProperties) => this.getOrientation(n),
     });
   }
 
@@ -857,7 +857,7 @@ export default class Nodes {
           isRoot:
             !!node.parent &&
             mapSnapshot.find(x => x.id === node.parent)?.isRoot,
-          getOrientation: (n: ExportNodeProperties) =>
+          getOrientation: (n: Node | ExportNodeProperties) =>
             this.getOrientation(n, rootNode),
         });
       }
@@ -942,8 +942,8 @@ export default class Nodes {
         'translate(' + [coordinates.x, coordinates.y] + ')'
       );
 
-      d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
-        return this.map.draw.drawBranch(node) as any;
+      d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: unknown) => {
+        return this.map.draw.drawBranch(node as Node) as unknown as string;
       });
 
       return true;

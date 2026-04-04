@@ -86,7 +86,7 @@ export default class Draw {
        */
       .style('visibility', (node: Node) => (node.hidden ? 'hidden' : 'visible'))
       .attr('class', this.map.id + '_node')
-      .attr('id', function (node: Node) {
+      .attr('id', function (this: SVGGElement, node: Node) {
         node.dom = this;
         return node.id;
       })
@@ -261,11 +261,12 @@ export default class Draw {
 
     d3.select(background).attr(
       'd',
-      (node: Node) => this.drawNodeBackground(node) as any
+      (node: unknown) =>
+        this.drawNodeBackground(node as Node) as unknown as string
     );
     d3.selectAll('.' + this.map.id + '_branch').attr(
       'd',
-      (node: Node) => this.drawBranch(node) as any
+      (node: unknown) => this.drawBranch(node as Node) as unknown as string
     );
 
     this.updateImagePosition(node);
@@ -297,9 +298,9 @@ export default class Draw {
 
       image.src = DOMPurify.sanitize(node.image.src);
 
-      image.onload = function () {
+      image.onload = () => {
         const h = node.image.size,
-          w = ((this as any).width * h) / (this as any).height,
+          w = (image.naturalWidth * h) / image.naturalHeight,
           y = -(h + node.dimensions.height / 2 + 5),
           x = -w / 2;
 
@@ -326,7 +327,7 @@ export default class Draw {
    */
   public setLink(node: Node) {
     let domLink = node.getLinkDOM();
-    let domText: SVGTextElement | null = null;
+    let domText: SVGTextElement | null;
 
     if (!domLink) {
       // create new dom elements if they do not exist

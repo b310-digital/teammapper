@@ -2,6 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
@@ -18,7 +19,19 @@
     "paths": {
       "@mmp/*": ["mmp/src/*"]
     },
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noImplicitThis": false
   },
-  "exclude": ["node_modules", "dist", "packages/mermaid-mindmap-parser/**/*"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "packages/mermaid-mindmap-parser/**/*",
+    "**/*.spec.ts",
+    "e2e/**/*",
+    "src/test/**/*",
+    "src/**/__mocks__/**/*"
+  ]
 }

@@ -24,14 +24,14 @@ export default class Drag {
 
     this.dragBehavior = d3
       .drag()
-      .on('start', (event: D3DragEvent<any, any, any>, node: Node) =>
-        this.started(event, node)
+      .on('start', (event: D3DragEvent<any, any, any>, node: unknown) =>
+        this.started(event, node as Node)
       )
-      .on('drag', (event: D3DragEvent<any, any, any>, node: Node) =>
-        this.dragged(event, node)
+      .on('drag', (event: D3DragEvent<any, any, any>, node: unknown) =>
+        this.dragged(event, node as Node)
       )
-      .on('end', (event: D3DragEvent<any, any, any>, node: Node) =>
-        this.ended(event, node)
+      .on('end', (event: D3DragEvent<any, any, any>, node: unknown) =>
+        this.ended(event, node as Node)
       );
   }
 
@@ -94,8 +94,8 @@ export default class Drag {
     }
 
     // Update all mind map branches
-    d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
-      return this.map.draw.drawBranch(node) as any;
+    d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: unknown) => {
+      return this.map.draw.drawBranch(node as Node) as unknown as string;
     });
 
     // This is here and not in the started function because started function
