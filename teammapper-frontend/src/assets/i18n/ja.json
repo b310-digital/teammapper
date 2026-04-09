@@ -1,0 +1,275 @@
+{
+  "LANGUAGES": {
+    "EN": "英語",
+    "FR": "フランス語",
+    "IT": "イタリア語",
+    "ZH-TW": "繁体字中国語",
+    "ZH-CN": "簡体字中国語",
+    "PT-BR": "ポルトガル語（ブラジル）",
+    "ES": "スペイン語",
+    "DE": "ドイツ語",
+    "JA": "日本語"
+  },
+  "TOOLTIPS": {
+    "IMPORT_MAP": "マップをインポート",
+    "IMPORT_MERMAID": "Mermaidマインドマップをインポート",
+    "IMPORT_JSON": "JSONマインドマップをインポート",
+    "IMPORT_AI": "AIでマインドマップを生成",
+    "EXPORT_MAP": "マップをエクスポート",
+    "EXPORT_JSON": "JSONとしてエクスポート",
+    "EXPORT_MERMAID": "Mermaidとしてエクスポート",
+    "EXPORT_SVG": "SVGとしてエクスポート",
+    "EXPORT_PNG": "PNGとしてエクスポート",
+    "EXPORT_JPEG": "JPEGとしてエクスポート",
+    "EXPORT_PDF": "PDFとしてエクスポート",
+    "ESC": "ダイアログを閉じる",
+    "FULLSCREEN": "全画面表示",
+    "CLOSE_MENU": "メニューを閉じる",
+    "OPEN_MENU": "メニューを開く",
+    "SHORTCUTS": "ショートカット一覧",
+    "MENU": "メニューを開く",
+    "NEW_MAP": "マップをリセット",
+    "OPEN_MAP": "既存のマップを読み込む",
+    "SAVE_MAP": "マップを保存",
+    "SAVE_MAP_WITH_NAME": "名前を付けて保存",
+    "COPY_NODE": "ノードをコピー",
+    "CUT_NODE": "ノードを切り取り",
+    "PASTE_NODE": "ノードを貼り付け",
+    "HIDE_CHILD_NODES": "子ノードを非表示",
+    "MOVE_NODE_TO_THE_LEFT": "ノードを左へ移動",
+    "MOVE_NODE_TO_THE_RIGHT": "ノードを右へ移動",
+    "MOVE_NODE_DOWN": "ノードを下へ移動",
+    "MOVE_NODE_UPWARD": "ノードを上へ移動",
+    "SELECT_NODE_ON_THE_LEFT": "左のノードを選択",
+    "SELECT_NODE_ON_THE_RIGHT": "右のノードを選択",
+    "SELECT_NODE_BELOW": "下のノードを選択",
+    "SELECT_NODE_ABOVE": "上のノードを選択",
+    "EDIT_NODE": "ノードのテキストを編集",
+    "COUPLE_NODE": "ノードをグループ化／解除",
+    "NODE_IMAGE": "ノードに画像を追加",
+    "NODE_IMAGE_REMOVE": "ノードから画像を削除",
+    "PICTOGRAM": "ピクトグラム",
+    "BOLD_TEXT": "テキストを太字にする",
+    "ITALIC_TEXT": "テキストを斜体にする",
+    "TEXT_SIZE": "テキストとノードのサイズを変更",
+    "IMAGE_SIZE": "ノード画像のサイズを変更",
+    "START_EDIT_NODE": "ノードテキストを編集",
+    "ADD_NODE": "ノードを追加",
+    "ADD_DETACHED_NODE": "独立ノードを追加",
+    "REMOVE_NODE": "ノードを削除",
+    "ZOOM_IN_MAP": "マップを拡大",
+    "ZOOM_OUT_MAP": "マップを縮小",
+    "CENTER_MAP": "マップを中央に表示",
+    "UNDO_MAP": "元に戻す",
+    "REDO_MAP": "やり直す",
+    "NODE_COLOR": "ノードの色を変更",
+    "BRANCH_COLOR": "ブランチの色を変更",
+    "TEXT_COLOR": "テキストの色を変更",
+    "ROOT_NODE_NAME_INPUT": "ルートノード名を変更",
+    "NODE_NAME_INPUT": "ノード名を変更",
+    "LANGUAGE": "言語を変更",
+    "SETTINGS": "設定を開く",
+    "CENTER_ON_RESIZING": "ウィンドウリサイズ時にマップを中央表示",
+    "NODE_DRAGGING": "ノードのドラッグを許可",
+    "MAP_ZOOM": "マップのズームを許可",
+    "AUTO_BRANCH_COLORS": "ブランチの色を自動選択",
+    "SHARE": "共有",
+    "LINK_ADD": "リンクを追加",
+    "LINK_REMOVE": "リンクを削除",
+    "FONT_MIN_SIZE": "最小フォントサイズ",
+    "FONT_MAX_SIZE": "最大フォントサイズ",
+    "FONT_INCREMENT": "フォントサイズの増減幅",
+    "FONT_INCREASE": "フォントを拡大",
+    "FONT_DECREASE": "フォントを縮小",
+    "SHOW_LINKTEXT": "リンクアイコンの代わりにリンクテキストを表示",
+    "INFO": "情報画面を開く"
+  },
+  "MODALS": {
+    "GENERAL": {
+      "BUTTON_CLOSE": "閉じる"
+    },
+    "CONNECTION_INFO": {
+      "TITLE": "接続が切断されました",
+      "CONTENT": "サーバーへの接続が失われました。再接続中...",
+      "BUTTON_RECONNECT": "再接続"
+    },
+    "IMPORT_MERMAID": {
+      "TITLE": "Mermaidマインドマップのインポート",
+      "CONTENT": "Mermaid構文を使用してマインドマップをインポートします。AIで生成するか、Mermaidコードを手動で記述してマインドマップを作成できます。",
+      "IMPORT": "インポート",
+      "LABEL_CREATE_FROM_AI": "マインドマップの説明",
+      "BUTTON_CREATE_FROM_AI": "生成",
+      "LABEL_TEXT_AREA": "Mermaid"
+    },
+    "IMPORT_AI": {
+      "TITLE": "AIマインドマップジェネレーター",
+      "CONTENT": "説明からAIが直接マインドマップを生成します。マッピングしたい内容を説明するだけで、AIが作成します。",
+      "LABEL_DESCRIPTION": "マインドマップの説明",
+      "PLACEHOLDER": "例：旅行の歴史",
+      "BUTTON_GENERATE": "生成してインポート"
+    },
+    "PICTOGRAMS": {
+      "TITLE": "ピクトグラムを追加",
+      "BUTTON_SEARCH": "検索",
+      "FORM_INPUT_LABEL_SEARCH": "検索キーワード",
+      "TERMS_TEXT": [
+        "ピクトグラム作成者：Sergio Palao。出典：ARASAAC (",
+        "https://arasaac.org",
+        ")。ライセンス：",
+        "CC (BY-NC-SA)",
+        "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
+        "。所有者：アラゴン州政府（スペイン）"
+      ],
+      "EMPTY": "結果なし"
+    },
+    "SHARE": {
+      "TITLE": "マップを共有",
+      "CONTENT": "このリンクをコピーしてマップを共有",
+      "LINK_TYPE_VIEW": "閲覧のみ",
+      "LINK_TYPE_EDIT": "閲覧と編集"
+    },
+    "INFO": {
+      "DELETED_AT": "マインドマップの削除予定日：",
+      "DELETE_AFTER_DAYS": "このサーバーのマインドマップは {{deleteAfterDays}} 日後に削除されます。",
+      "DELETE": "マインドマップを削除",
+      "CONFIRM_DELETE": "削除しますか？"
+    },
+    "LINK": {
+      "URL": "リンクURL（https://...）"
+    },
+    "CRITICAL_ERROR": {
+      "TITLE": "接続の問題",
+      "WARNING": "最近の変更が保存されていない可能性があります。",
+      "RELOAD_BUTTON": "ページを再読み込み"
+    }
+  },
+  "PAGES": {
+    "ABOUT": {
+      "INTRODUCTION": {
+        "APPLICATION_DESCRIPTION": "マインドマップを一緒に描くオープンソースWebアプリ。",
+        "APPLICATION_PROPERTIES": [
+          "マインドマップをチームで共同作業",
+          "QRコードやリンクでマインドマップを共有",
+          "ノードに画像・色・フォントプロパティ・リンクを追加",
+          "インポート・エクスポート機能",
+          "オープンソース／セルフホスティングで自分のデータを完全管理"
+        ]
+      },
+      "SECTIONS": [
+        {
+          "TITLE": "マインドマップ",
+          "SUBTITLE": "TeamMapperはTony Buzan方式を採用しており、画像と色の喚起力を活用して概念の記憶を促進し、創造性や思考の連想を刺激します。",
+          "CARDS": [
+            {
+              "TITLE": "色と画像",
+              "CONTENT": "マインドマップの色と画像は、脳の特性を活かして概念をより効果的・持続的に表現します。"
+            },
+            {
+              "TITLE": "放射状ツリー",
+              "CONTENT": "マインドマップの階層構造は放射状の幾何学を活かし、複数のレベルに分かれて概念の表現を促進します。"
+            },
+            {
+              "TITLE": "用途",
+              "CONTENT": "マインドマップは、教育や業務など様々な場面でのアイデア学習・整理に特に効果的です。"
+            }
+          ]
+        }
+      ]
+    },
+    "SETTINGS": {
+      "AUTO_BRANCH_COLORS": "ブランチの色を自動設定",
+      "CENTER_ON_RESIZING": "リサイズ時に中央表示",
+      "FONT_MIN_SIZE": "最小フォントサイズ",
+      "FONT_MAX_SIZE": "最大フォントサイズ",
+      "FONT_INCREMENT": "フォントサイズの増減幅",
+      "GENERAL": "一般",
+      "MAIN": "メイン",
+      "MAP_LIST": "作成済みマップ一覧",
+      "OWNED_MAPS": "マイマインドマップ",
+      "LAST_MAPS": "最近開いたマインドマップ",
+      "MAP_OPTIONS": "マップオプション",
+      "ROOT_NODE_NAME": "ルートノード名",
+      "NODE_NAME": "ノード名",
+      "TITLE": "設定",
+      "TTL": "削除予定日",
+      "SHOW_LINKTEXT": "リンクテキストを表示"
+    },
+    "SHORTCUTS": {
+      "TITLE": "ショートカット"
+    }
+  },
+  "MESSAGES": {
+    "NO_SAVED_MAPS": "保存されたマップがありません！",
+    "INITIAL_INFORMATION": "TeamMapper の準備ができました ☺",
+    "WELCOME_MESSAGE": "TeamMapper へようこそ ☺",
+    "MAP_DELETION_CONFIRM": "このマップを削除してもよいですか？",
+    "JSON_FILE_SIZE_TOO_LARGE": "ファイルサイズが1MBを超えており、インポート時に問題が発生する可能性があります。画像を削除するなどしてファイルサイズを小さくしてください。"
+  },
+  "TOASTS": {
+    "SUCCESSFULLY_DUPLICATED": "マインドマップを複製しました！",
+    "URL_COPIED": "URLをコピーしました！",
+    "NODE_COPIED": "ノードをコピーしました！",
+    "NODE_CUT": "ノードを切り取りました！",
+    "MAP_IMPORT_SUCCESS": "マインドマップをインポートしました！",
+    "MAP_UPDATE_SUCCESS": "マインドマップを更新しました！",
+    "WARNINGS": {
+      "MAP_IMPORT_IN_PROGRESS": "マインドマップをインポート中...",
+      "MAP_UPDATE_IN_PROGRESS": "マインドマップを更新中..."
+    },
+    "ERRORS": {
+      "ROOT_NODE_COPIED": "ルートノードはコピーできません！",
+      "ROOT_NODE_CUT": "ルートノードは切り取りできません！",
+      "ROOT_NODE_DELETED": "ルートノードは削除できません！",
+      "ROOT_NODE_LOCKED": "ルートノードはロックできません！",
+      "NO_NODES_IN_CLIPBOARD": "クリップボードにノードがありません！",
+      "NODE_COPY_GENERIC": "ノードのコピー中にエラーが発生しました。",
+      "NODE_CUT_GENERIC": "ノードの切り取り中にエラーが発生しました。",
+      "NODE_DELETION_GENERIC": "ノードの削除中にエラーが発生しました。",
+      "NODE_UPDATE_GENERIC": "ノードの更新中にエラーが発生しました。",
+      "NODE_PASTE_GENERIC": "ノードの貼り付け中にエラーが発生しました。",
+      "EXPORT_IMAGE_ERROR": "画像のエクスポート中にエラーが発生しました。マインドマップが大きすぎる可能性があります。",
+      "MAP_COULD_NOT_BE_FOUND": "マインドマップが見つかりませんでした！",
+      "IMPORT_ERROR": "マインドマップをインポートできませんでした",
+      "AI_MERMAID_ERROR": "Mermaidを生成できませんでした",
+      "OPERATION_FAILED_MAP_RELOADED": "操作に失敗しました - サーバーからマップを再読み込みしました",
+      "NETWORK_TIMEOUT": "サーバーへの接続が切断されました。変更が保存されていない可能性があります。",
+      "SERVER_ERROR": "サーバーでエラーが発生しました。最近の変更が保存されていない可能性があります。",
+      "AUTH_FAILED": "認証に失敗しました。ページを再読み込みしてサインインし直してください。",
+      "MALFORMED_REQUEST": "リクエストに問題が発生しました。もう一度お試しください。",
+      "RATE_LIMIT_EXCEEDED": "リクエストが多すぎます。しばらく待ってから再試行してください。",
+      "MALFORMED_RESPONSE": "サーバーから無効なレスポンスを受信しました。ページを再読み込みしてください。",
+      "UNEXPECTED_ERROR": "予期しないエラーが発生しました。ページを再読み込みしてください。"
+    },
+    "DELETE_MAP_SUCCESS": "マインドマップを削除しました！",
+    "AI_MERMAID_GENERATED_SUCCESS": "Mermaidを生成しました！",
+    "AI_MERMAID_GENERATING": "Mermaidを作成中...",
+    "AI_DESCRIPTION_REQUIRED": "マインドマップの説明を入力してください"
+  },
+  "GENERAL": {
+    "REPOSITORY": "ソースコード",
+    "CREATE": "マインドマップを作成",
+    "DISMISS": "閉じる",
+    "SAVED_MAPS": "保存済みマップ",
+    "MERMAID": "Mermaid (.mmd)",
+    "JSON": "ファイル (.json)",
+    "AI": "AIジェネレーター",
+    "PNG": "画像 (.png)",
+    "SVG": "画像 (.svg)",
+    "JPG": "画像 (.jpg)",
+    "PDF": "ドキュメント (.pdf)",
+    "LANGUAGE": "言語",
+    "YES": "はい",
+    "NO": "いいえ",
+    "OK": "OK",
+    "SAVE": "保存",
+    "OPEN": "開く",
+    "CANCEL": "キャンセル",
+    "NODE_DRAGGING": "ノードのドラッグ",
+    "MAP_ZOOM": "マップのズーム",
+    "MAP": "マップ",
+    "NODES": "ノード",
+    "SAVED": "保存済み",
+    "NOT_SAVED": "未保存",
+    "LINKS": "リンク"
+  }
+}
