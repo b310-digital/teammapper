@@ -27,7 +27,7 @@
     "dist"
   ],
   "dependencies": {
-    "dompurify": "3.3.3"
+    "dompurify": "3.4.0"
   },
   "devDependencies": {
     "jison": "0.4.18",
