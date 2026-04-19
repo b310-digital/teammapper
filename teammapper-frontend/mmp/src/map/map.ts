@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import Utils from '../utils/utils';
 import Events from './handlers/events';
 import Zoom from './handlers/zoom';
 import Draw from './handlers/draw';
@@ -55,6 +56,10 @@ export default class MmpMap {
 
     if (this.options.centerOnResize === true) {
       d3.select(window).on('resize.' + this.id, () => {
+        // On mobile, opening the soft keyboard fires a window resize.
+        // Re-centering would translate the SVG, move the focused node,
+        // and make the keyboard flicker or fail to stay open.
+        if (Utils.isEditingActiveElement()) return;
         this.zoom.center();
       });
     }

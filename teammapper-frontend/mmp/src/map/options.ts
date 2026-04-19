@@ -118,6 +118,10 @@ export default class Options implements OptionParameters {
 
     if (this.centerOnResize === true) {
       d3.select(window).on('resize.' + this.map.id, () => {
+        // Skip re-centering while editing, otherwise the mobile soft
+        // keyboard resize would move the focused node and make the
+        // keyboard flicker or fail to stay open.
+        if (Utils.isEditingActiveElement()) return;
         this.map.zoom.center();
       });
     } else {

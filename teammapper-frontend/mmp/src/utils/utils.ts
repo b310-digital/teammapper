@@ -173,6 +173,15 @@ export default class Utils {
   }
 
   /**
+   * Return true if the currently focused element is a contenteditable
+   * node being actively edited.
+   */
+  static isEditingActiveElement(): boolean {
+    const active = document.activeElement as HTMLElement | null;
+    return !!active && active.isContentEditable;
+  }
+
+  /**
    * Gets the nested property of object
    * @param obj
    * @param path
