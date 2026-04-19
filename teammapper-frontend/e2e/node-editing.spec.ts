@@ -91,6 +91,9 @@ test('adds a node and drags it - screenshot test', async ({ page }) => {
   );
   await page.mouse.up();
 
+  // Wait for dragging to finish
+  await page.waitForTimeout(500);
+
   // Take a screenshot of the map after dragging
   await expect(page.locator('.map')).toHaveScreenshot('node-after-drag.png', {
     timeout: 500,
