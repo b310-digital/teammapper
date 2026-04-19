@@ -417,6 +417,8 @@ export default class Draw {
     Utils.focusWithCaretAtEnd(name);
 
     name.style.setProperty('cursor', 'auto');
+    name.style.setProperty('user-select', 'text');
+    name.style.setProperty('-webkit-user-select', 'text');
 
     this.updateNodeShapes(node);
 
@@ -491,6 +493,8 @@ export default class Draw {
 
       name.setAttribute('contenteditable', 'false');
       name.style.setProperty('cursor', 'pointer');
+      name.style.removeProperty('user-select');
+      name.style.removeProperty('-webkit-user-select');
 
       name.blur();
     };
