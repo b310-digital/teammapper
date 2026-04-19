@@ -36,6 +36,8 @@
 npm-debug.log
 testem.log
 /typings
+**/tsconfig.build.tsbuildinfo
+**/tsconfig.tsbuildinfo
 
 # e2e
 /e2e/*.js

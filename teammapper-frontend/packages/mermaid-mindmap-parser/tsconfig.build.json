@@ -6,7 +6,8 @@
     "outDir": "./dist",
     "noEmit": false,
     "allowImportingTsExtensions": false,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "rootDir": "./src"
   },
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist"]
 }

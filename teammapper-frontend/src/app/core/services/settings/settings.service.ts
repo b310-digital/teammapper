@@ -28,7 +28,6 @@ export class SettingsService {
     'zh-cn',
     'es',
     'pt-br',
-    'ja',
   ];
 
   public userSettings: Observable<UserSettings | null>;

@@ -81,7 +81,6 @@ describe('FooterComponent', () => {
         'zh-cn',
         'es',
         'pt-br',
-        'ja',
       ]);
       expect(component.currentYear).toBe(new Date().getFullYear().toString());
     });

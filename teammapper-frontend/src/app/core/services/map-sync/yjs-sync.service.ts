@@ -459,7 +459,7 @@ export class YjsSyncService implements SyncStrategy {
     event: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>,
     nodesMap: Y.Map<Y.Map<unknown>>
   ): void {
-    if (event.target === nodesMap) {
+    if (event.target === (nodesMap as Y.AbstractType<unknown>)) {
       this.handleTopLevelNodeChanges(event, nodesMap);
     } else {
       this.handleNodePropertyChanges(event);

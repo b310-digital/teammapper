@@ -137,12 +137,13 @@ export default class Export {
     d3.select(clone)
       .selectAll('foreignObject')
       .nodes()
-      .forEach((fo: HTMLElement) => {
-        const parent = fo.parentElement;
+      .forEach((fo: d3.BaseType) => {
+        const foEl = fo as HTMLElement;
+        const parent = foEl.parentElement;
         const x =
-          parseInt(fo.getAttribute('x'), 10) +
-          Math.floor(parseInt(fo.getAttribute('width'), 10) / 2);
-        const splittedText = fo.firstChild.textContent.split('\n');
+          parseInt(foEl.getAttribute('x'), 10) +
+          Math.floor(parseInt(foEl.getAttribute('width'), 10) / 2);
+        const splittedText = foEl.firstChild.textContent.split('\n');
         // line breaks are created via tspan elements that are relatively positioned using dy property
         const svgTextWithLineBreaks = splittedText.map(
           (text, i) =>
@@ -153,26 +154,26 @@ export default class Export {
           NAMESPACE: 'http://www.w3.org/2000/svg',
         });
         d3.select(parent)
-          .attr('width', fo.getAttribute('width'))
+          .attr('width', foEl.getAttribute('width'))
           .append('text')
           .attr(
             'y',
-            parseInt(fo.getAttribute('y'), 10) +
-              parseInt((fo.firstElementChild as HTMLElement).style.fontSize, 10)
+            parseInt(foEl.getAttribute('y'), 10) +
+              parseInt((foEl.firstElementChild as HTMLElement).style.fontSize, 10)
           )
           .attr('x', x)
           .attr('text-anchor', 'middle')
           .attr(
             'font-family',
-            (fo.firstElementChild as HTMLElement).style.fontFamily
+            (foEl.firstElementChild as HTMLElement).style.fontFamily
           )
           .attr(
             'font-size',
-            (fo.firstElementChild as HTMLElement).style.fontSize
+            (foEl.firstElementChild as HTMLElement).style.fontSize
           )
-          .attr('fill', (fo.firstElementChild as HTMLElement).style.color)
+          .attr('fill', (foEl.firstElementChild as HTMLElement).style.color)
           .html(textSVG);
-        fo.remove();
+        foEl.remove();
       });
 
     this.convertImages(clone, () => {

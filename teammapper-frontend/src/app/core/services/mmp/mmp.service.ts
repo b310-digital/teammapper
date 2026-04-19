@@ -355,8 +355,9 @@ export class MmpService implements OnDestroy {
         updateHistory,
         id
       );
-    } catch (e) {
-      if (e.message == 'The root node can not be locked') {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message == 'The root node can not be locked') {
         const rootNodeFailureMessage = await this.utilsService.translate(
           'TOASTS.ERRORS.ROOT_NODE_LOCKED'
         );
@@ -377,8 +378,9 @@ export class MmpService implements OnDestroy {
   public async removeNode(nodeId?: string, notifyWithEvent = true) {
     try {
       this.currentMap.instance.removeNode(nodeId, notifyWithEvent);
-    } catch (e) {
-      if (e.message == 'The root node can not be deleted') {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message == 'The root node can not be deleted') {
         const rootNodeFailureMessage = await this.utilsService.translate(
           'TOASTS.ERRORS.ROOT_NODE_DELETED'
         );
@@ -403,8 +405,9 @@ export class MmpService implements OnDestroy {
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_COPIED');
       this.toastrService.success(successMessage);
-    } catch (e) {
-      if (e.message == 'The root node can not be copied') {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message == 'The root node can not be copied') {
         const rootNodeFailureMessage = await this.utilsService.translate(
           'TOASTS.ERRORS.ROOT_NODE_COPIED'
         );
@@ -429,8 +432,9 @@ export class MmpService implements OnDestroy {
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_CUT');
       this.toastrService.success(successMessage);
-    } catch (e) {
-      if (e.message == 'The root node can not be cut') {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message == 'The root node can not be cut') {
         const rootNodeFailureMessage = await this.utilsService.translate(
           'TOASTS.ERRORS.ROOT_NODE_CUT'
         );
@@ -451,8 +455,9 @@ export class MmpService implements OnDestroy {
   public async pasteNode(nodeId?: string) {
     try {
       this.currentMap.instance.pasteNode(nodeId);
-    } catch (e) {
-      if (e.message == 'There are not nodes in the mmp clipboard') {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '';
+      if (message == 'There are not nodes in the mmp clipboard') {
         const rootNodeFailureMessage = await this.utilsService.translate(
           'TOASTS.ERRORS.NO_NODES_IN_CLIPBOARD'
         );
