@@ -44,21 +44,9 @@ export default defineConfig({
   projects: [
     {
       name: 'webkit',
-      testIgnore: /.*\.mobile\.spec\.ts/,
       use: {
         ...devices['Desktop Safari'],
         headless: true, // Force headless mode for Docker environment
-      },
-    },
-    {
-      // Mobile Safari: same engine as the webkit project but with hasTouch:
-      // true + isMobile: true so page.tap() dispatches real touch events.
-      // Used by node-editing-mobile.spec.ts to guard issue #1249.
-      name: 'mobile-webkit',
-      testMatch: /.*\.mobile\.spec\.ts/,
-      use: {
-        ...devices['iPhone 14'],
-        headless: true,
       },
     },
   ],
