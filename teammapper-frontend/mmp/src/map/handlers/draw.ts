@@ -533,12 +533,26 @@ export default class Draw {
         active: document.activeElement?.tagName,
         ...extra,
       });
-    name.addEventListener('focus', () => log('focus'), { once: true });
-    name.addEventListener('blur', () => log('blur'), { once: true });
+    name.addEventListener(
+      'focus',
+      () => log('focus'),
+      { once: true, capture: true }
+    );
+    name.addEventListener(
+      'blur',
+      () =>
+        log('blur', {
+          // Short stack trace identifies programmatic blur() callers.
+          stack: new Error().stack?.split('\n').slice(1, 6).join(' | '),
+          stillInDom: document.body.contains(name),
+          contentEditable: name.getAttribute('contenteditable'),
+        }),
+      { once: true, capture: true }
+    );
     name.addEventListener('input', () => log('input'), { once: true });
     name.addEventListener('keydown', () => log('keydown'), { once: true });
 
-    // Listen globally for events that might steal focus in the ~300ms after
+    // Listen globally for events that might steal focus in the ~800ms after
     // enableNodeNameEditing, to identify which event/handler is the culprit.
     const globalTypes = [
       'pointerdown',
@@ -546,6 +560,7 @@ export default class Draw {
       'mousedown',
       'mouseup',
       'click',
+      'touchend',
       'focusin',
       'focusout',
     ] as const;
@@ -557,11 +572,32 @@ export default class Draw {
     globalTypes.forEach(type =>
       document.addEventListener(type, globalListener, true)
     );
+
+    // Poll activeElement at animation-frame cadence so we know whether the
+    // DIV lost focus synchronously (before any event fires) or later.
+    let frame = 0;
+    const startActive = document.activeElement?.tagName;
+    const pollStart = performance.now();
+    const poll = () => {
+      const active = document.activeElement?.tagName;
+      if (active !== startActive) {
+        mobileEditDebugLog('poll:activeChanged', {
+          frame,
+          deltaMs: Math.round(performance.now() - pollStart),
+          from: startActive,
+          to: active,
+        });
+        return;
+      }
+      if (frame++ < 40) requestAnimationFrame(poll);
+    };
+    requestAnimationFrame(poll);
+
     window.setTimeout(() => {
       globalTypes.forEach(type =>
         document.removeEventListener(type, globalListener, true)
       );
-    }, 800);
+    }, 1200);
   }
 
   /**
