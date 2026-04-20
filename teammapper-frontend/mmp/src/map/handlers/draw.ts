@@ -4,6 +4,11 @@ import DOMPurify from 'dompurify';
 import Map from '../map';
 import Utils from '../../utils/utils';
 import Node from '../models/node';
+import {
+  isMobileEditDebugEnabled,
+  mobileEditDebugLog,
+  shouldSkipEditPreventDefault,
+} from '../../utils/mobile-edit-debug';
 
 /**
  * Draw the map and update it.
@@ -104,11 +109,22 @@ export default class Draw {
       .on(
         'touchstart',
         (event: TouchEvent, node: Node) => {
+          mobileEditDebugLog('touchstart', {
+            nodeId: node.id,
+            tapedTwice,
+            editing: this.editing,
+            isLink: this.isLinkTarget(event),
+          });
           if (!this.map.options.edit) return false;
           // When not clicking a link and not in edit mode, disable all mobile native touch events
           // A single tap is supposed to move the node in this application
-          if (!this.isLinkTarget(event) && !this.editing) {
+          const willEnterEdit = tapedTwice;
+          const skipPrevent = willEnterEdit && shouldSkipEditPreventDefault();
+          if (!this.isLinkTarget(event) && !this.editing && !skipPrevent) {
             event.preventDefault();
+            mobileEditDebugLog('preventDefault');
+          } else if (skipPrevent) {
+            mobileEditDebugLog('preventDefault skipped (hypothesis)');
           }
 
           // a single tap should enter moving node mode - not a selection
@@ -122,6 +138,7 @@ export default class Draw {
             return false;
           }
 
+          mobileEditDebugLog('enterEdit triggered', { nodeId: node.id });
           this.enableNodeNameEditing(node);
         },
         { passive: false }
@@ -411,12 +428,21 @@ export default class Draw {
   public enableNodeNameEditing(node: Node) {
     this.editing = true;
     const name = node.getNameDOM();
+    mobileEditDebugLog('enableNodeNameEditing:start', { nodeId: node.id });
     name.setAttribute('contenteditable', 'true');
     name.innerHTML = DOMPurify.sanitize(node.name);
 
     Utils.focusWithCaretAtEnd(name);
+    mobileEditDebugLog('enableNodeNameEditing:after-focus', {
+      hasFocus: document.activeElement === name,
+      activeTag: document.activeElement?.tagName,
+    });
 
     name.style.setProperty('cursor', 'auto');
+
+    if (isMobileEditDebugEnabled()) {
+      this.attachEditableDebugListeners(name);
+    }
 
     this.updateNodeShapes(node);
 
@@ -494,6 +520,22 @@ export default class Draw {
 
       name.blur();
     };
+  }
+
+  /**
+   * Attach one-shot focus/blur/input listeners used only when mobile-edit
+   * debug flag is on. Confirms whether the contenteditable div actually
+   * received focus and the browser accepted input (keyboard event).
+   */
+  private attachEditableDebugListeners(name: HTMLElement): void {
+    const log = (event: string) =>
+      mobileEditDebugLog(`name:${event}`, {
+        active: document.activeElement?.tagName,
+      });
+    name.addEventListener('focus', () => log('focus'), { once: true });
+    name.addEventListener('blur', () => log('blur'), { once: true });
+    name.addEventListener('input', () => log('input'), { once: true });
+    name.addEventListener('keydown', () => log('keydown'), { once: true });
   }
 
   /**
