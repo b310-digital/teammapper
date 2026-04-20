@@ -528,14 +528,40 @@ export default class Draw {
    * received focus and the browser accepted input (keyboard event).
    */
   private attachEditableDebugListeners(name: HTMLElement): void {
-    const log = (event: string) =>
+    const log = (event: string, extra?: Record<string, unknown>) =>
       mobileEditDebugLog(`name:${event}`, {
         active: document.activeElement?.tagName,
+        ...extra,
       });
     name.addEventListener('focus', () => log('focus'), { once: true });
     name.addEventListener('blur', () => log('blur'), { once: true });
     name.addEventListener('input', () => log('input'), { once: true });
     name.addEventListener('keydown', () => log('keydown'), { once: true });
+
+    // Listen globally for events that might steal focus in the ~300ms after
+    // enableNodeNameEditing, to identify which event/handler is the culprit.
+    const globalTypes = [
+      'pointerdown',
+      'pointerup',
+      'mousedown',
+      'mouseup',
+      'click',
+      'focusin',
+      'focusout',
+    ] as const;
+    const globalListener = (e: Event) =>
+      mobileEditDebugLog(`global:${e.type}`, {
+        target: (e.target as Element | null)?.nodeName,
+        active: document.activeElement?.tagName,
+      });
+    globalTypes.forEach(type =>
+      document.addEventListener(type, globalListener, true)
+    );
+    window.setTimeout(() => {
+      globalTypes.forEach(type =>
+        document.removeEventListener(type, globalListener, true)
+      );
+    }, 800);
   }
 
   /**
