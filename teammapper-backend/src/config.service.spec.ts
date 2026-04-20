@@ -73,4 +73,31 @@ describe('ConfigService', () => {
       expect(config.getLogLevels()).toEqual(['error', 'warn', 'log', 'debug'])
     })
   })
+
+  describe('isYjsEnabled', () => {
+    it('returns true when YJS_ENABLED is not set', () => {
+      const config = createConfigService({})
+      expect(config.isYjsEnabled()).toBe(true)
+    })
+
+    it('returns true when YJS_ENABLED is "true"', () => {
+      const config = createConfigService({ YJS_ENABLED: 'true' })
+      expect(config.isYjsEnabled()).toBe(true)
+    })
+
+    it('returns false when YJS_ENABLED is "false"', () => {
+      const config = createConfigService({ YJS_ENABLED: 'false' })
+      expect(config.isYjsEnabled()).toBe(false)
+    })
+
+    it('returns false when YJS_ENABLED is "FALSE" (case-insensitive)', () => {
+      const config = createConfigService({ YJS_ENABLED: 'FALSE' })
+      expect(config.isYjsEnabled()).toBe(false)
+    })
+
+    it('returns true for any value other than "false"', () => {
+      const config = createConfigService({ YJS_ENABLED: 'yes' })
+      expect(config.isYjsEnabled()).toBe(true)
+    })
+  })
 })

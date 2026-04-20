@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Req,
   Controller,
@@ -12,18 +13,18 @@ import {
   Optional,
   Inject,
 } from '@nestjs/common'
+import * as v from 'valibot'
 import { MapsService } from '../services/maps.service'
 import { checkWriteAccess } from '../utils/yjsProtocol'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import {
-  IMmpClientDeleteRequest,
   IMmpClientMap,
-  IMmpClientMapCreateRequest,
   IMmpClientMapInfo,
   IMmpClientPrivateMap,
   Request,
 } from '../types'
+import { MapCreateSchema, MapDeleteSchema } from '../schemas/maps.schema'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
 
@@ -78,10 +79,14 @@ export default class MapsController {
   @Delete(':id')
   async delete(
     @Param('id') mapId: string,
-    @Body() body: IMmpClientDeleteRequest
+    @Body() body: unknown
   ): Promise<void> {
+    const result = v.safeParse(MapDeleteSchema, body)
+    if (!result.success) {
+      throw new BadRequestException(result.issues)
+    }
     const mmpMap = await this.mapsService.findMap(mapId)
-    if (mmpMap && mmpMap.adminId === body.adminId) {
+    if (mmpMap && mmpMap.adminId === result.output.adminId) {
       if (this.yjsGateway && this.yjsDocManager) {
         this.yjsGateway.closeConnectionsForMap(mapId)
         this.yjsDocManager.destroyDoc(mapId)
@@ -92,12 +97,19 @@ export default class MapsController {
 
   @Post()
   async create(
-    @Body() body: IMmpClientMapCreateRequest,
+    @Body() body: unknown,
     @Req() req?: Request
   ): Promise<IMmpClientPrivateMap | undefined> {
+    const result = v.safeParse(MapCreateSchema, body)
+    if (!result.success) {
+      throw new BadRequestException(result.issues)
+    }
     const pid = req?.pid
 
-    const newMap = await this.mapsService.createEmptyMap(body.rootNode, pid)
+    const newMap = await this.mapsService.createEmptyMap(
+      result.output.rootNode,
+      pid
+    )
 
     const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
 

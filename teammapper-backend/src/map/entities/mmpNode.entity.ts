@@ -12,7 +12,12 @@ import {
   BeforeUpdate,
 } from 'typeorm'
 import { MmpMap } from './mmpMap.entity'
-import { validateOrReject, IsDefined } from 'class-validator'
+import {
+  validateOrReject,
+  IsDefined,
+  MaxLength,
+  IsOptional,
+} from 'class-validator'
 
 @Entity()
 export class MmpNode {
@@ -20,6 +25,8 @@ export class MmpNode {
   id: string
 
   @Column({ type: 'varchar', nullable: true })
+  @IsOptional()
+  @MaxLength(512)
   name: string | null
 
   @ManyToOne(() => MmpMap, (map) => map.nodes, {
@@ -55,30 +62,44 @@ export class MmpNode {
   coordinatesY: number
 
   @Column({ type: 'varchar', nullable: true })
+  @IsOptional()
+  @MaxLength(9)
   colorsName: string | null
 
   @Column({ type: 'varchar', nullable: true })
+  @IsOptional()
+  @MaxLength(9)
   colorsBackground: string | null
 
   @Column({ type: 'varchar', nullable: true })
+  @IsOptional()
+  @MaxLength(9)
   colorsBranch: string | null
 
   @Column({ type: 'integer', nullable: true })
   fontSize: number | null
 
   @Column({ type: 'varchar', nullable: true })
+  @IsOptional()
+  @MaxLength(20)
   fontStyle: string | null
 
   @Column({ type: 'varchar', nullable: true })
+  @IsOptional()
+  @MaxLength(20)
   fontWeight: string | null
 
   @Column({ type: 'varchar', nullable: true })
+  @IsOptional()
+  @MaxLength(200000)
   imageSrc: string | null
 
   @Column({ type: 'integer', nullable: true, default: 60 })
   imageSize: number | null
 
   @Column({ type: 'varchar', nullable: true })
+  @IsOptional()
+  @MaxLength(2048)
   linkHref: string | null
 
   @Column({ type: 'boolean', nullable: true })

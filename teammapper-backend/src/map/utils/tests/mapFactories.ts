@@ -38,19 +38,19 @@ export const createMmpClientMap = (overrides = {}): IMmpClientMap => ({
 
 export const createClientRootNode = (overrides = {}): IMmpClientNodeBasics => ({
   colors: {
-    name: '',
-    background: '',
-    branch: '',
+    name: null,
+    background: null,
+    branch: null,
   },
   font: {
-    style: '',
-    size: 0,
-    weight: '',
+    style: null,
+    size: null,
+    weight: null,
   },
   name: 'Root node',
   image: {
-    src: '',
-    size: 0,
+    src: null,
+    size: null,
   },
   ...overrides,
 })

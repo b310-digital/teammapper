@@ -48,3 +48,6 @@ Thumbs.db
 # We serve the frontend from this folder.
 # During production build this directory will be filled with the production-ready frontend code.
 client
+
+# Benchmark reports (generated, not committed)
+benchmark/reports/*.json

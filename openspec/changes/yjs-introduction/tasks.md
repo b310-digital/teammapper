@@ -5,9 +5,9 @@
   The app MUST be fully functional after each PR is merged.
 
   Feature flags:
-  - Backend:  YJS_ENABLED env var (read by ConfigService). Default: false.
+  - Backend:  YJS_ENABLED env var (read by ConfigService). Default: true (missing env var = enabled).
               When false, Socket.io gateway is active, Yjs gateway does not accept connections.
-              When true, Yjs gateway is active and accepts connections.
+              When true (or not set), Yjs gateway is active and accepts connections.
               Both can coexist — Socket.io is only removed in the final PR.
   - Frontend: featureFlagYjs in environment.ts / environment.prod.ts. Default: false.
               When false, MapSyncService uses the Socket.io code path.
@@ -22,7 +22,7 @@
 
 - [x] 1.1 Add `yjs`, `y-protocols`, `y-websocket`, and `ws` (+ `@types/ws`) to backend dependencies
 - [x] 1.2 Add `yjs` and `y-websocket` to frontend dependencies
-- [x] 1.3 Add `YJS_ENABLED` env var support to backend `ConfigService` (default: `false`), with a `isYjsEnabled()` method
+- [x] 1.3 Add `YJS_ENABLED` env var support to backend `ConfigService` (default: `true` — missing env var activates Yjs), with a `isYjsEnabled()` method that returns `false` only when explicitly set to `'false'`
 - [x] 1.4 Add `featureFlagYjs: false` to frontend `environment.ts` and `environment.prod.ts`
 - [x] 1.5 Add `/yjs` entry to frontend `proxy.conf.json` forwarding to backend with `ws: true`
 - [x] 1.6 Verify both frontend and backend build, lint, and tests pass with no behavioral change

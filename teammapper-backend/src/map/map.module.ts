@@ -39,7 +39,9 @@ const mapProviders: Provider[] = configService.isYjsEnabled()
     CacheModule.register(),
     ScheduleModule.forRoot(),
   ],
-  controllers: [MapsController, MermaidController],
+  controllers: configService.isAiEnabled()
+    ? [MapsController, MermaidController]
+    : [MapsController],
   providers: mapProviders,
   exports: [MapsService],
 })

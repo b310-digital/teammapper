@@ -32,10 +32,11 @@ services:
       AI_LLM_TPD: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_TPD}
       JWT_SECRET: ${JWT_SECRET}
       YJS_ENABLED: ${YJS_ENABLED:-true}
-      LOG_LEVEL: ${LOG_LEVEL:-warn}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
 
       TESTING_PLAYWRIGHT_WS_ENDPOINT: "ws://playwright:9323"
       TESTING_PLAYWRIGHT_BASE_URL: "http://app:4200"
+      PLAYWRIGHT_MCP_CDP_ENDPOINT: "http://chrome:9222"
     ports:
       - "${APP_FRONTEND_PORT:-4200}:4200"
       - "${APP_BACKEND_PORT:-3000}:3000"
@@ -70,6 +71,15 @@ services:
     expose:
       - "9323"
     command: ["npx", "playwright", "run-server", "--port=9323"]
+
+  chrome:
+    image: chromedp/headless-shell:latest
+    container_name: chrome
+    depends_on:
+      - app
+    expose:
+      - "9222"
+    # headless-shell listens on 9222 by default with --remote-debugging-address=0.0.0.0
 
 volumes:
   postgres_data:

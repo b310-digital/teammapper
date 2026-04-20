@@ -16,7 +16,10 @@ test('adds image to node', async ({ page }) => {
   // Upload image to the node
   const imageInput = page.locator('#image-upload');
   await expect(imageInput).toHaveAttribute('type', 'file');
-  await expect(imageInput).toHaveAttribute('accept', 'image/*');
+  await expect(imageInput).toHaveAttribute(
+    'accept',
+    'image/png, image/jpeg, image/gif, image/webp'
+  );
 
   // Upload the test image
   const imagePath = path.join(__dirname, 'fake-data', 'radial-tree.png');
