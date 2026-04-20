@@ -186,8 +186,18 @@ export default class Nodes {
 
             background.style.stroke = color.toString();
 
-            Utils.removeAllRanges();
-            this.selectedNode.getNameDOM().blur();
+            // Don't blur the node that's currently being edited (#1249): on
+            // mobile, d3-drag's `started` callback fires on the second tap
+            // that enters edit mode and calls selectNode for the same node,
+            // which used to steal focus from the just-focused contenteditable
+            // and stop the soft keyboard from opening.
+            const prevName = this.selectedNode.getNameDOM();
+            const wouldBlurActiveEdit =
+              this.selectedNode === node && document.activeElement === prevName;
+            if (!wouldBlurActiveEdit) {
+              Utils.removeAllRanges();
+              prevName.blur();
+            }
 
             this.map.events.call(
               Event.nodeDeselect,
