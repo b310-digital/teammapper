@@ -5,6 +5,7 @@ import Map from '../map';
 import Utils from '../../utils/utils';
 import Node from '../models/node';
 import {
+  installFocusBlurTracing,
   isMobileEditDebugEnabled,
   mobileEditDebugLog,
   shouldSkipEditPreventDefault,
@@ -26,6 +27,7 @@ export default class Draw {
   constructor(map: Map, ref: HTMLElement) {
     this.map = map;
     this.mapRef = ref;
+    installFocusBlurTracing();
   }
 
   /**
@@ -542,8 +544,8 @@ export default class Draw {
       'blur',
       () =>
         log('blur', {
-          // Short stack trace identifies programmatic blur() callers.
-          stack: new Error().stack?.split('\n').slice(1, 6).join(' | '),
+          // Longer stack trace to see past Zone.js wrappers.
+          stack: new Error().stack?.split('\n').slice(1, 15).join(' || '),
           stillInDom: document.body.contains(name),
           contentEditable: name.getAttribute('contenteditable'),
         }),

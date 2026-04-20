@@ -95,3 +95,40 @@ export const mobileEditDebugLog = (
   if (!panel) mountPanel();
   renderPanel();
 };
+
+/**
+ * Monkey-patch HTMLElement.prototype.blur / focus so every programmatic call
+ * leaves a stack trace in the debug log. Installed once per page when the
+ * debug flag is active, before the rest of the app runs.
+ */
+let patched = false;
+export const installFocusBlurTracing = (): void => {
+  if (patched || !isMobileEditDebugEnabled() || typeof HTMLElement === 'undefined') {
+    return;
+  }
+  patched = true;
+  const proto = HTMLElement.prototype;
+  const originalBlur = proto.blur;
+  const originalFocus = proto.focus;
+  proto.blur = function patchedBlur(this: HTMLElement): void {
+    if (this.getAttribute('contenteditable') === 'true') {
+      mobileEditDebugLog('trace:blur() called', {
+        target: this.nodeName,
+        stack: new Error().stack?.split('\n').slice(1, 12).join(' || '),
+      });
+    }
+    return originalBlur.call(this);
+  };
+  proto.focus = function patchedFocus(
+    this: HTMLElement,
+    options?: FocusOptions
+  ): void {
+    if (this.getAttribute('contenteditable') === 'true') {
+      mobileEditDebugLog('trace:focus() called', {
+        target: this.nodeName,
+        stack: new Error().stack?.split('\n').slice(1, 12).join(' || '),
+      });
+    }
+    return originalFocus.call(this, options);
+  };
+};
