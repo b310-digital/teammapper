@@ -44,6 +44,7 @@ export default defineConfig({
   projects: [
     {
       name: 'webkit',
+      testIgnore: /.*\.mobile\.spec\.ts/,
       use: {
         ...devices['Desktop Safari'],
         headless: true, // Force headless mode for Docker environment
