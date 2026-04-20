@@ -11,6 +11,7 @@
 
 const FLAG_DEBUG = 'mobileEditDebug';
 const FLAG_SKIP_PREVENT = 'mobileEditSkipPrevent';
+const FLAG_FIX_SELECT_BLUR = 'mobileEditFixSelectBlur';
 const MAX_ENTRIES = 40;
 const PANEL_ID = 'mobile-edit-debug-panel';
 
@@ -39,6 +40,14 @@ export const isMobileEditDebugEnabled = (): boolean => readFlag(FLAG_DEBUG);
 
 export const shouldSkipEditPreventDefault = (): boolean =>
   readFlag(FLAG_SKIP_PREVENT);
+
+/**
+ * Hypothesis toggle: skip the `.blur()` on a previously-selected node's
+ * nameDOM when re-selecting the same node. Real-device trace (issue #1249)
+ * showed d3-drag's `started` callback runs selectNode(root.id) on the
+ * second tap, which blurs the just-focused edit div.
+ */
+export const shouldFixSelectBlur = (): boolean => readFlag(FLAG_FIX_SELECT_BLUR);
 
 const mountPanel = (): HTMLDivElement | null => {
   if (typeof document === 'undefined') return null;

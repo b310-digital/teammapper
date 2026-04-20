@@ -15,6 +15,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { Event } from './events';
 import Log from '../../utils/log';
 import Utils from '../../utils/utils';
+import {
+  mobileEditDebugLog,
+  shouldFixSelectBlur,
+} from '../../utils/mobile-edit-debug';
 import { MapSnapshot } from './history';
 
 const NODE_HORIZONTAL_SPACING = 200; // The x-axis spacing between parent and child nodes
@@ -179,15 +183,38 @@ export default class Nodes {
 
           const color = d3.color(background.style.fill).darker(0.5);
 
-          if (background.style.stroke !== color.toString()) {
+          const strokeNow = background.style.stroke;
+          const expected = color.toString();
+          if (strokeNow !== expected) {
+            mobileEditDebugLog('selectNode:enter-blur-branch', {
+              newId: id,
+              prevId: this.selectedNode?.id,
+              sameNode: this.selectedNode?.id === id,
+              strokeNow,
+              expected,
+              prevActiveIsName:
+                document.activeElement === this.selectedNode?.getNameDOM(),
+            });
             if (this.selectedNode) {
               this.selectedNode.getBackgroundDOM().style.stroke = '';
             }
 
             background.style.stroke = color.toString();
 
-            Utils.removeAllRanges();
-            this.selectedNode.getNameDOM().blur();
+            // Guarded fix (#1249): when re-selecting the SAME node that is
+            // actively being edited, the blur below wipes the just-focused
+            // edit div and the soft keyboard never opens on mobile.
+            const prevName = this.selectedNode.getNameDOM();
+            const skipBlur =
+              shouldFixSelectBlur() &&
+              this.selectedNode === node &&
+              document.activeElement === prevName;
+            if (skipBlur) {
+              mobileEditDebugLog('selectNode:skip-blur (hypothesis)');
+            } else {
+              Utils.removeAllRanges();
+              prevName.blur();
+            }
 
             this.map.events.call(
               Event.nodeDeselect,
