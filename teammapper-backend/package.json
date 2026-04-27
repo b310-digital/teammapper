@@ -35,7 +35,7 @@
   "dependencies": {
     "@ai-sdk/openai": "3.0.53",
     "@ai-sdk/openai-compatible": "2.0.41",
-    "@nestjs/cache-manager": "^3.1.0",
+    "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/cli": "^11.0.21",
     "@nestjs/common": "^11.1.19",
     "@nestjs/config": "4.0.4",
