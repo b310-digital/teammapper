@@ -2,3 +2,12 @@ packages:
   - 'teammapper-backend'
   - 'teammapper-frontend'
   - 'teammapper-frontend/packages/*'
+allowBuilds:
+  '@compodoc/compodoc': false
+  '@nestjs/core': false
+  '@parcel/watcher': true
+  core-js: false
+  esbuild: true
+  lmdb: false
+  msgpackr-extract: false
+  unrs-resolver: false

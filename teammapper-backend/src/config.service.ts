@@ -16,6 +16,8 @@ export interface LLMProps {
   tpm?: string
   tpd?: string
   rpm?: string
+  maxOutputTokens?: string
+  timeoutMs?: string
 }
 
 class ConfigService {
@@ -121,6 +123,8 @@ class ConfigService {
       tpm: this.getValue('AI_LLM_TPM', false),
       tpd: this.getValue('AI_LLM_TPD', false),
       rpm: this.getValue('AI_LLM_RPM', false),
+      maxOutputTokens: this.getValue('AI_LLM_MAX_OUTPUT_TOKENS', false),
+      timeoutMs: this.getValue('AI_LLM_TIMEOUT_MS', false),
     }
   }
 
