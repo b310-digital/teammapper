@@ -28,21 +28,28 @@ export class LlmUsageCounterService {
 
   /**
    * Atomically reserve `tokens` and one request slot for `dateUsage`,
-   * returning the new totals after the increment.
+   * returning the new totals after the increment, or `null` if the reservation
+   * would push the day's total above `cap`. Cap check happens inside the SQL so
+   * concurrent callers cannot both pass a "would I exceed?" check.
    */
   async reserve(
     dateUsage: string,
-    tokens: number
-  ): Promise<{ tokensUsed: number; requestsCount: number }> {
+    tokens: number,
+    cap?: number
+  ): Promise<{ tokensUsed: number; requestsCount: number } | null> {
     const rows = (await this.repo.query(
       `INSERT INTO llm_usage_counter ("dateUsage", "tokensUsed", "requestsCount")
-       VALUES ($1, $2, 1)
+       SELECT $1, $2, 1
+       WHERE $3::bigint IS NULL OR $2 <= $3::bigint
        ON CONFLICT ("dateUsage") DO UPDATE
          SET "tokensUsed" = llm_usage_counter."tokensUsed" + EXCLUDED."tokensUsed",
              "requestsCount" = llm_usage_counter."requestsCount" + 1
+         WHERE $3::bigint IS NULL
+               OR llm_usage_counter."tokensUsed" + EXCLUDED."tokensUsed" <= $3::bigint
        RETURNING "tokensUsed" AS tokens_used, "requestsCount" AS requests_count`,
-      [dateUsage, tokens]
+      [dateUsage, tokens, cap ?? null]
     )) as UsageRow[]
+    if (rows.length === 0) return null
     return this.normalize(rows[0])
   }
 

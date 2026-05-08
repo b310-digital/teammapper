@@ -28,12 +28,29 @@ describe('LlmUsageCounterService', () => {
     expect(totals).toEqual({ tokensUsed: 500, requestsCount: 3 })
   })
 
-  it('reserve passes the dateUsage and tokens as bound parameters', async () => {
+  it('reserve returns null when the SQL guard blocks the upsert', async () => {
+    queryMock.mockResolvedValueOnce([])
+    const totals = await service.reserve('2026-05-08', 200, 100)
+    expect(totals).toBeNull()
+  })
+
+  it('reserve passes the dateUsage, tokens, and cap as bound parameters', async () => {
+    queryMock.mockResolvedValueOnce([{ tokens_used: '1', requests_count: '1' }])
+    await service.reserve('2026-05-08', 200, 1000)
+    expect(queryMock).toHaveBeenCalledWith(expect.any(String), [
+      '2026-05-08',
+      200,
+      1000,
+    ])
+  })
+
+  it('reserve passes null when no cap is provided', async () => {
     queryMock.mockResolvedValueOnce([{ tokens_used: '1', requests_count: '1' }])
     await service.reserve('2026-05-08', 200)
     expect(queryMock).toHaveBeenCalledWith(expect.any(String), [
       '2026-05-08',
       200,
+      null,
     ])
   })
 

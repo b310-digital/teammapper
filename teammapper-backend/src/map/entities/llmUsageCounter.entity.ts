@@ -10,9 +10,9 @@ export class LlmUsageCounter {
   @PrimaryColumn({ type: 'date' })
   dateUsage: string
 
-  @Column({ type: 'bigint', default: 0 })
+  @Column({ type: 'bigint', default: '0' })
   tokensUsed: string
 
-  @Column({ type: 'bigint', default: 0 })
+  @Column({ type: 'bigint', default: '0' })
   requestsCount: string
 }

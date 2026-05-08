@@ -6,7 +6,7 @@ import configService from '../../config.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'
 import { LlmUsageCounterService } from './llm-usage-counter.service'
 
-const SYSTEM_PROMPT_TOKEN_OVERHEAD = 200
+export const SYSTEM_PROMPT_TOKEN_OVERHEAD = 200
 const DEFAULT_MAX_OUTPUT_TOKENS = 1024
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 
@@ -61,22 +61,27 @@ export class AiService {
 
     const estimated = this.estimateTokens(mindmapDescription)
     const reservation = await this.reserveBudget(estimated)
+    let text: string
+    let actual: number
     try {
-      const { text, usage } = await this.callLlm(
+      const result = await this.callLlm(
         provider(this.llmConfig.model),
         mindmapDescription,
         language
       )
-      const actual = usage.totalTokens ?? 0
-      await this.commitReservation(reservation, actual)
-      this.logger.debug(
-        `LLM call billed ${actual} tokens (estimated ${estimated})`
-      )
-      return text
+      text = result.text
+      actual = result.usage.totalTokens ?? 0
     } catch (err) {
       await this.releaseReservation(reservation)
       throw err
     }
+    // Reconciliation is best-effort: a failure here must not roll back a
+    // successful LLM call (would silently under-bill the budget).
+    await this.tryCommitReservation(reservation, actual)
+    this.logger.debug(
+      `LLM call billed ${actual} tokens (estimated ${estimated})`
+    )
+    return text
   }
 
   estimateTokens(input: string): number {
@@ -150,31 +155,47 @@ export class AiService {
     dateUsage: string,
     estimated: number
   ): Promise<void> {
-    const totals = await this.usageCounter.reserve(dateUsage, estimated)
-    if (this.limits.tpd !== undefined && totals.tokensUsed > this.limits.tpd) {
-      await this.usageCounter.release(dateUsage, estimated)
+    const totals = await this.usageCounter.reserve(
+      dateUsage,
+      estimated,
+      this.limits.tpd
+    )
+    if (totals === null) {
       throw new RateLimitExceededException('tokens')
     }
   }
 
-  private async commitReservation(
+  private async tryCommitReservation(
     reservation: Reservation,
     actual: number
   ): Promise<void> {
     reservation.entry.count = actual
-    await this.usageCounter.adjustTokens(
-      reservation.dateUsage,
-      actual - reservation.estimated
-    )
+    try {
+      await this.usageCounter.adjustTokens(
+        reservation.dateUsage,
+        actual - reservation.estimated
+      )
+    } catch (err) {
+      this.logger.warn(
+        `Failed to reconcile actual tokens for ${reservation.dateUsage}; keeping conservative reservation. ${(err as Error).message}`
+      )
+    }
   }
 
   private async releaseReservation(reservation: Reservation): Promise<void> {
     this.tokensUsedPerMinute = this.tokensUsedPerMinute.filter(
       (e) => e !== reservation.entry
     )
-    await this.usageCounter.release(
-      reservation.dateUsage,
-      reservation.estimated
-    )
+    try {
+      await this.usageCounter.release(
+        reservation.dateUsage,
+        reservation.estimated
+      )
+    } catch (err) {
+      // Don't mask the original error from the caller's catch path.
+      this.logger.error(
+        `Failed to release reserved tokens for ${reservation.dateUsage}: ${(err as Error).message}`
+      )
+    }
   }
 }
