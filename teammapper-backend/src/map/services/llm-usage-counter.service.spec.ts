@@ -21,9 +21,7 @@ describe('LlmUsageCounterService', () => {
   })
 
   it('reserve issues an atomic upsert and returns numeric totals', async () => {
-    queryMock.mockResolvedValueOnce([
-      { tokens_used: '500', requests_count: '3' },
-    ])
+    queryMock.mockResolvedValueOnce([{ tokensUsed: '500', requestsCount: '3' }])
     const totals = await service.reserve('2026-05-08', 200)
     expect(totals).toEqual({ tokensUsed: 500, requestsCount: 3 })
   })
@@ -35,7 +33,7 @@ describe('LlmUsageCounterService', () => {
   })
 
   it('reserve passes the dateUsage, tokens, and cap as bound parameters', async () => {
-    queryMock.mockResolvedValueOnce([{ tokens_used: '1', requests_count: '1' }])
+    queryMock.mockResolvedValueOnce([{ tokensUsed: '1', requestsCount: '1' }])
     await service.reserve('2026-05-08', 200, 1000)
     expect(queryMock).toHaveBeenCalledWith(expect.any(String), [
       '2026-05-08',
@@ -45,7 +43,7 @@ describe('LlmUsageCounterService', () => {
   })
 
   it('reserve passes null when no cap is provided', async () => {
-    queryMock.mockResolvedValueOnce([{ tokens_used: '1', requests_count: '1' }])
+    queryMock.mockResolvedValueOnce([{ tokensUsed: '1', requestsCount: '1' }])
     await service.reserve('2026-05-08', 200)
     expect(queryMock).toHaveBeenCalledWith(expect.any(String), [
       '2026-05-08',

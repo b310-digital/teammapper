@@ -4,8 +4,8 @@ import { Repository } from 'typeorm'
 import { LlmUsageCounter } from '../entities/llmUsageCounter.entity'
 
 interface UsageRow {
-  tokens_used: string | number
-  requests_count: string | number
+  tokensUsed: string | number
+  requestsCount: string | number
 }
 
 /**
@@ -46,11 +46,14 @@ export class LlmUsageCounterService {
              "requestsCount" = llm_usage_counter."requestsCount" + 1
          WHERE $3::bigint IS NULL
                OR llm_usage_counter."tokensUsed" + EXCLUDED."tokensUsed" <= $3::bigint
-       RETURNING "tokensUsed" AS tokens_used, "requestsCount" AS requests_count`,
+       RETURNING "tokensUsed", "requestsCount"`,
       [dateUsage, tokens, cap ?? null]
     )) as UsageRow[]
     if (rows.length === 0) return null
-    return this.normalize(rows[0])
+    return {
+      tokensUsed: Number(rows[0].tokensUsed),
+      requestsCount: Number(rows[0].requestsCount),
+    }
   }
 
   /**
@@ -77,15 +80,5 @@ export class LlmUsageCounterService {
        WHERE "dateUsage" = $1`,
       [dateUsage, tokens]
     )
-  }
-
-  private normalize(row: UsageRow): {
-    tokensUsed: number
-    requestsCount: number
-  } {
-    return {
-      tokensUsed: Number(row.tokens_used),
-      requestsCount: Number(row.requests_count),
-    }
   }
 }
