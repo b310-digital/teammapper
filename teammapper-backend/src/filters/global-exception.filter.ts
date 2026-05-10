@@ -16,9 +16,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const ctx = host.getType()
 
     // HttpException is intentional client-facing flow (validation, auth, not-found...).
-    // Forward its status/body unchanged and don't log — `util.inspect`-ing the
+    // Forward its status/body unchanged and don't log `util.inspect` the
     // exception expands `.response` (raw user input, secrets) and any
-    // `QueryFailedError.parameters` into server logs. See security-review.md S2/S3.
+    // `QueryFailedError.parameters` into server logs.
     if (ctx === 'http' && exception instanceof HttpException) {
       const response = host.switchToHttp().getResponse()
       return response
