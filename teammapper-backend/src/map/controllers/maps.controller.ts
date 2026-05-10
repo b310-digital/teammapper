@@ -25,6 +25,7 @@ import {
   Request,
 } from '../types'
 import { MapCreateSchema, MapDeleteSchema } from '../schemas/maps.schema'
+import { sanitizeIssues } from '../schemas/sanitize-issues'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
 
@@ -83,7 +84,7 @@ export default class MapsController {
   ): Promise<void> {
     const result = v.safeParse(MapDeleteSchema, body)
     if (!result.success) {
-      throw new BadRequestException(result.issues)
+      throw new BadRequestException(sanitizeIssues(result.issues))
     }
     const mmpMap = await this.mapsService.findMap(mapId)
     if (mmpMap && mmpMap.adminId === result.output.adminId) {
@@ -102,7 +103,7 @@ export default class MapsController {
   ): Promise<IMmpClientPrivateMap | undefined> {
     const result = v.safeParse(MapCreateSchema, body)
     if (!result.success) {
-      throw new BadRequestException(result.issues)
+      throw new BadRequestException(sanitizeIssues(result.issues))
     }
     const pid = req?.pid
 

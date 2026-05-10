@@ -142,6 +142,10 @@ class ConfigService {
       migrationsTableName: 'migration',
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
 
+      // Defense-in-depth: a `where: { col: undefined }` would otherwise be
+      // silently dropped and return every row.
+      invalidWhereValuesBehavior: { undefined: 'throw', null: 'throw' },
+
       extra: {
         query_timeout: this.getValue('POSTGRES_QUERY_TIMEOUT') || 100000,
         statement_timeout:

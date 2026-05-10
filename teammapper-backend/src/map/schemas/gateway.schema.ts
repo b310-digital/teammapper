@@ -1,8 +1,9 @@
 import * as v from 'valibot'
 import { NodeSchema } from './node.schema'
+import { sanitizeIssues } from './sanitize-issues'
 import type { Socket } from 'socket.io'
 
-// --- Base schemas ---
+// Base schemas
 
 export const JoinSchema = v.object({
   mapId: v.pipe(v.string(), v.nonEmpty()),
@@ -22,7 +23,7 @@ export const NodeSelectionSchema = v.object({
   selected: v.boolean(),
 })
 
-// --- EditGuard-protected schemas ---
+// EditGuard-protected schemas
 
 export const MapOptionsSchema = v.partial(
   v.object({
@@ -103,7 +104,7 @@ export const DeleteRequestSchema = v.object({
   mapId: v.pipe(v.string(), v.nonEmpty()),
 })
 
-// --- Inferred types ---
+// Inferred types
 
 export type IMmpClientJoinRequest = v.InferOutput<typeof JoinSchema>
 export type IMmpClientEditingRequest = v.InferOutput<
@@ -130,7 +131,7 @@ export type IMmpClientSnapshotChanges = v.InferOutput<
 >
 export type IMmpClientMapDiff = v.InferOutput<typeof MapDiffSchema>
 
-// --- Validation helper ---
+// Validation helper
 
 export const validateWsPayload = <T>(
   client: Socket,
@@ -141,7 +142,7 @@ export const validateWsPayload = <T>(
   if (!result.success) {
     client.emit('exception', {
       message: 'Invalid payload',
-      issues: result.issues,
+      issues: sanitizeIssues(result.issues),
     })
     return null
   }

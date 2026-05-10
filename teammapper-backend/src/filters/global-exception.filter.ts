@@ -2,11 +2,11 @@ import {
   ExceptionFilter,
   Catch,
   ArgumentsHost,
+  HttpException,
   Logger,
-  NotFoundException,
 } from '@nestjs/common'
 
-// This is for any unhandled gateway and "internal" NestJS related errors - like if the gateway can't reach clients or things like that.
+// This is for any unhandled gateway and "internal" NestJS related errors, like if the gateway can't reach clients or things like that.
 // It will try to always keep clients and their websockets alive and gracefully send errors over the wire, without revealing internal error reasons.
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -15,26 +15,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.getType()
 
-    // Skip logging for NotFoundException in HTTP context
-    // This is handled before anything else (and explicitly outside of ctx switch) to prevent _any_ error from logging
-    if (ctx === 'http' && exception instanceof NotFoundException) {
+    // HttpException is intentional client-facing flow (validation, auth, not-found...).
+    // Forward its status/body unchanged and don't log — `util.inspect`-ing the
+    // exception expands `.response` (raw user input, secrets) and any
+    // `QueryFailedError.parameters` into server logs. See security-review.md S2/S3.
+    if (ctx === 'http' && exception instanceof HttpException) {
       const response = host.switchToHttp().getResponse()
-      return response.status(404).json({
-        statusCode: 404,
-        message: 'Not Found',
-        timestamp: new Date().toISOString(),
-      })
+      return response
+        .status(exception.getStatus())
+        .json(exception.getResponse())
     }
 
-    const errorDetails = {
-      error: exception,
+    this.logger.error({
       type: exception?.constructor?.name || typeof exception,
       message: exception instanceof Error ? exception.message : 'Unknown error',
       stack: exception instanceof Error ? exception.stack : undefined,
       context: ctx,
-    }
-
-    this.logger.error(errorDetails)
+    })
 
     try {
       switch (ctx) {
