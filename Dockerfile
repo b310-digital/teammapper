@@ -1,4 +1,4 @@
-FROM node:25-alpine3.22 AS base
+FROM node:26-alpine3.22 AS base
 
 RUN apk add --no-cache postgresql-client make g++ python3 py3-pip curl && npm install -g pnpm
 
