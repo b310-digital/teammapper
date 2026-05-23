@@ -92,7 +92,7 @@
     "@angular/language-service": "21.2.6",
     "@compodoc/compodoc": "^1.2.1",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "^1.60.0",
     "@schematics/angular": "^21.2.5",
     "@types/d3": "7.4.3",
     "@types/jest": "30.0.0",

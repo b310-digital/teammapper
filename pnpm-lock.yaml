@@ -406,7 +406,7 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.4.0(jiti@2.7.0))
       '@playwright/test':
-        specifier: ^1.58.2
+        specifier: ^1.60.0
         version: 1.60.0
       '@schematics/angular':
         specifier: ^21.2.5
