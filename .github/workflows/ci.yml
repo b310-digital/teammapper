@@ -36,15 +36,16 @@ jobs:
 
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
               with:
-                node-version: '25'
+                node-version: '24'
 
             - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
+            - run: corepack prepare pnpm@10 --activate
 
             - name: Build and export to Docker
               uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7
               with:
                   context: .
+                  target: production
                   tags: |
                       ghcr.io/b310-digital/teammapper:latest
 
@@ -56,10 +57,10 @@ jobs:
 
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
               with:
-                node-version: '25'
+                node-version: '24'
 
             - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
+            - run: corepack prepare pnpm@10 --activate
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter teammapper-backend run lint
@@ -72,10 +73,10 @@ jobs:
 
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
               with:
-                node-version: '25'
+                node-version: '24'
 
             - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
+            - run: corepack prepare pnpm@10 --activate
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter teammapper-frontend run lint
@@ -88,10 +89,10 @@ jobs:
 
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
               with:
-                node-version: '25'
+                node-version: '24'
 
             - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
+            - run: corepack prepare pnpm@10 --activate
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
@@ -105,10 +106,10 @@ jobs:
 
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
               with:
-                node-version: '25'
+                node-version: '24'
 
             - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
+            - run: corepack prepare pnpm@10 --activate
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter teammapper-backend run tsc
@@ -134,10 +135,10 @@ jobs:
 
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
               with:
-                node-version: '25'
+                node-version: '24'
 
             - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
+            - run: corepack prepare pnpm@10 --activate
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter teammapper-backend run test
@@ -162,10 +163,10 @@ jobs:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
             - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
               with:
-                node-version: '25'
+                node-version: '24'
 
             - run: corepack enable
-            - run: corepack prepare pnpm@9 --activate
+            - run: corepack prepare pnpm@10 --activate
 
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
