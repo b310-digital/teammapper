@@ -1,7 +1,6 @@
 name: Playwright Tests
 permissions:
   contents: read
-  actions: write
 on:
   pull_request:
     branches: [main]
@@ -31,7 +30,7 @@ jobs:
       with:
         node-version: '24'
     - run: corepack enable
-    - run: corepack prepare pnpm@10 --activate
+    - run: corepack prepare pnpm@10.33.4 --activate
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
     - name: Build packages
