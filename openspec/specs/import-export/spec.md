@@ -26,12 +26,17 @@ The system SHALL allow users to import a mind map by uploading a JSON file. The 
 - **AND** each expected node SHALL appear exactly once
 
 ### Requirement: User can import a mind map from Mermaid syntax
-The system SHALL open a dialog with a text area when the user selects the Mermaid import option. Users SHALL enter Mermaid mindmap syntax and trigger import. On success, the dialog SHALL close and the nodes from the Mermaid syntax SHALL appear on the map.
+The system SHALL open a dialog with a text area when the user selects the Mermaid import option. Users SHALL enter Mermaid mindmap syntax and trigger import. On success, the dialog SHALL close and the nodes from the Mermaid syntax SHALL appear on the map. The dialog SHALL NOT include any AI generation functionality.
 
 #### Scenario: Import Mermaid mindmap via dialog
 - **WHEN** the user enters valid Mermaid mindmap syntax and clicks import
 - **THEN** the dialog SHALL close
 - **AND** all nodes defined in the Mermaid syntax SHALL be visible on the map
+
+#### Scenario: Mermaid import dialog has no AI generation section
+- **WHEN** the user opens the Mermaid import dialog
+- **THEN** the dialog SHALL NOT display any AI description input field
+- **AND** the dialog SHALL NOT display any AI generation button
 
 ### Requirement: Mermaid import preserves branch color assignment
 The system SHALL assign distinct branch colors when importing a Mermaid mindmap with multiple first-level branches. Child branches SHALL share their parent's color, resulting in as many unique colors as there are first-level branches.
@@ -66,13 +71,3 @@ The system SHALL allow exporting mind maps as SVG, PNG, JPG images and PDF docum
 #### Scenario: Export PDF
 - **WHEN** the user clicks "Document (.pdf)" in the export menu
 - **THEN** the map SHALL be downloaded as a PDF document
-
-### Requirement: Mermaid import dialog SHALL reflect AI-generated content immediately
-
-When AI generation populates the mermaid text area, the content SHALL be visible to the user immediately upon generation completing, without requiring any additional user interaction such as clicking or tabbing.
-
-#### Scenario: AI-generated mermaid content visible without interaction
-- **WHEN** the user enters a description and clicks the AI generation button in the mermaid import dialog
-- **AND** the server returns generated mermaid syntax
-- **THEN** the mermaid text area SHALL display the generated content immediately
-- **AND** the user SHALL be able to click "Import" without any additional interaction to reveal the content
