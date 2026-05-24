@@ -5,9 +5,13 @@
   "author": "b310 digital gmbh",
   "private": true,
   "license": "MIT",
+  "files": [
+    "dist",
+    "client"
+  ],
   "engines": {
     "npm": "~10.9.0",
-    "node": "~25.0.0"
+    "node": "^24.0"
   },
   "scripts": {
     "prebuild": "rimraf dist",
@@ -33,22 +37,19 @@
     "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {
-    "@ai-sdk/openai": "3.0.52",
+    "@ai-sdk/openai": "3.0.53",
     "@ai-sdk/openai-compatible": "2.0.41",
-    "@nestjs/cache-manager": "^3.1.0",
-    "@nestjs/cli": "^11.0.19",
-    "@nestjs/common": "^11.1.18",
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/common": "^11.1.19",
     "@nestjs/config": "4.0.4",
-    "@nestjs/core": "^11.1.18",
-    "@nestjs/platform-express": "^11.1.18",
-    "@nestjs/platform-socket.io": "^11.1.18",
-    "@nestjs/schedule": "^6.1.1",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/platform-express": "^11.1.19",
+    "@nestjs/schedule": "^6.1.3",
     "@nestjs/serve-static": "^5.0.5",
     "@nestjs/typeorm": "^11.0.1",
-    "@nestjs/websockets": "^11.1.18",
+    "@nestjs/websockets": "^11.1.19",
     "@types/uuid": "^11.0.0",
-    "ai": "6.0.158",
-    "cache-manager": "^7.2.8",
+    "ai": "6.0.168",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
     "deepmerge": "^4.3.1",
@@ -56,29 +57,24 @@
     "jsonwebtoken": "^9.0.3",
     "lib0": "^0.2.117",
     "pg": "^8.20.0",
-    "pq": "^0.0.3",
     "reflect-metadata": "^0.2.2",
     "rimraf": "^6.1.3",
     "rxjs": "^7.8.2",
-    "sanitize-html": "^2.17.3",
-    "socket.io": "4.8.3",
+    "sanitize-html": "^2.17.4",
     "typeorm": "^0.3.28",
-    "uuid": "11.1.0",
+    "uuid": "11.1.1",
     "valibot": "^1.3.1",
     "ws": "^8.20.0",
     "y-protocols": "^1.0.7",
-    "y-websocket": "^3.0.0",
     "yjs": "^13.6.30"
   },
   "devDependencies": {
-    "@eslint/compat": "^2.0.3",
     "@eslint/js": "^10.0.1",
     "@golevelup/ts-jest": "^3.0.0",
     "@jest/globals": "^30.3.0",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/testing": "^11.1.17",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "@types/cache-manager": "5.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cron": "^2.4.3",
     "@types/express": "^5.0.6",
@@ -96,13 +92,10 @@
     "eslint-import-resolver-typescript": "4.4.4",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.15.1",
-    "eslint-plugin-nestjs": "1.2.3",
     "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-typeorm": "0.0.19",
     "globals": "^17.4.0",
     "jest": "30.3.0",
     "prettier": "^3.8.1",
-    "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2",
     "ts-jest": "29.4.6",
     "ts-loader": "^9.5.4",
@@ -129,9 +122,6 @@
       "<rootDir>"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "setupFiles": [
-      "./test/jest-setup.ts"
-    ]
+    "testEnvironment": "node"
   }
 }

@@ -1,11 +1,10 @@
-import { MiddlewareConsumer, Module, Provider } from '@nestjs/common'
-import { CacheModule } from '@nestjs/cache-manager'
+import { MiddlewareConsumer, Module } from '@nestjs/common'
 import { ScheduleModule } from '@nestjs/schedule'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import MapsController from './controllers/maps.controller'
-import { MapsGateway } from './controllers/maps.gateway'
 import { MmpMap } from './entities/mmpMap.entity'
 import { MmpNode } from './entities/mmpNode.entity'
+import { LlmUsageCounter } from './entities/llmUsageCounter.entity'
 import { MapsService } from './services/maps.service'
 import { YjsDocManagerService } from './services/yjs-doc-manager.service'
 import { YjsPersistenceService } from './services/yjs-persistence.service'
@@ -14,35 +13,29 @@ import { WsConnectionLimiterService } from './services/ws-connection-limiter.ser
 import { TasksService } from './services/tasks.service'
 import MermaidController from './controllers/mermaid.controller'
 import { AiService } from './services/ai.service'
+import { LlmUsageCounterService } from './services/llm-usage-counter.service'
 import cookieParser from 'cookie-parser'
 import { PersonIdMiddleware } from '../auth/person-id.middleware'
 import configService from '../config.service'
 
-// When Yjs is enabled, the Yjs providers replace the Socket.io MapsGateway.
-// Both cannot bind to the same HTTP upgrade path simultaneously.
-const baseProviders: Provider[] = [MapsService, TasksService, AiService]
-
-const yjsProviders: Provider[] = [
-  YjsDocManagerService,
-  YjsPersistenceService,
-  WsConnectionLimiterService,
-  YjsGateway,
-]
-
-const mapProviders: Provider[] = configService.isYjsEnabled()
-  ? [...baseProviders, ...yjsProviders]
-  : [...baseProviders, MapsGateway]
-
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MmpMap, MmpNode]),
-    CacheModule.register(),
+    TypeOrmModule.forFeature([MmpMap, MmpNode, LlmUsageCounter]),
     ScheduleModule.forRoot(),
   ],
   controllers: configService.isAiEnabled()
     ? [MapsController, MermaidController]
     : [MapsController],
-  providers: mapProviders,
+  providers: [
+    MapsService,
+    TasksService,
+    AiService,
+    LlmUsageCounterService,
+    YjsDocManagerService,
+    YjsPersistenceService,
+    WsConnectionLimiterService,
+    YjsGateway,
+  ],
   exports: [MapsService],
 })
 export class MapModule {

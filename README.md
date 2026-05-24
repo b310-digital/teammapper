@@ -49,7 +49,6 @@ services:
       POSTGRES_QUERY_TIMEOUT: 100000
       POSTGRES_STATEMENT_TIMEOUT: 100000
       DELETE_AFTER_DAYS: 30
-      YJS_ENABLED: true
       AI_ENABLED: false
     ports:
       - 80:3000
@@ -237,7 +236,6 @@ The settings configuration includes the following feature flags:
 
 -   `pictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time in the JSON config!
 -   `ai`: Disables/Enables AI functionality like generating mindmaps with AI. Can be controlled via the `AI_ENABLED` environment variable (default: `false`).
--   `yjs`: Disables/Enables the Yjs-based real-time collaboration. Can be controlled via the `YJS_ENABLED` environment variable (default: `false`).
 
 #### Environment variable overrides
 
@@ -246,7 +244,6 @@ The following environment variables override the feature flags from the JSON con
 | Variable | Description | Default |
 | --- | --- | --- |
 | `AI_ENABLED` | Enable AI features (mindmap generation) | `false` |
-| `YJS_ENABLED` | Enable Yjs-based real-time collaboration | `false` |
 | `DELETE_AFTER_DAYS` | Number of days before mindmaps are deleted | `30` |
 | `LOG_LEVEL` | NestJS log verbosity (`error`, `warn`, `log`, `debug`, `verbose`) | `debug` in DEV, `log` otherwise |
 

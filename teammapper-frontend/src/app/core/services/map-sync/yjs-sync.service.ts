@@ -29,11 +29,10 @@ import {
   DEFAULT_COLOR,
   DEFAULT_SELF_COLOR,
 } from './map-sync-context';
-import { SyncStrategy } from './sync-strategy';
 
 const WS_CLOSE_MAP_DELETED = 4001;
 
-export class YjsSyncService implements SyncStrategy {
+export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
   private wsProvider: WebsocketProvider | null = null;
   private yjsSynced = false;
@@ -79,11 +78,7 @@ export class YjsSyncService implements SyncStrategy {
     await this.deleteMapViaHttp(adminId);
   }
 
-  // ─── SyncStrategy lifecycle ─────────────────────────────────
-
-  connect(): void {
-    // Yjs connects lazily in initMap — no-op here
-  }
+  // ─── Connection lifecycle ───────────────────────────────────
 
   initMap(uuid: string): void {
     if (this.hasActiveConnection(uuid)) {

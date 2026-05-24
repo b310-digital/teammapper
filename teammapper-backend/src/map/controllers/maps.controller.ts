@@ -10,8 +10,6 @@ import {
   Post,
   Query,
   Logger,
-  Optional,
-  Inject,
 } from '@nestjs/common'
 import * as v from 'valibot'
 import { MapsService } from '../services/maps.service'
@@ -25,6 +23,7 @@ import {
   Request,
 } from '../types'
 import { MapCreateSchema, MapDeleteSchema } from '../schemas/maps.schema'
+import { sanitizeIssues } from '../schemas/sanitize-issues'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
 
@@ -33,12 +32,8 @@ export default class MapsController {
   private readonly logger = new Logger(MapsController.name)
   constructor(
     private mapsService: MapsService,
-    @Optional()
-    @Inject(YjsDocManagerService)
-    private yjsDocManager?: YjsDocManagerService,
-    @Optional()
-    @Inject(YjsGateway)
-    private yjsGateway?: YjsGateway
+    private yjsDocManager: YjsDocManagerService,
+    private yjsGateway: YjsGateway
   ) {}
 
   @Get(':id')
@@ -47,7 +42,6 @@ export default class MapsController {
     @Query('secret') secret?: string
   ): Promise<IMmpClientMap | void> {
     try {
-      await this.mapsService.updateLastAccessed(mapId)
       const map = await this.mapsService.exportMapToClient(mapId)
       if (!map) throw new NotFoundException()
 
@@ -56,6 +50,12 @@ export default class MapsController {
         fullMap?.modificationSecret ?? null,
         secret ?? null
       )
+
+      // Only authorized readers should reset the retention clock; otherwise
+      // anonymous GETs (crawlers, attackers) could keep a map alive forever.
+      if (writable) {
+        await this.mapsService.updateLastAccessed(mapId)
+      }
 
       return { ...map, writable }
     } catch (e) {
@@ -83,15 +83,16 @@ export default class MapsController {
   ): Promise<void> {
     const result = v.safeParse(MapDeleteSchema, body)
     if (!result.success) {
-      throw new BadRequestException(result.issues)
+      throw new BadRequestException(sanitizeIssues(result.issues))
     }
     const mmpMap = await this.mapsService.findMap(mapId)
     if (mmpMap && mmpMap.adminId === result.output.adminId) {
-      if (this.yjsGateway && this.yjsDocManager) {
-        this.yjsGateway.closeConnectionsForMap(mapId)
-        this.yjsDocManager.destroyDoc(mapId)
-      }
+      this.yjsGateway.closeConnectionsForMap(mapId)
+      // Delete DB row before destroying the in-memory Y.Doc so that any
+      // concurrent reconnection's hydrateDocFromDb sees a missing row and
+      // refuses to create a phantom doc.
       await this.mapsService.deleteMap(mapId)
+      this.yjsDocManager.destroyDoc(mapId)
     }
   }
 
@@ -102,7 +103,7 @@ export default class MapsController {
   ): Promise<IMmpClientPrivateMap | undefined> {
     const result = v.safeParse(MapCreateSchema, body)
     if (!result.success) {
-      throw new BadRequestException(result.issues)
+      throw new BadRequestException(sanitizeIssues(result.issues))
     }
     const pid = req?.pid
 

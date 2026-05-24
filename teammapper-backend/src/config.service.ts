@@ -16,6 +16,8 @@ export interface LLMProps {
   tpm?: string
   tpd?: string
   rpm?: string
+  maxOutputTokens?: string
+  timeoutMs?: string
 }
 
 class ConfigService {
@@ -68,11 +70,6 @@ class ConfigService {
     return parseInt(this.getValue('DELETE_AFTER_DAYS', false) || '30')
   }
 
-  public isYjsEnabled(): boolean {
-    const value = this.getValue('YJS_ENABLED', false)
-    return value?.toLowerCase() !== 'false'
-  }
-
   public isAiEnabled(): boolean {
     const value = this.getValue('AI_ENABLED', false)
     return value?.toLowerCase() === 'true'
@@ -121,6 +118,8 @@ class ConfigService {
       tpm: this.getValue('AI_LLM_TPM', false),
       tpd: this.getValue('AI_LLM_TPD', false),
       rpm: this.getValue('AI_LLM_RPM', false),
+      maxOutputTokens: this.getValue('AI_LLM_MAX_OUTPUT_TOKENS', false),
+      timeoutMs: this.getValue('AI_LLM_TIMEOUT_MS', false),
     }
   }
 
@@ -137,6 +136,10 @@ class ConfigService {
 
       migrationsTableName: 'migration',
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
+
+      // Defense-in-depth: a `where: { col: undefined }` would otherwise be
+      // silently dropped and return every row.
+      invalidWhereValuesBehavior: { undefined: 'throw', null: 'throw' },
 
       extra: {
         query_timeout: this.getValue('POSTGRES_QUERY_TIMEOUT') || 100000,

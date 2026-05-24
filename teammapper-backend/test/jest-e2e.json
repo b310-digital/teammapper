@@ -6,6 +6,5 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "modulePaths": ["<rootDir>"],
-  "setupFiles": ["./test/jest-setup.ts"]
+  "modulePaths": ["<rootDir>"]
 }

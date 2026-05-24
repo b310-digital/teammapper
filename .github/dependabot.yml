@@ -1,15 +1,27 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Dependabot config — see docs/pnpm-security.md for the full policy.
+# Reference: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
+  - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Berlin"
     open-pull-requests-limit: 15
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    # 7-day cooldown mirrors pnpm-workspace.yaml minimumReleaseAge: 10080.
+    # Security updates ignore cooldown (Dependabot rule).
+    cooldown:
+      default-days: 7
     groups:
       production-dependencies:
         dependency-type: "production"
@@ -17,11 +29,40 @@ updates:
       development-dependencies:
         dependency-type: "development"
         update-types: ["minor", "patch"]
-  - package-ecosystem: "docker" # See documentation for possible values
-    directory: "/" # Location of package manifests
+
+  - package-ecosystem: "docker"
+    directory: "/"
     schedule:
       interval: "weekly"
-  - package-ecosystem: "github-actions" # See documentation for possible values
-    directory: "/" # Location of package manifests
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+    cooldown:
+      default-days: 7
+    # Node base image is bumped manually on the Node LTS cycle.
+    ignore:
+      - dependency-name: "node"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(actions)"
+      include: "scope"
+    cooldown:
+      default-days: 7

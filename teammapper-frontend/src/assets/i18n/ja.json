@@ -230,15 +230,7 @@
       "EXPORT_IMAGE_ERROR": "画像のエクスポート中にエラーが発生しました。マインドマップが大きすぎる可能性があります。",
       "MAP_COULD_NOT_BE_FOUND": "マインドマップが見つかりませんでした！",
       "IMPORT_ERROR": "マインドマップをインポートできませんでした",
-      "AI_MERMAID_ERROR": "Mermaidを生成できませんでした",
-      "OPERATION_FAILED_MAP_RELOADED": "操作に失敗しました - サーバーからマップを再読み込みしました",
-      "NETWORK_TIMEOUT": "サーバーへの接続が切断されました。変更が保存されていない可能性があります。",
-      "SERVER_ERROR": "サーバーでエラーが発生しました。最近の変更が保存されていない可能性があります。",
-      "AUTH_FAILED": "認証に失敗しました。ページを再読み込みしてサインインし直してください。",
-      "MALFORMED_REQUEST": "リクエストに問題が発生しました。もう一度お試しください。",
-      "RATE_LIMIT_EXCEEDED": "リクエストが多すぎます。しばらく待ってから再試行してください。",
-      "MALFORMED_RESPONSE": "サーバーから無効なレスポンスを受信しました。ページを再読み込みしてください。",
-      "UNEXPECTED_ERROR": "予期しないエラーが発生しました。ページを再読み込みしてください。"
+      "AI_MERMAID_ERROR": "Mermaidを生成できませんでした"
     },
     "DELETE_MAP_SUCCESS": "マインドマップを削除しました！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaidを生成しました！",

@@ -84,7 +84,6 @@ Copy `.env.default` to `.env` and configure the variables below.
 
 | Variable | Description | Default |
 |---|---|---|
-| `YJS_ENABLED` | Enable Yjs WebSocket server | `false` |
 | `FEATURE_YJS_RATE_LIMITING` | Enable WebSocket connection rate limiting | `false` |
 | `WS_TRUST_PROXY` | Trust `X-Forwarded-For` header for client IP resolution (enable when behind a reverse proxy) | `false` |
 | `WS_GLOBAL_MAX_CONNECTIONS` | Maximum total WebSocket connections | `500` |
@@ -100,9 +99,11 @@ Copy `.env.default` to `.env` and configure the variables below.
 | `AI_LLM_TOKEN` | LLM API token | - |
 | `AI_LLM_PROVIDER` | LLM provider (`openai` or `openai-compatible`) | `openai` |
 | `AI_LLM_MODEL` | LLM model name | - |
-| `AI_LLM_TPM` | Tokens per minute limit | - |
-| `AI_LLM_TPD` | Tokens per day limit | - |
-| `AI_LLM_RPM` | Requests per minute limit | - |
+| `AI_LLM_TPM` | Tokens per minute limit (per-process, soft) | - |
+| `AI_LLM_TPD` | Tokens per day limit (DB-backed, hard ceiling across restarts/instances) | - |
+| `AI_LLM_RPM` | Requests per minute limit (per-process) | - |
+| `AI_LLM_MAX_OUTPUT_TOKENS` | Per-call cap on generated tokens | `1024` |
+| `AI_LLM_TIMEOUT_MS` | Per-call abort timeout in ms | `30000` |
 
 > **Migration note:** The previous `stackit` provider value for `AI_LLM_PROVIDER` has been replaced by `openai-compatible`. If you were using `AI_LLM_PROVIDER=stackit`, change it to `AI_LLM_PROVIDER=openai-compatible`.
 

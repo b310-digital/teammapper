@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import MapsController from './maps.controller'
 import { MapsService } from '../services/maps.service'
-import { NotFoundException } from '@nestjs/common'
+import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
+import { YjsGateway } from './yjs-gateway.service'
+import { INestApplication, NotFoundException } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { IMmpClientMap, IMmpClientPrivateMap, Request } from '../types'
 import { MmpNode } from '../entities/mmpNode.entity'
@@ -11,10 +13,12 @@ import {
   createMmpMap,
 } from '../utils/tests/mapFactories'
 import MalformedUUIDError from '../services/uuid.error'
+import request from 'supertest'
 
 describe('MapsController', () => {
   let mapsController: MapsController
   let mapsService: MapsService
+  let yjsDocManager: YjsDocManagerService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -33,11 +37,20 @@ describe('MapsController', () => {
             getMapsOfUser: jest.fn(),
           },
         },
+        {
+          provide: YjsDocManagerService,
+          useValue: { destroyDoc: jest.fn() },
+        },
+        {
+          provide: YjsGateway,
+          useValue: { closeConnectionsForMap: jest.fn() },
+        },
       ],
     }).compile()
 
     mapsController = module.get<MapsController>(MapsController)
     mapsService = module.get<MapsService>(MapsService)
+    yjsDocManager = module.get<YjsDocManagerService>(YjsDocManagerService)
   })
 
   describe('duplicate', () => {
@@ -177,6 +190,36 @@ describe('MapsController', () => {
 
       expect(response).toEqual({ ...exportedMap, writable: false })
     })
+
+    it('bumps lastAccessed for an authorized (writable) read', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      await mapsController.findOne(mapId, 'my-secret')
+
+      expect(mapsService.updateLastAccessed).toHaveBeenCalledWith(mapId)
+    })
+
+    it('does not bump lastAccessed for an anonymous read of a protected map', async () => {
+      const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
+      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
+
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(mmpMap)
+
+      await mapsController.findOne(mapId)
+
+      expect(mapsService.updateLastAccessed).not.toHaveBeenCalled()
+    })
   })
 
   describe('findAll', () => {
@@ -208,7 +251,6 @@ describe('MapsController', () => {
 
       await mapsController.delete(existingMap.id, {
         adminId: existingMap.adminId,
-        mapId: existingMap.id,
       })
 
       expect(mapsService.deleteMap).toHaveBeenCalledWith(existingMap.id)
@@ -221,10 +263,28 @@ describe('MapsController', () => {
 
       await mapsController.delete(existingMap.id, {
         adminId: 'wrong-admin-id',
-        mapId: existingMap.id,
       })
 
       expect(mapsService.deleteMap).not.toHaveBeenCalledWith(existingMap.id)
+    })
+
+    it('deletes the DB row before destroying the in-memory Y.Doc', async () => {
+      const existingMap = createMmpMap()
+      const callOrder: string[] = []
+
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(existingMap)
+      jest.spyOn(mapsService, 'deleteMap').mockImplementation(async () => {
+        callOrder.push('deleteMap')
+      })
+      jest.spyOn(yjsDocManager, 'destroyDoc').mockImplementation(() => {
+        callOrder.push('destroyDoc')
+      })
+
+      await mapsController.delete(existingMap.id, {
+        adminId: existingMap.adminId,
+      })
+
+      expect(callOrder).toEqual(['deleteMap', 'destroyDoc'])
     })
   })
 
@@ -285,6 +345,83 @@ describe('MapsController', () => {
 
       expect(mapsService.createEmptyMap).toHaveBeenCalledWith(rootNode, pid)
       expect(response).toEqual(result)
+    })
+  })
+})
+
+// HTTP-layer regression tests: exercise the real request pipeline so that
+// JSON body → schema validation → controller wiring is verified against the
+// exact wire format the frontend produces. The unit tests above call the
+// controller method directly and so cannot catch wire-format drift.
+describe('MapsController (HTTP wire contract)', () => {
+  let app: INestApplication
+  let mapsService: MapsService
+
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [MapsController],
+      providers: [
+        {
+          provide: MapsService,
+          useValue: {
+            findMap: jest.fn(),
+            deleteMap: jest.fn(),
+          },
+        },
+        {
+          provide: YjsDocManagerService,
+          useValue: { destroyDoc: jest.fn() },
+        },
+        {
+          provide: YjsGateway,
+          useValue: { closeConnectionsForMap: jest.fn() },
+        },
+      ],
+    }).compile()
+
+    app = module.createNestApplication()
+    await app.init()
+    mapsService = module.get<MapsService>(MapsService)
+  })
+
+  afterAll(async () => {
+    await app.close()
+  })
+
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  describe('DELETE /api/maps/:id', () => {
+    it('accepts the body the frontend actually sends ({ adminId } only)', async () => {
+      const existingMap = createMmpMap()
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(existingMap)
+      jest.spyOn(mapsService, 'deleteMap').mockResolvedValueOnce(undefined)
+
+      await request(app.getHttpServer())
+        .delete(`/api/maps/${existingMap.id}`)
+        .send({ adminId: existingMap.adminId })
+        .expect(200)
+
+      expect(mapsService.deleteMap).toHaveBeenCalledWith(existingMap.id)
+    })
+
+    it('returns 400 when the body omits adminId', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/maps/any-id')
+        .send({})
+        .expect(400)
+
+      expect(mapsService.deleteMap).not.toHaveBeenCalled()
+    })
+
+    it('rejects adminId=null so legacy NULL-admin rows are not deletable', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/maps/any-id')
+        .send({ adminId: null })
+        .expect(400)
+
+      expect(mapsService.deleteMap).not.toHaveBeenCalled()
     })
   })
 })

@@ -207,18 +207,18 @@
 > **PR scope**: Remove all Socket.io code paths, dependencies, and feature flag branching. The Yjs path becomes the only path.
 > **App state after merge**: App uses Yjs exclusively. Codebase is clean — no dual code paths, no unused dependencies.
 
-- [ ] 13.1 Remove `MapsGateway` (Socket.io gateway with all `@SubscribeMessage` handlers)
-- [ ] 13.2 Remove `EditGuard` (auth now at WebSocket handshake in `YjsGateway`)
-- [ ] 13.3 Remove `cache-manager` client tracking logic from backend (replaced by Yjs Awareness)
-- [ ] 13.4 Remove per-operation validation methods from `MapsService` that are only used by the Socket.io path (`mapConstraintErrorToValidationResponse`, `validateBusinessRules`, `handleDatabaseConstraintError`, `addNode`, `addNodes`, `addNodesFromClient`, `updateNode`, `removeNode`, `updateMapByDiff`) — keep methods used by REST API, persistence, or `updateMap`
-- [ ] 13.5 Remove `@nestjs/platform-socket.io`, `socket.io`, `@nestjs/cache-manager`, and `cache-manager` from backend dependencies
-- [ ] 13.6 Remove Socket.io types from backend `types.ts` that are no longer referenced (`IMmpClientNodeRequest`, `IMmpClientNodeAddRequest`, `IMmpClientUndoRedoRequest`, `IMmpClientEditingRequest`, `OperationResponse`, `ValidationErrorResponse`, etc.) — keep types still used
-- [ ] 13.7 Remove the Socket.io code path from frontend `MapSyncService`: delete `initSocketIo()`, all `socket.emit` methods, all `socket.on` listener setup methods, `handleOperationResponse`, error handling helpers, `isValidServerMap`, `isValidErrorResponse`
-- [ ] 13.8 Remove Socket.io types from frontend `server-types.ts` that are no longer used
-- [ ] 13.9 Remove `socket.io-client` from frontend dependencies
-- [ ] 13.10 Remove the `/socket.io` entry from frontend `proxy.conf.json`
-- [ ] 13.11 Remove `featureFlagYjs` from frontend environments (no longer needed — Yjs is the only path)
-- [ ] 13.12 Remove `YJS_ENABLED` from backend `ConfigService` and `YjsGateway` flag check (no longer needed)
-- [ ] 13.13 Simplify `MapSyncService`: remove the branching logic, make the Yjs path the direct implementation
-- [ ] 13.14 Verify backend and frontend build, lint, and all tests pass
-- [ ] 13.15 Run E2E tests (`pnpm run playwright test --reporter=list`)
+- [x] 13.1 Remove `MapsGateway` (Socket.io gateway with all `@SubscribeMessage` handlers)
+- [x] 13.2 Remove `EditGuard` (auth now at WebSocket handshake in `YjsGateway`)
+- [x] 13.3 Remove `cache-manager` client tracking logic from backend (replaced by Yjs Awareness)
+- [x] 13.4 Remove per-operation validation methods from `MapsService` that are only used by the Socket.io path (`mapConstraintErrorToValidationResponse`, `validateBusinessRules`, `handleDatabaseConstraintError`, `addNode`, `addNodes`, `addNodesFromClient`, `updateNode`, `removeNode`, `updateMapByDiff`) — keep methods used by REST API, persistence, or `updateMap`
+- [x] 13.5 Remove `@nestjs/platform-socket.io`, `socket.io`, `@nestjs/cache-manager`, and `cache-manager` from backend dependencies
+- [x] 13.6 Remove Socket.io types from backend `types.ts` that are no longer referenced (`IMmpClientNodeRequest`, `IMmpClientNodeAddRequest`, `IMmpClientUndoRedoRequest`, `IMmpClientEditingRequest`, `OperationResponse`, `ValidationErrorResponse`, etc.) — keep types still used
+- [x] 13.7 Remove the Socket.io code path from frontend `MapSyncService`: delete `initSocketIo()`, all `socket.emit` methods, all `socket.on` listener setup methods, `handleOperationResponse`, error handling helpers, `isValidServerMap`, `isValidErrorResponse`
+- [x] 13.8 Remove Socket.io types from frontend `server-types.ts` that are no longer used
+- [x] 13.9 Remove `socket.io-client` from frontend dependencies
+- [x] 13.10 Remove the `/socket.io` entry from frontend `proxy.conf.json`
+- [x] 13.11 Remove `featureFlagYjs` from frontend environments (no longer needed — Yjs is the only path)
+- [x] 13.12 Remove `YJS_ENABLED` from backend `ConfigService` and `YjsGateway` flag check (no longer needed)
+- [x] 13.13 Simplify `MapSyncService`: remove the branching logic, make the Yjs path the direct implementation
+- [x] 13.14 Verify backend and frontend build, lint, and all tests pass
+- [x] 13.15 Run E2E tests (`pnpm run playwright test --reporter=list`)

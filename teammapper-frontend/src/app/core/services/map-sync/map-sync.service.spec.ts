@@ -6,17 +6,15 @@ import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
-import { ToastService } from '../toast/toast.service';
-import { DialogService } from '../dialog/dialog.service';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { createMockUtilsService } from '../../../../test/mocks/utils-service.mock';
 import { Observable } from 'rxjs';
 import { UserSettings } from '../../../shared/models/settings.model';
-import { SyncStrategy } from './sync-strategy';
+import { YjsSyncService } from './yjs-sync.service';
 
-// Narrow accessor: only exposes the SyncStrategy interface, not sub-service internals
-function getStrategy(service: MapSyncService): SyncStrategy {
-  return (service as unknown as { syncStrategy: SyncStrategy }).syncStrategy;
+// Narrow accessor: only exposes the sync service handle, not its internals
+function getSync(service: MapSyncService): YjsSyncService {
+  return (service as unknown as { syncService: YjsSyncService }).syncService;
 }
 
 function createMockNode(
@@ -69,7 +67,7 @@ describe('MapSyncService', () => {
     settingsService = {
       getCachedUserSettings: jest.fn(),
       getCachedSystemSettings: jest.fn().mockReturnValue({
-        featureFlags: { yjs: false, pictograms: false, ai: false },
+        featureFlags: { pictograms: false, ai: false },
       }),
       setEditMode: jest.fn(),
     } as unknown as jest.Mocked<SettingsService>;
@@ -101,14 +99,6 @@ describe('MapSyncService', () => {
         },
         { provide: SettingsService, useValue: settingsService },
         { provide: UtilsService, useValue: createMockUtilsService() },
-        {
-          provide: ToastService,
-          useValue: { showValidationCorrection: jest.fn() },
-        },
-        {
-          provide: DialogService,
-          useValue: { openCriticalErrorDialog: jest.fn() },
-        },
         {
           provide: ToastrService,
           useValue: {
@@ -142,9 +132,8 @@ describe('MapSyncService', () => {
         },
       });
 
-      // Prevent strategy from performing real I/O
       jest
-        .spyOn(getStrategy(service), 'initMap')
+        .spyOn(getSync(service), 'initMap')
         .mockImplementation(() => undefined);
     });
 
@@ -170,16 +159,20 @@ describe('MapSyncService', () => {
   });
 
   describe('undo and redo', () => {
-    it('undo delegates through to mmpService', () => {
+    it('undo delegates through to sync service', () => {
+      const undoSpy = jest.spyOn(getSync(service), 'undo');
+
       service.undo();
 
-      expect(mmpService.undo).toHaveBeenCalled();
+      expect(undoSpy).toHaveBeenCalled();
     });
 
-    it('redo delegates through to mmpService', () => {
+    it('redo delegates through to sync service', () => {
+      const redoSpy = jest.spyOn(getSync(service), 'redo');
+
       service.redo();
 
-      expect(mmpService.redo).toHaveBeenCalled();
+      expect(redoSpy).toHaveBeenCalled();
     });
   });
 
@@ -228,24 +221,24 @@ describe('MapSyncService', () => {
       );
     });
 
-    it('sets writable true on strategy when response writable is true', async () => {
+    it('sets writable true on sync service when response writable is true', async () => {
       httpService.get.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ ...mockServerMap, writable: true }),
       } as unknown as Response);
-      const setWritableSpy = jest.spyOn(getStrategy(service), 'setWritable');
+      const setWritableSpy = jest.spyOn(getSync(service), 'setWritable');
 
       await service.prepareExistingMap('test-uuid', 'secret');
 
       expect(setWritableSpy).toHaveBeenCalledWith(true);
     });
 
-    it('sets writable false on strategy when response writable is false', async () => {
+    it('sets writable false on sync service when response writable is false', async () => {
       httpService.get.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ ...mockServerMap, writable: false }),
       } as unknown as Response);
-      const setWritableSpy = jest.spyOn(getStrategy(service), 'setWritable');
+      const setWritableSpy = jest.spyOn(getSync(service), 'setWritable');
 
       await service.prepareExistingMap('test-uuid', 'wrong');
 
@@ -257,7 +250,7 @@ describe('MapSyncService', () => {
         ok: true,
         json: () => Promise.resolve(mockServerMap),
       } as unknown as Response);
-      const setWritableSpy = jest.spyOn(getStrategy(service), 'setWritable');
+      const setWritableSpy = jest.spyOn(getSync(service), 'setWritable');
 
       await service.prepareExistingMap('test-uuid', '');
 
@@ -266,16 +259,16 @@ describe('MapSyncService', () => {
   });
 
   describe('lifecycle', () => {
-    it('ngOnDestroy calls destroy on strategy', () => {
-      const destroySpy = jest.spyOn(getStrategy(service), 'destroy');
+    it('ngOnDestroy calls destroy on sync service', () => {
+      const destroySpy = jest.spyOn(getSync(service), 'destroy');
 
       service.ngOnDestroy();
 
       expect(destroySpy).toHaveBeenCalled();
     });
 
-    it('reset calls destroy on strategy', () => {
-      const destroySpy = jest.spyOn(getStrategy(service), 'destroy');
+    it('reset calls destroy on sync service', () => {
+      const destroySpy = jest.spyOn(getSync(service), 'destroy');
 
       service.reset();
 

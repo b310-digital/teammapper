@@ -31,8 +31,7 @@ services:
       AI_LLM_TPM: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_TPM}
       AI_LLM_TPD: ${DOCKER_COMPOSE_APP_ENV_AI_LLM_API_TPD}
       JWT_SECRET: ${JWT_SECRET}
-      YJS_ENABLED: ${YJS_ENABLED:-true}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
 
       TESTING_PLAYWRIGHT_WS_ENDPOINT: "ws://playwright:9323"
       TESTING_PLAYWRIGHT_BASE_URL: "http://app:4200"
@@ -64,13 +63,13 @@ services:
       - postgres_data:/var/lib/postgresql/data/pgdata
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.58.2-noble
+    image: mcr.microsoft.com/playwright:v1.60.0-noble
     container_name: playwright
     depends_on:
       - app
     expose:
       - "9323"
-    command: ["npx", "playwright", "run-server", "--port=9323"]
+    command: ["npx", "playwright", "run-server", "--port=9323", "--host=0.0.0.0"]
 
   chrome:
     image: chromedp/headless-shell:latest

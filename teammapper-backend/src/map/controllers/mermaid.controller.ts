@@ -9,6 +9,7 @@ import * as v from 'valibot'
 import { AiService } from '../services/ai.service'
 import { RateLimitExceptionFilter } from './rate-limit-exception.filter'
 import { MermaidCreateSchema } from '../schemas/mermaid.schema'
+import { sanitizeIssues } from '../schemas/sanitize-issues'
 
 @UseFilters(RateLimitExceptionFilter)
 @Controller('api/mermaid')
@@ -19,7 +20,7 @@ export default class AiController {
   async createMermaid(@Body() body: unknown) {
     const result = v.safeParse(MermaidCreateSchema, body)
     if (!result.success) {
-      throw new BadRequestException(result.issues)
+      throw new BadRequestException(sanitizeIssues(result.issues))
     }
     return this.aiService.generateMermaid(
       result.output.mindmapDescription,

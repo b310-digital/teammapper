@@ -16,7 +16,7 @@ const defaultSettings: Settings = {
       pictogramApiUrl: 'https://api.example.com',
       pictogramStaticUrl: 'https://static.example.com',
     },
-    featureFlags: { pictograms: true, ai: false, yjs: false },
+    featureFlags: { pictograms: true, ai: false },
   },
   userSettings: {
     general: { language: 'en' },
@@ -51,7 +51,6 @@ describe('SettingsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(configService.isYjsEnabled as jest.Mock).mockReturnValue(false)
     ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
     mockedFs.readFileSync.mockReturnValue(JSON.stringify(defaultSettings))
     mockedFs.existsSync.mockReturnValue(false)
@@ -132,40 +131,22 @@ describe('SettingsService', () => {
       expect(settings.systemSettings.featureFlags.ai).toBe(false)
     })
 
-    it('should set yjs flag to true when YJS_ENABLED is true', () => {
-      ;(configService.isYjsEnabled as jest.Mock).mockReturnValue(true)
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.featureFlags.yjs).toBe(true)
-    })
-
-    it('should set yjs flag to false when YJS_ENABLED is false', () => {
-      ;(configService.isYjsEnabled as jest.Mock).mockReturnValue(false)
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.featureFlags.yjs).toBe(false)
-    })
-
     it('should override file-based feature flags with config service values', () => {
       const settingsWithFlags = {
         ...defaultSettings,
         systemSettings: {
           ...defaultSettings.systemSettings,
-          featureFlags: { pictograms: true, ai: true, yjs: true },
+          featureFlags: { pictograms: true, ai: true },
         },
       }
       mockedFs.readFileSync.mockReturnValue(JSON.stringify(settingsWithFlags))
       ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
-      ;(configService.isYjsEnabled as jest.Mock).mockReturnValue(false)
 
       const settings = service.getSettings()
 
       expect(settings.systemSettings.featureFlags).toEqual({
         pictograms: true,
         ai: false,
-        yjs: false,
       })
     })
   })

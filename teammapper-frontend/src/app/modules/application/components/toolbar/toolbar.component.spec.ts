@@ -81,7 +81,7 @@ async function setupTestBed(): Promise<TestContext> {
         provide: SettingsService,
         useValue: {
           getCachedSystemSettings: jest.fn().mockReturnValue({
-            featureFlags: { yjs: false, pictograms: false, ai: false },
+            featureFlags: { pictograms: false, ai: false },
           }),
         },
       },
