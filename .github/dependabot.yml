@@ -52,16 +52,9 @@ updates:
       semver-major-days: 7
       semver-minor-days: 7
       semver-patch-days: 7
-    # LTS-only policy for the node base image. Even-numbered Node majors enter
-    # Active LTS in October of their release year. Re-evaluate this list each
-    # October when the next even major reaches LTS. Odd majors stay blocked
-    # permanently. Alpine major bumps are blocked because apk ABI changes can
-    # silently break native deps; allow opt-in once a release has been tested.
+    # Node base image is bumped manually on the Node LTS cycle.
     ignore:
       - dependency-name: "node"
-        versions: ["25.x", "27.x", "29.x", "31.x"]
-      - dependency-name: "node"
-        versions: ["*-alpine4.*", "*-alpine5.*"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
