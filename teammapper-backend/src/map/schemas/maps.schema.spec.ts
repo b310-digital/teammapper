@@ -12,7 +12,6 @@ const validCreateInput = {
 
 const validDeleteInput = {
   adminId: 'admin-123',
-  mapId: 'map-456',
 }
 
 describe('MapCreateSchema', () => {
@@ -62,32 +61,16 @@ describe('MapDeleteSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('accepts null adminId', () => {
+  it('rejects null adminId', () => {
     const result = v.safeParse(MapDeleteSchema, {
       ...validDeleteInput,
       adminId: null,
     })
-    expect(result.success).toBe(true)
-  })
-
-  it('rejects missing mapId', () => {
-    const result = v.safeParse(MapDeleteSchema, { adminId: 'abc' })
     expect(result.success).toBe(false)
   })
 
-  it('rejects empty mapId', () => {
-    const result = v.safeParse(MapDeleteSchema, {
-      adminId: null,
-      mapId: '',
-    })
-    expect(result.success).toBe(false)
-  })
-
-  it('rejects non-string mapId', () => {
-    const result = v.safeParse(MapDeleteSchema, {
-      adminId: null,
-      mapId: 123,
-    })
+  it('rejects empty adminId', () => {
+    const result = v.safeParse(MapDeleteSchema, { adminId: '' })
     expect(result.success).toBe(false)
   })
 })

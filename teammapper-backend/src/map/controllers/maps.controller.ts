@@ -42,7 +42,6 @@ export default class MapsController {
     @Query('secret') secret?: string
   ): Promise<IMmpClientMap | void> {
     try {
-      await this.mapsService.updateLastAccessed(mapId)
       const map = await this.mapsService.exportMapToClient(mapId)
       if (!map) throw new NotFoundException()
 
@@ -51,6 +50,12 @@ export default class MapsController {
         fullMap?.modificationSecret ?? null,
         secret ?? null
       )
+
+      // Only authorized readers should reset the retention clock; otherwise
+      // anonymous GETs (crawlers, attackers) could keep a map alive forever.
+      if (writable) {
+        await this.mapsService.updateLastAccessed(mapId)
+      }
 
       return { ...map, writable }
     } catch (e) {
@@ -83,8 +88,11 @@ export default class MapsController {
     const mmpMap = await this.mapsService.findMap(mapId)
     if (mmpMap && mmpMap.adminId === result.output.adminId) {
       this.yjsGateway.closeConnectionsForMap(mapId)
-      this.yjsDocManager.destroyDoc(mapId)
+      // Delete DB row before destroying the in-memory Y.Doc so that any
+      // concurrent reconnection's hydrateDocFromDb sees a missing row and
+      // refuses to create a phantom doc.
       await this.mapsService.deleteMap(mapId)
+      this.yjsDocManager.destroyDoc(mapId)
     }
   }
 

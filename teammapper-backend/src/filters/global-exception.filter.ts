@@ -6,8 +6,9 @@ import {
   Logger,
 } from '@nestjs/common'
 
-// This is for any unhandled gateway and "internal" NestJS related errors, like if the gateway can't reach clients or things like that.
-// It will try to always keep clients and their websockets alive and gracefully send errors over the wire, without revealing internal error reasons.
+// Catches unhandled errors from the HTTP pipeline. The Yjs websocket
+// gateway is a raw ws.Server mounted outside Nest's filter pipeline, so it
+// handles its own connection errors directly and never reaches this filter.
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name)
@@ -42,24 +43,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             message: 'Internal server error',
             timestamp: new Date().toISOString(),
           })
-        }
-
-        case 'ws': {
-          const client = host.switchToWs().getClient()
-          const error = {
-            event: 'error',
-            data: {
-              message: 'Internal server error',
-              timestamp: new Date().toISOString(),
-            },
-          }
-
-          if (typeof client.emit === 'function') {
-            client.emit('error', error)
-          } else if (typeof client.send === 'function') {
-            client.send(JSON.stringify(error))
-          }
-          break
         }
 
         default: {

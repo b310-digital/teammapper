@@ -14,8 +14,7 @@ export const MapCreateSchema = v.object({
 })
 
 export const MapDeleteSchema = v.object({
-  adminId: v.nullable(v.string()),
-  mapId: v.pipe(v.string(), v.nonEmpty()),
+  adminId: v.pipe(v.string(), v.nonEmpty()),
 })
 
 export type IMmpClientMapOptions = v.InferOutput<typeof MapOptionsSchema>

@@ -73,7 +73,7 @@ export class MapsService {
       return
     }
 
-    this.mapsRepository.update(uuid, { lastAccessed })
+    await this.mapsRepository.update(uuid, { lastAccessed })
   }
 
   async exportMapToClient(uuid: string): Promise<IMmpClientMap | undefined> {
