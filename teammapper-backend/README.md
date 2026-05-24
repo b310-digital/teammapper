@@ -84,7 +84,6 @@ Copy `.env.default` to `.env` and configure the variables below.
 
 | Variable | Description | Default |
 |---|---|---|
-| `YJS_ENABLED` | Enable Yjs WebSocket server | `false` |
 | `FEATURE_YJS_RATE_LIMITING` | Enable WebSocket connection rate limiting | `false` |
 | `WS_TRUST_PROXY` | Trust `X-Forwarded-For` header for client IP resolution (enable when behind a reverse proxy) | `false` |
 | `WS_GLOBAL_MAX_CONNECTIONS` | Maximum total WebSocket connections | `500` |

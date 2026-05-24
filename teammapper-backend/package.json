@@ -39,20 +39,17 @@
   "dependencies": {
     "@ai-sdk/openai": "3.0.53",
     "@ai-sdk/openai-compatible": "2.0.41",
-    "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/cli": "^11.0.21",
     "@nestjs/common": "^11.1.19",
     "@nestjs/config": "4.0.4",
     "@nestjs/core": "^11.1.19",
     "@nestjs/platform-express": "^11.1.19",
-    "@nestjs/platform-socket.io": "^11.1.19",
     "@nestjs/schedule": "^6.1.3",
     "@nestjs/serve-static": "^5.0.5",
     "@nestjs/typeorm": "^11.0.1",
     "@nestjs/websockets": "^11.1.19",
     "@types/uuid": "^11.0.0",
     "ai": "6.0.168",
-    "cache-manager": "^7.2.8",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
     "deepmerge": "^4.3.1",
@@ -64,7 +61,6 @@
     "rimraf": "^6.1.3",
     "rxjs": "^7.8.2",
     "sanitize-html": "^2.17.4",
-    "socket.io": "4.8.3",
     "typeorm": "^0.3.28",
     "uuid": "11.1.1",
     "valibot": "^1.3.1",
@@ -79,7 +75,6 @@
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/testing": "^11.1.17",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "@types/cache-manager": "5.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cron": "^2.4.3",
     "@types/express": "^5.0.6",
@@ -101,7 +96,6 @@
     "globals": "^17.4.0",
     "jest": "30.3.0",
     "prettier": "^3.8.1",
-    "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2",
     "ts-jest": "29.4.6",
     "ts-loader": "^9.5.4",
@@ -128,9 +122,6 @@
       "<rootDir>"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "setupFiles": [
-      "./test/jest-setup.ts"
-    ]
+    "testEnvironment": "node"
   }
 }

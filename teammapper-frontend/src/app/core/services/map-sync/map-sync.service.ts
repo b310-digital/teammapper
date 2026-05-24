@@ -16,14 +16,9 @@ import { UtilsService } from '../utils/utils.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
-import { ToastService } from '../toast/toast.service';
-import { DialogService } from '../dialog/dialog.service';
 import { ClientColorMapping, ClientColorMappingValue } from './yjs-utils';
-import { MapSyncErrorHandler } from './map-sync-error-handler';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
-import { SocketIoSyncService } from './socket-io-sync.service';
 import { YjsSyncService } from './yjs-sync.service';
-import { SyncStrategy } from './sync-strategy';
 
 export { ConnectionStatus } from './map-sync-context';
 
@@ -37,8 +32,6 @@ export class MapSyncService implements OnDestroy {
   private settingsService = inject(SettingsService);
   private utilsService = inject(UtilsService);
   private toastrService = inject(ToastrService);
-  private toastService = inject(ToastService);
-  private dialogService = inject(DialogService);
 
   // needed in color panel to show all clients
   private readonly clientListSubject: BehaviorSubject<string[]>;
@@ -56,8 +49,7 @@ export class MapSyncService implements OnDestroy {
   public readonly canRedo$: Observable<boolean> =
     this.canRedoSubject.asObservable();
 
-  // Sync strategy (only one instantiated based on feature flag)
-  private readonly syncStrategy: SyncStrategy;
+  private readonly syncService: YjsSyncService;
 
   // Common fields
   private colorMapping: ClientColorMapping;
@@ -80,43 +72,19 @@ export class MapSyncService implements OnDestroy {
       ];
     this.modificationSecret = '';
     this.colorMapping = {};
-    const yjsEnabled =
-      this.settingsService.getCachedSystemSettings()?.featureFlags?.yjs ??
-      false;
 
-    const ctx = this.createContext();
-
-    if (yjsEnabled) {
-      this.syncStrategy = new YjsSyncService(
-        ctx,
-        this.mmpService,
-        this.settingsService,
-        this.utilsService,
-        this.toastrService,
-        this.httpService
-      );
-    } else {
-      const errorHandler = new MapSyncErrorHandler(
-        this.mmpService,
-        this.utilsService,
-        this.toastService,
-        this.dialogService
-      );
-      this.syncStrategy = new SocketIoSyncService(
-        ctx,
-        this.mmpService,
-        this.settingsService,
-        this.utilsService,
-        this.toastrService,
-        errorHandler
-      );
-    }
-
-    this.syncStrategy.connect();
+    this.syncService = new YjsSyncService(
+      this.createContext(),
+      this.mmpService,
+      this.settingsService,
+      this.utilsService,
+      this.toastrService,
+      this.httpService
+    );
   }
 
   ngOnDestroy() {
-    this.syncStrategy.destroy();
+    this.syncService.destroy();
   }
 
   // ─── Public API ──────────────────────────────────────────────
@@ -139,14 +107,14 @@ export class MapSyncService implements OnDestroy {
       return;
     }
 
-    this.syncStrategy.setWritable(serverMap.writable !== false);
+    this.syncService.setWritable(serverMap.writable !== false);
     this.updateCachedMapForAdmin(serverMap);
     this.prepareMap(serverMap);
     return serverMap;
   }
 
   public reset() {
-    this.syncStrategy.destroy();
+    this.syncService.destroy();
     this.colorMapping = {};
   }
 
@@ -155,7 +123,7 @@ export class MapSyncService implements OnDestroy {
     this.attachedNodeSubject.next(
       this.mmpService.selectNode(this.mmpService.getRootNode().id)
     );
-    this.syncStrategy.initMap(this.getAttachedMap().cachedMap.uuid);
+    this.syncService.initMap(this.getAttachedMap().cachedMap.uuid);
   }
 
   public attachMap(cachedMapEntry: CachedMapEntry): void {
@@ -203,19 +171,19 @@ export class MapSyncService implements OnDestroy {
   }
 
   public undo(): void {
-    this.syncStrategy.undo();
+    this.syncService.undo();
   }
 
   public redo(): void {
-    this.syncStrategy.redo();
+    this.syncService.redo();
   }
 
   public updateMapOptions(options?: CachedMapOptions) {
-    this.syncStrategy.updateMapOptions(options);
+    this.syncService.updateMapOptions(options);
   }
 
   public async deleteMap(adminId: string): Promise<void> {
-    await this.syncStrategy.deleteMap(adminId);
+    await this.syncService.deleteMap(adminId);
   }
 
   public async fetchUserMapsFromServer(): Promise<CachedAdminMapEntry[]> {

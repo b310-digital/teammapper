@@ -10,8 +10,6 @@ import {
   Post,
   Query,
   Logger,
-  Optional,
-  Inject,
 } from '@nestjs/common'
 import * as v from 'valibot'
 import { MapsService } from '../services/maps.service'
@@ -34,12 +32,8 @@ export default class MapsController {
   private readonly logger = new Logger(MapsController.name)
   constructor(
     private mapsService: MapsService,
-    @Optional()
-    @Inject(YjsDocManagerService)
-    private yjsDocManager?: YjsDocManagerService,
-    @Optional()
-    @Inject(YjsGateway)
-    private yjsGateway?: YjsGateway
+    private yjsDocManager: YjsDocManagerService,
+    private yjsGateway: YjsGateway
   ) {}
 
   @Get(':id')
@@ -88,10 +82,8 @@ export default class MapsController {
     }
     const mmpMap = await this.mapsService.findMap(mapId)
     if (mmpMap && mmpMap.adminId === result.output.adminId) {
-      if (this.yjsGateway && this.yjsDocManager) {
-        this.yjsGateway.closeConnectionsForMap(mapId)
-        this.yjsDocManager.destroyDoc(mapId)
-      }
+      this.yjsGateway.closeConnectionsForMap(mapId)
+      this.yjsDocManager.destroyDoc(mapId)
       await this.mapsService.deleteMap(mapId)
     }
   }

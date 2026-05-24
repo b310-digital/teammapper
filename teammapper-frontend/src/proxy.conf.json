@@ -1,10 +1,4 @@
 {
-  "/socket.io": {
-    "target": "http://localhost:3000",
-    "secure": false,
-    "changeOrigin": true,
-    "ws": true
-  },
   "/yjs": {
     "target": "http://localhost:3000",
     "secure": false,

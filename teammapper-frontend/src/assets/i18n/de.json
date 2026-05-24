@@ -231,15 +231,7 @@
       "EXPORT_IMAGE_ERROR": "Beim Bild-Export ist ein Fehler aufgetreten. Womöglich ist die Mindmap zu groß.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap konnte nicht gefunden werden!",
       "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!",
-      "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden.",
-      "OPERATION_FAILED_MAP_RELOADED": "Operation fehlgeschlagen - Karte vom Server neu geladen",
-      "NETWORK_TIMEOUT": "Die Verbindung zum Server wurde unterbrochen. Ihre Änderungen wurden möglicherweise nicht gespeichert.",
-      "SERVER_ERROR": "Der Server hat einen Fehler festgestellt. Ihre letzten Änderungen wurden möglicherweise nicht gespeichert.",
-      "AUTH_FAILED": "Authentifizierung fehlgeschlagen. Möglicherweise müssen Sie die Seite neu laden und sich erneut anmelden.",
-      "MALFORMED_REQUEST": "Es gab ein Problem mit Ihrer Anfrage. Bitte versuchen Sie es erneut.",
-      "RATE_LIMIT_EXCEEDED": "Zu viele Anfragen. Bitte warten Sie einen Moment, bevor Sie es erneut versuchen.",
-      "MALFORMED_RESPONSE": "Ungültige Antwort vom Server erhalten. Bitte laden Sie die Seite neu.",
-      "UNEXPECTED_ERROR": "Ein unerwarteter Fehler ist aufgetreten. Bitte laden Sie die Seite neu."
+      "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden."
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",

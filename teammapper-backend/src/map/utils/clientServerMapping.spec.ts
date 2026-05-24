@@ -1,9 +1,7 @@
 import {
   mapClientNodeToMmpNode,
-  mergeClientNodeIntoMmpNode,
   mapClientBasicNodeToMmpRootNode,
 } from './clientServerMapping'
-import { MmpNode } from '../entities/mmpNode.entity'
 import { IMmpClientNode } from '../types'
 
 const buildClientNode = (
@@ -23,33 +21,6 @@ const buildClientNode = (
   parent: 'parent-uuid',
   ...overrides,
 })
-
-const buildServerNode = (overrides: Partial<MmpNode> = {}): MmpNode => {
-  const node = new MmpNode()
-  Object.assign(node, {
-    id: 'server-uuid',
-    name: 'Server Node',
-    colorsName: '#000000',
-    colorsBackground: '#ffffff',
-    colorsBranch: '#333333',
-    coordinatesX: 0,
-    coordinatesY: 0,
-    fontSize: 20,
-    fontStyle: 'normal',
-    fontWeight: 'normal',
-    imageSrc: '',
-    imageSize: 0,
-    linkHref: '',
-    k: 1,
-    locked: false,
-    detached: false,
-    root: false,
-    nodeMapId: 'map-uuid',
-    nodeParentId: 'parent-uuid',
-    ...overrides,
-  })
-  return node
-}
 
 describe('mapClientNodeToMmpNode sanitization', () => {
   it('should strip HTML from name', () => {
@@ -102,37 +73,6 @@ describe('mapClientNodeToMmpNode sanitization', () => {
     })
     const result = mapClientNodeToMmpNode(client, 'map-id')
     expect(result.fontStyle).toBe('normal')
-  })
-})
-
-describe('mergeClientNodeIntoMmpNode sanitization', () => {
-  it('should sanitize name when client provides it', () => {
-    const client = { name: '<script>xss</script>Clean' }
-    const server = buildServerNode()
-    const result = mergeClientNodeIntoMmpNode(client, server)
-    expect(result.name).toBe('Clean')
-  })
-
-  it('should keep server name when client does not provide it', () => {
-    const server = buildServerNode({ name: 'Server Name' })
-    const result = mergeClientNodeIntoMmpNode({}, server)
-    expect(result.name).toBe('Server Name')
-  })
-
-  it('should sanitize image src when client provides it', () => {
-    const client = { image: { src: 'javascript:alert(1)', size: 60 } }
-    const server = buildServerNode()
-    const result = mergeClientNodeIntoMmpNode(client, server)
-    expect(result.imageSrc).toBe('')
-  })
-
-  it('should sanitize link href when client provides it', () => {
-    const client = {
-      link: { href: 'data:text/html,<script>alert(1)</script>' },
-    }
-    const server = buildServerNode()
-    const result = mergeClientNodeIntoMmpNode(client, server)
-    expect(result.linkHref).toBe('')
   })
 })
 

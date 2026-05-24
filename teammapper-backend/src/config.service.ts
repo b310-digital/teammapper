@@ -70,11 +70,6 @@ class ConfigService {
     return parseInt(this.getValue('DELETE_AFTER_DAYS', false) || '30')
   }
 
-  public isYjsEnabled(): boolean {
-    const value = this.getValue('YJS_ENABLED', false)
-    return value?.toLowerCase() !== 'false'
-  }
-
   public isAiEnabled(): boolean {
     const value = this.getValue('AI_ENABLED', false)
     return value?.toLowerCase() === 'true'

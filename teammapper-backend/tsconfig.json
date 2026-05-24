@@ -15,6 +15,6 @@
     "strictNullChecks": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node", "jest", "express", "cache-manager", "uuid", "supertest", "express-serve-static-core"]
+    "types": ["node", "jest", "express", "uuid", "supertest", "express-serve-static-core"]
   }
 }
