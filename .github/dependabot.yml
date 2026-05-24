@@ -22,9 +22,6 @@ updates:
     # Security updates ignore cooldown (Dependabot rule).
     cooldown:
       default-days: 7
-      semver-major-days: 7
-      semver-minor-days: 7
-      semver-patch-days: 7
     groups:
       production-dependencies:
         dependency-type: "production"
@@ -49,9 +46,6 @@ updates:
       include: "scope"
     cooldown:
       default-days: 7
-      semver-major-days: 7
-      semver-minor-days: 7
-      semver-patch-days: 7
     # Node base image is bumped manually on the Node LTS cycle.
     ignore:
       - dependency-name: "node"
@@ -72,6 +66,3 @@ updates:
       include: "scope"
     cooldown:
       default-days: 7
-      semver-major-days: 7
-      semver-minor-days: 7
-      semver-patch-days: 7
