@@ -26,3 +26,10 @@ teammapper-frontend/npm-debug.log
 teammapper-frontend/README.md
 README.md
 teammapper-backend/benchmark
+node_modules
+.omc
+.claude
+.openspec
+openspec
+docs
+coverage

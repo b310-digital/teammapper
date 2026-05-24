@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: CI
 
 on:
   push:
@@ -14,55 +14,29 @@ permissions:
 jobs:
     teammapper-backend-build:
         runs-on: ubuntu-latest
-        permissions:
-          contents: read
-          packages: read
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-            - name: Set up QEMU
-              uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
-
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
 
-            - name: Login to GitHub Container Registry
-              uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4
-              with:
-                  registry: ghcr.io
-                  username: ${{ github.repository_owner }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-
-            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-              with:
-                node-version: '24'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@10.33.4 --activate
-
-            - name: Build and export to Docker
+            - name: Build Docker image (smoke test)
               uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7
               with:
                   context: .
                   target: production
                   tags: |
                       ghcr.io/b310-digital/teammapper:latest
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
     teammapper-backend-lint:
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-              with:
-                node-version: '24'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@10.33.4 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-pnpm
             - run: pnpm --filter teammapper-backend run lint
 
     teammapper-frontend-lint:
@@ -70,15 +44,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-              with:
-                node-version: '24'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@10.33.4 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-pnpm
             - run: pnpm --filter teammapper-frontend run lint
 
     teammapper-frontend-tsc:
@@ -86,15 +52,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-              with:
-                node-version: '24'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@10.33.4 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-pnpm
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
             - run: pnpm --filter teammapper-frontend run tsc
 
@@ -103,15 +61,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-              with:
-                node-version: '24'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@10.33.4 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-pnpm
             - run: pnpm --filter teammapper-backend run tsc
 
     teammapper-backend-test-e2e:
@@ -119,28 +69,18 @@ jobs:
 
         services:
             postgres:
-                image: postgres:10.8
+                image: postgres:15-alpine
                 env:
                     POSTGRES_USER: teammapper-user
                     POSTGRES_PASSWORD: teammapper-password
                     POSTGRES_DB: teammapper-backend-test
                 ports:
-                    # Will assign a random free host port
                     - 5432/tcp
-                # Needed because the postgres container does not provide a healthcheck
                 options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-              with:
-                node-version: '24'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@10.33.4 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-pnpm
             - run: pnpm --filter teammapper-backend run test
               env:
                   POSTGRES_DATABASE: "teammapper-backend-test"
@@ -159,16 +99,10 @@ jobs:
 
     teammapper-frontend-test:
         runs-on: ubuntu-latest
+
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-              with:
-                node-version: '24'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@10.33.4 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-pnpm
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
             - run: pnpm --filter teammapper-frontend run test
 
@@ -177,15 +111,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-            - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-              with:
-                node-version: '24'
-
-            - run: corepack enable
-            - run: corepack prepare pnpm@10.33.4 --activate
-
-            - run: pnpm install --frozen-lockfile
+            - uses: ./.github/actions/setup-pnpm
             - name: pnpm audit (fail on high/critical production deps)
               run: pnpm audit --audit-level=high --prod
 
