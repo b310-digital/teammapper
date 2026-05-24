@@ -17,8 +17,7 @@ This repo applies a subset of the [bodadotsh npm security best practices](https:
 | Least-privilege workflow permissions | Workflow-level `permissions: contents: read`, with per-job overrides only where a job needs more | CI runs with `secrets.GITHUB_TOKEN` scoped to the minimum each job requires. |
 | Dependabot 7-day cooldown | `cooldown:` block in `.github/dependabot.yml` (each ecosystem) | Holds version-update PRs for 7 days after a release, mirroring `minimumReleaseAge: 10080`. Security updates are exempt from cooldown so CVE fixes still flow promptly. |
 | Node base image LTS-only policy | `ignore:` rules on the `docker` ecosystem in `.github/dependabot.yml` | Blocks PRs that would bump the Node base image to odd majors (25, 27, 29, 31) or Alpine 4.x/5.x. Re-evaluate the ignore list each October when the next even-numbered Node major enters Active LTS. |
-| Dependency review on every PR | `dependency-review` job in `ci.yml` (`actions/dependency-review-action`) | Fails the PR if it introduces a new dep with a high/critical advisory or a license outside the allow-list (MIT, Apache-2.0, BSD-2/3-Clause, ISC, 0BSD, CC0-1.0, Unlicense). Complements `pnpm audit`, which only checks the installed tree. |
-| Scoped Dependabot auto-merge | `.github/workflows/dependabot-auto-merge.yml` | Auto-squash-merges Dependabot PRs only when ecosystem is `npm` AND update-type is `version-update:semver-minor` or `version-update:semver-patch`. All majors, all docker bumps, and all github-actions updates require manual review. |
+| Dependency review on every PR | `dependency-review` job in `ci.yml` (`actions/dependency-review-action`) | Fails the PR if it introduces a new dep with a high/critical advisory or a license outside the allow-list (MIT, Apache-2.0, BSD-2/3-Clause, ISC, 0BSD, CC0-1.0, Unlicense, BlueOak-1.0.0, Zlib, CC-BY-4.0). Complements `pnpm audit`, which only checks the installed tree. |
 
 ## Running checks locally
 
