@@ -15,6 +15,22 @@ describe('SettingsService', () => {
     // Clear all mocks before each test
     jest.clearAllMocks();
 
+    document.body.classList.remove('dark-mode');
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: jest.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    });
+
     // Create mock implementations
     httpService = {
       get: jest.fn(),
@@ -142,6 +158,95 @@ describe('SettingsService', () => {
       expect(storageService.set).toHaveBeenCalledWith(
         'settings',
         cachedSettings
+      );
+    });
+  });
+
+  describe('setDarkMode', () => {
+    it('toggles dark mode class on body and persists', async () => {
+      const cachedSettings = {
+        general: { language: 'en', darkMode: false },
+      };
+      storageService.get.mockResolvedValue(cachedSettings);
+      httpService.get.mockResolvedValue({
+        json: () =>
+          Promise.resolve({
+            userSettings: { general: { language: 'en', darkMode: false } },
+          }),
+      } as unknown as Response);
+
+      await settingsService.init();
+      document.body.classList.remove('dark-mode');
+
+      await settingsService.setDarkMode(true);
+
+      expect(document.body.classList.contains('dark-mode')).toBe(true);
+      expect(storageService.set).toHaveBeenCalledWith(
+        'settings',
+        expect.objectContaining({
+          general: expect.objectContaining({ darkMode: true }),
+        })
+      );
+    });
+
+    it('removes dark mode class when toggled off', async () => {
+      const cachedSettings = {
+        general: { language: 'en', darkMode: true },
+      };
+      storageService.get.mockResolvedValue(cachedSettings);
+      httpService.get.mockResolvedValue({
+        json: () =>
+          Promise.resolve({
+            userSettings: { general: { language: 'en', darkMode: true } },
+          }),
+      } as unknown as Response);
+
+      await settingsService.init();
+
+      await settingsService.setDarkMode(false);
+
+      expect(document.body.classList.contains('dark-mode')).toBe(false);
+      expect(storageService.set).toHaveBeenCalledWith(
+        'settings',
+        expect.objectContaining({
+          general: expect.objectContaining({ darkMode: false }),
+        })
+      );
+    });
+  });
+
+  describe('init with system preference', () => {
+    it('uses system dark mode preference when no cached settings', async () => {
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: jest.fn().mockImplementation(query => ({
+          matches: true,
+          media: query,
+          onchange: null,
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          dispatchEvent: jest.fn(),
+        })),
+      });
+
+      const defaultSettings = {
+        userSettings: { general: { language: 'en', darkMode: false } },
+      };
+
+      httpService.get.mockResolvedValue({
+        json: () => Promise.resolve(defaultSettings),
+      } as unknown as Response);
+      storageService.get.mockResolvedValue(null);
+
+      await settingsService.init();
+
+      expect(storageService.set).toHaveBeenCalledWith(
+        'settings',
+        expect.objectContaining({
+          general: expect.objectContaining({ darkMode: true }),
+        })
       );
     });
   });
