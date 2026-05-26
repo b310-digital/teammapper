@@ -190,7 +190,8 @@
       "ROOT_NODE_NAME": "根节点名称",
       "NODE_NAME": "节点名称",
       "TITLE": "设置",
-      "TTL": "最后已知删除日期"
+      "TTL": "最后已知删除日期",
+      "DARK_MODE": "深色模式"
     },
     "SHORTCUTS": {
       "TITLE": "快捷键"

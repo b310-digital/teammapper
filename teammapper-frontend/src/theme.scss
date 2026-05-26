@@ -12,8 +12,21 @@ $app-accent: mat.m2-define-palette(mat.$m2-gray-palette, 50);
 // The warn palette is optional (defaults to red).
 $app-warn: mat.m2-define-palette(mat.$m2-red-palette);
 
-// Create the theme object (a Sass map containing all of the palettes).
+// Create the light theme object (a Sass map containing all of the palettes).
 $app-theme: mat.m2-define-light-theme(
+  (
+    color: (
+      primary: $app-primary,
+      accent: $app-accent,
+      warn: $app-warn,
+    ),
+    typography: mat.m2-define-typography-config(),
+    density: 0,
+  )
+);
+
+// Create the dark theme object (a Sass map containing all of the palettes).
+$app-dark-theme: mat.m2-define-dark-theme(
   (
     color: (
       primary: $app-primary,
@@ -29,3 +42,9 @@ $app-theme: mat.m2-define-light-theme(
 // Alternatively, you can import and @include the theme mixins for each component
 // that you are using.
 @include mat.all-component-themes($app-theme);
+
+// Dark theme: replaces light theme components with dark variants when .dark-mode is active.
+
+.dark-mode {
+  @include mat.all-component-themes($app-dark-theme);
+}

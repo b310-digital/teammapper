@@ -17,7 +17,7 @@ section.jumbotron {
   h1,
   h4,
   p {
-    color: whitesmoke;
+    color: var(--color-text-inverse);
     word-wrap: break-word !important;
     white-space: pre-wrap !important;
     line-height: 150%;
@@ -78,7 +78,7 @@ section.jumbotron {
 
   .alert {
     padding: 20px;
-    color: white;
+    color: var(--color-text-inverse);
     margin-bottom: 15px;
     text-align: center;
     font-size: 0.7em;
@@ -86,7 +86,7 @@ section.jumbotron {
 
   .white-list {
     font-family: Fira Sans;
-    color: white;
+    color: var(--color-text-inverse);
     word-wrap: break-word;
     white-space: normal;
     overflow-wrap: break-word;

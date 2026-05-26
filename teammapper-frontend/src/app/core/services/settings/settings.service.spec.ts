@@ -109,7 +109,9 @@ describe('SettingsService', () => {
   // Additional tests for full coverage
   describe('init', () => {
     it('initializes settings with default values when no cached settings exist', async () => {
-      const defaultSettings = { userSettings: { general: { language: 'en' } } };
+      const defaultSettings = {
+        userSettings: { general: { language: 'en', darkMode: false } },
+      };
 
       httpService.get.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
@@ -125,8 +127,10 @@ describe('SettingsService', () => {
     });
 
     it('initializes settings with cached values when they exist', async () => {
-      const defaultSettings = { userSettings: { general: { language: 'en' } } };
-      const cachedSettings = { general: { language: 'fr' } };
+      const defaultSettings = {
+        userSettings: { general: { language: 'en', darkMode: false } },
+      };
+      const cachedSettings = { general: { language: 'fr', darkMode: true } };
 
       httpService.get.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),

@@ -42,6 +42,85 @@ body {
   outline: none;
 }
 
+:root {
+  --color-bg-primary: white;
+  --color-bg-secondary: #fafafa;
+  --color-bg-toolbar: white;
+  --color-bg-footer: #2c2c2c;
+  --color-bg-surface: white;
+  --color-bg-hover: rgba(0, 163, 211, 0.05);
+  --color-bg-key: gainsboro;
+  --color-bg-scroll-track: #f1f1f1;
+  --color-text-primary: #555555;
+  --color-text-inverse: whitesmoke;
+  --color-border: lightgray;
+  --color-border-vertical: #c2c2c2;
+  --color-float-btn-bg: #00a3d3;
+  --color-colorpicker-border: #a8a8a8;
+}
+
+.dark-mode {
+  --color-bg-primary: #1e1e1e;
+  --color-bg-secondary: #252525;
+  --color-bg-toolbar: #2d2d2d;
+  --color-bg-footer: #1a1a1a;
+  --color-bg-surface: #2d2d2d;
+  --color-bg-hover: rgba(95, 200, 240, 0.08);
+  --color-bg-key: #3e3e3e;
+  --color-bg-scroll-track: #333333;
+  --color-text-primary: #e0e0e0;
+  --color-text-inverse: #1e1e1e;
+  --color-border: #444444;
+  --color-border-vertical: #555555;
+  --color-float-btn-bg: #00b8e6;
+  --color-colorpicker-border: #555555;
+}
+
+// Color picker override
+div.color-picker {
+  border-radius: 2px;
+  border: 1px solid var(--color-colorpicker-border) !important;
+
+  div.box:last-child {
+    display: none !important;
+  }
+
+  div.arrow {
+    top: 170px !important;
+  }
+}
+
+// Snackbar
+snack-bar-container.snackbar {
+  background-color: var(--color-text-inverse);
+  border: 1px solid var(--color-border);
+  border-bottom: 0;
+  color: var(--color-text-primary);
+
+  simple-snack-bar.mat-simple-snackbar {
+    font-size: 15px;
+
+    button {
+      color: var(--color-text-primary);
+    }
+  }
+}
+
+body {
+  font-family: 'Fira Sans', sans;
+  font-size: 17px;
+}
+
+.container {
+  max-width: 1170px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+*:focus {
+  outline: none;
+}
+
 // Color picker override
 div.color-picker {
   border-radius: 2px;

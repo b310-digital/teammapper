@@ -191,6 +191,7 @@
       "NODE_NAME": "Nombre del nodo",
       "TITLE": "Ajustes",
       "TTL": "Last known date of deletion"
+      "DARK_MODE": "Modo oscuro"
     },
     "SHORTCUTS": {
       "TITLE": "Atajos"

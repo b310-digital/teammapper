@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, effect } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
@@ -35,13 +35,31 @@ export class SettingsService {
   private userSettingsSubject: BehaviorSubject<UserSettings | null>;
   private systemSettingsSubject: BehaviorSubject<SystemSettings | null>;
   private readonly editModeSubject: BehaviorSubject<boolean | null>;
+  private readonly darkModeSubject: BehaviorSubject<boolean>;
+  public readonly darkMode: Observable<boolean>;
 
   constructor() {
     // Initialization of the behavior subjects.
     this.userSettingsSubject = new BehaviorSubject(null);
     this.systemSettingsSubject = new BehaviorSubject(null);
     this.editModeSubject = new BehaviorSubject(null);
+    this.darkModeSubject = new BehaviorSubject(false);
     this.userSettings = this.userSettingsSubject.asObservable();
+    this.darkMode = this.darkModeSubject.asObservable();
+
+    effect(() => {
+      const settings = this.userSettingsSubject.getValue();
+      if (settings) {
+        this.applyDarkMode(settings.general.darkMode);
+      }
+    });
+  }
+
+  /**
+   * Initialize dark mode from system preference if no user setting exists.
+   */
+  private getSystemDarkModePreference(): boolean {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
   /**
@@ -55,6 +73,12 @@ export class SettingsService {
     const loadedSettings = (await this.storageService.get(
       STORAGE_KEYS.SETTINGS
     )) as UserSettings | null;
+
+    if (!loadedSettings) {
+      defaultSettings.userSettings.general.darkMode =
+        this.getSystemDarkModePreference();
+    }
+
     const userSettings = loadedSettings || defaultSettings.userSettings;
 
     // Save the default settings.
@@ -70,6 +94,30 @@ export class SettingsService {
   public async updateCachedSettings(settings: UserSettings): Promise<void> {
     await this.storageService.set(STORAGE_KEYS.SETTINGS, settings);
     this.userSettingsSubject.next(settings);
+  }
+
+  /**
+   * Apply dark mode to the document body.
+   */
+  private applyDarkMode(isDark: boolean) {
+    if (isDark) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+    this.darkModeSubject.next(isDark);
+  }
+
+  /**
+   * Toggle dark mode and persist the setting.
+   */
+  public async setDarkMode(value: boolean): Promise<void> {
+    const settings = this.getCachedUserSettings();
+    if (!settings) return;
+
+    settings.general.darkMode = value;
+    this.applyDarkMode(value);
+    await this.updateCachedSettings(settings);
   }
 
   public async getCachedAdminMapEntries(): Promise<CachedAdminMapEntry[]> {

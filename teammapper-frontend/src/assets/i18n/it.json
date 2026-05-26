@@ -190,7 +190,8 @@
       "ROOT_NODE_NAME": "Nome nodo radice",
       "NODE_NAME": "Nome nodo",
       "TITLE": "Impostazioni",
-      "TTL": "Ultima data di eliminazione conosciuta"
+      "TTL": "Ultima data di eliminazione conosciuta",
+      "DARK_MODE": "Modalità scura"
     },
     "SHORTCUTS": {
       "TITLE": "Scorciatoie da tastiera"

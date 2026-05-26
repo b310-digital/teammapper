@@ -191,6 +191,7 @@
       "NODE_NAME": "Nom du noeud",
       "TITLE": "Paramètres",
       "TTL": "Last known date of deletion"
+      "DARK_MODE": "Mode sombre"
     },
     "SHORTCUTS": {
       "TITLE": "Raccourcis"

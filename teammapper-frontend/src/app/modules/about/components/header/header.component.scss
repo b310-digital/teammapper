@@ -7,7 +7,7 @@ header.header {
   top: 0;
   left: 0;
   right: 0;
-  background-color: white;
+  background-color: var(--color-bg-primary);
 
   nav {
     display: flex;
@@ -23,7 +23,7 @@ header.header {
       width: 1px;
       height: 35px;
       margin: 0 10px;
-      background-color: #c2c2c2;
+      background-color: var(--color-border-vertical);
     }
 
     a.link {
