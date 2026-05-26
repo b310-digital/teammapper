@@ -6,8 +6,8 @@ mat-toolbar {
   touch-action: manipulation;
   height: 60px;
   padding: 0 8px;
-  border-bottom: 1px solid lightgray;
-  background-color: white !important;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-toolbar) !important;
 
   div.vertical-line {
     height: 100%;
@@ -15,7 +15,7 @@ mat-toolbar {
 
     > div {
       width: 1px;
-      background-color: #c2c2c2;
+      background-color: var(--color-border-vertical);
       height: 100%;
     }
   }
@@ -32,7 +32,7 @@ mat-toolbar::-webkit-scrollbar {
 }
 
 mat-toolbar::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-bg-scroll-track);
 }
 
 mat-toolbar::-webkit-scrollbar-thumb {

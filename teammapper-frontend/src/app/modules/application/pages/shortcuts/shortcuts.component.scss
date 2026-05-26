@@ -22,12 +22,12 @@ div.shortcuts {
     padding-bottom: 10px;
 
     mat-list-item {
-      color: #555555;
+      color: var(--color-text-primary);
     }
 
     .key {
       padding: 6px 12px;
-      background: gainsboro;
+      background: var(--color-bg-key);
       border-radius: 3px;
       font-size: 15px;
     }

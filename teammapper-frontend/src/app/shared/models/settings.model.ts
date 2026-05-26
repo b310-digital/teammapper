@@ -29,6 +29,7 @@ export interface UserSettings {
 
 interface General {
   language: string;
+  darkMode: boolean;
 }
 
 interface Info {

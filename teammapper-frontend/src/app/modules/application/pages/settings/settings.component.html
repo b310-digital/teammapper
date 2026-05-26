@@ -24,6 +24,12 @@
             </mat-card-header>
             <hr />
             <mat-card-content>
+              <mat-slide-toggle
+                (change)="updateDarkMode($event)"
+                [(ngModel)]="settings.general.darkMode"
+                color="primary">
+                {{ 'PAGES.SETTINGS.DARK_MODE' | translate }}
+              </mat-slide-toggle>
               <mat-form-field>
                 <mat-select
                   (selectionChange)="updateLanguage()"

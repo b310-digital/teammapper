@@ -20,7 +20,10 @@ import {
 } from '@angular/material/card';
 import { MatFormField } from '@angular/material/form-field';
 import { MatSelect, MatOption } from '@angular/material/select';
-import { MatSlideToggle } from '@angular/material/slide-toggle';
+import {
+  MatSlideToggle,
+  MatSlideToggleChange,
+} from '@angular/material/slide-toggle';
 import { FormsModule } from '@angular/forms';
 import { MatInput } from '@angular/material/input';
 import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
@@ -85,6 +88,10 @@ export class SettingsComponent {
     await this.settingsService.updateCachedSettings(this.settings);
 
     this.translateService.use(this.settings.general.language);
+  }
+
+  public async updateDarkMode(event: MatSlideToggleChange) {
+    await this.settingsService.setDarkMode(event.checked);
   }
 
   public back() {
