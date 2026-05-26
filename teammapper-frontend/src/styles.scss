@@ -57,6 +57,7 @@ body {
   --color-border-vertical: #c2c2c2;
   --color-float-btn-bg: #00a3d3;
   --color-colorpicker-border: #a8a8a8;
+  --color-bg-snackbar: whitesmoke;
 }
 
 .dark-mode {
@@ -74,6 +75,7 @@ body {
   --color-border-vertical: #555555;
   --color-float-btn-bg: #00b8e6;
   --color-colorpicker-border: #555555;
+  --color-bg-snackbar: #424242;
 }
 
 // Color picker override
@@ -92,7 +94,7 @@ div.color-picker {
 
 // Snackbar
 snack-bar-container.snackbar {
-  background-color: var(--color-text-inverse);
+  background-color: var(--color-bg-snackbar);
   border: 1px solid var(--color-border);
   border-bottom: 0;
   color: var(--color-text-primary);
@@ -102,51 +104,6 @@ snack-bar-container.snackbar {
 
     button {
       color: var(--color-text-primary);
-    }
-  }
-}
-
-body {
-  font-family: 'Fira Sans', sans;
-  font-size: 17px;
-}
-
-.container {
-  max-width: 1170px;
-  margin: 0 auto;
-  padding: 0 15px;
-}
-
-*:focus {
-  outline: none;
-}
-
-// Color picker override
-div.color-picker {
-  border-radius: 2px;
-  border: 1px solid #a8a8a8 !important;
-
-  div.box:last-child {
-    display: none !important;
-  }
-
-  div.arrow {
-    top: 170px !important;
-  }
-}
-
-// Snackbar
-snack-bar-container.snackbar {
-  background-color: whitesmoke;
-  border: 1px solid lightgray;
-  border-bottom: 0;
-  color: #555555;
-
-  simple-snack-bar.mat-simple-snackbar {
-    font-size: 15px;
-
-    button {
-      color: #555555;
     }
   }
 }
