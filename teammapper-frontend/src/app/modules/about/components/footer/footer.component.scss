@@ -1,7 +1,7 @@
 footer.footer {
   padding: 20px 0;
   background-color: var(--color-bg-footer);
-  color: var(--color-text-inverse);
+  color: var(--color-text-on-dark);
 
   div.container {
     display: flex;
@@ -12,7 +12,7 @@ footer.footer {
 
     a {
       text-decoration: none;
-      color: var(--color-text-inverse);
+      color: var(--color-text-on-dark);
     }
 
     a:hover {
@@ -53,15 +53,16 @@ footer.footer {
         }
 
         .mat-mdc-select-value-text {
-          color: var(--color-text-inverse);
+          color: var(--color-text-on-dark);
         }
 
         .mat-mdc-select-arrow {
-          color: var(--color-text-inverse);
+          color: var(--color-text-on-dark);
         }
 
         .mat-mdc-select-placeholder {
-          color: rgba(255, 255, 255, 0.7);
+          color: var(--color-text-inverse);
+          opacity: 0.7;
         }
       }
     }

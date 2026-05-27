@@ -1,6 +1,3 @@
-@use '@angular/material' as mat;
-@use 'src/theme.scss';
-
 div.about {
   height: 100%;
 
@@ -21,7 +18,7 @@ div.about {
       padding: 20px 15px 40px 15px;
 
       h1 {
-        color: mat.m2-get-color-from-palette(theme.$app-primary);
+        color: var(--color-primary);
       }
 
       div.cards {
@@ -51,7 +48,7 @@ div.about {
           height: 40px;
 
           a {
-            color: mat.m2-get-color-from-palette(theme.$app-primary);
+            color: var(--color-primary);
             text-decoration: none;
             padding-left: 10px;
           }

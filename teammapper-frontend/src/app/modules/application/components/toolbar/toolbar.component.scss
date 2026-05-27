@@ -1,6 +1,3 @@
-@use '@angular/material' as mat;
-@use 'src/theme.scss';
-
 mat-toolbar {
   overflow-x: auto;
   touch-action: manipulation;
@@ -36,15 +33,15 @@ mat-toolbar::-webkit-scrollbar-track {
 }
 
 mat-toolbar::-webkit-scrollbar-thumb {
-  background: mat.m2-get-color-from-palette(theme.$app-primary, 0.7);
+  background: var(--color-primary-medium);
 }
 
 mat-toolbar::-webkit-scrollbar-thumb:hover {
-  background: mat.m2-get-color-from-palette(theme.$app-primary, 0.8);
+  background: var(--color-primary-dark);
 }
 
 .label-file-upload:hover {
-  background: mat.m2-get-color-from-palette(theme.$app-primary, 0.05);
+  background: var(--color-primary-light);
 }
 
 input[type='file'] {

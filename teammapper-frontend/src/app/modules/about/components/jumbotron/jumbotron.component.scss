@@ -1,12 +1,9 @@
-@use '@angular/material' as mat;
-@use 'src/theme.scss';
-
 .m-2 {
   margin: 2rem;
 }
 
 section.jumbotron {
-  background-color: mat.m2-get-color-from-palette(theme.$app-primary);
+  background-color: var(--color-primary);
   padding: 100px 0 40px 0;
   text-align: center;
   align-items: center;
@@ -66,7 +63,7 @@ section.jumbotron {
       font-family: Fira Sans;
       width: 170px;
       font-weight: bold;
-      color: mat.m2-get-color-from-palette(theme.$app-primary);
+      color: var(--color-text-inverse);
       margin-bottom: 10px;
     }
 
