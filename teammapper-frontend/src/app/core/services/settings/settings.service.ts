@@ -1,4 +1,4 @@
-import { Injectable, inject, effect } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
@@ -46,13 +46,6 @@ export class SettingsService {
     this.darkModeSubject = new BehaviorSubject(false);
     this.userSettings = this.userSettingsSubject.asObservable();
     this.darkMode = this.darkModeSubject.asObservable();
-
-    effect(() => {
-      const settings = this.userSettingsSubject.getValue();
-      if (settings) {
-        this.applyDarkMode(settings.general.darkMode);
-      }
-    });
   }
 
   /**
@@ -84,6 +77,7 @@ export class SettingsService {
     // Save the default settings.
     await this.storageService.set(STORAGE_KEYS.SETTINGS, userSettings);
     this.userSettingsSubject.next(userSettings);
+    this.applyDarkMode(userSettings.general.darkMode);
     this.systemSettingsSubject.next(defaultSettings.systemSettings);
     return true;
   }
@@ -94,6 +88,7 @@ export class SettingsService {
   public async updateCachedSettings(settings: UserSettings): Promise<void> {
     await this.storageService.set(STORAGE_KEYS.SETTINGS, settings);
     this.userSettingsSubject.next(settings);
+    this.applyDarkMode(settings.general.darkMode);
   }
 
   /**
@@ -116,7 +111,6 @@ export class SettingsService {
     if (!settings) return;
 
     settings.general.darkMode = value;
-    this.applyDarkMode(value);
     await this.updateCachedSettings(settings);
   }
 

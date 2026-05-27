@@ -1,6 +1,6 @@
 div.settings {
   mat-toolbar {
-    background-color: transparent;
+    background-color: var(--color-bg-toolbar);
 
     div.container {
       width: 100%;
@@ -47,6 +47,10 @@ div.settings {
 
         mat-slide-toggle:last-child {
           margin-bottom: 0;
+        }
+
+        mat-form-field {
+          margin-top: 16px;
         }
       }
 

@@ -44,7 +44,7 @@ $app-dark-theme: mat.m2-define-dark-theme(
 @include mat.all-component-themes($app-theme);
 
 // Dark theme: replaces light theme components with dark variants when .dark-mode is active.
-
-.dark-mode {
+// Using 'body.dark-mode' for higher CSS specificity to override the global light theme.
+body.dark-mode {
   @include mat.all-component-themes($app-dark-theme);
 }

@@ -92,6 +92,12 @@ div.color-picker {
   }
 }
 
+// Global page background
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
 // Snackbar
 snack-bar-container.snackbar {
   background-color: var(--color-bg-snackbar);
