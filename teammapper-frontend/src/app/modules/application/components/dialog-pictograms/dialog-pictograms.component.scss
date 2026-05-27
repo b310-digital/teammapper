@@ -1,6 +1,3 @@
-@use '@angular/material' as mat;
-@use 'src/theme.scss';
-
 .my-1 {
   margin: 1em 0 1em 0;
 }
@@ -10,6 +7,6 @@
 }
 
 .image-wrapper:hover {
-  background: mat.m2-get-color-from-palette(theme.$app-primary, 0.05);
+  background: var(--color-primary-light);
   cursor: pointer;
 }

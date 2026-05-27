@@ -62,6 +62,21 @@ div.settings {
         }
       }
     }
+
+    .dark-mode-row {
+      margin-bottom: 16px;
+
+      mat-slide-toggle {
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    .language-row {
+      mat-form-field {
+        width: 100%;
+      }
+    }
   }
 
   div.content.container {
