@@ -4,6 +4,7 @@ packages:
   - 'teammapper-frontend/packages/*'
 # 7-day quarantine on newly published versions (mitigates fast-revoked malicious releases).
 minimumReleaseAge: 10080
+strictDepBuilds: true
 allowBuilds:
   '@compodoc/compodoc': false
   '@nestjs/core': false
