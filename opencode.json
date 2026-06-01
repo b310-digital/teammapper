@@ -1,0 +1,27 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "nebius": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Nebius Token Factory",
+      "options": {
+        "baseURL": "https://api.tokenfactory.nebius.com/v1",
+        "apiKey": "{env:OPENAI_API_KEY}"
+      },
+      "models": {
+        "moonshotai/Kimi-K2.6": {
+          "name": "Kimi K2.6"
+        }
+      }
+    }
+  },
+  "model": "nebius/moonshotai/Kimi-K2.6",
+  "permission": {
+    "bash": {
+      "docker": "deny",
+      "docker *": "deny",
+      "docker-compose": "deny",
+      "docker-compose *": "deny"
+    }
+  }
+}

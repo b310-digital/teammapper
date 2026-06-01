@@ -1,10 +1,8 @@
-# Codespaces / devcontainer compose definition.
-# Keeps the lightweight prebuilt node image for the workspace and adds a
-# Postgres sidecar reachable from the app container at host "postgres".
 services:
   app:
-    image: mcr.microsoft.com/devcontainers/javascript-node:24-bookworm
-    # Keep the container alive; the devcontainer runtime exec's into it.
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: sleep infinity
     volumes:
       - ..:/workspaces/teammapper:cached
@@ -19,7 +17,7 @@ services:
       POSTGRES_SSL: "false"
       POSTGRES_QUERY_TIMEOUT: "100000"
       POSTGRES_STATEMENT_TIMEOUT: "100000"
-      # Test database (used by backend e2e/integration tests)
+
       POSTGRES_TEST_HOST: postgres
       POSTGRES_TEST_PORT: "5432"
       POSTGRES_TEST_USER: teammapper-user

@@ -1,0 +1,28 @@
+{
+  "name": "TeamMapper DevContainer",
+
+  // Compose-based setup: the "app" service is the workspace, "postgres" is a sidecar DB.
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/teammapper",
+
+  // Run as the image's non-root user so files created in /workspaces are owned by it
+  "remoteUser": "node",
+
+  // Filesystem artifacts (deps + frontend packages) build here so they're
+  // prebuild-cached; migrations run in postCreate against the live DB.
+  "updateContentCommand": "pnpm install --frozen-lockfile && pnpm --filter teammapper-frontend run build:packages",
+  "postCreateCommand": "pnpm run migrate:dev",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+
+  // 4200 (frontend) and 3000 (backend) are forwarded for browser access
+  "forwardPorts": [4200, 3000]
+}
