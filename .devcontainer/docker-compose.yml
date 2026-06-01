@@ -1,0 +1,50 @@
+# Codespaces / devcontainer compose definition.
+# Keeps the lightweight prebuilt node image for the workspace and adds a
+# Postgres sidecar reachable from the app container at host "postgres".
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:24-bookworm
+    # Keep the container alive; the devcontainer runtime exec's into it.
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces/teammapper:cached
+    environment:
+      MODE: DEV
+      BINDING: "0.0.0.0"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: teammapper-user
+      POSTGRES_PASSWORD: teammapper-password
+      POSTGRES_DATABASE: teammapper-backend-dev
+      POSTGRES_SSL: "false"
+      POSTGRES_QUERY_TIMEOUT: "100000"
+      POSTGRES_STATEMENT_TIMEOUT: "100000"
+      # Test database (used by backend e2e/integration tests)
+      POSTGRES_TEST_HOST: postgres
+      POSTGRES_TEST_PORT: "5432"
+      POSTGRES_TEST_USER: teammapper-user
+      POSTGRES_TEST_PASSWORD: teammapper-password
+      POSTGRES_TEST_DATABASE: teammapper-backend-test
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: teammapper-backend-dev
+      POSTGRES_USER: teammapper-user
+      POSTGRES_PASSWORD: teammapper-password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/pgdata
+      - ./init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teammapper-user -d teammapper-backend-dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

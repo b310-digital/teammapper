@@ -1,0 +1,26 @@
+{
+  // This codespace targets an OpenAI-compatible LLM API.
+  // The endpoint and key come from the OPENAI_BASE_URL and OPENAI_API_KEY Codespaces secrets
+  // (Repo > Settings > Secrets and variables > Codespaces). Point them at any
+  // OpenAI-compatible provider to switch, without changing this file.
+
+  "name": "TeamMapper DevContainer",
+
+  // Compose-based setup: the "app" service is the workspace, "postgres" is a sidecar DB.
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/teammapper",
+
+  "postCreateCommand": "corepack enable && if [ -f package.json ]; then pnpm install --frozen-lockfile; fi",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+
+  "forwardPorts": [4200, 3000, 5432]
+}
