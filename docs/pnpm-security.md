@@ -15,9 +15,19 @@ This repo applies a subset of the [bodadotsh npm security best practices](https:
 | Transitive-dep CVE pins | `overrides:` in `pnpm-workspace.yaml` | Forces minimum versions of known-vulnerable transitive deps. Audit periodically with `pnpm why <pkg>` and retire entries once the tree resolves above the vulnerable range. |
 | Action pinning | All `uses:` lines in `.github/workflows/` carry a 40-char SHA | Protects against tag-rewrite supply-chain attacks. |
 | Least-privilege workflow permissions | Workflow-level `permissions: contents: read`, with per-job overrides only where a job needs more | CI runs with `secrets.GITHUB_TOKEN` scoped to the minimum each job requires. |
-| Dependabot 7-day cooldown | `cooldown:` block in `.github/dependabot.yml` (each ecosystem) | Holds version-update PRs for 7 days after a release, mirroring `minimumReleaseAge: 10080`. Security updates are exempt from cooldown so CVE fixes still flow promptly. |
-| Node base image pinned by digest, bumped manually | `FROM node:…@sha256:…` in `Dockerfile` + `ignore: dependency-name: "node"` in `.github/dependabot.yml` | The base image is pinned to a multi-arch manifest digest so builds are reproducible and immune to tag re-publishing. Dependabot does not open PRs for the Node image; bumps follow the Node LTS release cycle and are applied by hand, re-resolving the digest with `docker buildx imagetools inspect node:<version>-alpine<alpine>`. |
+| No Dependabot PRs — uniform 7-day quarantine | `open-pull-requests-limit: 0` (all ecosystems) in `.github/dependabot.yml` **+** security updates disabled in repo settings (see below) | Both version and security updates are off. Security PRs are immediate — `cooldown` does not apply to them — and would bypass the quarantine, so every change is applied by hand under `minimumReleaseAge`. Alerts stay on for triage. |
+| Node base image pinned by digest, bumped manually | `FROM node:…@sha256:…` in `Dockerfile` | The base image is pinned to a multi-arch manifest digest so builds are reproducible and immune to tag re-publishing. Bumps follow the Node LTS release cycle and are applied by hand, re-resolving the digest with `docker buildx imagetools inspect node:<version>-alpine<alpine>`. With version updates disabled, Dependabot never proposes a Node image bump. |
 | Dependency review on every PR | `dependency-review` job in `ci.yml` (`actions/dependency-review-action`) | Fails the PR if it introduces a new dep with a high/critical advisory or a license outside the allow-list (MIT, Apache-2.0, BSD-2/3-Clause, ISC, 0BSD, CC0-1.0, Unlicense, BlueOak-1.0.0, Zlib, CC-BY-4.0). Complements `pnpm audit`, which only checks the installed tree. |
+
+## Dependabot setup (repo settings)
+
+Dependabot can't delay security PRs — `cooldown` applies to version updates only
+([#13979](https://github.com/dependabot/dependabot-core/issues/13979)) — so the
+7-day quarantine is kept airtight by turning PRs off and patching by hand:
+
+- **Version updates** — disabled via `open-pull-requests-limit: 0` in `.github/dependabot.yml`.
+- **Security updates** — Settings → Code security → "Dependabot security updates" → **Disabled** (no `dependabot.yml` field for this).
+- **Alerts** — keep enabled; optionally add an auto-triage rule to dismiss sub-`high` alerts. Patch high/critical by hand once the fix is ≥7 days old (see "Adding a new override").
 
 ## Running checks locally
 
