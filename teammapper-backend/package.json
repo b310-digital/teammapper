@@ -53,7 +53,7 @@
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
     "deepmerge": "^4.3.1",
-    "http-proxy-middleware": "3.0.5",
+    "http-proxy-middleware": "3.0.7",
     "jsonwebtoken": "^9.0.3",
     "lib0": "^0.2.117",
     "pg": "^8.20.0",
