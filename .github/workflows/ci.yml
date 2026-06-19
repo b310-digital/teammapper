@@ -106,15 +106,6 @@ jobs:
             - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
             - run: pnpm --filter teammapper-frontend run test
 
-    teammapper-audit:
-        runs-on: ubuntu-latest
-
-        steps:
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-            - uses: ./.github/actions/setup-pnpm
-            - name: pnpm audit (fail on high/critical production deps)
-              run: pnpm audit --audit-level=high --prod
-
     dependency-review:
         runs-on: ubuntu-latest
         if: github.event_name == 'pull_request'
@@ -125,5 +116,8 @@ jobs:
             - name: Dependency Review (PR diff vs base)
               uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
               with:
-                  fail-on-severity: high
+                  # Vulnerability gating is disabled: internal policy is to wait a
+                  # week before integrating updates, and this action has no
+                  # time-based grace period. License enforcement stays on.
+                  vulnerability-check: false
                   allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, CC0-1.0, Unlicense, BlueOak-1.0.0, Zlib, CC-BY-4.0
