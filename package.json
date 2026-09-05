@@ -5,8 +5,8 @@
   "author": "b310 digital gmbh",
   "private": false,
   "license": "MIT",
+  "packageManager": "pnpm@10.33.4",
   "engines": {
-    "npm": "~10.9.0",
     "node": "^24.0"
   },
   "scripts": {

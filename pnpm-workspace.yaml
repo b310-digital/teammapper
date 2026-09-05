@@ -17,16 +17,20 @@ allowBuilds:
 # Transitive-dep CVE pins. Audit periodically with `pnpm why <pkg>` and remove
 # entries whose selector no longer matches any node in pnpm-lock.yaml.
 overrides:
-  'multer@<2.1.1': '2.1.1'
+  # GHSA-72gw-mp4g-v24j (DoS). Held back by @nestjs/platform-express.
+  'multer@<2.2.0': '>=2.2.0 <3.0.0'
   'ajv@>=7.0.0-alpha.0 <8.18.0': '8.18.0'
   'underscore@<=1.13.7': '1.13.8'
   'socket.io-parser@>=4.0.0 <4.2.6': '4.2.6'
-  'picomatch@>=4.0.0 <4.0.4': '>=4.0.4'
+  'picomatch@>=4.0.0 <4.0.4': '>=4.0.4 <5.0.0'
   'lodash@<4.18.0': '>=4.18.0'
   'follow-redirects@<1.16.0': '>=1.16.0'
   'hono@<4.12.25': '>=4.12.25'
-  'fast-uri@<3.1.2': '>=3.1.2'
-  'postcss@<8.5.10': '>=8.5.10'
+  # GHSA-f65p-4m7j-42xc / -fph4-wmhf-6fwf / -jqff-g426-hqxp (host confusion).
+  # Pulled in by ajv via @nestjs/cli > @angular-devkit/core.
+  'fast-uri@<3.1.6': '>=3.1.6 <4.0.0'
+  # GHSA-r28c-9q8g-f849. Parents: sanitize-html, beasties (@angular/build).
+  'postcss@<8.5.18': '>=8.5.18 <9.0.0'
   '@babel/plugin-transform-modules-systemjs@<7.29.4': '>=7.29.4'
   'uuid@>=11.0.0 <11.1.1': '>=11.1.1'
   # The entries below are transitive deps pinned to vulnerable versions by the
@@ -36,15 +40,41 @@ overrides:
   # 0.27.3 / piscina 5.1.4 / @babel/core 7.29.0 — so an override is the only fix.
   # Values are upper-bounded to the current major to avoid an unintended
   # major-version jump (e.g. @babel/core -> 8) when newer releases age out.
-  'shell-quote@<1.8.4': '>=1.8.4 <2.0.0'
+  # GHSA-395f-4hp3-45gv — 1.8.4 is itself affected, the fix landed in 1.9.0.
+  'shell-quote@<1.9.0': '>=1.9.0 <2.0.0'
   'qs@>=6.11.1 <6.15.2': '>=6.15.2 <7.0.0'
   'esbuild@>=0.27.3 <0.28.1': '>=0.28.1 <0.29.0'
-  'tar@>=7.0.0 <7.5.16': '>=7.5.16 <8.0.0'
+  # GHSA-23hp-3jrh-7fpw (critical) + GHSA-r292-9mhp-454m. Parent: @angular/cli > pacote.
+  'tar@>=7.0.0 <7.5.21': '>=7.5.21 <8.0.0'
   'launch-editor@<2.14.1': '>=2.14.1 <3.0.0'
-  # Scoped to the 4.x line only: @istanbuljs/load-nyc-config pulls js-yaml@3 and
-  # relies on the v3-only safeLoad API, so it must not be forced up to v4.
-  'js-yaml@>=4.0.0 <4.2.0': '>=4.2.0 <5.0.0'
+  # GHSA-52cp-r559-cp3m / GHSA-5p4m-2wfm-xmqj hit both live majors, so there is one
+  # selector each. The 3.x entry must stay inside 3.x: @istanbuljs/load-nyc-config
+  # relies on the v3-only safeLoad API and breaks if forced up to v4.
+  'js-yaml@>=4.0.0 <4.3.1': '>=4.3.1 <5.0.0'
+  'js-yaml@>=3.0.0 <3.15.1': '>=3.15.1 <4.0.0'
   '@babel/core@>=7.0.0 <7.29.6': '>=7.29.6 <8.0.0'
   'piscina@>=5.0.0-alpha.0 <5.1.5': '>=5.1.5 <6.0.0'
   'vite@>=7.0.0 <7.3.5': '>=7.3.5 <8.0.0'
   'dompurify@>=3.0.0 <3.4.9': '>=3.4.9 <4.0.0'
+  # GHSA-xv26-6w52-cph6 (critical, DoS). Parent: webpack-dev-server > sockjs.
+  'websocket-driver@<0.7.5': '>=0.7.5 <0.8.0'
+  # GHSA-rgw5-rvv9-x895 / -mh99-v99m-4gvg / -3jxr-9vmj-r5cp (ReDoS). Reached through
+  # minimatch from three different majors of brace-expansion, so one selector per major.
+  'brace-expansion@<1.1.18': '>=1.1.18 <2.0.0'
+  'brace-expansion@>=2.0.0 <2.1.4': '>=2.1.4 <3.0.0'
+  'brace-expansion@>=3.0.0 <5.0.9': '>=5.0.9 <6.0.0'
+  # GHSA-c83g-rgw3-j3cx / -73wf-gq98-2v4g. Parent: @nestjs/cli > webpack.
+  'browserslist@<=4.28.6': '>=4.28.7 <5.0.0'
+  # GHSA-xvcm-6775-5m9r / -v56q-mh7h-f735 (hash-collision DoS). Parent: sass.
+  'immutable@>=5.0.0-beta.1 <5.1.8': '>=5.1.8 <6.0.0'
+  # GHSA-mwp4-54f8-5fhr. Parent: @angular/cli > @modelcontextprotocol/sdk > express-rate-limit.
+  'ip-address@<=10.3.0': '>=10.3.1 <11.0.0'
+  # GHSA-2v37-7h3g-55p8 / -28wg-ghj8-5hjv. Parent: sanitize-html > postcss.
+  'nanoid@<3.3.18': '>=3.3.18 <4.0.0'
+  # GHSA-w4pp-8pjf-rmxw and GHSA-52v5-jr5w-gjxr. Parent: @angular/cli.
+  'pacote@>=11.2.7 <21.5.1': '>=21.5.1 <22.0.0'
+  'sigstore@<=4.1.0': '>=4.1.1 <5.0.0'
+  # GHSA-4cwx-7wf7-3272 / -vxpw-j846-p89q / -hm92-r4w5-c3mj / -vmh5-mc38-953g.
+  # Two majors are in the tree: @angular/build pins 7.x, node-gyp pins 6.x.
+  'undici@<6.27.0': '>=6.27.0 <7.0.0'
+  'undici@>=7.0.0 <7.29.0': '>=7.29.0 <8.0.0'
