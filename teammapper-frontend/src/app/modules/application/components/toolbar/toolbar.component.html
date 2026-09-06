@@ -168,6 +168,15 @@
     mat-icon-button>
     <mat-icon>{{ hasHiddenNodes ? 'visibility_off' : 'visibility' }}</mat-icon>
   </button>
+  <button
+    id="distribute-nodes-button"
+    (click)="mmpService.distributeNodes()"
+    [title]="'TOOLTIPS.DISTRIBUTE_NODES' | translate"
+    [disabled]="editDisabled"
+    color="primary"
+    mat-icon-button>
+    <mat-icon>account_tree</mat-icon>
+  </button>
 
   <div class="vertical-line">
     <div></div>
