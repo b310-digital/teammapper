@@ -610,16 +610,12 @@ export default class Nodes {
    * Return the orientation of a node in the map (true if left).
    * @return {boolean}
    */
-  public getOrientation(
-    node: Node | ExportNodeProperties,
-    rootNode?: Node | ExportNodeProperties
-  ): boolean | undefined {
+  public getOrientation(node: Node): boolean | undefined {
     if (node.isRoot) {
       return;
     }
 
-    const root =
-      rootNode ?? (node instanceof Node ? this.getRoot() : undefined);
+    const root = this.getRoot();
     if (!root) {
       return;
     }
@@ -757,90 +753,62 @@ export default class Nodes {
   }
 
   /**
-   * Base method for calculating node coordinates.
-   * The reason this exists is so we can work with a JSON snapshot (as given by an import), but also allow saved, "real" nodes to calculate coordinates
-   * This prevents duplication, whilst passing methods that differ depending on whether or not a JSON snapshot or "real" node is calculating coordinates.
-   * @param node Either a node previously saved or one from a JSON snapshot
-   * @param params
-   * getParent - Parent node of given node
-   * getSiblings() - Method to get the siblings of the given node
-   * isRoot - If parent node is root
-   * getOrientation() - Method to get the orientation of the node
-   * @returns
+   * Where a node added interactively goes: one column out from its parent and
+   * below its lowest sibling.
    */
-  private calculateNodeCoordinates(
-    node: Node | ExportNodeProperties,
-    params: {
-      nodeParent: (Node | ExportNodeProperties) | null;
-      getSiblings: () => (Node | ExportNodeProperties)[];
-      isRoot: boolean;
-      getOrientation: (n: Node | ExportNodeProperties) => boolean | undefined;
-    }
-  ): Coordinates {
-    const nodeParent = params.nodeParent;
+  private calculateCoordinates(node: Node): Coordinates {
+    const parent = node.parent;
+    const anchorX = parent?.coordinates?.x ?? node.coordinates?.x ?? 0;
+    const anchorY = parent?.coordinates?.y ?? node.coordinates?.y ?? 0;
+    const { column, siblings } = this.pickColumn(node);
 
-    const coordinates: Coordinates = {
-      x: nodeParent?.coordinates?.x ?? node.coordinates?.x ?? 0,
-      y: nodeParent?.coordinates?.y ?? node.coordinates?.y ?? 0,
-    };
-
-    let siblings = params.getSiblings();
-
-    if (nodeParent && params.isRoot) {
-      // This will go through sibling nodes and assign them to the left or to the right depending on the orientation of the sibling node
-      const [leftNodes, rightNodes] = siblings.reduce<
-        [(Node | ExportNodeProperties)[], (Node | ExportNodeProperties)[]]
-      >(
-        (acc, sibling) => {
-          if (params.getOrientation(sibling)) {
-            acc[0].push(sibling);
-          } else {
-            acc[1].push(sibling);
-          }
-          return acc;
-        },
-        [[], []]
-      );
-
-      if (leftNodes.length <= rightNodes.length) {
-        coordinates.x -= NODE_HORIZONTAL_SPACING;
-        siblings = leftNodes;
-      } else {
-        coordinates.x += NODE_HORIZONTAL_SPACING;
-        siblings = rightNodes;
-      }
-    } else if (!node.detached) {
-      if (nodeParent && params.getOrientation(nodeParent)) {
-        coordinates.x -= NODE_HORIZONTAL_SPACING;
-      } else {
-        coordinates.x += NODE_HORIZONTAL_SPACING;
-      }
-    }
-
-    if (siblings.length > 0) {
-      const lowerNode = this.getLowerNode(siblings);
-      coordinates.y =
-        (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
-    } else if (!node.detached) {
-      coordinates.y -= NODE_VERTICAL_SPACING;
-    }
-
-    return coordinates;
+    return { x: anchorX + column, y: this.stackBelow(node, anchorY, siblings) };
   }
 
   /**
-   * Existing method to calculate the coordinates of "real", saved nodes in the database.
-   * This method will pass on existing methods such as this.getSiblings() to calculateNodeCoordinates, so existing implementations don't break
-   * @param node
-   * @returns
+   * The column a new node lands in, as an offset from its parent, plus the
+   * siblings sharing that column. A child of the root takes the side that
+   * currently holds fewer siblings.
    */
-  private calculateCoordinates(node: Node): Coordinates {
-    return this.calculateNodeCoordinates(node, {
-      nodeParent: node.parent,
-      getSiblings: () => this.getSiblings(node),
-      isRoot: node.parent?.isRoot ?? false,
-      getOrientation: (n: Node) => this.getOrientation(n),
-    });
+  private pickColumn(node: Node): { column: number; siblings: Node[] } {
+    const siblings = this.getSiblings(node);
+    const parent = node.parent;
+
+    if (parent?.isRoot) {
+      const [left, right] = this.splitByOrientation(siblings);
+      return left.length <= right.length
+        ? { column: -NODE_HORIZONTAL_SPACING, siblings: left }
+        : { column: NODE_HORIZONTAL_SPACING, siblings: right };
+    }
+    if (node.detached) return { column: 0, siblings };
+
+    const goesLeft = !!parent && this.getOrientation(parent);
+    const column = goesLeft
+      ? -NODE_HORIZONTAL_SPACING
+      : NODE_HORIZONTAL_SPACING;
+
+    return { column, siblings };
+  }
+
+  private splitByOrientation(siblings: Node[]): [Node[], Node[]] {
+    const left: Node[] = [];
+    const right: Node[] = [];
+
+    for (const sibling of siblings) {
+      (this.getOrientation(sibling) ? left : right).push(sibling);
+    }
+
+    return [left, right];
+  }
+
+  /** Below the lowest sibling, or just above the parent when there is none. */
+  private stackBelow(node: Node, anchorY: number, siblings: Node[]): number {
+    if (siblings.length > 0) {
+      const lowerNode = this.getLowerNode(siblings);
+      return (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
+    }
+
+    return node.detached ? anchorY : anchorY - NODE_VERTICAL_SPACING;
   }
 
   /**
@@ -848,9 +816,8 @@ export default class Nodes {
    * an AI or mermaid import, which carry structure only. A node that already
    * has coordinates keeps them, so re-importing an exported map moves nothing.
    *
-   * `calculateNodeCoordinates` cannot do this job: it reads siblings that have
-   * not been positioned yet, so it superimposes whole branches on a bulk
-   * import.
+   * `calculateCoordinates` cannot do this job: it reads siblings that have not
+   * been positioned yet, so it superimposes whole branches on a bulk import.
    */
   public applyCoordinatesToMapSnapshot = (
     mapSnapshot: MapSnapshot
@@ -874,9 +841,7 @@ export default class Nodes {
    * @param {Node[]} nodes
    * @returns {Node} lowerNode
    */
-  private getLowerNode(
-    nodes: (Node | ExportNodeProperties)[]
-  ): Node | ExportNodeProperties | undefined {
+  private getLowerNode(nodes: Node[]): Node | undefined {
     if (nodes.length === 0) {
       return;
     }
