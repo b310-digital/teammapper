@@ -20,6 +20,9 @@ module.exports = {
     '!src/main.ts',
     '!src/polyfills.ts',
     '!src/environments/**',
+    'mmp/src/**/*.ts',
+    '!mmp/src/**/*.spec.ts',
+    '!mmp/src/typings.d.ts',
   ],
   coverageDirectory: 'coverage',
   modulePaths: ['<rootDir>'],
@@ -29,7 +32,9 @@ module.exports = {
   },
   testEnvironment: 'jsdom',
   transformIgnorePatterns: [
-    '/node_modules/(?!(.+\\.mjs$|.*uuid.*|zone\\.js.*|d3.*|internmap|delaunator|robust-predicates))',
+    // `.pnpm` must be allowed through, otherwise this pattern matches at pnpm's
+    // `/node_modules/.pnpm/` segment and the ESM-only d3 packages are never transformed.
+    '/node_modules/(?!(\\.pnpm|.+\\.mjs$|.*uuid.*|zone\\.js.*|d3.*|internmap|delaunator|robust-predicates))',
   ],
   maxWorkers: '50%',
   cacheDirectory: '<rootDir>/.jest-cache',
