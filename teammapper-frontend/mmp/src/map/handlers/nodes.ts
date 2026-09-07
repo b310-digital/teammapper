@@ -16,8 +16,8 @@ import { Event } from './events';
 import Log from '../../utils/log';
 import Utils from '../../utils/utils';
 import { MapSnapshot } from './history';
+import { NODE_HORIZONTAL_SPACING } from './node-geometry';
 
-const NODE_HORIZONTAL_SPACING = 200; // The x-axis spacing between parent and child nodes
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
 const NODE_VERTICAL_SPACING = 120; // The initial vertical spacing for the first child node
 /**

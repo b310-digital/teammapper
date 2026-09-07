@@ -62,3 +62,4 @@ ca/*.req
 
 .playwright-mcp
 .mcp.json
+.omc
