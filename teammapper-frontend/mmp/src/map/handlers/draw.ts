@@ -4,6 +4,12 @@ import DOMPurify from 'dompurify';
 import Map from '../map';
 import Utils from '../../utils/utils';
 import Node from '../models/node';
+import {
+  MIN_TEXT_EXTENT,
+  NODE_HEIGHT_PADDING,
+  NODE_WIDTH_PADDING,
+  estimateTextExtent,
+} from './node-geometry';
 
 /**
  * Draw the map and update it.
@@ -193,8 +199,8 @@ export default class Draw {
     const name = node.getNameDOM(),
       path = d3.path();
 
-    node.dimensions.width = name.clientWidth + 45;
-    node.dimensions.height = name.clientHeight + 30;
+    node.dimensions.width = name.clientWidth + NODE_WIDTH_PADDING;
+    node.dimensions.height = name.clientHeight + NODE_HEIGHT_PADDING;
 
     const x = node.dimensions.width / 2,
       y = node.dimensions.height / 2,
@@ -530,18 +536,13 @@ export default class Draw {
         // In these cases, try to approximate height and width before rendering.
         name.style.setProperty('width', '100%');
         name.style.setProperty('height', '100%');
-        // split by line break
-        const linesByLineBreaks = name.textContent.split(/\r?\n|\r|\n/g);
-        // take longest line as width, when no lines are present use 1 as length
-        const width = Math.max(
-          ...linesByLineBreaks.map((line: string) => line.length),
-          1
+        const { width, height } = estimateTextExtent(
+          name.textContent,
+          node.font.size
         );
-        // take number of lines as height factor
-        const height = linesByLineBreaks.length;
-        return [(width * node.font.size) / 1.2, height * node.font.size * 1.2];
+        return [width, height];
       }
-    })().map((value: number) => Math.max(value, 25));
+    })().map((value: number) => Math.max(value, MIN_TEXT_EXTENT));
 
     foreignObject.setAttribute('x', (-width / 2).toString());
     foreignObject.setAttribute('y', (-height / 2).toString());

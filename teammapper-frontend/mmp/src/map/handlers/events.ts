@@ -68,4 +68,5 @@ export enum Event {
   nodeCreate = 'mmp-node-create',
   nodePaste = 'mmp-node-paste',
   nodeRemove = 'mmp-node-remove',
+  distribute = 'mmp-distribute',
 }

@@ -12,7 +12,7 @@ services:
       POSTGRES_DATABASE: ${POSTGRES_PROD_DB}
       POSTGRES_HOST: ${POSTGRES_PROD_HOST:-postgres_prod}
       POSTGRES_PASSWORD: ${POSTGRES_PROD_PASSWORD}
-      POSTGRES_PORT: ${POSTGRES_PROD_PROD_PORT:-5432}
+      POSTGRES_PORT: ${POSTGRES_PROD_PORT:-5432}
       POSTGRES_SSL: ${POSTGRES_PROD_SSL:-true}
       POSTGRES_SSL_REJECT_UNAUTHORIZED: ${POSTGRES_PROD_SSL_REJECT_UNAUTHORIZED:-false}
       POSTGRES_USER: ${POSTGRES_PROD_USER:-teammapper-user}
@@ -26,7 +26,7 @@ services:
     depends_on:
       - postgres_prod
     volumes:
-      - ./config/settings.override.json:/home/node/app/teammapper-backend/config/settings.override.json:ro
+      - ./config/settings.override.json:/home/node/app/teammapper/config/settings.override.json:ro
 
   postgres_prod:
     image: postgres:15-alpine
@@ -43,8 +43,8 @@ services:
       # To setup an ssl-enabled postgres server locally, you need to generate a self-signed ssl certificate.
       # See README.md for more information.
       # Mount the ssl_cert_file and ssl_key_file into the docker container.
-      - ./ca/server.crt:/var/lib/postgresql/server.crt
-      - ./ca/server.key:/var/lib/postgresql/server.key
+      # - ./ca/server.crt:/var/lib/postgresql/server.crt
+      # - ./ca/server.key:/var/lib/postgresql/server.key
       - postgres_prod_data:/var/lib/postgresql/data/pgdata
 
 volumes:

@@ -36,6 +36,7 @@
     "CUT_NODE": "剪切节点",
     "PASTE_NODE": "粘贴节点",
     "HIDE_CHILD_NODES": "隐藏子节点",
+    "DISTRIBUTE_NODES": "均匀分布所有节点",
     "MOVE_NODE_TO_THE_LEFT": "左移节点",
     "MOVE_NODE_TO_THE_RIGHT": "右移节点",
     "MOVE_NODE_DOWN": "下移节点",

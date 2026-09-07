@@ -92,6 +92,7 @@ export default class MmpMap {
       copyNode: this.copyPaste.copy,
       cutNode: this.copyPaste.cut,
       applyCoordinatesToMapSnapshot: this.nodes.applyCoordinatesToMapSnapshot,
+      distributeNodes: this.nodes.distributeNodes,
       deselectNode: this.nodes.deselectNode,
       getSelectedNode: this.nodes.getSelectedNode,
       editNode: this.nodes.editNode,
@@ -136,6 +137,7 @@ export interface MmpInstance {
   copyNode: (id: string) => void;
   cutNode: (id: string) => void;
   applyCoordinatesToMapSnapshot: (mapSnapshot: MapSnapshot) => MapSnapshot;
+  distributeNodes: (notifyWithEvent?: boolean) => void;
   deselectNode: () => void;
   getSelectedNode: () => Node;
   editNode: () => void;

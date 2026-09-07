@@ -1,0 +1,24 @@
+name: Setup pnpm + Node
+description: Activate Node + pnpm via corepack, restore the pnpm store cache, and run a frozen-lockfile install.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+      with:
+        node-version: '24'
+
+    - shell: bash
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.33.4 --activate
+
+    - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+      with:
+        path: ~/.local/share/pnpm/store
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-store-${{ runner.os }}-
+
+    - shell: bash
+      run: pnpm install --frozen-lockfile

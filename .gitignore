@@ -56,10 +56,10 @@ ca/*.key
 ca/*.req
 
 .env.prod
-.npmrc
 
 # Speculatius - behavioral spec exploration output (regenerable)
 .speculatius/
 
 .playwright-mcp
 .mcp.json
+.omc

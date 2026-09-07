@@ -8,7 +8,9 @@ import { ExportNodeProperties } from '@mmp/map/types';
 
 describe('YjsUndoManager', () => {
   const ORIGIN_LOCAL = 'local';
-  const ORIGIN_IMPORT = 'import';
+  // Anything the undo manager is not configured to track. Real untracked
+  // updates arrive from the WebsocketProvider.
+  const ORIGIN_UNTRACKED = 'remote';
 
   function createMockNode(
     overrides?: Partial<ExportNodeProperties>
@@ -66,7 +68,7 @@ describe('YjsUndoManager', () => {
         isRoot: true,
         coordinates: { x: 0, y: 0 },
       },
-      ORIGIN_IMPORT
+      ORIGIN_UNTRACKED
     );
   }
 
@@ -93,8 +95,13 @@ describe('YjsUndoManager', () => {
       expect(undoManager.undoStack.length).toBe(1);
     });
 
-    it('ignores import-origin transactions', () => {
-      addNodeToMap(doc, nodesMap, { id: 'root', isRoot: true }, ORIGIN_IMPORT);
+    it('ignores transactions from an untracked origin', () => {
+      addNodeToMap(
+        doc,
+        nodesMap,
+        { id: 'root', isRoot: true },
+        ORIGIN_UNTRACKED
+      );
 
       expect(undoManager.undoStack.length).toBe(0);
     });

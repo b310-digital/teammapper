@@ -36,6 +36,7 @@
     "CUT_NODE": "Taglia nodo selezionato",
     "PASTE_NODE": "Incolla nodo copiato",
     "HIDE_CHILD_NODES": "Nascondere nodi figli",
+    "DISTRIBUTE_NODES": "Distribuire tutti i nodi uniformemente",
     "MOVE_NODE_TO_THE_LEFT": "Muovi nodo a sinistra",
     "MOVE_NODE_TO_THE_RIGHT": "Muovi nodo a destra",
     "MOVE_NODE_DOWN": "Muovi nodo in basso",

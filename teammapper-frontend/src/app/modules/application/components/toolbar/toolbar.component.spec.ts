@@ -32,6 +32,7 @@ class MmpServiceStub {
   addNode = jest.fn();
   removeNodeLink = jest.fn();
   toggleBranchVisibility = jest.fn();
+  distributeNodes = jest.fn();
   addNodeImage = jest.fn();
   importMap = jest.fn();
 }
@@ -344,6 +345,26 @@ describe('ToolbarComponent', () => {
       const undoButton =
         ctx.fixture.nativeElement.querySelector('#undo-button');
       expect(undoButton.disabled).toBe(true);
+    });
+  });
+
+  describe('distribute nodes', () => {
+    it('should render a button for distributing the nodes evenly', () => {
+      const button = ctx.fixture.nativeElement.querySelector(
+        '#distribute-nodes-button'
+      );
+
+      expect(button).not.toBeNull();
+    });
+
+    it('should distribute the nodes when the button is clicked', () => {
+      const button = ctx.fixture.nativeElement.querySelector(
+        '#distribute-nodes-button'
+      );
+
+      button.click();
+
+      expect(ctx.mmpService.distributeNodes).toHaveBeenCalled();
     });
   });
 });

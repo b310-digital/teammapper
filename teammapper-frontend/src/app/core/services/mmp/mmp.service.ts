@@ -474,6 +474,13 @@ export class MmpService implements OnDestroy {
   }
 
   /**
+   * Recompute every node's position from the tree, discarding manual placement.
+   */
+  public distributeNodes() {
+    this.currentMap.instance.distributeNodes();
+  }
+
+  /**
    * Return the children of the current node.
    */
   public nodeChildren(): ExportNodeProperties[] {

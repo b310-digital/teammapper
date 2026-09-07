@@ -62,6 +62,7 @@ describe('MmpService', () => {
       cutNode: jest.fn(),
       pasteNode: jest.fn(),
       toggleBranchVisibility: jest.fn(),
+      distributeNodes: jest.fn(),
       nodeChildren: jest.fn(),
       exportSelectedNode: jest.fn(),
       undo: jest.fn(),
@@ -263,6 +264,18 @@ describe('MmpService', () => {
         expect(result.success).toBe(true);
         expect(downloadFileSpy).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('distributeNodes', () => {
+    beforeEach(async () => {
+      await service.create('test-id', document.createElement('div'));
+    });
+
+    it('should delegate distributing the nodes to the mmp instance', () => {
+      service.distributeNodes();
+
+      expect(mockMap.instance.distributeNodes).toHaveBeenCalled();
     });
   });
 });

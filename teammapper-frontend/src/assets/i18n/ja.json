@@ -36,6 +36,7 @@
     "CUT_NODE": "ノードを切り取り",
     "PASTE_NODE": "ノードを貼り付け",
     "HIDE_CHILD_NODES": "子ノードを非表示",
+    "DISTRIBUTE_NODES": "すべてのノードを均等に配置",
     "MOVE_NODE_TO_THE_LEFT": "ノードを左へ移動",
     "MOVE_NODE_TO_THE_RIGHT": "ノードを右へ移動",
     "MOVE_NODE_DOWN": "ノードを下へ移動",
