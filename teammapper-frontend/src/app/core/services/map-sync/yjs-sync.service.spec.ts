@@ -199,10 +199,8 @@ describe('YjsSyncService', () => {
       ).toBe('import');
     });
 
-    /**
-     * Lay a root node down as a local edit, so the undo manager has a state
-     * to return to. Returns the doc's nodes map.
-     */
+    // Lay a root node down as a local edit, so the undo manager has a state
+    // to return to.
     function seedRootNode(id: string): Y.Map<Y.Map<unknown>> {
       const doc = internals(service).yDoc;
       const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
@@ -272,7 +270,15 @@ describe('YjsSyncService', () => {
           .mockImplementation(() => undefined);
       });
 
-      function replacementEvent(touchedMeta = true, local = false): unknown {
+      /**
+       * Feed the service a full-map replacement. `touchedMeta` marks it as a
+       * deliberate import or distribute rather than an undo replaying nodes;
+       * `local` marks it as our own undo rather than a peer's replacement.
+       */
+      function receiveReplacement({
+        touchedMeta = true,
+        local = false,
+      }: { touchedMeta?: boolean; local?: boolean } = {}): void {
         const changed = new Map<unknown, Set<string>>();
         if (touchedMeta) {
           changed.set(
@@ -281,11 +287,14 @@ describe('YjsSyncService', () => {
           );
         }
 
-        return {
-          changes: { keys: new Map([['root', { action: 'add' }]]) },
-          keysChanged: new Set(['root']),
-          transaction: { changed, local },
-        };
+        internals(service).handleTopLevelNodeChanges(
+          {
+            changes: { keys: new Map([['root', { action: 'add' }]]) },
+            keysChanged: new Set(['root']),
+            transaction: { changed, local },
+          },
+          nodesMap
+        );
       }
 
       function setLastOperation(operation: string): void {
@@ -297,25 +306,17 @@ describe('YjsSyncService', () => {
       it('does not show the import toast for a redistribution', () => {
         setLastOperation('distribute');
 
-        internals(service).handleTopLevelNodeChanges(
-          replacementEvent(),
-          nodesMap
-        );
+        receiveReplacement();
 
         expect(importToast).not.toHaveBeenCalled();
       });
 
       // An undo replays nodes without recording an operation, so the stale
-      // 'import' left in the meta map must not make it announce one. The
-      // operation is recorded in the doc and so is read the same way here as
-      // on the client that undid it.
+      // 'import' left in the meta map must not make it announce one.
       it('does not show the import toast when an import is undone', () => {
         setLastOperation('import');
 
-        internals(service).handleTopLevelNodeChanges(
-          replacementEvent(false),
-          nodesMap
-        );
+        receiveReplacement({ touchedMeta: false });
 
         expect(importToast).not.toHaveBeenCalled();
       });
@@ -323,10 +324,7 @@ describe('YjsSyncService', () => {
       it('does not show the import toast when a distribute is undone', () => {
         setLastOperation('distribute');
 
-        internals(service).handleTopLevelNodeChanges(
-          replacementEvent(false),
-          nodesMap
-        );
+        receiveReplacement({ touchedMeta: false });
 
         expect(importToast).not.toHaveBeenCalled();
       });
@@ -336,10 +334,7 @@ describe('YjsSyncService', () => {
       it('drops the undo history when a peer replaces the map', () => {
         seedRootNode('mine');
 
-        internals(service).handleTopLevelNodeChanges(
-          replacementEvent(),
-          nodesMap
-        );
+        receiveReplacement();
 
         expect(internals(service).yUndoManager?.undoStack.length).toBe(0);
       });
@@ -349,10 +344,7 @@ describe('YjsSyncService', () => {
       it('reports that there is nothing left to undo', () => {
         seedRootNode('mine');
 
-        internals(service).handleTopLevelNodeChanges(
-          replacementEvent(),
-          nodesMap
-        );
+        receiveReplacement();
 
         expect(context.setCanUndo).toHaveBeenLastCalledWith(false);
       });
@@ -360,10 +352,7 @@ describe('YjsSyncService', () => {
       it('keeps the history when the replacement is our own undo', () => {
         seedRootNode('mine');
 
-        internals(service).handleTopLevelNodeChanges(
-          replacementEvent(false, true),
-          nodesMap
-        );
+        receiveReplacement({ touchedMeta: false, local: true });
 
         expect(internals(service).yUndoManager?.undoStack.length).toBe(1);
       });
@@ -371,10 +360,7 @@ describe('YjsSyncService', () => {
       it('still shows the import toast for an actual import', () => {
         setLastOperation('import');
 
-        internals(service).handleTopLevelNodeChanges(
-          replacementEvent(),
-          nodesMap
-        );
+        receiveReplacement();
 
         expect(importToast).toHaveBeenCalled();
       });
