@@ -37,7 +37,16 @@ const WS_CLOSE_MAP_DELETED = 4001;
  * Yjs transaction origins are local and never reach the other clients.
  */
 type FullMapOperation = 'import' | 'distribute';
-const LAST_FULL_MAP_OPERATION = 'lastFullMapOperation';
+
+/** Doc-level metadata, shared with peers alongside the nodes themselves. */
+const META = 'meta';
+
+/**
+ * The most recent full-map announcement broadcast to peers. Only meaningful
+ * read inside the transaction that wrote it - the value it leaves behind
+ * describes a past operation, not the one being applied.
+ */
+const LAST_MAP_ANNOUNCEMENT = 'lastMapAnnouncement';
 
 /**
  * The origin every write of ours carries, and the only one the undo manager
@@ -442,7 +451,7 @@ export class YjsSyncService {
     this.yUndoManager?.stopCapturing();
 
     this.yDoc.transact(() => {
-      this.yDoc.getMap('meta').set(LAST_FULL_MAP_OPERATION, operation);
+      this.yDoc.getMap(META).set(LAST_MAP_ANNOUNCEMENT, operation);
       this.clearAndRepopulateNodes(nodesMap, sorted);
     }, LOCAL_ORIGIN);
   }
@@ -450,13 +459,15 @@ export class YjsSyncService {
   /**
    * A redistribution replaces the map the way an import does, and an undo
    * replays the nodes without recording an operation at all. Only a deliberate
-   * replacement writes the meta map in the same transaction as the nodes.
+   * replacement announces itself in the same transaction as the nodes, so the
+   * announcement is read per key: an unrelated write to `meta` is not one.
    */
   private shouldAnnounceImport(mapEvent: Y.YMapEvent<Y.Map<unknown>>): boolean {
-    const meta = this.yDoc.getMap('meta');
-    if (!mapEvent.transaction.changed.has(meta)) return false;
+    const meta = this.yDoc.getMap(META);
+    const announced = mapEvent.transaction.changed.get(meta);
+    if (!announced?.has(LAST_MAP_ANNOUNCEMENT)) return false;
 
-    return meta.get(LAST_FULL_MAP_OPERATION) !== 'distribute';
+    return meta.get(LAST_MAP_ANNOUNCEMENT) !== 'distribute';
   }
 
   private clearAndRepopulateNodes(

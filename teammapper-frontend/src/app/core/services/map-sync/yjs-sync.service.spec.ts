@@ -187,7 +187,7 @@ describe('YjsSyncService', () => {
       handlers['distribute']();
 
       expect(
-        internals(service).yDoc.getMap('meta').get('lastFullMapOperation')
+        internals(service).yDoc.getMap('meta').get('lastMapAnnouncement')
       ).toBe('distribute');
     });
 
@@ -195,7 +195,7 @@ describe('YjsSyncService', () => {
       handlers['create']();
 
       expect(
-        internals(service).yDoc.getMap('meta').get('lastFullMapOperation')
+        internals(service).yDoc.getMap('meta').get('lastMapAnnouncement')
       ).toBe('import');
     });
 
@@ -271,19 +271,19 @@ describe('YjsSyncService', () => {
       });
 
       /**
-       * Feed the service a full-map replacement. `touchedMeta` marks it as a
-       * deliberate import or distribute rather than an undo replaying nodes;
+       * Feed the service a full-map replacement. `metaKeys` are the meta keys
+       * the transaction wrote - an announcement, or nothing for an undo replay;
        * `local` marks it as our own undo rather than a peer's replacement.
        */
       function receiveReplacement({
-        touchedMeta = true,
+        metaKeys = ['lastMapAnnouncement'],
         local = false,
-      }: { touchedMeta?: boolean; local?: boolean } = {}): void {
+      }: { metaKeys?: string[]; local?: boolean } = {}): void {
         const changed = new Map<unknown, Set<string>>();
-        if (touchedMeta) {
+        if (metaKeys.length > 0) {
           changed.set(
             internals(service).yDoc.getMap('meta'),
-            new Set(['lastFullMapOperation'])
+            new Set(metaKeys)
           );
         }
 
@@ -300,7 +300,7 @@ describe('YjsSyncService', () => {
       function setLastOperation(operation: string): void {
         internals(service)
           .yDoc.getMap('meta')
-          .set('lastFullMapOperation', operation);
+          .set('lastMapAnnouncement', operation);
       }
 
       it('does not show the import toast for a redistribution', () => {
@@ -316,7 +316,7 @@ describe('YjsSyncService', () => {
       it('does not show the import toast when an import is undone', () => {
         setLastOperation('import');
 
-        receiveReplacement({ touchedMeta: false });
+        receiveReplacement({ metaKeys: [] });
 
         expect(importToast).not.toHaveBeenCalled();
       });
@@ -324,7 +324,7 @@ describe('YjsSyncService', () => {
       it('does not show the import toast when a distribute is undone', () => {
         setLastOperation('distribute');
 
-        receiveReplacement({ touchedMeta: false });
+        receiveReplacement({ metaKeys: [] });
 
         expect(importToast).not.toHaveBeenCalled();
       });
@@ -352,9 +352,19 @@ describe('YjsSyncService', () => {
       it('keeps the history when the replacement is our own undo', () => {
         seedRootNode('mine');
 
-        receiveReplacement({ touchedMeta: false, local: true });
+        receiveReplacement({ metaKeys: [], local: true });
 
         expect(internals(service).yUndoManager?.undoStack.length).toBe(1);
+      });
+
+      // The announcement is read per key, so `meta` gaining unrelated fields
+      // later must not turn every replacement into an import.
+      it('does not show the import toast for an unrelated meta write', () => {
+        setLastOperation('import');
+
+        receiveReplacement({ metaKeys: ['someOtherField'] });
+
+        expect(importToast).not.toHaveBeenCalled();
       });
 
       it('still shows the import toast for an actual import', () => {
