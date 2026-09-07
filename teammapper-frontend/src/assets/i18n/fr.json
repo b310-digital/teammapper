@@ -36,6 +36,7 @@
     "CUT_NODE": "Coupe le nœud actuel",
     "PASTE_NODE": "Collez le noeud copié",
     "HIDE_CHILD_NODES": "Masquer les nœuds enfants",
+    "DISTRIBUTE_NODES": "Répartir tous les nœuds uniformément",
     "MOVE_NODE_TO_THE_LEFT": "Déplace le nœud vers la gauche",
     "MOVE_NODE_TO_THE_RIGHT": "Déplace le noeud vers la droite",
     "MOVE_NODE_DOWN": "Déplace le nœud vers le bas",

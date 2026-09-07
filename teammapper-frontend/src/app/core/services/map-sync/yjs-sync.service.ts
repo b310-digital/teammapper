@@ -32,6 +32,13 @@ import {
 
 const WS_CLOSE_MAP_DELETED = 4001;
 
+/**
+ * Which operation caused a full-map replacement. Recorded in the doc because
+ * Yjs transaction origins are local and never reach the other clients.
+ */
+type FullMapOperation = 'import' | 'distribute';
+const LAST_FULL_MAP_OPERATION = 'lastFullMapOperation';
+
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
   private wsProvider: WebsocketProvider | null = null;
@@ -141,7 +148,9 @@ export class YjsSyncService {
   private initUndoManager(): void {
     const nodesMap = this.yDoc.getMap('nodes');
     this.yUndoManager = new Y.UndoManager(nodesMap, {
-      trackedOrigins: new Set(['local']),
+      // A distribute is tracked so one press is one undo. An import is not:
+      // loading a different map over this one is not an editing step.
+      trackedOrigins: new Set(['local', 'distribute']),
     });
     this.setupUndoManagerListeners();
   }
@@ -252,6 +261,7 @@ export class YjsSyncService {
   private createListeners(): void {
     this.unsubscribeListeners();
     this.setupCreateHandler();
+    this.setupDistributeHandler();
     this.setupSelectionHandlers();
     this.setupNodeUpdateHandler();
     this.setupNodeCreateHandler();
@@ -265,8 +275,24 @@ export class YjsSyncService {
         this.ctx.setAttachedNode(this.mmpService.selectNode());
         this.ctx.updateAttachedMap();
         if (this.yjsSynced) {
-          this.writeImportToYDoc();
+          this.writeFullMapToYDoc('import');
         }
+      })
+    );
+  }
+
+  /**
+   * A redistribution rewrites every node's coordinates at once, so it goes out
+   * as a full-map replacement rather than as one update per node.
+   */
+  private setupDistributeHandler(): void {
+    this.yjsSubscriptions.push(
+      this.mmpService.on('distribute').subscribe(() => {
+        if (!this.yDoc) return;
+        if (this.yjsSynced) {
+          this.writeFullMapToYDoc('distribute');
+        }
+        this.ctx.updateAttachedMap();
       })
     );
   }
@@ -391,14 +417,25 @@ export class YjsSyncService {
     }, 'local');
   }
 
-  private writeImportToYDoc(): void {
+  private writeFullMapToYDoc(operation: FullMapOperation): void {
     const snapshot = this.mmpService.exportAsJSON();
     const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
     const sorted = sortParentFirst(snapshot);
 
+    // Without this, Yjs merges the replacement with whatever the user did in
+    // the preceding half second and one undo would revert both.
+    this.yUndoManager?.stopCapturing();
+
     this.yDoc.transact(() => {
+      this.yDoc.getMap('meta').set(LAST_FULL_MAP_OPERATION, operation);
       this.clearAndRepopulateNodes(nodesMap, sorted);
-    }, 'import');
+    }, operation);
+  }
+
+  private lastFullMapOperation(): FullMapOperation {
+    const recorded = this.yDoc.getMap('meta').get(LAST_FULL_MAP_OPERATION);
+
+    return recorded === 'distribute' ? 'distribute' : 'import';
   }
 
   private clearAndRepopulateNodes(
@@ -469,7 +506,11 @@ export class YjsSyncService {
 
     if (this.isFullMapReplacement(mapEvent, nodesMap)) {
       this.loadMapFromYDoc();
-      this.showImportToast();
+      // A redistribution replaces the map the way an import does, but must not
+      // be announced as one.
+      if (this.lastFullMapOperation() !== 'distribute') {
+        this.showImportToast();
+      }
       return;
     }
 

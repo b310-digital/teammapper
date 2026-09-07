@@ -16,7 +16,7 @@ import { Event } from './events';
 import Log from '../../utils/log';
 import Utils from '../../utils/utils';
 import { MapSnapshot } from './history';
-import { computeMapLayout } from './layout';
+import { computeMapLayout, LayoutInputNode } from './layout';
 import { NODE_HORIZONTAL_SPACING } from './node-geometry';
 
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
@@ -835,6 +835,66 @@ export default class Nodes {
       return node;
     });
   };
+
+  /**
+   * Recompute every node's coordinates from the tree structure and the node
+   * sizes, discarding manual positioning. One mmp history entry covers the
+   * whole rewrite; the undo the user actually sees comes from the Y.Doc
+   * transaction that the distribute event triggers.
+   */
+  public distributeNodes = (notifyWithEvent = true) => {
+    const layout = computeMapLayout(this.toLayoutInput());
+    if (layout.size === 0) return;
+
+    for (const [id, coordinates] of layout) {
+      this.moveNodeTo(id, coordinates);
+    }
+
+    // Redrawing the branches costs a full selection pass, so it happens once
+    // here rather than once per node as the single-node move path does.
+    this.redrawBranches();
+    this.map.draw.update();
+    this.map.history.save();
+
+    if (notifyWithEvent) {
+      this.map.events.call(Event.distribute);
+    }
+  };
+
+  /** Move one node, leaving the branch redraw to the caller. */
+  private moveNodeTo(id: string, coordinates: Coordinates): void {
+    const node = this.nodes.get(id);
+    if (!node) return;
+
+    node.coordinates = { x: coordinates.x, y: coordinates.y };
+    node.dom?.setAttribute(
+      'transform',
+      'translate(' + [coordinates.x, coordinates.y] + ')'
+    );
+  }
+
+  private redrawBranches(): void {
+    d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
+      // A detached node has no parent and so no branch to draw. Returning
+      // null makes d3 drop the attribute, as the other redraw paths do.
+      const branch = this.map.draw.drawBranch(node);
+
+      return branch ? branch.toString() : null;
+    });
+  }
+
+  private toLayoutInput(): LayoutInputNode[] {
+    return Array.from(this.nodes.values()).map(node => ({
+      id: node.id,
+      parent: node.parent ? node.parent.id : '',
+      isRoot: node.isRoot,
+      detached: node.detached,
+      name: node.name,
+      font: node.font,
+      coordinates: node.coordinates,
+      dimensions: node.dimensions,
+    }));
+  }
 
   /**
    * Return the lower node of a list of nodes.
