@@ -16,6 +16,7 @@ import { Event } from './events';
 import Log from '../../utils/log';
 import Utils from '../../utils/utils';
 import { MapSnapshot } from './history';
+import { computeMapLayout } from './layout';
 import { NODE_HORIZONTAL_SPACING } from './node-geometry';
 
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
@@ -842,34 +843,26 @@ export default class Nodes {
     });
   }
 
+  /**
+   * Position the snapshot nodes that arrive without coordinates - every node of
+   * an AI or mermaid import, which carry structure only. A node that already
+   * has coordinates keeps them, so re-importing an exported map moves nothing.
+   *
+   * `calculateNodeCoordinates` cannot do this job: it reads siblings that have
+   * not been positioned yet, so it superimposes whole branches on a bulk
+   * import.
+   */
   public applyCoordinatesToMapSnapshot = (
     mapSnapshot: MapSnapshot
   ): MapSnapshot => {
-    const rootNode = mapSnapshot.find(x => x.isRoot);
+    if (mapSnapshot.every(node => !!node.coordinates)) return mapSnapshot;
+
+    const layout = computeMapLayout(mapSnapshot);
 
     return mapSnapshot.map(node => {
-      if (!node.coordinates) {
-        /**
-         * Since we're working with a JSON snapshot here, none of the nodes actually exist.
-         * This makes existing methods such as this.getSiblings() useless, because they only work with existing nodes.
-         * So here, we pass on methods that work directly with the JSON.
-         */
-        node.coordinates = this.calculateNodeCoordinates(node, {
-          nodeParent: node.parent
-            ? mapSnapshot.find(x => x.id === node.parent)
-            : null,
-          getSiblings: () =>
-            node.parent
-              ? mapSnapshot.filter(
-                  x => x.parent === node.parent && x.id !== node.id
-                )
-              : [],
-          isRoot:
-            !!node.parent &&
-            mapSnapshot.find(x => x.id === node.parent)?.isRoot,
-          getOrientation: (n: ExportNodeProperties) =>
-            this.getOrientation(n, rootNode),
-        });
+      const position = layout.get(node.id);
+      if (!node.coordinates && position) {
+        node.coordinates = { x: position.x, y: position.y };
       }
 
       return node;
