@@ -26,8 +26,11 @@ div.floating-buttons {
     color: #fff;
 
     &:disabled {
-      color: rgba(0, 0, 0, 0.26);
-      background: rgba(0, 0, 0, 0.26) !important;
+      color: var(--color-float-btn-disabled-color, rgba(0, 0, 0, 0.26));
+      background: var(
+        --color-float-btn-disabled-bg,
+        rgba(0, 0, 0, 0.26)
+      ) !important;
     }
   }
 

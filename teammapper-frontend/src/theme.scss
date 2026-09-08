@@ -25,13 +25,23 @@ $app-theme: mat.m2-define-light-theme(
   )
 );
 
+// Palettes for dark theme (using lighter hues per Material Design dark theme specs)
+$app-dark-primary: mat.m2-define-palette(
+  mat.$m2-blue-gray-palette,
+  200,
+  100,
+  400
+);
+$app-dark-accent: mat.m2-define-palette(mat.$m2-blue-gray-palette, 100);
+$app-dark-warn: mat.m2-define-palette(mat.$m2-red-palette, 300);
+
 // Create the dark theme object (a Sass map containing all of the palettes).
 $app-dark-theme: mat.m2-define-dark-theme(
   (
     color: (
-      primary: $app-primary,
-      accent: $app-accent,
-      warn: $app-warn,
+      primary: $app-dark-primary,
+      accent: $app-dark-accent,
+      warn: $app-dark-warn,
     ),
     typography: mat.m2-define-typography-config(),
     density: 0,

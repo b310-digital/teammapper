@@ -1,6 +1,14 @@
 #qr-code-canvas {
   display: flex;
   justify-content: center;
+
+  svg,
+  canvas {
+    padding: 12px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+  }
 }
 
 mat-form-field {

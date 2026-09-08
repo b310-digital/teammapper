@@ -72,7 +72,10 @@ export default class Export {
 
         context.drawImage(image, 0, 0);
         context.globalCompositeOperation = 'destination-over';
-        context.fillStyle = '#ffffff';
+        const isDarkMode =
+          typeof document !== 'undefined' &&
+          document.body?.classList.contains('dark-mode');
+        context.fillStyle = isDarkMode ? '#1e1e1e' : '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
         if (typeof type === 'string') {
@@ -125,6 +128,22 @@ export default class Export {
       style.innerHTML = '<![CDATA[\n' + css + '\n]]>';
       defs.appendChild(style);
       svg.appendChild(defs);
+    }
+
+    const isDarkMode =
+      typeof document !== 'undefined' &&
+      document.body?.classList.contains('dark-mode');
+    if (isDarkMode) {
+      const bgRect = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'rect'
+      );
+      bgRect.setAttribute('x', x.toString());
+      bgRect.setAttribute('y', y.toString());
+      bgRect.setAttribute('width', w.toString());
+      bgRect.setAttribute('height', h.toString());
+      bgRect.setAttribute('fill', '#1e1e1e');
+      svg.appendChild(bgRect);
     }
 
     clone.setAttribute('transform', 'translate(0,0)');

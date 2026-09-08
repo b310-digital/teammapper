@@ -56,29 +56,59 @@ export class SettingsService {
   }
 
   /**
-   * Initialize settings with the default or cached values and return them.
+   * Resolve user settings with dark mode migration fallback.
    */
-  public async init() {
-    const defaultSettings: Settings = await this.getDefaultSettings();
-    defaultSettings.userSettings.general.language =
-      this.translateService.getBrowserLang() ??
-      defaultSettings.userSettings.general.language;
-    const loadedSettings = (await this.storageService.get(
-      STORAGE_KEYS.SETTINGS
-    )) as UserSettings | null;
-
-    if (!loadedSettings) {
-      defaultSettings.userSettings.general.darkMode =
-        this.getSystemDarkModePreference();
+  private resolveUserSettings(
+    loaded: UserSettings | null,
+    defaults: UserSettings
+  ): UserSettings {
+    if (!loaded) {
+      defaults.general.darkMode = this.getSystemDarkModePreference();
+      return defaults;
     }
+    if (loaded.general.darkMode === undefined) {
+      loaded.general.darkMode = this.getSystemDarkModePreference();
+    }
+    return loaded;
+  }
 
-    const userSettings = loadedSettings || defaultSettings.userSettings;
+  /**
+   * Initialize default settings with browser language.
+   */
+  private async loadDefaultSettings(): Promise<Settings> {
+    const defaults = await this.getDefaultSettings();
+    defaults.userSettings.general.language =
+      this.translateService.getBrowserLang() ??
+      defaults.userSettings.general.language;
+    return defaults;
+  }
 
-    // Save the default settings.
+  /**
+   * Apply settings to application state and persistence.
+   */
+  private async applyAndPersistSettings(
+    userSettings: UserSettings,
+    systemSettings: SystemSettings
+  ): Promise<void> {
     await this.storageService.set(STORAGE_KEYS.SETTINGS, userSettings);
     this.userSettingsSubject.next(userSettings);
     this.applyDarkMode(userSettings.general.darkMode);
-    this.systemSettingsSubject.next(defaultSettings.systemSettings);
+    this.systemSettingsSubject.next(systemSettings);
+  }
+
+  /**
+   * Initialize settings with the default or cached values and return them.
+   */
+  public async init(): Promise<boolean> {
+    const defaults = await this.loadDefaultSettings();
+    const loaded = (await this.storageService.get(
+      STORAGE_KEYS.SETTINGS
+    )) as UserSettings | null;
+    const userSettings = this.resolveUserSettings(
+      loaded,
+      defaults.userSettings
+    );
+    await this.applyAndPersistSettings(userSettings, defaults.systemSettings);
     return true;
   }
 

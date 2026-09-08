@@ -47,3 +47,33 @@ mat-toolbar::-webkit-scrollbar-thumb:hover {
 input[type='file'] {
   display: none;
 }
+
+:host-context(body.dark-mode) {
+  mat-toolbar {
+    button.mat-mdc-icon-button,
+    .mat-mdc-icon-button {
+      color: #ffffff !important;
+
+      .mat-icon {
+        color: #ffffff !important;
+      }
+
+      &:hover:not(:disabled):not(.mat-button-disabled) {
+        background-color: rgba(255, 255, 255, 0.08);
+      }
+
+      &:disabled,
+      &.mat-button-disabled {
+        color: rgba(255, 255, 255, 0.38) !important;
+
+        .mat-icon {
+          color: rgba(255, 255, 255, 0.38) !important;
+        }
+      }
+    }
+  }
+
+  .label-file-upload:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}

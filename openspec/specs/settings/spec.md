@@ -62,3 +62,45 @@ The system SHALL display a list of recently opened mind maps in a dedicated sett
 #### Scenario: Navigate to map
 - **WHEN** the user clicks a map entry link
 - **THEN** they SHALL be navigated to that map
+
+### Requirement: Dark Mode Configuration & Persistence
+The system SHALL store the user's dark mode preference as part of `userSettings.general.darkMode`. The preference SHALL be persisted locally across browser sessions and reflected in application state.
+
+#### Scenario: First visit initializes dark mode from system preference
+- **WHEN** a user visits TeamMapper without existing stored settings
+- **AND** the operating system or browser indicates `prefers-color-scheme: dark`
+- **THEN** `userSettings.general.darkMode` SHALL be initialized to `true`
+- **AND** the dark mode theme SHALL be applied immediately to the document
+
+#### Scenario: First visit with light system preference
+- **WHEN** a user visits TeamMapper without existing stored settings
+- **AND** the operating system or browser does not indicate dark mode preference
+- **THEN** `userSettings.general.darkMode` SHALL be initialized to `false`
+- **AND** the default light theme SHALL remain active
+
+#### Scenario: Existing user settings without darkMode property (Migration)
+- **WHEN** a user with previously cached settings from an older version opens the application
+- **AND** `loadedSettings.general.darkMode` is `undefined`
+- **THEN** the system SHALL fall back to the system preference (`prefers-color-scheme: dark`)
+- **AND** the migrated settings SHALL be saved to local storage
+
+### Requirement: Dark Mode Setting Toggle in User Interface
+The system SHALL provide a dedicated toggle control for Dark Mode on the General tab of the Settings page (`/app/settings`).
+
+#### Scenario: Toggle dark mode on
+- **WHEN** the user navigates to `/app/settings`
+- **AND** toggles the "Dark mode" switch to enabled
+- **THEN** the application theme SHALL immediately switch to dark mode without requiring a page reload
+- **AND** the `dark-mode` class SHALL be added to `document.body`
+- **AND** the updated setting SHALL be persisted in storage
+
+#### Scenario: Toggle dark mode off
+- **WHEN** the user toggles the "Dark mode" switch to disabled
+- **THEN** the application theme SHALL immediately switch back to light mode
+- **AND** the `dark-mode` class SHALL be removed from `document.body`
+- **AND** the updated setting SHALL be persisted in storage
+
+#### Scenario: Dark mode toggle localization
+- **WHEN** the settings page is displayed in any supported language (en, de, es, fr, it, ja, pt-br, zh-cn, zh-tw)
+- **THEN** the label for the dark mode toggle SHALL be translated using the key `PAGES.SETTINGS.DARK_MODE`
+

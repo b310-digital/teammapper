@@ -249,5 +249,43 @@ describe('SettingsService', () => {
         })
       );
     });
+
+    it('migrates cached settings when darkMode is undefined', async () => {
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: jest.fn().mockImplementation(query => ({
+          matches: true,
+          media: query,
+          onchange: null,
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          dispatchEvent: jest.fn(),
+        })),
+      });
+
+      const legacyCachedSettings = {
+        general: { language: 'de' },
+      };
+      const defaultSettings = {
+        userSettings: { general: { language: 'en', darkMode: false } },
+      };
+
+      httpService.get.mockResolvedValue({
+        json: () => Promise.resolve(defaultSettings),
+      } as unknown as Response);
+      storageService.get.mockResolvedValue(legacyCachedSettings);
+
+      await settingsService.init();
+
+      expect(storageService.set).toHaveBeenCalledWith(
+        'settings',
+        expect.objectContaining({
+          general: expect.objectContaining({ language: 'de', darkMode: true }),
+        })
+      );
+      expect(document.body.classList.contains('dark-mode')).toBe(true);
+    });
   });
 });

@@ -10,3 +10,15 @@
   background: var(--color-primary-light);
   cursor: pointer;
 }
+
+:host-context(body.dark-mode) {
+  .image-wrapper {
+    background-color: #ffffff;
+    border-radius: 4px;
+    padding: 4px;
+
+    &:hover {
+      background-color: #f0f0f0;
+    }
+  }
+}

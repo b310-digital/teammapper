@@ -89,3 +89,23 @@ section.jumbotron {
     overflow-wrap: break-word;
   }
 }
+
+:host-context(body.dark-mode) section.jumbotron {
+  background-color: var(--color-bg-secondary);
+
+  h1,
+  h4,
+  p,
+  .white-list {
+    color: var(--color-text-primary);
+  }
+
+  > div > a {
+    color: var(--color-primary);
+  }
+
+  .alert {
+    color: var(--color-text-primary);
+    opacity: 0.85;
+  }
+}
