@@ -37,7 +37,23 @@ const WS_CLOSE_MAP_DELETED = 4001;
  * Yjs transaction origins are local and never reach the other clients.
  */
 type FullMapOperation = 'import' | 'distribute';
-const LAST_FULL_MAP_OPERATION = 'lastFullMapOperation';
+
+/** Doc-level metadata, shared with peers alongside the nodes themselves. */
+const META = 'meta';
+
+/**
+ * The most recent full-map announcement broadcast to peers. Only meaningful
+ * read inside the transaction that wrote it - the value it leaves behind
+ * describes a past operation, not the one being applied.
+ */
+const LAST_MAP_ANNOUNCEMENT = 'lastMapAnnouncement';
+
+/**
+ * The origin every write of ours carries, and the only one the undo manager
+ * tracks. A peer's change arrives with the WebsocketProvider as its origin,
+ * so it is never ours to undo.
+ */
+const LOCAL_ORIGIN = 'local';
 
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
@@ -148,9 +164,10 @@ export class YjsSyncService {
   private initUndoManager(): void {
     const nodesMap = this.yDoc.getMap('nodes');
     this.yUndoManager = new Y.UndoManager(nodesMap, {
-      // A distribute is tracked so one press is one undo. An import is not:
-      // loading a different map over this one is not an editing step.
-      trackedOrigins: new Set(['local', 'distribute']),
+      // Everything we write is undoable, full-map replacements included: a
+      // distribute reverts the layout, an import restores the map it replaced.
+      // Merely opening a map is not a write - see setupCreateHandler.
+      trackedOrigins: new Set([LOCAL_ORIGIN]),
     });
     this.setupUndoManagerListeners();
   }
@@ -164,6 +181,7 @@ export class YjsSyncService {
 
     this.yUndoManager.on('stack-item-added', updateUndoRedoState);
     this.yUndoManager.on('stack-item-popped', updateUndoRedoState);
+    this.yUndoManager.on('stack-cleared', updateUndoRedoState);
   }
 
   private setupConnectionStatus(): void {
@@ -269,6 +287,12 @@ export class YjsSyncService {
     this.setupNodeRemoveHandler();
   }
 
+  /**
+   * An import replaces the whole map, so it goes out as a full-map
+   * replacement. Opening a map emits `create` too, but never reaches the undo
+   * stack: MapSyncService.initMap emits it before subscribing here, and
+   * loadMapFromYDoc replays the map with notifyWithEvent = false.
+   */
   private setupCreateHandler(): void {
     this.yjsSubscriptions.push(
       this.mmpService.on('create').subscribe((_result: MapCreateEvent) => {
@@ -376,7 +400,7 @@ export class YjsSyncService {
       const yNode = new Y.Map<unknown>();
       populateYMapFromNodeProps(yNode, nodeProps);
       nodesMap.set(nodeProps.id, yNode);
-    }, 'local');
+    }, LOCAL_ORIGIN);
   }
 
   private writeNodeUpdateToYDoc(event: NodeUpdateEvent): void {
@@ -389,7 +413,7 @@ export class YjsSyncService {
       const value =
         event.nodeProperties[topLevelKey as keyof ExportNodeProperties];
       yNode.set(topLevelKey, value);
-    }, 'local');
+    }, LOCAL_ORIGIN);
   }
 
   private writeNodeRemoveFromYDoc(nodeId: string): void {
@@ -403,7 +427,7 @@ export class YjsSyncService {
       for (const id of descendantIds) {
         nodesMap.delete(id);
       }
-    }, 'local');
+    }, LOCAL_ORIGIN);
   }
 
   private writeNodesPasteToYDoc(nodes: ExportNodeProperties[]): void {
@@ -414,7 +438,7 @@ export class YjsSyncService {
         populateYMapFromNodeProps(yNode, node);
         nodesMap.set(node.id, yNode);
       }
-    }, 'local');
+    }, LOCAL_ORIGIN);
   }
 
   private writeFullMapToYDoc(operation: FullMapOperation): void {
@@ -427,15 +451,23 @@ export class YjsSyncService {
     this.yUndoManager?.stopCapturing();
 
     this.yDoc.transact(() => {
-      this.yDoc.getMap('meta').set(LAST_FULL_MAP_OPERATION, operation);
+      this.yDoc.getMap(META).set(LAST_MAP_ANNOUNCEMENT, operation);
       this.clearAndRepopulateNodes(nodesMap, sorted);
-    }, operation);
+    }, LOCAL_ORIGIN);
   }
 
-  private lastFullMapOperation(): FullMapOperation {
-    const recorded = this.yDoc.getMap('meta').get(LAST_FULL_MAP_OPERATION);
+  /**
+   * A redistribution replaces the map the way an import does, and an undo
+   * replays the nodes without recording an operation at all. Only a deliberate
+   * replacement announces itself in the same transaction as the nodes, so the
+   * announcement is read per key: an unrelated write to `meta` is not one.
+   */
+  private shouldAnnounceImport(mapEvent: Y.YMapEvent<Y.Map<unknown>>): boolean {
+    const meta = this.yDoc.getMap(META);
+    const announced = mapEvent.transaction.changed.get(meta);
+    if (!announced?.has(LAST_MAP_ANNOUNCEMENT)) return false;
 
-    return recorded === 'distribute' ? 'distribute' : 'import';
+    return meta.get(LAST_MAP_ANNOUNCEMENT) !== 'distribute';
   }
 
   private clearAndRepopulateNodes(
@@ -459,7 +491,7 @@ export class YjsSyncService {
       optionsMap.set('fontMaxSize', options.fontMaxSize);
       optionsMap.set('fontMinSize', options.fontMinSize);
       optionsMap.set('fontIncrement', options.fontIncrement);
-    }, 'local');
+    }, LOCAL_ORIGIN);
   }
 
   private async deleteMapViaHttp(adminId: string): Promise<void> {
@@ -506,9 +538,11 @@ export class YjsSyncService {
 
     if (this.isFullMapReplacement(mapEvent, nodesMap)) {
       this.loadMapFromYDoc();
-      // A redistribution replaces the map the way an import does, but must not
-      // be announced as one.
-      if (this.lastFullMapOperation() !== 'distribute') {
+      // A peer replaced the whole map, so our history describes a map that no
+      // longer exists. A replacement is a delete-and-reinsert that no CRDT can
+      // merge back, so undoing into it would leave the map with two roots.
+      if (!mapEvent.transaction.local) this.yUndoManager?.clear();
+      if (this.shouldAnnounceImport(mapEvent)) {
         this.showImportToast();
       }
       return;
