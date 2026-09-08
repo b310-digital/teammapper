@@ -178,6 +178,24 @@ body.dark-mode {
       }
     }
   }
+
+  // Floating action buttons (bottom right: zoom controls, center map)
+  .floating-buttons {
+    .zoom-in button,
+    .zoom-out button,
+    .center button {
+      background-color: var(--color-bg-surface) !important;
+      color: #ffffff !important;
+
+      .mat-icon {
+        color: #ffffff !important;
+      }
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+      }
+    }
+  }
 }
 
 // Color picker override

@@ -89,5 +89,9 @@ test('toggles dark mode in settings and persists', async ({ page }) => {
     await expect(page.locator('body')).not.toHaveClass(/dark-mode/);
   } else {
     await expect(page.locator('body')).toHaveClass(/dark-mode/);
+    const zoomIconColor = await page
+      .locator('#zoom-in-button mat-icon')
+      .evaluate(el => window.getComputedStyle(el).color);
+    expect(zoomIconColor).toBe('rgb(255, 255, 255)');
   }
 });

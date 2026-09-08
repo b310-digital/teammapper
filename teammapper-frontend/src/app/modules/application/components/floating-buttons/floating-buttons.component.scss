@@ -54,6 +54,15 @@ div.floating-buttons {
   .zoom-out,
   .center {
     right: 15px;
+
+    button {
+      background-color: var(--color-bg-surface);
+      color: var(--color-primary);
+
+      .mat-icon {
+        color: var(--color-primary);
+      }
+    }
   }
 
   .zoom-out {
@@ -66,5 +75,26 @@ div.floating-buttons {
 
   .center {
     bottom: 5px;
+  }
+}
+
+:host-context(body.dark-mode) {
+  div.floating-buttons {
+    .zoom-in,
+    .zoom-out,
+    .center {
+      button {
+        background-color: var(--color-bg-surface);
+        color: #ffffff;
+
+        .mat-icon {
+          color: #ffffff !important;
+        }
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.08);
+        }
+      }
+    }
   }
 }
