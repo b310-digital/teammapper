@@ -21,6 +21,27 @@ mat-toolbar {
     flex: 1 1 auto;
     min-width: 50px;
   }
+  button.mat-mdc-icon-button,
+  .mat-mdc-icon-button {
+    color: var(--color-toolbar-icon);
+
+    .mat-icon {
+      color: var(--color-toolbar-icon);
+    }
+
+    &:hover:not(:disabled):not(.mat-button-disabled) {
+      background-color: var(--color-bg-hover);
+    }
+
+    &:disabled,
+    &.mat-button-disabled {
+      color: var(--color-toolbar-icon-disabled);
+
+      .mat-icon {
+        color: var(--color-toolbar-icon-disabled);
+      }
+    }
+  }
 }
 
 // Scrollbar properties.
@@ -41,39 +62,9 @@ mat-toolbar::-webkit-scrollbar-thumb:hover {
 }
 
 .label-file-upload:hover {
-  background: var(--color-primary-light);
+  background: var(--color-bg-hover);
 }
 
 input[type='file'] {
   display: none;
-}
-
-:host-context(body.dark-mode) {
-  mat-toolbar {
-    button.mat-mdc-icon-button,
-    .mat-mdc-icon-button {
-      color: #ffffff !important;
-
-      .mat-icon {
-        color: #ffffff !important;
-      }
-
-      &:hover:not(:disabled):not(.mat-button-disabled) {
-        background-color: rgba(255, 255, 255, 0.08);
-      }
-
-      &:disabled,
-      &.mat-button-disabled {
-        color: rgba(255, 255, 255, 0.38) !important;
-
-        .mat-icon {
-          color: rgba(255, 255, 255, 0.38) !important;
-        }
-      }
-    }
-  }
-
-  .label-file-upload:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
 }

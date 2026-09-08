@@ -287,5 +287,19 @@ describe('SettingsService', () => {
       );
       expect(document.body.classList.contains('dark-mode')).toBe(true);
     });
+
+    it('falls back to cached settings if fetching defaults fails', async () => {
+      const cachedSettings = {
+        general: { language: 'de', darkMode: true },
+      };
+      httpService.get.mockRejectedValue(new Error('Network error'));
+      storageService.get.mockResolvedValue(cachedSettings);
+
+      const result = await settingsService.init();
+
+      expect(result).toBe(true);
+      expect(settingsService.getCachedUserSettings()).toEqual(cachedSettings);
+      expect(document.body.classList.contains('dark-mode')).toBe(true);
+    });
   });
 });

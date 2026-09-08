@@ -6,19 +6,13 @@
   font-size: small;
 }
 
-.image-wrapper:hover {
-  background: var(--color-primary-light);
+.image-wrapper {
+  background-color: var(--color-picto-bg);
+  border-radius: 4px;
+  padding: 4px;
   cursor: pointer;
-}
 
-:host-context(body.dark-mode) {
-  .image-wrapper {
-    background-color: #ffffff;
-    border-radius: 4px;
-    padding: 4px;
-
-    &:hover {
-      background-color: #f0f0f0;
-    }
+  &:hover {
+    background-color: var(--color-picto-hover);
   }
 }

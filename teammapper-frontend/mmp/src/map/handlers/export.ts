@@ -72,10 +72,7 @@ export default class Export {
 
         context.drawImage(image, 0, 0);
         context.globalCompositeOperation = 'destination-over';
-        const isDarkMode =
-          typeof document !== 'undefined' &&
-          document.body?.classList.contains('dark-mode');
-        context.fillStyle = isDarkMode ? '#1e1e1e' : '#ffffff';
+        context.fillStyle = this.getExportBackgroundColor();
         context.fillRect(0, 0, canvas.width, canvas.height);
 
         if (typeof type === 'string') {
@@ -94,6 +91,30 @@ export default class Export {
       };
     });
   };
+
+  /**
+   * Return true if dark mode is active in the document.
+   */
+  private isDarkModeActive(): boolean {
+    return (
+      typeof document !== 'undefined' &&
+      Boolean(document.body?.classList.contains('dark-mode'))
+    );
+  }
+
+  /**
+   * Resolve export background color, using CSS variable when dark mode is active.
+   */
+  private getExportBackgroundColor(): string {
+    if (this.isDarkModeActive() && typeof window !== 'undefined') {
+      const color = window
+        .getComputedStyle(document.body)
+        .getPropertyValue('--color-bg-primary')
+        .trim();
+      return color || '#1e1e1e';
+    }
+    return '#ffffff';
+  }
 
   /**
    * Convert the mind map svg in the data URI.
@@ -130,10 +151,9 @@ export default class Export {
       svg.appendChild(defs);
     }
 
-    const isDarkMode =
-      typeof document !== 'undefined' &&
-      document.body?.classList.contains('dark-mode');
-    if (isDarkMode) {
+    // In dark mode, append a background rect to prevent light-colored nodes and text
+    // from being unreadable on transparent backgrounds when viewed in external viewers.
+    if (this.isDarkModeActive()) {
       const bgRect = document.createElementNS(
         'http://www.w3.org/2000/svg',
         'rect'
@@ -142,7 +162,7 @@ export default class Export {
       bgRect.setAttribute('y', y.toString());
       bgRect.setAttribute('width', w.toString());
       bgRect.setAttribute('height', h.toString());
-      bgRect.setAttribute('fill', '#1e1e1e');
+      bgRect.setAttribute('fill', this.getExportBackgroundColor());
       svg.appendChild(bgRect);
     }
 

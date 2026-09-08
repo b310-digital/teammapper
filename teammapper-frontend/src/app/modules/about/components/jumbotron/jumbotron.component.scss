@@ -3,7 +3,7 @@
 }
 
 section.jumbotron {
-  background-color: var(--color-primary);
+  background-color: var(--color-jumbotron-bg);
   padding: 100px 0 40px 0;
   text-align: center;
   align-items: center;
@@ -14,7 +14,7 @@ section.jumbotron {
   h1,
   h4,
   p {
-    color: var(--color-text-inverse);
+    color: var(--color-jumbotron-text);
     word-wrap: break-word !important;
     white-space: pre-wrap !important;
     line-height: 150%;
@@ -63,7 +63,7 @@ section.jumbotron {
       font-family: Fira Sans;
       width: 170px;
       font-weight: bold;
-      color: var(--color-text-inverse);
+      color: var(--color-jumbotron-link);
       margin-bottom: 10px;
     }
 
@@ -75,7 +75,7 @@ section.jumbotron {
 
   .alert {
     padding: 20px;
-    color: var(--color-text-inverse);
+    color: var(--color-jumbotron-text);
     margin-bottom: 15px;
     text-align: center;
     font-size: 0.7em;
@@ -83,29 +83,9 @@ section.jumbotron {
 
   .white-list {
     font-family: Fira Sans;
-    color: var(--color-text-inverse);
+    color: var(--color-jumbotron-text);
     word-wrap: break-word;
     white-space: normal;
     overflow-wrap: break-word;
-  }
-}
-
-:host-context(body.dark-mode) section.jumbotron {
-  background-color: var(--color-bg-secondary);
-
-  h1,
-  h4,
-  p,
-  .white-list {
-    color: var(--color-text-primary);
-  }
-
-  > div > a {
-    color: var(--color-primary);
-  }
-
-  .alert {
-    color: var(--color-text-primary);
-    opacity: 0.85;
   }
 }

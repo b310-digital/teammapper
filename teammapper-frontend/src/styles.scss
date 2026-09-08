@@ -74,6 +74,13 @@ body {
   --color-colorpicker-border: #a8a8a8;
   --color-toolbar-icon: var(--color-primary);
   --color-toolbar-icon-disabled: rgba(0, 0, 0, 0.26);
+
+  // Component-specific theme variables
+  --color-jumbotron-bg: var(--color-primary);
+  --color-jumbotron-text: var(--color-text-on-dark);
+  --color-jumbotron-link: var(--color-text-on-dark);
+  --color-picto-bg: transparent;
+  --color-picto-hover: var(--color-primary-light);
 }
 
 body.dark-mode {
@@ -106,6 +113,12 @@ body.dark-mode {
   --color-toolbar-icon: #ffffff;
   --color-toolbar-icon-disabled: rgba(255, 255, 255, 0.38);
 
+  --color-jumbotron-bg: var(--color-bg-secondary);
+  --color-jumbotron-text: var(--color-text-primary);
+  --color-jumbotron-link: var(--color-primary);
+  --color-picto-bg: #ffffff;
+  --color-picto-hover: #f0f0f0;
+
   a {
     color: var(--color-primary);
 
@@ -115,41 +128,12 @@ body.dark-mode {
     }
   }
 
-  // Toolbar dark mode symbols: white and high contrast per best practices
+  // Toolbar typography in dark mode
   mat-toolbar {
-    background-color: var(--color-bg-toolbar) !important;
-    color: #ffffff;
-
     h1,
     h2,
     h3 {
       color: #ffffff;
-    }
-
-    button.mat-mdc-icon-button,
-    .mat-mdc-icon-button {
-      color: #ffffff !important;
-
-      .mat-icon {
-        color: #ffffff !important;
-      }
-
-      &:hover:not(:disabled):not(.mat-button-disabled) {
-        background-color: rgba(255, 255, 255, 0.08);
-      }
-
-      &:disabled,
-      &.mat-button-disabled {
-        color: rgba(255, 255, 255, 0.38) !important;
-
-        .mat-icon {
-          color: rgba(255, 255, 255, 0.38) !important;
-        }
-      }
-    }
-
-    div.vertical-line > div {
-      background-color: rgba(255, 255, 255, 0.15) !important;
     }
   }
 
@@ -161,7 +145,7 @@ body.dark-mode {
       color: var(--color-text-primary);
 
       .mat-icon {
-        color: #ffffff;
+        color: var(--color-toolbar-icon);
       }
 
       &:hover:not([disabled]):not(.mat-button-disabled) {
@@ -170,29 +154,11 @@ body.dark-mode {
 
       &[disabled],
       &.mat-button-disabled {
-        color: rgba(255, 255, 255, 0.38) !important;
+        color: var(--color-toolbar-icon-disabled) !important;
 
         .mat-icon {
-          color: rgba(255, 255, 255, 0.38) !important;
+          color: var(--color-toolbar-icon-disabled) !important;
         }
-      }
-    }
-  }
-
-  // Floating action buttons (bottom right: zoom controls, center map)
-  .floating-buttons {
-    .zoom-in button,
-    .zoom-out button,
-    .center button {
-      background-color: var(--color-bg-surface) !important;
-      color: #ffffff !important;
-
-      .mat-icon {
-        color: #ffffff !important;
-      }
-
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.08) !important;
       }
     }
   }

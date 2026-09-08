@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
@@ -15,6 +16,7 @@ import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 })
 // Global per user settings service
 export class SettingsService {
+  private document = inject(DOCUMENT);
   private storageService = inject(StorageService);
   private httpService = inject(HttpService);
   private translateService = inject(TranslateService);
@@ -52,7 +54,10 @@ export class SettingsService {
    * Initialize dark mode from system preference if no user setting exists.
    */
   private getSystemDarkModePreference(): boolean {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const defaultView = this.document.defaultView ?? window;
+    return (
+      defaultView.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false
+    );
   }
 
   /**
@@ -100,16 +105,42 @@ export class SettingsService {
    * Initialize settings with the default or cached values and return them.
    */
   public async init(): Promise<boolean> {
-    const defaults = await this.loadDefaultSettings();
-    const loaded = (await this.storageService.get(
-      STORAGE_KEYS.SETTINGS
-    )) as UserSettings | null;
-    const userSettings = this.resolveUserSettings(
-      loaded,
-      defaults.userSettings
-    );
-    await this.applyAndPersistSettings(userSettings, defaults.systemSettings);
-    return true;
+    try {
+      const defaults = await this.loadDefaultSettings();
+      const loaded = (await this.storageService.get(
+        STORAGE_KEYS.SETTINGS
+      )) as UserSettings | null;
+      const userSettings = this.resolveUserSettings(
+        loaded,
+        defaults.userSettings
+      );
+      await this.applyAndPersistSettings(userSettings, defaults.systemSettings);
+      return true;
+    } catch {
+      return await this.initFallbackSettings();
+    }
+  }
+
+  /**
+   * Fallback initialization if backend settings cannot be fetched.
+   */
+  private async initFallbackSettings(): Promise<boolean> {
+    try {
+      const cached = (await this.storageService.get(
+        STORAGE_KEYS.SETTINGS
+      )) as UserSettings | null;
+      if (cached) {
+        this.userSettingsSubject.next(cached);
+        this.applyDarkMode(
+          cached.general?.darkMode ?? this.getSystemDarkModePreference()
+        );
+        return true;
+      }
+    } catch {
+      // Ignore cache retrieval errors during fallback
+    }
+    this.applyDarkMode(this.getSystemDarkModePreference());
+    return false;
   }
 
   /**
@@ -124,11 +155,11 @@ export class SettingsService {
   /**
    * Apply dark mode to the document body.
    */
-  private applyDarkMode(isDark: boolean) {
+  private applyDarkMode(isDark: boolean): void {
     if (isDark) {
-      document.body.classList.add('dark-mode');
+      this.document.body.classList.add('dark-mode');
     } else {
-      document.body.classList.remove('dark-mode');
+      this.document.body.classList.remove('dark-mode');
     }
     this.darkModeSubject.next(isDark);
   }
