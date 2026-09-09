@@ -1,9 +1,14 @@
-@use '@angular/material' as mat;
-@use 'src/theme.scss';
-
 #qr-code-canvas {
   display: flex;
   justify-content: center;
+
+  svg,
+  canvas {
+    padding: 12px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+  }
 }
 
 mat-form-field {
@@ -22,9 +27,9 @@ mat-form-field {
   ::ng-deep
   .mat-slide-toggle.mat-checked:not(.mat-disabled)
   .mat-slide-toggle-bar {
-  background-color: mat.m2-get-color-from-palette(theme.$app-primary);
+  background-color: var(--color-primary);
 }
 
 :host ::ng-deep .mat-slide-toggle.mat-disabled .mat-slide-toggle-bar {
-  background-color: mat.m2-get-color-from-palette(theme.$app-primary);
+  background-color: var(--color-primary);
 }

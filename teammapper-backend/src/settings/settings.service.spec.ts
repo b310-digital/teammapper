@@ -19,7 +19,7 @@ const defaultSettings: Settings = {
     featureFlags: { pictograms: true, ai: false },
   },
   userSettings: {
-    general: { language: 'en' },
+    general: { language: 'en', darkMode: false },
     mapOptions: {
       centerOnResize: false,
       autoBranchColors: true,
@@ -72,6 +72,7 @@ describe('SettingsService', () => {
       const settings = service.getSettings()
 
       expect(settings.userSettings.general.language).toBe('en')
+      expect(settings.userSettings.general.darkMode).toBe(false)
     })
   })
 

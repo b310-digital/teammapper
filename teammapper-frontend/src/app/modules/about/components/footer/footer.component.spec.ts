@@ -24,7 +24,7 @@ describe('FooterComponent', () => {
   let mockTranslateService: jest.Mocked<TranslateService>;
 
   const mockSettings = {
-    general: { language: 'en' },
+    general: { language: 'en', darkMode: false },
     mapOptions: {
       autoBranchColors: true,
       fontMaxSize: 16,
@@ -91,7 +91,7 @@ describe('FooterComponent', () => {
     it('should update language', async () => {
       const newSettings = {
         ...mockSettings,
-        general: { language: 'fr' },
+        general: { language: 'fr', darkMode: false },
       };
       component.settings = newSettings;
       await component.updateLanguage();

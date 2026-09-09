@@ -22,12 +22,15 @@ div.floating-buttons {
 
   .add-node button,
   .remove-node button {
-    background-color: #00a3d3;
+    background-color: var(--color-float-btn-bg);
     color: #fff;
 
     &:disabled {
-      color: rgba(0, 0, 0, 0.26);
-      background: rgba(0, 0, 0, 0.26) !important;
+      color: var(--color-float-btn-disabled-color, rgba(0, 0, 0, 0.26));
+      background: var(
+        --color-float-btn-disabled-bg,
+        rgba(0, 0, 0, 0.26)
+      ) !important;
     }
   }
 
@@ -51,6 +54,19 @@ div.floating-buttons {
   .zoom-out,
   .center {
     right: 15px;
+
+    button {
+      background-color: var(--color-bg-surface);
+      color: var(--color-toolbar-icon);
+
+      .mat-icon {
+        color: var(--color-toolbar-icon);
+      }
+
+      &:hover {
+        background-color: var(--color-bg-hover);
+      }
+    }
   }
 
   .zoom-out {

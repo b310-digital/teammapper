@@ -49,7 +49,8 @@ export default class Draw {
       .append('rect')
       .attr('width', '100%')
       .attr('height', '100%')
-      .attr('fill', 'white')
+      .attr('fill', 'var(--color-bg-primary, white)')
+      .attr('class', 'map-background')
       .attr('pointer-events', 'all')
       .on('click', () => {
         // Deselect the selected node when click on the map background

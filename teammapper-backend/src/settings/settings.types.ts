@@ -51,7 +51,7 @@ export interface Settings {
     featureFlags: FeatureFlags
   }
   userSettings: {
-    general: { language: string }
+    general: { language: string; darkMode: boolean }
     mapOptions: MapOptions
   }
 }

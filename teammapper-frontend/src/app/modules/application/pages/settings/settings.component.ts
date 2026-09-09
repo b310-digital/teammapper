@@ -87,6 +87,10 @@ export class SettingsComponent {
     this.translateService.use(this.settings.general.language);
   }
 
+  public async updateDarkMode() {
+    await this.settingsService.setDarkMode(this.settings.general.darkMode);
+  }
+
   public back() {
     this.location.back();
   }

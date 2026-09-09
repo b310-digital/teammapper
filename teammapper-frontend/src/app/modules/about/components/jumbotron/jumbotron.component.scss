@@ -1,12 +1,9 @@
-@use '@angular/material' as mat;
-@use 'src/theme.scss';
-
 .m-2 {
   margin: 2rem;
 }
 
 section.jumbotron {
-  background-color: mat.m2-get-color-from-palette(theme.$app-primary);
+  background-color: var(--color-jumbotron-bg);
   padding: 100px 0 40px 0;
   text-align: center;
   align-items: center;
@@ -17,7 +14,7 @@ section.jumbotron {
   h1,
   h4,
   p {
-    color: whitesmoke;
+    color: var(--color-jumbotron-text);
     word-wrap: break-word !important;
     white-space: pre-wrap !important;
     line-height: 150%;
@@ -66,7 +63,7 @@ section.jumbotron {
       font-family: Fira Sans;
       width: 170px;
       font-weight: bold;
-      color: mat.m2-get-color-from-palette(theme.$app-primary);
+      color: var(--color-jumbotron-link);
       margin-bottom: 10px;
     }
 
@@ -78,7 +75,7 @@ section.jumbotron {
 
   .alert {
     padding: 20px;
-    color: white;
+    color: var(--color-jumbotron-text);
     margin-bottom: 15px;
     text-align: center;
     font-size: 0.7em;
@@ -86,7 +83,7 @@ section.jumbotron {
 
   .white-list {
     font-family: Fira Sans;
-    color: white;
+    color: var(--color-jumbotron-text);
     word-wrap: break-word;
     white-space: normal;
     overflow-wrap: break-word;

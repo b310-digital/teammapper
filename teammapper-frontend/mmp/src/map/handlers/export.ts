@@ -72,7 +72,7 @@ export default class Export {
 
         context.drawImage(image, 0, 0);
         context.globalCompositeOperation = 'destination-over';
-        context.fillStyle = '#ffffff';
+        context.fillStyle = this.getExportBackgroundColor();
         context.fillRect(0, 0, canvas.width, canvas.height);
 
         if (typeof type === 'string') {
@@ -91,6 +91,30 @@ export default class Export {
       };
     });
   };
+
+  /**
+   * Return true if dark mode is active in the document.
+   */
+  private isDarkModeActive(): boolean {
+    return (
+      typeof document !== 'undefined' &&
+      Boolean(document.body?.classList.contains('dark-mode'))
+    );
+  }
+
+  /**
+   * Resolve export background color, using CSS variable when dark mode is active.
+   */
+  private getExportBackgroundColor(): string {
+    if (this.isDarkModeActive() && typeof window !== 'undefined') {
+      const color = window
+        .getComputedStyle(document.body)
+        .getPropertyValue('--color-bg-primary')
+        .trim();
+      return color || '#1e1e1e';
+    }
+    return '#ffffff';
+  }
 
   /**
    * Convert the mind map svg in the data URI.
@@ -125,6 +149,21 @@ export default class Export {
       style.innerHTML = '<![CDATA[\n' + css + '\n]]>';
       defs.appendChild(style);
       svg.appendChild(defs);
+    }
+
+    // In dark mode, append a background rect to prevent light-colored nodes and text
+    // from being unreadable on transparent backgrounds when viewed in external viewers.
+    if (this.isDarkModeActive()) {
+      const bgRect = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'rect'
+      );
+      bgRect.setAttribute('x', x.toString());
+      bgRect.setAttribute('y', y.toString());
+      bgRect.setAttribute('width', w.toString());
+      bgRect.setAttribute('height', h.toString());
+      bgRect.setAttribute('fill', this.getExportBackgroundColor());
+      svg.appendChild(bgRect);
     }
 
     clone.setAttribute('transform', 'translate(0,0)');

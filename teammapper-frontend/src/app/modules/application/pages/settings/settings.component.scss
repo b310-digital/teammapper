@@ -1,6 +1,6 @@
 div.settings {
   mat-toolbar {
-    background-color: transparent;
+    background-color: var(--color-bg-toolbar);
 
     div.container {
       width: 100%;
@@ -24,7 +24,7 @@ div.settings {
         margin-bottom: 20px;
         border: 0;
         height: 1px;
-        background-color: lightgray;
+        background-color: var(--color-border);
       }
     }
 
@@ -48,6 +48,10 @@ div.settings {
         mat-slide-toggle:last-child {
           margin-bottom: 0;
         }
+
+        mat-form-field {
+          margin-top: 16px;
+        }
       }
 
       mat-card.map-options-nodes {
@@ -56,6 +60,21 @@ div.settings {
         mat-form-field {
           margin-right: 20px;
         }
+      }
+    }
+
+    .dark-mode-row {
+      margin-bottom: 16px;
+
+      mat-slide-toggle {
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    .language-row {
+      mat-form-field {
+        width: 100%;
       }
     }
   }
