@@ -140,7 +140,12 @@ describe('MapSyncService', () => {
     it('loads map data into mmpService on initMap', () => {
       service.initMap();
 
-      expect(mmpService.new).toHaveBeenCalledWith(mockMapSnapshot);
+      expect(mmpService.new).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'node-1',
+          name: 'Test Node',
+        }),
+      ]);
     });
 
     it('selects root node on initMap', () => {

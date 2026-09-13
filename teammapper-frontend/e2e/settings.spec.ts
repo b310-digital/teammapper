@@ -52,4 +52,3 @@ test('modifies map options in settings', async ({ page }) => {
   await page.locator('.close-button').click();
   await expect(page.locator('.map')).toBeVisible();
 });
-

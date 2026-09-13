@@ -19,6 +19,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ClientColorMapping, ClientColorMappingValue } from './yjs-utils';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
+import { normalizeMapData } from '@teammapper/shared';
 
 export { ConnectionStatus } from './map-sync-context';
 
@@ -119,7 +120,9 @@ export class MapSyncService implements OnDestroy {
   }
 
   public initMap() {
-    this.mmpService.new(this.getAttachedMap().cachedMap.data);
+    const rawData = this.getAttachedMap().cachedMap.data;
+    const normalized = normalizeMapData({ data: rawData });
+    this.mmpService.new(normalized.data as unknown as ExportNodeProperties[]);
     this.attachedNodeSubject.next(
       this.mmpService.selectNode(this.mmpService.getRootNode().id)
     );
@@ -306,9 +309,17 @@ export class MapSyncService implements OnDestroy {
   private prepareMap(serverMap: ServerMap) {
     const mapKey = this.createKey(serverMap.uuid);
     const mapProps = this.convertServerMapToMmp(serverMap);
+    const normalized = normalizeMapData({
+      ...mapProps,
+      options: serverMap.options,
+    });
     this.attachMap({
       key: mapKey,
-      cachedMap: { ...mapProps, ...{ options: serverMap.options } },
+      cachedMap: {
+        ...mapProps,
+        options: serverMap.options,
+        data: normalized.data as unknown as ExportNodeProperties[],
+      },
     });
     this.mmpService.updateAdditionalMapOptions(serverMap.options);
   }

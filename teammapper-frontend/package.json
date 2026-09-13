@@ -61,6 +61,7 @@
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "@teammapper/mermaid-mindmap-parser": "workspace:^",
+    "@teammapper/shared": "workspace:*",
     "angular2-hotkeys": "^16.0.1",
     "d3": "7.9.0",
     "deep-object-diff": "^1.1.9",
@@ -110,8 +111,5 @@
     "ts-node": "~10.9.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.2"
-  },
-  "workspaces": [
-    "packages/*"
-  ]
+  }
 }
