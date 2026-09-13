@@ -53,7 +53,6 @@ jobs:
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
             - uses: ./.github/actions/setup-pnpm
-            - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
             - run: pnpm --filter teammapper-frontend run tsc
 
     teammapper-backend-tsc:
@@ -103,8 +102,16 @@ jobs:
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
             - uses: ./.github/actions/setup-pnpm
-            - run: pnpm --filter @teammapper/mermaid-mindmap-parser run build
             - run: pnpm --filter teammapper-frontend run test
+
+    teammapper-shared-test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+            - uses: ./.github/actions/setup-pnpm
+            - run: pnpm --filter @teammapper/shared run lint
+            - run: pnpm --filter @teammapper/shared run test
 
     dependency-review:
         runs-on: ubuntu-latest
