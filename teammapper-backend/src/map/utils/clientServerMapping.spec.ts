@@ -2,7 +2,7 @@ import {
   mapClientNodeToMmpNode,
   mapClientBasicNodeToMmpRootNode,
 } from './clientServerMapping'
-import { IMmpClientNode } from '../types'
+import { IMmpClientNode } from '@teammapper/shared'
 
 const buildClientNode = (
   overrides: Partial<IMmpClientNode> = {}

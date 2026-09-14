@@ -21,9 +21,9 @@ import {
   resolveClientColor,
   findAffectedNodes,
   resolveMmpPropertyUpdate,
-  sortParentFirst,
   collectDescendantIds,
 } from './yjs-utils';
+import { sortNodesParentFirst } from '@teammapper/shared';
 import {
   MapSyncContext,
   DEFAULT_COLOR,
@@ -271,7 +271,7 @@ export class YjsSyncService {
     nodesMap.forEach((yNode: Y.Map<unknown>) => {
       nodes.push(yMapToNodeProps(yNode));
     });
-    return sortParentFirst(nodes);
+    return sortNodesParentFirst(nodes);
   }
 
   // ─── MMP event listeners (MMP → Y.Doc) ─────────────────────
@@ -444,7 +444,7 @@ export class YjsSyncService {
   private writeFullMapToYDoc(operation: FullMapOperation): void {
     const snapshot = this.mmpService.exportAsJSON();
     const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-    const sorted = sortParentFirst(snapshot);
+    const sorted = sortNodesParentFirst(snapshot);
 
     // Without this, Yjs merges the replacement with whatever the user did in
     // the preceding half second and one undo would revert both.
@@ -569,7 +569,7 @@ export class YjsSyncService {
         .map(key => nodesMap.get(key))
         .filter((yNode): yNode is Y.Map<unknown> => !!yNode)
         .map(yNode => yMapToNodeProps(yNode));
-      const sorted = sortParentFirst(nodeProps);
+      const sorted = sortNodesParentFirst(nodeProps);
       sorted.forEach(props => this.mmpService.addNodesFromServer([props]));
     }
   }

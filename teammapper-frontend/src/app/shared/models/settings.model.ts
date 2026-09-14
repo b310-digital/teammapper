@@ -1,4 +1,11 @@
 import { OptionParameters } from '@mmp/map/types';
+import {
+  SystemSettingsInfo,
+  SystemSettingsUrls,
+  SystemFeatureFlags,
+  UserGeneralSettings,
+  SystemSettings,
+} from '@teammapper/shared';
 
 // Options for the service
 // Mmp itself only takes the options parameters. The service can be sugered with additonal options though.
@@ -16,33 +23,15 @@ export interface Settings {
   userSettings: UserSettings;
 }
 
-export interface SystemSettings {
-  info: Info;
-  urls: Urls;
-  featureFlags: FeatureFlags;
-}
-
 export interface UserSettings {
-  general: General;
+  general: UserGeneralSettings;
   mapOptions: MmpOptions;
 }
 
-interface General {
-  language: string;
-  darkMode: boolean;
-}
-
-interface Info {
-  name: string;
-  version: string;
-}
-
-interface Urls {
-  pictogramApiUrl: string;
-  pictogramStaticUrl: string;
-}
-
-interface FeatureFlags {
-  pictograms: boolean;
-  ai: boolean;
-}
+export type {
+  SystemSettings,
+  SystemSettingsInfo,
+  SystemSettingsUrls,
+  SystemFeatureFlags,
+  UserGeneralSettings,
+};

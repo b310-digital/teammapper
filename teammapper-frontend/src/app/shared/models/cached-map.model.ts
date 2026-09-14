@@ -1,4 +1,5 @@
 import { MapSnapshot } from '@mmp/map/types';
+import { MapOptions } from '@teammapper/shared';
 
 export interface CachedMapEntry {
   cachedMap: CachedMap;
@@ -15,11 +16,7 @@ export interface CachedMap {
   options: CachedMapOptions;
 }
 
-export interface CachedMapOptions {
-  fontMaxSize: number;
-  fontMinSize: number;
-  fontIncrement: number;
-}
+export type CachedMapOptions = Required<MapOptions>;
 
 export interface CachedAdminMapValue {
   adminId: string;

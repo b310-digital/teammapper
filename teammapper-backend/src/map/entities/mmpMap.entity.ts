@@ -5,7 +5,7 @@ import {
   OneToMany,
   Generated,
 } from 'typeorm'
-import { MapOptions } from '../types'
+import { MapOptions } from '@teammapper/shared'
 import { MmpNode } from './mmpNode.entity'
 
 @Entity()

@@ -1,6 +1,7 @@
 import {
   assignOrderNumbers,
   collectSubtreeIds,
+  findRootNode,
   sortNodesParentFirst,
   TreeNodeLike,
 } from './tree';
@@ -162,6 +163,36 @@ describe('Tree Algorithms', () => {
 
       const descendants = collectSubtreeIds(nodes, 'A');
       expect(descendants).toEqual(['B']);
+    });
+  });
+
+  describe('findRootNode', () => {
+    it('returns undefined for empty or nullish node list', () => {
+      expect(findRootNode([])).toBeUndefined();
+    });
+
+    it('identifies root by explicit isRoot property', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'c1', parent: 'r' },
+        { id: 'r', isRoot: true, parent: null },
+      ];
+      expect(findRootNode(nodes)?.id).toBe('r');
+    });
+
+    it('identifies root by parent === null fallback when isRoot is omitted', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'c1', parent: 'r' },
+        { id: 'r', parent: null },
+      ];
+      expect(findRootNode(nodes)?.id).toBe('r');
+    });
+
+    it('identifies root by parent === "" fallback', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'c1', parent: 'r' },
+        { id: 'r', parent: '' },
+      ];
+      expect(findRootNode(nodes)?.id).toBe('r');
     });
   });
 

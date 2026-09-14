@@ -10,6 +10,7 @@ import {
 } from '../../../shared/models/settings.model';
 import { API_URL, HttpService } from '../../http/http.service';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
+import { SUPPORTED_LANGUAGES } from '@teammapper/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -21,17 +22,7 @@ export class SettingsService {
   private httpService = inject(HttpService);
   private translateService = inject(TranslateService);
 
-  public static readonly LANGUAGES = [
-    'en',
-    'fr',
-    'de',
-    'it',
-    'zh-tw',
-    'zh-cn',
-    'es',
-    'pt-br',
-    'ja',
-  ];
+  public static readonly LANGUAGES = [...SUPPORTED_LANGUAGES];
 
   public userSettings: Observable<UserSettings | null>;
   private userSettingsSubject: BehaviorSubject<UserSettings | null>;

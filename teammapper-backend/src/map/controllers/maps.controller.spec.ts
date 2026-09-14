@@ -5,7 +5,8 @@ import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import { INestApplication, NotFoundException } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
-import { IMmpClientMap, IMmpClientPrivateMap, Request } from '../types'
+import { ClientMap, ClientPrivateMap } from '@teammapper/shared'
+import { Request } from '../types'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
   createClientRootNode,
@@ -63,8 +64,8 @@ describe('MapsController', () => {
         adminId: 'new-admin-id',
         modificationSecret: 'new-modification-secret',
       })
-      const exportedMap: IMmpClientMap = createMmpClientMap()
-      const result: IMmpClientPrivateMap = {
+      const exportedMap: ClientMap = createMmpClientMap()
+      const result: ClientPrivateMap = {
         map: exportedMap,
         adminId: 'new-admin-id',
         modificationSecret: 'new-modification-secret',
@@ -104,7 +105,7 @@ describe('MapsController', () => {
   describe('findOne', () => {
     it('should find the correct map', async () => {
       const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
-      const exportedMap: IMmpClientMap = createMmpClientMap({
+      const exportedMap: ClientMap = createMmpClientMap({
         id: mapId,
       })
       const mmpMap = createMmpMap({ modificationSecret: null })
@@ -133,7 +134,7 @@ describe('MapsController', () => {
 
     it('returns writable true when map has no modification secret', async () => {
       const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
-      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const exportedMap: ClientMap = createMmpClientMap({ id: mapId })
       const mmpMap = createMmpMap({ modificationSecret: null })
 
       jest
@@ -148,7 +149,7 @@ describe('MapsController', () => {
 
     it('returns writable true when correct secret is provided', async () => {
       const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
-      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const exportedMap: ClientMap = createMmpClientMap({ id: mapId })
       const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
 
       jest
@@ -163,7 +164,7 @@ describe('MapsController', () => {
 
     it('returns writable false when wrong secret is provided', async () => {
       const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
-      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const exportedMap: ClientMap = createMmpClientMap({ id: mapId })
       const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
 
       jest
@@ -178,7 +179,7 @@ describe('MapsController', () => {
 
     it('returns writable false when no secret is provided for protected map', async () => {
       const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
-      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const exportedMap: ClientMap = createMmpClientMap({ id: mapId })
       const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
 
       jest
@@ -193,7 +194,7 @@ describe('MapsController', () => {
 
     it('bumps lastAccessed for an authorized (writable) read', async () => {
       const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
-      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const exportedMap: ClientMap = createMmpClientMap({ id: mapId })
       const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
 
       jest
@@ -208,7 +209,7 @@ describe('MapsController', () => {
 
     it('does not bump lastAccessed for an anonymous read of a protected map', async () => {
       const mapId = 'e7f66b65-ffd5-4387-b645-35f8e794c7e7'
-      const exportedMap: IMmpClientMap = createMmpClientMap({ id: mapId })
+      const exportedMap: ClientMap = createMmpClientMap({ id: mapId })
       const mmpMap = createMmpMap({ modificationSecret: 'my-secret' })
 
       jest
@@ -292,11 +293,11 @@ describe('MapsController', () => {
     it('should create a new map if given a root node', async () => {
       const newMap: MmpMap = createMmpMap()
 
-      const exportedMap: IMmpClientMap = createMmpClientMap({
+      const exportedMap: ClientMap = createMmpClientMap({
         uuid: newMap.id,
       })
 
-      const result: IMmpClientPrivateMap = {
+      const result: ClientPrivateMap = {
         map: exportedMap,
         adminId: 'admin-id',
         modificationSecret: 'modification-secret',
@@ -324,9 +325,9 @@ describe('MapsController', () => {
       const pid = 'test-person-id'
 
       const newMap: MmpMap = createMmpMap({ ownerExternalId: pid })
-      const exportedMap: IMmpClientMap = createMmpClientMap({ uuid: newMap.id })
+      const exportedMap: ClientMap = createMmpClientMap({ uuid: newMap.id })
 
-      const result: IMmpClientPrivateMap = {
+      const result: ClientPrivateMap = {
         map: exportedMap,
         adminId: 'admin-id',
         modificationSecret: 'modification-secret',

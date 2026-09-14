@@ -72,17 +72,7 @@ describe('FooterComponent', () => {
 
     it('should initialize with correct settings and languages', () => {
       expect(mockSettingsService.getCachedUserSettings).toHaveBeenCalled();
-      expect(component.languages).toEqual([
-        'en',
-        'fr',
-        'de',
-        'it',
-        'zh-tw',
-        'zh-cn',
-        'es',
-        'pt-br',
-        'ja',
-      ]);
+      expect(component.languages).toEqual(SettingsService.LANGUAGES);
       expect(component.currentYear).toBe(new Date().getFullYear().toString());
     });
   });
