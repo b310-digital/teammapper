@@ -8,33 +8,74 @@ import {
   MapCreateSchema,
   MapDeleteSchema,
   MapOptionsSchema,
+  MermaidCreateSchema,
+  NodeBasicsSchema,
   NodeSchema,
   sanitizeIssues,
 } from './index';
 
 describe('Shared Validation Schemas', () => {
   describe('Sub-schemas', () => {
-    it('validates ColorSchema', () => {
-      expect(v.safeParse(ColorSchema, { name: '#ff0000', branch: '#00ff00' }).success).toBe(true);
+    it('validates ColorSchema with valid hex, null, or empty object', () => {
+      expect(v.safeParse(ColorSchema, {}).success).toBe(true);
+      expect(v.safeParse(ColorSchema, { name: null, background: null, branch: null }).success).toBe(true);
+      expect(v.safeParse(ColorSchema, { name: '#ff0000', background: '#000000', branch: '#aaBBcc' }).success).toBe(true);
+      expect(v.safeParse(ColorSchema, { name: '#fff' }).success).toBe(true);
       expect(v.safeParse(ColorSchema, { name: 'invalid-hex' }).success).toBe(false);
+      expect(v.safeParse(ColorSchema, { name: 'red' }).success).toBe(false);
+      expect(v.safeParse(ColorSchema, { name: 'expression(alert(1))' }).success).toBe(false);
+      expect(v.safeParse(ColorSchema, { name: 123 }).success).toBe(false);
     });
 
     it('validates CoordinatesSchema', () => {
       expect(v.safeParse(CoordinatesSchema, { x: 10, y: 20 }).success).toBe(true);
+      expect(v.safeParse(CoordinatesSchema, { x: 10 }).success).toBe(false);
+      expect(v.safeParse(CoordinatesSchema, { y: 20 }).success).toBe(false);
       expect(v.safeParse(CoordinatesSchema, { x: 'invalid', y: 20 }).success).toBe(false);
     });
 
     it('validates FontSchema', () => {
+      expect(v.safeParse(FontSchema, {}).success).toBe(true);
       expect(v.safeParse(FontSchema, { size: 12, style: 'normal', weight: 'bold' }).success).toBe(true);
+      expect(v.safeParse(FontSchema, { size: 'big' }).success).toBe(false);
+      expect(v.safeParse(FontSchema, { style: 'a'.repeat(20) }).success).toBe(true);
+      expect(v.safeParse(FontSchema, { style: 'a'.repeat(21) }).success).toBe(false);
+      expect(v.safeParse(FontSchema, { weight: 'a'.repeat(21) }).success).toBe(false);
     });
 
     it('validates ImageSchema', () => {
+      expect(v.safeParse(ImageSchema, {}).success).toBe(true);
+      expect(v.safeParse(ImageSchema, { src: null }).success).toBe(true);
       expect(v.safeParse(ImageSchema, { src: 'https://example.com/pic.png', size: 100 }).success).toBe(true);
+      expect(v.safeParse(ImageSchema, { src: 'data:image/png;base64,abc' }).success).toBe(true);
+      expect(v.safeParse(ImageSchema, { src: 'a'.repeat(200_000) }).success).toBe(true);
+      expect(v.safeParse(ImageSchema, { src: 'a'.repeat(200_001) }).success).toBe(false);
     });
 
     it('validates LinkSchema', () => {
+      expect(v.safeParse(LinkSchema, {}).success).toBe(true);
+      expect(v.safeParse(LinkSchema, { href: null }).success).toBe(true);
       expect(v.safeParse(LinkSchema, { href: 'https://example.com' }).success).toBe(true);
+      expect(v.safeParse(LinkSchema, { href: 'http://example.com' }).success).toBe(true);
       expect(v.safeParse(LinkSchema, { href: 'javascript:alert(1)' }).success).toBe(false);
+      expect(v.safeParse(LinkSchema, { href: 'data:text/html,<script>' }).success).toBe(false);
+      expect(v.safeParse(LinkSchema, { href: 'https://x.co/' + 'a'.repeat(2035) }).success).toBe(true);
+      expect(v.safeParse(LinkSchema, { href: 'https://x.co/' + 'a'.repeat(2036) }).success).toBe(false);
+    });
+
+    it('validates NodeBasicsSchema', () => {
+      const validBasics = {
+        name: 'Root',
+        colors: { name: '#fff', background: null, branch: null },
+        font: { style: null, size: null, weight: null },
+        image: { src: null, size: null },
+      };
+      expect(v.safeParse(NodeBasicsSchema, validBasics).success).toBe(true);
+      expect(v.safeParse(NodeBasicsSchema, { name: 'Test', colors: {}, font: {}, image: {} }).success).toBe(true);
+      const withoutColors = { ...validBasics };
+      delete (withoutColors as Partial<typeof validBasics>).colors;
+      expect(v.safeParse(NodeBasicsSchema, withoutColors).success).toBe(false);
+      expect(v.safeParse(NodeBasicsSchema, { ...validBasics, name: 'a'.repeat(513) }).success).toBe(false);
     });
   });
 
@@ -166,6 +207,33 @@ describe('Shared Validation Schemas', () => {
     it('validates MapDeleteSchema', () => {
       expect(v.safeParse(MapDeleteSchema, { adminId: 'valid-id' }).success).toBe(true);
       expect(v.safeParse(MapDeleteSchema, { adminId: '' }).success).toBe(false);
+    });
+
+    it('validates MermaidCreateSchema', () => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'A mindmap about cats',
+          language: 'en',
+        }).success
+      ).toBe(true);
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'Japanese mindmap',
+          language: 'ja',
+        }).success
+      ).toBe(true);
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: '',
+          language: 'en',
+        }).success
+      ).toBe(false);
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'unsupported-lang',
+        }).success
+      ).toBe(false);
     });
   });
 });

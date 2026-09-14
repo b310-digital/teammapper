@@ -4,10 +4,10 @@ import { Repository, QueryRunner, In } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
-  IMmpClientMap,
+  ClientMap as IMmpClientMap,
   IMmpClientNodeBasics,
-  IMmpClientMapInfo,
-} from '../types'
+  ClientMapInfo as IMmpClientMapInfo,
+} from '@teammapper/shared'
 import {
   mapClientBasicNodeToMmpRootNode,
   mapClientNodeToMmpNode,

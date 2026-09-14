@@ -4,7 +4,7 @@ import {
   SystemSettingsUrls as Urls,
   SystemFeatureFlags as FeatureFlags,
   UserGeneralSettings as General,
-  SystemSettings as SharedSystemSettings,
+  SystemSettings,
 } from '@teammapper/shared';
 
 // Options for the service
@@ -23,11 +23,7 @@ export interface Settings {
   userSettings: UserSettings;
 }
 
-export interface SystemSettings extends SharedSystemSettings {
-  info: Info;
-  urls: Urls;
-  featureFlags: FeatureFlags;
-}
+export type { SystemSettings };
 
 export interface UserSettings {
   general: General;

@@ -1,7 +1,10 @@
 import { MmpMap } from 'src/map/entities/mmpMap.entity'
 import { MmpNode } from 'src/map/entities/mmpNode.entity'
 import * as crypto from 'crypto'
-import { IMmpClientMap, IMmpClientNodeBasics } from 'src/map/types'
+import {
+  ClientMap as IMmpClientMap,
+  IMmpClientNodeBasics,
+} from '@teammapper/shared'
 
 export const createMmpMap = (overrides = {}): MmpMap => ({
   id: crypto.randomUUID(),

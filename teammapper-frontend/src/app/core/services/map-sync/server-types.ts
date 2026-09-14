@@ -6,31 +6,22 @@ interface ServerMap extends Omit<
   ClientMap,
   'data' | 'options' | 'createdAt' | 'lastModified' | 'deletedAt'
 > {
-  uuid: string;
-  lastModified: string;
-  deletedAt: string;
   deleteAfterDays: number;
   data: MapSnapshot;
   options: CachedMapOptions;
   createdAt: string;
-  writable?: boolean;
+  lastModified: string;
+  deletedAt: string;
 }
 
-interface PrivateServerMap extends Omit<
-  ClientPrivateMap,
-  'map' | 'adminId' | 'modificationSecret'
-> {
+interface PrivateServerMap extends Omit<ClientPrivateMap, 'map'> {
   map: ServerMap;
   adminId: string;
   modificationSecret: string;
 }
 
 interface ServerMapInfo extends Omit<ClientMapInfo, 'ttl'> {
-  uuid: string;
-  adminId: string | null;
-  modificationSecret: string | null;
   ttl: string | null;
-  rootName: string | null;
 }
 
 const ReversePropertyMapping = {

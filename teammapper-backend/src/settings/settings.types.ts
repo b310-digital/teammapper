@@ -1,23 +1,19 @@
-export interface NodeColors {
-  name: string
-  background: string
-  branch?: string
-}
+import type {
+  SystemFeatureFlags as FeatureFlags,
+  SystemSettings,
+  SystemSettingsInfo,
+  SystemSettingsUrls,
+  UserGeneralSettings,
+  MapNodeColors,
+  MapNodeFont,
+  MapNodeLink,
+  MapNodeImage,
+} from '@teammapper/shared'
 
-export interface NodeFont {
-  size: number
-  style: string
-  weight: string
-}
-
-export interface NodeLink {
-  href: string
-}
-
-export interface NodeImage {
-  src: string
-  size: number
-}
+export type NodeColors = MapNodeColors
+export type NodeFont = MapNodeFont
+export type NodeLink = MapNodeLink
+export type NodeImage = MapNodeImage
 
 export interface NodeSettings {
   name: string
@@ -39,21 +35,15 @@ export interface MapOptions {
   rootNode: NodeSettings
 }
 
-import type {
-  SystemFeatureFlags as FeatureFlags,
+export type {
+  FeatureFlags,
+  SystemSettings,
   SystemSettingsInfo,
   SystemSettingsUrls,
-  UserGeneralSettings,
-} from '@teammapper/shared'
-
-export type { FeatureFlags }
+}
 
 export interface Settings {
-  systemSettings: {
-    info: SystemSettingsInfo
-    urls: SystemSettingsUrls
-    featureFlags: FeatureFlags
-  }
+  systemSettings: SystemSettings
   userSettings: {
     general: UserGeneralSettings
     mapOptions: MapOptions

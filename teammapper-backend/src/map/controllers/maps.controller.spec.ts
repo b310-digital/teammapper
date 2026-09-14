@@ -5,7 +5,11 @@ import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import { INestApplication, NotFoundException } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
-import { IMmpClientMap, IMmpClientPrivateMap, Request } from '../types'
+import {
+  ClientMap as IMmpClientMap,
+  ClientPrivateMap as IMmpClientPrivateMap,
+} from '@teammapper/shared'
+import { Request } from '../types'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
   createClientRootNode,

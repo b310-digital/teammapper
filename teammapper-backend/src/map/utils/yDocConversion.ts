@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
-import { MapOptions } from '../types'
+import { MapOptions } from '@teammapper/shared'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { sanitizeNodeFields } from './sanitization'
 

@@ -5,6 +5,8 @@ import {
   MAX_IMAGE_SRC_LENGTH,
   MAX_LINK_HREF_LENGTH,
   MAX_NODE_NAME_LENGTH,
+  MAX_MERMAID_DESCRIPTION_LENGTH,
+  SUPPORTED_LANGUAGES,
 } from '../constants';
 
 export const CssColorSchema = v.nullable(
@@ -85,6 +87,15 @@ export const MapDeleteSchema = v.object({
   adminId: v.pipe(v.string(), v.nonEmpty()),
 });
 
+export const MermaidCreateSchema = v.object({
+  mindmapDescription: v.pipe(
+    v.string(),
+    v.nonEmpty(),
+    v.maxLength(MAX_MERMAID_DESCRIPTION_LENGTH)
+  ),
+  language: v.picklist([...SUPPORTED_LANGUAGES]),
+});
+
 // InferOutput types matching canonical backend/frontend usage
 export type IMmpClientColor = v.InferOutput<typeof ColorSchema>;
 export type IMmpClientCoordinates = v.InferOutput<typeof CoordinatesSchema>;
@@ -96,6 +107,7 @@ export type IMmpClientNode = v.InferOutput<typeof NodeSchema>;
 export type IMmpClientMapOptions = v.InferOutput<typeof MapOptionsSchema>;
 export type IMmpClientMapCreateRequest = v.InferOutput<typeof MapCreateSchema>;
 export type IMmpClientDeleteRequest = v.InferOutput<typeof MapDeleteSchema>;
+export type MermaidCreateInput = v.InferOutput<typeof MermaidCreateSchema>;
 
 // Issue sanitization to prevent sensitive information leakage
 type AnyIssue = v.BaseIssue<unknown>;

@@ -5,6 +5,20 @@ export interface TreeNodeLike {
 }
 
 /**
+ * Locates the root node of a mindmap tree: prefers explicit isRoot flag,
+ * falling back to parent === null or parent === ''.
+ */
+export function findRootNode<T extends TreeNodeLike>(
+  nodes: readonly T[]
+): T | undefined {
+  if (!nodes || nodes.length === 0) return undefined;
+  return (
+    nodes.find((n) => Boolean(n.isRoot)) ??
+    nodes.find((n) => n.parent == null || n.parent === '')
+  );
+}
+
+/**
  * Iterative, cycle-safe breadth-first traversal that sorts nodes so root is first,
  * parents precede their children, and orphans/unreachable nodes are safely appended at the tail.
  *
@@ -15,8 +29,7 @@ export function sortNodesParentFirst<T extends TreeNodeLike>(
 ): T[] {
   if (!nodes || nodes.length === 0) return [];
 
-  // Find root node: prefer explicit isRoot flag, fallback to parent === null
-  const root = nodes.find((n) => Boolean(n.isRoot)) ?? nodes.find((n) => n.parent == null);
+  const root = findRootNode(nodes);
   if (!root) return [...nodes];
 
   // Map non-root children by parent ID

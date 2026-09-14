@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core'
 import { MapsService } from '../map/services/maps.service'
 import AppModule from '../app.module'
 import { Logger } from '@nestjs/common'
-import { IMmpClientMap, IMmpClientNode } from 'src/map/types'
+import { ClientMap as IMmpClientMap, IMmpClientNode } from '@teammapper/shared'
 import * as crypto from 'crypto'
 
 const createNode: any = (

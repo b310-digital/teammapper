@@ -125,11 +125,7 @@ export function resolveMmpPropertyUpdate(
 
 // Sorts nodes so root comes first and parents always precede their children (BFS order).
 // Orphaned nodes (not reachable from root) are appended at the end to prevent data loss.
-export const sortParentFirst = (
-  nodes: readonly ExportNodeProperties[]
-): ExportNodeProperties[] => {
-  return sortNodesParentFirst(nodes);
-};
+export const sortParentFirst = sortNodesParentFirst;
 
 // Collects all descendant node IDs using the shared cycle-safe BFS algorithm.
 export function collectDescendantIds(

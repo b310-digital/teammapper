@@ -19,7 +19,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ClientColorMapping, ClientColorMappingValue } from './yjs-utils';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
-import { normalizeMapData } from '@teammapper/shared';
+import { findRootNode, normalizeMapData } from '@teammapper/shared';
 
 export { ConnectionStatus } from './map-sync-context';
 
@@ -330,7 +330,8 @@ export class MapSyncService implements OnDestroy {
     )) as CachedAdminMapValue | null;
     if (map) {
       map.ttl = new Date(serverMap.deletedAt);
-      map.rootName = serverMap.data?.[0]?.name;
+      map.rootName =
+        findRootNode(serverMap.data)?.name ?? serverMap.data?.[0]?.name ?? null;
       this.storageService.set(serverMap.uuid, map);
     }
   }

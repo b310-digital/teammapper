@@ -17,13 +17,14 @@ import { checkWriteAccess } from '../utils/yjsProtocol'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import {
-  IMmpClientMap,
-  IMmpClientMapInfo,
-  IMmpClientPrivateMap,
-  Request,
-} from '../types'
-import { MapCreateSchema, MapDeleteSchema } from '../schemas/maps.schema'
-import { sanitizeIssues } from '../schemas/sanitize-issues'
+  ClientMap as IMmpClientMap,
+  ClientMapInfo as IMmpClientMapInfo,
+  ClientPrivateMap as IMmpClientPrivateMap,
+  MapCreateSchema,
+  MapDeleteSchema,
+  sanitizeIssues,
+} from '@teammapper/shared'
+import { Request } from '../types'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
 
