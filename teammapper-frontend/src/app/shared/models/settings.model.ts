@@ -28,6 +28,11 @@ export interface UserSettings {
   mapOptions: MmpOptions;
 }
 
+export type Info = SystemSettingsInfo;
+export type Urls = SystemSettingsUrls;
+export type FeatureFlags = SystemFeatureFlags;
+export type General = UserGeneralSettings;
+
 export type {
   SystemSettings,
   SystemSettingsInfo,
