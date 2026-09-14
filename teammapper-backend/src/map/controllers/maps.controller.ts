@@ -17,9 +17,9 @@ import { checkWriteAccess } from '../utils/yjsProtocol'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import {
-  ClientMap as IMmpClientMap,
-  ClientMapInfo as IMmpClientMapInfo,
-  ClientPrivateMap as IMmpClientPrivateMap,
+  ClientMap,
+  ClientMapInfo,
+  ClientPrivateMap,
   MapCreateSchema,
   MapDeleteSchema,
   sanitizeIssues,
@@ -41,7 +41,7 @@ export default class MapsController {
   async findOne(
     @Param('id') mapId: string,
     @Query('secret') secret?: string
-  ): Promise<IMmpClientMap | void> {
+  ): Promise<ClientMap | void> {
     try {
       const map = await this.mapsService.exportMapToClient(mapId)
       if (!map) throw new NotFoundException()
@@ -69,7 +69,7 @@ export default class MapsController {
   }
 
   @Get()
-  async findAll(@Req() req?: Request): Promise<IMmpClientMapInfo[]> {
+  async findAll(@Req() req?: Request): Promise<ClientMapInfo[]> {
     if (!req) return []
     const pid = req.pid
     if (!pid) return []
@@ -101,7 +101,7 @@ export default class MapsController {
   async create(
     @Body() body: unknown,
     @Req() req?: Request
-  ): Promise<IMmpClientPrivateMap | undefined> {
+  ): Promise<ClientPrivateMap | undefined> {
     const result = v.safeParse(MapCreateSchema, body)
     if (!result.success) {
       throw new BadRequestException(sanitizeIssues(result.issues))
@@ -127,7 +127,7 @@ export default class MapsController {
   @Post(':id/duplicate')
   async duplicate(
     @Param('id') mapId: string
-  ): Promise<IMmpClientPrivateMap | undefined> {
+  ): Promise<ClientPrivateMap | undefined> {
     const oldMap = await this.mapsService.findMap(mapId).catch((e: Error) => {
       if (e.name === 'MalformedUUIDError') {
         this.logger.warn(

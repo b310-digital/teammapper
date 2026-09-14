@@ -1,7 +1,7 @@
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
-  ClientMap as IMmpClientMap,
+  ClientMap,
   DEFAULT_ROOT_COLOR_BACKGROUND,
   DEFAULT_ROOT_COLOR_NAME,
   DEFAULT_ROOT_FONT_SIZE,
@@ -49,7 +49,7 @@ const mapMmpMapToClient = (
   serverNodes: MmpNode[],
   deletedAt: Date,
   deleteAfterDays: number
-): IMmpClientMap => {
+): ClientMap => {
   return {
     uuid: serverMap.id,
     data: serverNodes.map((node) => mapMmpNodeToClient(node)),

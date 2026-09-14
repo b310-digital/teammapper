@@ -1,9 +1,6 @@
 import * as Y from 'yjs';
-import {
-  populateYMapFromNodeProps,
-  yMapToNodeProps,
-  sortParentFirst,
-} from './yjs-utils';
+import { populateYMapFromNodeProps, yMapToNodeProps } from './yjs-utils';
+import { sortNodesParentFirst } from '@teammapper/shared';
 import { ExportNodeProperties } from '@mmp/map/types';
 
 describe('YjsUndoManager', () => {
@@ -367,9 +364,8 @@ describe('YjsUndoManager', () => {
     });
   });
 
-  // ─── sortParentFirst ─────────────────────────────────────────
-
-  describe('sortParentFirst', () => {
+  // ─── sortNodesParentFirst ────────────────────────────────────
+  describe('sortNodesParentFirst', () => {
     it('sorts deep hierarchy in parent-first order', () => {
       const nodes = [
         createMockNode({ id: 'gc', parent: 'child' }),
@@ -378,7 +374,7 @@ describe('YjsUndoManager', () => {
         createMockNode({ id: 'parent', parent: 'root' }),
       ];
 
-      const ids = sortParentFirst(nodes).map(n => n.id);
+      const ids = sortNodesParentFirst(nodes).map(n => n.id);
 
       expect(ids).toEqual(['root', 'parent', 'child', 'gc']);
     });

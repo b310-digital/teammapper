@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core'
 import { MapsService } from '../map/services/maps.service'
 import AppModule from '../app.module'
 import { Logger } from '@nestjs/common'
-import { ClientMap as IMmpClientMap, IMmpClientNode } from '@teammapper/shared'
+import { ClientMap, IMmpClientNode } from '@teammapper/shared'
 import * as crypto from 'crypto'
 
 const createNode: any = (
@@ -36,7 +36,7 @@ const createNode: any = (
   }
 }
 
-const createMap = (nodes: IMmpClientNode[]): IMmpClientMap => {
+const createMap = (nodes: IMmpClientNode[]): ClientMap => {
   return {
     uuid: crypto.randomUUID(),
     lastModified: new Date(),
@@ -83,7 +83,7 @@ async function bootstrap() {
     550,
     550
   )
-  const mapData: IMmpClientMap = createMap([
+  const mapData: ClientMap = createMap([
     rootNode,
     childNode,
     secondChildNode,

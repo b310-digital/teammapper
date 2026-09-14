@@ -1,9 +1,9 @@
 import { OptionParameters } from '@mmp/map/types';
 import {
-  SystemSettingsInfo as Info,
-  SystemSettingsUrls as Urls,
-  SystemFeatureFlags as FeatureFlags,
-  UserGeneralSettings as General,
+  SystemSettingsInfo,
+  SystemSettingsUrls,
+  SystemFeatureFlags,
+  UserGeneralSettings,
   SystemSettings,
 } from '@teammapper/shared';
 
@@ -23,11 +23,15 @@ export interface Settings {
   userSettings: UserSettings;
 }
 
-export type { SystemSettings };
-
 export interface UserSettings {
-  general: General;
+  general: UserGeneralSettings;
   mapOptions: MmpOptions;
 }
 
-export type { General, Info, Urls, FeatureFlags };
+export type {
+  SystemSettings,
+  SystemSettingsInfo,
+  SystemSettingsUrls,
+  SystemFeatureFlags,
+  UserGeneralSettings,
+};

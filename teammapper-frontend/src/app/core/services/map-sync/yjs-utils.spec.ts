@@ -8,9 +8,9 @@ import {
   findAffectedNodes,
   resolveMmpPropertyUpdate,
   resolveCompoundMmpUpdates,
-  sortParentFirst,
   collectDescendantIds,
 } from './yjs-utils';
+import { sortNodesParentFirst } from '@teammapper/shared';
 
 // Mock the NodePropertyMapping module
 jest.mock('@mmp/index', () => ({
@@ -341,9 +341,9 @@ describe('findAffectedNodes', () => {
   });
 });
 
-// ─── sortParentFirst ─────────────────────────────────────────
+// ─── sortNodesParentFirst ────────────────────────────────────
 
-describe('sortParentFirst', () => {
+describe('sortNodesParentFirst', () => {
   it('places root node first when children appear before parent', () => {
     const child = createMockNode({
       id: 'child-1',
@@ -352,7 +352,7 @@ describe('sortParentFirst', () => {
     });
     const root = createMockNode({ id: 'root-1', parent: '', isRoot: true });
 
-    const result = sortParentFirst([child, root]);
+    const result = sortNodesParentFirst([child, root]);
 
     expect(result.map(n => n.id)).toEqual(['root-1', 'child-1']);
   });
@@ -370,7 +370,7 @@ describe('sortParentFirst', () => {
     });
     const root = createMockNode({ id: 'root-1', parent: '', isRoot: true });
 
-    const result = sortParentFirst([grandchild, child, root]);
+    const result = sortNodesParentFirst([grandchild, child, root]);
 
     expect(result.map(n => n.id)).toEqual(['root-1', 'child-1', 'gc-1']);
   });
@@ -388,7 +388,7 @@ describe('sortParentFirst', () => {
       isRoot: false,
     });
 
-    const result = sortParentFirst([root, child1, child2]);
+    const result = sortNodesParentFirst([root, child1, child2]);
 
     expect(result.map(n => n.id)).toEqual(['root-1', 'c1', 'c2']);
   });
@@ -397,7 +397,7 @@ describe('sortParentFirst', () => {
     const node1 = createMockNode({ id: 'n1', parent: 'n2', isRoot: false });
     const node2 = createMockNode({ id: 'n2', parent: 'n1', isRoot: false });
 
-    const result = sortParentFirst([node1, node2]);
+    const result = sortNodesParentFirst([node1, node2]);
 
     expect(result.map(n => n.id)).toEqual(['n1', 'n2']);
   });
@@ -412,14 +412,14 @@ describe('sortParentFirst', () => {
       isRoot: false,
     });
 
-    const result = sortParentFirst([bChild, a, b, root]);
+    const result = sortNodesParentFirst([bChild, a, b, root]);
 
     expect(result[0].id).toBe('root');
     expect(result.indexOf(b)).toBeLessThan(result.indexOf(bChild));
   });
 
   it('returns empty array for empty input', () => {
-    const result = sortParentFirst([]);
+    const result = sortNodesParentFirst([]);
 
     expect(result).toEqual([]);
   });
@@ -437,7 +437,7 @@ describe('sortParentFirst', () => {
       isRoot: false,
     });
 
-    const result = sortParentFirst([orphan, child, root]);
+    const result = sortNodesParentFirst([orphan, child, root]);
 
     expect(result.map(n => n.id)).toEqual(['root', 'child', 'orphan']);
   });

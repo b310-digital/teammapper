@@ -1,5 +1,5 @@
 import type {
-  SystemFeatureFlags as FeatureFlags,
+  SystemFeatureFlags,
   SystemSettings,
   SystemSettingsInfo,
   SystemSettingsUrls,
@@ -10,17 +10,12 @@ import type {
   MapNodeImage,
 } from '@teammapper/shared'
 
-export type NodeColors = MapNodeColors
-export type NodeFont = MapNodeFont
-export type NodeLink = MapNodeLink
-export type NodeImage = MapNodeImage
-
 export interface NodeSettings {
   name: string
-  link: NodeLink
-  image: NodeImage
-  colors: NodeColors
-  font: NodeFont
+  link: MapNodeLink
+  image: MapNodeImage
+  colors: MapNodeColors
+  font: MapNodeFont
   locked?: boolean
 }
 
@@ -36,7 +31,7 @@ export interface MapOptions {
 }
 
 export type {
-  FeatureFlags,
+  SystemFeatureFlags,
   SystemSettings,
   SystemSettingsInfo,
   SystemSettingsUrls,

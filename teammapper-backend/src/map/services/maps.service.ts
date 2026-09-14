@@ -4,9 +4,9 @@ import { Repository, QueryRunner, In } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
-  ClientMap as IMmpClientMap,
+  ClientMap,
   IMmpClientNodeBasics,
-  ClientMapInfo as IMmpClientMapInfo,
+  ClientMapInfo,
 } from '@teammapper/shared'
 import {
   mapClientBasicNodeToMmpRootNode,
@@ -34,13 +34,13 @@ export class MapsService {
     })
   }
 
-  async getMapsOfUser(userId: string): Promise<IMmpClientMapInfo[]> {
+  async getMapsOfUser(userId: string): Promise<ClientMapInfo[]> {
     if (!userId) return []
     const mapsOfUser = await this.mapsRepository.find({
       where: { ownerExternalId: userId },
     })
 
-    const mapsInfo: IMmpClientMapInfo[] = await Promise.all(
+    const mapsInfo: ClientMapInfo[] = await Promise.all(
       mapsOfUser.map(async (map: MmpMap) => {
         return {
           uuid: map.id,
@@ -80,7 +80,7 @@ export class MapsService {
     await this.mapsRepository.update(uuid, { lastAccessed })
   }
 
-  async exportMapToClient(uuid: string): Promise<IMmpClientMap | undefined> {
+  async exportMapToClient(uuid: string): Promise<ClientMap | undefined> {
     const map = await this.findMap(uuid)
     if (!map) {
       this.logger.warn(`exportMapToClient(): Map was not found`)
@@ -250,7 +250,7 @@ export class MapsService {
   /**
    * Replaces all nodes in a map atomically. Used by REST import flows.
    */
-  async updateMap(clientMap: IMmpClientMap): Promise<MmpMap | null> {
+  async updateMap(clientMap: ClientMap): Promise<MmpMap | null> {
     const queryRunner = await this.createQueryRunner()
 
     try {
@@ -279,7 +279,7 @@ export class MapsService {
 
   private async saveValidNodes(
     queryRunner: QueryRunner,
-    clientMap: IMmpClientMap
+    clientMap: ClientMap
   ): Promise<void> {
     const mmpNodes = clientMap.data.map((x) =>
       mapClientNodeToMmpNode(x, clientMap.uuid)
