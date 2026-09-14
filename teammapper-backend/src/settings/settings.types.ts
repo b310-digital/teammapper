@@ -39,19 +39,23 @@ export interface MapOptions {
   rootNode: NodeSettings
 }
 
-export interface FeatureFlags {
-  pictograms: boolean
-  ai: boolean
-}
+import type {
+  SystemFeatureFlags as FeatureFlags,
+  SystemSettingsInfo,
+  SystemSettingsUrls,
+  UserGeneralSettings,
+} from '@teammapper/shared'
+
+export type { FeatureFlags }
 
 export interface Settings {
   systemSettings: {
-    info: { name: string; version: string }
-    urls: { pictogramApiUrl: string; pictogramStaticUrl: string }
+    info: SystemSettingsInfo
+    urls: SystemSettingsUrls
     featureFlags: FeatureFlags
   }
   userSettings: {
-    general: { language: string; darkMode: boolean }
+    general: UserGeneralSettings
     mapOptions: MapOptions
   }
 }

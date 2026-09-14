@@ -52,7 +52,11 @@ export class MapsService {
       })
     )
 
-    mapsInfo.sort((a, b) => (b.ttl?.getTime() ?? 0) - (a.ttl?.getTime() ?? 0))
+    mapsInfo.sort(
+      (a, b) =>
+        (b.ttl ? new Date(b.ttl).getTime() : 0) -
+        (a.ttl ? new Date(a.ttl).getTime() : 0)
+    )
 
     return mapsInfo.slice(0, 20)
   }

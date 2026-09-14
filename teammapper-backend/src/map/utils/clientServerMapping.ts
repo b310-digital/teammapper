@@ -1,6 +1,7 @@
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { IMmpClientMap, IMmpClientNode, IMmpClientNodeBasics } from '../types'
+import { MapNode } from '@teammapper/shared'
 import { sanitizeNodeFields } from './sanitization'
 
 const DEFAULT_COLOR_NAME = '#787878'
@@ -59,7 +60,7 @@ const mapMmpMapToClient = (
 }
 
 const mapClientNodeToMmpNode = (
-  clientNode: IMmpClientNode,
+  clientNode: IMmpClientNode | MapNode,
   mapId: string
 ): Partial<MmpNode> =>
   sanitizeNodeFields({

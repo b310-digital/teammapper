@@ -1,7 +1,7 @@
 import * as Y from 'yjs';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { ReversePropertyMapping } from './server-types';
-import { sortNodesParentFirst } from '@teammapper/shared';
+import { collectSubtreeIds, sortNodesParentFirst } from '@teammapper/shared';
 
 export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 
@@ -131,42 +131,20 @@ export const sortParentFirst = (
   return sortNodesParentFirst(nodes);
 };
 
-// Collects all descendant node IDs by building a parent-to-children
-// index in a single O(N) pass, then BFS-traversing from the given node.
+// Collects all descendant node IDs using the shared cycle-safe BFS algorithm.
 export function collectDescendantIds(
   nodesMap: Y.Map<Y.Map<unknown>>,
   nodeId: string
 ): string[] {
-  const childrenOf = new Map<string, string[]>();
+  const nodes: { id: string; parent: string | null }[] = [];
   nodesMap.forEach((yNode: Y.Map<unknown>, key: string) => {
-    const parent = yNode.get('parent') as string | null;
-    if (parent != null) {
-      const siblings = childrenOf.get(parent);
-      if (siblings) {
-        siblings.push(key);
-      } else {
-        childrenOf.set(parent, [key]);
-      }
-    }
+    nodes.push({
+      id: key,
+      parent: (yNode.get('parent') as string | null) ?? null,
+    });
   });
 
-  const descendants: string[] = [];
-  const visited = new Set<string>([nodeId]);
-  const queue = [nodeId];
-  let i = 0;
-
-  while (i < queue.length) {
-    const children = childrenOf.get(queue[i++]) ?? [];
-    for (const child of children) {
-      if (!visited.has(child)) {
-        visited.add(child);
-        descendants.push(child);
-        queue.push(child);
-      }
-    }
-  }
-
-  return descendants;
+  return collectSubtreeIds(nodes, nodeId);
 }
 
 export function resolveCompoundMmpUpdates(

@@ -1,7 +1,11 @@
 import { MapSnapshot } from '@mmp/map/types';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
+import { ClientMap, ClientPrivateMap, ClientMapInfo } from '@teammapper/shared';
 
-interface ServerMap {
+interface ServerMap extends Omit<
+  ClientMap,
+  'data' | 'options' | 'createdAt' | 'lastModified' | 'deletedAt'
+> {
   uuid: string;
   lastModified: string;
   deletedAt: string;
@@ -12,13 +16,16 @@ interface ServerMap {
   writable?: boolean;
 }
 
-interface PrivateServerMap {
+interface PrivateServerMap extends Omit<
+  ClientPrivateMap,
+  'map' | 'adminId' | 'modificationSecret'
+> {
   map: ServerMap;
   adminId: string;
   modificationSecret: string;
 }
 
-interface ServerMapInfo {
+interface ServerMapInfo extends Omit<ClientMapInfo, 'ttl'> {
   uuid: string;
   adminId: string | null;
   modificationSecret: string | null;

@@ -4,10 +4,14 @@ export const VALID_LANGUAGES = [
   'es',
   'fr',
   'it',
+  'ja',
   'nl',
   'pt',
+  'pt-br',
   'ru',
   'zh',
+  'zh-cn',
+  'zh-tw',
 ] as const;
 
 export type ValidLanguage = (typeof VALID_LANGUAGES)[number];

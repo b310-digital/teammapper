@@ -1,6 +1,3 @@
-import type { IMmpClientNode as _IMmpClientNode } from './schemas/node.schema'
-import type { IMmpClientMapOptions as _IMmpClientMapOptions } from './schemas/maps.schema'
-
 // Entity/node types — derived from valibot schemas
 export type {
   IMmpClientColor,
@@ -17,40 +14,18 @@ export type {
   IMmpClientDeleteRequest,
 } from './schemas/maps.schema'
 
-// IMmpClientMap is the canonical domain type used across services/mappers.
-export interface IMmpClientMap {
-  uuid: string
-  lastModified: Date | null
-  lastAccessed: Date | null
-  deleteAfterDays: number
-  deletedAt: Date
-  data: _IMmpClientNode[]
-  options: _IMmpClientMapOptions
-  createdAt: Date | null
-  writable?: boolean
-}
+import type {
+  ClientMap,
+  ClientMapInfo,
+  ClientPrivateMap,
+  MapOptions as _SharedMapOptions,
+} from '@teammapper/shared'
 
-// Types that don't have schemas (not user input boundaries)
-
-export interface MapOptions {
-  fontIncrement: number
-  fontMaxSize: number
-  fontMinSize: number
-}
-
-export interface IMmpClientMapInfo {
-  uuid: string
-  adminId: string | null
-  modificationSecret: string | null
-  ttl: Date | undefined
-  rootName: string | null
-}
-
-export interface IMmpClientPrivateMap {
-  map: IMmpClientMap
-  adminId: string | null
-  modificationSecret: string | null
-}
+// Canonical domain types consolidated in @teammapper/shared
+export type IMmpClientMap = ClientMap
+export type MapOptions = _SharedMapOptions
+export type IMmpClientMapInfo = ClientMapInfo
+export type IMmpClientPrivateMap = ClientPrivateMap
 
 export interface Request {
   cookies: {
