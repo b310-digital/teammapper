@@ -16,7 +16,9 @@
     "typeRoots": ["node_modules/@types"],
     "lib": ["es2018", "dom"],
     "paths": {
-      "@mmp/*": ["mmp/src/*"]
+      "@mmp/*": ["mmp/src/*"],
+      "rxjs": ["node_modules/rxjs"],
+      "rxjs/*": ["node_modules/rxjs/*"]
     },
     "useDefineForClassFields": false
   },

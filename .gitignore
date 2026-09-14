@@ -1,13 +1,16 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # compiled output
+dist/
 /dist
 /tmp
 /out-tsc
 /builds
 /documentation
+*.tsbuildinfo
 
 # dependencies
+node_modules/
 /node_modules
 .pnpm-store
 

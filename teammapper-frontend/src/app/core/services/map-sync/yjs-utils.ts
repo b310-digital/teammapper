@@ -1,6 +1,7 @@
 import * as Y from 'yjs';
 import { ExportNodeProperties } from '@mmp/map/types';
 import { ReversePropertyMapping } from './server-types';
+import { sortNodesParentFirst } from '@teammapper/shared';
 
 export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 
@@ -122,53 +123,12 @@ export function resolveMmpPropertyUpdate(
   );
 }
 
-// Groups non-root nodes by their parent ID
-const groupByParent = (
-  nodes: readonly ExportNodeProperties[]
-): ReadonlyMap<string, readonly ExportNodeProperties[]> =>
-  nodes
-    .filter(n => !n.isRoot)
-    .reduce((acc, node) => {
-      const pid = node.parent ?? '';
-      acc.set(pid, [...(acc.get(pid) ?? []), node]);
-      return acc;
-    }, new Map<string, ExportNodeProperties[]>());
-
-// Recursive BFS: processes head of queue, enqueues its children, accumulates result
-const collectBreadthFirst = (
-  queue: readonly ExportNodeProperties[],
-  childrenOf: ReadonlyMap<string, readonly ExportNodeProperties[]>,
-  collected: readonly ExportNodeProperties[] = []
-): readonly ExportNodeProperties[] => {
-  if (queue.length === 0) return collected;
-  const [current, ...rest] = queue;
-  const kids = childrenOf.get(current.id) ?? [];
-  return collectBreadthFirst([...rest, ...kids], childrenOf, [
-    ...collected,
-    current,
-  ]);
-};
-
-// Appends nodes not reachable from root to prevent data loss
-const appendOrphans = (
-  ordered: readonly ExportNodeProperties[],
-  all: readonly ExportNodeProperties[]
-): ExportNodeProperties[] => {
-  const visited = new Set(ordered.map(n => n.id));
-  return [...ordered, ...all.filter(n => !visited.has(n.id))];
-};
-
 // Sorts nodes so root comes first and parents always precede their children (BFS order).
 // Orphaned nodes (not reachable from root) are appended at the end to prevent data loss.
 export const sortParentFirst = (
   nodes: readonly ExportNodeProperties[]
 ): ExportNodeProperties[] => {
-  const root = nodes.find(n => n.isRoot);
-  if (!root) return [...nodes];
-
-  const childrenOf = groupByParent(nodes);
-  const ordered = collectBreadthFirst([root], childrenOf);
-  return appendOrphans(ordered, nodes);
+  return sortNodesParentFirst(nodes);
 };
 
 // Collects all descendant node IDs by building a parent-to-children
