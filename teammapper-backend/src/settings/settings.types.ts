@@ -35,6 +35,7 @@ export type {
   SystemSettings,
   SystemSettingsInfo,
   SystemSettingsUrls,
+  SystemFeatureFlags as FeatureFlags,
 }
 
 export interface Settings {

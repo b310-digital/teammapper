@@ -10,7 +10,7 @@ import { Event } from './events';
 export default class Drag {
   private map: Map;
 
-  private dragBehavior: DragBehavior<any, any, any>;
+  private dragBehavior: DragBehavior<SVGGElement, Node, unknown>;
   private dragging: boolean;
   private orientation: boolean;
   private descendants: Node[];
@@ -23,14 +23,14 @@ export default class Drag {
     this.map = map;
 
     this.dragBehavior = d3
-      .drag()
-      .on('start', (event: D3DragEvent<any, any, any>, node: Node) =>
+      .drag<SVGGElement, Node>()
+      .on('start', (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
         this.started(event, node)
       )
-      .on('drag', (event: D3DragEvent<any, any, any>, node: Node) =>
+      .on('drag', (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
         this.dragged(event, node)
       )
-      .on('end', (event: D3DragEvent<any, any, any>, node: Node) =>
+      .on('end', (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
         this.ended(event, node)
       );
   }
@@ -39,7 +39,7 @@ export default class Drag {
    * Return the d3 drag behavior
    * @returns {DragBehavior} dragBehavior
    */
-  public getDragBehavior(): DragBehavior<any, any, any> {
+  public getDragBehavior(): DragBehavior<SVGGElement, Node, unknown> {
     return this.dragBehavior;
   }
 
@@ -47,7 +47,7 @@ export default class Drag {
    * Select the node and calculate node position data for dragging.
    * @param {Node} node
    */
-  private started(_: D3DragEvent<any, any, any>, node: Node) {
+  private started(_: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
     this.orientation = this.map.nodes.getOrientation(node);
     this.descendants = this.map.nodes.getDescendants(node);
 
@@ -58,7 +58,7 @@ export default class Drag {
    * Move the dragged node and if it is locked all their descendants.
    * @param {Node} node
    */
-  private dragged(event: D3DragEvent<any, any, any>, node: Node) {
+  private dragged(event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
     const dy = event.dy,
       dx = event.dx;
 
@@ -95,7 +95,7 @@ export default class Drag {
 
     // Update all mind map branches
     d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
-      return this.map.draw.drawBranch(node) as any;
+      return this.map.draw.drawBranch(node).toString();
     });
 
     // This is here and not in the started function because started function
@@ -107,7 +107,7 @@ export default class Drag {
    * If the node was actually dragged change the state of dragging and save the snapshot.
    * @param {Node} node
    */
-  private ended(_event: D3DragEvent<any, any, any>, node: Node) {
+  private ended(_event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
     if (this.dragging) {
       this.dragging = false;
       this.map.history.save();

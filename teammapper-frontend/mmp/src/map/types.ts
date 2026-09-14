@@ -5,25 +5,21 @@ import {
 } from './models/node';
 import { ExportHistory, MapSnapshot } from './handlers/history';
 import { DefaultNodeProperties, OptionParameters } from './options';
+import type {
+  MapCreateEvent,
+  NodeUpdateEvent,
+  MapDiff,
+  SnapshotChanges,
+  NodeProperty,
+  NodePropertyValue,
+  MmpEventPayloadMap,
+  MmpEventType,
+  CachedMap,
+} from '@teammapper/shared';
 
-interface MapCreateEvent {
-  previousMapData: MapSnapshot;
-}
-
-interface MapProperties {
-  uuid: string;
-  lastModified: number;
-  createdAt: number;
-  data: MapSnapshot;
-  deletedAt: number;
-  deleteAfterDays: number;
-}
-
-interface NodeUpdateEvent {
-  nodeProperties: ExportNodeProperties;
-  previousValue: any;
-  changedProperty: string;
-}
+type MapProperties = Omit<CachedMap, 'options'> & {
+  options?: CachedMap['options'];
+};
 
 export {
   DefaultNodeProperties,
@@ -36,4 +32,10 @@ export {
   NodeUpdateEvent,
   OptionParameters,
   UserNodeProperties,
+  MapDiff,
+  SnapshotChanges,
+  NodeProperty,
+  NodePropertyValue,
+  MmpEventPayloadMap,
+  MmpEventType,
 };

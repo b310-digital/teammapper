@@ -37,7 +37,7 @@ export default class Export {
    * @param {Function} callback
    * @param {string} type
    */
-  public asImage = (callback: (...args: any[]) => void, type?: string) => {
+  public asImage = (callback: (url: string) => void, type?: string) => {
     if (typeof callback !== 'function') {
       Log.error('The first parameter must be a function', 'type');
     }
@@ -120,9 +120,9 @@ export default class Export {
    * Convert the mind map svg in the data URI.
    * @param {Function} callback
    */
-  private dataURI(callback: (...args: any[]) => void) {
-    const element = this.map.dom.g.node(),
-      clone = element.cloneNode(true),
+  private dataURI(callback: (url: string) => void) {
+    const element = this.map.dom.g.node() as SVGGElement,
+      clone = element.cloneNode(true) as SVGGElement,
       svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
       box = element.getBBox(),
       css = Utils.cssRules(element),
@@ -136,8 +136,8 @@ export default class Export {
     svg.setAttributeNS(xmlns, 'xmlns', 'http://www.w3.org/2000/svg');
     svg.setAttributeNS(xmlns, 'xmlns:xlink', 'http://www.w3.org/1999/xlink');
     svg.setAttribute('version', '1.1');
-    svg.setAttribute('width', w);
-    svg.setAttribute('height', h);
+    svg.setAttribute('width', w.toString());
+    svg.setAttribute('height', h.toString());
     svg.setAttribute('viewBox', [x, y, w, h].join(' '));
 
     // If there is css, insert it
@@ -174,14 +174,18 @@ export default class Export {
 
     // convert all foreignObjects to native svg text to ensure better compatibility with svg readers
     d3.select(clone)
-      .selectAll('foreignObject')
+      .selectAll<Element, unknown>('foreignObject')
       .nodes()
-      .forEach((fo: HTMLElement) => {
+      .forEach((node: Element) => {
+        const fo = node as HTMLElement;
         const parent = fo.parentElement;
+        const xAttr = fo.getAttribute('x') || '0';
+        const widthAttr = fo.getAttribute('width') || '0';
+        const yAttr = fo.getAttribute('y') || '0';
         const x =
-          parseInt(fo.getAttribute('x'), 10) +
-          Math.floor(parseInt(fo.getAttribute('width'), 10) / 2);
-        const splittedText = fo.firstChild.textContent.split('\n');
+          parseInt(xAttr, 10) +
+          Math.floor(parseInt(widthAttr, 10) / 2);
+        const splittedText = (fo.firstChild?.textContent || '').split('\n');
         // line breaks are created via tspan elements that are relatively positioned using dy property
         const svgTextWithLineBreaks = splittedText.map(
           (text, i) =>
@@ -191,25 +195,26 @@ export default class Export {
           USE_PROFILES: { svg: true },
           NAMESPACE: 'http://www.w3.org/2000/svg',
         });
+        const firstChildEl = fo.firstElementChild as HTMLElement | null;
         d3.select(parent)
-          .attr('width', fo.getAttribute('width'))
+          .attr('width', widthAttr)
           .append('text')
           .attr(
             'y',
-            parseInt(fo.getAttribute('y'), 10) +
-              parseInt((fo.firstElementChild as HTMLElement).style.fontSize, 10)
+            parseInt(yAttr, 10) +
+              parseInt(firstChildEl?.style.fontSize || '12', 10)
           )
           .attr('x', x)
           .attr('text-anchor', 'middle')
           .attr(
             'font-family',
-            (fo.firstElementChild as HTMLElement).style.fontFamily
+            firstChildEl?.style.fontFamily || 'sans-serif'
           )
           .attr(
             'font-size',
-            (fo.firstElementChild as HTMLElement).style.fontSize
+            firstChildEl?.style.fontSize || '12px'
           )
-          .attr('fill', (fo.firstElementChild as HTMLElement).style.color)
+          .attr('fill', firstChildEl?.style.color || '#000')
           .html(textSVG);
         fo.remove();
       });
@@ -225,29 +230,29 @@ export default class Export {
       reader.readAsDataURL(blob);
 
       reader.onloadend = () => {
-        callback(reader.result);
+        callback(reader.result as string);
       };
     });
   }
 
   /**
    * If there are images in the map convert their href in dataURI.
-   * @param {HTMLElement} element
+   * @param {Element} element
    * @param {Function} callback
    */
   private convertImages(
-    element: HTMLElement,
-    callback: (...args: any[]) => void
+    element: Element,
+    callback: () => void
   ) {
-    const images = element.querySelectorAll('image');
+    const images = element.querySelectorAll<SVGImageElement>('image');
     let counter = images.length;
 
     if (counter > 0) {
-      for (const image of images as any) {
+      for (const image of Array.from(images)) {
         const canvas = document.createElement('canvas'),
           ctx = canvas.getContext('2d'),
           img = new Image(),
-          href = image.getAttribute('href');
+          href = image.getAttribute('href') || '';
 
         img.crossOrigin = 'Anonymous';
 
@@ -256,7 +261,7 @@ export default class Export {
         img.onload = function () {
           canvas.width = img.width;
           canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
+          ctx?.drawImage(img, 0, 0);
 
           image.setAttribute('href', canvas.toDataURL('image/png'));
 

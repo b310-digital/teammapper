@@ -3,6 +3,11 @@ export interface MapNodeCoordinates {
   y: number;
 }
 
+export interface MapNodeDimensions {
+  width: number;
+  height: number;
+}
+
 export interface MapNodeColors {
   name?: string | null;
   background?: string | null;
@@ -10,20 +15,28 @@ export interface MapNodeColors {
   link?: string | null;
 }
 
+export type MapNodeColorsProperties = MapNodeColors;
+
 export interface MapNodeFont {
-  style?: string | null;
   size?: number | null;
+  style?: string | null;
   weight?: string | null;
 }
+
+export type MapNodeFontProperties = MapNodeFont;
 
 export interface MapNodeImage {
   src?: string | null;
   size?: number | null;
 }
 
+export type MapNodeImageProperties = MapNodeImage;
+
 export interface MapNodeLink {
   href?: string | null;
 }
+
+export type MapNodeLinkProperties = MapNodeLink;
 
 export interface MapNodeBasics {
   colors: MapNodeColors;
@@ -32,24 +45,37 @@ export interface MapNodeBasics {
   image: MapNodeImage;
 }
 
-export interface MapNode extends MapNodeBasics {
-  id: string;
-  parent: string | null;
-  isRoot: boolean;
-  coordinates: MapNodeCoordinates;
-  detached: boolean;
-  k: number;
-  link: MapNodeLink;
-  locked: boolean;
+export interface UserNodeProperties {
+  name?: string | null;
+  coordinates?: MapNodeCoordinates;
+  image?: MapNodeImage;
+  link?: MapNodeLink;
+  colors?: MapNodeColors;
+  font?: MapNodeFont;
+  locked?: boolean;
+  isRoot?: boolean;
+  detached?: boolean;
   hidden?: boolean;
   hasHiddenChildNodes?: boolean;
 }
+
+export interface MapNode extends UserNodeProperties {
+  id: string;
+  parent: string | null;
+  k: number;
+}
+
+export type ExportNodeProperties = MapNode;
+
+export type MapSnapshot = MapNode[];
 
 export interface MapOptions {
   fontMaxSize?: number;
   fontMinSize?: number;
   fontIncrement?: number;
 }
+
+export type CachedMapOptions = MapOptions;
 
 export interface ClientMap {
   uuid: string;
@@ -67,7 +93,7 @@ export interface ClientMapInfo {
   uuid: string;
   adminId: string | null;
   modificationSecret: string | null;
-  ttl?: Date | number | string;
+  ttl?: Date | number | string | null;
   rootName: string | null;
 }
 
@@ -110,6 +136,119 @@ export interface UserSettings {
     showLinktext?: boolean;
   };
 }
+
+export type SnapshotChanges = Record<
+  string,
+  Partial<ExportNodeProperties> | undefined
+>;
+
+export interface MapDiff {
+  added: SnapshotChanges;
+  deleted: SnapshotChanges;
+  updated: SnapshotChanges;
+}
+
+export type NodeProperty =
+  | 'name'
+  | 'locked'
+  | 'coordinates'
+  | 'imageSrc'
+  | 'imageSize'
+  | 'linkHref'
+  | 'backgroundColor'
+  | 'branchColor'
+  | 'fontWeight'
+  | 'fontStyle'
+  | 'fontSize'
+  | 'nameColor'
+  | 'hidden';
+
+export type NodePropertyValue =
+  | string
+  | number
+  | boolean
+  | MapNodeCoordinates
+  | null
+  | undefined;
+
+export interface NodeUpdateEvent {
+  nodeProperties: ExportNodeProperties;
+  previousValue: unknown;
+  changedProperty: NodeProperty | string;
+}
+
+export interface MapCreateEvent {
+  previousMapData?: MapSnapshot;
+}
+
+export interface CachedMap {
+  lastModified: number;
+  createdAt: number;
+  data: MapSnapshot;
+  uuid: string;
+  deleteAfterDays: number;
+  deletedAt: number;
+  options: CachedMapOptions;
+}
+
+export interface CachedMapEntry {
+  cachedMap: CachedMap;
+  key: string;
+}
+
+export interface CachedAdminMapValue {
+  adminId: string;
+  modificationSecret: string;
+  ttl: Date | number | string;
+  rootName: string | null;
+}
+
+export interface CachedAdminMapEntry {
+  id: string;
+  cachedAdminMapValue: CachedAdminMapValue;
+}
+
+export interface OldMmpNodeValue {
+  parent?: string;
+  k?: number;
+  name?: string;
+  fixed?: boolean;
+  x?: number;
+  y?: number;
+  'image-size'?: string;
+  'image-src'?: string;
+  'background-color'?: string;
+  'branch-color'?: string;
+  'text-color'?: string;
+  'font-size'?: string;
+  bold?: boolean;
+  italic?: boolean;
+}
+
+export interface OldMmpNode {
+  key: string;
+  value: OldMmpNodeValue;
+}
+
+export interface MmpEventPayloadMap {
+  create: MapCreateEvent;
+  center: void;
+  undo: MapDiff;
+  redo: MapDiff;
+  exportJSON: void;
+  exportImage: void;
+  zoomIn: void;
+  zoomOut: void;
+  nodeSelect: ExportNodeProperties;
+  nodeDeselect: ExportNodeProperties;
+  nodeUpdate: NodeUpdateEvent;
+  nodeCreate: ExportNodeProperties;
+  nodePaste: ExportNodeProperties[];
+  nodeRemove: ExportNodeProperties;
+  distribute: void;
+}
+
+export type MmpEventType = keyof MmpEventPayloadMap;
 
 export interface Settings {
   systemSettings: SystemSettings;

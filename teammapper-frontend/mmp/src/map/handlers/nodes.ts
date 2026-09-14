@@ -18,9 +18,26 @@ import Utils from '../../utils/utils';
 import { MapSnapshot } from './history';
 import { computeMapLayout, LayoutInputNode } from './layout';
 import { NODE_HORIZONTAL_SPACING } from './node-geometry';
+import type { NodeProperty, NodePropertyValue } from '@teammapper/shared';
 
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
 const NODE_VERTICAL_SPACING = 120; // The initial vertical spacing for the first child node
+export const PropertyMapping = {
+  name: ['name'],
+  locked: ['locked'],
+  coordinates: ['coordinates'],
+  imageSrc: ['image', 'src'],
+  imageSize: ['image', 'size'],
+  linkHref: ['link', 'href'],
+  backgroundColor: ['colors', 'background'],
+  branchColor: ['colors', 'branch'],
+  fontWeight: ['font', 'weight'],
+  fontStyle: ['font', 'style'],
+  fontSize: ['font', 'size'],
+  nameColor: ['colors', 'name'],
+  hidden: ['hidden'],
+} as const;
+
 /**
  * Manage the nodes of the map.
  */
@@ -35,13 +52,13 @@ export default class Nodes {
     this.counter = 0;
     this.nodes = new Map();
   }
-  static NodePropertyMapping: any;
+  static NodePropertyMapping: typeof PropertyMapping = PropertyMapping;
 
   private map: MmpMap;
 
   private counter: number;
   private nodes: Map<string, Node>;
-  private selectedNode: Node;
+  private selectedNode!: Node;
 
   /**
    * Add the root node to the map.
@@ -50,7 +67,7 @@ export default class Nodes {
   public addRootNode(coordinates?: Coordinates) {
     const rootId = uuidv4();
 
-    const properties: NodeProperties = Utils.mergeObjects(
+    const properties = Utils.mergeObjects(
       this.map.options.rootNode,
       {
         coordinates: {
@@ -64,7 +81,7 @@ export default class Nodes {
         hidden: false,
         isRoot: true,
       }
-    ) as NodeProperties;
+    ) as unknown as NodeProperties;
 
     this.map.rootId = rootId;
 
@@ -97,10 +114,10 @@ export default class Nodes {
     parentId?: string,
     overwriteId?: string
   ): Node => {
-    const parentNode: Node = userProperties.detached
+    const parentNode: Node | null = userProperties?.detached
       ? null
       : parentId
-        ? this.getNode(parentId)
+        ? (this.getNode(parentId) ?? null)
         : this.getSelectedNode();
 
     const properties: NodeProperties = Utils.mergeObjects(
@@ -153,7 +170,7 @@ export default class Nodes {
   public addNodes = (nodes: ExportNodeProperties[], updateHistory = true) => {
     nodes.forEach(node => {
       if (!this.existNode(node.id)) {
-        this.addNode(node, false, false, node.parent, node.id);
+        this.addNode(node, false, false, node.parent ?? undefined, node.id);
       }
     });
 
@@ -174,13 +191,13 @@ export default class Nodes {
       }
 
       if (!this.nodeSelectionTo(id)) {
-        if (this.nodes.has(id)) {
-          const node = this.nodes.get(id),
-            background = node.getBackgroundDOM();
+        const node = this.nodes.get(id);
+        if (node) {
+          const background = node.getBackgroundDOM();
 
-          const color = d3.color(background.style.fill).darker(0.5);
+          const color = d3.color(background.style.fill)?.darker(0.5);
 
-          if (background.style.stroke !== color.toString()) {
+          if (color && background.style.stroke !== color.toString()) {
             if (this.selectedNode) {
               this.selectedNode.getBackgroundDOM().style.stroke = '';
             }
@@ -238,9 +255,9 @@ export default class Nodes {
         Log.error('The node id must be a string', 'type');
       }
 
-      if (this.nodes.has(id)) {
-        const node = this.nodes.get(id),
-          background = node.getBackgroundDOM();
+      const node = this.nodes.get(id);
+      if (node) {
+        const background = node.getBackgroundDOM();
 
         if (background.style.stroke !== color) {
           background.style.stroke = DOMPurify.sanitize(color);
@@ -361,8 +378,8 @@ export default class Nodes {
    * Update the properties of the selected node.
    */
   public updateNode = (
-    property: string,
-    value: any,
+    property: NodeProperty | string,
+    value: NodePropertyValue | unknown,
     notifyWithEvent = true,
     updateHistory = true,
     id?: string
@@ -371,58 +388,66 @@ export default class Nodes {
       Log.error('The node id must be a string', 'type');
     }
 
-    const node: Node = id ? this.getNode(id) : this.selectedNode;
+    const node: Node | undefined = id ? this.getNode(id) : this.selectedNode;
 
     if (node === undefined) {
       Log.error('There are no nodes with id "' + id + '"');
+      return;
     }
 
     if (typeof property !== 'string') {
       Log.error('The property must be a string', 'type');
     }
 
-    let updated: any;
-    const previousValue: any = Utils.get(node, PropertyMapping[property]);
+    let updated: boolean | void = false;
+    const propertyPath =
+      PropertyMapping[property as keyof typeof PropertyMapping];
+    const previousValue: unknown = propertyPath
+      ? Utils.get(node, propertyPath)
+      : undefined;
 
     switch (property) {
       case 'name':
-        updated = this.updateNodeName(node, value);
+        updated = this.updateNodeName(node, value as string);
         break;
       case 'locked':
-        updated = this.updateNodeLockedStatus(node, value);
+        updated = this.updateNodeLockedStatus(node, value as boolean);
         break;
       case 'coordinates':
-        updated = this.updateNodeCoordinatesWithoutDescendants(node, value);
+        updated = this.updateNodeCoordinatesWithoutDescendants(
+          node,
+          value as Coordinates
+        );
         break;
       case 'imageSrc':
-        updated = this.updateNodeImageSrc(node, value);
+        updated = this.updateNodeImageSrc(node, value as string);
         break;
       case 'imageSize':
-        updated = this.updateNodeImageSize(node, value);
+        updated = this.updateNodeImageSize(node, value as number);
         break;
       case 'linkHref':
-        updated = this.updateNodeLinkHref(node, value);
+        updated = this.updateNodeLinkHref(node, value as string);
         break;
       case 'backgroundColor':
-        updated = this.updateNodeBackgroundColor(node, value);
+        updated = this.updateNodeBackgroundColor(node, value as string);
         break;
       case 'branchColor':
-        updated = this.updateNodeBranchColor(node, value);
+        updated = this.updateNodeBranchColor(node, value as string);
         break;
       case 'fontWeight':
-        updated = this.updateNodeFontWeight(node, value);
+        updated = this.updateNodeFontWeight(node, value as string);
         break;
       case 'fontStyle':
-        updated = this.updateNodeFontStyle(node, value);
+        updated = this.updateNodeFontStyle(node, value as string);
         break;
       case 'fontSize':
-        updated = this.updateNodeFontSize(node, value);
+        updated = this.updateNodeFontSize(node, value as number);
         break;
       case 'nameColor':
-        updated = this.updateNodeNameColor(node, value);
+        updated = this.updateNodeNameColor(node, value as string);
         break;
       case 'hidden':
-        updated = this.updateNodeHidden(node, value);
+        updated = this.updateNodeHidden(node, value as boolean);
         break;
       default:
         Log.error('The property does not exist');
@@ -449,10 +474,11 @@ export default class Nodes {
       Log.error('The node id must be a string', 'type');
     }
 
-    const node: Node = id ? this.getNode(id) : this.selectedNode;
+    const node: Node | undefined = id ? this.getNode(id) : this.selectedNode;
 
     if (node === undefined) {
       Log.error('There are no nodes with id "' + id + '"');
+      return;
     }
 
     if (!node.isRoot) {
@@ -470,7 +496,7 @@ export default class Nodes {
       if (notifyWithEvent)
         this.map.events.call(
           Event.nodeRemove,
-          null,
+          undefined,
           this.getNodeProperties(node)
         );
 
@@ -545,8 +571,11 @@ export default class Nodes {
     coordinates: Coordinates,
     reverse = false
   ): Coordinates {
-    const zoomCoordinates = d3.zoomTransform(this.map.dom.svg.node()),
-      fixedCoordinates: Coordinates = {} as Coordinates;
+    const svgEl = this.map.dom.svg?.node();
+    const zoomCoordinates = svgEl
+      ? d3.zoomTransform(svgEl)
+      : { x: 0, y: 0, k: 1 };
+    const fixedCoordinates: Coordinates = {} as Coordinates;
 
     if (coordinates.x) {
       if (reverse === false) {
@@ -628,7 +657,7 @@ export default class Nodes {
    * @returns {Node[]} nodes
    */
   public getDescendants(node: Node): Node[] {
-    let nodes = [];
+    let nodes: Node[] = [];
     this.getChildren(node).forEach((node: Node) => {
       nodes.push(node);
       nodes = nodes.concat(this.getDescendants(node));
@@ -653,8 +682,9 @@ export default class Nodes {
   /**
    * Return the node properties with the id equal to id passed as parameter.
    */
-  public exportNodeProperties = (id: string): ExportNodeProperties => {
-    return this.getNodeProperties(this.getNode(id));
+  public exportNodeProperties = (id: string): ExportNodeProperties | undefined => {
+    const node = this.getNode(id);
+    return node ? this.getNodeProperties(node) : undefined;
   };
 
   /**
@@ -714,22 +744,23 @@ export default class Nodes {
    * @returns {Node} rootNode
    */
   public getRoot = (): Node => {
-    return this.nodes.get(this.map.rootId);
+    return this.nodes.get(this.map.rootId)!;
   };
 
   /**
    * Return the node with the id equal to id passed as parameter.
    * @param {string} id
-   * @returns {Node}
+   * @returns {Node | undefined}
    */
-  public getNode = (id: string): Node => {
+  public getNode = (id: string): Node | undefined => {
     if (id !== undefined) {
       if (typeof id !== 'string') {
         Log.error('The node id must be a string', 'type');
-        return;
+        return undefined;
       }
       return this.nodes.get(id);
     }
+    return undefined;
   };
 
   /**
@@ -874,7 +905,7 @@ export default class Nodes {
   }
 
   private redrawBranches(): void {
-    d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
+    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr('d', (node: Node) => {
       // A detached node has no parent and so no branch to draw. Returning
       // null makes d3 drop the attribute, as the other redraw paths do.
       const branch = this.map.draw.drawBranch(node);
@@ -970,8 +1001,9 @@ export default class Nodes {
         'translate(' + [coordinates.x, coordinates.y] + ')'
       );
 
-      d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
-        return this.map.draw.drawBranch(node) as any;
+      d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr('d', (node: Node) => {
+        const branch = this.map.draw.drawBranch(node);
+        return branch ? branch.toString() : null;
       });
 
       return true;
@@ -999,10 +1031,10 @@ export default class Nodes {
       background.style.fill = sanitizedColor;
 
       if (background.style.stroke !== '') {
-        background.style.stroke = d3
-          .color(sanitizedColor)
-          .darker(0.5)
-          .toString();
+        const darker = d3.color(sanitizedColor)?.darker(0.5);
+        if (darker) {
+          background.style.stroke = darker.toString();
+        }
       }
 
       node.colors.background = sanitizedColor;
@@ -1052,7 +1084,9 @@ export default class Nodes {
       if (node.colors.name !== color) {
         const branch = document.getElementById(node.id + '_branch');
 
-        branch.style.fill = branch.style.stroke = sanitizedColor;
+        if (branch) {
+          branch.style.fill = branch.style.stroke = sanitizedColor;
+        }
 
         node.colors.branch = sanitizedColor;
         return true;
@@ -1077,7 +1111,7 @@ export default class Nodes {
     }
 
     if (node.font.size != size) {
-      node.getNameDOM().style['font-size'] = size + 'px';
+      node.getNameDOM().style.fontSize = size + 'px';
 
       this.map.draw.updateNodeShapes(node);
 
@@ -1102,7 +1136,7 @@ export default class Nodes {
     if (node.image.src !== '') {
       if (node.image.size !== size) {
         const image = node.getImageDOM(),
-          box = (image as any).getBBox(),
+          box = image.getBBox(),
           height = size,
           width = (box.width * height) / box.height,
           y = -(height + node.dimensions.height / 2 + 5),
@@ -1197,7 +1231,7 @@ export default class Nodes {
     }
 
     if (node.font.style !== style) {
-      node.getNameDOM().style['font-style'] = DOMPurify.sanitize(style);
+      node.getNameDOM().style.fontStyle = DOMPurify.sanitize(style);
 
       node.font.style = style;
       return true;
@@ -1218,7 +1252,7 @@ export default class Nodes {
     }
 
     if (node.font.weight !== weight) {
-      node.getNameDOM().style['font-weight'] = DOMPurify.sanitize(weight);
+      node.getNameDOM().style.fontWeight = DOMPurify.sanitize(weight);
 
       this.map.draw.updateNodeShapes(node);
 
@@ -1315,25 +1349,9 @@ export default class Nodes {
 
       const lowerNode = this.getLowerNode(children);
 
-      if (children.length > 0) {
+      if (children.length > 0 && lowerNode) {
         this.selectNode(lowerNode.id);
       }
     }
   }
 }
-
-export const PropertyMapping = {
-  name: ['name'],
-  locked: ['locked'],
-  coordinates: ['coordinates'],
-  imageSrc: ['image', 'src'],
-  imageSize: ['image', 'size'],
-  linkHref: ['link', 'href'],
-  backgroundColor: ['colors', 'background'],
-  branchColor: ['colors', 'branch'],
-  fontWeight: ['font', 'weight'],
-  fontStyle: ['font', 'style'],
-  fontSize: ['font', 'size'],
-  nameColor: ['colors', 'name'],
-  hidden: ['hidden'],
-} as const;

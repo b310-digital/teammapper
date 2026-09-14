@@ -9,6 +9,12 @@ import Nodes from './handlers/nodes';
 import Export from './handlers/export';
 import CopyPaste from './handlers/copy-paste';
 import Node, { ExportNodeProperties, UserNodeProperties } from './models/node';
+import type {
+  NodeProperty,
+  NodePropertyValue,
+  MmpEventPayloadMap,
+  MmpEventType,
+} from '@teammapper/shared';
 
 /**
  * Initialize all handlers and return a mmp object.
@@ -28,7 +34,7 @@ export default class MmpMap {
   public export: Export;
   public copyPaste: CopyPaste;
 
-  public instance: MmpInstance;
+  public instance!: MmpInstance;
 
   /**
    * Create all handler instances, set some map behaviors and return a mmp instance.
@@ -59,7 +65,7 @@ export default class MmpMap {
       });
     }
 
-    if (this.options.zoom === true) {
+    if (this.options.zoom === true && this.dom.svg) {
       this.dom.svg.call(this.zoom.getZoomBehavior());
     }
 
@@ -72,11 +78,12 @@ export default class MmpMap {
    * Remove permanently mmp instance.
    */
   private remove = () => {
-    this.dom.svg.remove();
+    this.dom.svg?.remove();
 
-    const props = Object.keys(this.instance);
+    const instanceRecord = this.instance as unknown as Record<string, unknown>;
+    const props = Object.keys(instanceRecord);
     for (const prop of props) {
-      delete this.instance[prop];
+      delete instanceRecord[prop];
     }
   };
 
@@ -143,7 +150,7 @@ export interface MmpInstance {
   editNode: () => void;
   toggleBranchVisibility: () => void;
   existNode: (id?: string) => boolean;
-  exportAsImage: (callback: (...args: any[]) => void, type?: string) => void;
+  exportAsImage: (callback: (url: string) => void, type?: string) => void;
   exportAsJSON: () => MapSnapshot;
   exportNodeProperties: (id: string) => ExportNodeProperties;
   exportRootProperties: () => ExportNodeProperties;
@@ -153,7 +160,7 @@ export interface MmpInstance {
   new: (snapshot?: MapSnapshot, notifyWithEvent?: boolean) => void;
   save: () => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];
-  on: (event: string, callback: (...args: any[]) => void) => void;
+  on: (event: string, callback: (...args: unknown[]) => void) => void;
   pasteNode: (id: string) => void;
   redo: () => void;
   remove: () => void;
@@ -162,19 +169,19 @@ export interface MmpInstance {
   undo: () => void;
   unsubscribeAll: () => void;
   updateNode: (
-    property: string,
-    value: any,
+    property: NodeProperty | string,
+    value: NodePropertyValue | unknown,
     notifyWithEvent?: boolean,
     updateHistory?: boolean,
     id?: string
   ) => void;
-  updateOptions: (property: string, value: any) => void;
+  updateOptions: (property: string, value: unknown) => void;
   zoomIn: (duration?: number) => void;
   zoomOut: (duration?: number) => void;
 }
 
 export interface DomElements {
-  container?: any;
-  g?: any;
-  svg?: any;
+  container?: d3.Selection<HTMLElement, unknown, null, undefined>;
+  g?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 }

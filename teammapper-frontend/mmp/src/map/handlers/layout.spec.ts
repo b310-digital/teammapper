@@ -372,7 +372,7 @@ describe('computeMapLayout', () => {
 
       const boxes = nodes.map(n => ({
         ...coords.get(n.id)!,
-        ...renderedBox(n.name!, n.font!.size),
+        ...renderedBox(n.name!, n.font?.size ?? undefined),
       }));
       expect(findAnyAABBOverlap(boxes)).toBeNull();
     });

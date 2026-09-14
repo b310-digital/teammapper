@@ -2,11 +2,13 @@ import { dispatch, Dispatch } from 'd3';
 import Utils from '../../utils/utils';
 import Log from '../../utils/log';
 
+export type MmpEventCallback = (...args: unknown[]) => void;
+
 /**
  * Manage the events of the map.
  */
 export default class Events {
-  private dispatcher: Dispatch<any>;
+  private dispatcher: Dispatch<object>;
 
   /**
    * Initialize the events.
@@ -20,10 +22,11 @@ export default class Events {
   /**
    * Call all registered callbacks for specified map event.
    * @param {Event} event
+   * @param {object} that
    * @param parameters
    */
-  public call(event: Event, ...parameters) {
-    return this.dispatcher.call(event, ...parameters);
+  public call(event: Event, that?: object, ...parameters: unknown[]) {
+    return this.dispatcher.call(event, that, ...parameters);
   }
 
   /**
@@ -31,7 +34,7 @@ export default class Events {
    * @param {string} event
    * @param {Function} callback
    */
-  public on = (event: string, callback: (...args: any[]) => void) => {
+  public on = (event: string, callback: MmpEventCallback) => {
     if (typeof event !== 'string') {
       Log.error('The event must be a string', 'type');
     }

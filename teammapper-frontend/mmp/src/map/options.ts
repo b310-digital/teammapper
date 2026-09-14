@@ -56,35 +56,35 @@ export default class Options implements OptionParameters {
     ) as DefaultNodeProperties;
   }
 
-  public update = (property: string, value: any) => {
+  public update = (property: string, value: unknown) => {
     if (typeof property !== 'string') {
       Log.error('The property must be a string', 'type');
     }
 
     switch (property) {
       case 'fontFamily':
-        this.updateFontFamily(value);
+        this.updateFontFamily(value as string);
         break;
       case 'centerOnResize':
-        this.updateCenterOnResize(value);
+        this.updateCenterOnResize(value as boolean);
         break;
       case 'drag':
-        this.updateDrag(value);
+        this.updateDrag(value as boolean);
         break;
       case 'edit':
-        this.updateEdit(value);
+        this.updateEdit(value as boolean);
         break;
       case 'zoom':
-        this.updateZoom(value);
+        this.updateZoom(value as boolean);
         break;
       case 'defaultNode':
-        this.updateDefaultNode(value);
+        this.updateDefaultNode(value as DefaultNodeProperties);
         break;
       case 'rootNode':
-        this.updateDefaultRootNode(value);
+        this.updateDefaultRootNode(value as DefaultNodeProperties);
         break;
       case 'showLinktext':
-        this.updateShowLinktext(value);
+        this.updateShowLinktext(value as boolean);
         break;
       default:
         Log.error('The property does not exist');
@@ -166,10 +166,12 @@ export default class Options implements OptionParameters {
 
     this.zoom = flag;
 
-    if (this.zoom === true) {
-      this.map.dom.svg.call(this.map.zoom.getZoomBehavior());
-    } else {
-      this.map.dom.svg.on('.zoom', null);
+    if (this.map.dom.svg) {
+      if (this.zoom === true) {
+        this.map.dom.svg.call(this.map.zoom.getZoomBehavior());
+      } else {
+        this.map.dom.svg.on('.zoom', null);
+      }
     }
   }
 

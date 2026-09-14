@@ -10,7 +10,7 @@ import Log from '../../utils/log';
 export default class Zoom {
   private map: Map;
 
-  private zoomBehavior: ZoomBehavior<any, any>;
+  private zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
 
   /**
    * Get the associated map instance and initialize the d3 zoom behavior.
@@ -20,10 +20,10 @@ export default class Zoom {
     this.map = map;
 
     this.zoomBehavior = d3
-      .zoom()
+      .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 2])
-      .on('zoom', (event: D3ZoomEvent<any, any>) => {
-        this.map.dom.g.attr('transform', event.transform);
+      .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
+        this.map.dom.g?.attr('transform', event.transform.toString());
       });
   }
 
@@ -69,8 +69,10 @@ export default class Zoom {
 
     const root = this.map.nodes.getRoot(),
       x = root.coordinates.x,
-      y = root.coordinates.y,
-      svg = this.map.dom.svg.transition().duration(duration);
+      y = root.coordinates.y;
+
+    if (!this.map.dom.svg) return;
+    const svg = this.map.dom.svg.transition().duration(duration);
 
     switch (type) {
       case 'zoom':
@@ -88,7 +90,7 @@ export default class Zoom {
    * Return the d3 zoom behavior.
    * @returns {ZoomBehavior} zoom
    */
-  public getZoomBehavior(): ZoomBehavior<any, any> {
+  public getZoomBehavior(): ZoomBehavior<SVGSVGElement, unknown> {
     return this.zoomBehavior;
   }
 
@@ -98,6 +100,7 @@ export default class Zoom {
    * @param {number} duration
    */
   private move(direction: boolean, duration = 50) {
+    if (!this.map.dom.svg) return;
     const svg = this.map.dom.svg.transition().duration(duration);
 
     this.zoomBehavior.scaleBy(svg, direction ? 4 / 3 : 3 / 4);

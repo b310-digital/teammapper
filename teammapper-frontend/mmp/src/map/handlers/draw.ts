@@ -70,11 +70,11 @@ export default class Draw {
     const dom = {
       nodes: this.map.dom.g
         .selectAll('.' + this.map.id + '_node')
-        .data(nodes, d => d.id)
+        .data(nodes, (d: unknown) => (d as Node).id)
         .style('visibility', d => (d.hidden ? 'hidden' : 'visible')),
       branches: this.map.dom.g
         .selectAll('.' + this.map.id + '_branch')
-        .data(nodes.slice(1), d => d.id)
+        .data(nodes.slice(1), (d: unknown) => (d as Node).id)
         .style('visibility', d => (d.hidden ? 'hidden' : 'visible')),
     };
     let tapedTwice = false;
@@ -154,7 +154,7 @@ export default class Draw {
       .insert('path', 'foreignObject')
       .style('fill', (node: Node) => DOMPurify.sanitize(node.colors.background))
       .style('stroke-width', 3)
-      .attr('d', (node: Node) => this.drawNodeBackground(node));
+      .attr('d', (node: Node) => this.drawNodeBackground(node).toString());
 
     // Set image and link of the node
     outer.each((node: Node) => {
@@ -176,7 +176,7 @@ export default class Draw {
       .style('visibility', (node: Node) => (node.hidden ? 'hidden' : 'visible'))
       .attr('class', this.map.id + '_branch')
       .attr('id', (node: Node) => node.id + '_branch')
-      .attr('d', (node: Node) => this.drawBranch(node));
+      .attr('d', (node: Node) => this.drawBranch(node).toString());
 
     dom.nodes.exit().remove();
     dom.branches.exit().remove();
@@ -268,11 +268,11 @@ export default class Draw {
 
     d3.select(background).attr(
       'd',
-      (node: Node) => this.drawNodeBackground(node) as any
+      (node: Node) => this.drawNodeBackground(node).toString()
     );
     d3.selectAll('.' + this.map.id + '_branch').attr(
       'd',
-      (node: Node) => this.drawBranch(node) as any
+      (node: Node) => this.drawBranch(node).toString()
     );
 
     this.updateImagePosition(node);
@@ -304,9 +304,9 @@ export default class Draw {
 
       image.src = DOMPurify.sanitize(node.image.src);
 
-      image.onload = function () {
+      image.onload = function (this: HTMLImageElement) {
         const h = node.image.size,
-          w = ((this as any).width * h) / (this as any).height,
+          w = (this.width * h) / this.height,
           y = -(h + node.dimensions.height / 2 + 5),
           x = -w / 2;
 
@@ -394,7 +394,7 @@ export default class Draw {
   public updateImagePosition(node: Node) {
     if (DOMPurify.sanitize(node.image.src) !== '') {
       const image = node.getImageDOM(),
-        y = -((image as any).getBBox().height + node.dimensions.height / 2 + 5);
+        y = -(image.getBBox().height + node.dimensions.height / 2 + 5);
       image.setAttribute('y', y.toString());
     }
   }

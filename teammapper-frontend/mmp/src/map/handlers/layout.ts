@@ -14,10 +14,10 @@ import { NODE_HORIZONTAL_SPACING, estimateNodeExtent } from './node-geometry';
 
 export interface LayoutInputNode {
   id: string;
-  parent: string;
+  parent: string | null;
   isRoot?: boolean;
   detached?: boolean;
-  name?: string;
+  name?: string | null;
   font?: Pick<Font, 'size'>;
   coordinates?: Coordinates;
   dimensions?: Dimensions;
@@ -125,12 +125,13 @@ class MapLayout {
   }
 
   private estimateExtent(node: LayoutInputNode): Dimensions {
-    if (node.name === undefined) {
+    if (node.name === undefined || node.name === null) {
       return { width: DEFAULT_NODE_WIDTH, height: DEFAULT_NODE_HEIGHT };
     }
-    const fontSize = isMeasured(node.font?.size)
-      ? node.font.size
-      : DEFAULT_FONT_SIZE;
+    const fontSize =
+      typeof node.font?.size === 'number' && isMeasured(node.font.size)
+        ? node.font.size
+        : DEFAULT_FONT_SIZE;
 
     return estimateNodeExtent(node.name, fontSize);
   }
@@ -150,7 +151,7 @@ class MapLayout {
   private indexChildren(): void {
     for (const node of this.nodes) {
       if (node.isRoot || node.detached) continue;
-      if (node.parent === node.id || !this.byId.has(node.parent)) continue;
+      if (!node.parent || node.parent === node.id || !this.byId.has(node.parent)) continue;
       const siblings = this.childrenOf.get(node.parent) ?? [];
       siblings.push(node);
       this.childrenOf.set(node.parent, siblings);
