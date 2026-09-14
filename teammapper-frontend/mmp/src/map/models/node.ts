@@ -1,11 +1,25 @@
 import * as d3 from 'd3';
+import type {
+  MapNodeCoordinates,
+  MapNodeDimensions,
+  MapNodeColors,
+  MapNodeFont,
+  MapNodeImage,
+  MapNodeLink,
+  MapNodeImageProperties,
+  MapNodeLinkProperties,
+  MapNodeColorsProperties,
+  MapNodeFontProperties,
+  UserNodeProperties,
+  ExportNodeProperties,
+} from '@teammapper/shared';
 
 /**
  * Model of the nodes.
  */
 export default class Node implements NodeProperties {
   public id: string;
-  public parent: Node;
+  public parent: Node | null;
   public k: number;
 
   public name: string;
@@ -16,7 +30,7 @@ export default class Node implements NodeProperties {
   public font: Font;
   public link: Link;
   public locked: boolean;
-  public dom: SVGGElement;
+  public dom!: SVGGElement;
   public isRoot: boolean;
   public detached: boolean;
   public hidden: boolean;
@@ -29,17 +43,17 @@ export default class Node implements NodeProperties {
   constructor(properties: NodeProperties) {
     this.id = properties.id;
     this.parent = properties.parent;
-    this.name = properties.name;
-    this.coordinates = properties.coordinates;
-    this.colors = properties.colors;
-    this.image = properties.image;
-    this.font = properties.font;
-    this.link = properties.link;
-    this.locked = properties.locked;
-    this.isRoot = properties.isRoot;
-    this.detached = properties.detached;
-    this.hidden = properties.hidden;
-    this.hasHiddenChildNodes = properties.hasHiddenChildNodes;
+    this.name = properties.name || '';
+    this.coordinates = properties.coordinates || { x: 0, y: 0 };
+    this.colors = properties.colors || { branch: '' };
+    this.image = properties.image || { src: '', size: 0 };
+    this.font = properties.font || { size: 12, style: 'normal', weight: 'normal' };
+    this.link = properties.link || { href: '' };
+    this.locked = Boolean(properties.locked);
+    this.isRoot = Boolean(properties.isRoot);
+    this.detached = Boolean(properties.detached);
+    this.hidden = Boolean(properties.hidden);
+    this.hasHiddenChildNodes = Boolean(properties.hasHiddenChildNodes);
 
     this.dimensions = {
       width: 0,
@@ -69,7 +83,7 @@ export default class Node implements NodeProperties {
    * @returns {HTMLDivElement} div
    */
   public getNameDOM(): HTMLDivElement {
-    return this.dom.querySelector('foreignObject > div');
+    return this.dom.querySelector('foreignObject > div') as HTMLDivElement;
   }
 
   /**
@@ -77,7 +91,7 @@ export default class Node implements NodeProperties {
    * @returns {SVGPathElement} path
    */
   public getBackgroundDOM(): SVGPathElement {
-    return this.dom.querySelector('path');
+    return this.dom.querySelector('path') as SVGPathElement;
   }
 
   /**
@@ -85,7 +99,7 @@ export default class Node implements NodeProperties {
    * @returns {SVGImageElement} image
    */
   public getImageDOM(): SVGImageElement {
-    return this.dom.querySelector('image');
+    return this.dom.querySelector('image') as SVGImageElement;
   }
 
   /**
@@ -93,9 +107,7 @@ export default class Node implements NodeProperties {
    * @returns {SVGIAElement} a
    */
   public getLinkDOM(): SVGAElement {
-    // Unfortunately typescript returns an html type as default - in this case its a SVG element
-    // https://github.com/microsoft/TypeScript/issues/51844
-    return this.dom.querySelector('a > text.link-text') as any;
+    return this.dom.querySelector<SVGAElement>('a > text.link-text') as SVGAElement;
   }
 
   /**
@@ -103,64 +115,21 @@ export default class Node implements NodeProperties {
    * @returns {SVGITextElement} text
    */
   public getHiddenChildIconDOM(): SVGTextElement {
-    return this.dom.querySelector('text.hidden-icon') as any;
+    return this.dom.querySelector<SVGTextElement>('text.hidden-icon') as SVGTextElement;
   }
 }
 
-export interface UserNodeProperties {
-  name?: string;
-  coordinates?: Coordinates;
-  image?: Image;
-  link?: Link;
-  colors?: Colors;
-  font?: Font;
-  locked?: boolean;
-  isRoot?: boolean;
-  detached?: boolean;
-  hidden?: boolean;
-  hasHiddenChildNodes?: boolean;
-}
+export type Coordinates = MapNodeCoordinates;
+export type Dimensions = MapNodeDimensions;
+export type Image = MapNodeImage;
+export type Link = MapNodeLink;
+export type Colors = MapNodeColors;
+export type Font = MapNodeFont;
+
+export type { UserNodeProperties, ExportNodeProperties };
 
 export interface NodeProperties extends UserNodeProperties {
   id: string;
-  parent: Node;
+  parent: Node | null;
   k?: number;
-}
-
-export interface ExportNodeProperties extends UserNodeProperties {
-  id: string;
-  parent: string;
-  k: number;
-}
-
-export interface Coordinates {
-  x: number;
-  y: number;
-}
-
-export interface Dimensions {
-  width: number;
-  height: number;
-}
-
-export interface Image {
-  src: string;
-  size: number;
-}
-
-export interface Link {
-  href: string;
-}
-
-export interface Colors {
-  name?: string;
-  background?: string;
-  branch: string;
-  link?: string;
-}
-
-export interface Font {
-  size: number;
-  style: string;
-  weight: string;
 }

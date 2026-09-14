@@ -145,7 +145,7 @@ export default class CopyPaste {
       const branch = !newParentNode?.colors?.branch
         ? this.map.options.defaultNode.colors.branch
         : newParentNode.colors.branch;
-      const fixedColors: Colors = Object.assign({}, nodePropertiesCopy.color, {
+      const fixedColors: Colors = Object.assign({}, nodePropertiesCopy.colors, {
         branch,
       });
 

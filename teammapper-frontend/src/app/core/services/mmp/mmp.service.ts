@@ -19,6 +19,11 @@ import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
 import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 import { validate as uuidValidate } from 'uuid';
 import { ExportService } from '../export/export.service';
+import type {
+  MmpEventPayloadMap,
+  NodeProperty,
+  NodePropertyValue,
+} from '@teammapper/shared';
 
 /**
  * Mmp wrapper service with mmp and other functions.
@@ -185,10 +190,13 @@ export class MmpService implements OnDestroy {
   /**
    * Return the subscribe of the mind mmp event with the node or nothing.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public on(event: string): Observable<any> {
+  public on<K extends keyof MmpEventPayloadMap>(
+    event: K
+  ): Observable<MmpEventPayloadMap[K]>;
+  public on<T = unknown>(event: string): Observable<T>;
+  public on(event: string): Observable<unknown> {
     return new Observable(observer => {
-      this.currentMap.instance.on(event, args => {
+      this.currentMap.instance.on(event, (args: unknown) => {
         observer.next(args);
       });
     });
@@ -335,14 +343,8 @@ export class MmpService implements OnDestroy {
    * Update a property of the current selected node.
    */
   public async updateNode(
-    property: string,
-    value?:
-      | boolean
-      | string
-      | number
-      | ArrayBuffer
-      | { x: number; y: number }
-      | unknown,
+    property: NodeProperty | string,
+    value?: NodePropertyValue | ArrayBuffer | unknown,
     notifyWithEvent?: boolean,
     updateHistory?: boolean,
     id?: string

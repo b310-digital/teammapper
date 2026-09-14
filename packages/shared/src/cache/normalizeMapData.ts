@@ -12,10 +12,10 @@ export const normalizeMapNode = (raw: unknown): MapNode => {
       isRoot: true,
       name: '',
       coordinates: { x: 0, y: 0 },
-      colors: {},
-      font: {},
-      image: {},
-      link: {},
+      colors: { branch: '' },
+      font: { size: 12, style: 'normal', weight: 'normal' },
+      image: { src: '', size: 0 },
+      link: { href: '' },
       locked: false,
       detached: false,
       k: 0,
@@ -29,7 +29,7 @@ export const normalizeMapNode = (raw: unknown): MapNode => {
   const id = typeof r.id === 'string' && r.id.trim().length > 0 ? r.id : 'node-' + Math.random().toString(36).substring(2, 9);
   const parent = typeof r.parent === 'string' && r.parent.trim().length > 0 ? r.parent : null;
   const isRoot = Boolean(r.isRoot ?? parent === null);
-  const name = typeof r.name === 'string' ? r.name : (r.name === null ? null : '');
+  const name = typeof r.name === 'string' ? r.name : '';
 
   // Coordinates
   const rawCoords = typeof r.coordinates === 'object' && r.coordinates !== null ? (r.coordinates as Record<string, unknown>) : {};
@@ -40,29 +40,33 @@ export const normalizeMapNode = (raw: unknown): MapNode => {
 
   // Colors
   const rawColors = typeof r.colors === 'object' && r.colors !== null ? (r.colors as Record<string, unknown>) : {};
-  const colors: MapNodeColors = {};
+  const colors: MapNodeColors = {
+    branch: typeof rawColors.branch === 'string' && sanitizeKey('branch') ? rawColors.branch : '',
+  };
   if (typeof rawColors.name === 'string' && sanitizeKey('name')) colors.name = rawColors.name;
   if (typeof rawColors.background === 'string' && sanitizeKey('background')) colors.background = rawColors.background;
-  if (typeof rawColors.branch === 'string' && sanitizeKey('branch')) colors.branch = rawColors.branch;
   if (typeof rawColors.link === 'string' && sanitizeKey('link')) colors.link = rawColors.link;
 
   // Font
   const rawFont = typeof r.font === 'object' && r.font !== null ? (r.font as Record<string, unknown>) : {};
-  const font: MapNodeFont = {};
-  if (typeof rawFont.style === 'string') font.style = rawFont.style;
-  if (typeof rawFont.size === 'number' && !isNaN(rawFont.size)) font.size = rawFont.size;
-  if (typeof rawFont.weight === 'string') font.weight = rawFont.weight;
+  const font: MapNodeFont = {
+    size: typeof rawFont.size === 'number' && !isNaN(rawFont.size) ? rawFont.size : 12,
+    style: typeof rawFont.style === 'string' ? rawFont.style : 'normal',
+    weight: typeof rawFont.weight === 'string' ? rawFont.weight : 'normal',
+  };
 
   // Image
   const rawImage = typeof r.image === 'object' && r.image !== null ? (r.image as Record<string, unknown>) : {};
-  const image: MapNodeImage = {};
-  if (typeof rawImage.src === 'string') image.src = rawImage.src;
-  if (typeof rawImage.size === 'number' && !isNaN(rawImage.size)) image.size = rawImage.size;
+  const image: MapNodeImage = {
+    src: typeof rawImage.src === 'string' ? rawImage.src : '',
+    size: typeof rawImage.size === 'number' && !isNaN(rawImage.size) ? rawImage.size : 0,
+  };
 
   // Link
   const rawLink = typeof r.link === 'object' && r.link !== null ? (r.link as Record<string, unknown>) : {};
-  const link: MapNodeLink = {};
-  if (typeof rawLink.href === 'string') link.href = rawLink.href;
+  const link: MapNodeLink = {
+    href: typeof rawLink.href === 'string' ? rawLink.href : '',
+  };
 
   return {
     id,

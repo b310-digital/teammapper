@@ -13,6 +13,12 @@ import Log from '../../utils/log';
 import Utils from '../../utils/utils';
 import { DefaultNodeValues } from '../options';
 import { detailedDiff } from 'deep-object-diff';
+import type {
+  MapSnapshot,
+  SnapshotChanges,
+  MapDiff,
+  OldMmpNode,
+} from '@teammapper/shared';
 
 /**
  * Manage map history, for each change save a snapshot.
@@ -46,7 +52,8 @@ export default class History {
       updated: {},
     };
 
-    ['added', 'deleted', 'updated'].forEach((key: keyof MapDiff) => {
+    const keys: (keyof MapDiff)[] = ['added', 'deleted', 'updated'];
+    keys.forEach((key: keyof MapDiff) => {
       const diffSection = snapshotDiff[key];
       if (diffSection && typeof diffSection === 'object') {
         updatedSnapshot[key] = Object.entries(diffSection).reduce(
@@ -279,8 +286,14 @@ export default class History {
       return false;
     }
 
-    if ((snapshot[0] as any).key && (snapshot[0] as any).value) {
-      this.convertOldMmp(snapshot);
+    const firstNode = snapshot[0] as unknown;
+    if (
+      firstNode &&
+      typeof firstNode === 'object' &&
+      'key' in firstNode &&
+      'value' in firstNode
+    ) {
+      this.convertOldMmp(snapshot as unknown as OldMmpNode[]);
     }
 
     for (const node of snapshot) {
@@ -306,20 +319,28 @@ export default class History {
       typeof node.locked === 'boolean',
       // older maps do not include the link prop yet
       node.link === undefined || typeof node.link.href === 'string',
-      node.coordinates &&
-        typeof node.coordinates.x === 'number' &&
-        typeof node.coordinates.y === 'number',
-      node.image &&
-        typeof node.image.size === 'number' &&
-        typeof node.image.src === 'string',
-      node.colors &&
-        typeof node.colors.background === 'string' &&
-        typeof node.colors.branch === 'string' &&
-        typeof node.colors.name === 'string',
-      node.font &&
-        typeof node.font.size === 'number' &&
-        typeof node.font.weight === 'string' &&
-        typeof node.font.style === 'string',
+      Boolean(
+        node.coordinates &&
+          typeof node.coordinates.x === 'number' &&
+          typeof node.coordinates.y === 'number'
+      ),
+      Boolean(
+        node.image &&
+          typeof node.image.size === 'number' &&
+          typeof node.image.src === 'string'
+      ),
+      Boolean(
+        node.colors &&
+          typeof node.colors.background === 'string' &&
+          typeof node.colors.branch === 'string' &&
+          typeof node.colors.name === 'string'
+      ),
+      Boolean(
+        node.font &&
+          typeof node.font.size === 'number' &&
+          typeof node.font.weight === 'string' &&
+          typeof node.font.style === 'string'
+      ),
     ];
 
     return conditions.every(condition => condition);
@@ -327,35 +348,40 @@ export default class History {
 
   /**
    * Convert the old mmp (version: 0.1.7) snapshot to new.
-   * @param {Array} snapshot
+   * @param {OldMmpNode[]} snapshot
    */
-  private convertOldMmp(snapshot: any[]) {
+  private convertOldMmp(snapshot: OldMmpNode[]) {
     for (const node of snapshot) {
       const oldNode = Utils.cloneObject(node);
-      Utils.clearObject(node);
+      const target = node as unknown as Record<string, unknown>;
+      Utils.clearObject(target);
 
-      node.id = 'map_node_' + oldNode.key.substr(4);
-      node.parent = oldNode.value.parent
+      target.id = 'map_node_' + oldNode.key.substr(4);
+      target.parent = oldNode.value.parent
         ? 'map_node_' + oldNode.value.parent.substr(4)
         : '';
-      node.k = oldNode.value.k;
-      node.name = oldNode.value.name;
-      node.locked = oldNode.value.fixed;
-      node.coordinates = {
+      target.k = oldNode.value.k;
+      target.name = oldNode.value.name;
+      target.locked = oldNode.value.fixed;
+      target.coordinates = {
         x: oldNode.value.x,
         y: oldNode.value.y,
       };
-      node.image = {
-        size: parseInt(oldNode.value['image-size']),
-        src: oldNode.value['image-src'],
+      target.image = {
+        size: oldNode.value['image-size']
+          ? parseInt(oldNode.value['image-size'], 10)
+          : 0,
+        src: oldNode.value['image-src'] || '',
       };
-      node.colors = {
+      target.colors = {
         background: oldNode.value['background-color'],
         branch: oldNode.value['branch-color'] || '',
         name: oldNode.value['text-color'],
       };
-      node.font = {
-        size: parseInt(oldNode.value['font-size']),
+      target.font = {
+        size: oldNode.value['font-size']
+          ? parseInt(oldNode.value['font-size'], 10)
+          : 12,
         weight: oldNode.value.bold ? 'bold' : 'normal',
         style: oldNode.value.italic ? 'italic' : 'normal',
       };
@@ -410,15 +436,4 @@ export interface ExportHistory {
   index: number;
 }
 
-export type MapSnapshot = ExportNodeProperties[];
-
-export type SnapshotChanges = Record<
-  string,
-  Partial<ExportNodeProperties> | undefined
->;
-
-export interface MapDiff {
-  added: SnapshotChanges;
-  deleted: SnapshotChanges;
-  updated: SnapshotChanges;
-}
+export type { MapSnapshot, SnapshotChanges, MapDiff };
