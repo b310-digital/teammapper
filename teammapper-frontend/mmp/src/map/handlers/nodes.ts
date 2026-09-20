@@ -67,21 +67,18 @@ export default class Nodes {
   public addRootNode(coordinates?: Coordinates) {
     const rootId = uuidv4();
 
-    const properties = Utils.mergeObjects(
-      this.map.options.rootNode,
-      {
-        coordinates: {
-          x: 0,
-          y: 0,
-        },
-        locked: false,
-        id: rootId,
-        parent: null,
-        detached: false,
-        hidden: false,
-        isRoot: true,
-      }
-    ) as unknown as NodeProperties;
+    const properties = Utils.mergeObjects(this.map.options.rootNode, {
+      coordinates: {
+        x: 0,
+        y: 0,
+      },
+      locked: false,
+      id: rootId,
+      parent: null,
+      detached: false,
+      hidden: false,
+      isRoot: true,
+    }) as unknown as NodeProperties;
 
     this.map.rootId = rootId;
 
@@ -682,7 +679,9 @@ export default class Nodes {
   /**
    * Return the node properties with the id equal to id passed as parameter.
    */
-  public exportNodeProperties = (id: string): ExportNodeProperties | undefined => {
+  public exportNodeProperties = (
+    id: string
+  ): ExportNodeProperties | undefined => {
     const node = this.getNode(id);
     return node ? this.getNodeProperties(node) : undefined;
   };
@@ -905,13 +904,16 @@ export default class Nodes {
   }
 
   private redrawBranches(): void {
-    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr('d', (node: Node) => {
-      // A detached node has no parent and so no branch to draw. Returning
-      // null makes d3 drop the attribute, as the other redraw paths do.
-      const branch = this.map.draw.drawBranch(node);
+    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
+      'd',
+      (node: Node) => {
+        // A detached node has no parent and so no branch to draw. Returning
+        // null makes d3 drop the attribute, as the other redraw paths do.
+        const branch = this.map.draw.drawBranch(node);
 
-      return branch ? branch.toString() : null;
-    });
+        return branch ? branch.toString() : null;
+      }
+    );
   }
 
   private toLayoutInput(): LayoutInputNode[] {
@@ -1001,10 +1003,13 @@ export default class Nodes {
         'translate(' + [coordinates.x, coordinates.y] + ')'
       );
 
-      d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr('d', (node: Node) => {
-        const branch = this.map.draw.drawBranch(node);
-        return branch ? branch.toString() : null;
-      });
+      d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
+        'd',
+        (node: Node) => {
+          const branch = this.map.draw.drawBranch(node);
+          return branch ? branch.toString() : null;
+        }
+      );
 
       return true;
     } else {

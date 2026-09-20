@@ -182,9 +182,7 @@ export default class Export {
         const xAttr = fo.getAttribute('x') || '0';
         const widthAttr = fo.getAttribute('width') || '0';
         const yAttr = fo.getAttribute('y') || '0';
-        const x =
-          parseInt(xAttr, 10) +
-          Math.floor(parseInt(widthAttr, 10) / 2);
+        const x = parseInt(xAttr, 10) + Math.floor(parseInt(widthAttr, 10) / 2);
         const splittedText = (fo.firstChild?.textContent || '').split('\n');
         // line breaks are created via tspan elements that are relatively positioned using dy property
         const svgTextWithLineBreaks = splittedText.map(
@@ -206,14 +204,8 @@ export default class Export {
           )
           .attr('x', x)
           .attr('text-anchor', 'middle')
-          .attr(
-            'font-family',
-            firstChildEl?.style.fontFamily || 'sans-serif'
-          )
-          .attr(
-            'font-size',
-            firstChildEl?.style.fontSize || '12px'
-          )
+          .attr('font-family', firstChildEl?.style.fontFamily || 'sans-serif')
+          .attr('font-size', firstChildEl?.style.fontSize || '12px')
           .attr('fill', firstChildEl?.style.color || '#000')
           .html(textSVG);
         fo.remove();
@@ -240,10 +232,7 @@ export default class Export {
    * @param {Element} element
    * @param {Function} callback
    */
-  private convertImages(
-    element: Element,
-    callback: () => void
-  ) {
+  private convertImages(element: Element, callback: () => void) {
     const images = element.querySelectorAll<SVGImageElement>('image');
     let counter = images.length;
 

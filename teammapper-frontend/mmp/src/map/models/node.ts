@@ -6,10 +6,6 @@ import type {
   MapNodeFont,
   MapNodeImage,
   MapNodeLink,
-  MapNodeImageProperties,
-  MapNodeLinkProperties,
-  MapNodeColorsProperties,
-  MapNodeFontProperties,
   UserNodeProperties,
   ExportNodeProperties,
 } from '@teammapper/shared';
@@ -47,7 +43,11 @@ export default class Node implements NodeProperties {
     this.coordinates = properties.coordinates || { x: 0, y: 0 };
     this.colors = properties.colors || { branch: '' };
     this.image = properties.image || { src: '', size: 0 };
-    this.font = properties.font || { size: 12, style: 'normal', weight: 'normal' };
+    this.font = properties.font || {
+      size: 12,
+      style: 'normal',
+      weight: 'normal',
+    };
     this.link = properties.link || { href: '' };
     this.locked = Boolean(properties.locked);
     this.isRoot = Boolean(properties.isRoot);
@@ -107,7 +107,9 @@ export default class Node implements NodeProperties {
    * @returns {SVGIAElement} a
    */
   public getLinkDOM(): SVGAElement {
-    return this.dom.querySelector<SVGAElement>('a > text.link-text') as SVGAElement;
+    return this.dom.querySelector<SVGAElement>(
+      'a > text.link-text'
+    ) as SVGAElement;
   }
 
   /**
@@ -115,7 +117,9 @@ export default class Node implements NodeProperties {
    * @returns {SVGITextElement} text
    */
   public getHiddenChildIconDOM(): SVGTextElement {
-    return this.dom.querySelector<SVGTextElement>('text.hidden-icon') as SVGTextElement;
+    return this.dom.querySelector<SVGTextElement>(
+      'text.hidden-icon'
+    ) as SVGTextElement;
   }
 }
 

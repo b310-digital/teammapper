@@ -45,7 +45,11 @@ export const ImageSchema = v.partial(
 export const LinkSchema = v.partial(
   v.object({
     href: v.nullable(
-      v.pipe(v.string(), v.regex(/^https?:\/\//i), v.maxLength(MAX_LINK_HREF_LENGTH))
+      v.pipe(
+        v.string(),
+        v.regex(/^https?:\/\//i),
+        v.maxLength(MAX_LINK_HREF_LENGTH)
+      )
     ),
   })
 );

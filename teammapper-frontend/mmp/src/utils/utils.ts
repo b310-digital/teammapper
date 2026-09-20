@@ -107,7 +107,7 @@ export default class Utils {
     const sheets = document.styleSheets;
 
     for (const sheet of Array.from(sheets)) {
-      let rules: CSSRuleList | null = null;
+      let rules: CSSRuleList | null;
       try {
         rules = sheet.cssRules;
       } catch {
