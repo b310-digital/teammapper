@@ -110,14 +110,14 @@ export class DialogShareComponent implements OnInit {
     this.toastrService.success(successMessage);
   }
 
-  async duplicateMindMap() {
+  async duplicateMindMap(): Promise<void> {
     // getCurrentMap from the MmpService doesn't give us the UUID of the map, only a legacy id and the root note ID, so we'll have to use the URL params.
     const id = window.location.pathname.split('/')[2];
     const response = await this.httpService.post(
       API_URL.ROOT,
       '/maps/' + id + '/duplicate'
     );
-    if (!response.ok) return null;
+    if (!response.ok) return;
 
     const newMap = await response.json();
     if (newMap && newMap.map.uuid) {

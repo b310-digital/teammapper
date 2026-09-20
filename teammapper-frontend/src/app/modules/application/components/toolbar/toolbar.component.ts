@@ -142,7 +142,7 @@ export class ToolbarComponent {
     'image/webp',
   ];
 
-  public initImageUpload(event: InputEvent) {
+  public initImageUpload(event: Event) {
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
     const file = fileUpload.files?.[0];
     if (!file || !ToolbarComponent.ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -176,7 +176,7 @@ export class ToolbarComponent {
     fileReader.readAsDataURL(file);
   }
 
-  public initJSONUpload(event: InputEvent) {
+  public initJSONUpload(event: Event) {
     const fileReader = new FileReader();
 
     fileReader.onload = (_fileEvent: Event) => {

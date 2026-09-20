@@ -114,7 +114,10 @@ export class UtilsService {
    * Return true if the two objects have the same structure (same keys).
    */
   public static isSameJSONStructure(json1: object, json2: object): boolean {
-    function checkObjectStructure(object1: object, object2: object): boolean {
+    function checkObjectStructure(
+      object1: Record<string, unknown>,
+      object2: Record<string, unknown>
+    ): boolean {
       for (const key of Object.keys(object1)) {
         if (
           !Object.prototype.hasOwnProperty.call(object1, key) ||
@@ -124,7 +127,12 @@ export class UtilsService {
         }
 
         if (typeof object1[key] === 'object') {
-          if (!checkObjectStructure(object1[key], object2[key])) {
+          if (
+            !checkObjectStructure(
+              object1[key] as Record<string, unknown>,
+              object2[key] as Record<string, unknown>
+            )
+          ) {
             return false;
           }
         }
@@ -133,8 +141,11 @@ export class UtilsService {
       return true;
     }
 
+    const first = json1 as Record<string, unknown>;
+    const second = json2 as Record<string, unknown>;
+
     return (
-      checkObjectStructure(json1, json2) && checkObjectStructure(json2, json1)
+      checkObjectStructure(first, second) && checkObjectStructure(second, first)
     );
   }
 

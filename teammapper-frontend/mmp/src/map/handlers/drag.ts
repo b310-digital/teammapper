@@ -94,9 +94,12 @@ export default class Drag {
     }
 
     // Update all mind map branches
-    d3.selectAll('.' + this.map.id + '_branch').attr('d', (node: Node) => {
-      return this.map.draw.drawBranch(node).toString();
-    });
+    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
+      'd',
+      (node: Node) => {
+        return this.map.draw.drawBranch(node).toString();
+      }
+    );
 
     // This is here and not in the started function because started function
     // is also executed when there is no drag events

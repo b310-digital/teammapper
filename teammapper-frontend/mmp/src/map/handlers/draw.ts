@@ -266,11 +266,10 @@ export default class Draw {
   public updateNodeShapes(node: Node) {
     const background = node.getBackgroundDOM();
 
-    d3.select(background).attr(
-      'd',
-      (node: Node) => this.drawNodeBackground(node).toString()
+    d3.select<SVGPathElement, Node>(background).attr('d', (node: Node) =>
+      this.drawNodeBackground(node).toString()
     );
-    d3.selectAll('.' + this.map.id + '_branch').attr(
+    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
       'd',
       (node: Node) => this.drawBranch(node).toString()
     );
@@ -304,9 +303,9 @@ export default class Draw {
 
       image.src = DOMPurify.sanitize(node.image.src);
 
-      image.onload = function (this: HTMLImageElement) {
+      image.onload = () => {
         const h = node.image.size,
-          w = (this.width * h) / this.height,
+          w = (image.width * h) / image.height,
           y = -(h + node.dimensions.height / 2 + 5),
           x = -w / 2;
 
@@ -380,7 +379,7 @@ export default class Draw {
    * Explicitly remove the hidden eye icon even if not set
    * @param {Node} node
    */
-  public removeHiddenChildrenIcon(node) {
+  public removeHiddenChildrenIcon(node: Node) {
     const domIcon = node.getHiddenChildIconDOM();
     if (domIcon) {
       domIcon.remove();
@@ -588,7 +587,7 @@ export default class Draw {
    * @returns {boolean}
    */
   private isLinkTarget(event: TouchEvent): boolean {
-    return event.target['classList'][0] === 'link-text';
+    return (event.target as Element).classList[0] === 'link-text';
   }
 
   /**

@@ -36,7 +36,7 @@ describe('YjsUndoManager', () => {
     return { doc, nodesMap };
   }
 
-  function createTrackedUndoManager(scope: Y.Map<unknown>): Y.UndoManager {
+  function createTrackedUndoManager<T>(scope: Y.Map<T>): Y.UndoManager {
     return new Y.UndoManager(scope, {
       trackedOrigins: new Set([ORIGIN_LOCAL]),
     });

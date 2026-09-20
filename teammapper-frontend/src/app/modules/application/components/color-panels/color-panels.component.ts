@@ -6,7 +6,7 @@ import {
   ViewChild,
   inject,
 } from '@angular/core';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties, NodeProperty } from '@mmp/map/types';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { ColorPickerDirective } from 'ngx-color-picker';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -56,11 +56,15 @@ export class ColorPanelsComponent implements OnInit {
     };
   }
 
-  public colorPickerChange(property, value) {
+  public colorPickerChange(property: NodeProperty, value: string) {
     this.mmpService.updateNode(property, value, true);
   }
 
-  public colorPickerToggleChange(opening, property, value) {
+  public colorPickerToggleChange(
+    opening: boolean,
+    property: NodeProperty,
+    value: string
+  ) {
     this.background.nativeElement.style.visibility = opening
       ? 'visible'
       : 'hidden';

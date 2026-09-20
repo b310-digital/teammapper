@@ -62,7 +62,7 @@ ca/*.req
 
 # Speculatius - behavioral spec exploration output (regenerable)
 .speculatius/
-
+.agents/
 .playwright-mcp
 .mcp.json
 .omc
