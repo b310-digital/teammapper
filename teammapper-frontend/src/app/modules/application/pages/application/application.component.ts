@@ -49,8 +49,8 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  public node: Observable<ExportNodeProperties>;
-  public editMode: Observable<boolean>;
+  public node: Observable<ExportNodeProperties | null>;
+  public editMode: Observable<boolean | null>;
 
   private imageDropSubscription: Subscription;
   private connectionStatusSubscription: Subscription;
@@ -92,12 +92,9 @@ export class ApplicationComponent implements OnInit, OnDestroy {
 
   // Initializes the map by either loading an existing one or creating a new one
   private async initMap() {
-    const givenId: string = this.route.snapshot.paramMap.get('id');
-    const modificationSecret: string = this.route.snapshot.fragment;
-    const map: ServerMap = await this.loadAndPrepareWithMap(
-      givenId,
-      modificationSecret
-    );
+    const givenId = this.route.snapshot.paramMap.get('id');
+    const modificationSecret = this.route.snapshot.fragment;
+    const map = await this.loadAndPrepareWithMap(givenId, modificationSecret);
 
     // not found, return to start page
     if (!map) {
@@ -107,9 +104,9 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   }
 
   private async loadAndPrepareWithMap(
-    mapId: string,
-    modificationSecret: string
-  ): Promise<ServerMap> {
+    mapId: string | null,
+    modificationSecret: string | null
+  ): Promise<ServerMap | null> {
     if (!mapId) {
       console.error(
         'No map ID provided - this should not happen with the guard in place'

@@ -47,19 +47,26 @@ export class DialogAboutComponent {
   public version = '';
   public applicationName = 'TeamMapper';
   public map: MapProperties;
-  public mapAdminId: Promise<string>;
+  public mapAdminId: Promise<string | undefined>;
 
   constructor() {
     const settings = this.settingsService.getCachedSystemSettings();
-    this.version = settings.info?.version || this.version;
-    this.applicationName = settings.info?.name || this.applicationName;
+    this.version = settings?.info?.version || this.version;
+    this.applicationName = settings?.info?.name || this.applicationName;
     this.map = this.mapSyncService.getAttachedMap().cachedMap;
     this.mapAdminId = this.getMapAdminId();
   }
 
   async deleteMap() {
-    if (confirm(this.translateService.instant('MODALS.INFO.CONFIRM_DELETE'))) {
-      await this.mapSyncService.deleteMap(await this.mapAdminId);
+    if (!confirm(this.translateService.instant('MODALS.INFO.CONFIRM_DELETE')))
+      return;
+
+    // Without the admin id the server rejects the delete, so stop here rather
+    // than send a request that cannot succeed.
+    const adminId = await this.mapAdminId;
+
+    if (adminId) {
+      await this.mapSyncService.deleteMap(adminId);
       await this.storageService.remove(this.map.uuid);
 
       this.dialogRef.close();

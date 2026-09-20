@@ -37,10 +37,10 @@ test('adds image to node', async ({ page }) => {
   // Verify the image is rendered with appropriate dimensions
   const width = await nodeImage.getAttribute('width');
   const height = await nodeImage.getAttribute('height');
-  expect(parseFloat(width)).toBeGreaterThan(0);
-  expect(parseFloat(height)).toBeGreaterThan(0);
+  expect(parseFloat(width ?? '')).toBeGreaterThan(0);
+  expect(parseFloat(height ?? '')).toBeGreaterThan(0);
 
   // Verify the image is positioned correctly relative to the node
   const y = await nodeImage.getAttribute('y');
-  expect(parseFloat(y)).toBeLessThan(0); // Image should be above the node text
+  expect(parseFloat(y ?? '')).toBeLessThan(0); // Image should be above the node text
 });

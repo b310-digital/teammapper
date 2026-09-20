@@ -14,7 +14,7 @@ export class FooterComponent implements OnInit {
   private settingsService = inject(SettingsService);
   private translateService = inject(TranslateService);
 
-  public settings: UserSettings;
+  public settings: UserSettings | null;
   public languages: string[];
 
   public currentYear: string;
@@ -27,6 +27,8 @@ export class FooterComponent implements OnInit {
   }
 
   public async updateLanguage() {
+    if (!this.settings) return;
+
     await this.settingsService.updateCachedSettings(this.settings);
 
     this.translateService.use(this.settings.general.language);

@@ -34,10 +34,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       .getAttachedMapObservable()
       .pipe(first((val: CachedMapEntry | null) => val !== null))
       .subscribe(async (_result: CachedMapEntry | null) => {
+        // With no cached settings mmp falls back to its own defaults rather
+        // than refusing to draw the map.
         await this.mmpService.create(
           'map_1',
           this.mapWrapper.nativeElement,
-          settings.mapOptions
+          settings?.mapOptions
         );
         this.mapSyncService.initMap();
       });
