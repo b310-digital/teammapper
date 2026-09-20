@@ -1,14 +1,12 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Subscription, Observable } from 'rxjs';
-import {
-  ConnectionStatus,
-  MapSyncService,
-} from '../../../../core/services/map-sync/map-sync.service';
+import { ConnectionStatus } from '../../../../core/services/map-sync/map-sync-context';
+import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { UtilsService } from '../../../../core/services/utils/utils.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { ServerMap } from 'src/app/core/services/map-sync/server-types';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';

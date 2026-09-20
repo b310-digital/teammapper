@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
-import { UserSettings } from '../../../../shared/models/settings.model';
+import { UserSettings } from '@teammapper/shared';
 import { MatSelect, MatOption } from '@angular/material/select';
 
 @Component({

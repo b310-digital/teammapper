@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as localforage from 'localforage';
-import { CachedAdminMapValue } from 'src/app/shared/models/cached-map.model';
+import { CachedAdminMapValue } from '@teammapper/shared';
 
 /**
  * Enumerative of the possible keys present in the storage

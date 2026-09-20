@@ -2,7 +2,7 @@ import { jest } from '@jest/globals'
 import * as fs from 'fs'
 import configService from '../config.service'
 import { SettingsService } from './settings.service'
-import { Settings } from './settings.types'
+import { Settings } from '@teammapper/shared'
 
 jest.mock('fs')
 jest.mock('../config.service')

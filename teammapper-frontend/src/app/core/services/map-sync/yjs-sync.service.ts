@@ -1,10 +1,12 @@
 import { Subscription } from 'rxjs';
 import { NodePropertyMapping } from '@mmp/index';
 import {
+  CachedMapOptions,
   ExportNodeProperties,
   MapCreateEvent,
   NodeUpdateEvent,
-} from '@mmp/map/types';
+  sortNodesParentFirst,
+} from '@teammapper/shared';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MmpService } from '../mmp/mmp.service';
@@ -12,7 +14,6 @@ import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import { API_URL, HttpService } from '../../http/http.service';
-import { CachedMapOptions } from '../../../shared/models/cached-map.model';
 import {
   ClientColorMapping,
   populateYMapFromNodeProps,
@@ -23,7 +24,6 @@ import {
   resolveMmpPropertyUpdate,
   collectDescendantIds,
 } from './yjs-utils';
-import { sortNodesParentFirst } from '@teammapper/shared';
 import {
   MapSyncContext,
   DEFAULT_COLOR,

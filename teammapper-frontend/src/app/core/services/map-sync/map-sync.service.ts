@@ -7,8 +7,11 @@ import {
   CachedMap,
   CachedMapEntry,
   CachedMapOptions,
-} from '../../../shared/models/cached-map.model';
-import { ExportNodeProperties, MapProperties } from '@mmp/map/types';
+  ExportNodeProperties,
+  findRootNode,
+  normalizeMapData,
+} from '@teammapper/shared';
+import { MapProperties } from '@mmp/map/types';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
@@ -19,9 +22,6 @@ import { ToastrService } from 'ngx-toastr';
 import { ClientColorMapping, ClientColorMappingValue } from './yjs-utils';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
-import { findRootNode, normalizeMapData } from '@teammapper/shared';
-
-export { ConnectionStatus } from './map-sync-context';
 
 @Injectable({
   providedIn: 'root',

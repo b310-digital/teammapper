@@ -2,15 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { CachedAdminMapEntry } from 'src/app/shared/models/cached-map.model';
 import {
+  CachedAdminMapEntry,
   Settings,
+  SUPPORTED_LANGUAGES,
   SystemSettings,
   UserSettings,
-} from '../../../shared/models/settings.model';
+} from '@teammapper/shared';
 import { API_URL, HttpService } from '../../http/http.service';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
-import { SUPPORTED_LANGUAGES } from '@teammapper/shared';
 
 @Injectable({
   providedIn: 'root',

@@ -1,5 +1,5 @@
 import * as Y from 'yjs';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties, sortNodesParentFirst } from '@teammapper/shared';
 import {
   populateYMapFromNodeProps,
   yMapToNodeProps,
@@ -10,7 +10,6 @@ import {
   resolveCompoundMmpUpdates,
   collectDescendantIds,
 } from './yjs-utils';
-import { sortNodesParentFirst } from '@teammapper/shared';
 
 // Mock the NodePropertyMapping module
 jest.mock('@mmp/index', () => ({

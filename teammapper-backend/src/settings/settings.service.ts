@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import deepmerge from 'deepmerge'
 import configService from '../config.service'
-import { Settings } from './settings.types'
+import { Settings } from '@teammapper/shared'
 
 @Injectable()
 export class SettingsService {

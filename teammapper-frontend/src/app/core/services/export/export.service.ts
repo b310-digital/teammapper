@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 
 @Injectable({
   providedIn: 'root',

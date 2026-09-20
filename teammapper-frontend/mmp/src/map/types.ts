@@ -1,41 +1,9 @@
-import {
-  ExportNodeProperties,
-  NodeProperties,
-  UserNodeProperties,
-} from './models/node';
-import { ExportHistory, MapSnapshot } from './handlers/history';
-import { DefaultNodeProperties, OptionParameters } from './options';
-import type {
-  MapCreateEvent,
-  NodeUpdateEvent,
-  MapDiff,
-  SnapshotChanges,
-  NodeProperty,
-  NodePropertyValue,
-  MmpEventPayloadMap,
-  MmpEventType,
-  CachedMap,
-} from '@teammapper/shared';
+import type { CachedMap } from '@teammapper/shared';
 
-type MapProperties = Omit<CachedMap, 'options'> & {
+/**
+ * A cached map whose options may be missing, which is how a map arrives before
+ * the server has filled them in.
+ */
+export type MapProperties = Omit<CachedMap, 'options'> & {
   options?: CachedMap['options'];
-};
-
-export {
-  DefaultNodeProperties,
-  ExportHistory,
-  ExportNodeProperties,
-  MapCreateEvent,
-  MapProperties,
-  MapSnapshot,
-  NodeProperties,
-  NodeUpdateEvent,
-  OptionParameters,
-  UserNodeProperties,
-  MapDiff,
-  SnapshotChanges,
-  NodeProperty,
-  NodePropertyValue,
-  MmpEventPayloadMap,
-  MmpEventType,
 };

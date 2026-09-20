@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ExportService } from './export.service';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 
 describe('ExportService', () => {
   let service: ExportService;

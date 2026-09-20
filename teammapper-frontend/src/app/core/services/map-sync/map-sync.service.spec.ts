@@ -6,10 +6,9 @@ import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
-import { ExportNodeProperties } from '@mmp/map/types';
 import { createMockUtilsService } from '../../../../test/mocks/utils-service.mock';
 import { Observable } from 'rxjs';
-import { UserSettings } from '../../../shared/models/settings.model';
+import { ExportNodeProperties, UserSettings } from '@teammapper/shared';
 import { YjsSyncService } from './yjs-sync.service';
 
 // Narrow accessor: only exposes the sync service handle, not its internals

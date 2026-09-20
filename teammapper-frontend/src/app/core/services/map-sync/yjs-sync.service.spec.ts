@@ -6,7 +6,7 @@ import { HttpService } from '../../http/http.service';
 import { MapSyncContext } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
 import * as Y from 'yjs';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 
 function createMockContext(): MapSyncContext {
   return {

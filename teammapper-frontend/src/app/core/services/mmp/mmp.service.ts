@@ -8,22 +8,20 @@ import { filter } from 'rxjs/operators';
 import * as mmp from '@mmp/index';
 import MmpMap from '@mmp/map/map';
 import DOMPurify from 'dompurify';
-import {
-  ExportHistory,
+import { ExportHistory } from '@mmp/map/handlers/history';
+import { OptionParameters } from '@mmp/map/options';
+import type {
+  CachedMapOptions,
   ExportNodeProperties,
   MapSnapshot,
-  OptionParameters,
-  UserNodeProperties,
-} from '@mmp/map/types';
-import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
-import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
-import { validate as uuidValidate } from 'uuid';
-import { ExportService } from '../export/export.service';
-import type {
   MmpEventPayloadMap,
   NodeProperty,
   NodePropertyValue,
+  UserNodeProperties,
 } from '@teammapper/shared';
+import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
+import { validate as uuidValidate } from 'uuid';
+import { ExportService } from '../export/export.service';
 
 /**
  * `catch` binds `unknown`. mmp throws the conditions below as `Error` instances

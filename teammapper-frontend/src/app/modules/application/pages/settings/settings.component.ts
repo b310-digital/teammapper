@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { UserSettings } from '../../../../shared/models/settings.model';
+import { UserSettings } from '@teammapper/shared';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { Location, AsyncPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
-import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
+import { CachedMapOptions } from '@teammapper/shared';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatDialogTitle } from '@angular/material/dialog';
 import { MatIconButton } from '@angular/material/button';

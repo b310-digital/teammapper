@@ -1,5 +1,6 @@
 import Nodes from './nodes';
-import Node, { Coordinates, NodeProperties } from '../models/node';
+import Node, { NodeProperties } from '../models/node';
+import type { MapNodeCoordinates } from '@teammapper/shared';
 import MmpMap from '../map';
 
 function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
@@ -11,12 +12,12 @@ function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
  * state `addNode` calls this in - `getSiblings` splices the node itself back
  * out, so it never counts as its own sibling.
  */
-function placementOf(node: Node, existing: Node[]): Coordinates {
+function placementOf(node: Node, existing: Node[]): MapNodeCoordinates {
   const handler = new Nodes({
     rootId: 'root',
   } as unknown as MmpMap) as unknown as {
     nodes: Map<string, Node>;
-    calculateCoordinates(node: Node): Coordinates;
+    calculateCoordinates(node: Node): MapNodeCoordinates;
   };
   handler.nodes = new Map([...existing, node].map(each => [each.id, each]));
 
