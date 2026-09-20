@@ -172,6 +172,10 @@ export class YjsPersistenceService implements OnModuleDestroy {
     })
   }
 
+  // One INSERT ... ON CONFLICT DO UPDATE for all nodes. `save()` would issue
+  // one UPDATE per existing node in parallel on the same connection, which pg
+  // deprecates (queries on a client must not overlap). Entity instances keep
+  // the @BeforeInsert validation running.
   private async upsertNodes(
     queryRunner: QueryRunner,
     nodes: Partial<MmpNode>[]
@@ -179,7 +183,7 @@ export class YjsPersistenceService implements OnModuleDestroy {
     const entities = nodes.map((node) =>
       queryRunner.manager.create(MmpNode, node)
     )
-    await queryRunner.manager.save(entities)
+    await queryRunner.manager.upsert(MmpNode, entities, ['id', 'nodeMapId'])
   }
 
   private async updateMapMetadata(
