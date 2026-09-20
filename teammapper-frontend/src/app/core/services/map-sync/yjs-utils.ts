@@ -1,10 +1,6 @@
 import * as Y from 'yjs';
 import { ReversePropertyMapping } from './server-types';
-import {
-  collectSubtreeIds,
-  ExportNodeProperties,
-  sortNodesParentFirst,
-} from '@teammapper/shared';
+import { collectSubtreeIds, ExportNodeProperties } from '@teammapper/shared';
 
 export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 
@@ -126,13 +122,6 @@ export function resolveMmpPropertyUpdate(
   );
 }
 
-// Sorts nodes so root comes first and parents always precede their children (BFS order).
-// Orphaned nodes (not reachable from root) are appended at the end to prevent data loss.
-export const sortParentFirst = (
-  nodes: readonly ExportNodeProperties[]
-): ExportNodeProperties[] => {
-  return sortNodesParentFirst(nodes);
-};
 // Collects all descendant node IDs using the shared cycle-safe BFS algorithm.
 export function collectDescendantIds(
   nodesMap: Y.Map<Y.Map<unknown>>,

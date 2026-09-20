@@ -243,7 +243,7 @@ export const DefaultNodeValues: DefaultNodeProperties = {
   isRoot: false,
 };
 
-export const DefaultRootNodeValues: DefaultNodeProperties = {
+const DefaultRootNodeValues: DefaultNodeProperties = {
   name: 'Root node',
   link: {
     href: '',

@@ -100,17 +100,8 @@ export const MermaidCreateSchema = v.object({
   language: v.picklist([...SUPPORTED_LANGUAGES]),
 });
 
-// InferOutput types matching canonical backend/frontend usage
-export type IMmpClientColor = v.InferOutput<typeof ColorSchema>;
-export type IMmpClientCoordinates = v.InferOutput<typeof CoordinatesSchema>;
-export type IMmpClientFont = v.InferOutput<typeof FontSchema>;
-export type IMmpClientImage = v.InferOutput<typeof ImageSchema>;
-export type IMmpClientLink = v.InferOutput<typeof LinkSchema>;
 export type IMmpClientNodeBasics = v.InferOutput<typeof NodeBasicsSchema>;
 export type IMmpClientNode = v.InferOutput<typeof NodeSchema>;
-export type IMmpClientMapOptions = v.InferOutput<typeof MapOptionsSchema>;
-export type IMmpClientMapCreateRequest = v.InferOutput<typeof MapCreateSchema>;
-export type IMmpClientDeleteRequest = v.InferOutput<typeof MapDeleteSchema>;
 export type MermaidCreateInput = v.InferOutput<typeof MermaidCreateSchema>;
 
 // Issue sanitization to prevent sensitive information leakage

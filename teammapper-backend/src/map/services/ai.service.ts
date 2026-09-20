@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { generateText, LanguageModel } from 'ai'
-import { SYSTEM_PROMPT, userPrompt, SupportedLanguage } from '../utils/prompts'
+import { SupportedLanguage } from '@teammapper/shared'
+import { SYSTEM_PROMPT, userPrompt } from '../utils/prompts'
 import { createProvider } from '../utils/aiProvider'
 import configService from '../../config.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'

@@ -31,7 +31,7 @@ export function createMockContext(): MapSyncContext {
   };
 }
 
-export function createMockMmpService(): jest.Mocked<MmpService> {
+function createMockMmpService(): jest.Mocked<MmpService> {
   return {
     on: jest.fn().mockReturnValue({
       subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
