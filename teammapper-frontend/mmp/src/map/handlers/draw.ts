@@ -332,7 +332,7 @@ export default class Draw {
    */
   public setLink(node: Node) {
     let domLink = node.getLinkDOM();
-    let domText: SVGTextElement | null = null;
+    let domText: SVGTextElement | null;
 
     if (!domLink) {
       // create new dom elements if they do not exist

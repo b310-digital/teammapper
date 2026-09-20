@@ -1,2 +1,15 @@
-**/*
-!README.md
+# Build output and caches
+dist/
+coverage/
+.angular/
+.jest-cache/
+.pnpm-store/
+playwright-report/
+teammapper-backend/client/
+
+# Generated or vendored
+pnpm-lock.yaml
+teammapper-backend/src/migrations/
+
+# Generated test output
+teammapper-frontend/playwright/output/

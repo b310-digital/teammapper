@@ -37,6 +37,7 @@
     "doc": "compodoc -p src/tsconfig.app.json",
     "deploy": "ng deploy",
     "format": "npx prettier . --write",
+    "format:check": "npx prettier . --check",
     "test:e2e": "npx playwright test"
   },
   "dependencies": {

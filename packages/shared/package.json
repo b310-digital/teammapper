@@ -23,7 +23,9 @@
     "clean": "rm -rf dist",
     "tsc": "tsc -p tsconfig.esm.json --noEmit",
     "test": "jest",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\"",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
   },
   "dependencies": {
     "valibot": "^1.3.1"

@@ -321,25 +321,25 @@ export default class History {
       node.link === undefined || typeof node.link.href === 'string',
       Boolean(
         node.coordinates &&
-          typeof node.coordinates.x === 'number' &&
-          typeof node.coordinates.y === 'number'
+        typeof node.coordinates.x === 'number' &&
+        typeof node.coordinates.y === 'number'
       ),
       Boolean(
         node.image &&
-          typeof node.image.size === 'number' &&
-          typeof node.image.src === 'string'
+        typeof node.image.size === 'number' &&
+        typeof node.image.src === 'string'
       ),
       Boolean(
         node.colors &&
-          typeof node.colors.background === 'string' &&
-          typeof node.colors.branch === 'string' &&
-          typeof node.colors.name === 'string'
+        typeof node.colors.background === 'string' &&
+        typeof node.colors.branch === 'string' &&
+        typeof node.colors.name === 'string'
       ),
       Boolean(
         node.font &&
-          typeof node.font.size === 'number' &&
-          typeof node.font.weight === 'string' &&
-          typeof node.font.style === 'string'
+        typeof node.font.size === 'number' &&
+        typeof node.font.weight === 'string' &&
+        typeof node.font.style === 'string'
       ),
     ];
 

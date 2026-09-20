@@ -13,8 +13,8 @@ export function findRootNode<T extends TreeNodeLike>(
 ): T | undefined {
   if (!nodes || nodes.length === 0) return undefined;
   return (
-    nodes.find((n) => Boolean(n.isRoot)) ??
-    nodes.find((n) => n.parent == null || n.parent === '')
+    nodes.find(n => Boolean(n.isRoot)) ??
+    nodes.find(n => n.parent == null || n.parent === '')
   );
 }
 

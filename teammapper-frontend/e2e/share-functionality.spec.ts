@@ -8,7 +8,7 @@ test('opens share dialog and verifies functionality', async ({
   // Note: WebKit doesn't support clipboard permissions via grantPermissions
   try {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  } catch (e) {
+  } catch {
     // Ignore permission errors for browsers that don't support it
   }
 
@@ -56,7 +56,7 @@ test('opens share dialog and verifies functionality', async ({
   const clipboardText = await page.evaluate(async () => {
     try {
       return await navigator.clipboard.readText();
-    } catch (e) {
+    } catch {
       // Fallback for browsers that don't support clipboard API
       return null;
     }

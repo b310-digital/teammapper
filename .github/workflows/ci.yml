@@ -47,6 +47,14 @@ jobs:
             - uses: ./.github/actions/setup-pnpm
             - run: pnpm --filter teammapper-frontend run lint
 
+    format-check:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+            - uses: ./.github/actions/setup-pnpm
+            - run: pnpm run format:check
+
     teammapper-frontend-tsc:
         runs-on: ubuntu-latest
 

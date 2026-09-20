@@ -9,12 +9,7 @@ import Nodes from './handlers/nodes';
 import Export from './handlers/export';
 import CopyPaste from './handlers/copy-paste';
 import Node, { ExportNodeProperties, UserNodeProperties } from './models/node';
-import type {
-  NodeProperty,
-  NodePropertyValue,
-  MmpEventPayloadMap,
-  MmpEventType,
-} from '@teammapper/shared';
+import type { NodeProperty, NodePropertyValue } from '@teammapper/shared';
 
 /**
  * Initialize all handlers and return a mmp object.

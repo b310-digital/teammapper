@@ -37,6 +37,26 @@ getent hosts chrome # for CDP endpoint in .mcp.json
 4. Navigate with Playwright: `browser_navigate` to `http://<resolved-ip>:4200`
 5. Use `browser_snapshot` (preferred over screenshots) to inspect the page
 
+## Formatting and lint scope
+
+`.prettierrc` at the repository root is the one prettier config. Every workspace
+inherits it. `teammapper-backend/.prettierrc.json` is the only override and
+exists because the backend writes no semicolons. Do not add a second config to a
+workspace: prettier applies the nearest file and ignores the rest, so a copy
+forks the rules without anyone noticing.
+
+Keep `.editorconfig` in agreement with it. Prettier reads `.editorconfig`
+wherever no prettier config applies, so an `indent_size` that disagrees
+reformats every workspace that lacks one.
+
+Each workspace defines `format` to write and `format:check` to verify. CI runs
+`pnpm run format:check`, which fans out to all of them. Give a new workspace
+both scripts, or nothing checks its formatting.
+
+`teammapper-frontend/angular.json` lists the directories `ng lint` reads in
+`lintFilePatterns`. A directory left out of that list goes unlinted, whatever
+`eslint.config.js` matches.
+
 ## TypeScript strictness
 
 `teammapper-frontend/tsconfig.json` sets `strict: true` and switches two flags

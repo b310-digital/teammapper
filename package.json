@@ -20,6 +20,7 @@
     "build:frontend:prod": "GENERATE_SOURCEMAP=false pnpm --filter teammapper-frontend run build:prod",
     "clean": "rm -rf teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist packages/*/dist",
     "format": "pnpm --filter '*' run format",
+    "format:check": "pnpm --filter '*' run format:check",
     "install:frozen": "pnpm install --frozen-lockfile",
     "lint": "pnpm --filter '*' run lint",
     "migrate:dev": "pnpm --filter teammapper-backend run dev:typeorm:migrate",

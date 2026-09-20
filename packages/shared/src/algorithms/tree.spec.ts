@@ -26,7 +26,7 @@ describe('Tree Algorithms', () => {
       ];
 
       const result = sortNodesParentFirst(nodes);
-      const ids = result.map((n) => n.id);
+      const ids = result.map(n => n.id);
 
       expect(ids[0]).toBe('root');
       expect(ids.indexOf('root')).toBeLessThan(ids.indexOf('c1'));
@@ -44,7 +44,7 @@ describe('Tree Algorithms', () => {
       ];
 
       const result = sortNodesParentFirst(nodes);
-      expect(result.map((n) => n.id)).toEqual(['root', 'A', 'B', 'C', 'D']);
+      expect(result.map(n => n.id)).toEqual(['root', 'A', 'B', 'C', 'D']);
     });
 
     it('handles direct 2-node cycle (A -> B -> A) without infinite loop or stack overflow', () => {
@@ -57,8 +57,8 @@ describe('Tree Algorithms', () => {
       const result = sortNodesParentFirst(nodes);
       expect(result.length).toBe(3);
       expect(result[0].id).toBe('root');
-      expect(result.map((n) => n.id)).toContain('A');
-      expect(result.map((n) => n.id)).toContain('B');
+      expect(result.map(n => n.id)).toContain('A');
+      expect(result.map(n => n.id)).toContain('B');
     });
 
     it('handles self-referencing cycle (A -> A) safely', () => {
@@ -68,7 +68,7 @@ describe('Tree Algorithms', () => {
       ];
 
       const result = sortNodesParentFirst(nodes);
-      expect(result.map((n) => n.id)).toEqual(['root', 'A']);
+      expect(result.map(n => n.id)).toEqual(['root', 'A']);
     });
 
     it('handles child pointing back to root in cycle safely', () => {
@@ -78,7 +78,7 @@ describe('Tree Algorithms', () => {
       ];
 
       const result = sortNodesParentFirst(nodes);
-      expect(result.map((n) => n.id)).toEqual(['root', 'child']);
+      expect(result.map(n => n.id)).toEqual(['root', 'child']);
     });
 
     it('handles 3-node cycle (A -> B -> C -> A) reachable from root', () => {
@@ -103,7 +103,7 @@ describe('Tree Algorithms', () => {
       ];
 
       const result = sortNodesParentFirst(nodes);
-      const ids = result.map((n) => n.id);
+      const ids = result.map(n => n.id);
 
       expect(ids.slice(0, 2)).toEqual(['root', 'child']);
       expect(ids).toContain('orphan1');
@@ -137,7 +137,9 @@ describe('Tree Algorithms', () => {
 
   describe('collectSubtreeIds', () => {
     it('returns empty array when rootId has no children or does not exist', () => {
-      const nodes: TreeNodeLike[] = [{ id: 'root', isRoot: true, parent: null }];
+      const nodes: TreeNodeLike[] = [
+        { id: 'root', isRoot: true, parent: null },
+      ];
       expect(collectSubtreeIds(nodes, 'root')).toEqual([]);
       expect(collectSubtreeIds(nodes, 'nonexistent')).toEqual([]);
     });

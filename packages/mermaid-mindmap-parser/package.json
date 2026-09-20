@@ -13,7 +13,9 @@
     "build": "vite build && tsc --project tsconfig.build.json",
     "build:types": "tsc --project tsconfig.build.json",
     "build:js": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
   },
   "types": "dist/index.d.ts",
   "exports": {

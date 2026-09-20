@@ -151,7 +151,12 @@ class MapLayout {
   private indexChildren(): void {
     for (const node of this.nodes) {
       if (node.isRoot || node.detached) continue;
-      if (!node.parent || node.parent === node.id || !this.byId.has(node.parent)) continue;
+      if (
+        !node.parent ||
+        node.parent === node.id ||
+        !this.byId.has(node.parent)
+      )
+        continue;
       const siblings = this.childrenOf.get(node.parent) ?? [];
       siblings.push(node);
       this.childrenOf.set(node.parent, siblings);

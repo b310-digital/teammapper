@@ -24,11 +24,15 @@ export default class Drag {
 
     this.dragBehavior = d3
       .drag<SVGGElement, Node>()
-      .on('start', (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
-        this.started(event, node)
+      .on(
+        'start',
+        (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
+          this.started(event, node)
       )
-      .on('drag', (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
-        this.dragged(event, node)
+      .on(
+        'drag',
+        (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
+          this.dragged(event, node)
       )
       .on('end', (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
         this.ended(event, node)

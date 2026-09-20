@@ -39,9 +39,13 @@ describe('normalizeMapData', () => {
   });
 
   it('neutralizes prototype pollution properties', () => {
-    const malicious = JSON.parse('{"id": "node-1", "__proto__": {"polluted": true}, "colors": {"constructor": "exploit"}}');
+    const malicious = JSON.parse(
+      '{"id": "node-1", "__proto__": {"polluted": true}, "colors": {"constructor": "exploit"}}'
+    );
     const node = normalizeMapNode(malicious);
-    expect((node as unknown as Record<string, unknown>).polluted).toBeUndefined();
+    expect(
+      (node as unknown as Record<string, unknown>).polluted
+    ).toBeUndefined();
     expect(node.id).toBe('node-1');
   });
 
