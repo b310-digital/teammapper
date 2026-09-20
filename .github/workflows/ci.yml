@@ -146,3 +146,8 @@ jobs:
                   # time-based grace period. License enforcement stays on.
                   vulnerability-check: false
                   allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, CC0-1.0, Unlicense, BlueOak-1.0.0, Zlib, CC-BY-4.0
+                  # dompurify is dual-licensed "(MPL-2.0 OR Apache-2.0)" and we
+                  # use it under Apache-2.0. The action reports the expression as
+                  # "Apache-2.0 AND MPL-2.0" and rejects it, so exempt the package
+                  # instead of allowing MPL-2.0 for everything.
+                  allow-dependencies-licenses: pkg:npm/dompurify
