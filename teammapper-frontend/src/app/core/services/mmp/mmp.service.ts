@@ -5,10 +5,8 @@ import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
 import { jsPDF } from 'jspdf';
 import { filter } from 'rxjs/operators';
-import * as mmp from '@mmp/index';
-import MmpMap from '@mmp/map/map';
+import { create, MmpMap, OptionParameters } from '@teammapper/mmp';
 import DOMPurify from 'dompurify';
-import { OptionParameters } from '@mmp/map/options';
 import {
   CachedMapOptions,
   ExportNodeProperties,
@@ -102,7 +100,7 @@ export class MmpService implements OnDestroy {
     ref: HTMLElement,
     options?: OptionParameters
   ) {
-    const map: MmpMap = mmp.create(id, ref, options);
+    const map: MmpMap = create(id, ref, options);
 
     // additional options do not include the standard mmp map options
     this.additionalOptions = await this.defaultAdditionalOptions();

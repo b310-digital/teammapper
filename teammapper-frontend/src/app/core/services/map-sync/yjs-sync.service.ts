@@ -1,5 +1,5 @@
 import { Subscription } from 'rxjs';
-import { NodePropertyMapping } from '@mmp/index';
+import { NodePropertyMapping } from '@teammapper/mmp';
 import {
   CachedMapOptions,
   ExportNodeProperties,

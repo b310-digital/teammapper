@@ -6,7 +6,7 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
-import { NodeColors } from '@mmp/map/models/node';
+import { NodeColors } from '@teammapper/mmp';
 import {
   ExportNodeProperties,
   MapNodeColors,

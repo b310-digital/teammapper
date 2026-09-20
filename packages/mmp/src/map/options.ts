@@ -1,0 +1,300 @@
+import { NodeColors, NodeFont, NodeImage, NodeLink } from './models/node.js';
+import type { MapNodeCoordinates, MapNodeSettings } from '@teammapper/shared';
+import Utils from '../utils/utils.js';
+import Map from './map.js';
+import * as d3 from 'd3';
+import Log from '../utils/log.js';
+
+/**
+ * Manage default map options.
+ */
+export default class Options implements OptionParameters {
+  private map: Map;
+
+  public fontFamily: string;
+  public centerOnResize: boolean;
+  public drag: boolean;
+  public zoom: boolean;
+  // Controls wether edit related click handlers will be registered in the draw module
+  // Note: node property updates are still available
+  public edit: boolean;
+
+  public defaultNode: DefaultNodeProperties;
+  public rootNode: DefaultNodeProperties;
+  public showLinktext: boolean;
+
+  /**
+   * Initialize all options.
+   * @param {OptionParameters} parameters
+   * @param {Map} map
+   */
+  constructor(parameters: OptionParameters = {}, map: Map) {
+    this.map = map;
+
+    this.fontFamily = parameters.fontFamily || 'Arial, Helvetica, sans-serif';
+    this.centerOnResize =
+      parameters.centerOnResize !== undefined
+        ? parameters.centerOnResize
+        : true;
+    this.drag = parameters.drag !== undefined ? parameters.drag : true;
+    this.edit = parameters.edit !== undefined ? parameters.edit : true;
+    this.zoom = parameters.zoom !== undefined ? parameters.zoom : true;
+    this.showLinktext =
+      parameters.showLinktext !== undefined ? parameters.showLinktext : false;
+
+    // Default node properties
+    this.defaultNode = Utils.mergeObjects(
+      DefaultNodeValues,
+      parameters.defaultNode,
+      true
+    ) as DefaultNodeProperties;
+
+    // Default root node properties
+    this.rootNode = Utils.mergeObjects(
+      DefaultRootNodeValues,
+      parameters.rootNode,
+      true
+    ) as DefaultNodeProperties;
+  }
+
+  public update = (property: string, value: unknown) => {
+    if (typeof property !== 'string') {
+      Log.error('The property must be a string', 'type');
+    }
+
+    switch (property) {
+      case 'fontFamily':
+        this.updateFontFamily(value as string);
+        break;
+      case 'centerOnResize':
+        this.updateCenterOnResize(value as boolean);
+        break;
+      case 'drag':
+        this.updateDrag(value as boolean);
+        break;
+      case 'edit':
+        this.updateEdit(value as boolean);
+        break;
+      case 'zoom':
+        this.updateZoom(value as boolean);
+        break;
+      case 'defaultNode':
+        this.updateDefaultNode(value as DefaultNodeProperties);
+        break;
+      case 'rootNode':
+        this.updateDefaultRootNode(value as DefaultNodeProperties);
+        break;
+      case 'showLinktext':
+        this.updateShowLinktext(value as boolean);
+        break;
+      default:
+        Log.error('The property does not exist');
+    }
+  };
+
+  /**
+   * Update the font family of all nodes.
+   * @param {string} font
+   */
+  private updateFontFamily(font: string) {
+    if (typeof font !== 'string') {
+      Log.error('The font must be a string', 'type');
+    }
+
+    this.fontFamily = font;
+
+    this.map.draw.update();
+  }
+
+  /**
+   * Update centerOnResize behavior.
+   * @param {boolean} flag
+   */
+  private updateCenterOnResize(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    this.centerOnResize = flag;
+
+    if (this.centerOnResize === true) {
+      d3.select(window).on('resize.' + this.map.id, () => {
+        this.map.zoom.center();
+      });
+    } else {
+      d3.select(window).on('resize.' + this.map.id, null);
+    }
+  }
+
+  /**
+   * Update drag behavior.
+   * @param {boolean} flag
+   */
+  private updateDrag(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    this.drag = flag;
+
+    this.map.draw.clear();
+    this.map.draw.update();
+  }
+
+  /**
+   * Update edit behavior.
+   * @param {boolean} flag
+   */
+  private updateEdit(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    this.edit = flag;
+
+    this.map.draw.clear();
+    this.map.draw.update();
+  }
+
+  /**
+   * Update zoom behavior.
+   * @param {boolean} flag
+   */
+  private updateZoom(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    this.zoom = flag;
+
+    if (this.zoom === true) {
+      this.map.dom.svg.call(this.map.zoom.getZoomBehavior());
+    } else {
+      this.map.dom.svg.on('.zoom', null);
+    }
+  }
+
+  /**
+   * Update default node properties.
+   * @param {DefaultNodeProperties} properties
+   */
+  private updateDefaultNode(properties: DefaultNodeProperties) {
+    this.defaultNode = Utils.mergeObjects(
+      this.defaultNode,
+      properties,
+      true
+    ) as DefaultNodeProperties;
+  }
+
+  /**
+   * Update default root node properties.
+   * @param {DefaultNodeProperties} properties
+   */
+  private updateDefaultRootNode(properties: DefaultNodeProperties) {
+    this.rootNode = Utils.mergeObjects(
+      this.rootNode,
+      properties,
+      true
+    ) as DefaultNodeProperties;
+  }
+
+  /**
+   * Update if Linktext or Link Icon is shown.
+   * @param {boolean} value
+   */
+  private updateShowLinktext(value: boolean) {
+    if (typeof value !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    this.showLinktext = value;
+
+    this.map.draw.update();
+  }
+}
+
+export const DefaultNodeValues: DefaultNodeProperties = {
+  name: '',
+  link: {
+    href: '',
+  },
+  coordinates: {
+    x: 0,
+    y: 0,
+  },
+  image: {
+    src: '',
+    size: 60,
+  },
+  colors: {
+    name: '#787878',
+    background: '#f9f9f9',
+    branch: '#577a96',
+    link: '#000000',
+  },
+  font: {
+    size: 16,
+    style: 'normal',
+    weight: 'normal',
+  },
+  locked: true,
+  detached: false,
+  hidden: false,
+  isRoot: false,
+};
+
+const DefaultRootNodeValues: DefaultNodeProperties = {
+  name: 'Root node',
+  link: {
+    href: '',
+  },
+  coordinates: {
+    x: 0,
+    y: 0,
+  },
+  image: {
+    src: '',
+    size: 70,
+  },
+  colors: {
+    name: '#787878',
+    background: '#f0f6f5',
+    branch: '',
+    link: '#000000',
+  },
+  font: {
+    size: 20,
+    style: 'normal',
+    weight: 'normal',
+  },
+  locked: true,
+  detached: false,
+  isRoot: true,
+  hidden: false,
+};
+
+export interface DefaultNodeProperties {
+  name: string;
+  image: NodeImage;
+  coordinates: MapNodeCoordinates;
+  link: NodeLink;
+  colors: NodeColors;
+  font: NodeFont;
+  locked: boolean;
+  detached: boolean;
+  isRoot: boolean;
+  hidden: boolean;
+}
+
+export interface OptionParameters {
+  fontFamily?: string;
+  centerOnResize?: boolean;
+  drag?: boolean;
+  edit?: boolean;
+  zoom?: boolean;
+  // What a caller supplies is the settings payload, which carries no position
+  // and no tree membership. Options fills the rest in from DefaultNodeValues.
+  defaultNode?: MapNodeSettings;
+  rootNode?: MapNodeSettings;
+  showLinktext?: boolean;
+}

@@ -11,7 +11,7 @@ import {
   findRootNode,
   normalizeMapData,
 } from '@teammapper/shared';
-import { MapProperties } from '@mmp/map/types';
+import { MapProperties } from '@teammapper/mmp';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';

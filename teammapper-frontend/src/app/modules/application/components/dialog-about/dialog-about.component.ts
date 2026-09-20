@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
-import { MapProperties } from '@mmp/map/types';
+import { MapProperties } from '@teammapper/mmp';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
