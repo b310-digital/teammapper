@@ -5,12 +5,12 @@ import { Logger } from '@nestjs/common'
 import { ClientMap, IMmpClientNode } from '@teammapper/shared'
 import * as crypto from 'crypto'
 
-const createNode: any = (
+const createNode = (
   isRoot: boolean,
   parentId: string,
   x: number,
   y: number
-) => {
+): IMmpClientNode => {
   return {
     colors: {
       name: '#000000',
@@ -33,6 +33,10 @@ const createNode: any = (
     name: 'Seed Data',
     parent: parentId,
     isRoot: isRoot,
+    detached: false,
+    link: {},
+    hidden: false,
+    hasHiddenChildNodes: false,
   }
 }
 

@@ -13,5 +13,5 @@ import { TranslatePipe } from '@ngx-translate/core';
 export class FloatingButtonsComponent {
   mmpService = inject(MmpService);
 
-  @Input() public editDisabled: boolean;
+  @Input() public editDisabled = false;
 }

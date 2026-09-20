@@ -1,5 +1,13 @@
 import { BenchmarkGraderService } from './benchmark-grader.service'
 import { BenchmarkRunner } from './benchmark.runner'
+import type { LlmUsageCounting } from '../src/map/services/llm-usage-counter.service'
+
+// The benchmark runs without a database and enforces no daily cap.
+const noUsageCounter: LlmUsageCounting = {
+  reserve: async () => ({ tokensUsed: 0, requestsCount: 0 }),
+  adjustTokens: async () => {},
+  release: async () => {},
+}
 
 async function main(): Promise<void> {
   // Dynamic imports — run after process.env is set above
@@ -12,7 +20,7 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  const aiService = new AiService()
+  const aiService = new AiService(noUsageCounter)
   const graderService = new BenchmarkGraderService({ llmConfig })
   const runner = new BenchmarkRunner(aiService, graderService, llmConfig)
 

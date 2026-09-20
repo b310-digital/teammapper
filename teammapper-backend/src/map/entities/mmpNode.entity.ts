@@ -19,22 +19,23 @@ import {
   IsOptional,
 } from 'class-validator'
 
+// Columns take `!` and no initializer; AGENTS.md, TypeScript strictness rule 3.
 @Entity()
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ type: 'varchar', nullable: true })
   @IsOptional()
   @MaxLength(512)
-  name: string | null
+  name!: string | null
 
   @ManyToOne(() => MmpMap, (map) => map.nodes, {
     onDelete: 'CASCADE',
     orphanedRowAction: 'delete',
   })
   @JoinColumn()
-  nodeMap: MmpMap
+  nodeMap!: MmpMap
 
   @ManyToOne(() => MmpNode, (node) => node.children, {
     onDelete: 'CASCADE',
@@ -44,99 +45,99 @@ export class MmpNode {
     { name: 'nodeParentId', referencedColumnName: 'id' },
   ])
   @Index()
-  nodeParent: MmpNode
+  nodeParent!: MmpNode
 
   @OneToMany(() => MmpNode, (node) => node.nodeParent)
-  children: MmpNode[]
+  children!: MmpNode[]
 
   @Column({ type: 'boolean', default: false })
   @IsDefined()
-  root: boolean
+  root!: boolean
 
   @Column({ type: 'float' })
   @IsDefined()
-  coordinatesX: number
+  coordinatesX!: number
 
   @Column({ type: 'float' })
   @IsDefined()
-  coordinatesY: number
+  coordinatesY!: number
 
   @Column({ type: 'varchar', nullable: true })
   @IsOptional()
   @MaxLength(9)
-  colorsName: string | null
+  colorsName!: string | null
 
   @Column({ type: 'varchar', nullable: true })
   @IsOptional()
   @MaxLength(9)
-  colorsBackground: string | null
+  colorsBackground!: string | null
 
   @Column({ type: 'varchar', nullable: true })
   @IsOptional()
   @MaxLength(9)
-  colorsBranch: string | null
+  colorsBranch!: string | null
 
   @Column({ type: 'integer', nullable: true })
-  fontSize: number | null
+  fontSize!: number | null
 
   @Column({ type: 'varchar', nullable: true })
   @IsOptional()
   @MaxLength(20)
-  fontStyle: string | null
+  fontStyle!: string | null
 
   @Column({ type: 'varchar', nullable: true })
   @IsOptional()
   @MaxLength(20)
-  fontWeight: string | null
+  fontWeight!: string | null
 
   @Column({ type: 'varchar', nullable: true })
   @IsOptional()
   @MaxLength(200000)
-  imageSrc: string | null
+  imageSrc!: string | null
 
   @Column({ type: 'integer', nullable: true, default: 60 })
-  imageSize: number | null
+  imageSize!: number | null
 
   @Column({ type: 'varchar', nullable: true })
   @IsOptional()
   @MaxLength(2048)
-  linkHref: string | null
+  linkHref!: string | null
 
   @Column({ type: 'boolean', nullable: true })
-  locked: boolean | null
+  locked!: boolean | null
 
   @Column({ type: 'boolean', default: false })
   @IsDefined()
-  detached: boolean
+  detached!: boolean
 
   @Column({ type: 'float', nullable: true })
-  k: number | null
+  k!: number | null
 
   @PrimaryColumn('uuid')
   @Index()
   @IsDefined()
-  nodeMapId: string
+  nodeMapId!: string
 
   @Column({ type: 'uuid', nullable: true })
-  nodeParentId: string | null
+  nodeParentId!: string | null
 
   @Column({ type: 'integer' })
   @Generated('increment')
-  orderNumber: number
+  orderNumber!: number
 
   @Column({
     type: 'timestamptz',
     nullable: true,
     default: () => 'CURRENT_TIMESTAMP',
   })
-  lastModified: Date | null
+  lastModified!: Date | null
 
   @Column({
     type: 'timestamptz',
     nullable: true,
     default: () => 'CURRENT_TIMESTAMP',
   })
-  createdAt: Date | null
+  createdAt!: Date | null
 
   @BeforeInsert()
   @BeforeUpdate()

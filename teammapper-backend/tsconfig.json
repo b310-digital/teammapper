@@ -11,8 +11,7 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": ["node", "jest", "express", "uuid", "supertest", "express-serve-static-core"]

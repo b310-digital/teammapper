@@ -14,9 +14,9 @@ export class ShortcutsService implements OnDestroy {
   private settingsService = inject(SettingsService);
   private router = inject(Router);
 
-  private hotKeys: Hotkey[];
+  private hotKeys: Hotkey[] = [];
   private editMode: boolean | null = null;
-  private settingsSubscription: Subscription;
+  private settingsSubscription: Subscription | null = null;
 
   /**
    * Add all global hot keys of the application.
@@ -32,7 +32,7 @@ export class ShortcutsService implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.settingsSubscription.unsubscribe();
+    this.settingsSubscription?.unsubscribe();
   }
 
   public registerHotKeys() {

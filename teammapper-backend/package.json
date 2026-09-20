@@ -15,7 +15,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "tsc": "tsc -p ./tsconfig.build.json",
+    "tsc": "tsc -p ./tsconfig.json --noEmit",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"benchmark/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"benchmark/**/*.ts\"",
     "start": "nest start",

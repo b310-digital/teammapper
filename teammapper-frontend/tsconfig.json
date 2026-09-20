@@ -22,12 +22,7 @@
     },
     "useDefineForClassFields": false,
 
-    // `strictPropertyInitialization` is the one flag of `strict` still off.
-    // Write class fields that pass once it is on: initialize them, or declare
-    // them optional, instead of relying on `!`.
-    "strict": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": false
+    "strict": true
   },
   "angularCompilerOptions": {
     "strictTemplates": true,

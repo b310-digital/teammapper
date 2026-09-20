@@ -7,6 +7,7 @@ export const createMmpMap = (overrides = {}): MmpMap => ({
   id: crypto.randomUUID(),
   adminId: 'admin-id',
   modificationSecret: 'modification-secret',
+  ownerExternalId: null,
   name: 'Test Map',
   lastModified: new Date('1970-01-01'),
   lastAccessed: new Date('1970-01-01'),

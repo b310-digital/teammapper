@@ -1,5 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type D3Element = any;
+// An opaque handle onto whatever the renderer drew for a node. This package
+// only stores it and hands it back, so it never needs a shape.
+type D3Element = unknown;
 
 // https://github.com/mermaid-js/mermaid/blob/develop/packages/mermaid/src/diagrams/mindmap/mindmapTypes.ts
 interface MindmapNode {

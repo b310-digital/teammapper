@@ -11,9 +11,9 @@ export default class Drag {
   private map: Map;
 
   private dragBehavior: DragBehavior<SVGGElement, Node, unknown>;
-  private dragging: boolean;
+  private dragging = false;
   private orientation: boolean | undefined;
-  private descendants: Node[];
+  private descendants: Node[] = [];
 
   /**
    * Get the associated map instance and initialize the d3 drag behavior.

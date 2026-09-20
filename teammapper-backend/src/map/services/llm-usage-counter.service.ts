@@ -9,11 +9,26 @@ interface UsageRow {
 }
 
 /**
+ * What a caller needs from the counter to hold a daily token budget. The
+ * DB-backed service below implements it, and so do the in-memory stand-ins the
+ * unit tests and the benchmark run without a database.
+ */
+export interface LlmUsageCounting {
+  reserve(
+    dateUsage: string,
+    tokens: number,
+    cap?: number
+  ): Promise<{ tokensUsed: number; requestsCount: number } | null>
+  adjustTokens(dateUsage: string, delta: number): Promise<void>
+  release(dateUsage: string, tokens: number): Promise<void>
+}
+
+/**
  * Anonymized aggregate counter for LLM usage. Stores only per-date totals
  * so the daily token cap is enforced across restarts and multi-instance deployments.
  */
 @Injectable()
-export class LlmUsageCounterService {
+export class LlmUsageCounterService implements LlmUsageCounting {
   constructor(
     @InjectRepository(LlmUsageCounter)
     private readonly repo: Repository<LlmUsageCounter>

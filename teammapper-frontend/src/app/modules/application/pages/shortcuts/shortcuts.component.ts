@@ -32,7 +32,7 @@ export class ShortcutsComponent implements OnInit {
   private shortcutsService = inject(ShortcutsService);
   private location = inject(Location);
 
-  public shortcuts: Shortcut[];
+  public shortcuts: Shortcut[] = [];
 
   public ngOnInit() {
     const hotKeys: Hotkey[] = this.shortcutsService.getHotKeys();

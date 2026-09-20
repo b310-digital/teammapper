@@ -1,12 +1,11 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { Subscription, Observable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ConnectionStatus } from '../../../../core/services/map-sync/map-sync-context';
 import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { UtilsService } from '../../../../core/services/utils/utils.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExportNodeProperties } from '@teammapper/shared';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { ServerMap } from 'src/app/core/services/map-sync/server-types';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
@@ -49,11 +48,11 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  public node: Observable<ExportNodeProperties | null>;
-  public editMode: Observable<boolean | null>;
+  public node = this.mapSyncService.getAttachedNodeObservable();
+  public editMode = this.settingsService.getEditModeObservable();
 
-  private imageDropSubscription: Subscription;
-  private connectionStatusSubscription: Subscription;
+  private imageDropSubscription: Subscription | null = null;
+  private connectionStatusSubscription: Subscription | null = null;
 
   async ngOnInit() {
     this.storageService.cleanExpired();
@@ -62,7 +61,6 @@ export class ApplicationComponent implements OnInit, OnDestroy {
 
     this.handleImageDropObservable();
 
-    this.node = this.mapSyncService.getAttachedNodeObservable();
     this.connectionStatusSubscription = this.mapSyncService
       .getConnectionStatusObservable()
       .subscribe((status: ConnectionStatus) => {
@@ -72,12 +70,11 @@ export class ApplicationComponent implements OnInit, OnDestroy {
           this.dialogService.openDisconnectDialog();
         else this.dialogService.closeDisconnectDialog();
       });
-    this.editMode = this.settingsService.getEditModeObservable();
   }
 
   ngOnDestroy() {
-    this.imageDropSubscription.unsubscribe();
-    this.connectionStatusSubscription.unsubscribe();
+    this.imageDropSubscription?.unsubscribe();
+    this.connectionStatusSubscription?.unsubscribe();
     // The dialog is an overlay, so it outlives this component unless we close
     // it here: teardown order can drop the status that would have closed it.
     this.dialogService.closeDisconnectDialog();

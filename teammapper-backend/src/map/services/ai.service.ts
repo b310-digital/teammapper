@@ -1,10 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { generateText, LanguageModel } from 'ai'
 import { SYSTEM_PROMPT, userPrompt, SupportedLanguage } from '../utils/prompts'
 import { createProvider } from '../utils/aiProvider'
 import configService from '../../config.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'
-import { LlmUsageCounterService } from './llm-usage-counter.service'
+import {
+  LlmUsageCounting,
+  LlmUsageCounterService,
+} from './llm-usage-counter.service'
 
 export const SYSTEM_PROMPT_TOKEN_OVERHEAD = 200
 const DEFAULT_MAX_OUTPUT_TOKENS = 1024
@@ -38,7 +41,12 @@ export class AiService {
   private tokensUsedPerMinute: PerMinuteEntry[] = []
   private readonly limits: ParsedLimits
 
-  constructor(private readonly usageCounter: LlmUsageCounterService) {
+  constructor(
+    // The parameter is an interface, so Nest has no design-time token for it
+    // and the provider has to be named explicitly.
+    @Inject(LlmUsageCounterService)
+    private readonly usageCounter: LlmUsageCounting
+  ) {
     this.limits = {
       tpm: AiService.parseInt(this.llmConfig.tpm),
       rpm: AiService.parseInt(this.llmConfig.rpm),
