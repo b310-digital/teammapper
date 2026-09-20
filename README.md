@@ -114,6 +114,15 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
 
 -   Visit the frontend in http://localhost:4200
 
+
+### Secret linting via gitleaks
+If installed, run gitleaks to make sure to secrets are accidentally included:
+
+```
+# Assumes location is set to teammapper repo
+docker run -v "$(pwd)":/path ghcr.io/gitleaks/gitleaks:latest dir /path --verbose --config /path/.gitleaks.toml
+```
+
 ### Test
 
 -   Create a test database
