@@ -3,14 +3,15 @@
  */
 export default class Log {
   /**
-   * Throw an Error with a message.
+   * Throw an Error with a message. Never returns, so a call to it narrows the
+   * code that follows.
    * @param {string} message
    * @param {string} type
    */
   static error(
     message: string,
     type?: 'eval' | 'range' | 'reference' | 'syntax' | 'type' | 'uri'
-  ) {
+  ): never {
     switch (type) {
       case 'eval':
         throw new EvalError(message);

@@ -23,7 +23,7 @@ export default class Zoom {
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 2])
       .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
-        this.map.dom.g?.attr('transform', event.transform.toString());
+        this.map.dom.g.attr('transform', event.transform.toString());
       });
   }
 
@@ -71,7 +71,6 @@ export default class Zoom {
       x = root.coordinates.x,
       y = root.coordinates.y;
 
-    if (!this.map.dom.svg) return;
     const svg = this.map.dom.svg.transition().duration(duration);
 
     switch (type) {
@@ -100,7 +99,6 @@ export default class Zoom {
    * @param {number} duration
    */
   private move(direction: boolean, duration = 50) {
-    if (!this.map.dom.svg) return;
     const svg = this.map.dom.svg.transition().duration(duration);
 
     this.zoomBehavior.scaleBy(svg, direction ? 4 / 3 : 3 / 4);

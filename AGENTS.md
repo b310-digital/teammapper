@@ -104,7 +104,9 @@ drifts, and the copies then disagree about what the server sends.
 
 Derive a variant instead of retyping the fields. `Required<T>` makes every
 optional field of `T` mandatory, which is how `UserMapOptions` stays tied to
-`MapOptions`.
+`MapOptions`. `Required<T>` leaves a declared `| null` alone, so for the node
+styling types, whose schemas mark every field `v.nullable`, derive with
+`Resolved<T>` instead (see `NodeColors`).
 
 Import from the module that declares the symbol. Never re-export one module's
 types from another, and never add a barrel file whose only content is

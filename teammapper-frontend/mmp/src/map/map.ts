@@ -3,13 +3,19 @@ import Events from './handlers/events';
 import Zoom from './handlers/zoom';
 import Draw from './handlers/draw';
 import Options, { OptionParameters } from './options';
-import History, { ExportHistory, MapSnapshot } from './handlers/history';
+import History, { ExportHistory } from './handlers/history';
 import Drag from './handlers/drag';
 import Nodes from './handlers/nodes';
 import Export from './handlers/export';
 import CopyPaste from './handlers/copy-paste';
-import Node, { ExportNodeProperties, UserNodeProperties } from './models/node';
-import type { NodeProperty, NodePropertyValue } from '@teammapper/shared';
+import Node from './models/node';
+import type {
+  ExportNodeProperties,
+  MapSnapshot,
+  NodeProperty,
+  NodePropertyValue,
+  UserNodeProperties,
+} from '@teammapper/shared';
 
 /**
  * Initialize all handlers and return a mmp object.
@@ -40,7 +46,6 @@ export default class MmpMap {
   constructor(id: string, ref: HTMLElement, options?: OptionParameters) {
     this.id = id;
 
-    this.dom = {};
     this.events = new Events();
     this.options = new Options(options, this);
     this.zoom = new Zoom(this);
@@ -52,7 +57,7 @@ export default class MmpMap {
     this.copyPaste = new CopyPaste(this);
     this.rootId = '';
 
-    this.draw.create();
+    this.dom = this.draw.create();
 
     if (this.options.centerOnResize === true) {
       d3.select(window).on('resize.' + this.id, () => {
@@ -60,7 +65,7 @@ export default class MmpMap {
       });
     }
 
-    if (this.options.zoom === true && this.dom.svg) {
+    if (this.options.zoom === true) {
       this.dom.svg.call(this.zoom.getZoomBehavior());
     }
 
@@ -73,7 +78,7 @@ export default class MmpMap {
    * Remove permanently mmp instance.
    */
   private remove = () => {
-    this.dom.svg?.remove();
+    this.dom.svg.remove();
 
     const instanceRecord = this.instance as unknown as Record<string, unknown>;
     const props = Object.keys(instanceRecord);
@@ -136,8 +141,8 @@ export interface MmpInstance {
   ) => Node;
   addNodes: (nodes: ExportNodeProperties[], updateHistory?: boolean) => void;
   center: (type?: 'zoom' | 'position', duration?: number) => void;
-  copyNode: (id: string) => void;
-  cutNode: (id: string) => void;
+  copyNode: (id?: string) => void;
+  cutNode: (id?: string) => void;
   applyCoordinatesToMapSnapshot: (mapSnapshot: MapSnapshot) => MapSnapshot;
   distributeNodes: (notifyWithEvent?: boolean) => void;
   deselectNode: () => void;
@@ -147,7 +152,7 @@ export interface MmpInstance {
   existNode: (id?: string) => boolean;
   exportAsImage: (callback: (url: string) => void, type?: string) => void;
   exportAsJSON: () => MapSnapshot;
-  exportNodeProperties: (id: string) => ExportNodeProperties;
+  exportNodeProperties: (id: string) => ExportNodeProperties | undefined;
   exportRootProperties: () => ExportNodeProperties;
   exportSelectedNode: () => ExportNodeProperties;
   highlightNode: (id: string, color: string, notifyWithEvent?: boolean) => void;
@@ -156,7 +161,7 @@ export interface MmpInstance {
   save: () => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];
   on: (event: string, callback: (...args: unknown[]) => void) => void;
-  pasteNode: (id: string) => void;
+  pasteNode: (id?: string) => void;
   redo: () => void;
   remove: () => void;
   removeNode: (id?: string, notifyWithEvent?: boolean) => void;
@@ -176,7 +181,7 @@ export interface MmpInstance {
 }
 
 export interface DomElements {
-  container?: d3.Selection<HTMLElement, unknown, null, undefined>;
-  g?: d3.Selection<SVGGElement, unknown, null, undefined>;
-  svg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  container: d3.Selection<HTMLElement, unknown, null, undefined>;
+  g: d3.Selection<SVGGElement, unknown, null, undefined>;
+  svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 }

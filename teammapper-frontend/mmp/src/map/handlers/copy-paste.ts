@@ -1,12 +1,15 @@
 import Map from '../map';
-import Node, {
-  Colors,
-  Coordinates,
+import Node from '../models/node';
+import type {
   ExportNodeProperties,
-} from '../models/node';
+  MapNodeColors,
+  MapNodeCoordinates,
+} from '@teammapper/shared';
 import Log from '../../utils/log';
 import Utils from '../../utils/utils';
 import { Event } from './events';
+
+const ORIGIN: MapNodeCoordinates = { x: 0, y: 0 };
 
 /**
  * Manage the drag events of the nodes.
@@ -29,12 +32,12 @@ export default class CopyPaste {
    * the selected node in the mmp clipboard.
    * @param {string} id
    */
-  public copy = (id: string) => {
+  public copy = (id?: string) => {
     if (id && typeof id !== 'string') {
       Log.error('The node id must be a string', 'type');
     }
 
-    const node: Node = id
+    const node = id
       ? this.map.nodes.getNode(id)
       : this.map.nodes.getSelectedNode();
 
@@ -58,12 +61,12 @@ export default class CopyPaste {
    * the selected node in the mmp clipboard.
    * @param {string} id
    */
-  public cut = (id: string) => {
+  public cut = (id?: string) => {
     if (id && typeof id !== 'string') {
       Log.error('The node id must be a string', 'type');
     }
 
-    const node: Node = id
+    const node = id
       ? this.map.nodes.getNode(id)
       : this.map.nodes.getSelectedNode();
 
@@ -89,7 +92,7 @@ export default class CopyPaste {
    * of the node with the passed as parameter or of the selected node.
    * @param {string} id
    */
-  public paste = (id: string) => {
+  public paste = (id?: string) => {
     if (this.copiedNodes === undefined) {
       Log.error('There are not nodes in the mmp clipboard');
     }
@@ -98,7 +101,7 @@ export default class CopyPaste {
       Log.error('The node id must be a string', 'type');
     }
 
-    const node: Node = id
+    const node = id
       ? this.map.nodes.getNode(id)
       : this.map.nodes.getSelectedNode();
 
@@ -106,48 +109,31 @@ export default class CopyPaste {
       Log.error('There are no nodes with id "' + id + '"');
     }
 
-    const rootNode = this.map.nodes.getRoot();
     const newNodes = new Array<Node>();
 
     const addNodes = (
       nodeProperties: ExportNodeProperties,
       newParentNode: Node
     ) => {
-      let coordinates: Coordinates;
-
-      // first run, skipped for initial node
-      if (nodeProperties.id !== this.copiedNodes[0].id) {
-        coordinates = { x: 0, y: 0 };
-
-        // get old parent that was cut and does not exist on the map anymore
-        const oldParentNode = this.findInCopiedNodes(nodeProperties.parent);
-
-        let dx = oldParentNode.coordinates.x - nodeProperties.coordinates.x;
-        const dy = oldParentNode.coordinates.y - nodeProperties.coordinates.y;
-
-        const newParentOrientation =
-          this.map.nodes.getOrientation(newParentNode);
-        const oldParentOrientation =
-          oldParentNode.coordinates.x < rootNode.coordinates.x;
-
-        if (oldParentOrientation !== newParentOrientation) {
-          dx = -dx;
-        }
-
-        coordinates.x = newParentNode.coordinates.x - dx;
-        coordinates.y = newParentNode.coordinates.y - dy;
-
-        coordinates = this.map.nodes.fixCoordinates(coordinates, true);
-      }
+      // The new parent places the initial node. The rest keep the offset
+      // they had to their own parent in the copied subtree.
+      const coordinates =
+        nodeProperties.id === this.copiedNodes[0].id
+          ? undefined
+          : this.calculatePastedCoordinates(nodeProperties, newParentNode);
 
       const nodePropertiesCopy = Utils.cloneObject(nodeProperties);
       // use the new parents branch color
       const branch = !newParentNode?.colors?.branch
         ? this.map.options.defaultNode.colors.branch
         : newParentNode.colors.branch;
-      const fixedColors: Colors = Object.assign({}, nodePropertiesCopy.colors, {
-        branch,
-      });
+      const fixedColors: MapNodeColors = Object.assign(
+        {},
+        nodePropertiesCopy.colors,
+        {
+          branch,
+        }
+      );
 
       const createdNode = this.map.nodes.addNode(
         {
@@ -191,7 +177,40 @@ export default class CopyPaste {
     );
   };
 
-  private findInCopiedNodes = (id: string): ExportNodeProperties => {
+  /**
+   * Keep the offset a copied node had to its old parent, mirrored when the new
+   * parent sits on the other side of the root.
+   * @param {ExportNodeProperties} nodeProperties
+   * @param {Node} newParentNode
+   * @returns {MapNodeCoordinates} coordinates
+   */
+  private calculatePastedCoordinates(
+    nodeProperties: ExportNodeProperties,
+    newParentNode: Node
+  ): MapNodeCoordinates {
+    const rootNode = this.map.nodes.getRoot();
+    const oldParentNode = this.findInCopiedNodes(nodeProperties.parent);
+    const oldParent = oldParentNode?.coordinates ?? ORIGIN;
+    const node = nodeProperties.coordinates ?? ORIGIN;
+
+    // The root reports no orientation, so a paste onto it always mirrors.
+    const mirrored =
+      oldParent.x < rootNode.coordinates.x !==
+      this.map.nodes.getOrientation(newParentNode);
+    const dx = mirrored ? node.x - oldParent.x : oldParent.x - node.x;
+
+    return this.map.nodes.fixCoordinates(
+      {
+        x: newParentNode.coordinates.x - dx,
+        y: newParentNode.coordinates.y - (oldParent.y - node.y),
+      },
+      true
+    );
+  }
+
+  private findInCopiedNodes = (
+    id: string | null
+  ): ExportNodeProperties | undefined => {
     return this.copiedNodes.find(copiedNode => {
       return copiedNode.id === id;
     });

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import { Path } from 'd3';
 import DOMPurify from 'dompurify';
-import Map from '../map';
+import Map, { DomElements } from '../map';
 import Utils from '../../utils/utils';
 import Node from '../models/node';
 import {
@@ -31,13 +31,12 @@ export default class Draw {
 
   /**
    * Create svg and main css map properties.
+   * @returns {DomElements} the created dom elements of the map
    */
-  public create() {
-    this.map.dom.container = d3
-      .select(this.mapRef)
-      .style('position', 'relative');
+  public create(): DomElements {
+    const container = d3.select(this.mapRef).style('position', 'relative');
 
-    this.map.dom.svg = this.map.dom.container
+    const svg = container
       .append('svg')
       .style('position', 'absolute')
       .style('width', '100%')
@@ -45,7 +44,7 @@ export default class Draw {
       .style('top', 0)
       .style('left', 0);
 
-    this.map.dom.svg
+    svg
       .append('rect')
       .attr('width', '100%')
       .attr('height', '100%')
@@ -57,7 +56,7 @@ export default class Draw {
         this.map.nodes.deselectNode();
       });
 
-    this.map.dom.g = this.map.dom.svg.append('g');
+    return { container, svg, g: svg.append('g') };
   }
 
   /**
@@ -176,7 +175,7 @@ export default class Draw {
       .style('visibility', (node: Node) => (node.hidden ? 'hidden' : 'visible'))
       .attr('class', this.map.id + '_branch')
       .attr('id', (node: Node) => node.id + '_branch')
-      .attr('d', (node: Node) => this.drawBranch(node).toString());
+      .attr('d', (node: Node) => this.drawBranch(node)?.toString() ?? null);
 
     dom.nodes.exit().remove();
     dom.branches.exit().remove();
@@ -220,10 +219,10 @@ export default class Draw {
   /**
    * Draw the branch of the node.
    * @param {Node} node
-   * @returns {Path} path
+   * @returns {Path | null} path, or null for a node without a parent
    */
-  public drawBranch(node: Node): Path {
-    if (node.parent === undefined || node.parent === null) return;
+  public drawBranch(node: Node): Path | null {
+    if (node.parent === null) return null;
 
     const parent = node.parent,
       path = d3.path(),
@@ -271,7 +270,7 @@ export default class Draw {
     );
     d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
       'd',
-      (node: Node) => this.drawBranch(node).toString()
+      (node: Node) => this.drawBranch(node)?.toString() ?? null
     );
 
     this.updateImagePosition(node);
@@ -473,7 +472,8 @@ export default class Draw {
     name.onpaste = event => {
       event.preventDefault();
 
-      const text = event.clipboardData.getData('text/plain');
+      const text = event.clipboardData?.getData('text/plain');
+      if (text === undefined) return;
 
       document.execCommand('insertText', false, text);
     };
