@@ -409,7 +409,10 @@ export class YjsSyncService {
     if (!yNode) return;
 
     this.yDoc.transact(() => {
-      const topLevelKey = NodePropertyMapping[event.changedProperty][0];
+      const topLevelKey =
+        NodePropertyMapping[
+          event.changedProperty as keyof typeof NodePropertyMapping
+        ][0];
       const value =
         event.nodeProperties[topLevelKey as keyof ExportNodeProperties];
       yNode.set(topLevelKey, value);
@@ -464,7 +467,11 @@ export class YjsSyncService {
    */
   private shouldAnnounceImport(mapEvent: Y.YMapEvent<Y.Map<unknown>>): boolean {
     const meta = this.yDoc.getMap(META);
-    const announced = mapEvent.transaction.changed.get(meta);
+    // Yjs keys `transaction.changed` by an erased `AbstractType`, which no
+    // concrete `Y.Map` satisfies. The lookup compares object identity.
+    const announced = mapEvent.transaction.changed.get(
+      meta as unknown as Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>
+    );
     if (!announced?.has(LAST_MAP_ANNOUNCEMENT)) return false;
 
     return meta.get(LAST_MAP_ANNOUNCEMENT) !== 'distribute';
@@ -523,7 +530,8 @@ export class YjsSyncService {
     event: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>,
     nodesMap: Y.Map<Y.Map<unknown>>
   ): void {
-    if (event.target === nodesMap) {
+    // `event.target` carries the same erased `AbstractType`.
+    if ((event.target as unknown) === nodesMap) {
       this.handleTopLevelNodeChanges(event, nodesMap);
     } else {
       this.handleNodePropertyChanges(event);

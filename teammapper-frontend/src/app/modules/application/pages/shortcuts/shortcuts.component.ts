@@ -11,8 +11,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 interface Shortcut {
   keys: string[];
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  description: string | Function;
+  description: string;
 }
 
 @Component({
@@ -42,7 +41,9 @@ export class ShortcutsComponent implements OnInit {
 
       return {
         keys: keys === '+' ? [keys] : keys.split('+'),
-        description: hotKey.description,
+        // angular2-hotkeys widens this to `string | Function`; every hotkey
+        // here comes from ShortcutsService, which only passes strings.
+        description: hotKey.description as string,
       };
     });
   }

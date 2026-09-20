@@ -39,11 +39,13 @@ export default class Events {
       Log.error('The event must be a string', 'type');
     }
 
-    if (!Event[event]) {
+    const eventName = Event[event as keyof typeof Event];
+
+    if (!eventName) {
       Log.error('The event does not exist');
     }
 
-    this.dispatcher.on(Event[event], callback);
+    this.dispatcher.on(eventName, callback);
   };
 
   /**

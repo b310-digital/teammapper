@@ -20,7 +20,20 @@
       "rxjs": ["node_modules/rxjs"],
       "rxjs/*": ["node_modules/rxjs/*"]
     },
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+
+    // Strict mode, phase 1. `strictNullChecks` and `strictPropertyInitialization`
+    // stay off for now: they produce ~205 of the ~240 errors a full `strict: true`
+    // reports, more than one reviewable change can carry. We turn them on one
+    // area at a time. Write new code that will pass once they are on.
+    "strict": true,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true
   },
   "exclude": ["node_modules", "dist", "packages/mermaid-mindmap-parser/**/*"]
 }

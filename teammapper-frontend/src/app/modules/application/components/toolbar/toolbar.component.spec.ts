@@ -256,7 +256,7 @@ describe('ToolbarComponent', () => {
     const mockFileReader = {
       readAsDataURL: jest.fn(),
       result: '',
-      onload: null,
+      onload: null as FileReader['onload'],
     };
     window.FileReader = jest.fn(
       () => mockFileReader
@@ -264,7 +264,7 @@ describe('ToolbarComponent', () => {
 
     ctx.component.initImageUpload({
       target: { files: [mockFile] },
-    } as unknown as InputEvent);
+    } as unknown as Event);
 
     expect(mockFileReader.readAsDataURL).not.toHaveBeenCalled();
   });
@@ -274,7 +274,7 @@ describe('ToolbarComponent', () => {
     const mockFileReader = {
       readAsDataURL: jest.fn(),
       result: '',
-      onload: null,
+      onload: null as FileReader['onload'],
     };
     window.FileReader = jest.fn(
       () => mockFileReader
@@ -282,7 +282,7 @@ describe('ToolbarComponent', () => {
 
     ctx.component.initImageUpload({
       target: { files: [mockFile] },
-    } as unknown as InputEvent);
+    } as unknown as Event);
 
     expect(mockFileReader.readAsDataURL).toHaveBeenCalledWith(mockFile);
   });
@@ -294,7 +294,7 @@ describe('ToolbarComponent', () => {
     const mockFileReader = {
       readAsText: jest.fn(),
       result: '{}',
-      onload: null,
+      onload: null as FileReader['onload'],
     };
     window.FileReader = jest.fn(
       () => mockFileReader
@@ -302,7 +302,7 @@ describe('ToolbarComponent', () => {
 
     ctx.component.initJSONUpload({
       target: { files: [mockFile] },
-    } as unknown as InputEvent);
+    } as unknown as Event);
 
     expect(mockFileReader.readAsText).toHaveBeenCalledWith(mockFile);
   });
