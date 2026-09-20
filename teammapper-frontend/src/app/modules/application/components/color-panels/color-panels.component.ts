@@ -38,7 +38,7 @@ export class ColorPanelsComponent implements OnChanges {
   public readonly background =
     viewChild.required<ElementRef<HTMLElement>>('background');
 
-  public readonly options: { width: string; presetColors: string[] } = {
+  public readonly options = {
     width: '250px',
     presetColors: [
       '#666666',

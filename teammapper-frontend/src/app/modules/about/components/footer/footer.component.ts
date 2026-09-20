@@ -17,7 +17,7 @@ export class FooterComponent implements OnInit {
   public settings: UserSettings | null = null;
   public languages: string[] = SettingsService.LANGUAGES;
 
-  public currentYear: string = new Date().getFullYear().toString();
+  public currentYear = new Date().getFullYear().toString();
 
   public ngOnInit() {
     this.settings = this.settingsService.getCachedUserSettings();

@@ -64,11 +64,11 @@ export class DialogShareComponent implements OnInit {
   private router = inject(Router);
 
   @ViewChild('qrcodecanvas', { static: true })
-  private qrCodeCanvasRef?: ElementRef<HTMLCanvasElement>;
+  private qrCodeCanvasRef: ElementRef<HTMLCanvasElement> | null = null;
   @ViewChild('sharedialog', { static: true })
-  private shareDialogRef?: ElementRef<HTMLElement>;
+  private shareDialogRef: ElementRef<HTMLElement> | null = null;
   @ViewChild('inputlink', { static: true })
-  private inputLinkRef?: ElementRef<HTMLInputElement>;
+  private inputLinkRef: ElementRef<HTMLInputElement> | null = null;
 
   public showEditableLink = true;
   private editorLink: string = window.location.href;
@@ -78,7 +78,7 @@ export class DialogShareComponent implements OnInit {
     window.location.host +
     window.location.pathname +
     window.location.search;
-  private qrCode: QRCodeStyling = this.createQrCode();
+  private qrCode: QRCodeStyling | null = null;
 
   /**
    * The three elements the dialog drives. All three are static queries, so
@@ -114,19 +114,14 @@ export class DialogShareComponent implements OnInit {
     return this.editorLink === this.viewerLink;
   }
 
-  private createQrCode(): QRCodeStyling {
+  appendQrCode() {
     const size: number = window.innerWidth > 500 ? 300 : 200;
-
-    return new QRCodeStyling({
+    this.qrCode = new QRCodeStyling({
       ...qrcodeStyling,
       width: size,
       height: size,
       data: this.getLink(),
     });
-  }
-
-  appendQrCode() {
-    this.qrCode = this.createQrCode();
     this.qrCodeCanvas.nativeElement.innerHTML = '';
     this.qrCode.append(this.qrCodeCanvas.nativeElement);
   }
@@ -171,7 +166,7 @@ export class DialogShareComponent implements OnInit {
   }
 
   downloadQrCode() {
-    this.qrCode.download();
+    this.qrCode?.download();
   }
 
   getLink() {

@@ -8,10 +8,7 @@ import {
 import { MapOptions } from '@teammapper/shared'
 import { MmpNode } from './mmpNode.entity'
 
-// Every column below carries a definite assignment assertion. TypeORM fills
-// these in when it hydrates or inserts a row, and an initializer would emit a
-// real assignment, which makes the insert write that value instead of letting
-// the column default apply.
+// Columns take `!` and no initializer; AGENTS.md, TypeScript strictness rule 3.
 @Entity()
 export class MmpMap {
   @PrimaryGeneratedColumn('uuid')
@@ -32,7 +29,7 @@ export class MmpMap {
   adminId!: string | null
 
   @Column({ type: 'varchar', nullable: true })
-  ownerExternalId?: string | null
+  ownerExternalId!: string | null
 
   @Column({ type: 'uuid', nullable: true, default: null })
   @Generated('uuid')

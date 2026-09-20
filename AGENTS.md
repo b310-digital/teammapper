@@ -69,12 +69,13 @@ Follow six rules:
 2. Never silence a type error with `!` or `as any`. A non-null assertion moves
    the failure to runtime. Narrow the value, or change the type so the null case
    is representable.
-3. TypeORM entity columns are the one exception to rule 2, and they take a
-   definite assignment assertion (`name!: string | null`). TypeORM assigns them
-   on hydrate and on insert, and an initializer would emit a real assignment,
-   which makes the insert write that value instead of letting the column default
-   apply. The assertion erases, so the emitted JavaScript and the metadata
-   TypeORM derives the schema from stay identical.
+3. TypeORM entity columns are the one exception to rule 2 in shipped code, and
+   they take a definite assignment assertion (`name!: string | null`). TypeORM
+   assigns them on hydrate and on insert, and an initializer would emit a real
+   assignment, which makes the insert write that value instead of letting the
+   column default apply. The assertion erases. The emitted JavaScript stays
+   identical, and so does the metadata TypeORM derives the schema from. A test
+   may also use `!` on a value it created itself a few lines earlier.
 4. For a value that is missing only until setup runs, write one accessor that
    throws (see `MmpService.map`, `YjsSyncService.doc` and
    `DialogShareComponent.qrCodeCanvas`) instead of spreading `?.` across every
@@ -91,13 +92,19 @@ Two commands check this:
 1. `pnpm run tsc` checks the TypeScript in every workspace. Each workspace's
    `tsc` script must cover its tests too, not just what it ships: the frontend
    and `teammapper-backend` point at `tsconfig.json` rather than at the build
-   config, and `packages/shared` has `tsconfig.typecheck.json` for it, because
-   its build configs drop `*.spec.ts` to keep tests out of `dist`.
+   config, and `packages/shared` has `tsconfig.typecheck.cjs.json` and
+   `tsconfig.typecheck.esm.json` for it, because its build configs drop
+   `*.spec.ts` to keep tests out of `dist`. It needs both because the backend
+   consumes the CommonJS build and the frontend the ESM build, and the two
+   module resolutions accept different imports.
 2. `pnpm --filter teammapper-frontend run build:dev` checks the templates, which
    `tsc` skips.
 
-`@typescript-eslint/no-explicit-any` is an error in every workspace. There is no
-`any` left in the tree; keep it that way rather than reaching for a suppression.
+`@typescript-eslint/no-explicit-any` is an error in every linted workspace.
+There is no `any` left in the tree; keep it that way rather than reaching for a
+suppression. `packages/mermaid-mindmap-parser` is vendored from mermaid (see its
+README and LICENSE), so it has no lint config and no `lint` script, and
+`pnpm run lint` skips it. Do not add one.
 
 ## Types and imports
 

@@ -19,10 +19,7 @@ import {
   IsOptional,
 } from 'class-validator'
 
-// Every column below carries a definite assignment assertion. TypeORM fills
-// these in when it hydrates or inserts a row, and an initializer would emit a
-// real assignment, which makes the insert write that value instead of letting
-// the column default apply.
+// Columns take `!` and no initializer; AGENTS.md, TypeScript strictness rule 3.
 @Entity()
 export class MmpNode {
   @PrimaryGeneratedColumn('uuid')

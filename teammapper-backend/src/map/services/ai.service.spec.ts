@@ -23,12 +23,9 @@ interface FakeUsageState {
   requestsCount: number
 }
 
-/** The counter AiService talks to, with every method a jest mock. */
-type UsageCounterMock = {
-  [K in keyof LlmUsageCounting]: jest.MockedFunction<LlmUsageCounting[K]>
-}
-
-const buildUsageCounterMock = (state: FakeUsageState): UsageCounterMock => ({
+const buildUsageCounterMock = (
+  state: FakeUsageState
+): jest.Mocked<LlmUsageCounting> => ({
   reserve: jest.fn(async (_dateUsage: string, tokens: number, cap?: number) => {
     const proposed = state.tokensUsed + tokens
     if (cap !== undefined && proposed > cap) return null
@@ -54,7 +51,7 @@ describe('AiService', () => {
   let createProviderMock: CreateProviderMock
   let getLLMConfigMock: GetLLMConfigMock
   let usageState: FakeUsageState
-  let usageCounter: UsageCounterMock
+  let usageCounter: jest.Mocked<LlmUsageCounting>
 
   beforeAll(async () => {
     jest.useFakeTimers({ advanceTimers: true })
