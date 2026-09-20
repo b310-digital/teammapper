@@ -23,8 +23,7 @@ export class PictogramService {
   }
 
   getPictos(seachTerm: string): Observable<IPictogramResponse[]> {
-    const language =
-      this.settingsSerivce.getCachedUserSettings()?.general?.language || 'en';
+    const language = this.settingsSerivce.getLanguage();
     const url = `${this.apirUrl}/${language}/${this.apiResource}/${seachTerm}`;
     return this.http.get<IPictogramResponse[]>(url);
   }

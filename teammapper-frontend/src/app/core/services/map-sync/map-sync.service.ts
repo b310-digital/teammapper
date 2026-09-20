@@ -99,13 +99,13 @@ export class MapSyncService implements OnDestroy {
 
   public async prepareExistingMap(
     id: string,
-    modificationSecret: string
-  ): Promise<ServerMap> {
-    this.modificationSecret = modificationSecret;
+    modificationSecret: string | null
+  ): Promise<ServerMap | null> {
+    this.modificationSecret = modificationSecret ?? '';
     const serverMap = await this.fetchMapFromServer(id);
 
     if (!serverMap) {
-      return;
+      return null;
     }
 
     this.syncService.setWritable(serverMap.writable !== false);
@@ -137,7 +137,7 @@ export class MapSyncService implements OnDestroy {
     return this.attachedMapSubject.asObservable();
   }
 
-  public getClientListObservable(): Observable<string[] | null> {
+  public getClientListObservable(): Observable<string[]> {
     return this.clientListSubject.asObservable();
   }
 
@@ -150,7 +150,13 @@ export class MapSyncService implements OnDestroy {
   }
 
   public getAttachedMap(): CachedMapEntry {
-    return this.attachedMapSubject.getValue();
+    const attachedMap = this.attachedMapSubject.getValue();
+
+    if (!attachedMap) {
+      throw new Error('No map is attached');
+    }
+
+    return attachedMap;
   }
 
   public getConnectionStatus(): ConnectionStatus {
@@ -237,7 +243,7 @@ export class MapSyncService implements OnDestroy {
     return matchingClient ? this.colorMapping[matchingClient].color : '';
   }
 
-  private clientForNode(nodeId: string): string {
+  private clientForNode(nodeId: string): string | undefined {
     return Object.keys(this.colorMapping)
       .filter((key: string) => this.colorMapping[key]?.nodeId === nodeId)
       .shift();
@@ -268,7 +274,7 @@ export class MapSyncService implements OnDestroy {
     this.modificationSecret = privateServerMap.modificationSecret;
   }
 
-  private async fetchMapFromServer(id: string): Promise<ServerMap> {
+  private async fetchMapFromServer(id: string): Promise<ServerMap | null> {
     const secretParam = this.modificationSecret
       ? `?secret=${encodeURIComponent(this.modificationSecret)}`
       : '';
@@ -287,7 +293,7 @@ export class MapSyncService implements OnDestroy {
       '/maps/',
       JSON.stringify({
         rootNode:
-          this.settingsService.getCachedUserSettings().mapOptions.rootNode,
+          this.settingsService.getCachedUserSettings()?.mapOptions.rootNode,
       })
     );
 

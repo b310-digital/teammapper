@@ -15,7 +15,7 @@ export class ShortcutsService implements OnDestroy {
   private router = inject(Router);
 
   private hotKeys: Hotkey[];
-  private editMode: boolean;
+  private editMode: boolean | null = null;
   private settingsSubscription: Subscription;
 
   /**
@@ -192,28 +192,30 @@ export class ShortcutsService implements OnDestroy {
         keys: 'alt+.',
         description: 'TOOLTIPS.FONT_INCREASE',
         callback: () => {
-          const node = this.mmpService.selectNode();
-          const size: number = node.font.size;
-          if (size >= this.mmpService.getAdditionalMapOptions().fontMaxSize)
-            return;
+          const size = this.mmpService.selectNode().font?.size;
+          const options = this.mmpService.getAdditionalMapOptions();
+          if (size == null || size >= options.fontMaxSize) return;
 
-          const increment =
-            this.mmpService.getAdditionalMapOptions().fontIncrement;
-          this.mmpService.updateNode('fontSize', size + increment, false);
+          this.mmpService.updateNode(
+            'fontSize',
+            size + options.fontIncrement,
+            false
+          );
         },
       },
       {
         keys: 'alt+-',
         description: 'TOOLTIPS.FONT_DECREASE',
         callback: () => {
-          const node = this.mmpService.selectNode();
-          const size: number = node.font.size;
-          if (size <= this.mmpService.getAdditionalMapOptions().fontMinSize)
-            return;
+          const size = this.mmpService.selectNode().font?.size;
+          const options = this.mmpService.getAdditionalMapOptions();
+          if (size == null || size <= options.fontMinSize) return;
 
-          const increment =
-            this.mmpService.getAdditionalMapOptions().fontIncrement;
-          this.mmpService.updateNode('fontSize', size - increment, false);
+          this.mmpService.updateNode(
+            'fontSize',
+            size - options.fontIncrement,
+            false
+          );
         },
       },
     ];

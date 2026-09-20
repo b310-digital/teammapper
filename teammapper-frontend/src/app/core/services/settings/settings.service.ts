@@ -12,6 +12,9 @@ import {
 import { API_URL, HttpService } from '../../http/http.service';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
+/** Used whenever the settings could not be loaded. */
+const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
+
 @Injectable({
   providedIn: 'root',
 })
@@ -33,9 +36,11 @@ export class SettingsService {
 
   constructor() {
     // Initialization of the behavior subjects.
-    this.userSettingsSubject = new BehaviorSubject(null);
-    this.systemSettingsSubject = new BehaviorSubject(null);
-    this.editModeSubject = new BehaviorSubject(null);
+    this.userSettingsSubject = new BehaviorSubject<UserSettings | null>(null);
+    this.systemSettingsSubject = new BehaviorSubject<SystemSettings | null>(
+      null
+    );
+    this.editModeSubject = new BehaviorSubject<boolean | null>(null);
     this.darkModeSubject = new BehaviorSubject(false);
     this.userSettings = this.userSettingsSubject.asObservable();
     this.darkMode = this.darkModeSubject.asObservable();
@@ -191,6 +196,14 @@ export class SettingsService {
    */
   public getCachedUserSettings(): UserSettings | null {
     return this.userSettingsSubject.getValue();
+  }
+
+  /**
+   * The language of the cached settings, or the default one when the settings
+   * could not be loaded.
+   */
+  public getLanguage(): string {
+    return this.getCachedUserSettings()?.general.language ?? DEFAULT_LANGUAGE;
   }
 
   public getCachedSystemSettings(): SystemSettings | null {

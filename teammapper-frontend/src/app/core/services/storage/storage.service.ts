@@ -37,7 +37,7 @@ export class StorageService {
   /**
    * Return all the saved values in the storage.
    */
-  public async getAll(): Promise<unknown[] | null> {
+  public async getAll(): Promise<unknown[]> {
     const keys = await localforage.keys();
     const values = await Promise.all(
       keys.map(async (key: string) => {
@@ -49,13 +49,13 @@ export class StorageService {
       })
     );
 
-    return values || null;
+    return values;
   }
 
   /**
    * Return all the saved keys in the storage.
    */
-  public async getAllEntries(): Promise<[string, unknown][] | null> {
+  public async getAllEntries(): Promise<[string, unknown][]> {
     const keys = await localforage.keys();
     const entries = await Promise.all(
       keys.map(async (key: string) => {
@@ -67,7 +67,7 @@ export class StorageService {
       })
     );
 
-    return entries || null;
+    return entries;
   }
 
   /**
@@ -115,7 +115,7 @@ export class StorageService {
   public async isEmpty(): Promise<boolean> {
     const items: unknown[] = await this.getAll();
 
-    return items && items.length > 0;
+    return items.length > 0;
   }
 
   /*
