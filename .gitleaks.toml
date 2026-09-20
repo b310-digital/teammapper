@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+  '''.jest-cache/''',
+  '''node_modules/''',
+  '''\.pnpm-store/''',
+  '''\.pnpm/''',
+]
