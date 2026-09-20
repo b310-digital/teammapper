@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
+import { PostgresQueryRunner } from 'typeorm/driver/postgres/PostgresQueryRunner'
 import { ConfigModule } from '@nestjs/config'
 import * as Y from 'yjs'
 import { v4 as uuidv4 } from 'uuid'
@@ -201,6 +202,46 @@ describe('YjsPersistenceService', () => {
         expect.objectContaining({ id: rootNode.id, name: 'Renamed Root' }),
       ])
 
+      doc.destroy()
+    })
+
+    it('never overlaps queries on one connection when updating many nodes', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      for (let i = 0; i < 5; i++) addChildToDoc(doc, rootNode.id)
+      await service.persistDoc(map.id, doc)
+      const inFlight = new Map<PostgresQueryRunner, number>()
+      let maxInFlight = 0
+      const original = PostgresQueryRunner.prototype.query
+      jest
+        .spyOn(PostgresQueryRunner.prototype, 'query')
+        .mockImplementation(async function (
+          this: PostgresQueryRunner,
+          ...args
+        ) {
+          const running = (inFlight.get(this) ?? 0) + 1
+          inFlight.set(this, running)
+          maxInFlight = Math.max(maxInFlight, running)
+          try {
+            return await original.apply(this, args)
+          } finally {
+            inFlight.set(this, running - 1)
+          }
+        })
+
+      await service.persistDoc(map.id, doc)
+
+      expect(maxInFlight).toBe(1)
+      doc.destroy()
+    })
+
+    it('keeps createdAt of existing nodes across persists', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      await service.persistDoc(map.id, doc)
+
+      const persisted = await nodesRepo.findOneByOrFail({ id: rootNode.id })
+      expect(persisted.createdAt).toEqual(rootNode.createdAt)
       doc.destroy()
     })
 
