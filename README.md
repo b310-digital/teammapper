@@ -263,8 +263,8 @@ The following environment variables override the feature flags from the JSON con
 ## Contributing
 
 The frontend compiles under `strict: true` and Angular's `strictTemplates`.
-`strictNullChecks` stays off while we turn it on one area at a time. Run both
-checks before you open a PR:
+`strictPropertyInitialization` is the one flag still off. Run both checks before
+you open a PR:
 
 ```bash
 pnpm --filter teammapper-frontend run tsc        # TypeScript
