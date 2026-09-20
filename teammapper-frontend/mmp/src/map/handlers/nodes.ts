@@ -643,9 +643,6 @@ export default class Nodes {
     }
 
     const root = this.getRoot();
-    if (!root) {
-      return;
-    }
 
     return (node.coordinates?.x ?? 0) < (root.coordinates?.x ?? 0);
   }
