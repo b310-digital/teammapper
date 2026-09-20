@@ -1,5 +1,5 @@
-import { Colors, Coordinates, Font, Image, Link } from './models/node';
-import type { MapNodeSettings } from '@teammapper/shared';
+import { NodeColors, NodeFont, NodeImage, NodeLink } from './models/node';
+import type { MapNodeCoordinates, MapNodeSettings } from '@teammapper/shared';
 import Utils from '../utils/utils';
 import Map from './map';
 import * as d3 from 'd3';
@@ -167,12 +167,10 @@ export default class Options implements OptionParameters {
 
     this.zoom = flag;
 
-    if (this.map.dom.svg) {
-      if (this.zoom === true) {
-        this.map.dom.svg.call(this.map.zoom.getZoomBehavior());
-      } else {
-        this.map.dom.svg.on('.zoom', null);
-      }
+    if (this.zoom === true) {
+      this.map.dom.svg.call(this.map.zoom.getZoomBehavior());
+    } else {
+      this.map.dom.svg.on('.zoom', null);
     }
   }
 
@@ -262,6 +260,7 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     name: '#787878',
     background: '#f0f6f5',
     branch: '',
+    link: '#000000',
   },
   font: {
     size: 20,
@@ -276,11 +275,11 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
 
 export interface DefaultNodeProperties {
   name: string;
-  image: Image;
-  coordinates: Coordinates;
-  link: Link;
-  colors: Colors;
-  font: Font;
+  image: NodeImage;
+  coordinates: MapNodeCoordinates;
+  link: NodeLink;
+  colors: NodeColors;
+  font: NodeFont;
   locked: boolean;
   detached: boolean;
   isRoot: boolean;

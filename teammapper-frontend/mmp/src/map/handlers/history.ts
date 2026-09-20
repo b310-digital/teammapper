@@ -1,22 +1,19 @@
 import Map from '../map';
-import Node, {
-  Colors,
-  Coordinates,
-  ExportNodeProperties,
-  Font,
-  Image,
-  Link,
-  NodeProperties,
-} from '../models/node';
+import Node, { NodeProperties } from '../models/node';
 import { Event } from './events';
 import Log from '../../utils/log';
 import Utils from '../../utils/utils';
 import { DefaultNodeValues } from '../options';
 import { detailedDiff } from 'deep-object-diff';
 import type {
-  MapSnapshot,
-  SnapshotChanges,
+  ExportNodeProperties,
   MapDiff,
+  MapNodeColors,
+  MapNodeCoordinates,
+  MapNodeFont,
+  MapNodeImage,
+  MapNodeLink,
+  MapSnapshot,
   OldMmpNode,
 } from '@teammapper/shared';
 
@@ -220,17 +217,17 @@ export default class History {
       const properties: NodeProperties = {
         id: mergedProperty.id,
         parent: mergedProperty.parent
-          ? this.map.nodes.getNode(mergedProperty.parent)
+          ? (this.map.nodes.getNode(mergedProperty.parent) ?? null)
           : null,
         k: mergedProperty.k,
         name: mergedProperty.name,
         coordinates: Utils.cloneObject(
           mergedProperty.coordinates
-        ) as Coordinates,
-        image: Utils.cloneObject(mergedProperty.image) as Image,
-        colors: Utils.cloneObject(mergedProperty.colors) as Colors,
-        font: Utils.cloneObject(mergedProperty.font) as Font,
-        link: Utils.cloneObject(mergedProperty.link) as Link,
+        ) as MapNodeCoordinates,
+        image: Utils.cloneObject(mergedProperty.image) as MapNodeImage,
+        colors: Utils.cloneObject(mergedProperty.colors) as MapNodeColors,
+        font: Utils.cloneObject(mergedProperty.font) as MapNodeFont,
+        link: Utils.cloneObject(mergedProperty.link) as MapNodeLink,
         locked: mergedProperty.locked,
         detached: mergedProperty.detached,
         hidden: mergedProperty.hidden,
@@ -435,5 +432,3 @@ export interface ExportHistory {
   snapshots: MapSnapshot[];
   index: number;
 }
-
-export type { MapSnapshot, SnapshotChanges, MapDiff };

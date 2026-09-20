@@ -1,13 +1,4 @@
-import Node, {
-  Colors,
-  Coordinates,
-  ExportNodeProperties,
-  Font,
-  Image,
-  Link,
-  NodeProperties,
-  UserNodeProperties,
-} from '../models/node';
+import Node, { NodeProperties } from '../models/node';
 import MmpMap from '../map';
 import * as d3 from 'd3';
 import DOMPurify from 'dompurify';
@@ -15,10 +6,20 @@ import { v4 as uuidv4 } from 'uuid';
 import { Event } from './events';
 import Log from '../../utils/log';
 import Utils from '../../utils/utils';
-import { MapSnapshot } from './history';
 import { computeMapLayout, LayoutInputNode } from './layout';
 import { NODE_HORIZONTAL_SPACING } from './node-geometry';
-import type { NodeProperty, NodePropertyValue } from '@teammapper/shared';
+import type {
+  ExportNodeProperties,
+  MapNodeColors,
+  MapNodeCoordinates,
+  MapNodeFont,
+  MapNodeImage,
+  MapNodeLink,
+  MapSnapshot,
+  NodeProperty,
+  NodePropertyValue,
+  UserNodeProperties,
+} from '@teammapper/shared';
 
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
 const NODE_VERTICAL_SPACING = 120; // The initial vertical spacing for the first child node
@@ -62,9 +63,9 @@ export default class Nodes {
 
   /**
    * Add the root node to the map.
-   * @param {Coordinates} coordinates
+   * @param {MapNodeCoordinates} coordinates
    */
-  public addRootNode(coordinates?: Coordinates) {
+  public addRootNode(coordinates?: MapNodeCoordinates) {
     const rootId = uuidv4();
 
     const properties = Utils.mergeObjects(this.map.options.rootNode, {
@@ -324,11 +325,11 @@ export default class Nodes {
 
       if (descendants) {
         descendants.forEach(x => {
-          if (x.parent.hidden && !x.hidden) {
+          if (x.parent?.hidden && !x.hidden) {
             this.updateNode('hidden', true, false, false, x.id);
           }
 
-          if (!x.parent.hidden && x.hidden) {
+          if (!x.parent?.hidden && x.hidden) {
             this.updateNode('hidden', false, false, false, x.id);
           }
         });
@@ -413,7 +414,7 @@ export default class Nodes {
       case 'coordinates':
         updated = this.updateNodeCoordinatesWithoutDescendants(
           node,
-          value as Coordinates
+          value as MapNodeCoordinates
         );
         break;
       case 'imageSrc':
@@ -513,7 +514,7 @@ export default class Nodes {
       Log.error('The node id must be a string', 'type');
     }
 
-    const node: Node = id ? this.getNode(id) : this.selectedNode;
+    const node = id ? this.getNode(id) : this.selectedNode;
 
     if (node === undefined) {
       Log.error('There are no nodes with id "' + id + '"');
@@ -544,11 +545,11 @@ export default class Nodes {
       name: node.name,
       coordinates: fixedCoordinates
         ? this.fixCoordinates(node.coordinates, true)
-        : (Utils.cloneObject(node.coordinates) as Coordinates),
-      image: Utils.cloneObject(node.image) as Image,
-      colors: Utils.cloneObject(node.colors) as Colors,
-      font: Utils.cloneObject(node.font) as Font,
-      link: Utils.cloneObject(node.link) as Link,
+        : (Utils.cloneObject(node.coordinates) as MapNodeCoordinates),
+      image: Utils.cloneObject(node.image) as MapNodeImage,
+      colors: Utils.cloneObject(node.colors) as MapNodeColors,
+      font: Utils.cloneObject(node.font) as MapNodeFont,
+      link: Utils.cloneObject(node.link) as MapNodeLink,
       locked: node.locked,
       isRoot: node.isRoot,
       detached: node.detached,
@@ -560,19 +561,19 @@ export default class Nodes {
 
   /**
    * Convert external coordinates to internal or otherwise.
-   * @param {Coordinates} coordinates
+   * @param {MapNodeCoordinates} coordinates
    * @param {boolean} reverse
-   * @returns {Coordinates}
+   * @returns {MapNodeCoordinates}
    */
   public fixCoordinates(
-    coordinates: Coordinates,
+    coordinates: MapNodeCoordinates,
     reverse = false
-  ): Coordinates {
-    const svgEl = this.map.dom.svg?.node();
+  ): MapNodeCoordinates {
+    const svgEl = this.map.dom.svg.node();
     const zoomCoordinates = svgEl
       ? d3.zoomTransform(svgEl)
       : { x: 0, y: 0, k: 1 };
-    const fixedCoordinates: Coordinates = {} as Coordinates;
+    const fixedCoordinates: MapNodeCoordinates = {} as MapNodeCoordinates;
 
     if (coordinates.x) {
       if (reverse === false) {
@@ -743,7 +744,13 @@ export default class Nodes {
    * @returns {Node} rootNode
    */
   public getRoot = (): Node => {
-    return this.nodes.get(this.map.rootId)!;
+    const root = this.nodes.get(this.map.rootId);
+
+    if (root === undefined) {
+      Log.error('The map has no root node');
+    }
+
+    return root;
   };
 
   /**
@@ -768,25 +775,25 @@ export default class Nodes {
    * @returns {Array<Node>} siblings
    */
   private getSiblings(node: Node): Node[] {
-    if (!node.isRoot && !node.detached) {
-      const parentChildren: Node[] = this.getChildren(node.parent);
-
-      if (parentChildren.length > 1) {
-        parentChildren.splice(parentChildren.indexOf(node), 1);
-        return parentChildren;
-      } else {
-        return [];
-      }
-    } else {
+    if (node.isRoot || node.detached || !node.parent) {
       return [];
     }
+
+    const parentChildren: Node[] = this.getChildren(node.parent);
+
+    if (parentChildren.length > 1) {
+      parentChildren.splice(parentChildren.indexOf(node), 1);
+      return parentChildren;
+    }
+
+    return [];
   }
 
   /**
    * Where a node added interactively goes: one column out from its parent and
    * below its lowest sibling.
    */
-  private calculateCoordinates(node: Node): Coordinates {
+  private calculateCoordinates(node: Node): MapNodeCoordinates {
     const parent = node.parent;
     const anchorX = parent?.coordinates?.x ?? node.coordinates?.x ?? 0;
     const anchorY = parent?.coordinates?.y ?? node.coordinates?.y ?? 0;
@@ -892,7 +899,7 @@ export default class Nodes {
   };
 
   /** Move one node, leaving the branch redraw to the caller. */
-  private moveNodeTo(id: string, coordinates: Coordinates): void {
+  private moveNodeTo(id: string, coordinates: MapNodeCoordinates): void {
     const node = this.nodes.get(id);
     if (!node) return;
 
@@ -975,12 +982,12 @@ export default class Nodes {
    * The main method for moving nodes is located inside the drag module.
    * This method acts as a more simpler way of just moving one node.
    * @param {Node} node
-   * @param {Coordinates} coordinates
+   * @param {MapNodeCoordinates} coordinates
    * @returns {boolean}
    */
   private updateNodeCoordinatesWithoutDescendants = (
     initialNode: Node,
-    coordinates: Coordinates
+    coordinates: MapNodeCoordinates
   ): boolean => {
     // no moving of descendants here
     const fixedCoordinates = coordinates;
@@ -989,7 +996,7 @@ export default class Nodes {
       initialNode.coordinates,
       fixedCoordinates,
       true
-    ) as Coordinates;
+    ) as MapNodeCoordinates;
 
     if (
       !(
@@ -997,7 +1004,9 @@ export default class Nodes {
         coordinates.y === initialNode.coordinates.y
       )
     ) {
-      initialNode.coordinates = Utils.cloneObject(coordinates) as Coordinates;
+      initialNode.coordinates = Utils.cloneObject(
+        coordinates
+      ) as MapNodeCoordinates;
       initialNode.dom.setAttribute(
         'transform',
         'translate(' + [coordinates.x, coordinates.y] + ')'
@@ -1302,7 +1311,7 @@ export default class Nodes {
         }
       );
 
-      if (this.selectedNode.parent.isRoot) {
+      if (this.selectedNode.parent?.isRoot) {
         siblings = siblings.filter((node: Node) => {
           return (
             this.getOrientation(node) === this.getOrientation(this.selectedNode)
@@ -1337,26 +1346,31 @@ export default class Nodes {
    * @param {boolean} direction
    */
   private moveSelectionOnBranch(direction: boolean) {
-    if (
-      (!this.getOrientation(this.selectedNode) && direction) ||
-      (this.getOrientation(this.selectedNode) && !direction)
-    ) {
-      this.selectNode(this.selectedNode.parent.id);
-    } else {
-      let children = this.getChildren(this.selectedNode);
+    const orientation = this.getOrientation(this.selectedNode);
+    const parent = this.selectedNode.parent;
+    const movesToParent =
+      (!orientation && direction) || (orientation && !direction);
 
-      if (this.getOrientation(this.selectedNode) === undefined) {
-        // The selected node is the root
-        children = children.filter((node: Node) => {
-          return this.getOrientation(node) === direction;
-        });
-      }
+    // The root has no parent and no orientation, so it always moves to a child
+    // on the requested side.
+    if (movesToParent && parent) {
+      this.selectNode(parent.id);
+      return;
+    }
 
-      const lowerNode = this.getLowerNode(children);
+    let children = this.getChildren(this.selectedNode);
 
-      if (children.length > 0 && lowerNode) {
-        this.selectNode(lowerNode.id);
-      }
+    if (orientation === undefined) {
+      // The selected node is the root
+      children = children.filter((node: Node) => {
+        return this.getOrientation(node) === direction;
+      });
+    }
+
+    const lowerNode = this.getLowerNode(children);
+
+    if (children.length > 0 && lowerNode) {
+      this.selectNode(lowerNode.id);
     }
   }
 }

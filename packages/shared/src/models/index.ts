@@ -1,3 +1,9 @@
+/**
+ * Every field of T present and non-null. `Required<T>` only drops the `?`;
+ * these fields are `v.nullable` in the schemas, so the null has to go too.
+ */
+export type Resolved<T> = { [K in keyof T]-?: NonNullable<T[K]> };
+
 export interface MapNodeCoordinates {
   x: number;
   y: number;

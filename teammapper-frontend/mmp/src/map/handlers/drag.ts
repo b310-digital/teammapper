@@ -12,7 +12,7 @@ export default class Drag {
 
   private dragBehavior: DragBehavior<SVGGElement, Node, unknown>;
   private dragging: boolean;
-  private orientation: boolean;
+  private orientation: boolean | undefined;
   private descendants: Node[];
 
   /**
@@ -101,7 +101,7 @@ export default class Drag {
     d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
       'd',
       (node: Node) => {
-        return this.map.draw.drawBranch(node).toString();
+        return this.map.draw.drawBranch(node)?.toString() ?? null;
       }
     );
 

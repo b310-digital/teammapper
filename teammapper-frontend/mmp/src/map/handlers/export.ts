@@ -1,6 +1,6 @@
 import Map from '../map';
 import Log from '../../utils/log';
-import { MapSnapshot } from './history';
+import type { MapSnapshot } from '@teammapper/shared';
 import Utils from '../../utils/utils';
 import { Event } from './events';
 import * as d3 from 'd3';
@@ -68,6 +68,11 @@ export default class Export {
         canvas.style.height = image.height + 'px';
         canvas.width = Math.floor(image.width * scale);
         canvas.height = Math.floor(image.height * scale);
+
+        if (!context) {
+          Log.error('The canvas context is not available');
+        }
+
         context.scale(scale, scale);
 
         context.drawImage(image, 0, 0);
