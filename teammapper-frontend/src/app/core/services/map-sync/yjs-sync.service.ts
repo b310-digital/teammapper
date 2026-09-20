@@ -80,8 +80,8 @@ export class YjsSyncService {
   ) {}
 
   /**
-   * The Y.Doc of the open connection. initMap creates it, and every read and
-   * write below happens after that.
+   * The Y.Doc of the open connection. initMap creates it, and the reads and
+   * writes below run after that.
    */
   private get doc(): Y.Doc {
     if (!this.yDoc) {
@@ -158,13 +158,14 @@ export class YjsSyncService {
 
   private setupConnection(mapId: string): void {
     const wsUrl = buildYjsWsUrl();
-    this.wsProvider = new WebsocketProvider(wsUrl, mapId, this.doc, {
+    const provider = new WebsocketProvider(wsUrl, mapId, this.doc, {
       params: { secret: this.ctx.getModificationSecret() },
       maxBackoffTime: 5000,
       disableBc: true,
     });
+    this.wsProvider = provider;
 
-    this.provider.on('sync', (synced: boolean) => {
+    provider.on('sync', (synced: boolean) => {
       if (synced && !this.yjsSynced) {
         this.handleFirstSync();
       }
@@ -209,7 +210,6 @@ export class YjsSyncService {
     this.provider.on(
       'status',
       (event: { status: 'connected' | 'disconnected' | 'connecting' }) => {
-        if (!this.wsProvider) return;
         if (event.status === 'connected') {
           this.ctx.setConnectionStatus('connected');
         } else if (event.status === 'disconnected') {
@@ -513,9 +513,13 @@ export class YjsSyncService {
   }
 
   private writeMapOptionsToYDoc(options?: CachedMapOptions): void {
-    if (!this.yDoc || !options) return;
-    const optionsMap = this.doc.getMap('mapOptions');
-    this.doc.transact(() => {
+    // The settings page can change these with no map open, so this is the one
+    // write that has to tolerate a missing doc rather than throw.
+    const doc = this.yDoc;
+    if (!doc || !options) return;
+
+    const optionsMap = doc.getMap('mapOptions');
+    doc.transact(() => {
       optionsMap.set('fontMaxSize', options.fontMaxSize);
       optionsMap.set('fontMinSize', options.fontMinSize);
       optionsMap.set('fontIncrement', options.fontIncrement);

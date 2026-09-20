@@ -6,6 +6,7 @@ import {
   CachedAdminMapEntry,
   Settings,
   SUPPORTED_LANGUAGES,
+  SupportedLanguage,
   SystemSettings,
   UserSettings,
 } from '@teammapper/shared';
@@ -13,7 +14,7 @@ import { API_URL, HttpService } from '../../http/http.service';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
 /** Used whenever the settings could not be loaded. */
-const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
+const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
 
 @Injectable({
   providedIn: 'root',

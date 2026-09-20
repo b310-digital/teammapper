@@ -32,17 +32,10 @@ const errorMessage = (error: unknown): string =>
 
 /**
  * The font options mmp does not handle itself. The shared MapOptions leaves
- * them optional because a stored map may omit them; MmpService always resolves
- * them against the defaults before handing them out.
+ * them optional because a stored map may omit them; MmpService resolves them
+ * against the configured defaults before handing them out.
  */
 export type AdditionalMapOptions = Required<MapOptions>;
-
-/** Used until the settings have been fetched, and as the merge base. */
-const DEFAULT_ADDITIONAL_OPTIONS: AdditionalMapOptions = {
-  fontMaxSize: 28,
-  fontMinSize: 15,
-  fontIncrement: 5,
-};
 
 /**
  * Mmp wrapper service with mmp and other functions.
@@ -60,7 +53,8 @@ export class MmpService implements OnDestroy {
 
   private readonly branchColors: string[];
   // additional options that are not handled within mmp, like fontMaxSize etc.
-  private additionalOptions: AdditionalMapOptions = DEFAULT_ADDITIONAL_OPTIONS;
+  // `create` resolves them; before that there is no map to hold options for.
+  private additionalOptions: AdditionalMapOptions | null = null;
   private settingsSubscription: Subscription;
 
   constructor() {
@@ -80,9 +74,10 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * The map this service is attached to. Every operation below needs one, so
-   * calling them before `create` is a programming error, and this throws
-   * instead of returning null.
+   * The map this service is attached to. Most of the operations below need
+   * one, so calling them before `create` is a programming error, and this
+   * throws instead of returning null. The few that a caller may reach with no
+   * map read `currentMap` and bail out.
    */
   private get map(): MmpMap {
     if (!this.currentMap) {
@@ -118,8 +113,8 @@ export class MmpService implements OnDestroy {
   public remove() {
     if (!this.currentMap) return;
 
-    this.map.instance.unsubscribeAll();
-    this.map.instance.remove();
+    this.currentMap.instance.unsubscribeAll();
+    this.currentMap.instance.remove();
     this.currentMap = null;
   }
 
@@ -168,13 +163,20 @@ export class MmpService implements OnDestroy {
    */
   public async updateAdditionalMapOptions(options: CachedMapOptions) {
     const defaultOptions = await this.defaultAdditionalOptions();
-    this.additionalOptions = { ...defaultOptions, ...options };
+
+    // A stored map may carry a key with no value, and spreading that over the
+    // defaults would put the hole back.
+    this.additionalOptions = {
+      fontMaxSize: options.fontMaxSize ?? defaultOptions.fontMaxSize,
+      fontMinSize: options.fontMinSize ?? defaultOptions.fontMinSize,
+      fontIncrement: options.fontIncrement ?? defaultOptions.fontIncrement,
+    };
   }
 
   /**
-   * Get the additional options
+   * Get the additional options, or null while no map has been created.
    */
-  public getAdditionalMapOptions(): AdditionalMapOptions {
+  public getAdditionalMapOptions(): AdditionalMapOptions | null {
     return this.additionalOptions;
   }
 

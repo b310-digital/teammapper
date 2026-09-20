@@ -291,6 +291,8 @@ export class MapSyncService implements OnDestroy {
     const response = await this.httpService.post(
       API_URL.ROOT,
       '/maps/',
+      // With no cached settings the key drops out of the payload and the
+      // server names the root node from its own defaults.
       JSON.stringify({
         rootNode:
           this.settingsService.getCachedUserSettings()?.mapOptions.rootNode,

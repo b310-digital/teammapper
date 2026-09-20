@@ -194,7 +194,7 @@ export class ShortcutsService implements OnDestroy {
         callback: () => {
           const size = this.mmpService.selectNode().font?.size;
           const options = this.mmpService.getAdditionalMapOptions();
-          if (size == null || size >= options.fontMaxSize) return;
+          if (size == null || !options || size >= options.fontMaxSize) return;
 
           this.mmpService.updateNode(
             'fontSize',
@@ -209,7 +209,7 @@ export class ShortcutsService implements OnDestroy {
         callback: () => {
           const size = this.mmpService.selectNode().font?.size;
           const options = this.mmpService.getAdditionalMapOptions();
-          if (size == null || size <= options.fontMinSize) return;
+          if (size == null || !options || size <= options.fontMinSize) return;
 
           this.mmpService.updateNode(
             'fontSize',
