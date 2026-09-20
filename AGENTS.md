@@ -7,11 +7,24 @@ reader has to follow, or a fact about the codebase they need in order to follow
 one. Delete an entry when it stops being true rather than appending a note that
 supersedes it.
 
+## Browsers: two containers, two protocols
+
+The `app` container has no browser installed. Two other containers provide one,
+and they are not interchangeable:
+
+| Container    | Serves                                      | Protocol                                  |
+| ------------ | ------------------------------------------- | ----------------------------------------- |
+| `chrome`     | Playwright MCP, for driving the app by hand | CDP, `http://<ip>:9222`                   |
+| `playwright` | the e2e suite in `teammapper-frontend/e2e`  | `playwright run-server`, `ws://<ip>:9323` |
+
+In both cases the browser runs outside the `app` container, so `localhost` in a
+page URL means _that_ container. Point it at the `app` container instead.
+
 ## Playwright MCP
 
 ### Setup
 
-The Playwright MCP connects to a headless Chrome running in a separate Docker container (`chrome`) via CDP. Configuration is in `.mcp.json`. Example:
+The Playwright MCP connects to a headless Chrome running in a separate Docker container (`chrome`) via CDP. Configuration is in `.mcp.json`, which is gitignored and not checked in because the container IP differs per environment — write it yourself from this example:
 
 ```
 {
@@ -38,11 +51,88 @@ getent hosts chrome # for CDP endpoint in .mcp.json
 
 ### Checklist
 
-1. Start the dev server: `pnpm run dev` (run in background)
+1. Start the dev server: `BINDING=0.0.0.0 pnpm run dev` (run in background;
+   a container with nothing installed yet needs the checklist under E2E tests
+   first)
 2. Wait for the server to be ready: `curl -s -o /dev/null -w "%{http_code}" http://localhost:4200`
 3. Resolve the app IP: `getent hosts app`
 4. Navigate with Playwright: `browser_navigate` to `http://<resolved-ip>:4200`
 5. Use `browser_snapshot` (preferred over screenshots) to inspect the page
+
+## E2E tests
+
+`teammapper-frontend/playwright.config.ts` connects to the `playwright`
+container rather than launching a browser. Two variables on the `app` service
+in `docker-compose.yml` drive that.
+
+`TESTING_PLAYWRIGHT_WS_ENDPOINT` (`ws://playwright:9323`) is what makes the
+config pass `connectOptions`. Without it Playwright launches a browser locally
+and every test fails with
+
+```
+browserType.launch: Executable doesn't exist at
+/home/node/.cache/ms-playwright/webkit-2359/pw_run.sh
+```
+
+which reads as a missing browser. It is not one: no browser belongs in the
+`app` container, so connect to the `playwright` container rather than running
+`npx playwright install`.
+
+`TESTING_PLAYWRIGHT_BASE_URL` (`http://app:4200`) sets `baseURL`. Without it
+the fallback is `http://localhost:4200`, which inside the `playwright`
+container is the browser's own loopback, where nothing listens.
+
+A container started before these were added to the compose file runs without
+them, and the failure looks like a missing browser rather than missing
+configuration. Check with `env | grep TESTING_PLAYWRIGHT`, and pass them on the
+command line if they are absent:
+
+```bash
+getent hosts app playwright   # e.g. 172.18.0.2 app, 172.18.0.5 playwright
+
+cd teammapper-frontend && \
+  TESTING_PLAYWRIGHT_WS_ENDPOINT=ws://<playwright-ip>:9323 \
+  TESTING_PLAYWRIGHT_BASE_URL=http://<app-ip>:4200 \
+  npx playwright test --reporter=list
+```
+
+Resolved IPs always work; the compose defaults use hostnames, which resolve
+over the compose network.
+
+`--reporter=list` prints one line per test, which reads better in a log than
+the configured `html` reporter. Artifacts land under `teammapper-frontend` in
+`playwright/output` and `playwright-report/`, both gitignored.
+
+### The client and the image are one version
+
+`@playwright/test` in `teammapper-frontend/package.json` and the
+`mcr.microsoft.com/playwright:vX.Y.Z-noble` tag in `docker-compose.yml` must
+match, because the protocol between them is not stable across versions. Bump
+both in the same commit.
+
+### Checklist from a fresh container
+
+1. `pnpm install --frozen-lockfile`. The compose file mounts `node_modules` as
+   named volumes under `/home/node/app`, so a container holding the repo
+   anywhere else starts with none of them.
+2. `pnpm run build:packages`. The frontend resolves `@teammapper/shared` from
+   `dist`, not from source.
+3. `BINDING=0.0.0.0 pnpm run dev`, in the background. The frontend `start`
+   script is `ng serve --host $BINDING`, and compose supplies `BINDING`; set it
+   yourself if your shell lacks it.
+4. Wait for both servers, not just the frontend:
+
+   ```bash
+   curl -s -o /dev/null http://localhost:4200
+   curl -s -o /dev/null http://localhost:3000/api/maps
+   ```
+
+   `playwright.config.ts` declares both as `webServer` entries with
+   `reuseExistingServer`, so it adopts whatever already listens on 4200 and
+   3000 and starts nothing.
+
+5. Run the suite. `webkit` is the only project; the config records that Chrome
+   is unusable here because it forces a redirect to https.
 
 ## Formatting and lint scope
 
