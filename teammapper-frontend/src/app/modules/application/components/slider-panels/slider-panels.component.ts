@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';

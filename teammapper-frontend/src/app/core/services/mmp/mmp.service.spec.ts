@@ -5,7 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
 import * as mmp from '@mmp/index';
 import { Subject } from 'rxjs';
-import { OptionParameters } from '@mmp/map/types';
+import { OptionParameters } from '@mmp/map/options';
 
 jest.mock('dompurify', () => {
   return {

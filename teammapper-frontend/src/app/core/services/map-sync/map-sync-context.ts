@@ -1,5 +1,4 @@
-import { ExportNodeProperties } from '@mmp/map/types';
-import { CachedMapEntry } from '../../../shared/models/cached-map.model';
+import { CachedMapEntry, ExportNodeProperties } from '@teammapper/shared';
 import { ClientColorMapping } from './yjs-utils';
 
 export const DEFAULT_COLOR = '#000000';

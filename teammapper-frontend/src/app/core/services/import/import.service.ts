@@ -9,7 +9,7 @@ import {
   mindmapDb,
 } from '@teammapper/mermaid-mindmap-parser';
 import { SettingsService } from '../settings/settings.service';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 import { COLORS } from '../mmp/mmp-utils';
 
 /**

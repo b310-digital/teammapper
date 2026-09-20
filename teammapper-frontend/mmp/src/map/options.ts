@@ -1,4 +1,5 @@
 import { Colors, Coordinates, Font, Image, Link } from './models/node';
+import type { MapNodeSettings } from '@teammapper/shared';
 import Utils from '../utils/utils';
 import Map from './map';
 import * as d3 from 'd3';
@@ -292,7 +293,9 @@ export interface OptionParameters {
   drag?: boolean;
   edit?: boolean;
   zoom?: boolean;
-  defaultNode?: DefaultNodeProperties;
-  rootNode?: DefaultNodeProperties;
+  // What a caller supplies is the settings payload, which carries no position
+  // and no tree membership. Options fills the rest in from DefaultNodeValues.
+  defaultNode?: MapNodeSettings;
+  rootNode?: MapNodeSettings;
   showLinktext?: boolean;
 }

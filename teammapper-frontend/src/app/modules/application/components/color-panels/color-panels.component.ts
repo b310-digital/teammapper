@@ -6,7 +6,7 @@ import {
   ViewChild,
   inject,
 } from '@angular/core';
-import { ExportNodeProperties, NodeProperty } from '@mmp/map/types';
+import { ExportNodeProperties, NodeProperty } from '@teammapper/shared';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { ColorPickerDirective } from 'ngx-color-picker';
 import { TranslatePipe } from '@ngx-translate/core';

@@ -10,6 +10,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { of, Observable } from 'rxjs';
 import { FooterComponent } from './footer.component';
+import { MapNodeSettings, UserSettings } from '@teammapper/shared';
 
 class FakeTranslateLoader implements TranslateLoader {
   getTranslation(): Observable<Record<string, string>> {
@@ -23,14 +24,26 @@ describe('FooterComponent', () => {
   let mockSettingsService: Partial<SettingsService>;
   let mockTranslateService: jest.Mocked<TranslateService>;
 
-  const mockSettings = {
+  const mockNode: MapNodeSettings = {
+    name: '',
+    link: { href: '' },
+    image: { src: '', size: 60 },
+    colors: { name: '#787878', background: '#f9f9f9', branch: '#577a96' },
+    font: { size: 16, style: 'normal', weight: 'normal' },
+    locked: true,
+  };
+
+  const mockSettings: UserSettings = {
     general: { language: 'en', darkMode: false },
     mapOptions: {
       autoBranchColors: true,
       fontMaxSize: 16,
       fontMinSize: 12,
       fontIncrement: 2,
+      centerOnResize: true,
       showLinktext: false,
+      defaultNode: mockNode,
+      rootNode: mockNode,
     },
   };
 

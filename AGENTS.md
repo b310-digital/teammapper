@@ -94,3 +94,20 @@ Two commands check this:
 1. `pnpm --filter teammapper-frontend run tsc` checks the TypeScript.
 2. `pnpm --filter teammapper-frontend run build:dev` checks the templates, which
    `tsc` skips.
+
+## Types and imports
+
+`packages/shared` owns every type that crosses the wire. Import those from
+`@teammapper/shared`. Before writing an interface, search the shared package
+for one that already describes the payload: a payload typed in two places
+drifts, and the copies then disagree about what the server sends.
+
+Derive a variant instead of retyping the fields. `Required<T>` makes every
+optional field of `T` mandatory, which is how `UserMapOptions` stays tied to
+`MapOptions`.
+
+Import from the module that declares the symbol. Never re-export one module's
+types from another, and never add a barrel file whose only content is
+`export ... from`. A re-export hides where a type comes from and gives one type
+two import paths, so both end up in use. `packages/shared/src/index.ts` is the
+package entry point and the only exception.

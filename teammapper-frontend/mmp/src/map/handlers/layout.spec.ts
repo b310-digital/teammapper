@@ -1,13 +1,13 @@
 import { computeMapLayout, LayoutInputNode } from './layout';
 import { NODE_HORIZONTAL_SPACING, estimateNodeExtent } from './node-geometry';
-import type { Coordinates, Dimensions } from '../models/node';
+import type { MapNodeCoordinates, MapNodeDimensions } from '@teammapper/shared';
 
 /** The module's fallback box and node gaps, restated because it exports none. */
 const DEFAULT_BOX = { width: 100, height: 30 };
 const VERTICAL_GAP = 20;
 const COLUMN_PADDING = VERTICAL_GAP;
 
-type Box = Coordinates & Dimensions;
+type Box = MapNodeCoordinates & MapNodeDimensions;
 
 function boxesOverlap(a: Box, b: Box): boolean {
   const aLeft = a.x - a.width / 2;
@@ -67,7 +67,7 @@ function buildAiShape(
   return nodes;
 }
 
-function measuredAt(dimensions: Dimensions) {
+function measuredAt(dimensions: MapNodeDimensions) {
   return () => ({ dimensions });
 }
 
@@ -77,7 +77,9 @@ function measuredAt(dimensions: Dimensions) {
  * even when the siblings are visited in order, because it cannot see how many
  * levels a neighbouring subtree spans.
  */
-function buildAsymmetricShape(dimensions: Dimensions): LayoutInputNode[] {
+function buildAsymmetricShape(
+  dimensions: MapNodeDimensions
+): LayoutInputNode[] {
   const nodes: LayoutInputNode[] = [
     node('root', '', { isRoot: true }),
     node('A', 'root'),
@@ -495,10 +497,13 @@ describe('computeMapLayout', () => {
       'falls back to the default size when a dimension is %s',
       (_label, bad) => {
         const nodes: LayoutInputNode[] = [
-          node('root', '', { isRoot: true, dimensions: bad as Dimensions }),
-          node('branch', 'root', { dimensions: bad as Dimensions }),
-          node('a', 'branch', { dimensions: bad as Dimensions }),
-          node('b', 'branch', { dimensions: bad as Dimensions }),
+          node('root', '', {
+            isRoot: true,
+            dimensions: bad as MapNodeDimensions,
+          }),
+          node('branch', 'root', { dimensions: bad as MapNodeDimensions }),
+          node('a', 'branch', { dimensions: bad as MapNodeDimensions }),
+          node('b', 'branch', { dimensions: bad as MapNodeDimensions }),
         ];
 
         const coords = computeMapLayout(nodes);

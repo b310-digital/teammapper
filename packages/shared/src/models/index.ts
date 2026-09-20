@@ -15,28 +15,20 @@ export interface MapNodeColors {
   link?: string | null;
 }
 
-export type MapNodeColorsProperties = MapNodeColors;
-
 export interface MapNodeFont {
   size?: number | null;
   style?: string | null;
   weight?: string | null;
 }
 
-export type MapNodeFontProperties = MapNodeFont;
-
 export interface MapNodeImage {
   src?: string | null;
   size?: number | null;
 }
 
-export type MapNodeImageProperties = MapNodeImage;
-
 export interface MapNodeLink {
   href?: string | null;
 }
-
-export type MapNodeLinkProperties = MapNodeLink;
 
 export interface MapNodeBasics {
   colors: MapNodeColors;
@@ -129,12 +121,34 @@ export interface UserGeneralSettings {
   darkMode: boolean;
 }
 
+/**
+ * The node defaults the settings endpoint sends: a name plus styling, with no
+ * position and no place in a tree.
+ */
+export interface MapNodeSettings {
+  name: string;
+  link: MapNodeLink;
+  image: MapNodeImage;
+  colors: MapNodeColors;
+  font: MapNodeFont;
+  locked?: boolean;
+}
+
+/**
+ * The map options inside the user settings. The server fills every one of
+ * them, so none are optional here, unlike the per-map MapOptions above.
+ */
+export interface UserMapOptions extends Required<MapOptions> {
+  centerOnResize: boolean;
+  autoBranchColors: boolean;
+  showLinktext: boolean;
+  defaultNode: MapNodeSettings;
+  rootNode: MapNodeSettings;
+}
+
 export interface UserSettings {
   general: UserGeneralSettings;
-  mapOptions: MapOptions & {
-    autoBranchColors?: boolean;
-    showLinktext?: boolean;
-  };
+  mapOptions: UserMapOptions;
 }
 
 export type SnapshotChanges = Record<

@@ -1,4 +1,4 @@
-import type { Dimensions } from '../models/node';
+import type { MapNodeDimensions } from '@teammapper/shared';
 
 /**
  * A node's real size is only known once it has been drawn. The renderer needs
@@ -18,7 +18,10 @@ export const MIN_TEXT_EXTENT = 25;
 const WIDTH_PER_CHARACTER = 1 / 1.2;
 const LINE_HEIGHT_FACTOR = 1.2;
 
-export function estimateTextExtent(text: string, fontSize: number): Dimensions {
+export function estimateTextExtent(
+  text: string,
+  fontSize: number
+): MapNodeDimensions {
   const lines = text.split(/\r?\n|\r/g);
   const longest = Math.max(...lines.map(line => line.length), 1);
 
@@ -31,7 +34,10 @@ export function estimateTextExtent(text: string, fontSize: number): Dimensions {
   };
 }
 
-export function estimateNodeExtent(text: string, fontSize: number): Dimensions {
+export function estimateNodeExtent(
+  text: string,
+  fontSize: number
+): MapNodeDimensions {
   const { width, height } = estimateTextExtent(text, fontSize);
 
   return {

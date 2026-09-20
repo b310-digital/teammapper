@@ -1,6 +1,9 @@
 import Nodes from './nodes';
 import MmpMap from '../map';
-import { Coordinates, ExportNodeProperties } from '../models/node';
+import type {
+  MapNodeCoordinates,
+  ExportNodeProperties,
+} from '@teammapper/shared';
 
 /**
  * Snapshots here are shaped the way an import delivers them: the root has
@@ -17,7 +20,7 @@ function createHandler(): Nodes {
 function makeNode(
   id: string,
   parent: string,
-  options: { isRoot?: boolean; coordinates?: Coordinates } = {}
+  options: { isRoot?: boolean; coordinates?: MapNodeCoordinates } = {}
 ): ExportNodeProperties {
   return {
     id,
@@ -63,7 +66,7 @@ describe('applyCoordinatesToMapSnapshot', () => {
 
   it('preserves already-positioned nodes and assigns positions only to the rest', () => {
     const handler = createHandler();
-    const preservedCoordinates: Coordinates = { x: 600, y: 60 };
+    const preservedCoordinates: MapNodeCoordinates = { x: 600, y: 60 };
     const snapshot = [
       makeNode('root', '', { isRoot: true, coordinates: { x: 0, y: 0 } }),
       makeNode('positioned', 'root', { coordinates: preservedCoordinates }),

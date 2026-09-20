@@ -1,5 +1,9 @@
 import { stratify, tree, HierarchyPointNode } from 'd3';
-import type { Coordinates, Dimensions, Font } from '../models/node';
+import type {
+  MapNodeCoordinates,
+  MapNodeDimensions,
+  MapNodeFont,
+} from '@teammapper/shared';
 import { NODE_HORIZONTAL_SPACING, estimateNodeExtent } from './node-geometry';
 
 /**
@@ -18,9 +22,9 @@ export interface LayoutInputNode {
   isRoot?: boolean;
   detached?: boolean;
   name?: string | null;
-  font?: Pick<Font, 'size'>;
-  coordinates?: Coordinates;
-  dimensions?: Dimensions;
+  font?: Pick<MapNodeFont, 'size'>;
+  coordinates?: MapNodeCoordinates;
+  dimensions?: MapNodeDimensions;
 }
 
 const VERTICAL_GAP = 20;
@@ -50,7 +54,7 @@ function finiteOrZero(value: number | undefined): number {
 
 export function computeMapLayout(
   nodes: LayoutInputNode[]
-): Map<string, Coordinates> {
+): Map<string, MapNodeCoordinates> {
   return new MapLayout(nodes).build();
 }
 
@@ -58,11 +62,11 @@ class MapLayout {
   private readonly byId = new Map<string, LayoutInputNode>();
   private readonly childrenOf = new Map<string, LayoutInputNode[]>();
   private readonly depthOf = new Map<string, number>();
-  private readonly extents = new Map<string, Dimensions>();
-  private readonly coordinates = new Map<string, Coordinates>();
+  private readonly extents = new Map<string, MapNodeDimensions>();
+  private readonly coordinates = new Map<string, MapNodeCoordinates>();
   private readonly nodes: LayoutInputNode[];
   private readonly root: LayoutInputNode | undefined;
-  private readonly anchor: Coordinates;
+  private readonly anchor: MapNodeCoordinates;
 
   constructor(nodes: LayoutInputNode[]) {
     this.nodes = this.dedupeById(nodes);
@@ -85,7 +89,7 @@ class MapLayout {
     return Array.from(this.byId.values());
   }
 
-  public build(): Map<string, Coordinates> {
+  public build(): Map<string, MapNodeCoordinates> {
     if (this.nodes.length === 0) return this.coordinates;
 
     this.indexChildren();
@@ -106,12 +110,12 @@ class MapLayout {
     this.layoutSide(right, 1, offsets);
   }
 
-  private extentOf(node: LayoutInputNode): Dimensions {
+  private extentOf(node: LayoutInputNode): MapNodeDimensions {
     const cached = this.extents.get(node.id);
     if (cached) return cached;
 
     const estimated = this.estimateExtent(node);
-    const extent: Dimensions = {
+    const extent: MapNodeDimensions = {
       width: isMeasured(node.dimensions?.width)
         ? node.dimensions.width
         : estimated.width,
@@ -124,7 +128,7 @@ class MapLayout {
     return extent;
   }
 
-  private estimateExtent(node: LayoutInputNode): Dimensions {
+  private estimateExtent(node: LayoutInputNode): MapNodeDimensions {
     if (node.name === undefined || node.name === null) {
       return { width: DEFAULT_NODE_WIDTH, height: DEFAULT_NODE_HEIGHT };
     }

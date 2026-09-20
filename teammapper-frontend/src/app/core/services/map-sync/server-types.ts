@@ -1,6 +1,10 @@
-import { MapSnapshot } from '@mmp/map/types';
-import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
-import { ClientMap, ClientPrivateMap, ClientMapInfo } from '@teammapper/shared';
+import {
+  CachedMapOptions,
+  ClientMap,
+  ClientMapInfo,
+  ClientPrivateMap,
+  MapSnapshot,
+} from '@teammapper/shared';
 
 interface ServerMap extends Omit<
   ClientMap,

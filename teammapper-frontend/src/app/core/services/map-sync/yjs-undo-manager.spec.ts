@@ -1,7 +1,6 @@
 import * as Y from 'yjs';
 import { populateYMapFromNodeProps, yMapToNodeProps } from './yjs-utils';
-import { sortNodesParentFirst } from '@teammapper/shared';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties, sortNodesParentFirst } from '@teammapper/shared';
 
 describe('YjsUndoManager', () => {
   const ORIGIN_LOCAL = 'local';

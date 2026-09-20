@@ -9,7 +9,7 @@ import {
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
-import { CachedMapEntry } from 'src/app/shared/models/cached-map.model';
+import { CachedMapEntry } from '@teammapper/shared';
 
 import { first, Subscription } from 'rxjs';
 

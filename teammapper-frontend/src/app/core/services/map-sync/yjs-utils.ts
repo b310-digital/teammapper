@@ -1,7 +1,10 @@
 import * as Y from 'yjs';
-import { ExportNodeProperties } from '@mmp/map/types';
 import { ReversePropertyMapping } from './server-types';
-import { collectSubtreeIds, sortNodesParentFirst } from '@teammapper/shared';
+import {
+  collectSubtreeIds,
+  ExportNodeProperties,
+  sortNodesParentFirst,
+} from '@teammapper/shared';
 
 export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 

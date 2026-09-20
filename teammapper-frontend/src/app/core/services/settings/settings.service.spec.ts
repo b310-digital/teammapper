@@ -1,4 +1,4 @@
-import { CachedAdminMapValue } from 'src/app/shared/models/cached-map.model';
+import { CachedAdminMapValue } from '@teammapper/shared';
 import { HttpService } from '../../http/http.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from './settings.service';

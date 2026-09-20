@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { SliderPanelsComponent } from './slider-panels.component';
 

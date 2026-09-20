@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
