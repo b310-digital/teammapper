@@ -1,5 +1,4 @@
-import { SUPPORTED_LANGUAGES, SupportedLanguage } from '@teammapper/shared'
-export { SUPPORTED_LANGUAGES, SupportedLanguage }
+import { SupportedLanguage } from '@teammapper/shared'
 
 export const SYSTEM_PROMPT = `You are an expert in drawing mindmaps.
    The user provides a topic in <topic> tags. Create a helpful, small mindmap about it in the language specified by the lang attribute.

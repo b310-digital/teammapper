@@ -1,10 +1,6 @@
-import type { SupportedLanguage } from '../src/map/utils/prompts'
+import type { SupportedLanguage } from '@teammapper/shared'
 
-export type FixtureTopic =
-  | 'informational'
-  | 'creative'
-  | 'technical'
-  | 'edge-case'
+type FixtureTopic = 'informational' | 'creative' | 'technical' | 'edge-case'
 
 export interface BenchmarkFixture {
   readonly id: string

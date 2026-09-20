@@ -122,7 +122,6 @@ const mapClientBasicNodeToMmpRootNode = (
 }
 
 export {
-  mapMmpNodeToClient,
   mapClientNodeToMmpNode,
   mapClientBasicNodeToMmpRootNode,
   mapMmpMapToClient,

@@ -12,9 +12,6 @@ export const SUPPORTED_LANGUAGES = [
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
-export const VALID_LANGUAGES = SUPPORTED_LANGUAGES;
-export type ValidLanguage = SupportedLanguage;
-
 export const MAX_NODE_NAME_LENGTH = 512;
 export const MAX_IMAGE_SRC_LENGTH = 200_000;
 export const MAX_LINK_HREF_LENGTH = 2048;
