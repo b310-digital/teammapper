@@ -79,6 +79,34 @@ export class YjsSyncService {
     private httpService: HttpService
   ) {}
 
+  /**
+   * The Y.Doc of the open connection. initMap creates it, and the reads and
+   * writes below run after that.
+   */
+  private get doc(): Y.Doc {
+    if (!this.yDoc) {
+      throw new Error('The map connection has no Y.Doc');
+    }
+    return this.yDoc;
+  }
+
+  /**
+   * The nodes of the open connection, typed once instead of at every read.
+   */
+  private get nodesMap(): Y.Map<Y.Map<unknown>> {
+    return this.doc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+  }
+
+  /**
+   * The websocket provider of the open connection. initMap creates it.
+   */
+  private get provider(): WebsocketProvider {
+    if (!this.wsProvider) {
+      throw new Error('The map connection has no websocket provider');
+    }
+    return this.wsProvider;
+  }
+
   // ─── Public API ─────────────────────────────────────────────
 
   setWritable(writable: boolean): void {
@@ -111,9 +139,9 @@ export class YjsSyncService {
 
     this.yjsMapId = uuid;
     this.yDoc = new Y.Doc();
-    this.setupConnection(uuid);
-    this.setupConnectionStatus();
-    this.setupMapDeletionHandler();
+    const provider = this.setupConnection(uuid);
+    this.setupConnectionStatus(provider);
+    this.setupMapDeletionHandler(provider);
     this.createListeners();
   }
 
@@ -135,19 +163,34 @@ export class YjsSyncService {
     }
   }
 
-  private setupConnection(mapId: string): void {
+  private setupConnection(mapId: string): WebsocketProvider {
     const wsUrl = buildYjsWsUrl();
-    this.wsProvider = new WebsocketProvider(wsUrl, mapId, this.yDoc, {
+    const provider = new WebsocketProvider(wsUrl, mapId, this.doc, {
       params: { secret: this.ctx.getModificationSecret() },
       maxBackoffTime: 5000,
       disableBc: true,
     });
+    this.wsProvider = provider;
 
-    this.wsProvider.on('sync', (synced: boolean) => {
+    provider.on('sync', (synced: boolean) => {
+      if (!this.isCurrentProvider(provider)) return;
       if (synced && !this.yjsSynced) {
         this.handleFirstSync();
       }
     });
+
+    return provider;
+  }
+
+  /**
+   * Whether this provider is still the open connection. destroy() clears
+   * `wsProvider` before it disconnects, and disconnecting emits both 'status'
+   * and 'connection-close'. Those events therefore arrive for a provider that
+   * is already gone, and acting on them reports the map we just left as
+   * disconnected.
+   */
+  private isCurrentProvider(provider: WebsocketProvider): boolean {
+    return this.wsProvider === provider;
   }
 
   private handleFirstSync(): void {
@@ -162,33 +205,32 @@ export class YjsSyncService {
   }
 
   private initUndoManager(): void {
-    const nodesMap = this.yDoc.getMap('nodes');
-    this.yUndoManager = new Y.UndoManager(nodesMap, {
+    const undoManager = new Y.UndoManager(this.nodesMap, {
       // Everything we write is undoable, full-map replacements included: a
       // distribute reverts the layout, an import restores the map it replaced.
       // Merely opening a map is not a write - see setupCreateHandler.
       trackedOrigins: new Set([LOCAL_ORIGIN]),
     });
-    this.setupUndoManagerListeners();
+    this.yUndoManager = undoManager;
+    this.setupUndoManagerListeners(undoManager);
   }
 
-  private setupUndoManagerListeners(): void {
+  private setupUndoManagerListeners(undoManager: Y.UndoManager): void {
     const updateUndoRedoState = () => {
-      if (!this.yUndoManager) return;
-      this.ctx.setCanUndo(this.yUndoManager.undoStack.length > 0);
-      this.ctx.setCanRedo(this.yUndoManager.redoStack.length > 0);
+      this.ctx.setCanUndo(undoManager.undoStack.length > 0);
+      this.ctx.setCanRedo(undoManager.redoStack.length > 0);
     };
 
-    this.yUndoManager.on('stack-item-added', updateUndoRedoState);
-    this.yUndoManager.on('stack-item-popped', updateUndoRedoState);
-    this.yUndoManager.on('stack-cleared', updateUndoRedoState);
+    undoManager.on('stack-item-added', updateUndoRedoState);
+    undoManager.on('stack-item-popped', updateUndoRedoState);
+    undoManager.on('stack-cleared', updateUndoRedoState);
   }
 
-  private setupConnectionStatus(): void {
-    this.wsProvider.on(
+  private setupConnectionStatus(provider: WebsocketProvider): void {
+    provider.on(
       'status',
       (event: { status: 'connected' | 'disconnected' | 'connecting' }) => {
-        if (!this.wsProvider) return;
+        if (!this.isCurrentProvider(provider)) return;
         if (event.status === 'connected') {
           this.ctx.setConnectionStatus('connected');
         } else if (event.status === 'disconnected') {
@@ -198,8 +240,9 @@ export class YjsSyncService {
     );
   }
 
-  private setupMapDeletionHandler(): void {
-    this.wsProvider.on('connection-close', (event: CloseEvent | null) => {
+  private setupMapDeletionHandler(provider: WebsocketProvider): void {
+    provider.on('connection-close', (event: CloseEvent | null) => {
+      if (!this.isCurrentProvider(provider)) return;
       if (event?.code === WS_CLOSE_MAP_DELETED) {
         window.location.reload();
       }
@@ -230,6 +273,9 @@ export class YjsSyncService {
     this.yjsSynced = false;
     this.yjsWritable = false;
     this.yjsMapId = null;
+    // Reset to the pre-connection state. A leftover 'disconnected' would
+    // reopen the connection-lost dialog over the next map.
+    this.ctx.setConnectionStatus(null);
   }
 
   private detachObservers(): void {
@@ -257,8 +303,7 @@ export class YjsSyncService {
   // ─── Initial map load ───────────────────────────────────────
 
   private loadMapFromYDoc(): void {
-    const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-    const snapshot = this.extractSnapshotFromYDoc(nodesMap);
+    const snapshot = this.extractSnapshotFromYDoc(this.nodesMap);
     if (snapshot.length > 0) {
       this.mmpService.new(snapshot, false);
     }
@@ -395,8 +440,8 @@ export class YjsSyncService {
   // ─── Write operations (MMP → Y.Doc) ────────────────────────
 
   private writeNodeCreateToYDoc(nodeProps: ExportNodeProperties): void {
-    const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-    this.yDoc.transact(() => {
+    const nodesMap = this.nodesMap;
+    this.doc.transact(() => {
       const yNode = new Y.Map<unknown>();
       populateYMapFromNodeProps(yNode, nodeProps);
       nodesMap.set(nodeProps.id, yNode);
@@ -404,11 +449,11 @@ export class YjsSyncService {
   }
 
   private writeNodeUpdateToYDoc(event: NodeUpdateEvent): void {
-    const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+    const nodesMap = this.nodesMap;
     const yNode = nodesMap.get(event.nodeProperties.id);
     if (!yNode) return;
 
-    this.yDoc.transact(() => {
+    this.doc.transact(() => {
       const topLevelKey =
         NodePropertyMapping[
           event.changedProperty as keyof typeof NodePropertyMapping
@@ -420,12 +465,12 @@ export class YjsSyncService {
   }
 
   private writeNodeRemoveFromYDoc(nodeId: string): void {
-    const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+    const nodesMap = this.nodesMap;
     if (!nodesMap.has(nodeId)) return;
 
     const descendantIds = collectDescendantIds(nodesMap, nodeId);
 
-    this.yDoc.transact(() => {
+    this.doc.transact(() => {
       nodesMap.delete(nodeId);
       for (const id of descendantIds) {
         nodesMap.delete(id);
@@ -434,8 +479,8 @@ export class YjsSyncService {
   }
 
   private writeNodesPasteToYDoc(nodes: ExportNodeProperties[]): void {
-    const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-    this.yDoc.transact(() => {
+    const nodesMap = this.nodesMap;
+    this.doc.transact(() => {
       for (const node of nodes) {
         const yNode = new Y.Map<unknown>();
         populateYMapFromNodeProps(yNode, node);
@@ -446,15 +491,15 @@ export class YjsSyncService {
 
   private writeFullMapToYDoc(operation: FullMapOperation): void {
     const snapshot = this.mmpService.exportAsJSON();
-    const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+    const nodesMap = this.nodesMap;
     const sorted = sortNodesParentFirst(snapshot);
 
     // Without this, Yjs merges the replacement with whatever the user did in
     // the preceding half second and one undo would revert both.
     this.yUndoManager?.stopCapturing();
 
-    this.yDoc.transact(() => {
-      this.yDoc.getMap(META).set(LAST_MAP_ANNOUNCEMENT, operation);
+    this.doc.transact(() => {
+      this.doc.getMap(META).set(LAST_MAP_ANNOUNCEMENT, operation);
       this.clearAndRepopulateNodes(nodesMap, sorted);
     }, LOCAL_ORIGIN);
   }
@@ -466,7 +511,7 @@ export class YjsSyncService {
    * announcement is read per key: an unrelated write to `meta` is not one.
    */
   private shouldAnnounceImport(mapEvent: Y.YMapEvent<Y.Map<unknown>>): boolean {
-    const meta = this.yDoc.getMap(META);
+    const meta = this.doc.getMap(META);
     // Yjs keys `transaction.changed` by an erased `AbstractType`, which no
     // concrete `Y.Map` satisfies. The lookup compares object identity.
     const announced = mapEvent.transaction.changed.get(
@@ -492,9 +537,13 @@ export class YjsSyncService {
   }
 
   private writeMapOptionsToYDoc(options?: CachedMapOptions): void {
-    if (!this.yDoc || !options) return;
-    const optionsMap = this.yDoc.getMap('mapOptions');
-    this.yDoc.transact(() => {
+    // The settings page can change these with no map open, so this is the one
+    // write that has to tolerate a missing doc rather than throw.
+    const doc = this.yDoc;
+    if (!doc || !options) return;
+
+    const optionsMap = doc.getMap('mapOptions');
+    doc.transact(() => {
       optionsMap.set('fontMaxSize', options.fontMaxSize);
       optionsMap.set('fontMinSize', options.fontMinSize);
       optionsMap.set('fontIncrement', options.fontIncrement);
@@ -513,7 +562,7 @@ export class YjsSyncService {
   // ─── Y.Doc observers (Y.Doc → MMP) ─────────────────────────
 
   private setupNodesObserver(): void {
-    const nodesMap = this.yDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+    const nodesMap = this.nodesMap;
     this.yjsNodesObserver = (
       events: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>[],
       transaction: Y.Transaction
@@ -613,7 +662,7 @@ export class YjsSyncService {
     });
   }
 
-  private applyRemoteNodeAdd(yNode: Y.Map<unknown>): void {
+  private applyRemoteNodeAdd(yNode: Y.Map<unknown> | undefined): void {
     if (!yNode) return;
     const nodeProps = yMapToNodeProps(yNode);
     this.mmpService.addNodesFromServer([nodeProps]);
@@ -636,7 +685,7 @@ export class YjsSyncService {
   }
 
   private setupMapOptionsObserver(): void {
-    const optionsMap = this.yDoc.getMap('mapOptions');
+    const optionsMap = this.doc.getMap('mapOptions');
     this.yjsOptionsObserver = (_: unknown, transaction: Y.Transaction) => {
       if (transaction.local && transaction.origin !== this.yUndoManager) return;
       this.applyRemoteMapOptions();
@@ -645,7 +694,7 @@ export class YjsSyncService {
   }
 
   private applyRemoteMapOptions(): void {
-    const optionsMap = this.yDoc.getMap('mapOptions');
+    const optionsMap = this.doc.getMap('mapOptions');
     const options: CachedMapOptions = {
       fontMaxSize: (optionsMap.get('fontMaxSize') as number) ?? 28,
       fontMinSize: (optionsMap.get('fontMinSize') as number) ?? 6,
@@ -657,7 +706,7 @@ export class YjsSyncService {
   // ─── Awareness (presence, selection, client list) ───────────
 
   private setupAwareness(): void {
-    const awareness = this.wsProvider.awareness;
+    const awareness = this.provider.awareness;
     const color = this.pickClientColor(awareness);
     this.ctx.setClientColor(color);
 
@@ -703,8 +752,8 @@ export class YjsSyncService {
   }
 
   private buildColorMappingFromAwareness(): ClientColorMapping {
-    const awareness = this.wsProvider.awareness;
-    const localClientId = this.yDoc.clientID;
+    const awareness = this.provider.awareness;
+    const localClientId = this.doc.clientID;
     const mapping: ClientColorMapping = {};
 
     for (const [clientId, state] of awareness.getStates()) {

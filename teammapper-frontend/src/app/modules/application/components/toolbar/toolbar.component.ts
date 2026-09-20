@@ -2,7 +2,10 @@ import { Component, Input, inject } from '@angular/core';
 import { ExportNodeProperties } from '@teammapper/shared';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
-import { MmpService } from 'src/app/core/services/mmp/mmp.service';
+import {
+  ExportFormat,
+  MmpService,
+} from 'src/app/core/services/mmp/mmp.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MatToolbar } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
@@ -50,7 +53,7 @@ export class ToolbarComponent {
     this.featureFlagAI = flags?.ai ?? false;
   }
 
-  public async exportMap(format: string) {
+  public async exportMap(format: ExportFormat) {
     const result = await this.mmpService.exportMap(format);
     if (result.size > 1000 && format === 'json')
       alert(

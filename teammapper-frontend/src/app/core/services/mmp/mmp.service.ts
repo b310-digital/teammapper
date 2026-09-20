@@ -8,11 +8,11 @@ import { filter } from 'rxjs/operators';
 import * as mmp from '@mmp/index';
 import MmpMap from '@mmp/map/map';
 import DOMPurify from 'dompurify';
-import { ExportHistory } from '@mmp/map/handlers/history';
 import { OptionParameters } from '@mmp/map/options';
-import type {
+import {
   CachedMapOptions,
   ExportNodeProperties,
+  MapOptions,
   MapSnapshot,
   MmpEventPayloadMap,
   NodeProperty,
@@ -30,6 +30,16 @@ import { ExportService } from '../export/export.service';
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+/** The formats `exportMap` knows how to write. */
+export type ExportFormat = 'json' | 'pdf' | 'mermaid' | 'svg' | 'jpeg' | 'png';
+
+/**
+ * The font options mmp does not handle itself. The shared MapOptions leaves
+ * them optional because a stored map may omit them; MmpService resolves them
+ * against the configured defaults before handing them out.
+ */
+type AdditionalMapOptions = Required<MapOptions>;
+
 /**
  * Mmp wrapper service with mmp and other functions.
  */
@@ -42,17 +52,17 @@ export class MmpService implements OnDestroy {
   toastrService = inject(ToastrService);
   private exportService = inject(ExportService);
 
-  private currentMap: MmpMap;
+  private currentMap: MmpMap | null = null;
 
   private readonly branchColors: string[];
   // additional options that are not handled within mmp, like fontMaxSize etc.
-  private additionalOptions: CachedMapOptions;
+  // `create` resolves them; before that there is no map to hold options for.
+  private additionalOptions: AdditionalMapOptions | null = null;
   private settingsSubscription: Subscription;
 
   constructor() {
     const settingsService = this.settingsService;
 
-    this.additionalOptions = null;
     this.branchColors = COLORS;
 
     this.settingsSubscription = settingsService
@@ -64,6 +74,19 @@ export class MmpService implements OnDestroy {
         this.currentMap.options.update('drag', result);
         this.currentMap.options.update('edit', result);
       });
+  }
+
+  /**
+   * The map this service is attached to. Most of the operations below need
+   * one, so calling them before `create` is a programming error, and this
+   * throws instead of returning null. A few methods run before `create`. Those
+   * read `currentMap` directly and return early.
+   */
+  private get map(): MmpMap {
+    if (!this.currentMap) {
+      throw new Error('No mind map has been created yet');
+    }
+    return this.currentMap;
   }
 
   ngOnDestroy() {
@@ -95,13 +118,13 @@ export class MmpService implements OnDestroy {
 
     this.currentMap.instance.unsubscribeAll();
     this.currentMap.instance.remove();
-    this.currentMap = undefined;
+    this.currentMap = null;
   }
 
   /**
    * Clear or load an existing mind mmp.
    */
-  public async new(map?: MapSnapshot, notifyWithEvent = true) {
+  public async new(map: MapSnapshot, notifyWithEvent = true) {
     const hasInvalidUUID = map.some(node => !uuidValidate(node.id));
 
     if (hasInvalidUUID) {
@@ -113,29 +136,29 @@ export class MmpService implements OnDestroy {
     }
 
     const mapWithCoordinates =
-      this.currentMap.instance.applyCoordinatesToMapSnapshot(map);
-    this.currentMap.instance.new(mapWithCoordinates, notifyWithEvent);
+      this.map.instance.applyCoordinatesToMapSnapshot(map);
+    this.map.instance.new(mapWithCoordinates, notifyWithEvent);
   }
 
   /**
    * Zoom in the mind mmp.
    */
   public zoomIn(duration?: number) {
-    this.currentMap.instance.zoomIn(duration);
+    this.map.instance.zoomIn(duration);
   }
 
   /**
    * Zoom out the mind mmp.
    */
   public zoomOut(duration?: number) {
-    this.currentMap.instance.zoomOut(duration);
+    this.map.instance.zoomOut(duration);
   }
 
   /**
    * Update the mind mmp option properties.
    */
   public updateOptions(property: string, value: boolean | string | number) {
-    this.currentMap.instance.updateOptions(property, value);
+    this.map.instance.updateOptions(property, value);
   }
 
   /**
@@ -143,13 +166,20 @@ export class MmpService implements OnDestroy {
    */
   public async updateAdditionalMapOptions(options: CachedMapOptions) {
     const defaultOptions = await this.defaultAdditionalOptions();
-    this.additionalOptions = { ...defaultOptions, ...options };
+
+    // A stored map may carry a key with no value, and spreading that over the
+    // defaults would put the hole back.
+    this.additionalOptions = {
+      fontMaxSize: options.fontMaxSize ?? defaultOptions.fontMaxSize,
+      fontMinSize: options.fontMinSize ?? defaultOptions.fontMinSize,
+      fontIncrement: options.fontIncrement ?? defaultOptions.fontIncrement,
+    };
   }
 
   /**
-   * Get the additional options
+   * Get the additional options, or null while no map has been created.
    */
-  public getAdditionalMapOptions(): CachedMapOptions {
+  public getAdditionalMapOptions(): AdditionalMapOptions | null {
     return this.additionalOptions;
   }
 
@@ -157,7 +187,7 @@ export class MmpService implements OnDestroy {
    * Return the json of the mind mmp.
    */
   public exportAsJSON(): MapSnapshot {
-    return this.currentMap.instance.exportAsJSON();
+    return this.map.instance.exportAsJSON();
   }
 
   /**
@@ -165,31 +195,24 @@ export class MmpService implements OnDestroy {
    */
   public exportAsImage(type?: string): Promise<string> {
     return new Promise(resolve => {
-      this.currentMap.instance.exportAsImage(uri => {
+      this.map.instance.exportAsImage(uri => {
         resolve(uri);
       }, type);
     });
   }
 
   /**
-   * Return the array of snapshots of the mind map.
-   */
-  public history(): ExportHistory {
-    return this.currentMap?.instance?.history();
-  }
-
-  /**
    * Save the current snapshot to history
    */
   public save() {
-    return this.currentMap.instance.save();
+    return this.map.instance.save();
   }
 
   /**
    * Center the mind mmp.
    */
   public center(type?: 'position' | 'zoom', duration?: number) {
-    this.currentMap.instance.center(type, duration);
+    this.map.instance.center(type, duration);
   }
 
   /**
@@ -201,7 +224,7 @@ export class MmpService implements OnDestroy {
   public on<T = unknown>(event: string): Observable<T>;
   public on(event: string): Observable<unknown> {
     return new Observable(observer => {
-      this.currentMap.instance.on(event, (args: unknown) => {
+      this.map.instance.on(event, (args: unknown) => {
         observer.next(args);
       });
     });
@@ -212,8 +235,8 @@ export class MmpService implements OnDestroy {
    *
    * @param nodes Given nodes from the server
    */
-  public addNodesFromServer(nodes?: ExportNodeProperties[]) {
-    this.currentMap.instance.addNodes(nodes);
+  public addNodesFromServer(nodes: ExportNodeProperties[]) {
+    this.map.instance.addNodes(nodes);
   }
 
   /**
@@ -259,14 +282,15 @@ export class MmpService implements OnDestroy {
     }
 
     if (properties?.detached) {
-      const currentNode = this.selectNode();
-      newProps.coordinates = {
-        x: currentNode.coordinates.x,
-        y: currentNode.coordinates.y - 80,
-      };
+      // Place a detached node above the node the user created it from
+      const coordinates = this.selectNode().coordinates;
+
+      if (coordinates) {
+        newProps.coordinates = { x: coordinates.x, y: coordinates.y - 80 };
+      }
     }
 
-    this.currentMap.instance.addNode(
+    this.map.instance.addNode(
       newProps,
       notifyWithEvent,
       true,
@@ -282,28 +306,28 @@ export class MmpService implements OnDestroy {
   public selectNode(
     nodeId?: string | 'left' | 'right' | 'up' | 'down'
   ): ExportNodeProperties {
-    return this.currentMap.instance.selectNode(nodeId);
+    return this.map.instance.selectNode(nodeId);
   }
 
   /**
    * exports the root node props
    */
   public getRootNode(): ExportNodeProperties {
-    return this.currentMap.instance.exportRootProperties();
+    return this.map.instance.exportRootProperties();
   }
 
   /**
    * exports the given node props
    */
-  public getNode(nodeId: string): ExportNodeProperties {
-    return this.currentMap.instance.exportNodeProperties(nodeId);
+  public getNode(nodeId: string): ExportNodeProperties | undefined {
+    return this.map.instance.exportNodeProperties(nodeId);
   }
 
   /**
    * Checks if a given node actually exists
    */
   public existNode(nodeId: string): boolean {
-    return this.currentMap.instance.existNode(nodeId);
+    return this.map.instance.existNode(nodeId);
   }
 
   /**
@@ -314,34 +338,28 @@ export class MmpService implements OnDestroy {
     color: string,
     notifyWithEvent = true
   ): void {
-    return this.currentMap.instance.highlightNode(
-      nodeId,
-      color,
-      notifyWithEvent
-    );
+    return this.map.instance.highlightNode(nodeId, color, notifyWithEvent);
   }
 
   /**
    * Focus the text of the selected node to edit it.
    */
   public editNode() {
-    this.currentMap.instance.editNode();
+    this.map.instance.editNode();
   }
 
   /**
    * Get the currently selected node
    */
   public getSelectedNode() {
-    if (this.currentMap) {
-      return this.currentMap.instance.getSelectedNode();
-    }
+    return this.currentMap?.instance.getSelectedNode();
   }
 
   /**
    * Deselect the current node.
    */
   public deselectNode() {
-    this.currentMap.instance.deselectNode();
+    this.map.instance.deselectNode();
   }
 
   /**
@@ -355,7 +373,7 @@ export class MmpService implements OnDestroy {
     id?: string
   ) {
     try {
-      this.currentMap.instance.updateNode(
+      this.map.instance.updateNode(
         property,
         value,
         notifyWithEvent,
@@ -383,7 +401,7 @@ export class MmpService implements OnDestroy {
    */
   public async removeNode(nodeId?: string, notifyWithEvent = true) {
     try {
-      this.currentMap.instance.removeNode(nodeId, notifyWithEvent);
+      this.map.instance.removeNode(nodeId, notifyWithEvent);
     } catch (e) {
       if (errorMessage(e) == 'The root node can not be deleted') {
         const rootNodeFailureMessage = await this.utilsService.translate(
@@ -405,7 +423,7 @@ export class MmpService implements OnDestroy {
    */
   public async copyNode(nodeId?: string) {
     try {
-      this.currentMap.instance.copyNode(nodeId);
+      this.map.instance.copyNode(nodeId);
 
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_COPIED');
@@ -431,7 +449,7 @@ export class MmpService implements OnDestroy {
    */
   public async cutNode(nodeId?: string) {
     try {
-      this.currentMap.instance.cutNode(nodeId);
+      this.map.instance.cutNode(nodeId);
 
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_CUT');
@@ -457,7 +475,7 @@ export class MmpService implements OnDestroy {
    */
   public async pasteNode(nodeId?: string) {
     try {
-      this.currentMap.instance.pasteNode(nodeId);
+      this.map.instance.pasteNode(nodeId);
     } catch (e) {
       if (errorMessage(e) == 'There are not nodes in the mmp clipboard') {
         const rootNodeFailureMessage = await this.utilsService.translate(
@@ -477,28 +495,29 @@ export class MmpService implements OnDestroy {
    * Toggle (hide/show) all child nodes of the selected node
    */
   public toggleBranchVisibility() {
-    this.currentMap.instance.toggleBranchVisibility();
+    this.map.instance.toggleBranchVisibility();
   }
 
   /**
    * Recompute every node's position from the tree, discarding manual placement.
    */
   public distributeNodes() {
-    this.currentMap.instance.distributeNodes();
+    this.map.instance.distributeNodes();
   }
 
   /**
    * Return the children of the current node.
    */
   public nodeChildren(): ExportNodeProperties[] {
-    return this.currentMap?.instance.nodeChildren();
+    return this.currentMap?.instance.nodeChildren() ?? [];
   }
 
   /**
    * Move the node in a direction.
    */
   public moveNodeTo(direction: 'left' | 'right' | 'up' | 'down', range = 10) {
-    const coordinates = this.currentMap.instance.selectNode().coordinates;
+    const coordinates = this.map.instance.selectNode().coordinates;
+    if (!coordinates) return;
 
     switch (direction) {
       case 'left':
@@ -515,17 +534,17 @@ export class MmpService implements OnDestroy {
         break;
     }
 
-    this.currentMap.instance.updateNode('coordinates', coordinates);
+    this.map.instance.updateNode('coordinates', coordinates);
   }
 
   /**
    * Export the current mind map with the format passed as parameter.
    */
   public async exportMap(
-    format = 'json'
+    format: ExportFormat = 'json'
   ): Promise<{ success: boolean; size?: number }> {
     const name = DOMPurify.sanitize(
-      this.getRootNode().name.replace(/\n/g, ' ').replace(/\s+/g, ' ')
+      (this.getRootNode().name ?? '').replace(/\n/g, ' ').replace(/\s+/g, ' ')
     );
 
     switch (format) {
@@ -542,6 +561,9 @@ export class MmpService implements OnDestroy {
       case 'jpeg':
       case 'png': {
         return this.exportToImage(format, name);
+      }
+      default: {
+        return { success: false };
       }
     }
   }
@@ -582,44 +604,30 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Set the current mind mmp.
-   */
-  public setCurrentMap(map: MmpMap): void {
-    this.currentMap = map;
-  }
-
-  /**
-   * Get the current mind mmp.
-   */
-  public getCurrentMap(): MmpMap {
-    return this.currentMap;
-  }
-
-  /**
    * Returns the current selected Node
    */
   public exportSelectedNode(): ExportNodeProperties {
-    return this.currentMap.instance.exportSelectedNode();
+    return this.map.instance.exportSelectedNode();
   }
 
   /**
    * Reverse the last one change of the mind mmp.
    */
   public undo() {
-    this.currentMap.instance.undo();
+    this.map.instance.undo();
   }
 
   /**
    * Repeat a previously undoed change of the mind mmp.
    */
   public redo() {
-    this.currentMap.instance.redo();
+    this.map.instance.redo();
   }
 
   /**
    * Initialize additional map settings with defaults
    */
-  private async defaultAdditionalOptions(): Promise<CachedMapOptions> {
+  private async defaultAdditionalOptions(): Promise<AdditionalMapOptions> {
     const defaultSettings = (await this.settingsService.getDefaultSettings())
       .userSettings;
 

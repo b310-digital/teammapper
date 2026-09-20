@@ -66,9 +66,11 @@ export class ApplicationComponent implements OnInit, OnDestroy {
     this.connectionStatusSubscription = this.mapSyncService
       .getConnectionStatusObservable()
       .subscribe((status: ConnectionStatus) => {
-        if (status === 'connected') this.dialogService.closeDisconnectDialog();
+        // A null status means no connection is open any more, so the dialog
+        // has nothing left to report and closes with the connected case.
         if (status === 'disconnected')
           this.dialogService.openDisconnectDialog();
+        else this.dialogService.closeDisconnectDialog();
       });
     this.editMode = this.settingsService.getEditModeObservable();
   }
@@ -76,6 +78,9 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.imageDropSubscription.unsubscribe();
     this.connectionStatusSubscription.unsubscribe();
+    // The dialog is an overlay, so it outlives this component unless we close
+    // it here: teardown order can drop the status that would have closed it.
+    this.dialogService.closeDisconnectDialog();
   }
 
   public handleImageDropObservable() {

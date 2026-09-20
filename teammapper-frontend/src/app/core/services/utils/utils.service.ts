@@ -45,22 +45,26 @@ export class UtilsService {
       window.document.body.ondrop = (event: DragEvent) => {
         event.preventDefault();
 
-        if (event.dataTransfer.files[0]) {
+        const dataTransfer = event.dataTransfer;
+        if (!dataTransfer) return;
+
+        const droppedFile = dataTransfer.files[0];
+        if (droppedFile) {
           const fileReader = new FileReader();
 
           fileReader.onload = () => {
-            subscriber.next(fileReader.result.toString());
+            subscriber.next(fileReader.result?.toString() ?? '');
           };
 
           fileReader.onerror = subscriber.error;
 
-          fileReader.readAsDataURL(event.dataTransfer.files[0]);
+          fileReader.readAsDataURL(droppedFile);
         } else {
-          subscriber.next(
-            event.dataTransfer
-              .getData('text/html')
-              .match(/src\s*=\s*"(.+?)"/)[1]
-          );
+          // The drop carried markup instead of a file, so pull the image out
+          const source = dataTransfer
+            .getData('text/html')
+            .match(/src\s*=\s*"(.+?)"/);
+          if (source) subscriber.next(source[1]);
         }
       };
     });
@@ -174,8 +178,15 @@ export class UtilsService {
   public blobToBase64(blob: Blob): Promise<string | ArrayBuffer> {
     const reader = new FileReader();
     reader.readAsDataURL(blob);
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+      reader.onerror = () => {
+        reject(new Error('The blob could not be read'));
+      };
       reader.onloadend = () => {
+        if (reader.result === null) {
+          reject(new Error('The blob could not be read'));
+          return;
+        }
         resolve(reader.result);
       };
     });

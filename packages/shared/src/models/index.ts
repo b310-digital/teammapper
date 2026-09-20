@@ -217,8 +217,9 @@ export interface CachedMapEntry {
 }
 
 export interface CachedAdminMapValue {
-  adminId: string;
-  modificationSecret: string;
+  // Legacy rows carry neither, so the /maps listing sends both as null.
+  adminId: string | null;
+  modificationSecret: string | null;
   ttl: Date | number | string;
   rootName: string | null;
 }

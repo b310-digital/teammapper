@@ -12,6 +12,9 @@ import {
 import { API_URL, HttpService } from '../../http/http.service';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
+/** `getLanguage` returns this when no user settings are cached. */
+const DEFAULT_LANGUAGE = 'en';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -33,9 +36,11 @@ export class SettingsService {
 
   constructor() {
     // Initialization of the behavior subjects.
-    this.userSettingsSubject = new BehaviorSubject(null);
-    this.systemSettingsSubject = new BehaviorSubject(null);
-    this.editModeSubject = new BehaviorSubject(null);
+    this.userSettingsSubject = new BehaviorSubject<UserSettings | null>(null);
+    this.systemSettingsSubject = new BehaviorSubject<SystemSettings | null>(
+      null
+    );
+    this.editModeSubject = new BehaviorSubject<boolean | null>(null);
     this.darkModeSubject = new BehaviorSubject(false);
     this.userSettings = this.userSettingsSubject.asObservable();
     this.darkMode = this.darkModeSubject.asObservable();
@@ -191,6 +196,15 @@ export class SettingsService {
    */
   public getCachedUserSettings(): UserSettings | null {
     return this.userSettingsSubject.getValue();
+  }
+
+  /**
+   * Returns the cached language, or `DEFAULT_LANGUAGE` when nothing is cached.
+   * Settings written by an older version may have no `general` block, and an
+   * empty language would build a malformed request url, so both fall back.
+   */
+  public getLanguage(): string {
+    return this.getCachedUserSettings()?.general?.language || DEFAULT_LANGUAGE;
   }
 
   public getCachedSystemSettings(): SystemSettings | null {
