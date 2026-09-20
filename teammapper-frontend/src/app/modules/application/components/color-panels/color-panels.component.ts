@@ -3,9 +3,8 @@ import {
   ElementRef,
   Input,
   OnChanges,
-  OnInit,
-  ViewChild,
   inject,
+  viewChild,
 } from '@angular/core';
 import { NodeColors } from '@mmp/map/models/node';
 import {
@@ -30,15 +29,41 @@ const resolveColors = (colors?: MapNodeColors | null): NodeColors => ({
   styleUrls: ['./color-panels.component.scss'],
   imports: [ColorPickerDirective, TranslatePipe],
 })
-export class ColorPanelsComponent implements OnChanges, OnInit {
+export class ColorPanelsComponent implements OnChanges {
   mmpService = inject(MmpService);
 
   @Input() public node: ExportNodeProperties | null = null;
-  @Input() public editDisabled: boolean;
+  @Input() public editDisabled = false;
 
-  @ViewChild('background') public background: ElementRef;
+  public readonly background =
+    viewChild.required<ElementRef<HTMLElement>>('background');
 
-  public options: { width: string; presetColors: string[] };
+  public readonly options: { width: string; presetColors: string[] } = {
+    width: '250px',
+    presetColors: [
+      '#666666',
+      '#f5f5f5',
+      '#f44336',
+      '#E91E63',
+      '#9C27B0',
+      '#673AB7',
+      '#3F51B5',
+      '#2196F3',
+      '#03A9F4',
+      '#00BCD4',
+      '#009688',
+      '#4CAF50',
+      '#8BC34A',
+      '#CDDC39',
+      '#FFEB3B',
+      '#FFC107',
+      '#FF9800',
+      '#FF5722',
+      '#795548',
+      '#9E9E9E',
+      '#607D8B',
+    ],
+  };
 
   /**
    * The colors of the node with every value resolved, since a color picker
@@ -51,35 +76,6 @@ export class ColorPanelsComponent implements OnChanges, OnInit {
     this.colors = resolveColors(this.node?.colors);
   }
 
-  ngOnInit() {
-    this.options = {
-      width: '250px',
-      presetColors: [
-        '#666666',
-        '#f5f5f5',
-        '#f44336',
-        '#E91E63',
-        '#9C27B0',
-        '#673AB7',
-        '#3F51B5',
-        '#2196F3',
-        '#03A9F4',
-        '#00BCD4',
-        '#009688',
-        '#4CAF50',
-        '#8BC34A',
-        '#CDDC39',
-        '#FFEB3B',
-        '#FFC107',
-        '#FF9800',
-        '#FF5722',
-        '#795548',
-        '#9E9E9E',
-        '#607D8B',
-      ],
-    };
-  }
-
   public colorPickerChange(property: NodeProperty, value: string) {
     this.mmpService.updateNode(property, value, true);
   }
@@ -89,7 +85,7 @@ export class ColorPanelsComponent implements OnChanges, OnInit {
     property: NodeProperty,
     value: string
   ) {
-    this.background.nativeElement.style.visibility = opening
+    this.background().nativeElement.style.visibility = opening
       ? 'visible'
       : 'hidden';
 

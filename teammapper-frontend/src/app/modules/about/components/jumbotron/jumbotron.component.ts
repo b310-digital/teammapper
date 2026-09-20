@@ -25,6 +25,4 @@ import { TranslatePipe } from '@ngx-translate/core';
     TranslatePipe,
   ],
 })
-export class JumbotronComponent {
-  public projectName: string;
-}
+export class JumbotronComponent {}

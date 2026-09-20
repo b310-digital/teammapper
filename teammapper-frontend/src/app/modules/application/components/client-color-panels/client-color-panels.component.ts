@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { Observable } from 'rxjs';
 import { NgStyle, AsyncPipe } from '@angular/common';
@@ -12,8 +12,6 @@ import { MatIcon } from '@angular/material/icon';
 })
 export class ClientColorPanelsComponent {
   mapSyncService = inject(MapSyncService);
-
-  @ViewChild('background') public background: ElementRef;
 
   public clientColors: Observable<string[]>;
 

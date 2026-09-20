@@ -64,11 +64,11 @@ export class DialogShareComponent implements OnInit {
   private router = inject(Router);
 
   @ViewChild('qrcodecanvas', { static: true })
-  qrCodeCanvas: ElementRef<HTMLCanvasElement>;
+  private qrCodeCanvasRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild('sharedialog', { static: true })
-  shareDialog: ElementRef<HTMLElement>;
+  private shareDialogRef?: ElementRef<HTMLElement>;
   @ViewChild('inputlink', { static: true })
-  inputLink: ElementRef<HTMLInputElement>;
+  private inputLinkRef?: ElementRef<HTMLInputElement>;
 
   public showEditableLink = true;
   private editorLink: string = window.location.href;
@@ -78,7 +78,33 @@ export class DialogShareComponent implements OnInit {
     window.location.host +
     window.location.pathname +
     window.location.search;
-  private qrCode: QRCodeStyling;
+  private qrCode: QRCodeStyling = this.createQrCode();
+
+  /**
+   * The three elements the dialog drives. All three are static queries, so
+   * Angular has filled them in by `ngOnInit`; reading one earlier is a
+   * programming error, and these throw instead of returning undefined.
+   */
+  private get qrCodeCanvas(): ElementRef<HTMLCanvasElement> {
+    if (!this.qrCodeCanvasRef) {
+      throw new Error('The share dialog has no QR code canvas yet');
+    }
+    return this.qrCodeCanvasRef;
+  }
+
+  private get shareDialog(): ElementRef<HTMLElement> {
+    if (!this.shareDialogRef) {
+      throw new Error('The share dialog has not been rendered yet');
+    }
+    return this.shareDialogRef;
+  }
+
+  private get inputLink(): ElementRef<HTMLInputElement> {
+    if (!this.inputLinkRef) {
+      throw new Error('The share dialog has no link input yet');
+    }
+    return this.inputLinkRef;
+  }
 
   ngOnInit() {
     this.appendQrCode();
@@ -88,15 +114,19 @@ export class DialogShareComponent implements OnInit {
     return this.editorLink === this.viewerLink;
   }
 
-  appendQrCode() {
+  private createQrCode(): QRCodeStyling {
     const size: number = window.innerWidth > 500 ? 300 : 200;
 
-    this.qrCode = new QRCodeStyling({
+    return new QRCodeStyling({
       ...qrcodeStyling,
       width: size,
       height: size,
       data: this.getLink(),
     });
+  }
+
+  appendQrCode() {
+    this.qrCode = this.createQrCode();
     this.qrCodeCanvas.nativeElement.innerHTML = '';
     this.qrCode.append(this.qrCodeCanvas.nativeElement);
   }

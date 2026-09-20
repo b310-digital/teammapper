@@ -73,10 +73,14 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     const server = this.httpAdapterHost.httpAdapter.getHttpServer()
-    this.wss = new WebSocketServer({
+    // The handlers below close over `wss` rather than reading `this.wss`, so
+    // they see the server this call created even though `onModuleDestroy`
+    // clears the field.
+    const wss = new WebSocketServer({
       noServer: true,
       maxPayload: WS_MAX_PAYLOAD,
     })
+    this.wss = wss
 
     server.on(
       'upgrade',
@@ -92,13 +96,13 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
           return
         }
 
-        this.wss!.handleUpgrade(request, socket, head, (ws) => {
-          this.wss!.emit('connection', ws, request)
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          wss.emit('connection', ws, request)
         })
       }
     )
 
-    this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+    wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
       this.handleConnection(ws, req).catch((err) =>
         this.logger.error(
           `Unhandled connection error: ${err instanceof Error ? err.message : String(err)}`
@@ -222,8 +226,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       let setupComplete = false
       try {
         const writable = checkWriteAccess(map.modificationSecret, secret)
-        this.trackConnection(ws, mapId, writable, ip)
-        const count = this.mapConnections.get(mapId)!.size
+        const count = this.trackConnection(ws, mapId, writable, ip)
         await this.docManager.notifyClientCount(mapId, count)
         this.setupSync(ws, doc, mapId, writable)
         setupComplete = true
@@ -242,16 +245,16 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /** Registers the socket and returns how many are now open on the map. */
   private trackConnection(
     ws: WebSocket,
     mapId: string,
     writable: boolean,
     ip: string
-  ): void {
-    if (!this.mapConnections.has(mapId)) {
-      this.mapConnections.set(mapId, new Set())
-    }
-    this.mapConnections.get(mapId)!.add(ws)
+  ): number {
+    const connections = this.mapConnections.get(mapId) ?? new Set<WebSocket>()
+    this.mapConnections.set(mapId, connections)
+    connections.add(ws)
     this.connectionMeta.set(ws, {
       mapId,
       writable,
@@ -259,6 +262,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       isAlive: true,
       ip,
     })
+    return connections.size
   }
 
   private getOrCreateAwareness(

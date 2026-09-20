@@ -7,11 +7,11 @@ import { Entity, Column, PrimaryColumn } from 'typeorm'
 @Entity('llm_usage_counter')
 export class LlmUsageCounter {
   @PrimaryColumn({ type: 'date' })
-  dateUsage: string
+  dateUsage!: string
 
   @Column({ type: 'bigint', default: '0' })
-  tokensUsed: string
+  tokensUsed!: string
 
   @Column({ type: 'bigint', default: '0' })
-  requestsCount: string
+  requestsCount!: string
 }

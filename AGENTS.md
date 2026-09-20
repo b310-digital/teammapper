@@ -58,31 +58,46 @@ both scripts, or nothing checks its formatting.
 
 ## TypeScript strictness
 
-`teammapper-frontend/tsconfig.json` sets `strict: true` and turns
-`strictPropertyInitialization` back off. Angular checks templates with
-`strictTemplates`, `strictInjectionParameters` and `strictInputAccessModifiers`.
+Every workspace sets `strict: true` with no flag turned back off. Angular
+additionally checks templates with `strictTemplates`,
+`strictInjectionParameters` and `strictInputAccessModifiers`.
 
-Follow five rules:
+Follow six rules:
 
-1. Write class fields that pass once `strictPropertyInitialization` is on:
-   initialize them, or declare them `T | null` and assign later.
+1. Write class fields that pass `strictPropertyInitialization`: initialize them,
+   or declare them `T | null` and assign later.
 2. Never silence a type error with `!` or `as any`. A non-null assertion moves
    the failure to runtime. Narrow the value, or change the type so the null case
    is representable.
-3. For a value that is missing only until setup runs, write one accessor that
-   throws (see `MmpService.map` and `YjsSyncService.doc`) instead of spreading
-   `?.` across every use.
-4. Narrow with `error instanceof Error` before reading `.message`; `catch` binds
+3. TypeORM entity columns are the one exception to rule 2, and they take a
+   definite assignment assertion (`name!: string | null`). TypeORM assigns them
+   on hydrate and on insert, and an initializer would emit a real assignment,
+   which makes the insert write that value instead of letting the column default
+   apply. The assertion erases, so the emitted JavaScript and the metadata
+   TypeORM derives the schema from stay identical.
+4. For a value that is missing only until setup runs, write one accessor that
+   throws (see `MmpService.map`, `YjsSyncService.doc` and
+   `DialogShareComponent.qrCodeCanvas`) instead of spreading `?.` across every
+   use. A view query that resolves after the view exists can instead be a
+   signal query: `viewChild.required<ElementRef<HTMLElement>>('map')`.
+5. Narrow with `error instanceof Error` before reading `.message`; `catch` binds
    `unknown`.
-5. Put the datum on the d3 selection, as in
+6. Put the datum on the d3 selection, as in
    `d3.selectAll<SVGPathElement, Node>(...)`. `strictFunctionTypes` rejects an
    annotation on the callback parameter.
 
 Two commands check this:
 
-1. `pnpm --filter teammapper-frontend run tsc` checks the TypeScript.
+1. `pnpm run tsc` checks the TypeScript in every workspace. Each workspace's
+   `tsc` script must cover its tests too, not just what it ships: the frontend
+   and `teammapper-backend` point at `tsconfig.json` rather than at the build
+   config, and `packages/shared` has `tsconfig.typecheck.json` for it, because
+   its build configs drop `*.spec.ts` to keep tests out of `dist`.
 2. `pnpm --filter teammapper-frontend run build:dev` checks the templates, which
    `tsc` skips.
+
+`@typescript-eslint/no-explicit-any` is an error in every workspace. There is no
+`any` left in the tree; keep it that way rather than reaching for a suppression.
 
 ## Types and imports
 

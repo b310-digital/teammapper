@@ -18,7 +18,7 @@ export class SliderPanelsComponent implements OnChanges {
   mmpService = inject(MmpService);
 
   @Input() public node: ExportNodeProperties | null = null;
-  @Input() public editDisabled: boolean;
+  @Input() public editDisabled = false;
 
   /**
    * The sizes of the node with a resolved value, since a slider needs a

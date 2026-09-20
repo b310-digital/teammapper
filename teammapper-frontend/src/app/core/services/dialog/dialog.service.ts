@@ -13,12 +13,15 @@ import { DialogShareComponent } from 'src/app/modules/application/components/dia
 export class DialogService {
   private dialog = inject(MatDialog);
 
-  private disconnectModalRef: MatDialogRef<DialogConnectionInfoComponent>;
-  private shareModalRef: MatDialogRef<DialogShareComponent>;
-  private aboutModalRef: MatDialogRef<DialogAboutComponent>;
-  private pictogramsModalRef: MatDialogRef<DialogPictogramsComponent>;
-  private importMermaidModalRef: MatDialogRef<DialogImportMermaidComponent>;
-  private importAiModalRef: MatDialogRef<DialogImportAiComponent>;
+  private disconnectModalRef: MatDialogRef<DialogConnectionInfoComponent> | null =
+    null;
+  private shareModalRef: MatDialogRef<DialogShareComponent> | null = null;
+  private aboutModalRef: MatDialogRef<DialogAboutComponent> | null = null;
+  private pictogramsModalRef: MatDialogRef<DialogPictogramsComponent> | null =
+    null;
+  private importMermaidModalRef: MatDialogRef<DialogImportMermaidComponent> | null =
+    null;
+  private importAiModalRef: MatDialogRef<DialogImportAiComponent> | null = null;
 
   openPictogramDialog() {
     this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent);

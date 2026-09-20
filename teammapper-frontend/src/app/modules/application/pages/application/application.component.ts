@@ -49,11 +49,13 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  public node: Observable<ExportNodeProperties | null>;
-  public editMode: Observable<boolean | null>;
+  public node: Observable<ExportNodeProperties | null> =
+    this.mapSyncService.getAttachedNodeObservable();
+  public editMode: Observable<boolean | null> =
+    this.settingsService.getEditModeObservable();
 
-  private imageDropSubscription: Subscription;
-  private connectionStatusSubscription: Subscription;
+  private imageDropSubscription: Subscription | null = null;
+  private connectionStatusSubscription: Subscription | null = null;
 
   async ngOnInit() {
     this.storageService.cleanExpired();
@@ -62,7 +64,6 @@ export class ApplicationComponent implements OnInit, OnDestroy {
 
     this.handleImageDropObservable();
 
-    this.node = this.mapSyncService.getAttachedNodeObservable();
     this.connectionStatusSubscription = this.mapSyncService
       .getConnectionStatusObservable()
       .subscribe((status: ConnectionStatus) => {
@@ -72,12 +73,11 @@ export class ApplicationComponent implements OnInit, OnDestroy {
           this.dialogService.openDisconnectDialog();
         else this.dialogService.closeDisconnectDialog();
       });
-    this.editMode = this.settingsService.getEditModeObservable();
   }
 
   ngOnDestroy() {
-    this.imageDropSubscription.unsubscribe();
-    this.connectionStatusSubscription.unsubscribe();
+    this.imageDropSubscription?.unsubscribe();
+    this.connectionStatusSubscription?.unsubscribe();
     // The dialog is an overlay, so it outlives this component unless we close
     // it here: teardown order can drop the status that would have closed it.
     this.dialogService.closeDisconnectDialog();

@@ -1,5 +1,34 @@
 import { BenchmarkGraderService } from './benchmark-grader.service'
 import { BenchmarkRunner } from './benchmark.runner'
+import type { LlmUsageCounting } from '../src/map/services/llm-usage-counter.service'
+
+/**
+ * The benchmark runs without a database, so it keeps the daily totals in
+ * memory. Nothing enforces a cap here: the run is deliberate and bounded by
+ * the fixture list.
+ */
+class InMemoryUsageCounter implements LlmUsageCounting {
+  private tokensUsed = 0
+  private requestsCount = 0
+
+  async reserve(
+    _dateUsage: string,
+    tokens: number
+  ): Promise<{ tokensUsed: number; requestsCount: number }> {
+    this.tokensUsed += tokens
+    this.requestsCount += 1
+    return { tokensUsed: this.tokensUsed, requestsCount: this.requestsCount }
+  }
+
+  async adjustTokens(_dateUsage: string, delta: number): Promise<void> {
+    this.tokensUsed = Math.max(0, this.tokensUsed + delta)
+  }
+
+  async release(_dateUsage: string, tokens: number): Promise<void> {
+    this.tokensUsed = Math.max(0, this.tokensUsed - tokens)
+    this.requestsCount = Math.max(0, this.requestsCount - 1)
+  }
+}
 
 async function main(): Promise<void> {
   // Dynamic imports — run after process.env is set above
@@ -12,7 +41,7 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  const aiService = new AiService()
+  const aiService = new AiService(new InMemoryUsageCounter())
   const graderService = new BenchmarkGraderService({ llmConfig })
   const runner = new BenchmarkRunner(aiService, graderService, llmConfig)
 

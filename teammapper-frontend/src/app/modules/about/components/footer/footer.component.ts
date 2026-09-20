@@ -14,16 +14,13 @@ export class FooterComponent implements OnInit {
   private settingsService = inject(SettingsService);
   private translateService = inject(TranslateService);
 
-  public settings: UserSettings | null;
-  public languages: string[];
+  public settings: UserSettings | null = null;
+  public languages: string[] = SettingsService.LANGUAGES;
 
-  public currentYear: string;
+  public currentYear: string = new Date().getFullYear().toString();
 
   public ngOnInit() {
     this.settings = this.settingsService.getCachedUserSettings();
-    this.languages = SettingsService.LANGUAGES;
-
-    this.currentYear = new Date().getFullYear().toString();
   }
 
   public async updateLanguage() {

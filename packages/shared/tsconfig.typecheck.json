@@ -1,0 +1,11 @@
+{
+  // The build configs drop `*.spec.ts` so the tests stay out of `dist`. This
+  // one puts them back, so `pnpm run tsc` checks the tests too.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true
+  },
+  "exclude": ["node_modules", "dist"]
+}

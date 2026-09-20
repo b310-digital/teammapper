@@ -17,7 +17,7 @@ const ORIGIN: MapNodeCoordinates = { x: 0, y: 0 };
 export default class CopyPaste {
   private map: Map;
 
-  private copiedNodes: ExportNodeProperties[];
+  private copiedNodes: ExportNodeProperties[] = [];
 
   /**
    * Get the associated map instance.
@@ -93,7 +93,7 @@ export default class CopyPaste {
    * @param {string} id
    */
   public paste = (id?: string) => {
-    if (this.copiedNodes === undefined) {
+    if (this.copiedNodes.length === 0) {
       Log.error('There are not nodes in the mmp clipboard');
     }
 

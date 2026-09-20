@@ -1,10 +1,10 @@
 import {
   Component,
   ElementRef,
-  ViewChild,
   OnDestroy,
   AfterViewInit,
   inject,
+  viewChild,
 } from '@angular/core';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
@@ -23,9 +23,9 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private mmpService = inject(MmpService);
   private mapSyncService = inject(MapSyncService);
 
-  @ViewChild('map') mapWrapper: ElementRef<HTMLElement>;
+  readonly mapWrapper = viewChild.required<ElementRef<HTMLElement>>('map');
 
-  private mapSyncServiceSubscription: Subscription;
+  private mapSyncServiceSubscription: Subscription | null = null;
 
   public async ngAfterViewInit() {
     const settings = this.settingsService.getCachedUserSettings();
@@ -38,7 +38,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         // than refusing to draw the map.
         await this.mmpService.create(
           'map_1',
-          this.mapWrapper.nativeElement,
+          this.mapWrapper().nativeElement,
           settings?.mapOptions
         );
         this.mapSyncService.initMap();
@@ -48,6 +48,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy() {
     this.mapSyncService.reset();
     this.mmpService.remove();
-    this.mapSyncServiceSubscription.unsubscribe();
+    this.mapSyncServiceSubscription?.unsubscribe();
   }
 }

@@ -40,7 +40,7 @@ export class ToolbarComponent {
   private settingsService = inject(SettingsService);
 
   @Input() public node: ExportNodeProperties | null = null;
-  @Input() public editDisabled: boolean;
+  @Input() public editDisabled = false;
   public featureFlagPictograms: boolean;
   public featureFlagAI: boolean;
 

@@ -13,6 +13,7 @@
     "build": "vite build && tsc --project tsconfig.build.json",
     "build:types": "tsc --project tsconfig.build.json",
     "build:js": "vite build",
+    "tsc": "tsc -p tsconfig.json --noEmit",
     "preview": "vite preview",
     "format": "prettier --write src",
     "format:check": "prettier --check src"
