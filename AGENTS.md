@@ -96,7 +96,11 @@ Two commands check this:
    `tsconfig.typecheck.esm.json` for it, because its build configs drop
    `*.spec.ts` to keep tests out of `dist`. It needs both because the backend
    consumes the CommonJS build and the frontend the ESM build, and the two
-   module resolutions accept different imports.
+   module resolutions accept different imports. `packages/mmp` emits ESM only,
+   so it needs one build: `tsconfig.json` is the `noEmit` typecheck config that
+   includes the specs, and `tsconfig.build.json` extends it to emit without
+   them. It compiles under `nodenext`, so a relative import there must carry
+   the `.js` extension, and the package's jest config maps that back to `.ts`.
 2. `pnpm --filter teammapper-frontend run build:dev` checks the templates, which
    `tsc` skips.
 
@@ -122,5 +126,16 @@ styling types, whose schemas mark every field `v.nullable`, derive with
 Import from the module that declares the symbol. Never re-export one module's
 types from another, and never add a barrel file whose only content is a chain of
 re-export statements. A re-export hides where a type comes from and gives one
-type two import paths, so both end up in use. `packages/shared/src/index.ts` is
-the package entry point and the only exception.
+type two import paths, so both end up in use. The package entry points
+`packages/shared/src/index.ts` and `packages/mmp/src/index.ts` are the only
+exceptions.
+
+`packages/mmp` is the mind map renderer (`@teammapper/mmp`). It draws with d3
+into a DOM, so only `teammapper-frontend` may depend on it. Never import it from
+`teammapper-backend` or `packages/shared`. Its `exports` map exposes the entry
+point alone: import from `@teammapper/mmp`, and when the frontend needs another
+symbol, export it from `packages/mmp/src/index.ts` instead of adding a deep
+path. The frontend jest config maps the package to `src/test/mocks/mmp.ts`, and
+`pnpm --filter @teammapper/mmp run test` runs the library's own specs.
+`packages/README.md` lists each workspace package with its purpose and its
+consumers. Update it when you add or remove a package or a consumer.

@@ -12,7 +12,7 @@ import {
 } from './yjs-utils';
 
 // Mock the NodePropertyMapping module
-jest.mock('@mmp/index', () => ({
+jest.mock('@teammapper/mmp', () => ({
   NodePropertyMapping: {
     name: ['name'],
     locked: ['locked'],
@@ -32,7 +32,7 @@ jest.mock('@mmp/index', () => ({
 
 // Import NodePropertyMapping after mocking - needed for reverse mapping
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { NodePropertyMapping } from '@mmp/index';
+import { NodePropertyMapping } from '@teammapper/mmp';
 
 function createMockNode(
   overrides?: Partial<ExportNodeProperties>

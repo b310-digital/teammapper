@@ -3,9 +3,9 @@ import { MmpService } from './mmp.service';
 import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
-import * as mmp from '@mmp/index';
+import * as mmp from '@teammapper/mmp';
 import { Subject } from 'rxjs';
-import { OptionParameters } from '@mmp/map/options';
+import { OptionParameters } from '@teammapper/mmp';
 
 jest.mock('dompurify', () => {
   return {
@@ -16,7 +16,7 @@ jest.mock('dompurify', () => {
   };
 });
 
-jest.mock('@mmp/index', () => ({
+jest.mock('@teammapper/mmp', () => ({
   create: jest.fn(),
   NodePropertyMapping: {},
 }));
