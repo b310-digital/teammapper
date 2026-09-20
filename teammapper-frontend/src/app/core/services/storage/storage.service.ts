@@ -110,12 +110,12 @@ export class StorageService {
   }
 
   /**
-   * Check if there are items in the storage. Return true if there are items, false otherwise.
+   * Check if the storage holds no items.
    */
   public async isEmpty(): Promise<boolean> {
     const items: unknown[] = await this.getAll();
 
-    return items.length > 0;
+    return items.length === 0;
   }
 
   /*

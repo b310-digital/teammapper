@@ -71,9 +71,7 @@ export class DialogImportAiComponent {
         '/mermaid/create',
         JSON.stringify({
           mindmapDescription: this.mindmapDescription,
-          language:
-            this.settingsService.getCachedUserSettings().general.language ??
-            'en',
+          language: this.settingsService.getLanguage(),
         })
       );
 

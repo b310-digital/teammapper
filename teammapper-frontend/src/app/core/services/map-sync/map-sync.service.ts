@@ -288,15 +288,19 @@ export class MapSyncService implements OnDestroy {
   }
 
   private async postMapToServer(): Promise<PrivateServerMap> {
+    // The create endpoint requires a root node, so an absent one is a 400 and
+    // not a server-side default. Settings init leaves the cache empty when it
+    // cannot reach the server, so read the defaults back before posting.
+    const cached = this.settingsService.getCachedUserSettings();
+    const rootNode =
+      cached?.mapOptions.rootNode ??
+      (await this.settingsService.getDefaultSettings()).userSettings.mapOptions
+        .rootNode;
+
     const response = await this.httpService.post(
       API_URL.ROOT,
       '/maps/',
-      // With no cached settings the key drops out of the payload and the
-      // server names the root node from its own defaults.
-      JSON.stringify({
-        rootNode:
-          this.settingsService.getCachedUserSettings()?.mapOptions.rootNode,
-      })
+      JSON.stringify({ rootNode })
     );
 
     return response.json();

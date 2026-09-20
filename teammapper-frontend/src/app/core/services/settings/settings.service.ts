@@ -6,15 +6,14 @@ import {
   CachedAdminMapEntry,
   Settings,
   SUPPORTED_LANGUAGES,
-  SupportedLanguage,
   SystemSettings,
   UserSettings,
 } from '@teammapper/shared';
 import { API_URL, HttpService } from '../../http/http.service';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
-/** Used whenever the settings could not be loaded. */
-const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
+/** `getLanguage` returns this when no user settings are cached. */
+const DEFAULT_LANGUAGE = 'en';
 
 @Injectable({
   providedIn: 'root',
@@ -200,11 +199,12 @@ export class SettingsService {
   }
 
   /**
-   * The language of the cached settings, or the default one when the settings
-   * could not be loaded.
+   * Returns the cached language, or `DEFAULT_LANGUAGE` when nothing is cached.
+   * Settings written by an older version may have no `general` block, and an
+   * empty language would build a malformed request url, so both fall back.
    */
   public getLanguage(): string {
-    return this.getCachedUserSettings()?.general.language ?? DEFAULT_LANGUAGE;
+    return this.getCachedUserSettings()?.general?.language || DEFAULT_LANGUAGE;
   }
 
   public getCachedSystemSettings(): SystemSettings | null {

@@ -30,12 +30,15 @@ import { ExportService } from '../export/export.service';
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+/** The formats `exportMap` knows how to write. */
+export type ExportFormat = 'json' | 'pdf' | 'mermaid' | 'svg' | 'jpeg' | 'png';
+
 /**
  * The font options mmp does not handle itself. The shared MapOptions leaves
  * them optional because a stored map may omit them; MmpService resolves them
  * against the configured defaults before handing them out.
  */
-export type AdditionalMapOptions = Required<MapOptions>;
+type AdditionalMapOptions = Required<MapOptions>;
 
 /**
  * Mmp wrapper service with mmp and other functions.
@@ -76,8 +79,8 @@ export class MmpService implements OnDestroy {
   /**
    * The map this service is attached to. Most of the operations below need
    * one, so calling them before `create` is a programming error, and this
-   * throws instead of returning null. The few that a caller may reach with no
-   * map read `currentMap` and bail out.
+   * throws instead of returning null. A few methods run before `create`. Those
+   * read `currentMap` directly and return early.
    */
   private get map(): MmpMap {
     if (!this.currentMap) {
@@ -349,9 +352,7 @@ export class MmpService implements OnDestroy {
    * Get the currently selected node
    */
   public getSelectedNode() {
-    if (this.currentMap) {
-      return this.map.instance.getSelectedNode();
-    }
+    return this.currentMap?.instance.getSelectedNode();
   }
 
   /**
@@ -540,7 +541,7 @@ export class MmpService implements OnDestroy {
    * Export the current mind map with the format passed as parameter.
    */
   public async exportMap(
-    format = 'json'
+    format: ExportFormat = 'json'
   ): Promise<{ success: boolean; size?: number }> {
     const name = DOMPurify.sanitize(
       (this.getRootNode().name ?? '').replace(/\n/g, ' ').replace(/\s+/g, ' ')
@@ -600,20 +601,6 @@ export class MmpService implements OnDestroy {
    */
   public removeNodeImage() {
     this.updateNode('imageSrc', '');
-  }
-
-  /**
-   * Set the current mind mmp.
-   */
-  public setCurrentMap(map: MmpMap): void {
-    this.currentMap = map;
-  }
-
-  /**
-   * Get the current mind mmp.
-   */
-  public getCurrentMap(): MmpMap | null {
-    return this.currentMap;
   }
 
   /**

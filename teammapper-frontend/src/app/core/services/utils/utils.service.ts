@@ -179,6 +179,9 @@ export class UtilsService {
     const reader = new FileReader();
     reader.readAsDataURL(blob);
     return new Promise((resolve, reject) => {
+      reader.onerror = () => {
+        reject(new Error('The blob could not be read'));
+      };
       reader.onloadend = () => {
         if (reader.result === null) {
           reject(new Error('The blob could not be read'));

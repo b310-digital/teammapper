@@ -75,7 +75,7 @@ export class DialogAboutComponent {
   }
 
   language(): string {
-    return this.settingsService.getCachedUserSettings().general.language;
+    return this.settingsService.getLanguage();
   }
 
   async getMapAdminId(): Promise<string | undefined> {
