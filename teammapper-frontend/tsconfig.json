@@ -22,12 +22,11 @@
     },
     "useDefineForClassFields": false,
 
-    // Strict mode, phase 1. `strictNullChecks` and `strictPropertyInitialization`
-    // stay off for now: they produce ~205 of the ~240 errors a full `strict: true`
-    // reports, more than one reviewable change can carry. We turn them on one
-    // area at a time. Write new code that will pass once they are on.
+    // `strictPropertyInitialization` is the one flag of `strict` still off.
+    // Write class fields that pass once it is on: initialize them, or declare
+    // them optional, instead of relying on `!`.
     "strict": true,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "strictPropertyInitialization": false
   },
   "angularCompilerOptions": {

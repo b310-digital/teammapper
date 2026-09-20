@@ -9,7 +9,6 @@ import { SliderPanelsComponent } from './slider-panels.component';
 // thumb input carries the value, and `step` plus `showTickMarks` draw the ticks.
 // These tests check the displayed value, the bounds and the update call.
 describe('SliderPanelsComponent', () => {
-  let component: SliderPanelsComponent;
   let fixture: ComponentFixture<SliderPanelsComponent>;
   let mmpService: { updateNode: jest.Mock; getAdditionalMapOptions: jest.Mock };
 
@@ -42,9 +41,8 @@ describe('SliderPanelsComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(SliderPanelsComponent);
-    component = fixture.componentInstance;
-    component.node = node();
-    component.editDisabled = false;
+    fixture.componentRef.setInput('node', node());
+    fixture.componentRef.setInput('editDisabled', false);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -78,6 +76,14 @@ describe('SliderPanelsComponent', () => {
     input.dispatchEvent(new Event('input'));
 
     expect(mmpService.updateNode).toHaveBeenCalledWith('fontSize', 35, true);
+  });
+
+  it('hides the font slider while no map has been created', () => {
+    mmpService.getAdditionalMapOptions.mockReturnValue(null);
+    fixture.componentRef.setInput('node', node());
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.font-size')).toBeNull();
   });
 
   it('updates the node image size when the thumb emits input', () => {

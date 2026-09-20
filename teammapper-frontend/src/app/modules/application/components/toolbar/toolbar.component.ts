@@ -39,7 +39,7 @@ export class ToolbarComponent {
   private dialogService = inject(DialogService);
   private settingsService = inject(SettingsService);
 
-  @Input() public node: ExportNodeProperties;
+  @Input() public node: ExportNodeProperties | null = null;
   @Input() public editDisabled: boolean;
   public featureFlagPictograms: boolean;
   public featureFlagAI: boolean;
@@ -55,7 +55,7 @@ export class ToolbarComponent {
 
   public async exportMap(format: ExportFormat) {
     const result = await this.mmpService.exportMap(format);
-    if (result.size > 1000 && format === 'json')
+    if (result.size !== undefined && result.size > 1000 && format === 'json')
       alert(
         this.translationService.instant('MESSAGES.JSON_FILE_SIZE_TOO_LARGE')
       );
@@ -100,7 +100,7 @@ export class ToolbarComponent {
   }
 
   public toogleNodeFontStyle() {
-    const currentStyle = this.mmpService.selectNode().font.style;
+    const currentStyle = this.mmpService.selectNode().font?.style;
 
     if (currentStyle === 'italic') {
       this.mmpService.updateNode('fontStyle', 'normal');
@@ -113,7 +113,8 @@ export class ToolbarComponent {
     const linkInput = prompt(
       this.translationService.instant('MODALS.LINK.URL')
     );
-    if (this.isValidLink(linkInput)) this.mmpService.addNodeLink(linkInput);
+    if (linkInput !== null && this.isValidLink(linkInput))
+      this.mmpService.addNodeLink(linkInput);
   }
 
   public addDetachedNode() {
@@ -125,7 +126,7 @@ export class ToolbarComponent {
   }
 
   public toogleNodeFontWeight() {
-    const currentWeight = this.mmpService.selectNode().font.weight;
+    const currentWeight = this.mmpService.selectNode().font?.weight;
 
     if (currentWeight === 'bold') {
       this.mmpService.updateNode('fontWeight', 'normal');
@@ -157,7 +158,7 @@ export class ToolbarComponent {
     fileReader.onload = (_fileEvent: Event) => {
       // in case file is an image resize it
       const img = new Image(); // create a image
-      img.src = fileReader.result.toString(); // result is base64-encoded Data URI
+      img.src = fileReader.result?.toString() ?? ''; // result is base64-encoded Data URI
       img.onload = (el: Event) => {
         const resizeWidth = 360; // without px
         const elem = document.createElement('canvas'); // create a canvas
@@ -170,6 +171,8 @@ export class ToolbarComponent {
 
         // draw in canvas
         const ctx = elem.getContext('2d');
+        if (!ctx) return;
+
         ctx.drawImage(target, 0, 0, elem.width, elem.height);
 
         // get the base64-encoded Data URI from the resize image
@@ -183,11 +186,12 @@ export class ToolbarComponent {
     const fileReader = new FileReader();
 
     fileReader.onload = (_fileEvent: Event) => {
-      this.mmpService.importMap(fileReader.result.toString());
+      this.mmpService.importMap(fileReader.result?.toString() ?? '');
     };
 
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
-    fileReader.readAsText(fileUpload.files[0]);
+    const file = fileUpload.files?.[0];
+    if (file) fileReader.readAsText(file);
   }
 
   private isValidLink(input: string): boolean {

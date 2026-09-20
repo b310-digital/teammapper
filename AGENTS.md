@@ -1,5 +1,12 @@
 # Agents
 
+This file holds guidelines and rules for working in this repository. Never use
+it as a changelog. Nothing here records what a change did, which files it
+touched or when: git history covers that. Every entry states a rule a future
+reader has to follow, or a fact about the codebase they need in order to follow
+one. Delete an entry when it stops being true rather than appending a note that
+supersedes it.
+
 ## Playwright MCP
 
 ### Setup
@@ -59,33 +66,33 @@ both scripts, or nothing checks its formatting.
 
 ## TypeScript strictness
 
-`teammapper-frontend/tsconfig.json` sets `strict: true` and switches two flags
-back off:
+`teammapper-frontend/tsconfig.json` sets `strict: true` and switches
+`strictPropertyInitialization` back off:
 
 ```jsonc
 "strict": true,
-"strictNullChecks": false,
+"strictNullChecks": true,
 "strictPropertyInitialization": false
 ```
 
-The compiler enforces the rest of `strict`: `noImplicitAny`,
+The compiler enforces the rest of `strict`: `noImplicitAny`, `strictNullChecks`,
 `strictFunctionTypes`, `strictBindCallApply`, `noImplicitThis`, `alwaysStrict`
 and `useUnknownInCatchVariables`. The Angular compiler checks templates with
 `strictTemplates`, `strictInjectionParameters` and `strictInputAccessModifiers`.
 
-The two disabled flags produce ~205 of the ~240 errors a full `strict: true`
-reports, so we turn them on one area at a time. Follow four rules to keep that
-migration small:
+Follow five rules:
 
-1. Write types that will pass once `strictNullChecks` is on. Mark what can be
-   absent as `T | null` or optional, even though the compiler does not yet
-   check it.
-2. Do not silence a type error with `!` or `as any`. A non-null assertion moves
-   the failure from compile time to runtime. Narrow the value instead, or change
-   the type so the null case is representable.
-3. Narrow with `error instanceof Error` before reading `.message`, because
-   `catch` binds `unknown`.
-4. Put the datum on the d3 selection, as in
+1. Write class fields that pass once `strictPropertyInitialization` is on:
+   initialize them, or declare them `T | null` and assign later.
+2. Never silence a type error with `!` or `as any`. A non-null assertion moves
+   the failure to runtime. Narrow the value, or change the type so the null
+   case is representable.
+3. For a value that is missing only until setup runs, write one accessor that
+   throws (see `MmpService.map`, `YjsSyncService.doc`) instead of spreading
+   `?.` across every use.
+4. Narrow with `error instanceof Error` before reading `.message`; `catch`
+   binds `unknown`.
+5. Put the datum on the d3 selection, as in
    `d3.selectAll<SVGPathElement, Node>(...)`. `strictFunctionTypes` rejects an
    annotation on the callback parameter.
 

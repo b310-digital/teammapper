@@ -21,9 +21,7 @@ export class RootComponent implements OnInit {
   public tapCounter = 0;
 
   public async ngOnInit() {
-    const settings = this.settingsService.getCachedUserSettings();
-
-    await this.initTranslations(settings.general.language);
+    await this.initTranslations(this.settingsService.getLanguage());
 
     this.shortcutsService.init();
 

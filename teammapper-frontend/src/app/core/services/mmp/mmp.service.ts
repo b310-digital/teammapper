@@ -38,7 +38,7 @@ export type ExportFormat = 'json' | 'pdf' | 'mermaid' | 'svg' | 'jpeg' | 'png';
  * them optional because a stored map may omit them; MmpService resolves them
  * against the configured defaults before handing them out.
  */
-type AdditionalMapOptions = Required<MapOptions>;
+export type AdditionalMapOptions = Required<MapOptions>;
 
 /**
  * Mmp wrapper service with mmp and other functions.

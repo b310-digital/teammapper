@@ -1,6 +1,9 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, OnChanges, inject } from '@angular/core';
 import { ExportNodeProperties } from '@teammapper/shared';
-import { MmpService } from '../../../../core/services/mmp/mmp.service';
+import {
+  AdditionalMapOptions,
+  MmpService,
+} from '../../../../core/services/mmp/mmp.service';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -11,11 +14,28 @@ import { TranslatePipe } from '@ngx-translate/core';
   styleUrls: ['./slider-panels.component.scss'],
   imports: [MatSlider, MatSliderThumb, FormsModule, TranslatePipe],
 })
-export class SliderPanelsComponent {
+export class SliderPanelsComponent implements OnChanges {
   mmpService = inject(MmpService);
 
-  @Input() public node: ExportNodeProperties;
+  @Input() public node: ExportNodeProperties | null = null;
   @Input() public editDisabled: boolean;
+
+  /**
+   * The sizes of the node with a resolved value, since a slider needs a
+   * number. The sliders write their live value back here, and only MmpService
+   * changes the node itself.
+   */
+  public fontSize = 0;
+  public imageSize = 0;
+
+  /** The font bounds of the open map, absent until one has been created. */
+  public mapOptions: AdditionalMapOptions | null = null;
+
+  ngOnChanges() {
+    this.fontSize = this.node?.font?.size ?? 0;
+    this.imageSize = this.node?.image?.size ?? 0;
+    this.mapOptions = this.mmpService.getAdditionalMapOptions();
+  }
 
   public updateNodeFontSize(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -29,17 +49,5 @@ export class SliderPanelsComponent {
     const value = parseInt(target.value, 10);
 
     this.mmpService.updateNode('imageSize', value, true);
-  }
-
-  public getSettingsFontMaxSize() {
-    return this.mmpService.getAdditionalMapOptions().fontMaxSize;
-  }
-
-  public getSettingsFontMinSize() {
-    return this.mmpService.getAdditionalMapOptions().fontMinSize;
-  }
-
-  public getSettingsFontIncrement() {
-    return this.mmpService.getAdditionalMapOptions().fontIncrement;
   }
 }

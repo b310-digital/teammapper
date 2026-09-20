@@ -49,7 +49,7 @@ export class MindmapsOverview implements OnInit {
   public getMapUrl(entry: CachedAdminMapEntry): string {
     return this.router
       .createUrlTree([`/map/${entry.id}`], {
-        fragment: entry.cachedAdminMapValue.modificationSecret,
+        fragment: entry.cachedAdminMapValue.modificationSecret ?? undefined,
       })
       .toString();
   }

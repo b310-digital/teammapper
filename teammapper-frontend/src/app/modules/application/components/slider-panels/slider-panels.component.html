@@ -1,19 +1,19 @@
 <div class="sliders-panel">
-  @if (node?.font) {
+  @if (node?.font && mapOptions) {
     <mat-slider
       [title]="'TOOLTIPS.TEXT_SIZE' | translate"
       [disabled]="editDisabled"
       class="font-size slider-vertical"
       color="primary"
-      [max]="getSettingsFontMaxSize()"
-      [min]="getSettingsFontMinSize()"
-      [step]="getSettingsFontIncrement()"
+      [max]="mapOptions.fontMaxSize"
+      [min]="mapOptions.fontMinSize"
+      [step]="mapOptions.fontIncrement"
       discrete
       showTickMarks>
       <input
         matSliderThumb
         (input)="updateNodeFontSize($event)"
-        [(ngModel)]="node.font.size"
+        [(ngModel)]="fontSize"
         #textSlider />
     </mat-slider>
   }
@@ -30,7 +30,7 @@
       <input
         matSliderThumb
         (input)="updateNodeImageSize($event)"
-        [(ngModel)]="node.image.size"
+        [(ngModel)]="imageSize"
         #imageSlider />
     </mat-slider>
   }
