@@ -9,6 +9,17 @@ Keep environment-specific setup out of this file. Container names, addresses,
 ports, cache directories and endpoints belong in `docker-compose.yml`, the
 README, or a gitignored config.
 
+## Vocabulary
+
+`docs/glossary.md` defines every domain concept and fixes one term per concept.
+Read it before naming anything, and use its terms in code, comments, commit
+messages and documentation. The core object is a **mind map**, short form
+**map**. Never call it a board, a canvas, a diagram or a document. The glossary
+opens with a table of the other words to avoid.
+
+Add an entry when you introduce a concept, and correct one when a rename makes
+it wrong.
+
 ## E2E tests
 
 The suite in `teammapper-frontend/e2e` drives a browser in the `playwright`
