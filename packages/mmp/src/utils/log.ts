@@ -1,5 +1,5 @@
 /**
- * Manage console messages and errors.
+ * Throw typed errors with a message.
  */
 export default class Log {
   /**
@@ -28,21 +28,5 @@ export default class Log {
       default:
         throw new Error(message);
     }
-  }
-
-  /**
-   * Print an info message.
-   * @param {string} message
-   */
-  static info(message: string) {
-    console.info(message);
-  }
-
-  /**
-   * Print a debug message.
-   * @param {string} message
-   */
-  static debug(message: string) {
-    console.debug(message);
   }
 }

@@ -153,13 +153,6 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Update the mind mmp option properties.
-   */
-  public updateOptions(property: string, value: boolean | string | number) {
-    this.map.instance.updateOptions(property, value);
-  }
-
-  /**
    * Update the additional map settings
    */
   public async updateAdditionalMapOptions(options: CachedMapOptions) {
@@ -197,13 +190,6 @@ export class MmpService implements OnDestroy {
         resolve(uri);
       }, type);
     });
-  }
-
-  /**
-   * Save the current snapshot to history
-   */
-  public save() {
-    return this.map.instance.save();
   }
 
   /**
@@ -315,13 +301,6 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * exports the given node props
-   */
-  public getNode(nodeId: string): ExportNodeProperties | undefined {
-    return this.map.instance.exportNodeProperties(nodeId);
-  }
-
-  /**
    * Checks if a given node actually exists
    */
   public existNode(nodeId: string): boolean {
@@ -351,13 +330,6 @@ export class MmpService implements OnDestroy {
    */
   public getSelectedNode() {
     return this.currentMap?.instance.getSelectedNode();
-  }
-
-  /**
-   * Deselect the current node.
-   */
-  public deselectNode() {
-    this.map.instance.deselectNode();
   }
 
   /**
@@ -599,27 +571,6 @@ export class MmpService implements OnDestroy {
    */
   public removeNodeImage() {
     this.updateNode('imageSrc', '');
-  }
-
-  /**
-   * Returns the current selected Node
-   */
-  public exportSelectedNode(): ExportNodeProperties {
-    return this.map.instance.exportSelectedNode();
-  }
-
-  /**
-   * Reverse the last one change of the mind mmp.
-   */
-  public undo() {
-    this.map.instance.undo();
-  }
-
-  /**
-   * Repeat a previously undoed change of the mind mmp.
-   */
-  public redo() {
-    this.map.instance.redo();
   }
 
   /**

@@ -1,7 +1,6 @@
 import * as d3 from 'd3';
 import { ZoomBehavior, D3ZoomEvent } from 'd3';
 import Map from '../map.js';
-import { Event } from './events.js';
 import Log from '../../utils/log.js';
 
 /**
@@ -37,7 +36,6 @@ export default class Zoom {
     }
 
     this.move(true, duration);
-    this.map.events.call(Event.zoomIn);
   };
 
   /**
@@ -50,7 +48,6 @@ export default class Zoom {
     }
 
     this.move(false, duration);
-    this.map.events.call(Event.zoomOut);
   };
 
   /**
@@ -81,8 +78,6 @@ export default class Zoom {
       default:
         this.zoomBehavior.translateTo(svg, x, y);
     }
-
-    this.map.events.call(Event.center);
   };
 
   /**

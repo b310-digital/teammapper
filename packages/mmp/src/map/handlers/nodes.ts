@@ -44,20 +44,18 @@ export const PropertyMapping = {
  */
 export default class Nodes {
   /**
-   * Get the associated map instance and initialize counter and nodes.
+   * Get the associated map instance and initialize the nodes.
    * @param {MmpMap} map
    */
   constructor(map: MmpMap) {
     this.map = map;
 
-    this.counter = 0;
     this.nodes = new Map();
   }
   static NodePropertyMapping: typeof PropertyMapping = PropertyMapping;
 
   private map: MmpMap;
 
-  private counter: number;
   private nodes: Map<string, Node>;
   private selectedNode!: Node;
 
@@ -91,8 +89,6 @@ export default class Nodes {
     }
 
     this.nodes.set(properties.id, node);
-
-    this.counter++;
 
     this.map.draw.update();
 
@@ -134,8 +130,6 @@ export default class Nodes {
     const node: Node = new Node(properties);
 
     this.nodes.set(properties.id, node);
-
-    this.counter++;
 
     if (
       !properties.coordinates?.x &&
@@ -668,23 +662,6 @@ export default class Nodes {
   }
 
   /**
-   * Export currently selected node
-   */
-  public exportSelectedNode = (): ExportNodeProperties => {
-    return this.getNodeProperties(this.selectedNode);
-  };
-
-  /**
-   * Return the node properties with the id equal to id passed as parameter.
-   */
-  public exportNodeProperties = (
-    id: string
-  ): ExportNodeProperties | undefined => {
-    const node = this.getNode(id);
-    return node ? this.getNodeProperties(node) : undefined;
-  };
-
-  /**
    * Return the root parameters
    */
   public exportRootProperties = (): ExportNodeProperties => {
@@ -696,22 +673,6 @@ export default class Nodes {
    */
   public setNode(key: string, node: Node) {
     this.nodes.set(key, node);
-  }
-
-  /**
-   * Get the counter number of the nodes.
-   * @returns {number} counter
-   */
-  public getCounter() {
-    return this.counter;
-  }
-
-  /**
-   * Set the counter of the nodes.
-   * @param {number} number
-   */
-  public setCounter(number: number) {
-    this.counter = number;
   }
 
   /**

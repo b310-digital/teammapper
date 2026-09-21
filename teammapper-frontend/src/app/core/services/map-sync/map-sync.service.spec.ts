@@ -58,9 +58,6 @@ describe('MapSyncService', () => {
       removeNode: jest.fn(),
       highlightNode: jest.fn(),
       exportAsJSON: jest.fn().mockReturnValue([]),
-      undo: jest.fn(),
-      redo: jest.fn(),
-      history: jest.fn().mockReturnValue({ snapshots: [], index: 0 }),
     } as unknown as jest.Mocked<MmpService>;
 
     settingsService = {
