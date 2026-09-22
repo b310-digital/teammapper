@@ -157,17 +157,6 @@ export interface UserSettings {
   mapOptions: UserMapOptions;
 }
 
-export type SnapshotChanges = Record<
-  string,
-  Partial<ExportNodeProperties> | undefined
->;
-
-export interface MapDiff {
-  added: SnapshotChanges;
-  deleted: SnapshotChanges;
-  updated: SnapshotChanges;
-}
-
 export type NodeProperty =
   | 'name'
   | 'locked'
@@ -253,13 +242,6 @@ export interface OldMmpNode {
 
 export interface MmpEventPayloadMap {
   create: MapCreateEvent;
-  center: void;
-  undo: MapDiff;
-  redo: MapDiff;
-  exportJSON: void;
-  exportImage: void;
-  zoomIn: void;
-  zoomOut: void;
   nodeSelect: ExportNodeProperties;
   nodeDeselect: ExportNodeProperties;
   nodeUpdate: NodeUpdateEvent;

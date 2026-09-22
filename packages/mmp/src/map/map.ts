@@ -3,7 +3,7 @@ import Events from './handlers/events.js';
 import Zoom from './handlers/zoom.js';
 import Draw from './handlers/draw.js';
 import Options, { OptionParameters } from './options.js';
-import History, { ExportHistory } from './handlers/history.js';
+import History from './handlers/history.js';
 import Drag from './handlers/drag.js';
 import Nodes from './handlers/nodes.js';
 import Export from './handlers/export.js';
@@ -100,31 +100,23 @@ export default class MmpMap {
       cutNode: this.copyPaste.cut,
       applyCoordinatesToMapSnapshot: this.nodes.applyCoordinatesToMapSnapshot,
       distributeNodes: this.nodes.distributeNodes,
-      deselectNode: this.nodes.deselectNode,
       getSelectedNode: this.nodes.getSelectedNode,
       editNode: this.nodes.editNode,
       toggleBranchVisibility: this.nodes.toggleBranchVisibility,
       existNode: this.nodes.existNode,
       exportAsImage: this.export.asImage,
       exportAsJSON: this.export.asJSON,
-      exportNodeProperties: this.nodes.exportNodeProperties,
       exportRootProperties: this.nodes.exportRootProperties,
-      exportSelectedNode: this.nodes.exportSelectedNode,
       highlightNode: this.nodes.highlightNodeWithColor,
-      history: this.history.getHistory,
       new: this.history.new,
-      save: this.history.save,
       nodeChildren: this.nodes.nodeChildren,
       on: this.events.on,
       pasteNode: this.copyPaste.paste,
-      redo: this.history.redo,
       remove: this.remove,
       removeNode: this.nodes.removeNode,
       selectNode: this.nodes.selectNode,
-      undo: this.history.undo,
       unsubscribeAll: this.events.unsubscribeAll,
       updateNode: this.nodes.updateNode,
-      updateOptions: this.options.update,
       zoomIn: this.zoom.zoomIn,
       zoomOut: this.zoom.zoomOut,
     });
@@ -145,28 +137,21 @@ export interface MmpInstance {
   cutNode: (id?: string) => void;
   applyCoordinatesToMapSnapshot: (mapSnapshot: MapSnapshot) => MapSnapshot;
   distributeNodes: (notifyWithEvent?: boolean) => void;
-  deselectNode: () => void;
   getSelectedNode: () => Node;
   editNode: () => void;
   toggleBranchVisibility: () => void;
   existNode: (id?: string) => boolean;
   exportAsImage: (callback: (url: string) => void, type?: string) => void;
   exportAsJSON: () => MapSnapshot;
-  exportNodeProperties: (id: string) => ExportNodeProperties | undefined;
   exportRootProperties: () => ExportNodeProperties;
-  exportSelectedNode: () => ExportNodeProperties;
   highlightNode: (id: string, color: string, notifyWithEvent?: boolean) => void;
-  history: () => ExportHistory;
   new: (snapshot?: MapSnapshot, notifyWithEvent?: boolean) => void;
-  save: () => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];
   on: (event: string, callback: (...args: unknown[]) => void) => void;
   pasteNode: (id?: string) => void;
-  redo: () => void;
   remove: () => void;
   removeNode: (id?: string, notifyWithEvent?: boolean) => void;
   selectNode: (id?: string) => ExportNodeProperties;
-  undo: () => void;
   unsubscribeAll: () => void;
   updateNode: (
     property: NodeProperty | string,
@@ -175,7 +160,6 @@ export interface MmpInstance {
     updateHistory?: boolean,
     id?: string
   ) => void;
-  updateOptions: (property: string, value: unknown) => void;
   zoomIn: (duration?: number) => void;
   zoomOut: (duration?: number) => void;
 }

@@ -2,7 +2,6 @@ import Map from '../map.js';
 import Log from '../../utils/log.js';
 import type { MapSnapshot } from '@teammapper/shared';
 import Utils from '../../utils/utils.js';
-import { Event } from './events.js';
 import * as d3 from 'd3';
 import DOMPurify from 'dompurify';
 
@@ -26,8 +25,6 @@ export default class Export {
    */
   public asJSON = (): MapSnapshot => {
     const snapshot = this.map.history.current();
-
-    this.map.events.call(Event.exportJSON);
 
     return Utils.cloneObject(snapshot);
   };
@@ -88,7 +85,6 @@ export default class Export {
         canvas.toBlob(() => undefined);
 
         callback(canvas.toDataURL(type));
-        this.map.events.call(Event.exportImage);
       };
 
       image.onerror = () => {

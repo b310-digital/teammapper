@@ -2,7 +2,6 @@ import { NodeColors, NodeFont, NodeImage, NodeLink } from './models/node.js';
 import type { MapNodeCoordinates, MapNodeSettings } from '@teammapper/shared';
 import Utils from '../utils/utils.js';
 import Map from './map.js';
-import * as d3 from 'd3';
 import Log from '../utils/log.js';
 
 /**
@@ -63,68 +62,16 @@ export default class Options implements OptionParameters {
     }
 
     switch (property) {
-      case 'fontFamily':
-        this.updateFontFamily(value as string);
-        break;
-      case 'centerOnResize':
-        this.updateCenterOnResize(value as boolean);
-        break;
       case 'drag':
         this.updateDrag(value as boolean);
         break;
       case 'edit':
         this.updateEdit(value as boolean);
         break;
-      case 'zoom':
-        this.updateZoom(value as boolean);
-        break;
-      case 'defaultNode':
-        this.updateDefaultNode(value as DefaultNodeProperties);
-        break;
-      case 'rootNode':
-        this.updateDefaultRootNode(value as DefaultNodeProperties);
-        break;
-      case 'showLinktext':
-        this.updateShowLinktext(value as boolean);
-        break;
       default:
         Log.error('The property does not exist');
     }
   };
-
-  /**
-   * Update the font family of all nodes.
-   * @param {string} font
-   */
-  private updateFontFamily(font: string) {
-    if (typeof font !== 'string') {
-      Log.error('The font must be a string', 'type');
-    }
-
-    this.fontFamily = font;
-
-    this.map.draw.update();
-  }
-
-  /**
-   * Update centerOnResize behavior.
-   * @param {boolean} flag
-   */
-  private updateCenterOnResize(flag: boolean) {
-    if (typeof flag !== 'boolean') {
-      Log.error('The value must be a boolean', 'type');
-    }
-
-    this.centerOnResize = flag;
-
-    if (this.centerOnResize === true) {
-      d3.select(window).on('resize.' + this.map.id, () => {
-        this.map.zoom.center();
-      });
-    } else {
-      d3.select(window).on('resize.' + this.map.id, null);
-    }
-  }
 
   /**
    * Update drag behavior.
@@ -153,62 +100,6 @@ export default class Options implements OptionParameters {
     this.edit = flag;
 
     this.map.draw.clear();
-    this.map.draw.update();
-  }
-
-  /**
-   * Update zoom behavior.
-   * @param {boolean} flag
-   */
-  private updateZoom(flag: boolean) {
-    if (typeof flag !== 'boolean') {
-      Log.error('The value must be a boolean', 'type');
-    }
-
-    this.zoom = flag;
-
-    if (this.zoom === true) {
-      this.map.dom.svg.call(this.map.zoom.getZoomBehavior());
-    } else {
-      this.map.dom.svg.on('.zoom', null);
-    }
-  }
-
-  /**
-   * Update default node properties.
-   * @param {DefaultNodeProperties} properties
-   */
-  private updateDefaultNode(properties: DefaultNodeProperties) {
-    this.defaultNode = Utils.mergeObjects(
-      this.defaultNode,
-      properties,
-      true
-    ) as DefaultNodeProperties;
-  }
-
-  /**
-   * Update default root node properties.
-   * @param {DefaultNodeProperties} properties
-   */
-  private updateDefaultRootNode(properties: DefaultNodeProperties) {
-    this.rootNode = Utils.mergeObjects(
-      this.rootNode,
-      properties,
-      true
-    ) as DefaultNodeProperties;
-  }
-
-  /**
-   * Update if Linktext or Link Icon is shown.
-   * @param {boolean} value
-   */
-  private updateShowLinktext(value: boolean) {
-    if (typeof value !== 'boolean') {
-      Log.error('The value must be a boolean', 'type');
-    }
-
-    this.showLinktext = value;
-
     this.map.draw.update();
   }
 }

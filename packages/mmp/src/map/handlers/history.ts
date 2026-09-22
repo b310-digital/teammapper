@@ -4,10 +4,8 @@ import { Event } from './events.js';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { DefaultNodeValues } from '../options.js';
-import { detailedDiff } from 'deep-object-diff';
 import type {
   ExportNodeProperties,
-  MapDiff,
   MapNodeColors,
   MapNodeCoordinates,
   MapNodeFont,
@@ -18,64 +16,29 @@ import type {
 } from '@teammapper/shared';
 
 /**
- * Manage map history, for each change save a snapshot.
+ * Hold the snapshot of the current map and rebuild the map from one.
  */
 export default class History {
   private map: Map;
 
-  private index: number;
-  private snapshots: MapSnapshot[];
+  private snapshot: MapSnapshot;
 
   /**
-   * Get the associated map instance, initialize index and snapshots.
+   * Get the associated map instance and start with an empty snapshot.
    * @param {Map} map
    */
   constructor(map: Map) {
     this.map = map;
 
-    this.index = -1;
-    this.snapshots = [];
+    this.snapshot = [];
   }
 
   /**
-   * As snapshots are saved by number (1, 2, 3 etc) by the deep-object-diff library and not by node ID, this switches out the number with the affected node ID.
-   * This helps the server understand which node was modified.
-   * @param {MapDiff} snapshotDiff
-   */
-  private switchDiffKeys(snapshotDiff: MapDiff) {
-    const updatedSnapshot: MapDiff = {
-      added: {},
-      deleted: {},
-      updated: {},
-    };
-
-    const keys: (keyof MapDiff)[] = ['added', 'deleted', 'updated'];
-    keys.forEach((key: keyof MapDiff) => {
-      const diffSection = snapshotDiff[key];
-      if (diffSection && typeof diffSection === 'object') {
-        updatedSnapshot[key] = Object.entries(diffSection).reduce(
-          (
-            acc,
-            [index, value]: [string, Partial<ExportNodeProperties> | undefined]
-          ) => {
-            const nodeId =
-              value?.id ?? this.snapshots[this.index][Number(index)]?.id;
-            return nodeId ? { ...acc, [nodeId]: value ?? {} } : acc;
-          },
-          {}
-        );
-      }
-    });
-
-    return updatedSnapshot;
-  }
-
-  /**
-   * Return last snapshot of the current map.
-   * @return {MapSnapshot} [snapshot] - Last snapshot of the map.
+   * Return the snapshot of the current map.
+   * @return {MapSnapshot} snapshot
    */
   public current = (): MapSnapshot => {
-    return this.snapshots[this.index];
+    return this.snapshot;
   };
 
   /**
@@ -84,8 +47,6 @@ export default class History {
    */
   public new = (snapshot?: MapSnapshot, notifyWithEvent = true) => {
     if (snapshot === undefined) {
-      this.map.nodes.setCounter(0);
-
       this.map.nodes.clear();
 
       this.map.draw.clear();
@@ -116,7 +77,6 @@ export default class History {
           'There was an error importing the map; changes have been rolled back.'
         );
       } else {
-        this.clearHistory();
         this.save();
         if (notifyWithEvent)
           this.map.events.call(Event.create, this.map.dom, {
@@ -129,77 +89,11 @@ export default class History {
   };
 
   /**
-   * Undo last changes.
-   */
-  public undo = () => {
-    if (this.index > 1) {
-      const prevSnapshot = this.snapshots[this.index - 1];
-      const currentSnapshot = this.snapshots[this.index];
-
-      // The position of these snapshots matters! diff() will always return the right-hand snapshot when comparing
-      const diffSnapshots = detailedDiff(
-        currentSnapshot,
-        prevSnapshot
-      ) as MapDiff;
-      // The key for the diff will be based off of snapshot index (eg. "0", "1", "2"), but we want to replace that with the node id to make it robust for server-side.
-      const switchedKeysSnapshot = this.switchDiffKeys(diffSnapshots);
-
-      this.redraw(this.snapshots[--this.index]);
-      this.map.events.call(Event.undo, this.map.dom, switchedKeysSnapshot);
-    }
-  };
-
-  /**
-   * Redo one change which was undone.
-   */
-  public redo = () => {
-    if (this.index < this.snapshots.length - 1) {
-      const currentSnapshot = this.snapshots[this.index];
-      const nextSnapshot = this.snapshots[this.index + 1];
-
-      const diffSnapshots = detailedDiff(
-        currentSnapshot,
-        nextSnapshot
-      ) as MapDiff;
-      // The key for the diff will be based off of snapshot index (eg. "0", "1", "2"), but we want to replace that with the node id to make it robust for server-side.
-      const switchedKeysSnapshot = this.switchDiffKeys(diffSnapshots);
-
-      this.redraw(this.snapshots[++this.index]);
-      this.map.events.call(Event.redo, this.map.dom, switchedKeysSnapshot);
-    }
-  };
-
-  /**
    * Save the current snapshot of the mind map.
    */
   public save() {
-    if (this.index < this.snapshots.length - 1) {
-      this.snapshots.splice(this.index + 1);
-    }
-
-    this.snapshots.push(this.getSnapshot());
-
-    this.index++;
+    this.snapshot = this.getSnapshot();
   }
-
-  /**
-   * Clears the history of the map
-   */
-  public clearHistory = () => {
-    this.snapshots = [];
-    this.index = -1;
-  };
-
-  /**
-   * Return all history of map with all snapshots.
-   * @returns {MapSnapshot[]}
-   */
-  public getHistory = (): ExportHistory => {
-    return {
-      snapshots: this.snapshots.slice(0),
-      index: this.index,
-    };
-  };
 
   /**
    * Redraw the map with a new snapshot.
@@ -245,8 +139,6 @@ export default class History {
     this.map.draw.update();
 
     this.map.nodes.selectRootNode();
-
-    this.setCounter();
   }
 
   /**
@@ -260,17 +152,6 @@ export default class History {
         return this.map.nodes.getNodeProperties(node, false);
       })
       .slice();
-  }
-
-  /**
-   * Set the right counter value of the nodes.
-   */
-  private setCounter() {
-    const id = this.map.nodes.getNodes().map((node: Node) => {
-      const words = node.id.split('_');
-      return parseInt(words[words.length - 1]);
-    });
-    this.map.nodes.setCounter(Math.max(...id) + 1);
   }
 
   /**
@@ -426,9 +307,4 @@ export default class History {
       }
     });
   }
-}
-
-export interface ExportHistory {
-  snapshots: MapSnapshot[];
-  index: number;
 }
