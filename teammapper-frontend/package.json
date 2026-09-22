@@ -26,7 +26,7 @@
   ],
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host $BINDING --ssl false",
+    "start": "ng serve --host ${BINDING:-0.0.0.0} --ssl false",
     "test": "ng test",
     "tsc": "npx tsc -p ./tsconfig.json --noEmit",
     "build:packages": "pnpm install --filter \"@teammapper/*\" --frozen-lockfile && pnpm run --filter \"@teammapper/*\" build",
