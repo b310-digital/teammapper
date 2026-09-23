@@ -163,6 +163,7 @@ describe('MapsService', () => {
             coordinatesX: 0,
             coordinatesY: 0,
             root: isRoot,
+            detached: false,
           })
         )
       await save(root, null, true)
@@ -193,7 +194,8 @@ describe('MapsService', () => {
         coordinatesY: 3,
         root: true,
         detached: false,
-        colorsName: 'not-a-color-value',
+        // Entity validation accepts 1.5, and Postgres rejects it as an integer
+        fontSize: 1.5,
       })
 
       await expect(
