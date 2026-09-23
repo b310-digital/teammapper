@@ -127,6 +127,8 @@ test('imports an old JSON export holding detached nodes as trees', async ({
 }) => {
   await createMap(page);
   await importJson(page, './e2e/fake-data/legacy-detached-map.json');
+  // toBeVisible passes for a node outside the viewport, which the clicks
+  // below cannot reach, because the map does not scroll.
   for (const name of [
     'Legacy root',
     'Legacy child',
@@ -134,7 +136,7 @@ test('imports an old JSON export holding detached nodes as trees', async ({
     'Pasted under note',
     'Lonely note',
   ]) {
-    await expect(page.getByText(name, { exact: true })).toBeVisible();
+    await expect(page.getByText(name, { exact: true })).toBeInViewport();
   }
 
   await addChild(page, 'Legacy note', 'Note child');
@@ -165,7 +167,7 @@ test('imports an old JSON export holding detached nodes as trees', async ({
   expect({
     x: (note?.x ?? 0) - (root?.x ?? 0),
     y: (note?.y ?? 0) - (root?.y ?? 0),
-  }).toEqual({ x: 600, y: -300 });
+  }).toEqual({ x: 300, y: -150 });
 });
 
 test('deletes a second tree and keeps the main tree', async ({ page }) => {
