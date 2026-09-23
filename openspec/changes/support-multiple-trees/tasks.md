@@ -2,11 +2,11 @@ Each section is one pull request of about 500 changed lines, counting tests, and
 
 ## 1. PR 1: the renderer accepts several roots (about 450 lines)
 
-- [ ] 1.1 Make `Nodes.addNode` accept an explicit `null` parent for a root, and make `Nodes.addNodes` pass `null` for an empty parent instead of falling back to the selected node
-- [ ] 1.2 Add a lookup for the root of a node's own tree, and compare against it in `getOrientation`, which moves keyboard navigation, drag feedback and paste mirroring along with it
-- [ ] 1.3 Split the children of any root left and right in `pickColumn`, and apply the root rules of `moveSelectionOnLevel` and `updateNodeBranchColor` to every root
-- [ ] 1.4 Give every root branch color `''` by default
-- [ ] 1.5 Write unit tests: a root loaded by `addNodes` stays parentless whatever is selected, a child of a second root lands on the side `pickColumn` picks for it, orientation reads the node's own tree root, single-tree output is unchanged
+- [x] 1.1 Make `Nodes.addNode` accept an explicit `null` parent for a root, and make `Nodes.addNodes` pass `null` for an empty parent instead of falling back to the selected node
+- [x] 1.2 Add a lookup for the root of a node's own tree, and compare against it in `getOrientation`, which moves keyboard navigation, drag feedback and paste mirroring along with it
+- [x] 1.3 Split the children of any root left and right in `pickColumn`, and apply the root rules of `moveSelectionOnLevel` and `updateNodeBranchColor` to every root
+- [x] 1.4 Give every root branch color `''` by default
+- [x] 1.5 Write unit tests: a root loaded by `addNodes` stays parentless whatever is selected, a child of a second root lands on the side `pickColumn` picks for it, orientation reads the node's own tree root, single-tree output is unchanged
 
 ## 2. PR 2: multi-root algorithms and the sync observer (about 550 lines)
 

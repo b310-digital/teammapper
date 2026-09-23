@@ -98,21 +98,18 @@ export default class Nodes {
   /**
    * Add a node in the map.
    * @param {UserNodeProperties} userProperties
-   * @param {string} parentId
+   * @param {string | null} parentId the parent's id, null to add a root, or
+   * undefined to add a child of the selected node
    * @param {string} overwriteId
    */
   public addNode = (
     userProperties?: UserNodeProperties,
     notifyWithEvent = true,
     updateHistory = true,
-    parentId?: string,
+    parentId?: string | null,
     overwriteId?: string
   ): Node => {
-    const parentNode: Node | null = userProperties?.detached
-      ? null
-      : parentId
-        ? (this.getNode(parentId) ?? null)
-        : this.getSelectedNode();
+    const parentNode = this.resolveParent(userProperties, parentId);
 
     const properties: NodeProperties = Utils.mergeObjects(
       this.map.options.defaultNode,
@@ -122,6 +119,12 @@ export default class Nodes {
 
     properties.id = overwriteId || uuidv4();
     properties.parent = parentNode;
+
+    // A root draws no branch. Its children fall through to the automatic
+    // branch colors, as the main root's children do.
+    if (!parentNode && userProperties?.colors?.branch === undefined) {
+      properties.colors = { ...properties.colors, branch: '' };
+    }
 
     // A node added to a branch this person hid starts hidden itself, so a node
     // somebody else creates there does not appear on its own.
@@ -136,7 +139,7 @@ export default class Nodes {
     if (
       !properties.coordinates?.x &&
       !properties.coordinates?.y &&
-      !node.isRoot
+      node.parent
     ) {
       node.coordinates = this.calculateCoordinates(node);
     }
@@ -157,14 +160,29 @@ export default class Nodes {
   };
 
   /**
-   * Adds multiple nodes at once and saves one snapshot to history.
+   * The parent a node added through addNode gets: none for a detached node or
+   * an explicit null, the named node for an id, the selected node otherwise.
+   */
+  private resolveParent(
+    userProperties: UserNodeProperties | undefined,
+    parentId: string | null | undefined
+  ): Node | null {
+    if (userProperties?.detached || parentId === null) return null;
+    if (parentId) return this.getNode(parentId) ?? null;
+
+    return this.getSelectedNode();
+  }
+
+  /**
+   * Adds multiple nodes at once and saves one snapshot to history. A node
+   * with an empty parent becomes a root, whatever node is selected.
    * @param {ExportNodeProperties[]} nodes
    * @param {boolean} updateHistory
    */
   public addNodes = (nodes: ExportNodeProperties[], updateHistory = true) => {
     nodes.forEach(node => {
       if (!this.existNode(node.id)) {
-        this.addNode(node, false, false, node.parent ?? undefined, node.id);
+        this.addNode(node, false, false, node.parent || null, node.id);
       }
     });
 
@@ -622,17 +640,35 @@ export default class Nodes {
   }
 
   /**
-   * Return the orientation of a node in the map (true if left).
+   * Return whether a node is left of the root of its own tree (true if left).
+   * A root has no side and returns undefined.
    * @return {boolean}
    */
   public getOrientation(node: Node): boolean | undefined {
-    if (node.isRoot) {
+    if (!node.parent) {
       return;
     }
 
-    const root = this.getRoot();
+    const root = this.getTreeRoot(node);
 
     return (node.coordinates?.x ?? 0) < (root.coordinates?.x ?? 0);
+  }
+
+  /**
+   * Return the root of the tree a node belongs to: the ancestor with no
+   * parent. A cycle of ancestors stops at the node that closes it.
+   * @returns {Node} root
+   */
+  public getTreeRoot(node: Node): Node {
+    const visited = new Set<Node>([node]);
+    let current = node;
+
+    while (current.parent && !visited.has(current.parent)) {
+      current = current.parent;
+      visited.add(current);
+    }
+
+    return current;
   }
 
   /**
@@ -756,14 +792,14 @@ export default class Nodes {
 
   /**
    * The column a new node lands in, as an offset from its parent, plus the
-   * siblings sharing that column. A child of the root takes the side that
-   * currently holds fewer siblings.
+   * siblings sharing that column. A child of a root takes the side of its
+   * tree that currently holds fewer siblings.
    */
   private pickColumn(node: Node): { column: number; siblings: Node[] } {
     const siblings = this.getSiblings(node);
     const parent = node.parent;
 
-    if (parent?.isRoot) {
+    if (parent && !parent.parent) {
       const [left, right] = this.splitByOrientation(siblings);
       return left.length <= right.length
         ? { column: -NODE_HORIZONTAL_SPACING, siblings: left }
@@ -1046,7 +1082,7 @@ export default class Nodes {
 
     const sanitizedColor = DOMPurify.sanitize(color);
 
-    if (!node.isRoot) {
+    if (node.parent) {
       if (node.colors.name !== color) {
         const branch = document.getElementById(node.id + '_branch');
 
@@ -1059,9 +1095,12 @@ export default class Nodes {
       } else {
         return false;
       }
-    } else {
-      Log.error('The root node has no branches');
+    } else if (node.colors.branch === sanitizedColor) {
+      // A remote colors sync sends the branch color with the other colors,
+      // unchanged, so a root accepts its own value without an error.
       return false;
+    } else {
+      Log.error('A root node has no branches');
     }
   };
 
@@ -1254,7 +1293,9 @@ export default class Nodes {
    * @param {boolean} direction
    */
   private moveSelectionOnLevel(direction: boolean) {
-    if (!this.selectedNode.isRoot) {
+    const parent = this.selectedNode.parent;
+
+    if (parent) {
       let siblings = this.getSiblings(this.selectedNode).filter(
         (node: Node) => {
           return (
@@ -1263,7 +1304,7 @@ export default class Nodes {
         }
       );
 
-      if (this.selectedNode.parent?.isRoot) {
+      if (!parent.parent) {
         siblings = siblings.filter((node: Node) => {
           return (
             this.getOrientation(node) === this.getOrientation(this.selectedNode)
@@ -1303,7 +1344,7 @@ export default class Nodes {
     const movesToParent =
       (!orientation && direction) || (orientation && !direction);
 
-    // The root has no parent and no orientation, so it always moves to a child
+    // A root has no parent and no orientation, so it always moves to a child
     // on the requested side.
     if (movesToParent && parent) {
       this.selectNode(parent.id);
@@ -1313,7 +1354,7 @@ export default class Nodes {
     let children = this.getChildren(this.selectedNode);
 
     if (orientation === undefined) {
-      // The selected node is the root
+      // The selected node is a root
       children = children.filter((node: Node) => {
         return this.getOrientation(node) === direction;
       });

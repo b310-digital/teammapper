@@ -19,6 +19,10 @@ export default class CopyPaste {
 
   private copiedNodes: ExportNodeProperties[] = [];
 
+  // The x of the copied tree's root at copy time. A cut removes the copied
+  // nodes, so paste cannot look the root up on the map.
+  private copiedTreeRootX = 0;
+
   /**
    * Get the associated map instance.
    * @param {Map} map
@@ -46,11 +50,7 @@ export default class CopyPaste {
     }
 
     if (!node.isRoot) {
-      this.copiedNodes = [this.map.nodes.getNodeProperties(node, false)];
-
-      this.map.nodes.getDescendants(node).forEach((node: Node) => {
-        this.copiedNodes.push(this.map.nodes.getNodeProperties(node, false));
-      });
+      this.copyToClipboard(node);
     } else {
       Log.error('The root node can not be copied');
     }
@@ -75,17 +75,25 @@ export default class CopyPaste {
     }
 
     if (!node.isRoot) {
-      this.copiedNodes = [this.map.nodes.getNodeProperties(node, false)];
-
-      this.map.nodes.getDescendants(node).forEach((node: Node) => {
-        this.copiedNodes.push(this.map.nodes.getNodeProperties(node, false));
-      });
+      this.copyToClipboard(node);
 
       this.map.nodes.removeNode(node.id);
     } else {
       Log.error('The root node can not be cut');
     }
   };
+
+  /**
+   * Write a node and its descendants to the mmp clipboard, together with the
+   * x of the root of its tree.
+   * @param {Node} node
+   */
+  private copyToClipboard(node: Node) {
+    this.copiedNodes = [node, ...this.map.nodes.getDescendants(node)].map(
+      copied => this.map.nodes.getNodeProperties(copied, false)
+    );
+    this.copiedTreeRootX = this.map.nodes.getTreeRoot(node).coordinates.x;
+  }
 
   /**
    * If there are nodes in the mmp clipboard paste them in the map as children
@@ -179,7 +187,7 @@ export default class CopyPaste {
 
   /**
    * Keep the offset a copied node had to its old parent, mirrored when the new
-   * parent sits on the other side of the root.
+   * parent is on the other side of its tree root.
    * @param {ExportNodeProperties} nodeProperties
    * @param {Node} newParentNode
    * @returns {MapNodeCoordinates} coordinates
@@ -188,14 +196,13 @@ export default class CopyPaste {
     nodeProperties: ExportNodeProperties,
     newParentNode: Node
   ): MapNodeCoordinates {
-    const rootNode = this.map.nodes.getRoot();
     const oldParentNode = this.findInCopiedNodes(nodeProperties.parent);
     const oldParent = oldParentNode?.coordinates ?? ORIGIN;
     const node = nodeProperties.coordinates ?? ORIGIN;
 
-    // The root reports no orientation, so a paste onto it always mirrors.
+    // A root reports no orientation, so a paste onto one always mirrors.
     const mirrored =
-      oldParent.x < rootNode.coordinates.x !==
+      oldParent.x < this.copiedTreeRootX !==
       this.map.nodes.getOrientation(newParentNode);
     const dx = mirrored ? node.x - oldParent.x : oldParent.x - node.x;
 
