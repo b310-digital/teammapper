@@ -10,7 +10,6 @@ import DOMPurify from 'dompurify';
 import {
   CachedMapOptions,
   ExportNodeProperties,
-  MapNodeCoordinates,
   MapOptions,
   MapSnapshot,
   MmpEventPayloadMap,
@@ -228,22 +227,17 @@ export class MmpService implements OnDestroy {
   /**
    * Add a node in the mind mmp triggered by the user.
    *
-   * Detached nodes can be used as comments and are not assigned to a parent node.
    * addNode puts a child under `properties.parent`, or under the selected
    * node when no parent is named, and adds no child when nothing is selected.
-   * A detached node needs no selection.
+   * Call `addTree` to add a root node.
    */
   public addNode(
     properties?: Partial<ExportNodeProperties>,
     notifyWithEvent = true
   ) {
     const newProps: UserNodeProperties = properties || { name: '' };
-    const parent = properties?.parent
-      ? this.selectNode(properties.parent)
-      : !properties?.detached
-        ? this.selectNode()
-        : null;
-    if (!parent && !properties?.detached) return;
+    const parent = this.selectNode(properties?.parent || undefined);
+    if (!parent) return;
 
     const settings = this.settingsService.getCachedUserSettings();
 
@@ -251,7 +245,7 @@ export class MmpService implements OnDestroy {
       newProps.colors = {
         branch: properties.colors.branch,
       };
-    } else if (parent?.colors?.branch) {
+    } else if (parent.colors?.branch) {
       newProps.colors = {
         branch: parent.colors.branch,
       };
@@ -267,28 +261,13 @@ export class MmpService implements OnDestroy {
       };
     }
 
-    if (properties?.detached) {
-      newProps.coordinates = this.detachedNodeCoordinates();
-    }
-
     this.map.instance.addNode(
       newProps,
       notifyWithEvent,
       true,
-      parent?.id,
+      parent.id,
       properties?.id
     );
-  }
-
-  /**
-   * Place a detached node 80px above the selected node, or at
-   * newTreeCoordinates() when nothing is selected.
-   */
-  private detachedNodeCoordinates(): MapNodeCoordinates {
-    const coordinates = this.selectNode()?.coordinates;
-    if (!coordinates) return this.map.instance.newTreeCoordinates();
-
-    return { x: coordinates.x, y: coordinates.y - 80 };
   }
 
   /**
@@ -492,15 +471,11 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Paste as an independent tree when the caller names no node, nothing is
-   * selected and the `multiTree` flag is on. Paste under the named or the
-   * selected node otherwise.
+   * Paste as an independent tree when the caller names no node and nothing is
+   * selected. Paste under the named or the selected node otherwise.
    */
   private pasteFromClipboard(nodeId?: string) {
-    const asTree =
-      !nodeId &&
-      !this.hasSelectedNode() &&
-      this.settingsService.isMultiTreeEnabled();
+    const asTree = !nodeId && !this.hasSelectedNode();
 
     if (asTree) this.map.instance.pasteTree();
     else this.map.instance.pasteNode(nodeId);

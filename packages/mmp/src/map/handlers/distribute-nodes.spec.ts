@@ -47,7 +47,6 @@ function liveNode(
     parent,
     name: id,
     isRoot: false,
-    detached: false,
     hidden: false,
     coordinates: { x: 0, y: 0 },
     dimensions: { width: 100, height: 30 },
@@ -173,10 +172,10 @@ describe('distributeNodes', () => {
     expect(events).not.toContain(Event.distribute);
   });
 
-  it('redraws every branch, dropping the path of a detached node', () => {
+  it('redraws every branch, dropping the path of a second root', () => {
     const root = liveNode('root', null, { isRoot: true });
     const child = liveNode('child', root);
-    const loose = liveNode('loose', null, { detached: true });
+    const loose = liveNode('loose', null);
     const nodes = [root, child, loose];
     const { handler, map } = handlerWith(nodes);
     attachBranchPaths(map.id, nodes);

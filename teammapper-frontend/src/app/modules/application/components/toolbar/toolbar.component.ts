@@ -43,7 +43,6 @@ export class ToolbarComponent {
   @Input() public editDisabled = false;
   public featureFlagPictograms: boolean;
   public featureFlagAI: boolean;
-  public featureFlagMultiTree: boolean;
 
   public canUndo$ = this.mapSyncService.canUndo$;
   public canRedo$ = this.mapSyncService.canRedo$;
@@ -52,7 +51,6 @@ export class ToolbarComponent {
     const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;
     this.featureFlagPictograms = flags?.pictograms ?? false;
     this.featureFlagAI = flags?.ai ?? false;
-    this.featureFlagMultiTree = this.settingsService.isMultiTreeEnabled();
   }
 
   public async exportMap(format: ExportFormat) {
@@ -71,7 +69,7 @@ export class ToolbarComponent {
 
   /**
    * True when editing is off or no node is selected. The node buttons bind to
-   * this getter; add tree, add detached node and paste do not.
+   * this getter; add tree and paste do not.
    */
   get nodeActionsDisabled(): boolean {
     return this.editDisabled || !this.mmpService.hasSelectedNode();
@@ -126,10 +124,6 @@ export class ToolbarComponent {
     );
     if (linkInput !== null && this.isValidLink(linkInput))
       this.mmpService.addNodeLink(linkInput);
-  }
-
-  public addDetachedNode() {
-    this.mmpService.addNode({ detached: true, name: '' });
   }
 
   public removeLink() {

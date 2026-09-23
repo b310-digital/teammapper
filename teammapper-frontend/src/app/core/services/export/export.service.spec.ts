@@ -226,22 +226,5 @@ mindmap
       const result = service.exportToMermaid(nodes);
       expect(result).toBe('mindmap\n  Root\n\nmindmap\n  Lone');
     });
-
-    it('should export a detached node and its children as a tree', () => {
-      const nodes: ExportNodeProperties[] = [
-        { id: 'root', parent: '', name: 'Root', isRoot: true },
-        {
-          id: 'detached',
-          parent: '',
-          name: 'Detached',
-          isRoot: false,
-          detached: true,
-        },
-        { id: 'child', parent: 'detached', name: 'Child', isRoot: false },
-      ] as ExportNodeProperties[];
-
-      const result = service.exportToMermaid(nodes);
-      expect(result).toBe('mindmap\n  Root\n\nmindmap\n  Detached\n    Child');
-    });
   });
 });

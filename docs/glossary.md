@@ -60,20 +60,16 @@ The one root node per map that the app creates with the map. No one can delete,
 copy, cut or lock it. The stored flag `isRoot` marks the main root only, so do
 not read `isRoot` to learn whether a node has a parent.
 
-### Detached node
+### Orphaned node
 
-A root node that the toolbar's "add detached node" button creates. The layout
-places it in a column right of the trees instead of laying out a tree around it.
-A user can add children to a detached node, but a redistribution parks those
-children like orphaned nodes. The app coined the term; mind mapping has no
-common word for it.
+A node that no root node reaches, because its parent is missing or its
+ancestors form a cycle. An orphaned node is a fault in the data. The layout
+parks it in a column right of every tree and starts no tree at it. The backend
+leaves every orphaned node out when it saves a map or duplicates one, logs the
+node IDs, and deletes their rows, because the parent foreign key rejects them.
 
-Do not confuse a detached node with an **orphaned node**, whose parent is
-missing or whose ancestors form a cycle, so that no root node reaches it. An
-orphaned node is a fault in the data, and the app repairs it by placing the node
-at the end of the map. The backend leaves every orphaned node out when it saves
-a map or duplicates one, logs the node IDs, and deletes their rows, because the
-parent foreign key rejects them.
+Do not call a parentless node an orphaned node: a node with no parent is a root
+node.
 
 ### Branch
 
@@ -123,15 +119,15 @@ linktext, and the starting name and styling for root nodes and ordinary nodes.
 
 ### Add, remove, select, deselect
 
-The four basic node operations. Adding takes a parent. Adding a tree or a
-detached node takes none: the toolbar's "add tree" button creates a root node
-clear of the other trees. No one can remove the main root.
+The four basic node operations. Adding takes a parent. Adding a tree takes
+none: the toolbar's "add tree" button creates a root node clear of the other
+trees. Removing a node removes its descendants with it, so removing a root node
+removes its tree. No one can remove the main root.
 
 Deselecting leaves no node selected, the main root included. With nothing
 selected, the operations on the selected node do nothing, and the toolbar
-and the floating buttons disable them. Paste is the exception when
-`multiTree` is on: it adds a tree (see Copy, cut, paste). A map load selects
-the main root.
+and the floating buttons disable them. Paste is the exception: it adds a tree
+(see Copy, cut, paste). A map load selects the main root.
 
 ### Drag
 
@@ -146,9 +142,8 @@ calls it distributing all nodes evenly.
 ### Copy, cut, paste
 
 Clipboard operations over a node and its whole subtree. No one can copy or cut
-the main root. With nothing selected and `multiTree` on, paste adds the copied
-nodes as a new tree clear of the other trees. No pasted node becomes the main
-root.
+the main root. With nothing selected, paste adds the copied nodes as a new tree
+clear of the other trees. No pasted node becomes the main root.
 
 ### Undo / Redo
 

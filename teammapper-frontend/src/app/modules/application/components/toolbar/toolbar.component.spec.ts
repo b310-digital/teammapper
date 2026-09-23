@@ -55,7 +55,7 @@ interface TestContext {
   canRedoSubject: BehaviorSubject<boolean>;
 }
 
-async function setupTestBed(multiTree = false): Promise<TestContext> {
+async function setupTestBed(): Promise<TestContext> {
   const mmpService = new MmpServiceStub();
   const canUndoSubject = new BehaviorSubject<boolean>(false);
   const canRedoSubject = new BehaviorSubject<boolean>(false);
@@ -87,7 +87,6 @@ async function setupTestBed(multiTree = false): Promise<TestContext> {
           getCachedSystemSettings: jest.fn().mockReturnValue({
             featureFlags: { pictograms: false, ai: false },
           }),
-          isMultiTreeEnabled: jest.fn().mockReturnValue(multiTree),
         },
       },
       {
@@ -407,10 +406,10 @@ describe('ToolbarComponent', () => {
       }
     });
 
-    it('keeps paste, add detached node and distribute enabled', () => {
+    it('keeps paste, add tree and distribute enabled', () => {
       for (const selector of [
         '#paste-node-button',
-        '#add-detached-node-button',
+        '#add-tree-button',
         '#distribute-nodes-button',
       ]) {
         expect(disabled(selector)).toBe(false);
@@ -436,36 +435,23 @@ describe('ToolbarComponent', () => {
     const query = (selector: string): HTMLButtonElement | null =>
       ctx.fixture.nativeElement.querySelector(selector);
 
-    it('shows the detached-node button while multiTree is off', () => {
-      expect(query('#add-detached-node-button')).not.toBeNull();
-      expect(query('#add-tree-button')).toBeNull();
+    it('shows the add-tree button and no detached-node button', () => {
+      expect(query('#add-tree-button')).not.toBeNull();
+      expect(query('#add-detached-node-button')).toBeNull();
     });
 
-    describe('while multiTree is on', () => {
-      beforeEach(async () => {
-        ctx.fixture.destroy();
-        TestBed.resetTestingModule();
-        ctx = await setupTestBed(true);
-      });
+    it('adds a tree when the add-tree button is clicked', () => {
+      query('#add-tree-button')?.click();
 
-      it('shows the add-tree button in place of the detached-node button', () => {
-        expect(query('#add-tree-button')).not.toBeNull();
-        expect(query('#add-detached-node-button')).toBeNull();
-      });
+      expect(ctx.mmpService.addTree).toHaveBeenCalled();
+      expect(ctx.mmpService.addNode).not.toHaveBeenCalled();
+    });
 
-      it('adds a tree when the add-tree button is clicked', () => {
-        query('#add-tree-button')?.click();
+    it('keeps the add-tree button enabled with nothing selected', () => {
+      ctx.mmpService.hasSelectedNode.mockReturnValue(false);
+      refresh(ctx);
 
-        expect(ctx.mmpService.addTree).toHaveBeenCalled();
-        expect(ctx.mmpService.addNode).not.toHaveBeenCalled();
-      });
-
-      it('keeps the add-tree button enabled with nothing selected', () => {
-        ctx.mmpService.hasSelectedNode.mockReturnValue(false);
-        refresh(ctx);
-
-        expect(query('#add-tree-button')?.disabled).toBe(false);
-      });
+      expect(query('#add-tree-button')?.disabled).toBe(false);
     });
   });
 });

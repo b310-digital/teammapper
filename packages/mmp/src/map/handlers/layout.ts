@@ -23,7 +23,6 @@ export interface LayoutInputNode {
   id: string;
   parent: string | null;
   isRoot?: boolean;
-  detached?: boolean;
   name?: string | null;
   font?: Pick<MapNodeFont, 'size'>;
   coordinates?: MapNodeCoordinates;
@@ -83,14 +82,9 @@ function hasPosition(
   );
 }
 
-/**
- * The main root, then every other parentless node that is not detached. The
- * layout starts no tree at a detached node and parks it with the orphans.
- */
+/** The main root, then every other parentless node. */
 function findTreeRoots(nodes: LayoutInputNode[]): LayoutInputNode[] {
-  const roots = nodes.filter(
-    node => node.isRoot || (!node.parent && !node.detached)
-  );
+  const roots = nodes.filter(node => node.isRoot || !node.parent);
   return [
     ...roots.filter(root => root.isRoot),
     ...roots.filter(root => !root.isRoot),
@@ -140,7 +134,7 @@ class MapLayout {
 
     this.indexChildren();
     this.layoutTrees();
-    this.placeDetachedNodes();
+    this.placeOrphans();
 
     return this.coordinates;
   }
@@ -251,7 +245,7 @@ class MapLayout {
    */
   private indexChildren(): void {
     for (const node of this.nodes) {
-      if (node.isRoot || node.detached) continue;
+      if (node.isRoot) continue;
       if (
         !node.parent ||
         node.parent === node.id ||
@@ -465,11 +459,12 @@ class MapLayout {
   }
 
   /**
-   * Detached nodes and orphans have no path from a root, so the tree layout
-   * has no position for them. The engine keeps a node with coordinates where
-   * the user put it and stacks the rest in a column clear of the trees.
+   * An orphan has no path from a root, because its parent is missing or its
+   * ancestors form a cycle, so the tree layout has no position for it. The
+   * engine keeps an orphan with coordinates where it is and stacks the rest in
+   * a column clear of the trees.
    */
-  private placeDetachedNodes(): void {
+  private placeOrphans(): void {
     const unplaced: LayoutInputNode[] = [];
 
     for (const node of this.nodes) {

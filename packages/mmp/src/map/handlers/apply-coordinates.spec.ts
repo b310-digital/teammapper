@@ -27,7 +27,6 @@ function makeNode(
     parent,
     k: 1,
     isRoot: options.isRoot ?? false,
-    detached: false,
     ...(options.coordinates ? { coordinates: options.coordinates } : {}),
   };
 }

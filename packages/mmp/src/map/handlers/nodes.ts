@@ -75,7 +75,6 @@ export default class Nodes {
       locked: false,
       id: rootId,
       parent: null,
-      detached: false,
       hidden: false,
       isRoot: true,
     }) as unknown as NodeProperties;
@@ -110,7 +109,7 @@ export default class Nodes {
     parentId?: string | null,
     overwriteId?: string
   ): Node => {
-    const parentNode = this.resolveParent(userProperties, parentId);
+    const parentNode = this.resolveParent(parentId);
 
     const properties: NodeProperties = Utils.mergeObjects(
       this.map.options.defaultNode,
@@ -161,16 +160,13 @@ export default class Nodes {
   };
 
   /**
-   * The parent a node added through addNode gets: none for a detached node or
-   * an explicit null, the named node for an id, the selected node otherwise.
-   * Throws when the caller names no parent and nothing is selected, because a
-   * new root node would hide the caller's mistake.
+   * The parent a node added through addNode gets: none for an explicit null,
+   * the named node for an id, the selected node otherwise. Throws when the
+   * caller names no parent and nothing is selected, because a new root node
+   * would hide the caller's mistake.
    */
-  private resolveParent(
-    userProperties: UserNodeProperties | undefined,
-    parentId: string | null | undefined
-  ): Node | null {
-    if (userProperties?.detached || parentId === null) return null;
+  private resolveParent(parentId: string | null | undefined): Node | null {
+    if (parentId === null) return null;
     if (parentId) return this.getNode(parentId) ?? null;
     if (!this.selectedNode) Log.error('There is no selected node');
 
@@ -560,7 +556,6 @@ export default class Nodes {
       link: Utils.cloneObject(node.link) as MapNodeLink,
       locked: node.locked,
       isRoot: node.isRoot,
-      detached: node.detached,
       hidden: node.hidden,
       hasHiddenChildNodes: node.hasHiddenChildNodes,
       k: node.k,
@@ -788,7 +783,7 @@ export default class Nodes {
    * @returns {Array<Node>} siblings
    */
   private getSiblings(node: Node): Node[] {
-    if (node.isRoot || node.detached || !node.parent) {
+    if (!node.parent) {
       return [];
     }
 
@@ -812,7 +807,7 @@ export default class Nodes {
     const anchorY = parent?.coordinates?.y ?? node.coordinates?.y ?? 0;
     const { column, siblings } = this.pickColumn(node);
 
-    return { x: anchorX + column, y: this.stackBelow(node, anchorY, siblings) };
+    return { x: anchorX + column, y: this.stackBelow(anchorY, siblings) };
   }
 
   /**
@@ -830,7 +825,6 @@ export default class Nodes {
         ? { column: -NODE_HORIZONTAL_SPACING, siblings: left }
         : { column: NODE_HORIZONTAL_SPACING, siblings: right };
     }
-    if (node.detached) return { column: 0, siblings };
 
     const goesLeft = !!parent && this.getOrientation(parent);
     const column = goesLeft
@@ -852,13 +846,13 @@ export default class Nodes {
   }
 
   /** Below the lowest sibling, or just above the parent when there is none. */
-  private stackBelow(node: Node, anchorY: number, siblings: Node[]): number {
+  private stackBelow(anchorY: number, siblings: Node[]): number {
     if (siblings.length > 0) {
       const lowerNode = this.getLowerNode(siblings);
       return (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
     }
 
-    return node.detached ? anchorY : anchorY - NODE_VERTICAL_SPACING;
+    return anchorY - NODE_VERTICAL_SPACING;
   }
 
   /**
@@ -927,7 +921,7 @@ export default class Nodes {
     d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
       'd',
       (node: Node) => {
-        // A detached node has no parent and so no branch to draw. Returning
+        // A root node has no parent and so no branch to draw. Returning
         // null makes d3 drop the attribute, as the other redraw paths do.
         const branch = this.map.draw.drawBranch(node);
 
@@ -941,7 +935,6 @@ export default class Nodes {
       id: node.id,
       parent: node.parent ? node.parent.id : '',
       isRoot: node.isRoot,
-      detached: node.detached,
       name: node.name,
       font: node.font,
       coordinates: node.coordinates,

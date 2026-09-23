@@ -16,7 +16,6 @@ const buildClientNode = (
   link: { href: '' },
   k: 1,
   locked: false,
-  detached: false,
   isRoot: false,
   parent: 'parent-uuid',
   hidden: false,

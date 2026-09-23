@@ -32,7 +32,6 @@ function createMockNode(
     image: undefined,
     link: undefined,
     isRoot: false,
-    detached: false,
     ...overrides,
   };
 }

@@ -17,7 +17,6 @@ const createTestNode = (overrides: Partial<MmpNode> = {}): MmpNode => {
   node.name = 'Test Node'
   node.root = true
   node.locked = false
-  node.detached = false
   node.k = 1.5
   node.coordinatesX = 100
   node.coordinatesY = 200
@@ -55,7 +54,6 @@ const yNodeToPlainObject = (yNode: Y.Map<unknown>) => ({
   name: yNode.get('name'),
   isRoot: yNode.get('isRoot'),
   locked: yNode.get('locked'),
-  detached: yNode.get('detached'),
   k: yNode.get('k'),
   coordinates: yNode.get('coordinates'),
   colors: yNode.get('colors'),
@@ -84,7 +82,6 @@ describe('yDocConversion', () => {
         name: 'Test Node',
         isRoot: true,
         locked: false,
-        detached: false,
         k: 1.5,
         coordinates: { x: 100, y: 200 },
         colors: { name: '#333333', background: '#ffffff', branch: '#999999' },
@@ -92,6 +89,14 @@ describe('yDocConversion', () => {
         image: { src: 'data:image/png;base64,iVBORw0KGgo=', size: 80 },
         link: { href: 'https://example.com' },
       })
+
+      doc.destroy()
+    })
+
+    it('writes no detached entry', () => {
+      const { yNode, doc } = populateAndGet(createTestNode())
+
+      expect(yNode.has('detached')).toBe(false)
 
       doc.destroy()
     })
@@ -137,7 +142,6 @@ describe('yDocConversion', () => {
         name: 'Test Node',
         root: true,
         locked: false,
-        detached: false,
         k: 1.5,
         coordinatesX: 100,
         coordinatesY: 200,
@@ -259,7 +263,6 @@ describe('yDocConversion', () => {
         yNode.set('name', '<img src=x onerror=alert(1)>Hello')
         yNode.set('isRoot', true)
         yNode.set('locked', false)
-        yNode.set('detached', false)
         yNode.set('k', 1)
         yNode.set('coordinates', { x: 0, y: 0 })
         yNode.set('colors', {

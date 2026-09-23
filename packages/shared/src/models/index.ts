@@ -52,7 +52,6 @@ export interface UserNodeProperties {
   font?: MapNodeFont;
   locked?: boolean;
   isRoot?: boolean;
-  detached?: boolean;
   hidden?: boolean;
   hasHiddenChildNodes?: boolean;
 }
@@ -114,7 +113,6 @@ export interface SystemSettingsUrls {
 export interface SystemFeatureFlags {
   pictograms: boolean;
   ai: boolean;
-  multiTree: boolean;
 }
 
 export interface SystemSettings {

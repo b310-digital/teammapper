@@ -33,7 +33,6 @@ const createNode = (
     name: 'Seed Data',
     parent: parentId,
     isRoot: isRoot,
-    detached: false,
     link: {},
     hidden: false,
     hasHiddenChildNodes: false,

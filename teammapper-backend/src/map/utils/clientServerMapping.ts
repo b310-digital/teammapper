@@ -33,7 +33,6 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
     href: serverNode.linkHref || '',
   },
   id: serverNode.id,
-  detached: serverNode.detached || false,
   image: { src: serverNode.imageSrc || '', size: serverNode.imageSize || 0 },
   k: serverNode.k || 1,
   locked: serverNode.locked || false,
@@ -81,7 +80,6 @@ const mapClientNodeToMmpNode = (
     k: clientNode.k,
     linkHref: clientNode.link?.href,
     locked: clientNode.locked,
-    detached: clientNode.detached,
     name: clientNode.name,
     nodeParentId: clientNode.parent || undefined, // This is needed because a client root node defines its parent as an empty string, which is an invalid UUID format
     root: clientNode.isRoot,
@@ -116,7 +114,6 @@ const mapClientBasicNodeToMmpRootNode = (
     imageSize: clientRootNodeBasics.image?.size,
     name: sanitized.name || DEFAULT_ROOT_NAME,
     root: true,
-    detached: false,
     nodeMapId: mapId,
   }
 }

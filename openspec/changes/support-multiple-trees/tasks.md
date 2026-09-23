@@ -65,11 +65,11 @@ Each section is one pull request of about 500 changed lines, counting tests, and
 
 ## 8. PR 8: release several trees and retire the detached node (about 650 lines, mostly deletions)
 
-- [ ] 8.1 Remove the `multiTree` flag from system settings and the frontend, together with the single-tree branches it guarded
-- [ ] 8.2 Write a migration that sets the parent to null on any detached row carrying one, then drops `mmp_node.detached`, with a down-migration re-adding the column with default `false`
-- [ ] 8.3 Remove `detached` from `packages/shared` models, schemas and `normalizeMapData`, from the backend entity, `clientServerMapping` and `yDocConversion`, and from the frontend Y.Doc utilities
-- [ ] 8.4 Remove `detached` from the mmp `Node` model, `options.ts`, `history.ts`, `getSiblings`, `pickColumn`, `stackBelow` and `LayoutInputNode`
-- [ ] 8.5 Rename `placeDetachedNodes` to an orphan fallback, and remove the detached test cases or turn them into orphan cases
-- [ ] 8.6 Remove the "add detached node" button, `addDetachedNode`, the detached branch of `MmpService.addNode`, and the `ADD_DETACHED_NODE` translation key
-- [ ] 8.7 Update `docs/glossary.md` (root node, main root, tree, orphaned node; remove detached node), the `yjs-undo` spec, and the e2e fixture `test-map.json`
-- [ ] 8.8 Run the Playwright suite in the `playwright` container
+- [x] 8.1 Remove the `multiTree` flag from system settings and the frontend, together with the single-tree branches it guarded
+- [x] 8.2 Write a migration that sets the parent to null on any detached row carrying one, then drops `mmp_node.detached`, with a down-migration re-adding the column with default `false`
+- [x] 8.3 Remove `detached` from `packages/shared` models, schemas and `normalizeMapData`, from the backend entity, `clientServerMapping` and `yDocConversion`, and from the frontend Y.Doc utilities
+- [x] 8.4 Remove `detached` from the mmp `Node` model, `options.ts`, `history.ts`, `getSiblings`, `pickColumn`, `stackBelow` and `LayoutInputNode`
+- [x] 8.5 Rename `placeDetachedNodes` to an orphan fallback, and remove the detached test cases or turn them into orphan cases
+- [x] 8.6 Remove the "add detached node" button, `addDetachedNode`, the detached branch of `MmpService.addNode`, and the `ADD_DETACHED_NODE` translation key
+- [x] 8.7 Update `docs/glossary.md` (root node, main root, tree, orphaned node; remove detached node), the `yjs-undo` spec, and the e2e fixture `test-map.json`
+- [x] 8.8 Run the Playwright suite in the `playwright` container

@@ -70,7 +70,6 @@ describe('YjsPersistenceService', () => {
       nodeMapId: map.id,
       name: 'Root',
       root: true,
-      detached: false,
       coordinatesX: 0,
       coordinatesY: 0,
       k: 1,
@@ -98,7 +97,6 @@ describe('YjsPersistenceService', () => {
     child.set('name', 'Child Node')
     child.set('isRoot', false)
     child.set('locked', false)
-    child.set('detached', false)
     child.set('k', 1)
     child.set('coordinates', { x: 100, y: 50 })
     child.set('colors', { name: '#333', background: '#fff', branch: '' })
@@ -210,7 +208,6 @@ describe('YjsPersistenceService', () => {
         nodeMapId: map.id,
         name: 'Extra Node',
         root: false,
-        detached: true,
         coordinatesX: 50,
         coordinatesY: 50,
         k: 1,

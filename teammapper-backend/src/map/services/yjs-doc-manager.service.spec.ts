@@ -20,7 +20,6 @@ const createMockNode = (id: string, root = false): MmpNode => {
   node.name = 'Node'
   node.root = root
   node.locked = false
-  node.detached = false
   node.k = 1
   node.coordinatesX = 0
   node.coordinatesY = 0
