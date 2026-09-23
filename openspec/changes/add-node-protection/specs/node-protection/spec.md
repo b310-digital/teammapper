@@ -2,13 +2,26 @@
 
 ### Requirement: User protects a branch
 
-A writable client SHALL protect the selected node and every node below it through the lock button in the toolbar. The protection SHALL be stored on the selected node and SHALL sync to every client. A node SHALL count as protected when it or any ancestor carries the protection. Protecting a node SHALL remove the protection from every descendant that carried its own. The main root SHALL be protectable.
+A writable client SHALL protect the selected node and every node below it through the lock button in the toolbar. The protection SHALL be stored on the selected node and SHALL sync to every connected client, including read-only ones, so every client sees the branch as completed. A node SHALL count as protected when it or any ancestor carries the protection. Protecting a node SHALL remove the protection from every descendant that carried its own. The main root SHALL be protectable.
 
 #### Scenario: Protect a branch
 
 - **GIVEN** node A with children B and C, none protected
 - **WHEN** the user selects A and presses the lock button
 - **THEN** A, B and C SHALL be protected on every client
+
+#### Scenario: Peer's protection applies locally
+
+- **GIVEN** client 1 and client 2 have the map open
+- **WHEN** client 1 protects A
+- **THEN** client 2 SHALL show A as protected without a reload
+- **AND** client 2 SHALL refuse its user's edits inside the branch of A
+
+#### Scenario: Client joining later
+
+- **GIVEN** A is protected
+- **WHEN** a client opens the map
+- **THEN** that client SHALL show A as protected
 
 #### Scenario: New child of a protected node
 
