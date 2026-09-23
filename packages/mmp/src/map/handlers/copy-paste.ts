@@ -23,6 +23,10 @@ export default class CopyPaste {
   // nodes, so paste cannot look the root up on the map.
   private copiedTreeRootX = 0;
 
+  // Whether the running paste adds a tree. A tree paste makes the copied node
+  // the root, so old sides count from that node instead of the old tree root.
+  private pastingTree = false;
+
   /**
    * Get the associated map instance.
    * @param {Map} map
@@ -110,9 +114,9 @@ export default class CopyPaste {
   /**
    * Add the copied nodes under `parent`, or as a new tree for null, and
    * announce them in one paste event.
-   * @param {Node | null} parent
    */
   private pasteInto(parent: Node | null) {
+    this.pastingTree = parent === null;
     const newNodes: Node[] = [];
     this.addCopiedNode(this.copiedNodes[0], parent, newNodes);
 
@@ -147,8 +151,8 @@ export default class CopyPaste {
   }
 
   /**
-   * The properties a pasted node gets. No pasted node carries the main-root
-   * mark, whatever the copied node carried.
+   * The properties a pasted node gets. Every pasted node gets
+   * `isRoot = false`, whatever the copied node carried.
    */
   private pastedProperties(
     nodeProperties: ExportNodeProperties,
@@ -169,8 +173,9 @@ export default class CopyPaste {
   }
 
   /**
-   * A pasted root draws no branch and takes `''`, as every root does. A pasted
-   * child takes its new parent's branch color, or the default one.
+   * A pasted root gets branch color `''`, because the map draws no branch to a
+   * root node. A pasted child takes its new parent's branch color, or the
+   * default one.
    */
   private pastedBranchColor(newParentNode: Node | null): string {
     if (!newParentNode) return '';
@@ -181,9 +186,11 @@ export default class CopyPaste {
   }
 
   /**
-   * A pasted root goes where a new tree goes. The new parent places the
-   * initial node of a paste under a node. The rest keep the offset they had
-   * to their own parent in the copied nodes.
+   * The coordinates of a pasted node:
+   * - a pasted root takes `newTreeCoordinates()`
+   * - the first node pasted under a parent takes `undefined`, and `addNode`
+   *   places it
+   * - every other node keeps its offset to its own copied parent
    */
   private pastedCoordinates(
     nodeProperties: ExportNodeProperties,
@@ -212,9 +219,12 @@ export default class CopyPaste {
 
     // Only a pasted tree has a root as a new parent. The root has no side,
     // and its children keep the sides they had.
+    const oldTreeRootX = this.pastingTree
+      ? (this.copiedNodes[0].coordinates?.x ?? 0)
+      : this.copiedTreeRootX;
     const newSide = this.map.nodes.getOrientation(newParentNode);
     const mirrored =
-      newSide !== undefined && oldParent.x < this.copiedTreeRootX !== newSide;
+      newSide !== undefined && oldParent.x < oldTreeRootX !== newSide;
     const dx = mirrored ? node.x - oldParent.x : oldParent.x - node.x;
 
     return this.map.nodes.fixCoordinates(

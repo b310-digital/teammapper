@@ -11,8 +11,8 @@ import type {
 
 /**
  * Delete, copy and paste act on a whole tree when the user picks its root.
- * The main root is the one node no user can delete, copy or cut, and no
- * pasted node carries the main-root mark.
+ * The main root is the one node no user can delete, copy or cut, and every
+ * pasted node gets `isRoot = false`.
  */
 
 interface CopyPasteInternals {
@@ -48,7 +48,8 @@ function makeMap() {
 
   const nodes = new Nodes(map);
   map.nodes = nodes;
-  // No zoom transform applies in these tests, so this is the identity.
+  // No zoom transform applies in these tests, so `fixCoordinates` returns its
+  // input.
   nodes.fixCoordinates = (coordinates: MapNodeCoordinates) => coordinates;
 
   const root = makeNode({ id: 'root', isRoot: true });
@@ -174,7 +175,7 @@ describe('paste', () => {
     expect(nodes.getDescendants(pastedRoot)).toHaveLength(3);
   });
 
-  it('writes no main-root mark on any pasted node', () => {
+  it('writes isRoot false on every pasted node', () => {
     const { clipboard, nodes, tree, events } = makeMap();
     clipboard.copy('left');
     const copied = (clipboard as unknown as CopyPasteInternals).copiedNodes;
@@ -218,7 +219,7 @@ describe('pasteTree', () => {
     expect(nodes.getDescendants(pastedRoot)).toHaveLength(3);
   });
 
-  it('gives the pasted root no main-root mark and branch color empty', () => {
+  it("writes isRoot false on every pasted node and branch color '' on the pasted root", () => {
     const { pasted } = pasteSecondTree();
     const [pastedRoot] = pasted;
 
@@ -247,6 +248,36 @@ describe('pasteTree', () => {
         [200, -120],
       ].sort()
     );
+  });
+
+  it('keeps the offsets of a copied non-root subtree to its copied node', () => {
+    const context = makeMap();
+    const inner = makeNode({
+      id: 'inner',
+      parent: context.tree.right,
+      coordinates: { x: 1100, y: -240 },
+    });
+    const innermost = makeNode({
+      id: 'innermost',
+      parent: inner,
+      coordinates: { x: 1050, y: -360 },
+    });
+    context.nodes.setNode(inner.id, inner);
+    context.nodes.setNode(innermost.id, innermost);
+    context.clipboard.copy('right');
+    const expectedRoot = context.nodes.newTreeCoordinates();
+
+    context.clipboard.pasteTree();
+
+    const offsets = pastedNodes(context.nodes, context.events).map(node => [
+      node.coordinates.x - expectedRoot.x,
+      node.coordinates.y - expectedRoot.y,
+    ]);
+    expect(offsets).toEqual([
+      [0, 0],
+      [-100, -120],
+      [-150, -240],
+    ]);
   });
 
   it('pastes a tree whatever node is selected', () => {

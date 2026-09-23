@@ -50,8 +50,8 @@ async function addTree(page: Page, name: string) {
 async function deselect(page: Page) {
   const background = page.locator('.map-background');
   const box = await background.boundingBox();
-  const y = (box?.height ?? 400) / 2;
-  await background.click({ position: { x: 20, y } });
+  if (!box) throw new Error('The map background has no bounding box');
+  await background.click({ position: { x: 20, y: box.height / 2 } });
   await expect(page.locator('#copy-node-button')).toBeDisabled();
 }
 
@@ -101,6 +101,19 @@ test('pastes a copied tree as a second tree with nothing selected', async ({
   expect(children.map(child => child.parent).sort()).toEqual(
     roots.map(root => root.id).sort()
   );
+
+  // The pasted tree lands clear of the copied one, and its child keeps the
+  // offset it had to its root.
+  const [first, second] = roots.map(root => root.coordinates);
+  expect(first).not.toEqual(second);
+  const offsets = roots.map(root => {
+    const child = children.find(node => node.parent === root.id);
+    return {
+      x: (child?.coordinates?.x ?? 0) - (root.coordinates?.x ?? 0),
+      y: (child?.coordinates?.y ?? 0) - (root.coordinates?.y ?? 0),
+    };
+  });
+  expect(offsets[0]).toEqual(offsets[1]);
 });
 
 test('deletes a second tree and keeps the main tree', async ({ page }) => {

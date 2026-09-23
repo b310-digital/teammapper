@@ -27,7 +27,8 @@ const downloadFileSpy = jest
 
 describe('MmpService', () => {
   let service: MmpService;
-  let settingsService: Partial<jest.Mocked<SettingsService>>;
+  let settingsService: Partial<jest.Mocked<SettingsService>> &
+    Pick<jest.Mocked<SettingsService>, 'isMultiTreeEnabled'>;
   let utilsService: Partial<jest.Mocked<UtilsService>>;
   let toastrService: Partial<jest.Mocked<ToastrService>>;
   let editModeSubject: Subject<boolean>;
@@ -312,7 +313,7 @@ describe('MmpService', () => {
 
     describe('pasteNode', () => {
       function enableMultiTree(): void {
-        settingsService.isMultiTreeEnabled?.mockReturnValue(true);
+        settingsService.isMultiTreeEnabled.mockReturnValue(true);
       }
 
       it('pastes as a tree with nothing selected and multiTree on', async () => {

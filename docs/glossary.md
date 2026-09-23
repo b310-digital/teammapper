@@ -127,7 +127,9 @@ clear of the other trees. No one can remove the main root.
 
 Deselecting leaves no node selected, the main root included. With nothing
 selected, the operations on the selected node do nothing, and the toolbar
-and the floating buttons disable them. A map load selects the main root.
+and the floating buttons disable them. Paste is the exception when
+`multiTree` is on: it adds a tree (see Copy, cut, paste). A map load selects
+the main root.
 
 ### Drag
 
@@ -142,7 +144,9 @@ calls it distributing all nodes evenly.
 ### Copy, cut, paste
 
 Clipboard operations over a node and its whole subtree. No one can copy or cut
-the main root.
+the main root. With nothing selected and `multiTree` on, paste adds the copied
+nodes as a new tree clear of the other trees. No pasted node becomes the main
+root.
 
 ### Undo / Redo
 

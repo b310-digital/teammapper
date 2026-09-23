@@ -10,8 +10,8 @@ import type {
 /**
  * A pasted node keeps the offset it had to its old parent. When the new parent
  * is on the other side of its tree root, the horizontal part of that offset is
- * mirrored. A root has no side, and only a pasted tree has one as a new parent,
- * so the children of a pasted root keep the sides they had.
+ * mirrored. A root node has no side. Only a tree paste gives a node a root as
+ * its new parent, and the children of that pasted root keep the sides they had.
  */
 
 const ROOT = new Node({
