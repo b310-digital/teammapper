@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-undo Specification
+
+## Purpose
+
+Defines undo and redo through a Y.UndoManager that tracks only the local changes of a client and restores every node property.
+
+## Requirements
 
 ### Requirement: Y.UndoManager lifecycle
 When `yjsEnabled` is true, the `MapSyncService` SHALL create a `Y.UndoManager` instance tracking the `nodesMap` (`yDoc.getMap('nodes')`). The UndoManager SHALL be configured with `trackedOrigins: new Set(['local'])`. The UndoManager SHALL be created AFTER the first Y.Doc sync and map load completes, so that the initial hydration is not captured as undoable operations. The UndoManager SHALL be destroyed in `resetYjs()` before the Y.Doc is destroyed.

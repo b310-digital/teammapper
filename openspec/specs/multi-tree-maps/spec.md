@@ -1,4 +1,10 @@
-## ADDED Requirements
+# multi-tree-maps Specification
+
+## Purpose
+
+Defines maps that hold several trees: how roots are marked, laid out, placed, copied, deleted and saved.
+
+## Requirements
 
 ### Requirement: A map holds any number of trees
 A map SHALL hold any number of trees. A node with no parent SHALL be a root, and a root SHALL accept children to any depth. Exactly one root per map SHALL carry the main-root mark, stored as `isRoot`.

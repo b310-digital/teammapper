@@ -1,4 +1,10 @@
-## ADDED Requirements
+# zoom-controls Specification
+
+## Purpose
+
+Defines the controls that zoom the map in and out and center it, keeping the map usable afterwards.
+
+## Requirements
 
 ### Requirement: User can zoom in, zoom out, and center the map
 The system SHALL provide zoom in, zoom out, and center map controls. After any combination of zoom and center operations, the map and root node SHALL remain visible and usable.

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# undo-redo Specification
+
+## Purpose
+
+Lets users undo their most recent action on a mind map and redo an action they undid.
+
+## Requirements
 
 ### Requirement: User can undo the last action
 The system SHALL provide an undo action that reverts the most recent operation. When a node addition is undone, the added node SHALL no longer be visible.

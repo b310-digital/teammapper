@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-ws-connection-resilience Specification
+
+## Purpose
+
+Makes the Yjs WebSocket server close connections that error, stop answering pings or never finish setup.
+
+## Requirements
 
 ### Requirement: WebSocket error handler on individual connections
 

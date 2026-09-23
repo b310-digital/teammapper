@@ -1,4 +1,10 @@
-## ADDED Requirements
+# branch-colors Specification
+
+## Purpose
+
+Gives each first-level branch of a tree a distinct color and passes that color on to its descendants.
+
+## Requirements
 
 ### Requirement: First-level branches have distinct colors
 The system SHALL assign different colors to branches connecting first-level child nodes to the root. Each first-level branch SHALL have a unique color.

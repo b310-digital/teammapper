@@ -1,4 +1,10 @@
-## ADDED Requirements
+# node-operations Specification
+
+## Purpose
+
+Defines what a user can do with a single node of a mind map: add, remove, style, move, and attach images and links.
+
+## Requirements
 
 ### Requirement: User can add and remove child nodes
 The system SHALL allow users to add a child node to the currently selected node via an add button, and remove a selected node via a remove button. The add button SHALL accept any selected node as a parent, including a root. Removing a node SHALL remove its descendants with it.

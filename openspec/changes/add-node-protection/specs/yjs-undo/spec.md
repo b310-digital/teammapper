@@ -21,6 +21,13 @@ When a node (or subtree) is deleted and the deletion is undone, ALL node propert
 - **THEN** the Y.Doc SHALL contain all three nodes with their original properties
 - **AND** `B.parent` SHALL be `A.id` and `C.parent` SHALL be `B.id`
 
+#### Scenario: Undo of a tree delete restores the root without a parent
+
+- **GIVEN** a root `R` that does not carry the main-root mark has child `S`
+- **WHEN** `R` is deleted and the user triggers undo
+- **THEN** the Y.Doc SHALL contain `R` with a null parent and no main-root mark
+- **AND** `S.parent` SHALL be `R.id`
+
 #### Scenario: Multiple undo/redo cycles preserve properties
 
 - **GIVEN** a node exists with specific coordinates and properties

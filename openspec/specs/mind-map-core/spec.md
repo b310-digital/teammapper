@@ -1,4 +1,10 @@
-## ADDED Requirements
+# mind-map-core Specification
+
+## Purpose
+
+Defines creating, reloading and deleting mind maps, the landing page, the map canvas and its toolbar, and the language of the interface.
+
+## Requirements
 
 ### Requirement: User can create a new mind map
 The system SHALL allow users to create a new mind map from the home page. Upon creation, the map SHALL be displayed with a default root node labeled "Root node".

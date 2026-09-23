@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-ws-resource-protection Specification
+
+## Purpose
+
+Limits message size, concurrent connections and connection rate on the Yjs WebSocket server, globally and per IP.
+
+## Requirements
 
 ### Requirement: Maximum message payload size
 

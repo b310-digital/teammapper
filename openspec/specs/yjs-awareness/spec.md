@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-awareness Specification
+
+## Purpose
+
+Defines how connected clients announce their presence, color and node selection through Yjs Awareness, and how other clients show them.
+
+## Requirements
 
 ### Requirement: Client presence via Yjs Awareness
 Each connected client SHALL announce its presence using the Yjs Awareness protocol. The awareness state SHALL include the client's assigned color and current node selection. The awareness state SHALL be set when the client connects and updated when the selection changes.
