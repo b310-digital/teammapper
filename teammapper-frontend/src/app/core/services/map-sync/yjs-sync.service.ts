@@ -94,8 +94,7 @@ export class YjsSyncService {
   private yjsSubscriptions: Subscription[] = [];
   private yjsMapId: string | null = null;
   private yjsNodesObserver:
-    | Parameters<Y.Map<unknown>['observeDeep']>[0]
-    | null = null;
+    Parameters<Y.Map<unknown>['observeDeep']>[0] | null = null;
   private yjsOptionsObserver: Parameters<Y.Map<unknown>['observe']>[0] | null =
     null;
   private yjsAwarenessHandler: (() => void) | null = null;

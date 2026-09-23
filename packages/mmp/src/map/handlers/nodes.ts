@@ -1004,12 +1004,10 @@ export default class Nodes {
       true
     ) as MapNodeCoordinates;
 
-    if (
-      !(
-        coordinates.x === initialNode.coordinates.x &&
-        coordinates.y === initialNode.coordinates.y
-      )
-    ) {
+    if (!(
+      coordinates.x === initialNode.coordinates.x &&
+      coordinates.y === initialNode.coordinates.y
+    )) {
       initialNode.coordinates = Utils.cloneObject(
         coordinates
       ) as MapNodeCoordinates;

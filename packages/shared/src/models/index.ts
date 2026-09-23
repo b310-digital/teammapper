@@ -172,12 +172,7 @@ export type NodeProperty =
   | 'hidden';
 
 export type NodePropertyValue =
-  | string
-  | number
-  | boolean
-  | MapNodeCoordinates
-  | null
-  | undefined;
+  string | number | boolean | MapNodeCoordinates | null | undefined;
 
 export interface NodeUpdateEvent {
   nodeProperties: ExportNodeProperties;
