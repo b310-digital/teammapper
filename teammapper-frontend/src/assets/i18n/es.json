@@ -215,7 +215,8 @@
     "MAP_UPDATE_SUCCESS": "¡Mapa mental actualizado correctamente!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importación de mapas mentales en curso",
-      "MAP_UPDATE_IN_PROGRESS": "Actualizando mapa mental..."
+      "MAP_UPDATE_IN_PROGRESS": "Actualizando mapa mental...",
+      "MERMAID_SEVERAL_TREES": "Cada árbol se convirtió en su propio bloque mindmap. Las herramientas de Mermaid fuera de TeamMapper muestran un bloque a la vez."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "No es posible copiar el nodo raíz.",

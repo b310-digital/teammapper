@@ -217,7 +217,8 @@
     "MAP_UPDATE_SUCCESS": "マインドマップを更新しました！",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "マインドマップをインポート中...",
-      "MAP_UPDATE_IN_PROGRESS": "マインドマップを更新中..."
+      "MAP_UPDATE_IN_PROGRESS": "マインドマップを更新中...",
+      "MERMAID_SEVERAL_TREES": "各ツリーはそれぞれ独立した mindmap ブロックになりました。TeamMapper 以外の Mermaid ツールは一度に 1 つのブロックしか表示しません。"
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "ルートノードはコピーできません！",

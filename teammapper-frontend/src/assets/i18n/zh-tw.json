@@ -215,7 +215,8 @@
     "MAP_UPDATE_SUCCESS": "Mindmap successfully updated!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Map import in progress...",
-      "MAP_UPDATE_IN_PROGRESS": "Updating mindmap..."
+      "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
+      "MERMAID_SEVERAL_TREES": "每棵樹都成為一個獨立的 mindmap 區塊。TeamMapper 以外的 Mermaid 工具一次只能呈現一個區塊。"
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",

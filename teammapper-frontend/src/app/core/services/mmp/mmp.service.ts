@@ -17,6 +17,7 @@ import {
   NodeProperty,
   NodePropertyValue,
   UserNodeProperties,
+  findRootNodes,
 } from '@teammapper/shared';
 import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
 import { validate as uuidValidate } from 'uuid';
@@ -759,6 +760,7 @@ export class MmpService implements OnDestroy {
       link.click();
 
       URL.revokeObjectURL(url);
+      await this.warnOfSeveralMermaidBlocks(nodes);
 
       const fileSizeKb = blob.size / 1024;
 
@@ -770,5 +772,19 @@ export class MmpService implements OnDestroy {
       this.toastrService.error(exportErrorMessage);
       return { success: false };
     }
+  }
+
+  /**
+   * Tells the user that the export wrote one `mindmap` block per tree, since
+   * Mermaid tools outside TeamMapper accept one block per text.
+   */
+  private async warnOfSeveralMermaidBlocks(
+    nodes: ExportNodeProperties[]
+  ): Promise<void> {
+    if (findRootNodes(nodes).length < 2) return;
+    const message = await this.utilsService.translate(
+      'TOASTS.WARNINGS.MERMAID_SEVERAL_TREES'
+    );
+    this.toastrService.info(message);
   }
 }

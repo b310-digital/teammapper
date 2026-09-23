@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
@@ -134,6 +135,42 @@ describe('YjsPersistenceService', () => {
         coordinatesX: 100,
         coordinatesY: 50,
       })
+
+      doc.destroy()
+    })
+
+    it('persists every other node when the Y.Doc holds an orphan', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const childId = addChildToDoc(doc, rootNode.id)
+      const orphanId = addChildToDoc(doc, uuidv4())
+      addChildToDoc(doc, orphanId)
+
+      await service.persistDoc(map.id, doc)
+
+      const dbNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
+      expect(dbNodes.map((n) => n.id).sort()).toEqual(
+        [rootNode.id, childId].sort()
+      )
+
+      doc.destroy()
+    })
+
+    it('keeps every node row when no root reaches a node of the Y.Doc', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const childId = addChildToDoc(doc, rootNode.id)
+      await service.persistDoc(map.id, doc)
+      const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
+      nodesMap.get(rootNode.id)?.set('parent', childId)
+      jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {})
+
+      await expect(service.persistDoc(map.id, doc)).rejects.toThrow()
+
+      const dbNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
+      expect(dbNodes.map((n) => n.id).sort()).toEqual(
+        [rootNode.id, childId].sort()
+      )
 
       doc.destroy()
     })

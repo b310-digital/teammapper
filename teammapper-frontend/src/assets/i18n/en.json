@@ -217,7 +217,8 @@
     "MAP_UPDATE_SUCCESS": "Mindmap successfully updated!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importing mindmap...",
-      "MAP_UPDATE_IN_PROGRESS": "Updating mindmap..."
+      "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
+      "MERMAID_SEVERAL_TREES": "Each tree became its own mindmap block. Mermaid tools outside TeamMapper render one block at a time."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",

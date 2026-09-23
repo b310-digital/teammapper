@@ -13,6 +13,7 @@ import {
   mapClientNodeToMmpNode,
   mapMmpMapToClient,
 } from '../utils/clientServerMapping'
+import { orderNodesFromRoot } from '../utils/nodeOrdering'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid'
 import MalformedUUIDError from './uuid.error'
@@ -100,7 +101,9 @@ export class MapsService {
    * Bulk-inserts nodes into a map within a single transaction. Used by the
    * REST duplicate-map endpoint, where the source nodes are already valid
    * MmpNode entities. Yjs persistence has its own path that does not rely on
-   * this method.
+   * this method. The method saves row by row, so the parent foreign key
+   * requires parents first. It orders the nodes that way and leaves out every
+   * node no root reaches.
    */
   async addNodes(mapId: string, nodes: Partial<MmpNode>[]): Promise<MmpNode[]> {
     if (!mapId || nodes.length === 0) {
@@ -118,7 +121,7 @@ export class MapsService {
       const nodesToCreate = await this.filterOutExistingNodes(
         queryRunner,
         mapId,
-        nodes as MmpNode[]
+        orderNodesFromRoot(nodes) as MmpNode[]
       )
 
       const createdNodes = await this.saveAllNodesInTransaction(

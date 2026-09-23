@@ -215,7 +215,8 @@
     "MAP_UPDATE_SUCCESS": "思维导图更新成功",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "心智图导入中",
-      "MAP_UPDATE_IN_PROGRESS": "更新思维导图"
+      "MAP_UPDATE_IN_PROGRESS": "更新思维导图",
+      "MERMAID_SEVERAL_TREES": "每棵树都成为一个独立的 mindmap 块。TeamMapper 之外的 Mermaid 工具一次只能渲染一个块。"
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "无法复制根节点！",

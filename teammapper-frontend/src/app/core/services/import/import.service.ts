@@ -35,20 +35,16 @@ export class ImportService {
    */
   async importFromMermaid(input: string): Promise<boolean> {
     try {
-      // Clear the mermaid database before parsing to prevent conflicts
-      mindmapDb.clear();
+      // Parse and validate every block before replacing the existing map
+      const convertedNodes = this.splitMermaidBlocks(input).flatMap(
+        (block, index) => this.parseBlock(block, index === 0)
+      );
 
-      // Parse and validate the input first
-      const parseResult = mermaidMindmapParser.parse(input);
-      const parsedMermaidMindmap = parseResult.getMindmap();
-      const convertedNodes = this.convertMermaidToNodes(parsedMermaidMindmap);
-
-      // Validate that we have valid nodes before clearing the existing map
-      if (!convertedNodes || convertedNodes.length === 0) {
+      if (convertedNodes.length === 0) {
         throw new Error('No valid nodes found in the imported data');
       }
 
-      // Only clear existing map and import if data is valid
+      // One importMap call, since each call replaces the whole map
       this.mmpService.importMap(JSON.stringify(convertedNodes));
 
       const successMessage = await this.utilsService.translate(
@@ -68,10 +64,46 @@ export class ImportService {
   }
 
   /**
+   * Splits the Mermaid text into one string per `mindmap` block, since the
+   * parser accepts a single root per parse. Lines before the first `mindmap`
+   * line stay with the first block. The header match ignores case, as the
+   * Mermaid lexer does.
+   */
+  private splitMermaidBlocks(input: string): string[] {
+    const blocks: string[][] = [[]];
+    let blockHasHeader = false;
+    for (const line of input.split('\n')) {
+      const isHeader = /^\s*mindmap\s*$/i.test(line);
+      if (isHeader && blockHasHeader) blocks.push([]);
+      blockHasHeader ||= isHeader;
+      blocks[blocks.length - 1].push(line);
+    }
+    return blocks.map(lines => lines.join('\n'));
+  }
+
+  /**
+   * Parses one `mindmap` block into nodes. Only the main tree's root carries
+   * the `isRoot` mark.
+   */
+  private parseBlock(
+    block: string,
+    isMainTree: boolean
+  ): ExportNodeProperties[] {
+    // Clear the mermaid database before parsing to prevent conflicts
+    mindmapDb.clear();
+    const rootNode = mermaidMindmapParser.parse(block).getMindmap();
+    if (!rootNode) {
+      throw new Error('A mindmap block holds no node');
+    }
+    return this.convertMermaidToNodes(rootNode, isMainTree);
+  }
+
+  /**
    * Converts a Mermaid mindmap node structure to the internal node format.
    */
   private convertMermaidToNodes(
-    rootNode: MermaidMindmapNode
+    rootNode: MermaidMindmapNode,
+    isMainTree: boolean
   ): ExportNodeProperties[] {
     const nodes: ExportNodeProperties[] = [];
     const siblingCountMap = new Map<string, number>();
@@ -79,7 +111,6 @@ export class ImportService {
     const processNode = (
       node: MermaidMindmapNode,
       parentId = '',
-      isRoot = true,
       parentBranchColor = ''
     ): void => {
       const nodeId = uuidv4();
@@ -89,28 +120,18 @@ export class ImportService {
       );
 
       const branchColor = this.determineBranchColor(
-        isRoot,
         parentId,
         parentBranchColor,
         nodes,
         siblingIndex
       );
 
-      const convertedNode = this.createNode(
-        nodeId,
-        parentId,
-        node,
-        isRoot,
-        branchColor
-      );
+      const isRoot = isMainTree && parentId === '';
+      nodes.push(this.createNode(nodeId, parentId, node, isRoot, branchColor));
 
-      nodes.push(convertedNode);
-
-      if (node.children?.length) {
-        node.children.forEach(child => {
-          processNode(child, nodeId, false, branchColor);
-        });
-      }
+      node.children?.forEach(child => {
+        processNode(child, nodeId, branchColor);
+      });
     };
 
     processNode(rootNode);
@@ -135,18 +156,18 @@ export class ImportService {
   }
 
   /**
-   * Determines the branch color for a node based on its position and settings.
-   * Direct children of root get unique colors based on their sibling index.
-   * Other nodes inherit their parent's branch color.
+   * Returns the branch color for a node, by its position and the settings:
+   * - a root: no branch color
+   * - a direct child of a root: a unique color picked by its sibling index
+   * - any other node: its parent's branch color
    */
   private determineBranchColor(
-    isRoot: boolean,
     parentId: string,
     parentBranchColor: string,
     nodes: ExportNodeProperties[],
     siblingIndex: number
   ): string {
-    if (isRoot) {
+    if (parentId === '') {
       return '';
     }
 
@@ -156,7 +177,7 @@ export class ImportService {
     }
 
     const parentNode = nodes.find(n => n.id === parentId);
-    const isDirectChildOfRoot = parentNode?.isRoot === true;
+    const isDirectChildOfRoot = parentNode?.parent === '';
 
     if (isDirectChildOfRoot) {
       const { autoBranchColors, defaultNode } = settings.mapOptions;
