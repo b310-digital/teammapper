@@ -23,5 +23,6 @@ export const DEFAULT_ROOT_NAME = 'Root node';
 export const DEFAULT_ROOT_COLOR_NAME = '#787878';
 export const DEFAULT_ROOT_COLOR_BACKGROUND = '#f0f6f5';
 export const DEFAULT_ROOT_FONT_SIZE = 20;
+export const DEFAULT_FONT_MAX_SIZE = 48;
 export const DEFAULT_ROOT_FONT_STYLE = 'normal';
 export const DEFAULT_ROOT_FONT_WEIGHT = 'normal';
