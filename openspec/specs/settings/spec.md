@@ -1,4 +1,10 @@
-## ADDED Requirements
+# settings Specification
+
+## Purpose
+
+Defines the settings page, where users change the language, the map options and dark mode, and see the maps they created.
+
+## Requirements
 
 ### Requirement: User can change the application language
 The system SHALL provide a language dropdown on the settings page with multiple language options. Users SHALL be able to select a different language.

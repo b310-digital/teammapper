@@ -1,4 +1,10 @@
-## ADDED Requirements
+# import-export Specification
+
+## Purpose
+
+Lets users bring mind maps in from JSON and Mermaid files, and take them out as JSON, Mermaid, SVG, PNG, JPG and PDF files.
+
+## Requirements
 
 ### Requirement: Import menu offers JSON, Mermaid, and AI options
 The system SHALL provide an import menu that displays JSON and Mermaid import options when opened. When the AI feature is enabled, an AI generation option SHALL also be visible.

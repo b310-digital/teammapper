@@ -25,7 +25,9 @@ When `yjsEnabled` is true, the `MapSyncService` SHALL create a `Y.UndoManager` i
 - **WHEN** `yjsEnabled` is false
 - **THEN** the service SHALL NOT create a `Y.UndoManager` instance
 
-### Requirement: Transaction origin on local writes
+## ADDED Requirements
+
+### Requirement: Local writes and imports use the tracked origin
 
 All local MMP-to-YDoc write operations SHALL use `'local'` as the transaction origin so that `Y.UndoManager` captures them. This includes arrow writes and the full-map replacement that import and redistribute write. The service SHALL call `stopCapturing()` before a full-map replacement, so that one undo reverts the replacement alone. A full-map replacement written by a peer SHALL clear the local undo stack.
 
@@ -70,3 +72,11 @@ All local MMP-to-YDoc write operations SHALL use `'local'` as the transaction or
 
 - **WHEN** a peer imports a map
 - **THEN** the local undo stack SHALL be empty
+
+## REMOVED Requirements
+
+### Requirement: Transaction origin on local writes
+
+**Reason**: An import now writes with the tracked `'local'` origin, so one undo reverts it. The old requirement wrote imports with an untracked `'import'` origin.
+
+**Migration**: "Local writes and imports use the tracked origin" replaces this requirement.

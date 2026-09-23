@@ -14,3 +14,9 @@ Each Y.Doc SHALL contain a `Y.Map("nodes")` where keys are node IDs and values a
 - **WHEN** a client adds a new entry to the `nodes` Y.Map
 - **THEN** the entry SHALL be a Y.Map containing all required `ExportNodeProperties` fields
 - **AND** `protected` SHALL be `false` unless the node is protected
+
+#### Scenario: Y.Doc holds several roots
+
+- **WHEN** a map with three trees is hydrated
+- **THEN** the `nodes` map SHALL hold three entries with no parent
+- **AND** one of them SHALL carry the main-root mark

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-bridge Specification
+
+## Purpose
+
+Defines how the frontend writes renderer events into the Y.Doc and applies remote Y.Doc changes to the renderer, including import, load and map deletion.
+
+## Requirements
 
 ### Requirement: Local MMP events write to Y.Doc
 When the user performs an action in MMP (create, update, remove node), the MapSyncService bridge SHALL write the change to the local Y.Doc. The bridge SHALL NOT send individual network messages — Yjs handles synchronization automatically. All local write operations SHALL use `'local'` as the transaction origin so that `Y.UndoManager` can track them.

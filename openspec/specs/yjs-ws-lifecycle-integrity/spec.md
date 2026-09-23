@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-ws-lifecycle-integrity Specification
+
+## Purpose
+
+Keeps Y.Doc state, client counts and persistence consistent through server shutdown, connection close and map deletion.
+
+## Requirements
 
 ### Requirement: Persistence service graceful shutdown
 
