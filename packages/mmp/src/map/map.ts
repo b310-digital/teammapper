@@ -114,6 +114,7 @@ export default class MmpMap {
       nodeChildren: this.nodes.nodeChildren,
       on: this.events.on,
       pasteNode: this.copyPaste.paste,
+      pasteTree: this.copyPaste.pasteTree,
       remove: this.remove,
       removeNode: this.nodes.removeNode,
       selectNode: this.nodes.selectNode,
@@ -152,6 +153,7 @@ export interface MmpInstance {
   nodeChildren: (id?: string) => ExportNodeProperties[];
   on: (event: string, callback: (...args: unknown[]) => void) => void;
   pasteNode: (id?: string) => void;
+  pasteTree: () => void;
   remove: () => void;
   removeNode: (id?: string, notifyWithEvent?: boolean) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;

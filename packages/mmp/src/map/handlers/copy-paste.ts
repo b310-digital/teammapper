@@ -2,8 +2,8 @@ import Map from '../map.js';
 import Node from '../models/node.js';
 import type {
   ExportNodeProperties,
-  MapNodeColors,
   MapNodeCoordinates,
+  UserNodeProperties,
 } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
@@ -83,80 +83,117 @@ export default class CopyPaste {
    * @param {string} id
    */
   public paste = (id?: string) => {
-    if (this.copiedNodes.length === 0) {
-      Log.error('There are not nodes in the mmp clipboard');
-    }
+    this.requireCopiedNodes();
 
     const node = this.map.nodes.getTargetNode(id);
     if (!node) return;
 
-    const newNodes = new Array<Node>();
+    this.pasteInto(node);
+  };
 
-    const addNodes = (
-      nodeProperties: ExportNodeProperties,
-      newParentNode: Node
-    ) => {
-      // The new parent places the initial node. The rest keep the offset
-      // they had to their own parent in the copied subtree.
-      const coordinates =
-        nodeProperties.id === this.copiedNodes[0].id
-          ? undefined
-          : this.calculatePastedCoordinates(nodeProperties, newParentNode);
+  /**
+   * Paste the nodes of the mmp clipboard as an independent tree, its root
+   * placed at `newTreeCoordinates`, whatever node is selected.
+   */
+  public pasteTree = () => {
+    this.requireCopiedNodes();
 
-      const nodePropertiesCopy = Utils.cloneObject(nodeProperties);
-      // use the new parents branch color
-      const branch = !newParentNode?.colors?.branch
-        ? this.map.options.defaultNode.colors.branch
-        : newParentNode.colors.branch;
-      const fixedColors: MapNodeColors = Object.assign(
-        {},
-        nodePropertiesCopy.colors,
-        {
-          branch,
-        }
-      );
+    this.pasteInto(null);
+  };
 
-      const createdNode = this.map.nodes.addNode(
-        {
-          name: nodePropertiesCopy.name,
-          coordinates,
-          image: nodePropertiesCopy.image,
-          colors: fixedColors,
-          font: nodePropertiesCopy.font,
-          locked: nodePropertiesCopy.locked,
-          isRoot: nodePropertiesCopy.isRoot,
-        },
-        false,
-        false,
-        newParentNode.id
-      );
+  private requireCopiedNodes() {
+    if (this.copiedNodes.length === 0) {
+      Log.error('There are not nodes in the mmp clipboard');
+    }
+  }
 
-      newNodes.push(createdNode);
-
-      // get children on first level of the copiedNodes (that are no longer exisiting on the map)
-      const children = this.getChildrenInCopiedNodes(nodeProperties.id);
-
-      // If there are children add them.
-      if (children.length > 0) {
-        children.forEach((np: ExportNodeProperties) => {
-          addNodes(np, createdNode);
-        });
-      }
-    };
-
-    addNodes(this.copiedNodes[0], node);
+  /**
+   * Add the copied nodes under `parent`, or as a new tree for null, and
+   * announce them in one paste event.
+   * @param {Node | null} parent
+   */
+  private pasteInto(parent: Node | null) {
+    const newNodes: Node[] = [];
+    this.addCopiedNode(this.copiedNodes[0], parent, newNodes);
 
     this.map.draw.clear();
     this.map.draw.update();
-
     this.map.history.save();
 
-    this.map.events.call(
-      Event.nodePaste,
-      node.dom,
-      newNodes.map(node => this.map.nodes.getNodeProperties(node))
+    const pasted = newNodes.map(node => this.map.nodes.getNodeProperties(node));
+    this.map.events.call(Event.nodePaste, parent?.dom, pasted);
+  }
+
+  /**
+   * Add a copied node under `newParentNode`, then its copied children under
+   * the node just created.
+   */
+  private addCopiedNode(
+    nodeProperties: ExportNodeProperties,
+    newParentNode: Node | null,
+    newNodes: Node[]
+  ) {
+    const createdNode = this.map.nodes.addNode(
+      this.pastedProperties(nodeProperties, newParentNode),
+      false,
+      false,
+      newParentNode?.id ?? null
     );
-  };
+    newNodes.push(createdNode);
+
+    this.getChildrenInCopiedNodes(nodeProperties.id).forEach(child =>
+      this.addCopiedNode(child, createdNode, newNodes)
+    );
+  }
+
+  /**
+   * The properties a pasted node gets. No pasted node carries the main-root
+   * mark, whatever the copied node carried.
+   */
+  private pastedProperties(
+    nodeProperties: ExportNodeProperties,
+    newParentNode: Node | null
+  ): UserNodeProperties {
+    const copy = Utils.cloneObject(nodeProperties);
+    const branch = this.pastedBranchColor(newParentNode);
+
+    return {
+      name: copy.name,
+      coordinates: this.pastedCoordinates(nodeProperties, newParentNode),
+      image: copy.image,
+      colors: { ...copy.colors, branch },
+      font: copy.font,
+      locked: copy.locked,
+      isRoot: false,
+    };
+  }
+
+  /**
+   * A pasted root draws no branch and takes `''`, as every root does. A pasted
+   * child takes its new parent's branch color, or the default one.
+   */
+  private pastedBranchColor(newParentNode: Node | null): string {
+    if (!newParentNode) return '';
+
+    return (
+      newParentNode.colors?.branch || this.map.options.defaultNode.colors.branch
+    );
+  }
+
+  /**
+   * A pasted root goes where a new tree goes. The new parent places the
+   * initial node of a paste under a node. The rest keep the offset they had
+   * to their own parent in the copied nodes.
+   */
+  private pastedCoordinates(
+    nodeProperties: ExportNodeProperties,
+    newParentNode: Node | null
+  ): MapNodeCoordinates | undefined {
+    if (!newParentNode) return this.map.nodes.newTreeCoordinates();
+    if (nodeProperties.id === this.copiedNodes[0].id) return undefined;
+
+    return this.calculatePastedCoordinates(nodeProperties, newParentNode);
+  }
 
   /**
    * Keep the offset a copied node had to its old parent, mirrored when the new
@@ -173,10 +210,11 @@ export default class CopyPaste {
     const oldParent = oldParentNode?.coordinates ?? ORIGIN;
     const node = nodeProperties.coordinates ?? ORIGIN;
 
-    // A root reports no orientation, so a paste onto one always mirrors.
+    // Only a pasted tree has a root as a new parent. The root has no side,
+    // and its children keep the sides they had.
+    const newSide = this.map.nodes.getOrientation(newParentNode);
     const mirrored =
-      oldParent.x < this.copiedTreeRootX !==
-      this.map.nodes.getOrientation(newParentNode);
+      newSide !== undefined && oldParent.x < this.copiedTreeRootX !== newSide;
     const dx = mirrored ? node.x - oldParent.x : oldParent.x - node.x;
 
     return this.map.nodes.fixCoordinates(

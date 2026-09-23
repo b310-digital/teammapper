@@ -56,6 +56,7 @@ describe('MmpService', () => {
       copyNode: jest.fn(),
       cutNode: jest.fn(),
       pasteNode: jest.fn(),
+      pasteTree: jest.fn(),
       toggleBranchVisibility: jest.fn(),
       distributeNodes: jest.fn(),
       nodeChildren: jest.fn(),
@@ -72,6 +73,7 @@ describe('MmpService', () => {
 
     settingsService = {
       getEditModeObservable: jest.fn().mockReturnValue(editModeSubject),
+      isMultiTreeEnabled: jest.fn().mockReturnValue(false),
       getCachedUserSettings: jest.fn().mockReturnValue({
         mapOptions: {
           autoBranchColors: false,
@@ -305,6 +307,64 @@ describe('MmpService', () => {
         await service.copyNode('test-node');
 
         expect(mockMap.instance.copyNode).toHaveBeenCalledWith('test-node');
+      });
+    });
+
+    describe('pasteNode', () => {
+      function enableMultiTree(): void {
+        settingsService.isMultiTreeEnabled?.mockReturnValue(true);
+      }
+
+      it('pastes as a tree with nothing selected and multiTree on', async () => {
+        mockMap.instance.getSelectedNode.mockReturnValue(null);
+        enableMultiTree();
+
+        await service.pasteNode();
+
+        expect(mockMap.instance.pasteTree).toHaveBeenCalled();
+        expect(mockMap.instance.pasteNode).not.toHaveBeenCalled();
+      });
+
+      it('pastes no tree with nothing selected and multiTree off', async () => {
+        mockMap.instance.getSelectedNode.mockReturnValue(null);
+
+        await service.pasteNode();
+
+        expect(mockMap.instance.pasteTree).not.toHaveBeenCalled();
+        expect(mockMap.instance.pasteNode).toHaveBeenCalledWith(undefined);
+      });
+
+      it('pastes under the selected node with multiTree on', async () => {
+        mockMap.instance.getSelectedNode.mockReturnValue({ id: 'selected' });
+        enableMultiTree();
+
+        await service.pasteNode();
+
+        expect(mockMap.instance.pasteTree).not.toHaveBeenCalled();
+        expect(mockMap.instance.pasteNode).toHaveBeenCalledWith(undefined);
+      });
+
+      it('pastes under a node named by id with nothing selected', async () => {
+        mockMap.instance.getSelectedNode.mockReturnValue(null);
+        enableMultiTree();
+
+        await service.pasteNode('target');
+
+        expect(mockMap.instance.pasteNode).toHaveBeenCalledWith('target');
+      });
+
+      it('reports an empty clipboard on a tree paste', async () => {
+        mockMap.instance.getSelectedNode.mockReturnValue(null);
+        enableMultiTree();
+        mockMap.instance.pasteTree.mockImplementationOnce(() => {
+          throw new Error('There are not nodes in the mmp clipboard');
+        });
+
+        await service.pasteNode();
+
+        expect(utilsService.translate).toHaveBeenCalledWith(
+          'TOASTS.ERRORS.NO_NODES_IN_CLIPBOARD'
+        );
       });
     });
 

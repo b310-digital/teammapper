@@ -474,7 +474,7 @@ export class MmpService implements OnDestroy {
    */
   public async pasteNode(nodeId?: string) {
     try {
-      this.map.instance.pasteNode(nodeId);
+      this.pasteFromClipboard(nodeId);
     } catch (e) {
       if (errorMessage(e) == 'There are not nodes in the mmp clipboard') {
         const rootNodeFailureMessage = await this.utilsService.translate(
@@ -488,6 +488,21 @@ export class MmpService implements OnDestroy {
         this.toastrService.error(genericErrorMessage);
       }
     }
+  }
+
+  /**
+   * Paste as an independent tree when the caller names no node, nothing is
+   * selected and the `multiTree` flag is on. Paste under the named or the
+   * selected node otherwise.
+   */
+  private pasteFromClipboard(nodeId?: string) {
+    const asTree =
+      !nodeId &&
+      !this.hasSelectedNode() &&
+      this.settingsService.isMultiTreeEnabled();
+
+    if (asTree) this.map.instance.pasteTree();
+    else this.map.instance.pasteNode(nodeId);
   }
 
   /**
