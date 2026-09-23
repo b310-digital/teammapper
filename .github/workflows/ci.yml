@@ -150,9 +150,9 @@ jobs:
                   # use it under Apache-2.0. The action reports the expression as
                   # "Apache-2.0 AND MPL-2.0" and rejects it, so exempt the package
                   # instead of allowing MPL-2.0 for everything.
-                  # lightningcss (MPL-2.0) is a CSS build tool pulled in by vite
-                  # and webpack. It runs at build time only and ships nothing into
-                  # the bundle, so it gets the same package-level exemption.
+                  # vite and webpack pull in lightningcss (MPL-2.0), a CSS build
+                  # tool. lightningcss runs at build time and writes no code into
+                  # the bundle, so exempt its packages the same way.
                   allow-dependencies-licenses: >-
                       pkg:npm/dompurify,
                       pkg:npm/lightningcss,
