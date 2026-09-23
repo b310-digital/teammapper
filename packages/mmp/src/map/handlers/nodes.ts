@@ -123,7 +123,9 @@ export default class Nodes {
     properties.id = overwriteId || uuidv4();
     properties.parent = parentNode;
 
-    if (parentNode && parentNode.hidden) {
+    // A node added to a branch this person hid starts hidden itself, so a node
+    // somebody else creates there does not appear on its own.
+    if (parentNode && this.hidesChildNodes(parentNode)) {
       properties.hidden = true;
     }
 
@@ -297,53 +299,45 @@ export default class Nodes {
    * Toggle (hide/show) all child nodes of selected node
    */
   public toggleBranchVisibility = () => {
-    if (this.selectedNode) {
-      const children = this.getChildren(this.selectedNode);
+    if (!this.selectedNode) return;
 
-      const descendants = this.getDescendants(this.selectedNode).filter(
-        x => !children.includes(x)
-      );
+    const children = this.getChildren(this.selectedNode);
 
-      /**
-       * We need to hide direct children and descendants separately, because if we just use getDescendants() and set !x.hidden, we'd inadvertently show already hidden children of children.
-       * This is why we have two separate checks for children of children:
-       * 1) If the parent is hidden but they're not, hide them.
-       * 2) If the parent is not hidden but they are, show them.
-       */
+    // One hidden child shows the whole branch, and children that all show hide
+    // it. Deciding once for the branch repairs children that disagree, which
+    // happens after somebody else adds a node to a branch hidden here.
+    this.selectedNode.hasHiddenChildNodes =
+      children.length > 0 && !children.some(x => x.hidden);
 
-      if (children) {
-        children.forEach(x =>
-          this.updateNode('hidden', !x.hidden, false, false, x.id)
-        );
-      }
+    this.applyHiddenStateToDescendants(this.selectedNode);
 
-      if (descendants) {
-        descendants.forEach(x => {
-          if (x.parent?.hidden && !x.hidden) {
-            this.updateNode('hidden', true, false, false, x.id);
-          }
-
-          if (!x.parent?.hidden && x.hidden) {
-            this.updateNode('hidden', false, false, false, x.id);
-          }
-        });
-      }
-
-      // Lengthy but definitive check to see if we have any hidden nodes after toggling
-      // We need the hasHiddenChildNodes attribute so we can correctly re-apply hidden state when we get map updates from the server
-      if (
-        this.map.nodes.nodeChildren(this.selectedNode.id)?.filter(x => x.hidden)
-          .length > 0
-      ) {
-        this.selectedNode.hasHiddenChildNodes = true;
-      } else {
-        this.selectedNode.hasHiddenChildNodes = false;
-      }
-
-      this.map.draw.update();
-      this.map.history.save();
-    }
+    this.map.draw.update();
+    this.map.history.save();
   };
+
+  /**
+   * Set the hidden flag of every descendant from its parent, so a descendant
+   * hides whenever its parent hides its children. A branch this person hid
+   * further down stays hidden, because getDescendants returns each parent
+   * before its own children.
+   * @param {Node} node
+   */
+  private applyHiddenStateToDescendants = (node: Node) => {
+    this.getDescendants(node).forEach(descendant => {
+      const parent = descendant.parent;
+      const hidden = parent ? this.hidesChildNodes(parent) : false;
+      this.updateNode('hidden', hidden, false, false, descendant.id);
+    });
+  };
+
+  /**
+   * Tell whether the children of a node are hidden, which happens when the
+   * node itself is hidden or when this person hid its branch.
+   * @param {Node} node
+   * @returns {boolean}
+   */
+  private hidesChildNodes = (node: Node): boolean =>
+    node.hidden || node.hasHiddenChildNodes;
 
   /**
    * Deselect the current selected node.
