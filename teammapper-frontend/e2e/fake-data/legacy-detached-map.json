@@ -37,7 +37,7 @@
     "id": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e03",
     "parent": "",
     "name": "Legacy note",
-    "coordinates": { "x": 600, "y": -300 },
+    "coordinates": { "x": 300, "y": -150 },
     "image": { "src": "", "size": 60 },
     "colors": {
       "name": "#666666",
@@ -56,7 +56,7 @@
     "id": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e04",
     "parent": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e03",
     "name": "Pasted under note",
-    "coordinates": { "x": 800, "y": -300 },
+    "coordinates": { "x": 500, "y": -150 },
     "image": { "src": "", "size": 60 },
     "colors": {
       "name": "#666666",
@@ -75,7 +75,7 @@
     "id": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e05",
     "parent": "",
     "name": "Lonely note",
-    "coordinates": { "x": 600, "y": 300 },
+    "coordinates": { "x": 300, "y": 150 },
     "image": { "src": "", "size": 60 },
     "colors": {
       "name": "#666666",

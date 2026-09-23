@@ -68,7 +68,12 @@ export default class Zoom {
       x = root.coordinates.x,
       y = root.coordinates.y;
 
-    const svg = this.map.dom.svg.transition().duration(duration);
+    // A transition applies on a later animation frame, and an interrupt, such
+    // as the one d3-zoom sends on mousedown, cancels it. A zero duration
+    // therefore sets the transform on the selection before this returns.
+    const svg = duration
+      ? this.map.dom.svg.transition().duration(duration)
+      : this.map.dom.svg;
 
     switch (type) {
       case 'zoom':
