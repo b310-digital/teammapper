@@ -218,7 +218,8 @@
     "MAP_UPDATE_SUCCESS": "Mindmap erfolgreich aktualisiert!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert...",
-      "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert..."
+      "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert...",
+      "MERMAID_SEVERAL_TREES": "Jeder Baum wurde zu einem eigenen mindmap-Block. Mermaid-Werkzeuge außerhalb von TeamMapper stellen nur einen Block auf einmal dar."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",

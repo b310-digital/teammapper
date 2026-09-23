@@ -215,7 +215,8 @@
     "MAP_UPDATE_SUCCESS": "Mise à jour réussie de la carte heuristique !",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importation de Mindmap en cours",
-      "MAP_UPDATE_IN_PROGRESS": "Mise à jour de la carte heuristique..."
+      "MAP_UPDATE_IN_PROGRESS": "Mise à jour de la carte heuristique...",
+      "MERMAID_SEVERAL_TREES": "Chaque arbre est devenu son propre bloc mindmap. Les outils Mermaid hors de TeamMapper affichent un bloc à la fois."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Il n'est pas possible de copier le noeud racine !",

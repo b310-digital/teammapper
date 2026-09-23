@@ -71,7 +71,9 @@ common word for it.
 Do not confuse a detached node with an **orphaned node**, whose parent is
 missing or whose ancestors form a cycle, so that no root node reaches it. An
 orphaned node is a fault in the data, and the app repairs it by placing the node
-at the end of the map.
+at the end of the map. The backend leaves every orphaned node out when it saves
+a map or duplicates one, logs the node IDs, and deletes their rows, because the
+parent foreign key rejects them.
 
 ### Branch
 

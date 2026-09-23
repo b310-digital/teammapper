@@ -98,6 +98,7 @@ describe('MmpService', () => {
     toastrService = {
       success: jest.fn(),
       error: jest.fn(),
+      info: jest.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -427,6 +428,45 @@ describe('MmpService', () => {
 
         expect(result.success).toBe(true);
         expect(downloadFileSpy).toHaveBeenCalled();
+      });
+
+      describe('to Mermaid', () => {
+        const root = { id: 'root', parent: '', name: 'Root', isRoot: true };
+        const second = { id: 'second', parent: '', name: 'Second' };
+
+        let clickSpy: jest.SpyInstance;
+
+        beforeEach(() => {
+          URL.createObjectURL = jest.fn().mockReturnValue('blob:test');
+          URL.revokeObjectURL = jest.fn();
+          clickSpy = jest
+            .spyOn(HTMLAnchorElement.prototype, 'click')
+            .mockReturnValue(undefined);
+        });
+
+        afterEach(() => {
+          clickSpy.mockRestore();
+        });
+
+        it('warns that a map with two trees exports two blocks', async () => {
+          mockMap.instance.exportAsJSON.mockReturnValue([root, second]);
+
+          const result = await service.exportMap('mermaid');
+
+          expect(result.success).toBe(true);
+          expect(utilsService.translate).toHaveBeenCalledWith(
+            'TOASTS.WARNINGS.MERMAID_SEVERAL_TREES'
+          );
+          expect(toastrService.info).toHaveBeenCalledWith('translated-text');
+        });
+
+        it('shows no warning for a map with one tree', async () => {
+          mockMap.instance.exportAsJSON.mockReturnValue([root]);
+
+          await service.exportMap('mermaid');
+
+          expect(toastrService.info).not.toHaveBeenCalled();
+        });
       });
     });
   });

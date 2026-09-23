@@ -55,13 +55,13 @@ Each section is one pull request of about 500 changed lines, counting tests, and
 
 ## 7. PR 7: Mermaid per tree and orphan-safe saving (about 500 lines)
 
-- [ ] 7.1 Write one `mindmap` block per root in `ExportService`, separated by a blank line, ordered main root first
-- [ ] 7.2 Build the children map from every node, and stop skipping detached nodes
-- [ ] 7.3 Split an imported document at each `mindmap` line and parse each block on its own
-- [ ] 7.4 Build one snapshot from every block, mark only the first block's root with `isRoot`, and replace the map with a single `importMap` call
-- [ ] 7.5 Leave out the nodes no root reaches in `orderNodesFromRoot`, and log their ids
-- [ ] 7.6 Write unit tests: a two-tree map exports two blocks and re-imports to the same trees, and only the first imported root carries `isRoot`
-- [ ] 7.7 Write backend tests: a Y.Doc holding an orphan persists every other node, and a map holding an orphan duplicates without it
+- [x] 7.1 Write one `mindmap` block per root in `ExportService`, separated by a blank line, ordered main root first
+- [x] 7.2 Build the children map from every node, and stop skipping detached nodes
+- [x] 7.3 Split an imported document at each `mindmap` line and parse each block on its own
+- [x] 7.4 Build one snapshot from every block, mark only the first block's root with `isRoot`, and replace the map with a single `importMap` call
+- [x] 7.5 Leave out the nodes no root reaches in `orderNodesFromRoot`, and log their ids
+- [x] 7.6 Write unit tests: a two-tree map exports two blocks and re-imports to the same trees, and only the first imported root carries `isRoot`
+- [x] 7.7 Write backend tests: a Y.Doc holding an orphan persists every other node, and a map holding a parent cycle duplicates without it, since the parent foreign key rejects an orphan row
 
 ## 8. PR 8: release several trees and retire the detached node (about 650 lines, mostly deletions)
 

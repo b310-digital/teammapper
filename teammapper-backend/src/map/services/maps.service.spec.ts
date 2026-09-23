@@ -148,6 +148,40 @@ describe('MapsService', () => {
       )
     })
 
+    it('duplicates a map holding a parent cycle without the cycle', async () => {
+      const source = await mapsRepo.save({})
+      const copy = await mapsRepo.save({})
+      const root = '11111111-1111-4111-8111-111111111111'
+      const a = '22222222-2222-4222-8222-222222222222'
+      const b = '33333333-3333-4333-8333-333333333333'
+      const save = (id: string, parentId: string | null, isRoot = false) =>
+        nodesRepo.save(
+          nodesRepo.create({
+            id,
+            nodeMapId: source.id,
+            nodeParentId: parentId,
+            coordinatesX: 0,
+            coordinatesY: 0,
+            root: isRoot,
+          })
+        )
+      await save(root, null, true)
+      await save(a, root)
+      await save(b, a)
+      await nodesRepo.update(
+        { id: a, nodeMapId: source.id },
+        { nodeParentId: b }
+      )
+
+      await mapsService.addNodes(
+        copy.id,
+        await mapsService.findNodes(source.id)
+      )
+
+      const copied = await nodesRepo.find({ where: { nodeMapId: copy.id } })
+      expect(copied.map((n) => n.id)).toEqual([root])
+    })
+
     it('throws and rolls back on database errors', async () => {
       const map = await mapsRepo.save({})
       const loggerSpyError = jest.spyOn(Logger.prototype, 'error')
@@ -157,9 +191,9 @@ describe('MapsService', () => {
         nodeMapId: map.id,
         coordinatesX: 3,
         coordinatesY: 3,
-        root: false,
+        root: true,
         detached: false,
-        nodeParentId: '99999999-9999-4999-8999-999999999999',
+        colorsName: 'not-a-color-value',
       })
 
       await expect(
