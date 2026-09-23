@@ -1,20 +1,27 @@
 import {
   assignOrderNumbers,
   collectSubtreeIds,
-  findRootNode,
+  collectTreeIds,
+  findMainRoot,
+  findRootNodes,
   sortNodesParentFirst,
   TreeNodeLike,
 } from './tree';
 
+const idsOf = (nodes: TreeNodeLike[]): string[] => nodes.map(n => n.id);
+
 describe('Tree Algorithms', () => {
   describe('sortNodesParentFirst', () => {
-    it('returns empty array when given empty input', () => {
-      expect(sortNodesParentFirst([])).toEqual([]);
+    it('returns empty groups when given empty input', () => {
+      expect(sortNodesParentFirst([])).toEqual({ ordered: [], unreached: [] });
     });
 
     it('returns single root node unchanged', () => {
       const root: TreeNodeLike = { id: 'root', isRoot: true, parent: null };
-      expect(sortNodesParentFirst([root])).toEqual([root]);
+      expect(sortNodesParentFirst([root])).toEqual({
+        ordered: [root],
+        unreached: [],
+      });
     });
 
     it('orders root first and parents before children in standard hierarchy', () => {
@@ -25,8 +32,7 @@ describe('Tree Algorithms', () => {
         { id: 'c1', parent: 'root' },
       ];
 
-      const result = sortNodesParentFirst(nodes);
-      const ids = result.map(n => n.id);
+      const ids = idsOf(sortNodesParentFirst(nodes).ordered);
 
       expect(ids[0]).toBe('root');
       expect(ids.indexOf('root')).toBeLessThan(ids.indexOf('c1'));
@@ -44,10 +50,53 @@ describe('Tree Algorithms', () => {
       ];
 
       const result = sortNodesParentFirst(nodes);
-      expect(result.map(n => n.id)).toEqual(['root', 'A', 'B', 'C', 'D']);
+      expect(idsOf(result.ordered)).toEqual(['root', 'A', 'B', 'C', 'D']);
     });
 
-    it('handles direct 2-node cycle (A -> B -> A) without infinite loop or stack overflow', () => {
+    it('orders two roots with the main root first', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'second', parent: null },
+        { id: 'main', isRoot: true, parent: null },
+      ];
+
+      const result = sortNodesParentFirst(nodes);
+      expect(idsOf(result.ordered)).toEqual(['main', 'second']);
+    });
+
+    it('walks each tree to completion before the next, main tree first', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'secondChild', parent: 'second' },
+        { id: 'mainGrandchild', parent: 'mainChild' },
+        { id: 'mainChild', parent: 'main' },
+        { id: 'second', parent: null },
+        { id: 'main', isRoot: true, parent: null },
+      ];
+
+      const result = sortNodesParentFirst(nodes);
+      expect(idsOf(result.ordered)).toEqual([
+        'main',
+        'mainChild',
+        'mainGrandchild',
+        'second',
+        'secondChild',
+      ]);
+    });
+
+    it('puts an orphan and its descendants in `unreached`', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'root', isRoot: true, parent: null },
+        { id: 'orphan2', parent: 'orphan1' },
+        { id: 'child', parent: 'root' },
+        { id: 'orphan1', parent: 'non-existent-parent' },
+      ];
+
+      const result = sortNodesParentFirst(nodes);
+
+      expect(idsOf(result.ordered)).toEqual(['root', 'child']);
+      expect(idsOf(result.unreached)).toEqual(['orphan2', 'orphan1']);
+    });
+
+    it('puts a 2-node cycle (A -> B -> A) in `unreached`', () => {
       const nodes: TreeNodeLike[] = [
         { id: 'root', isRoot: true, parent: null },
         { id: 'A', parent: 'B' },
@@ -55,71 +104,46 @@ describe('Tree Algorithms', () => {
       ];
 
       const result = sortNodesParentFirst(nodes);
-      expect(result.length).toBe(3);
-      expect(result[0].id).toBe('root');
-      expect(result.map(n => n.id)).toContain('A');
-      expect(result.map(n => n.id)).toContain('B');
+
+      expect(idsOf(result.ordered)).toEqual(['root']);
+      expect(idsOf(result.unreached)).toEqual(['A', 'B']);
     });
 
-    it('handles self-referencing cycle (A -> A) safely', () => {
+    it('puts a self-referencing node (A -> A) in `unreached`', () => {
       const nodes: TreeNodeLike[] = [
         { id: 'root', isRoot: true, parent: null },
         { id: 'A', parent: 'A' },
       ];
 
       const result = sortNodesParentFirst(nodes);
-      expect(result.map(n => n.id)).toEqual(['root', 'A']);
+
+      expect(idsOf(result.ordered)).toEqual(['root']);
+      expect(idsOf(result.unreached)).toEqual(['A']);
     });
 
-    it('handles child pointing back to root in cycle safely', () => {
+    it('puts a node that carries `isRoot` but has a parent in `unreached`', () => {
       const nodes: TreeNodeLike[] = [
         { id: 'root', isRoot: true, parent: 'child' },
         { id: 'child', parent: 'root' },
       ];
 
       const result = sortNodesParentFirst(nodes);
-      expect(result.map(n => n.id)).toEqual(['root', 'child']);
+
+      expect(result.ordered).toEqual([]);
+      expect(idsOf(result.unreached)).toEqual(['root', 'child']);
     });
 
-    it('handles 3-node cycle (A -> B -> C -> A) reachable from root', () => {
-      const nodes: TreeNodeLike[] = [
-        { id: 'root', isRoot: true, parent: null },
-        { id: 'A', parent: 'C' },
-        { id: 'B', parent: 'A' },
-        { id: 'C', parent: 'B' },
-      ];
-
-      const result = sortNodesParentFirst(nodes);
-      expect(result.length).toBe(4);
-      expect(result[0].id).toBe('root');
-    });
-
-    it('appends orphaned nodes at the tail without dropping any nodes', () => {
-      const nodes: TreeNodeLike[] = [
-        { id: 'root', isRoot: true, parent: null },
-        { id: 'child', parent: 'root' },
-        { id: 'orphan1', parent: 'non-existent-parent' },
-        { id: 'orphan2', parent: 'orphan1' },
-      ];
-
-      const result = sortNodesParentFirst(nodes);
-      const ids = result.map(n => n.id);
-
-      expect(ids.slice(0, 2)).toEqual(['root', 'child']);
-      expect(ids).toContain('orphan1');
-      expect(ids).toContain('orphan2');
-      expect(ids.length).toBe(4);
-    });
-
-    it('returns copy of input nodes when no root is present', () => {
+    it('puts every node in `unreached` when no root is present', () => {
       const nodes: TreeNodeLike[] = [
         { id: 'a', parent: 'x' },
         { id: 'b', parent: 'y' },
       ];
 
       const result = sortNodesParentFirst(nodes);
-      expect(result).toEqual(nodes);
-      expect(result).not.toBe(nodes);
+
+      expect(result.ordered).toEqual([]);
+      expect(result.unreached).toEqual(nodes);
+      expect(result.unreached).not.toBe(nodes);
     });
 
     it('does not mutate input array or input node objects', () => {
@@ -168,33 +192,94 @@ describe('Tree Algorithms', () => {
     });
   });
 
-  describe('findRootNode', () => {
-    it('returns undefined for empty or nullish node list', () => {
-      expect(findRootNode([])).toBeUndefined();
+  describe('collectTreeIds', () => {
+    const nodes: TreeNodeLike[] = [
+      { id: 'main', isRoot: true, parent: null },
+      { id: 'mainChild', parent: 'main' },
+      { id: 'second', parent: null },
+      { id: 'secondChild', parent: 'second' },
+      { id: 'secondGrandchild', parent: 'secondChild' },
+    ];
+
+    it('returns a root followed by its descendants', () => {
+      expect(collectTreeIds(nodes, 'second')).toEqual([
+        'second',
+        'secondChild',
+        'secondGrandchild',
+      ]);
     });
 
-    it('identifies root by explicit isRoot property', () => {
+    it('returns a root without children alone', () => {
+      expect(collectTreeIds([{ id: 'solo', parent: null }], 'solo')).toEqual([
+        'solo',
+      ]);
+    });
+
+    it('returns nothing for an unknown ID', () => {
+      expect(collectTreeIds(nodes, 'nonexistent')).toEqual([]);
+    });
+  });
+
+  describe('findMainRoot', () => {
+    it('returns undefined for an empty node list', () => {
+      expect(findMainRoot([])).toBeUndefined();
+    });
+
+    it('identifies the main root by explicit isRoot property', () => {
       const nodes: TreeNodeLike[] = [
+        { id: 'second', parent: null },
         { id: 'c1', parent: 'r' },
         { id: 'r', isRoot: true, parent: null },
       ];
-      expect(findRootNode(nodes)?.id).toBe('r');
+      expect(findMainRoot(nodes)?.id).toBe('r');
     });
 
-    it('identifies root by parent === null fallback when isRoot is omitted', () => {
+    it('falls back to parent === null when isRoot is omitted', () => {
       const nodes: TreeNodeLike[] = [
         { id: 'c1', parent: 'r' },
         { id: 'r', parent: null },
       ];
-      expect(findRootNode(nodes)?.id).toBe('r');
+      expect(findMainRoot(nodes)?.id).toBe('r');
     });
 
-    it('identifies root by parent === "" fallback', () => {
+    it('falls back to parent === ""', () => {
       const nodes: TreeNodeLike[] = [
         { id: 'c1', parent: 'r' },
         { id: 'r', parent: '' },
       ];
-      expect(findRootNode(nodes)?.id).toBe('r');
+      expect(findMainRoot(nodes)?.id).toBe('r');
+    });
+  });
+
+  describe('findRootNodes', () => {
+    it('returns empty array for an empty node list', () => {
+      expect(findRootNodes([])).toEqual([]);
+    });
+
+    it('returns every parentless node with the main root first', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'second', parent: null },
+        { id: 'child', parent: 'main' },
+        { id: 'third', parent: '' },
+        { id: 'main', isRoot: true, parent: null },
+      ];
+      expect(idsOf(findRootNodes(nodes))).toEqual(['main', 'second', 'third']);
+    });
+
+    it('keeps input order when no parentless node carries `isRoot`', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'b', parent: null },
+        { id: 'a', parent: null },
+      ];
+      expect(idsOf(findRootNodes(nodes))).toEqual(['b', 'a']);
+    });
+
+    it('leaves out a node that carries `isRoot` but has a parent', () => {
+      const nodes: TreeNodeLike[] = [
+        { id: 'marked', isRoot: true, parent: 'other' },
+        { id: 'other', parent: null },
+      ];
+      expect(idsOf(findRootNodes(nodes))).toEqual(['other']);
     });
   });
 

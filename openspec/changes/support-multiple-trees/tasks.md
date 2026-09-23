@@ -10,13 +10,13 @@ Each section is one pull request of about 500 changed lines, counting tests, and
 
 ## 2. PR 2: multi-root algorithms and the sync observer (about 550 lines)
 
-- [ ] 2.1 Add `findRootNodes` returning every node with no parent, main root first, and keep `findMainRoot` for single-root callers
-- [ ] 2.2 Rewrite `sortNodesParentFirst` to seed its queue with every root and to return the nodes no root reaches separately
-- [ ] 2.3 Add `collectTreeIds` that returns a root plus its descendants, reusing `collectSubtreeIds`
-- [ ] 2.4 Sort batched adds in `YjsSyncService` with the multi-root `sortNodesParentFirst`
-- [ ] 2.5 Keep `isFullMapReplacement` reading `isRoot`, and document that it fires only when the main root's entry is rewritten
-- [ ] 2.6 Write unit tests: two roots ordered main root first, child of a second root after that root, an orphan and its descendants returned separately, a cycle returned separately
-- [ ] 2.7 Write sync tests: a remote root add and a remote pasted tree apply as ordinary adds and leave the undo stack, a remote import and a remote redistribution still reload and clear it
+- [x] 2.1 Add `findRootNodes` returning every node with no parent, main root first, and keep `findMainRoot` for single-root callers
+- [x] 2.2 Rewrite `sortNodesParentFirst` to walk from every root and to return the nodes no root reaches in a second list
+- [x] 2.3 Add `collectTreeIds` that returns a root plus its descendants, reusing `collectSubtreeIds`
+- [x] 2.4 Sort batched adds in `YjsSyncService` with the multi-root `sortNodesParentFirst`
+- [x] 2.5 Keep `isFullMapReplacement` reading `isRoot`, and document that it fires only when a transaction rewrites the main root's entry
+- [x] 2.6 Write unit tests: two roots ordered main root first, child of a second root after that root, an orphan and its descendants in the second list, a cycle in the second list
+- [x] 2.7 Write sync tests: a remote root add and a remote pasted tree apply as ordinary adds and leave the undo stack, a remote import and a remote redistribution reload the map and clear the undo stack
 - [ ] 2.8 Write a backend test: duplicating a two-root map saves every node
 - [ ] 2.9 Add an integration test: two clients each add a parentless node through the Y.Doc, and both render every tree
 

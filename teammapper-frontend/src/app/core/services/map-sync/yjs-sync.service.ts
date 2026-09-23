@@ -55,6 +55,36 @@ const LAST_MAP_ANNOUNCEMENT = 'lastMapAnnouncement';
  */
 const LOCAL_ORIGIN = 'local';
 
+/**
+ * Orders the nodes of a whole map parent-first across every root, then
+ * appends the orphans no root reaches, in input order.
+ */
+function parentFirstWithOrphans(
+  nodes: ExportNodeProperties[]
+): ExportNodeProperties[] {
+  const { ordered, unreached } = sortNodesParentFirst(nodes);
+  return [...ordered, ...unreached];
+}
+
+/**
+ * Orders a batch of added nodes parent-first. A node whose parent is outside
+ * the batch, such as the top of a subtree pasted under a node this client
+ * already holds, starts a walk as if it were a root.
+ */
+function batchParentFirst(
+  nodes: ExportNodeProperties[]
+): ExportNodeProperties[] {
+  const batchIds = new Set(nodes.map(n => n.id));
+  const keys = nodes.map(node => ({
+    node,
+    id: node.id,
+    parent: node.parent && batchIds.has(node.parent) ? node.parent : null,
+    isRoot: node.isRoot,
+  }));
+  const { ordered, unreached } = sortNodesParentFirst(keys);
+  return [...ordered, ...unreached].map(key => key.node);
+}
+
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
   private wsProvider: WebsocketProvider | null = null;
@@ -316,7 +346,7 @@ export class YjsSyncService {
     nodesMap.forEach((yNode: Y.Map<unknown>) => {
       nodes.push(yMapToNodeProps(yNode));
     });
-    return sortNodesParentFirst(nodes);
+    return parentFirstWithOrphans(nodes);
   }
 
   // ─── MMP event listeners (MMP → Y.Doc) ─────────────────────
@@ -492,7 +522,7 @@ export class YjsSyncService {
   private writeFullMapToYDoc(operation: FullMapOperation): void {
     const snapshot = this.mmpService.exportAsJSON();
     const nodesMap = this.nodesMap;
-    const sorted = sortNodesParentFirst(snapshot);
+    const sorted = parentFirstWithOrphans(snapshot);
 
     // Without this, Yjs merges the replacement with whatever the user did in
     // the preceding half second and one undo would revert both.
@@ -626,7 +656,7 @@ export class YjsSyncService {
         .map(key => nodesMap.get(key))
         .filter((yNode): yNode is Y.Map<unknown> => !!yNode)
         .map(yNode => yMapToNodeProps(yNode));
-      const sorted = sortNodesParentFirst(nodeProps);
+      const sorted = batchParentFirst(nodeProps);
       sorted.forEach(props => this.mmpService.addNodesFromServer([props]));
     }
   }
@@ -636,6 +666,13 @@ export class YjsSyncService {
     if (msg) this.toastrService.success(msg);
   }
 
+  /**
+   * Reads `isRoot`, which marks the main root only. Adding a tree or pasting
+   * one writes roots without the mark, so the check fires only when a
+   * transaction rewrites the main root's entry: an import, a redistribution,
+   * or an undo of either. Yjs reports a delete and re-set of one key as
+   * `update`, so the check reads `add` and `update`.
+   */
   private isFullMapReplacement(
     mapEvent: Y.YMapEvent<Y.Map<unknown>>,
     nodesMap: Y.Map<Y.Map<unknown>>

@@ -15,7 +15,7 @@ say so.
 | board, canvas, diagram, chart, document | mind map                                   |
 | Mindmap, mindmap (one word)             | mind map                                   |
 | card, box, bubble, topic, item          | node                                       |
-| central topic, main idea, centre        | root node                                  |
+| central topic, main idea, centre        | main root                                  |
 | edge                                    | branch                                     |
 | fold, collapse, unfold, expand          | hide, show                                 |
 | clone, fork                             | duplicate                                  |
@@ -32,7 +32,7 @@ do not use any of them as a loose synonym for a branch.
 
 ### Mind map
 
-The whole map: a root node, every node below it, and the map's settings. Write
+The whole map: one or more trees and the map's settings. Write
 "mind map" in prose, and **map** in identifiers and in URLs.
 
 The product's own screens say "Mindmap" in most places and "mind map" in others.
@@ -41,23 +41,35 @@ Write "mind map".
 ### Node
 
 One labelled unit in a mind map. A node holds a name, a position, colors and a
-font, and it may hold an image and a link. Every node except the root has a
+font, and it may hold an image and a link. Every node except a root node has a
 parent.
+
+### Tree
+
+A root node and every node that descends from it. A map holds one or more
+trees, and each tree has its own layout around its root node.
 
 ### Root node
 
-The one node per map with no parent. The app creates it with the map, and no one
-can delete, copy, cut or lock it. Every other node descends from it.
+A node with no parent. Each root node starts a tree, and the map draws no
+branch to it. A map holds at least one root node, the main root.
+
+### Main root
+
+The one root node per map that the app creates with the map. No one can delete,
+copy, cut or lock it. The stored flag `isRoot` marks the main root only, so do
+not read `isRoot` to learn whether a node has a parent.
 
 ### Detached node
 
-A node with no parent that the map still draws, and draws no branch to. The app
-coined the term; mind mapping has no common word for it. Users create detached
-nodes on purpose.
+A root node that the toolbar's "add detached node" button creates. The layout
+places it in a column right of the trees instead of laying out a tree around it.
+The app coined the term; mind mapping has no common word for it.
 
 Do not confuse a detached node with an **orphaned node**, whose parent is
-missing. An orphaned node is a fault in the data, and the app repairs it by
-placing the node at the end of the map.
+missing or whose ancestors form a cycle, so that no root node reaches it. An
+orphaned node is a fault in the data, and the app repairs it by placing the node
+at the end of the map.
 
 ### Branch
 
@@ -108,7 +120,7 @@ linktext, and the starting name and styling for root nodes and ordinary nodes.
 ### Add, remove, select, deselect
 
 The four basic node operations. Adding takes a parent; adding a detached node
-takes none. No one can remove the root node.
+takes none. No one can remove the main root.
 
 ### Drag
 
@@ -123,7 +135,7 @@ calls it distributing all nodes evenly.
 ### Copy, cut, paste
 
 Clipboard operations over a node and its whole subtree. No one can copy or cut
-the root node.
+the main root.
 
 ### Undo / Redo
 
@@ -135,7 +147,7 @@ and there is no restore.
 
 ### Zoom, center
 
-Scale the view, and move the root node back to the middle of the viewport.
+Scale the view, and move the main root back to the middle of the viewport.
 
 ### Import
 

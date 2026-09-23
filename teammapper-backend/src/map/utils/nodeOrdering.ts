@@ -15,6 +15,8 @@ export const orderNodesFromRoot = (
     isRoot: Boolean(n.root),
   }))
 
-  const orderedAdapted = sortNodesParentFirst(adapted)
-  return assignOrderNumbers(orderedAdapted.map((a) => ({ ...a.node })))
+  const { ordered, unreached } = sortNodesParentFirst(adapted)
+  return assignOrderNumbers(
+    [...ordered, ...unreached].map((a) => ({ ...a.node }))
+  )
 }

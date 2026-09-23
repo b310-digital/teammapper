@@ -64,6 +64,38 @@ describe('orderNodesFromRoot', () => {
     expect(result.map((n) => n.orderNumber)).toEqual([1, 2, 3, 4, 5])
   })
 
+  it('orders a second root after the main root and before its child', () => {
+    const nodes = [
+      makeNode({ id: 'secondChild', nodeParentId: 'second' }),
+      makeNode({ id: 'second' }),
+      makeNode({ id: 'main', root: true }),
+    ]
+
+    const result = orderNodesFromRoot(nodes)
+
+    expect(result.map((n) => [n.id, n.orderNumber])).toEqual([
+      ['main', 1],
+      ['second', 2],
+      ['secondChild', 3],
+    ])
+  })
+
+  it('appends a node no root reaches at the tail', () => {
+    const nodes = [
+      makeNode({ id: 'orphan', nodeParentId: 'deleted' }),
+      makeNode({ id: 'child', nodeParentId: 'root' }),
+      makeNode({ id: 'root', root: true }),
+    ]
+
+    const result = orderNodesFromRoot(nodes)
+
+    expect(result.map((n) => [n.id, n.orderNumber])).toEqual([
+      ['root', 1],
+      ['child', 2],
+      ['orphan', 3],
+    ])
+  })
+
   it('returns input unchanged when no root node exists', () => {
     const nodes = [
       makeNode({ id: 'a', nodeParentId: 'x' }),
