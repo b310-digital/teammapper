@@ -83,7 +83,8 @@
               "app",
               ".app",
               "host.docker.internal"
-            ]
+            ],
+            "prebundle": false
           },
           "configurations": {
             "production": {

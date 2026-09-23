@@ -52,6 +52,17 @@ the suite.
 match, because the protocol between them is not stable across versions. Bump
 both in the same commit.
 
+## Dev server and workspace packages
+
+The `serve` target in `teammapper-frontend/angular.json` sets
+`"prebundle": false`. Keep it off. Vite keys its prebundle cache on the lockfile
+and the config, so a rebuilt `packages/*/dist` leaves both unchanged and
+`ng serve` keeps serving the old build of `@teammapper/mmp`. A fresh checkout,
+such as CI, has no cache and runs the current build, so the two disagree.
+Excluding the workspace packages from prebundling does not work either: Vite
+then resolves the bare imports they leave external, such as `d3`, from the
+frontend, which does not depend on them.
+
 ## Formatting and lint scope
 
 `.prettierrc` at the repository root is the one prettier config, and every
