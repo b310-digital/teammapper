@@ -13,9 +13,9 @@ import type { ExportNodeProperties } from '@teammapper/shared';
 
 interface NodesInternals {
   nodes: Map<string, Node>;
-  selectedNode: Node;
-  moveSelectionOnLevel(direction: boolean): void;
-  moveSelectionOnBranch(direction: boolean): void;
+  selectedNode: Node | null;
+  moveSelectionOnLevel(selected: Node, direction: boolean): void;
+  moveSelectionOnBranch(selected: Node, direction: boolean): void;
 }
 
 function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
@@ -267,11 +267,10 @@ describe('moveSelectionOnLevel', () => {
       }),
     ];
     children.forEach(child => internals.nodes.set(child.id, child));
-    internals.selectedNode = children[0];
     const selectNode = jest.fn();
     handler.selectNode = selectNode;
 
-    internals.moveSelectionOnLevel(false);
+    internals.moveSelectionOnLevel(children[0], false);
 
     expect(selectNode).toHaveBeenCalledWith('left-low');
   });
@@ -293,11 +292,10 @@ describe('moveSelectionOnBranch', () => {
       }),
     ];
     children.forEach(child => internals.nodes.set(child.id, child));
-    internals.selectedNode = nodes.secondRoot;
     const selectNode = jest.fn();
     handler.selectNode = selectNode;
 
-    internals.moveSelectionOnBranch(direction);
+    internals.moveSelectionOnBranch(nodes.secondRoot, direction);
 
     return selectNode.mock.calls.map(call => call[0]);
   }

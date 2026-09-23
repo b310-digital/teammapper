@@ -69,6 +69,14 @@ export class ToolbarComponent {
     );
   }
 
+  /**
+   * True when editing is off or no node is selected. The node buttons bind to
+   * this getter; add tree, add detached node and paste do not.
+   */
+  get nodeActionsDisabled(): boolean {
+    return this.editDisabled || !this.mmpService.hasSelectedNode();
+  }
+
   // In some cases the mmpService is not yet initialized so trying to call getSelectedNode() will throw an error
   get canHideNodes() {
     if (this.mmpService) {
@@ -102,9 +110,10 @@ export class ToolbarComponent {
   }
 
   public toogleNodeFontStyle() {
-    const currentStyle = this.mmpService.selectNode().font?.style;
+    const selected = this.mmpService.selectNode();
+    if (!selected) return;
 
-    if (currentStyle === 'italic') {
+    if (selected.font?.style === 'italic') {
       this.mmpService.updateNode('fontStyle', 'normal');
     } else {
       this.mmpService.updateNode('fontStyle', 'italic');
@@ -128,9 +137,10 @@ export class ToolbarComponent {
   }
 
   public toogleNodeFontWeight() {
-    const currentWeight = this.mmpService.selectNode().font?.weight;
+    const selected = this.mmpService.selectNode();
+    if (!selected) return;
 
-    if (currentWeight === 'bold') {
+    if (selected.font?.weight === 'bold') {
       this.mmpService.updateNode('fontWeight', 'normal');
     } else {
       this.mmpService.updateNode('fontWeight', 'bold');

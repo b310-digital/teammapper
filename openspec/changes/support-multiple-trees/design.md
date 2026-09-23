@@ -94,7 +94,7 @@ Every root takes branch color `''`, the main root's default. `MmpService.addNode
 
 ### 4. Empty selection and paste
 
-`Nodes.deselectNode` selects the main root today, and `initMap` selects the main root when a map loads, so no state represents "nothing selected". The selected node becomes `Node | null`. Deselecting leaves it `null`, and a map load still selects the main root.
+`Nodes.deselectNode` selects the main root today, and `initMap` selects the main root when a map loads, so no state represents "nothing selected". The selected node becomes `Node | null`. Deselecting leaves it `null`, and a map load still selects the main root. The empty selection applies to every user, because `packages/mmp` reads no flag.
 
 With nothing selected:
 
@@ -150,7 +150,7 @@ A user who relied on a detached node as a comment beside a specific node keeps i
 ### 9. Rollout order
 
 1. The renderer, the shared algorithms, the layout and the sync observer learn several roots. None of these changes alters a single-tree map, and `packages/mmp` reads no flag.
-2. The `multiTree` flag, off by default, gates the add-tree button and pasting as a tree in the frontend. An operator can turn it on to try the feature. The same release removes the early return in `MmpService.addNode` for every user, flag or not, so a user can add children to a selected detached node. Until the final release, the layout engine parks the children of a detached node as orphans on a redistribution.
+2. The `multiTree` flag, off by default, gates the add-tree button and pasting as a tree in the frontend. An operator can turn it on to try the feature. The same release removes the early return in `MmpService.addNode` for every user, flag or not, so a user can add children to a selected detached node. The empty selection of decision 4 also ships to every user, flag or not. Until the final release, the layout engine parks the children of a detached node as orphans on a redistribution.
 3. The final release removes the flag, replaces the detached-node button with the add-tree button for every user, stops reading and writing `detached`, and drops the column in a migration.
 
 Step 3 bundles the flag removal with the retirement so that the toolbar never offers both buttons and never offers neither. A frontend older than step 1 attaches a parentless node that is not detached under the selected node, so step 3 runs only once no such frontend is deployed. Rolling back past step 3 needs the down-migration, and the rolled-back frontend then shows that same misplacement for former detached nodes until the map reloads.

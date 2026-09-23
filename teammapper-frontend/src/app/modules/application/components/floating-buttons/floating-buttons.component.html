@@ -4,7 +4,7 @@
       id="floating-add-node"
       (click)="mmpService.addNode()"
       [title]="'TOOLTIPS.ADD_NODE' | translate"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       class="mat-elevation-z2"
       mat-mini-fab>
       <mat-icon aria-label="Add node">add</mat-icon>
@@ -15,7 +15,7 @@
       id="floating-remove-node"
       (click)="mmpService.removeNode()"
       [title]="'TOOLTIPS.REMOVE_NODE' | translate"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       class="mat-elevation-z2"
       mat-mini-fab>
       <mat-icon aria-label="Remove node">remove</mat-icon>

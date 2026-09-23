@@ -118,6 +118,10 @@ describe('MmpService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('reports no selected node before create', () => {
+    expect(service.hasSelectedNode()).toBe(false);
+  });
+
   describe('create', () => {
     it('should create a new mind map', async () => {
       const id = 'test-id';
@@ -165,13 +169,17 @@ describe('MmpService', () => {
     });
 
     describe('addNode', () => {
+      beforeEach(() => {
+        mockMap.instance.selectNode.mockReturnValue({ id: 'selected' });
+      });
+
       it('should add a node with default properties', () => {
         service.addNode();
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
           { name: '' },
           true,
           true,
-          undefined,
+          'selected',
           undefined
         );
       });
@@ -183,8 +191,32 @@ describe('MmpService', () => {
           props,
           true,
           true,
-          undefined,
+          'selected',
           '123'
+        );
+      });
+
+      it('adds no child with nothing selected', () => {
+        mockMap.instance.selectNode.mockReturnValue(null);
+
+        service.addNode();
+
+        expect(mockMap.instance.addNode).not.toHaveBeenCalled();
+      });
+
+      it('places a detached node where a new tree goes with nothing selected', () => {
+        const coordinates = { x: 1400, y: 0 };
+        mockMap.instance.selectNode.mockReturnValue(null);
+        mockMap.instance.newTreeCoordinates.mockReturnValue(coordinates);
+
+        service.addNode({ detached: true, name: '' });
+
+        expect(mockMap.instance.addNode).toHaveBeenCalledWith(
+          { detached: true, name: '', coordinates },
+          true,
+          true,
+          undefined,
+          undefined
         );
       });
 
@@ -239,6 +271,50 @@ describe('MmpService', () => {
       it('should select node by direction', () => {
         service.selectNode('left');
         expect(mockMap.instance.selectNode).toHaveBeenCalledWith('left');
+      });
+    });
+
+    describe('hasSelectedNode', () => {
+      it('reports a selected node', () => {
+        mockMap.instance.getSelectedNode.mockReturnValue({ id: 'selected' });
+
+        expect(service.hasSelectedNode()).toBe(true);
+      });
+    });
+
+    describe('copyNode and cutNode with nothing selected', () => {
+      beforeEach(() => {
+        mockMap.instance.getSelectedNode.mockReturnValue(null);
+      });
+
+      it('copies nothing and reports no success', async () => {
+        await service.copyNode();
+
+        expect(mockMap.instance.copyNode).not.toHaveBeenCalled();
+        expect(toastrService.success).not.toHaveBeenCalled();
+      });
+
+      it('cuts nothing and reports no success', async () => {
+        await service.cutNode();
+
+        expect(mockMap.instance.cutNode).not.toHaveBeenCalled();
+        expect(toastrService.success).not.toHaveBeenCalled();
+      });
+
+      it('copies a node named by id', async () => {
+        await service.copyNode('test-node');
+
+        expect(mockMap.instance.copyNode).toHaveBeenCalledWith('test-node');
+      });
+    });
+
+    describe('moveNodeTo', () => {
+      it('moves nothing with nothing selected', () => {
+        mockMap.instance.selectNode.mockReturnValue(null);
+
+        service.moveNodeTo('left');
+
+        expect(mockMap.instance.updateNode).not.toHaveBeenCalled();
       });
     });
 

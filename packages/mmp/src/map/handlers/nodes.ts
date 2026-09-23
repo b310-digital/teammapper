@@ -57,7 +57,8 @@ export default class Nodes {
   private map: MmpMap;
 
   private nodes: Map<string, Node>;
-  private selectedNode!: Node;
+  // deselectNode sets this to null. A map load selects the main root.
+  private selectedNode: Node | null = null;
 
   /**
    * Add the root node to the map.
@@ -162,6 +163,8 @@ export default class Nodes {
   /**
    * The parent a node added through addNode gets: none for a detached node or
    * an explicit null, the named node for an id, the selected node otherwise.
+   * Throws when the caller names no parent and nothing is selected, because a
+   * new root node would hide the caller's mistake.
    */
   private resolveParent(
     userProperties: UserNodeProperties | undefined,
@@ -169,8 +172,9 @@ export default class Nodes {
   ): Node | null {
     if (userProperties?.detached || parentId === null) return null;
     if (parentId) return this.getNode(parentId) ?? null;
+    if (!this.selectedNode) Log.error('There is no selected node');
 
-    return this.getSelectedNode();
+    return this.selectedNode;
   }
 
   /**
@@ -192,11 +196,12 @@ export default class Nodes {
   };
 
   /**
-   * Select a node or return the current selected node.
+   * Select a node or return the current selected node, null when nothing is
+   * selected.
    * @param {string} id
-   * @returns {ExportNodeProperties}
+   * @returns {ExportNodeProperties | null}
    */
-  public selectNode = (id?: string): ExportNodeProperties => {
+  public selectNode = (id?: string): ExportNodeProperties | null => {
     if (id !== undefined) {
       if (typeof id !== 'string') {
         Log.error('The node id must be a string', 'type');
@@ -210,30 +215,9 @@ export default class Nodes {
           const color = d3.color(background.style.fill)?.darker(0.5);
 
           if (color && background.style.stroke !== color.toString()) {
-            if (this.selectedNode) {
-              this.selectedNode.getBackgroundDOM().style.stroke = '';
-            }
+            this.releaseSelection(node);
 
             background.style.stroke = color.toString();
-
-            // Don't blur the node that's currently being edited (#1249): on
-            // mobile, d3-drag's `started` callback fires on the second tap
-            // that enters edit mode and calls selectNode for the same node,
-            // which used to steal focus from the just-focused contenteditable
-            // and stop the soft keyboard from opening.
-            const prevName = this.selectedNode.getNameDOM();
-            const wouldBlurActiveEdit =
-              this.selectedNode === node && document.activeElement === prevName;
-            if (!wouldBlurActiveEdit) {
-              Utils.removeAllRanges();
-              prevName.blur();
-            }
-
-            this.map.events.call(
-              Event.nodeDeselect,
-              this.selectedNode.dom,
-              this.getNodeProperties(this.selectedNode)
-            );
 
             this.selectedNode = node;
             this.map.events.call(
@@ -248,8 +232,43 @@ export default class Nodes {
       }
     }
 
-    return this.getNodeProperties(this.selectedNode);
+    return this.selectedNode ? this.getNodeProperties(this.selectedNode) : null;
   };
+
+  /**
+   * Clear the ring and the focus of the selected node, leave nothing
+   * selected, and tell listeners the node lost the selection. `next` names
+   * the node about to take the selection, or null for a deselect.
+   * @param {Node | null} next
+   */
+  private releaseSelection(next: Node | null) {
+    const previous = this.selectedNode;
+    if (!previous) return;
+
+    previous.getBackgroundDOM().style.stroke = '';
+
+    // Keep focus on the node the user is editing (#1249): on mobile,
+    // d3-drag's `started` callback fires on the second tap that enters edit
+    // mode and calls selectNode for the same node, which used to steal focus
+    // from the just-focused contenteditable and stop the soft keyboard from
+    // opening.
+    const prevName = previous.getNameDOM();
+    const editingSameNode =
+      previous === next && document.activeElement === prevName;
+    if (!editingSameNode) {
+      Utils.removeAllRanges();
+      prevName.blur();
+    }
+
+    // The blur runs first: the name editor's onblur commits the name through
+    // updateNode without an id, which targets the selected node.
+    this.selectedNode = null;
+    this.map.events.call(
+      Event.nodeDeselect,
+      previous.dom,
+      this.getNodeProperties(previous)
+    );
+  }
 
   /**
    * Highlighs node with a border
@@ -358,24 +377,32 @@ export default class Nodes {
     node.hidden || node.hasHiddenChildNodes;
 
   /**
-   * Deselect the current selected node.
+   * Deselect the current selected node, the main root included, and leave
+   * nothing selected.
    */
   public deselectNode = () => {
-    if (this.selectedNode?.id === this.getRoot().id) return;
+    this.releaseSelection(null);
+  };
 
-    const oldNodeProps: ExportNodeProperties = this.getNodeProperties(
-      this.selectedNode
-    );
-    const oldDom: SVGGElement = this.selectedNode.dom;
+  /**
+   * Return the node with `id`, or the selected node when the caller passes no
+   * id. Return null when the caller passes no id and nothing is selected.
+   * Throw when `id` names no node.
+   * @param {string} id
+   * @returns {Node | null}
+   */
+  public getTargetNode = (id?: string): Node | null => {
+    if (id && typeof id !== 'string') {
+      Log.error('The node id must be a string', 'type');
+    }
+    if (!id) return this.selectedNode;
 
-    if (this.selectedNode) {
-      this.selectedNode.getBackgroundDOM().style.stroke = '';
-      Utils.removeAllRanges();
+    const node = this.getNode(id);
+    if (node === undefined) {
+      Log.error('There are no nodes with id "' + id + '"');
     }
 
-    this.selectRootNode();
-
-    this.map.events.call(Event.nodeDeselect, oldDom, oldNodeProps);
+    return node;
   };
 
   /**
@@ -388,16 +415,8 @@ export default class Nodes {
     updateHistory = true,
     id?: string
   ) => {
-    if (id && typeof id !== 'string') {
-      Log.error('The node id must be a string', 'type');
-    }
-
-    const node: Node | undefined = id ? this.getNode(id) : this.selectedNode;
-
-    if (node === undefined) {
-      Log.error('There are no nodes with id "' + id + '"');
-      return;
-    }
+    const node = this.getTargetNode(id);
+    if (!node) return;
 
     if (typeof property !== 'string') {
       Log.error('The property must be a string', 'type');
@@ -474,16 +493,8 @@ export default class Nodes {
    * @param {string} id
    */
   public removeNode = (id?: string, notifyWithEvent = true) => {
-    if (id && typeof id !== 'string') {
-      Log.error('The node id must be a string', 'type');
-    }
-
-    const node: Node | undefined = id ? this.getNode(id) : this.selectedNode;
-
-    if (node === undefined) {
-      Log.error('There are no nodes with id "' + id + '"');
-      return;
-    }
+    const node = this.getTargetNode(id);
+    if (!node) return;
 
     if (!node.isRoot) {
       this.nodes.delete(node.id);
@@ -504,7 +515,11 @@ export default class Nodes {
           this.getNodeProperties(node)
         );
 
-      this.deselectNode();
+      // Deselect only when the removal deleted the selected node or one of
+      // its ancestors.
+      if (this.selectedNode && !this.nodes.has(this.selectedNode.id)) {
+        this.deselectNode();
+      }
     } else {
       Log.error('The root node can not be deleted');
     }
@@ -516,23 +531,10 @@ export default class Nodes {
    * @returns {ExportNodeProperties[]}
    */
   public nodeChildren = (id?: string): ExportNodeProperties[] => {
-    if (id && typeof id !== 'string') {
-      Log.error('The node id must be a string', 'type');
-    }
+    const node = this.getTargetNode(id);
+    if (!node) return [];
 
-    const node = id ? this.getNode(id) : this.selectedNode;
-
-    if (node === undefined) {
-      Log.error('There are no nodes with id "' + id + '"');
-    }
-
-    return Array.from(this.nodes.values())
-      .filter((n: Node) => {
-        return n.parent && n.parent.id === node.id;
-      })
-      .map((n: Node) => {
-        return this.getNodeProperties(n);
-      });
+    return this.getChildren(node).map((n: Node) => this.getNodeProperties(n));
   };
 
   /**
@@ -610,18 +612,19 @@ export default class Nodes {
    * @returns {boolean}
    */
   private nodeSelectionTo(direction: string): boolean {
+    // Arrow keys move no selection while nothing is selected.
+    const selected = this.selectedNode;
+
     switch (direction) {
       case 'up':
-        this.moveSelectionOnLevel(true);
-        return true;
       case 'down':
-        this.moveSelectionOnLevel(false);
+        if (selected) this.moveSelectionOnLevel(selected, direction === 'up');
         return true;
       case 'left':
-        this.moveSelectionOnBranch(true);
-        return true;
       case 'right':
-        this.moveSelectionOnBranch(false);
+        if (selected) {
+          this.moveSelectionOnBranch(selected, direction === 'left');
+        }
         return true;
       default:
         return false;
@@ -728,10 +731,10 @@ export default class Nodes {
   }
 
   /**
-   * Return the current selected node.
-   * @returns {Node}
+   * Return the current selected node, or null when nothing is selected.
+   * @returns {Node | null}
    */
-  public getSelectedNode = (): Node => {
+  public getSelectedNode = (): Node | null => {
     return this.selectedNode;
   };
 
@@ -1311,38 +1314,31 @@ export default class Nodes {
   };
 
   /**
-   * Move the node selection on the level of the current node (true: up).
+   * Move the node selection on the level of the selected node (true: up).
+   * @param {Node} selected
    * @param {boolean} direction
    */
-  private moveSelectionOnLevel(direction: boolean) {
-    const parent = this.selectedNode.parent;
+  private moveSelectionOnLevel(selected: Node, direction: boolean) {
+    const parent = selected.parent;
 
     if (parent) {
-      let siblings = this.getSiblings(this.selectedNode).filter(
-        (node: Node) => {
-          return (
-            direction === node.coordinates.y < this.selectedNode.coordinates.y
-          );
-        }
-      );
+      let siblings = this.getSiblings(selected).filter((node: Node) => {
+        return direction === node.coordinates.y < selected.coordinates.y;
+      });
 
       if (!parent.parent) {
         siblings = siblings.filter((node: Node) => {
-          return (
-            this.getOrientation(node) === this.getOrientation(this.selectedNode)
-          );
+          return this.getOrientation(node) === this.getOrientation(selected);
         });
       }
 
       if (siblings.length > 0) {
         let closerNode: Node = siblings[0],
-          tmp = Math.abs(
-            siblings[0].coordinates.y - this.selectedNode.coordinates.y
-          );
+          tmp = Math.abs(siblings[0].coordinates.y - selected.coordinates.y);
 
         for (const node of siblings) {
           const distance = Math.abs(
-            node.coordinates.y - this.selectedNode.coordinates.y
+            node.coordinates.y - selected.coordinates.y
           );
 
           if (distance < tmp) {
@@ -1358,11 +1354,12 @@ export default class Nodes {
 
   /**
    * Move the node selection in a child node or in the parent node (true: left)
+   * @param {Node} selected
    * @param {boolean} direction
    */
-  private moveSelectionOnBranch(direction: boolean) {
-    const orientation = this.getOrientation(this.selectedNode);
-    const parent = this.selectedNode.parent;
+  private moveSelectionOnBranch(selected: Node, direction: boolean) {
+    const orientation = this.getOrientation(selected);
+    const parent = selected.parent;
     const movesToParent =
       (!orientation && direction) || (orientation && !direction);
 
@@ -1373,7 +1370,7 @@ export default class Nodes {
       return;
     }
 
-    let children = this.getChildren(this.selectedNode);
+    let children = this.getChildren(selected);
 
     if (orientation === undefined) {
       // The selected node is a root

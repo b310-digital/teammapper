@@ -1,4 +1,4 @@
-Each section is one pull request of about 500 changed lines, counting tests, and none is under 400 or over 700. Every PR leaves `main` releasable and ships in the listed order. PRs 1 to 3 change nothing for a map with one tree, and PRs 4 to 7 add behavior only behind the `multiTree` flag, except task 4.3, which lets every user add children to a detached node. The line counts are estimates.
+Each section is one pull request of about 500 changed lines, counting tests, and none is under 400 or over 700. Every PR leaves `main` releasable and ships in the listed order. PRs 1 to 3 change nothing for a map with one tree, and PRs 4 to 7 add behavior only behind the `multiTree` flag, with two exceptions. Task 4.3 lets every user add children to a detached node. Section 5 leaves every user with an empty selection after a deselect, because `packages/mmp` reads no flag, and disables the node buttons in that state. The line counts are estimates.
 
 ## 1. PR 1: the renderer accepts several roots (about 450 lines)
 
@@ -38,11 +38,11 @@ Each section is one pull request of about 500 changed lines, counting tests, and
 
 ## 5. PR 5: empty selection (about 500 lines)
 
-- [ ] 5.1 Make the selected node `Node | null` in mmp, make `deselectNode` leave it `null`, and keep selecting the main root on map load
-- [ ] 5.2 Narrow every caller of `getSelectedNode` for `null`, and make keys that act on the selected node do nothing without one
-- [ ] 5.3 Disable the node-specific toolbar buttons with nothing selected, and keep add tree and paste enabled
-- [ ] 5.4 Broadcast an empty selection through presence, and draw no selection ring for that client
-- [ ] 5.5 Write unit tests for deselecting, the toolbar states and the presence payload
+- [x] 5.1 Make the selected node `Node | null` in mmp, make `deselectNode` leave it `null`, and keep selecting the main root on map load
+- [x] 5.2 Narrow every caller of `getSelectedNode` for `null`, and make keys that act on the selected node do nothing without one
+- [x] 5.3 Disable the node-specific toolbar buttons with nothing selected, and keep add tree and paste enabled
+- [x] 5.4 Broadcast an empty selection through presence, and draw no selection ring for that client
+- [x] 5.5 Write unit tests for deselecting, the toolbar states and the presence payload
 
 ## 6. PR 6: delete, copy and paste by tree (about 450 lines)
 
