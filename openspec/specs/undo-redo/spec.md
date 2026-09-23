@@ -1,4 +1,10 @@
-## ADDED Requirements
+# undo-redo Specification
+
+## Purpose
+
+Undo and redo a user's own edits from the toolbar and the keyboard.
+
+## Requirements
 
 ### Requirement: User can undo the last action
 The system SHALL provide an undo action that reverts the most recent operation. When a node addition is undone, the added node SHALL no longer be visible.

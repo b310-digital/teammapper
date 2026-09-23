@@ -1,3 +1,11 @@
+# log-level-config Specification
+
+## Purpose
+
+Control the backend's log verbosity through the `LOG_LEVEL` environment variable, with a `MODE`-based default.
+
+## Requirements
+
 ### Requirement: LOG_LEVEL env var controls NestJS log verbosity
 The system SHALL accept a `LOG_LEVEL` environment variable with values: `error`, `warn`, `log`, `debug`, `verbose`. The value acts as a threshold — setting a level enables that level and all levels above it in severity.
 

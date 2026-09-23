@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-write-access Specification
+
+## Purpose
+
+Decide whether a client may edit a map, over HTTP, and enforce it on the Yjs connection.
+
+## Requirements
 
 ### Requirement: HTTP-based write-access determination
 The `GET /api/maps/:id` endpoint SHALL accept an optional `secret` query parameter. When provided, the server SHALL compare it against the map's `modificationSecret` using the existing `checkWriteAccess()` utility and return a `writable` boolean field in the response.

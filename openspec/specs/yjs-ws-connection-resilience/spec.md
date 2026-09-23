@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-ws-connection-resilience Specification
+
+## Purpose
+
+Detect and clean up broken, idle and stalled Yjs WebSocket connections.
+
+## Requirements
 
 ### Requirement: WebSocket error handler on individual connections
 

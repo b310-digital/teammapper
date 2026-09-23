@@ -1,4 +1,10 @@
-## ADDED Requirements
+# navigation Specification
+
+## Purpose
+
+Move between the map, the settings page and the shortcuts page.
+
+## Requirements
 
 ### Requirement: User can navigate to settings and back to the map
 The system SHALL provide a settings navigation button that opens the settings page. While on the settings page, the map SHALL not be rendered. A close action SHALL return the user to the map view.

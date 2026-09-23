@@ -1,4 +1,10 @@
-## ADDED Requirements
+# input-validation Specification
+
+## Purpose
+
+Validate every request and real-time message the backend receives before acting on it.
+
+## Requirements
 
 ### Requirement: The system SHALL validate map creation requests
 When a user creates a new map, the system SHALL verify that the request contains a valid root node with expected fields (name, colors, font, image). Malformed or missing data SHALL be rejected with a clear error.

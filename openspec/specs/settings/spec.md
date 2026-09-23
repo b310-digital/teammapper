@@ -1,4 +1,10 @@
-## ADDED Requirements
+# settings Specification
+
+## Purpose
+
+Change the application language, user settings and map options.
+
+## Requirements
 
 ### Requirement: User can change the application language
 The system SHALL provide a language dropdown on the settings page with multiple language options. Users SHALL be able to select a different language.

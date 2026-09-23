@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-ws-resource-protection Specification
+
+## Purpose
+
+Limit message size and concurrent Yjs connections to protect the server.
+
+## Requirements
 
 ### Requirement: Maximum message payload size
 

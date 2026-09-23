@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-ws-lifecycle-integrity Specification
+
+## Purpose
+
+Keep persistence and cleanup correct when Yjs connections close and the server shuts down.
+
+## Requirements
 
 ### Requirement: Persistence service graceful shutdown
 

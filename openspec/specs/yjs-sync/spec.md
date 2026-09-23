@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-sync Specification
+
+## Purpose
+
+Sync a map between clients through one Y.Doc per map over a dedicated WebSocket server.
+
+## Requirements
 
 ### Requirement: Y.Doc per map on the server
 The server SHALL maintain one Y.Doc instance per active map. A Y.Doc is created or loaded when the first client connects to a map and SHALL remain in memory while at least one client is connected. The Y.Doc SHALL be evicted from memory after a grace period (default 30 seconds) following the last client disconnect.

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# ai-mindmap-generation Specification
+
+## Purpose
+
+Generate a mind map from a prose description through an OpenAI-compatible model, within language and size limits.
+
+## Requirements
 
 ### Requirement: The system SHALL generate a mindmap from a text description
 A user SHALL be able to submit a text description and a language, and receive a generated mindmap in return.

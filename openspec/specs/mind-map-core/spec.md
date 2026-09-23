@@ -1,4 +1,10 @@
-## ADDED Requirements
+# mind-map-core Specification
+
+## Purpose
+
+Create, load, display and delete a mind map, from the landing page to the map view.
+
+## Requirements
 
 ### Requirement: User can create a new mind map
 The system SHALL allow users to create a new mind map from the home page. Upon creation, the map SHALL be displayed with a default root node labeled "Root node".

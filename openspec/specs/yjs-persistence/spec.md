@@ -1,4 +1,10 @@
-## ADDED Requirements
+# yjs-persistence Specification
+
+## Purpose
+
+Persist the Y.Doc of a map to the database and hydrate it back.
+
+## Requirements
 
 ### Requirement: Debounced persistence on Y.Doc change
 The server SHALL persist the Y.Doc state to PostgreSQL on a debounced timer. When a Y.Doc is modified, the server SHALL wait for a configurable debounce interval (default 2 seconds) of inactivity before persisting. Each new modification SHALL reset the debounce timer.

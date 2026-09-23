@@ -1,4 +1,10 @@
-## ADDED Requirements
+# node-operations Specification
+
+## Purpose
+
+Add, remove, style and move nodes, and attach images and links to them.
+
+## Requirements
 
 ### Requirement: User can add and remove child nodes
 The system SHALL allow users to add a child node to the currently selected node via an add button, and remove a selected node via a remove button.

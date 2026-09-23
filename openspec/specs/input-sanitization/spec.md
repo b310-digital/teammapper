@@ -1,4 +1,10 @@
-## ADDED Requirements
+# input-sanitization Specification
+
+## Purpose
+
+Keep node names, images and links free of markup, unsafe formats and unsafe protocols.
+
+## Requirements
 
 ### Requirement: Node names SHALL be plain text only
 The system SHALL strip all HTML markup from node names. Only plain text content SHALL be persisted.
