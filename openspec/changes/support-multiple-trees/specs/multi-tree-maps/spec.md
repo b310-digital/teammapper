@@ -61,6 +61,10 @@ The client that creates a tree SHALL place its root clear of the bounding box of
 - **WHEN** the user creates a tree on a map that already shows two trees
 - **THEN** the new tree's bounding box SHALL NOT overlap either existing bounding box
 
+#### Scenario: First child of a new tree stays clear
+- **WHEN** the user creates a tree and adds one child narrower than two horizontal spacings to its root
+- **THEN** the new tree's bounding box, child included, SHALL NOT overlap the bounding box of any other tree
+
 #### Scenario: Dragged tree keeps its position
 - **GIVEN** the user dragged a tree to a chosen position
 - **WHEN** the map re-renders

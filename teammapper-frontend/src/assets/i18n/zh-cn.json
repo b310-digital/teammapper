@@ -57,6 +57,7 @@
     "START_EDIT_NODE": "编辑节点",
     "ADD_NODE": "新增节点",
     "ADD_DETACHED_NODE": "添加独立节点",
+    "ADD_TREE": "添加树",
     "REMOVE_NODE": "删除节点",
     "ZOOM_IN_MAP": "放大",
     "ZOOM_OUT_MAP": "缩小",

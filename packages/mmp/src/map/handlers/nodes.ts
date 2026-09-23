@@ -672,6 +672,28 @@ export default class Nodes {
   }
 
   /**
+   * Returns the coordinates for the root of a new tree: its centre twice
+   * NODE_HORIZONTAL_SPACING right of the bounding box of every node this
+   * client holds, level with the main root. `pickColumn` puts a root's first
+   * child one spacing to its left, so the second spacing keeps that column
+   * clear of the other trees. The client writes these coordinates with the
+   * root, so the root keeps them from then on.
+   * @returns {MapNodeCoordinates} coordinates
+   */
+  public newTreeCoordinates = (): MapNodeCoordinates => {
+    const rightEdge = this.getNodes().reduce(
+      (edge, node) =>
+        Math.max(edge, node.coordinates.x + node.dimensions.width / 2),
+      -Infinity
+    );
+
+    return {
+      x: rightEdge + 2 * NODE_HORIZONTAL_SPACING,
+      y: this.getRoot().coordinates.y,
+    };
+  };
+
+  /**
    * Return all descendants of a node.
    * @returns {Node[]} nodes
    */

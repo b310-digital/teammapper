@@ -11,6 +11,7 @@ import CopyPaste from './handlers/copy-paste.js';
 import Node from './models/node.js';
 import type {
   ExportNodeProperties,
+  MapNodeCoordinates,
   MapSnapshot,
   NodeProperty,
   NodePropertyValue,
@@ -109,6 +110,7 @@ export default class MmpMap {
       exportRootProperties: this.nodes.exportRootProperties,
       highlightNode: this.nodes.highlightNodeWithColor,
       new: this.history.new,
+      newTreeCoordinates: this.nodes.newTreeCoordinates,
       nodeChildren: this.nodes.nodeChildren,
       on: this.events.on,
       pasteNode: this.copyPaste.paste,
@@ -128,7 +130,7 @@ export interface MmpInstance {
     userProperties?: UserNodeProperties,
     notifyWithEvent?: boolean,
     updateHistory?: boolean,
-    parentId?: string,
+    parentId?: string | null,
     overwriteId?: string
   ) => Node;
   addNodes: (nodes: ExportNodeProperties[], updateHistory?: boolean) => void;
@@ -146,6 +148,7 @@ export interface MmpInstance {
   exportRootProperties: () => ExportNodeProperties;
   highlightNode: (id: string, color: string, notifyWithEvent?: boolean) => void;
   new: (snapshot?: MapSnapshot, notifyWithEvent?: boolean) => void;
+  newTreeCoordinates: () => MapNodeCoordinates;
   nodeChildren: (id?: string) => ExportNodeProperties[];
   on: (event: string, callback: (...args: unknown[]) => void) => void;
   pasteNode: (id?: string) => void;

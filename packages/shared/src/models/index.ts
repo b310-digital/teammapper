@@ -114,6 +114,7 @@ export interface SystemSettingsUrls {
 export interface SystemFeatureFlags {
   pictograms: boolean;
   ai: boolean;
+  multiTree: boolean;
 }
 
 export interface SystemSettings {

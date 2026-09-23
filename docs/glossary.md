@@ -64,7 +64,9 @@ not read `isRoot` to learn whether a node has a parent.
 
 A root node that the toolbar's "add detached node" button creates. The layout
 places it in a column right of the trees instead of laying out a tree around it.
-The app coined the term; mind mapping has no common word for it.
+A user can add children to a detached node, but a redistribution parks those
+children like orphaned nodes. The app coined the term; mind mapping has no
+common word for it.
 
 Do not confuse a detached node with an **orphaned node**, whose parent is
 missing or whose ancestors form a cycle, so that no root node reaches it. An
@@ -119,8 +121,9 @@ linktext, and the starting name and styling for root nodes and ordinary nodes.
 
 ### Add, remove, select, deselect
 
-The four basic node operations. Adding takes a parent; adding a detached node
-takes none. No one can remove the main root.
+The four basic node operations. Adding takes a parent. Adding a tree or a
+detached node takes none: the toolbar's "add tree" button creates a root node
+clear of the other trees. No one can remove the main root.
 
 ### Drag
 

@@ -1,4 +1,4 @@
-Each section is one pull request of about 500 changed lines, counting tests, and none is under 400 or over 700. Every PR leaves `main` releasable and ships in the listed order. PRs 1 to 3 change nothing for a map with one tree, and PRs 4 to 7 add behavior only behind the `multiTree` flag. The line counts are estimates.
+Each section is one pull request of about 500 changed lines, counting tests, and none is under 400 or over 700. Every PR leaves `main` releasable and ships in the listed order. PRs 1 to 3 change nothing for a map with one tree, and PRs 4 to 7 add behavior only behind the `multiTree` flag, except task 4.3, which lets every user add children to a detached node. The line counts are estimates.
 
 ## 1. PR 1: the renderer accepts several roots (about 450 lines)
 
@@ -29,12 +29,12 @@ Each section is one pull request of about 500 changed lines, counting tests, and
 
 ## 4. PR 4: add a tree from the toolbar, behind the flag (about 450 lines)
 
-- [ ] 4.1 Add the `multiTree` feature flag to system settings, defaulting to off, and read it in the frontend `SettingsService`
-- [ ] 4.2 Show an "add tree" button in place of "add detached node" when `multiTree` is on, with a new translation key in every locale
-- [ ] 4.3 Remove the early return in `MmpService.addNode` that refuses children while a detached node is selected
-- [ ] 4.4 Place a new root one horizontal spacing right of the bounding box of every tree the client holds, level with the main root, and write its coordinates
-- [ ] 4.5 Write unit tests: adding a child to a second root attaches it to that root, the new tree does not overlap the trees the client holds
-- [ ] 4.6 Add an e2e test creating a tree and adding two levels of children to it
+- [x] 4.1 Add the `multiTree` feature flag to system settings, defaulting to off, and read it in the frontend `SettingsService`
+- [x] 4.2 Show an "add tree" button in place of "add detached node" when `multiTree` is on, with a new translation key in every locale
+- [x] 4.3 Remove the early return in `MmpService.addNode` that refuses children while a detached node is selected
+- [x] 4.4 Place a new root two horizontal spacings right of the bounding box of every tree the client holds, level with the main root, so its first child on the left stays clear, and write its coordinates
+- [x] 4.5 Write unit tests: adding a child to a second root attaches it to that root, the new tree does not overlap the trees the client holds
+- [x] 4.6 Add an e2e test creating a tree and adding two levels of children to it
 
 ## 5. PR 5: empty selection (about 500 lines)
 

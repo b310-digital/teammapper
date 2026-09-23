@@ -211,6 +211,14 @@ export class SettingsService {
     return this.systemSettingsSubject.getValue();
   }
 
+  /**
+   * Reports whether the `multiTree` feature flag lets the user create trees.
+   * Returns false before the system settings load.
+   */
+  public isMultiTreeEnabled(): boolean {
+    return this.getCachedSystemSettings()?.featureFlags.multiTree ?? false;
+  }
+
   public getEditModeObservable(): Observable<boolean | null> {
     return this.editModeSubject.asObservable();
   }
