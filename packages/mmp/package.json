@@ -30,18 +30,18 @@
   "dependencies": {
     "@teammapper/shared": "workspace:*",
     "d3": "7.9.0",
-    "dompurify": "3.4.9",
-    "uuid": "13.0.1"
+    "dompurify": "3.4.15",
+    "uuid": "13.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/d3": "7.4.3",
     "@types/jest": "30.0.0",
-    "eslint": "^10.1.0",
-    "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "ts-jest": "29.4.6",
+    "eslint": "^10.10.0",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1",
+    "ts-jest": "29.4.12",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.57.2"
+    "typescript-eslint": "^8.70.0"
   }
 }

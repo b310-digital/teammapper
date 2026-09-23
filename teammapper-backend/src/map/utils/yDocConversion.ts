@@ -45,8 +45,7 @@ export const yMapToMmpNode = (
   mapId: string
 ): Partial<MmpNode> => {
   const coords = yNode.get('coordinates') as
-    | { x: number; y: number }
-    | undefined
+    { x: number; y: number } | undefined
   const colors = yNode.get('colors') as
     | {
         name: string
