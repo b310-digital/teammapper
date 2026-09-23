@@ -36,19 +36,17 @@ function selectionAfterBranchMove(
   const handler = new Nodes({ rootId: ROOT.id } as unknown as MmpMap);
   const internals = handler as unknown as {
     nodes: Map<string, Node>;
-    selectedNode: Node;
-    moveSelectionOnBranch(direction: boolean): void;
+    moveSelectionOnBranch(selected: Node, direction: boolean): void;
   };
 
   for (const node of [ROOT, LEFT_CHILD, LEFT_GRANDCHILD, RIGHT_CHILD]) {
     internals.nodes.set(node.id, node);
   }
-  internals.selectedNode = selected;
 
   const selectNode = jest.fn();
   handler.selectNode = selectNode;
 
-  internals.moveSelectionOnBranch(direction);
+  internals.moveSelectionOnBranch(selected, direction);
 
   return selectNode.mock.calls.map(call => call[0]);
 }

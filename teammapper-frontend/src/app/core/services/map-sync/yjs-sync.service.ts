@@ -407,14 +407,14 @@ export class YjsSyncService {
         })
     );
 
+    // A deselect leaves nothing selected until a nodeSelect follows, so peers
+    // see no selection for this client and draw no ring for it.
     this.yjsSubscriptions.push(
-      this.mmpService
-        .on('nodeDeselect')
-        .subscribe((nodeProps: ExportNodeProperties) => {
-          if (!this.yDoc) return;
-          this.updateAwarenessSelection(null);
-          this.ctx.setAttachedNode(nodeProps);
-        })
+      this.mmpService.on('nodeDeselect').subscribe(() => {
+        if (!this.yDoc) return;
+        this.updateAwarenessSelection(null);
+        this.ctx.setAttachedNode(null);
+      })
     );
   }
 

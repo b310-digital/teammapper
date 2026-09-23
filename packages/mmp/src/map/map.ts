@@ -139,7 +139,7 @@ export interface MmpInstance {
   cutNode: (id?: string) => void;
   applyCoordinatesToMapSnapshot: (mapSnapshot: MapSnapshot) => MapSnapshot;
   distributeNodes: (notifyWithEvent?: boolean) => void;
-  getSelectedNode: () => Node;
+  getSelectedNode: () => Node | null;
   editNode: () => void;
   toggleBranchVisibility: () => void;
   existNode: (id?: string) => boolean;
@@ -154,7 +154,7 @@ export interface MmpInstance {
   pasteNode: (id?: string) => void;
   remove: () => void;
   removeNode: (id?: string, notifyWithEvent?: boolean) => void;
-  selectNode: (id?: string) => ExportNodeProperties;
+  selectNode: (id?: string) => ExportNodeProperties | null;
   unsubscribeAll: () => void;
   updateNode: (
     property: NodeProperty | string,

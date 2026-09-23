@@ -4,6 +4,7 @@ useDefault = true
 [allowlist]
 paths = [
   '''.jest-cache/''',
+  '''dist/''',
   '''node_modules/''',
   '''\.pnpm-store/''',
   '''\.pnpm/''',

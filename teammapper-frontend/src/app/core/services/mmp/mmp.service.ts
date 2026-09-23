@@ -10,6 +10,7 @@ import DOMPurify from 'dompurify';
 import {
   CachedMapOptions,
   ExportNodeProperties,
+  MapNodeCoordinates,
   MapOptions,
   MapSnapshot,
   MmpEventPayloadMap,
@@ -226,7 +227,10 @@ export class MmpService implements OnDestroy {
   /**
    * Add a node in the mind mmp triggered by the user.
    *
-   * Detached nodes can be used as comments and are not assigned to a parent node
+   * Detached nodes can be used as comments and are not assigned to a parent node.
+   * addNode puts a child under `properties.parent`, or under the selected
+   * node when no parent is named, and adds no child when nothing is selected.
+   * A detached node needs no selection.
    */
   public addNode(
     properties?: Partial<ExportNodeProperties>,
@@ -238,6 +242,8 @@ export class MmpService implements OnDestroy {
       : !properties?.detached
         ? this.selectNode()
         : null;
+    if (!parent && !properties?.detached) return;
+
     const settings = this.settingsService.getCachedUserSettings();
 
     if (properties?.colors?.branch) {
@@ -261,12 +267,7 @@ export class MmpService implements OnDestroy {
     }
 
     if (properties?.detached) {
-      // Place a detached node above the node the user created it from
-      const coordinates = this.selectNode().coordinates;
-
-      if (coordinates) {
-        newProps.coordinates = { x: coordinates.x, y: coordinates.y - 80 };
-      }
+      newProps.coordinates = this.detachedNodeCoordinates();
     }
 
     this.map.instance.addNode(
@@ -276,6 +277,17 @@ export class MmpService implements OnDestroy {
       parent?.id,
       properties?.id
     );
+  }
+
+  /**
+   * Place a detached node 80px above the selected node, or at
+   * newTreeCoordinates() when nothing is selected.
+   */
+  private detachedNodeCoordinates(): MapNodeCoordinates {
+    const coordinates = this.selectNode()?.coordinates;
+    if (!coordinates) return this.map.instance.newTreeCoordinates();
+
+    return { x: coordinates.x, y: coordinates.y - 80 };
   }
 
   /**
@@ -289,12 +301,21 @@ export class MmpService implements OnDestroy {
 
   /**
    * Select the node with the id or in the direction passed as parameter.
-   * If the node id is not defined return the current selected node.
+   * If the node id is not defined return the current selected node, or null
+   * when nothing is selected.
    */
   public selectNode(
     nodeId?: string | 'left' | 'right' | 'up' | 'down'
-  ): ExportNodeProperties {
+  ): ExportNodeProperties | null {
     return this.map.instance.selectNode(nodeId);
+  }
+
+  /**
+   * Return true when a node is selected, and false before `create` builds the
+   * map.
+   */
+  public hasSelectedNode(): boolean {
+    return !!this.getSelectedNode();
   }
 
   /**
@@ -396,6 +417,8 @@ export class MmpService implements OnDestroy {
    * If id is not specified, copy the selected node.
    */
   public async copyNode(nodeId?: string) {
+    if (!nodeId && !this.hasSelectedNode()) return;
+
     try {
       this.map.instance.copyNode(nodeId);
 
@@ -422,6 +445,8 @@ export class MmpService implements OnDestroy {
    * If id is not specified, copy the selected node.
    */
   public async cutNode(nodeId?: string) {
+    if (!nodeId && !this.hasSelectedNode()) return;
+
     try {
       this.map.instance.cutNode(nodeId);
 
@@ -490,7 +515,7 @@ export class MmpService implements OnDestroy {
    * Move the node in a direction.
    */
   public moveNodeTo(direction: 'left' | 'right' | 'up' | 'down', range = 10) {
-    const coordinates = this.map.instance.selectNode().coordinates;
+    const coordinates = this.map.instance.selectNode()?.coordinates;
     if (!coordinates) return;
 
     switch (direction) {

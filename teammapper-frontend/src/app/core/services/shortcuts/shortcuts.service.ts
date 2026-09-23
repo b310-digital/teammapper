@@ -192,7 +192,7 @@ export class ShortcutsService implements OnDestroy {
         keys: 'alt+.',
         description: 'TOOLTIPS.FONT_INCREASE',
         callback: () => {
-          const size = this.mmpService.selectNode().font?.size;
+          const size = this.mmpService.selectNode()?.font?.size;
           const options = this.mmpService.getAdditionalMapOptions();
           if (size == null || !options || size >= options.fontMaxSize) return;
 
@@ -207,7 +207,7 @@ export class ShortcutsService implements OnDestroy {
         keys: 'alt+-',
         description: 'TOOLTIPS.FONT_DECREASE',
         callback: () => {
-          const size = this.mmpService.selectNode().font?.size;
+          const size = this.mmpService.selectNode()?.font?.size;
           const options = this.mmpService.getAdditionalMapOptions();
           if (size == null || !options || size <= options.fontMinSize) return;
 

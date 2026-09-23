@@ -1,3 +1,4 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   TranslateService,
@@ -26,6 +27,7 @@ class MmpServiceStub {
   exportMap = jest.fn();
   nodeChildren = jest.fn().mockReturnValue([]);
   getSelectedNode = jest.fn();
+  hasSelectedNode = jest.fn().mockReturnValue(true);
   selectNode = jest.fn();
   updateNode = jest.fn();
   addNodeLink = jest.fn();
@@ -119,6 +121,15 @@ async function setupTestBed(multiTree = false): Promise<TestContext> {
     canUndoSubject,
     canRedoSubject,
   };
+}
+
+/**
+ * Re-render after a stub changes what the selection getters return. The test
+ * bed runs zoneless, so nothing marks the view dirty on its own.
+ */
+function refresh(ctx: TestContext): void {
+  ctx.fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+  ctx.fixture.detectChanges();
 }
 
 describe('ToolbarComponent', () => {
@@ -370,6 +381,57 @@ describe('ToolbarComponent', () => {
     });
   });
 
+  describe('with nothing selected', () => {
+    const disabled = (selector: string): boolean | undefined =>
+      ctx.fixture.nativeElement.querySelector(selector)?.disabled;
+
+    beforeEach(() => {
+      ctx.mmpService.hasSelectedNode.mockReturnValue(false);
+      ctx.mmpService.selectNode.mockReturnValue(null);
+      refresh(ctx);
+    });
+
+    it('disables the buttons that act on the selected node', () => {
+      for (const selector of [
+        '#copy-node-button',
+        '#cut-node-button',
+        '#hide-child-nodes-button',
+        '#lock-node-button',
+        '#node-image-button',
+        '#image-upload',
+        '#bold-button',
+        '#italic-button',
+        '#add-link-button',
+      ]) {
+        expect(disabled(selector)).toBe(true);
+      }
+    });
+
+    it('keeps paste, add detached node and distribute enabled', () => {
+      for (const selector of [
+        '#paste-node-button',
+        '#add-detached-node-button',
+        '#distribute-nodes-button',
+      ]) {
+        expect(disabled(selector)).toBe(false);
+      }
+    });
+
+    it('enables the node buttons again once a node is selected', () => {
+      ctx.mmpService.hasSelectedNode.mockReturnValue(true);
+      refresh(ctx);
+
+      expect(disabled('#copy-node-button')).toBe(false);
+    });
+
+    it('changes no font style or weight', () => {
+      ctx.component.toogleNodeFontStyle();
+      ctx.component.toogleNodeFontWeight();
+
+      expect(ctx.mmpService.updateNode).not.toHaveBeenCalled();
+    });
+  });
+
   describe('add tree', () => {
     const query = (selector: string): HTMLButtonElement | null =>
       ctx.fixture.nativeElement.querySelector(selector);
@@ -396,6 +458,13 @@ describe('ToolbarComponent', () => {
 
         expect(ctx.mmpService.addTree).toHaveBeenCalled();
         expect(ctx.mmpService.addNode).not.toHaveBeenCalled();
+      });
+
+      it('keeps the add-tree button enabled with nothing selected', () => {
+        ctx.mmpService.hasSelectedNode.mockReturnValue(false);
+        refresh(ctx);
+
+        expect(query('#add-tree-button')?.disabled).toBe(false);
       });
     });
   });

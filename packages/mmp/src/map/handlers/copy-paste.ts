@@ -37,17 +37,8 @@ export default class CopyPaste {
    * @param {string} id
    */
   public copy = (id?: string) => {
-    if (id && typeof id !== 'string') {
-      Log.error('The node id must be a string', 'type');
-    }
-
-    const node = id
-      ? this.map.nodes.getNode(id)
-      : this.map.nodes.getSelectedNode();
-
-    if (node === undefined) {
-      Log.error('There are no nodes with id "' + id + '"');
-    }
+    const node = this.map.nodes.getTargetNode(id);
+    if (!node) return;
 
     if (!node.isRoot) {
       this.copyToClipboard(node);
@@ -62,17 +53,8 @@ export default class CopyPaste {
    * @param {string} id
    */
   public cut = (id?: string) => {
-    if (id && typeof id !== 'string') {
-      Log.error('The node id must be a string', 'type');
-    }
-
-    const node = id
-      ? this.map.nodes.getNode(id)
-      : this.map.nodes.getSelectedNode();
-
-    if (node === undefined) {
-      Log.error('There are no nodes with id "' + id + '"');
-    }
+    const node = this.map.nodes.getTargetNode(id);
+    if (!node) return;
 
     if (!node.isRoot) {
       this.copyToClipboard(node);
@@ -105,17 +87,8 @@ export default class CopyPaste {
       Log.error('There are not nodes in the mmp clipboard');
     }
 
-    if (id && typeof id !== 'string') {
-      Log.error('The node id must be a string', 'type');
-    }
-
-    const node = id
-      ? this.map.nodes.getNode(id)
-      : this.map.nodes.getSelectedNode();
-
-    if (node === undefined) {
-      Log.error('There are no nodes with id "' + id + '"');
-    }
+    const node = this.map.nodes.getTargetNode(id);
+    if (!node) return;
 
     const newNodes = new Array<Node>();
 

@@ -125,6 +125,10 @@ The four basic node operations. Adding takes a parent. Adding a tree or a
 detached node takes none: the toolbar's "add tree" button creates a root node
 clear of the other trees. No one can remove the main root.
 
+Deselecting leaves no node selected, the main root included. With nothing
+selected, the operations on the selected node do nothing, and the toolbar
+and the floating buttons disable them. A map load selects the main root.
+
 ### Drag
 
 Move a node by pointer. A locked node drags its descendants along.
