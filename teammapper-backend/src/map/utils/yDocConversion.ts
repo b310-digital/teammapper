@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
-import { MapOptions } from '@teammapper/shared'
+import { DEFAULT_FONT_MAX_SIZE, MapOptions } from '@teammapper/shared'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { sanitizeNodeFields } from './sanitization'
 
@@ -113,7 +113,8 @@ export const yMapToMapOptions = (
   return {
     name: (optionsMap.get('name') as string) || null,
     options: {
-      fontMaxSize: (optionsMap.get('fontMaxSize') as number) ?? 28,
+      fontMaxSize:
+        (optionsMap.get('fontMaxSize') as number) ?? DEFAULT_FONT_MAX_SIZE,
       fontMinSize: (optionsMap.get('fontMinSize') as number) ?? 6,
       fontIncrement: (optionsMap.get('fontIncrement') as number) ?? 2,
     },

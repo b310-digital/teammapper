@@ -2,6 +2,7 @@ import { Subscription } from 'rxjs';
 import { NodePropertyMapping } from '@teammapper/mmp';
 import {
   CachedMapOptions,
+  DEFAULT_FONT_MAX_SIZE,
   ExportNodeProperties,
   MapCreateEvent,
   NodeUpdateEvent,
@@ -733,7 +734,8 @@ export class YjsSyncService {
   private applyRemoteMapOptions(): void {
     const optionsMap = this.doc.getMap('mapOptions');
     const options: CachedMapOptions = {
-      fontMaxSize: (optionsMap.get('fontMaxSize') as number) ?? 28,
+      fontMaxSize:
+        (optionsMap.get('fontMaxSize') as number) ?? DEFAULT_FONT_MAX_SIZE,
       fontMinSize: (optionsMap.get('fontMinSize') as number) ?? 6,
       fontIncrement: (optionsMap.get('fontIncrement') as number) ?? 2,
     };

@@ -204,6 +204,15 @@ describe('yDocConversion', () => {
 
       doc.destroy()
     })
+
+    it('falls back to a max font size of 48 when none is stored', () => {
+      const doc = new Y.Doc()
+      const optionsMap = doc.getMap('mapOptions') as Y.Map<unknown>
+
+      expect(yMapToMapOptions(optionsMap).options.fontMaxSize).toBe(48)
+
+      doc.destroy()
+    })
   })
 
   describe('hydrateYDoc', () => {
