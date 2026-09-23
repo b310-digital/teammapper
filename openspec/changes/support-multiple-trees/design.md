@@ -62,6 +62,8 @@ Readers split by the question they ask:
 
 A root without coordinates occurs only in a snapshot such as a Mermaid import. The engine places each such root to the right of the trees already placed, separated by one horizontal spacing.
 
+Corrupt data can mark two nodes with `isRoot`. The engine then lays out the first marked node as the main root and every other marked node as an ordinary root, so each one starts a tree and its descendants get laid out around it.
+
 ```mermaid
 flowchart TD
     A[Nodes of the map] --> B{parent === null}

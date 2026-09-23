@@ -17,15 +17,15 @@ Each section is one pull request of about 500 changed lines, counting tests, and
 - [x] 2.5 Keep `isFullMapReplacement` reading `isRoot`, and document that it fires only when a transaction rewrites the main root's entry
 - [x] 2.6 Write unit tests: two roots ordered main root first, child of a second root after that root, an orphan and its descendants in the second list, a cycle in the second list
 - [x] 2.7 Write sync tests: a remote root add and a remote pasted tree apply as ordinary adds and leave the undo stack, a remote import and a remote redistribution reload the map and clear the undo stack
-- [ ] 2.8 Write a backend test: duplicating a two-root map saves every node
-- [ ] 2.9 Add an integration test: two clients each add a parentless node through the Y.Doc, and both render every tree
+- [x] 2.8 Write a backend test: duplicating a two-root map saves every node
+- [x] 2.9 Add an integration test: two clients each add a parentless node through the Y.Doc, and both render every tree
 
 ## 3. PR 3: one layout pass per tree (about 500 lines)
 
-- [ ] 3.1 Extract the single-tree pass of `LayoutEngine` into a method taking a root and an anchor
-- [ ] 3.2 Run the pass once per root that is not detached, keep every root with coordinates at them, and place a root without coordinates right of the placed trees
-- [ ] 3.3 Keep parking detached nodes and orphans with `placeDetachedNodes`
-- [ ] 3.4 Write unit tests in `layout.spec.ts`: two trees without coordinates do not overlap, each tree branches left and right, a root with coordinates keeps them, a redistribution moves no root, single-tree output is unchanged
+- [x] 3.1 Extract the single-tree pass of `LayoutEngine` into a method taking a root and an anchor
+- [x] 3.2 Run the pass once per root that is not detached, keep every root with coordinates at them, and place a root without coordinates right of the placed trees
+- [x] 3.3 Keep parking detached nodes and orphans with `placeDetachedNodes`
+- [x] 3.4 Write unit tests in `layout.spec.ts`: two trees without coordinates do not overlap, each tree branches left and right, a root with coordinates keeps them, a redistribution moves no root, single-tree output is unchanged
 
 ## 4. PR 4: add a tree from the toolbar, behind the flag (about 450 lines)
 
