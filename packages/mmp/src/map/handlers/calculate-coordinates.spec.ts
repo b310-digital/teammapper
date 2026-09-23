@@ -106,4 +106,41 @@ describe('calculateCoordinates', () => {
 
     expect(placementOf(child, [root])).toEqual({ x: -200, y: 0 });
   });
+
+  describe('in a second tree right of the main tree', () => {
+    const secondRoot = makeNode({
+      id: 'second-root',
+      coordinates: { x: 1000, y: 0 },
+    });
+    const secondLeft = makeNode({
+      id: 'second-left',
+      parent: secondRoot,
+      coordinates: { x: 800, y: -120 },
+    });
+    const existing = [root, leftBranch, rightBranch, secondRoot];
+
+    it('puts the first child of the second root on its left', () => {
+      const child = makeNode({ id: 'first', parent: secondRoot });
+
+      expect(placementOf(child, existing)).toEqual({ x: 800, y: -120 });
+    });
+
+    it('puts the second child of the second root on its empty right', () => {
+      const child = makeNode({ id: 'second', parent: secondRoot });
+
+      expect(placementOf(child, [...existing, secondLeft])).toEqual({
+        x: 1200,
+        y: -120,
+      });
+    });
+
+    it('keeps a grandchild on the left of its own tree root', () => {
+      const child = makeNode({ id: 'grandchild', parent: secondLeft });
+
+      expect(placementOf(child, [...existing, secondLeft])).toEqual({
+        x: 600,
+        y: -240,
+      });
+    });
+  });
 });
