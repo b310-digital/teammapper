@@ -43,6 +43,7 @@ export class ToolbarComponent {
   @Input() public editDisabled = false;
   public featureFlagPictograms: boolean;
   public featureFlagAI: boolean;
+  public featureFlagMultiTree: boolean;
 
   public canUndo$ = this.mapSyncService.canUndo$;
   public canRedo$ = this.mapSyncService.canRedo$;
@@ -51,6 +52,7 @@ export class ToolbarComponent {
     const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;
     this.featureFlagPictograms = flags?.pictograms ?? false;
     this.featureFlagAI = flags?.ai ?? false;
+    this.featureFlagMultiTree = this.settingsService.isMultiTreeEnabled();
   }
 
   public async exportMap(format: ExportFormat) {

@@ -30,6 +30,7 @@ class MmpServiceStub {
   updateNode = jest.fn();
   addNodeLink = jest.fn();
   addNode = jest.fn();
+  addTree = jest.fn();
   removeNodeLink = jest.fn();
   toggleBranchVisibility = jest.fn();
   distributeNodes = jest.fn();
@@ -52,7 +53,7 @@ interface TestContext {
   canRedoSubject: BehaviorSubject<boolean>;
 }
 
-async function setupTestBed(): Promise<TestContext> {
+async function setupTestBed(multiTree = false): Promise<TestContext> {
   const mmpService = new MmpServiceStub();
   const canUndoSubject = new BehaviorSubject<boolean>(false);
   const canRedoSubject = new BehaviorSubject<boolean>(false);
@@ -84,6 +85,7 @@ async function setupTestBed(): Promise<TestContext> {
           getCachedSystemSettings: jest.fn().mockReturnValue({
             featureFlags: { pictograms: false, ai: false },
           }),
+          isMultiTreeEnabled: jest.fn().mockReturnValue(multiTree),
         },
       },
       {
@@ -365,6 +367,36 @@ describe('ToolbarComponent', () => {
       button.click();
 
       expect(ctx.mmpService.distributeNodes).toHaveBeenCalled();
+    });
+  });
+
+  describe('add tree', () => {
+    const query = (selector: string): HTMLButtonElement | null =>
+      ctx.fixture.nativeElement.querySelector(selector);
+
+    it('shows the detached-node button while multiTree is off', () => {
+      expect(query('#add-detached-node-button')).not.toBeNull();
+      expect(query('#add-tree-button')).toBeNull();
+    });
+
+    describe('while multiTree is on', () => {
+      beforeEach(async () => {
+        ctx.fixture.destroy();
+        TestBed.resetTestingModule();
+        ctx = await setupTestBed(true);
+      });
+
+      it('shows the add-tree button in place of the detached-node button', () => {
+        expect(query('#add-tree-button')).not.toBeNull();
+        expect(query('#add-detached-node-button')).toBeNull();
+      });
+
+      it('adds a tree when the add-tree button is clicked', () => {
+        query('#add-tree-button')?.click();
+
+        expect(ctx.mmpService.addTree).toHaveBeenCalled();
+        expect(ctx.mmpService.addNode).not.toHaveBeenCalled();
+      });
     });
   });
 });

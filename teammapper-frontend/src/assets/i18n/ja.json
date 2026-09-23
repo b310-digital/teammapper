@@ -57,6 +57,7 @@
     "START_EDIT_NODE": "ノードテキストを編集",
     "ADD_NODE": "ノードを追加",
     "ADD_DETACHED_NODE": "独立ノードを追加",
+    "ADD_TREE": "ツリーを追加",
     "REMOVE_NODE": "ノードを削除",
     "ZOOM_IN_MAP": "マップを拡大",
     "ZOOM_OUT_MAP": "マップを縮小",

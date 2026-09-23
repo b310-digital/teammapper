@@ -57,6 +57,7 @@
     "IMAGE_SIZE": "Cambia la dimensione dell'immage del nodo",
     "ADD_NODE": "Aggiungi un nodo",
     "ADD_DETACHED_NODE": "Aggiungi un nodo staccato",
+    "ADD_TREE": "Aggiungi un albero",
     "REMOVE_NODE": "Rimuovi un nodo",
     "ZOOM_IN_MAP": "Esegui uno zoom-avanti",
     "ZOOM_OUT_MAP": "Esegui uno zoom-indietro",

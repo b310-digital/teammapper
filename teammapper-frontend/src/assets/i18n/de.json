@@ -57,6 +57,7 @@
     "START_EDIT_NODE": "Knoten Text bearbeiten",
     "ADD_NODE": "Knoten hinzufügen",
     "ADD_DETACHED_NODE": "Freien Knoten hinzufügen (z.B. für Kommentare)",
+    "ADD_TREE": "Baum hinzufügen",
     "REMOVE_NODE": "Knoten löschen",
     "ZOOM_IN_MAP": "Mindmap vergrößern",
     "ZOOM_OUT_MAP": "Mindmap verkleinern",

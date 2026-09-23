@@ -2,6 +2,7 @@ import Nodes from './nodes.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
 import MmpMap from '../map.js';
+import { NODE_HORIZONTAL_SPACING } from './node-geometry.js';
 import type { ExportNodeProperties } from '@teammapper/shared';
 
 /**
@@ -136,6 +137,71 @@ describe('addNode', () => {
 
     expect(added.parent).toBe(nodes.secondRoot);
     expect(added.coordinates).toEqual({ x: 800, y: -120 });
+  });
+});
+
+describe('newTreeCoordinates', () => {
+  function sizeNodes(nodes: Record<string, Node>, width: number): void {
+    for (const node of Object.values(nodes)) {
+      node.dimensions = { width, height: 30 };
+    }
+  }
+
+  it('places the new root two spacings right of the bounding box of every tree', () => {
+    const { handler, nodes } = makeMap();
+    sizeNodes(nodes, 120);
+    const rightEdge = nodes.secondRoot.coordinates.x + 60;
+
+    expect(handler.newTreeCoordinates().x).toBe(
+      rightEdge + 2 * NODE_HORIZONTAL_SPACING
+    );
+  });
+
+  it("keeps the new root's first child clear of the other trees", () => {
+    const { handler, nodes } = makeMap();
+    sizeNodes(nodes, 120);
+    const rightEdge = nodes.secondRoot.coordinates.x + 60;
+    const root = handler.addNode(
+      { coordinates: handler.newTreeCoordinates() },
+      false,
+      false,
+      null
+    );
+
+    const child = handler.addNode({}, false, false, root.id);
+    child.dimensions = { width: 120, height: 30 };
+
+    expect(child.coordinates.x).toBeLessThan(root.coordinates.x);
+    expect(child.coordinates.x - 60).toBeGreaterThan(rightEdge);
+  });
+
+  it("measures the right edge from each node's width", () => {
+    const { handler, nodes } = makeMap();
+    sizeNodes(nodes, 100);
+    nodes.branch.coordinates = { x: 950, y: 0 };
+    nodes.branch.dimensions = { width: 400, height: 30 };
+
+    expect(handler.newTreeCoordinates().x).toBe(
+      1150 + 2 * NODE_HORIZONTAL_SPACING
+    );
+  });
+
+  it('keeps the new root level with the main root', () => {
+    const { handler, nodes } = makeMap();
+    nodes.root.coordinates = { x: 0, y: 340 };
+    nodes.secondRoot.coordinates = { x: 1000, y: -500 };
+
+    expect(handler.newTreeCoordinates().y).toBe(340);
+  });
+
+  it('keeps the placed root at its coordinates when it is added', () => {
+    const { handler } = makeMap();
+    const coordinates = handler.newTreeCoordinates();
+
+    const added = handler.addNode({ coordinates }, false, false, null);
+
+    expect(added.coordinates).toEqual(coordinates);
+    expect(added.parent).toBeNull();
   });
 });
 

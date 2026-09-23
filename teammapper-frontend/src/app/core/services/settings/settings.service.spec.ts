@@ -162,6 +162,36 @@ describe('SettingsService', () => {
     });
   });
 
+  describe('isMultiTreeEnabled', () => {
+    async function initWithFlags(featureFlags: object): Promise<void> {
+      httpService.get.mockResolvedValue({
+        json: () =>
+          Promise.resolve({
+            userSettings: { general: { language: 'en', darkMode: false } },
+            systemSettings: { featureFlags },
+          }),
+      } as unknown as Response);
+      storageService.get.mockResolvedValue(null);
+      await settingsService.init();
+    }
+
+    it('returns false before the system settings load', () => {
+      expect(settingsService.isMultiTreeEnabled()).toBe(false);
+    });
+
+    it('reads the multiTree flag from the system settings', async () => {
+      await initWithFlags({ pictograms: false, ai: false, multiTree: true });
+
+      expect(settingsService.isMultiTreeEnabled()).toBe(true);
+    });
+
+    it('returns false when the system settings omit the flag', async () => {
+      await initWithFlags({ pictograms: false, ai: false });
+
+      expect(settingsService.isMultiTreeEnabled()).toBe(false);
+    });
+  });
+
   describe('setDarkMode', () => {
     it('toggles dark mode class on body and persists', async () => {
       const cachedSettings = {

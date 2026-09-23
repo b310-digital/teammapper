@@ -238,11 +238,6 @@ export class MmpService implements OnDestroy {
       : !properties?.detached
         ? this.selectNode()
         : null;
-
-    // detached nodes are not available as parent
-    if (this.selectNode()?.detached) {
-      return;
-    }
     const settings = this.settingsService.getCachedUserSettings();
 
     if (properties?.colors?.branch) {
@@ -281,6 +276,15 @@ export class MmpService implements OnDestroy {
       parent?.id,
       properties?.id
     );
+  }
+
+  /**
+   * Add the root of a new tree, placed clear of every tree this client holds.
+   * The root has no parent and no main-root mark.
+   */
+  public addTree() {
+    const coordinates = this.map.instance.newTreeCoordinates();
+    this.map.instance.addNode({ name: '', coordinates }, true, true, null);
   }
 
   /**
