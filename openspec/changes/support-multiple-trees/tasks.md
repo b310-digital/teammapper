@@ -46,12 +46,12 @@ Each section is one pull request of about 500 changed lines, counting tests, and
 
 ## 6. PR 6: delete, copy and paste by tree (about 450 lines)
 
-- [ ] 6.1 Delete a root and its descendants in one operation, and refuse to delete the main root
-- [ ] 6.2 Keep the copy and cut guard on `isRoot`, and copy any other root with its tree
-- [ ] 6.3 Write `isRoot = false` on every pasted node in `CopyPaste.paste`
-- [ ] 6.4 With nothing selected and `multiTree` on, paste the copied nodes as an independent tree placed like 4.4, with a pasted root of branch color `''`
-- [ ] 6.5 Write unit tests for each rule, including deleting the main root while other trees exist and pasting onto the selected main root
-- [ ] 6.6 Add e2e tests: copy a tree, deselect, paste, both trees render; delete a second tree, the main tree stays
+- [x] 6.1 Delete a root and its descendants in one operation, and refuse to delete the main root
+- [x] 6.2 Keep the copy and cut guard on `isRoot`, and copy any other root with its tree
+- [x] 6.3 Write `isRoot = false` on every pasted node in `CopyPaste.paste`
+- [x] 6.4 With nothing selected and `multiTree` on, paste the copied nodes as an independent tree placed like 4.4, with a pasted root of branch color `''`
+- [x] 6.5 Write unit tests for each rule, including deleting the main root while other trees exist and pasting onto the selected main root
+- [x] 6.6 Add e2e tests: copy a tree, deselect, paste, both trees render; delete a second tree, the main tree stays
 
 ## 7. PR 7: Mermaid per tree and orphan-safe saving (about 500 lines)
 

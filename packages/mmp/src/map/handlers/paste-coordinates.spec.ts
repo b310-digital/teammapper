@@ -10,8 +10,8 @@ import type {
 /**
  * A pasted node keeps the offset it had to its old parent. When the new parent
  * is on the other side of its tree root, the horizontal part of that offset is
- * mirrored. A root has no side, so a paste onto one mirrors whatever the old
- * parent's side was.
+ * mirrored. A root node has no side. Only a tree paste gives a node a root as
+ * its new parent, and the children of that pasted root keep the sides they had.
  */
 
 const ROOT = new Node({
@@ -102,16 +102,16 @@ describe('calculatePastedCoordinates', () => {
     });
   });
 
-  it('mirrors the offset of a left-hand subtree pasted onto the root', () => {
+  it('keeps the left-hand offset of a child whose new parent is a root', () => {
     const pasted = copied('child', 'old', { x: -300, y: 50 });
 
-    expect(placementOf(pasted, leftParent, ROOT)).toEqual({ x: 100, y: 50 });
+    expect(placementOf(pasted, leftParent, ROOT)).toEqual({ x: -100, y: 50 });
   });
 
-  it('mirrors the offset of a right-hand subtree pasted onto the root', () => {
+  it('keeps the right-hand offset of a child whose new parent is a root', () => {
     const pasted = copied('child', 'old', { x: 300, y: 50 });
 
-    expect(placementOf(pasted, rightParent, ROOT)).toEqual({ x: -100, y: 50 });
+    expect(placementOf(pasted, rightParent, ROOT)).toEqual({ x: 100, y: 50 });
   });
 
   describe('with a second tree right of the main tree', () => {
