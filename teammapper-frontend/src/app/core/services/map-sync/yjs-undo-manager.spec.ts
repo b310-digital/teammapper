@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { populateYMapFromNodeProps, yMapToNodeProps } from './yjs-utils';
-import { ExportNodeProperties, sortNodesParentFirst } from '@teammapper/shared';
+import { ExportNodeProperties } from '@teammapper/shared';
 
 describe('YjsUndoManager', () => {
   const ORIGIN_LOCAL = 'local';
@@ -360,22 +360,6 @@ describe('YjsUndoManager', () => {
         A: yMapToNodeProps(nodesMap.get('A')!).coordinates,
         B: yMapToNodeProps(nodesMap.get('B')!).coordinates,
       }).toEqual({ size: 3, A: coordsA, B: coordsB });
-    });
-  });
-
-  // ─── sortNodesParentFirst ────────────────────────────────────
-  describe('sortNodesParentFirst', () => {
-    it('sorts deep hierarchy in parent-first order', () => {
-      const nodes = [
-        createMockNode({ id: 'gc', parent: 'child' }),
-        createMockNode({ id: 'child', parent: 'parent' }),
-        createMockNode({ id: 'root', parent: undefined, isRoot: true }),
-        createMockNode({ id: 'parent', parent: 'root' }),
-      ];
-
-      const ids = sortNodesParentFirst(nodes).map(n => n.id);
-
-      expect(ids).toEqual(['root', 'parent', 'child', 'gc']);
     });
   });
 });

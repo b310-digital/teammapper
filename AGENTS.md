@@ -35,6 +35,11 @@ service in `docker-compose.yml` wire that up, and
   `http://localhost:4200`, which inside the `playwright` container is the
   browser's own loopback, where nothing listens.
 
+A shell can lack both variables even inside the `app` container. When the
+browser fails to launch with a missing executable, read the two values from the
+`app` service in `docker-compose.yml` and pass them on the command line:
+`env TESTING_PLAYWRIGHT_WS_ENDPOINT=<value> TESTING_PLAYWRIGHT_BASE_URL=<value> pnpm run test:e2e`.
+
 Run the suite with `pnpm run test:e2e`. The config declares the backend and the
 frontend as `webServer` entries with `reuseExistingServer`, so it adopts servers
 already listening on 3000 and 4200 and starts nothing.

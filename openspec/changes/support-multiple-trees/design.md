@@ -112,7 +112,7 @@ The guard stays. Tests pin the two new cases: a peer adding a tree and a peer pa
 
 `sortNodesParentFirst` walks breadth-first from the single node `findRootNode` returns and appends whatever it never reached, in input order, which lets a child precede its parent. The Yjs persist step writes one multi-row upsert, and Postgres checks the foreign key at the end of that statement, so row order does not matter there. `MapsService.saveAllNodesInTransaction`, used by duplicating a map, and `MapsService.saveValidNodes` insert row by row, in order-number order, so a second root's children can reach the database before their root.
 
-The replacement seeds the queue with every parentless node, main root first. Callers that need the one protected node call `findMainRoot` instead.
+The replacement walks each tree to completion before the next, main tree first, so order numbers group by tree and a detached node keeps its place after the main tree. Callers that need the one protected node call `findMainRoot` instead.
 
 An orphan can never pass the composite foreign key `(nodeMapId, nodeParentId)`, whatever the order. Today one orphan in the Y.Doc fails every persist of that map, and the debounce retries it forever. The save instead leaves out every node no root reaches, logs their ids, and writes the rest. The orphan still renders parked until the map reloads, and after a reload it is gone.
 

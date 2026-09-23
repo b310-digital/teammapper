@@ -8,7 +8,7 @@ import {
   CachedMapEntry,
   CachedMapOptions,
   ExportNodeProperties,
-  findRootNode,
+  findMainRoot,
   normalizeMapData,
 } from '@teammapper/shared';
 import { MapProperties } from '@teammapper/mmp';
@@ -343,7 +343,7 @@ export class MapSyncService implements OnDestroy {
     if (map) {
       map.ttl = new Date(serverMap.deletedAt);
       map.rootName =
-        findRootNode(serverMap.data)?.name ?? serverMap.data?.[0]?.name ?? null;
+        findMainRoot(serverMap.data)?.name ?? serverMap.data[0]?.name ?? null;
       this.storageService.set(serverMap.uuid, map);
     }
   }

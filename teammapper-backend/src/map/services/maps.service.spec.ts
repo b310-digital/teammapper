@@ -13,6 +13,7 @@ import {
 } from '../../../test/db'
 import { truncateDatabase } from 'test/helper'
 import { jest } from '@jest/globals'
+import { orderNodesFromRoot } from '../utils/nodeOrdering'
 
 describe('MapsService', () => {
   let mapsService: MapsService
@@ -107,6 +108,44 @@ describe('MapsService', () => {
 
       const allNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
       expect(allNodes.length).toBe(1)
+    })
+
+    it('copies every node of a two-root map through findNodes and addNodes', async () => {
+      const source = await mapsRepo.save({})
+      const copy = await mapsRepo.save({})
+      const node = (id: string, parentId: string | null, root = false) =>
+        nodesRepo.create({
+          id,
+          nodeMapId: source.id,
+          nodeParentId: parentId ?? undefined,
+          coordinatesX: 0,
+          coordinatesY: 0,
+          root,
+          detached: false,
+        })
+      const main = '11111111-1111-4111-8111-111111111111'
+      const second = '22222222-2222-4222-8222-222222222222'
+      const secondChild = '33333333-3333-4333-8333-333333333333'
+      const ordered = orderNodesFromRoot([
+        node(secondChild, second),
+        node(second, null),
+        node(main, null, true),
+      ])
+
+      await mapsService.addNodes(source.id, ordered)
+      await mapsService.addNodes(
+        copy.id,
+        await mapsService.findNodes(source.id)
+      )
+
+      const copied = await nodesRepo.find({ where: { nodeMapId: copy.id } })
+      expect(copied.map((n) => [n.id, n.nodeParentId ?? null]).sort()).toEqual(
+        [
+          [main, null],
+          [second, null],
+          [secondChild, second],
+        ].sort()
+      )
     })
 
     it('throws and rolls back on database errors', async () => {
