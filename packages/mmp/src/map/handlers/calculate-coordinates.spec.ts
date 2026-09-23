@@ -88,25 +88,6 @@ describe('calculateCoordinates', () => {
     });
   });
 
-  it('leaves a detached node level with its parent instead of above it', () => {
-    const child = makeNode({
-      id: 'detached',
-      parent: leftBranch,
-      detached: true,
-    });
-
-    expect(placementOf(child, [root, leftBranch])).toEqual({
-      x: -200,
-      y: -120,
-    });
-  });
-
-  it('still shifts a detached child of the root into a column', () => {
-    const child = makeNode({ id: 'detached', parent: root, detached: true });
-
-    expect(placementOf(child, [root])).toEqual({ x: -200, y: 0 });
-  });
-
   describe('in a second tree right of the main tree', () => {
     const secondRoot = makeNode({
       id: 'second-root',

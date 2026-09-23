@@ -1,5 +1,4 @@
 import { test, expect, Page } from '@playwright/test';
-import { enableMultiTree } from './helpers/feature-flags';
 
 /** Adds a tree through the add-tree button, which writes a root to the Y.Doc. */
 async function addTree(page: Page, name: string): Promise<void> {
@@ -12,7 +11,6 @@ test('two clients each add a tree and both render every tree', async ({
   page,
   browser,
 }) => {
-  await enableMultiTree(page.context());
   await page.goto('/');
   await page.getByText('Create mind map').click();
   await expect(page.getByText('Root node')).toBeVisible();
@@ -21,7 +19,6 @@ test('two clients each add a tree and both render every tree', async ({
   // second client opens the map with edit rights.
   const secondClientContext = await browser.newContext();
   try {
-    await enableMultiTree(secondClientContext);
     const secondClient = await secondClientContext.newPage();
     await secondClient.goto(page.url());
     await expect(secondClient.getByText('Root node')).toBeVisible();

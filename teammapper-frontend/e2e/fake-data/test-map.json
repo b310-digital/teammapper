@@ -26,7 +26,6 @@
     },
     "locked": false,
     "isRoot": true,
-    "detached": false,
     "hidden": false,
     "k": 1
   },
@@ -57,7 +56,6 @@
     },
     "locked": true,
     "isRoot": false,
-    "detached": false,
     "hidden": false,
     "k": -5.334638335475086
   }

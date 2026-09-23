@@ -236,7 +236,6 @@ export class ImportService {
       name: node.descr || node.nodeId || defaultNode.name,
       locked: !isRoot,
       isRoot,
-      detached: false,
       hidden: false,
       font: {
         style: defaultNode.font.style,

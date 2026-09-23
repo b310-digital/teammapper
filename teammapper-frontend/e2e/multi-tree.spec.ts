@@ -1,7 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import type { ExportNodeProperties } from '@teammapper/shared';
 import type { Readable } from 'stream';
-import { enableMultiTree } from './helpers/feature-flags';
 
 /** Adds a child to the node named `parent` and names it `name`. */
 async function addChild(page: Page, parent: string, name: string) {
@@ -27,9 +26,8 @@ async function exportNodes(page: Page): Promise<ExportNodeProperties[]> {
   return JSON.parse(await readStream(await download.createReadStream()));
 }
 
-/** Opens a new map with the `multiTree` flag on. */
+/** Opens a new map. */
 async function createMap(page: Page) {
-  await enableMultiTree(page.context());
   await page.goto('/');
   await page.getByText('Create mind map').click();
   await expect(page.getByText('Root node')).toBeVisible();
@@ -114,6 +112,60 @@ test('pastes a copied tree as a second tree with nothing selected', async ({
     };
   });
   expect(offsets[0]).toEqual(offsets[1]);
+});
+
+/** Imports a JSON file through the toolbar. */
+async function importJson(page: Page, path: string) {
+  await page.locator('#menu-import').click();
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByText('JSON').click();
+  await (await fileChooserPromise).setFiles(path);
+}
+
+test('imports an old JSON export holding detached nodes as trees', async ({
+  page,
+}) => {
+  await createMap(page);
+  await importJson(page, './e2e/fake-data/legacy-detached-map.json');
+  for (const name of [
+    'Legacy root',
+    'Legacy child',
+    'Legacy note',
+    'Pasted under note',
+    'Lonely note',
+  ]) {
+    await expect(page.getByText(name, { exact: true })).toBeVisible();
+  }
+
+  await addChild(page, 'Legacy note', 'Note child');
+  // A reload reads the map back from the server, so the checks below cover
+  // what the backend stored as well as what the client holds.
+  await page.reload();
+  await expect(page.getByText('Note child', { exact: true })).toBeVisible();
+
+  const nodes = await exportNodes(page);
+  const byName = (name: string) => nodes.find(node => node.name === name);
+  expect(nodes.some(node => 'detached' in node)).toBe(false);
+  expect(
+    ['Legacy note', 'Lonely note'].map(name => [
+      byName(name)?.parent,
+      byName(name)?.isRoot,
+    ])
+  ).toEqual([
+    ['', false],
+    ['', false],
+  ]);
+  expect(byName('Pasted under note')?.parent).toBe(byName('Legacy note')?.id);
+  expect(byName('Note child')?.parent).toBe(byName('Legacy note')?.id);
+  expect(nodes.filter(node => node.isRoot).map(node => node.name)).toEqual([
+    'Legacy root',
+  ]);
+  const root = byName('Legacy root')?.coordinates;
+  const note = byName('Legacy note')?.coordinates;
+  expect({
+    x: (note?.x ?? 0) - (root?.x ?? 0),
+    y: (note?.y ?? 0) - (root?.y ?? 0),
+  }).toEqual({ x: 600, y: -300 });
 });
 
 test('deletes a second tree and keeps the main tree', async ({ page }) => {

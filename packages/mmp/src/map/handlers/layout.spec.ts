@@ -100,11 +100,11 @@ function buildAsymmetricShape(
 }
 
 describe('computeMapLayout', () => {
-  it('returns a coordinate for every node, including detached ones', () => {
+  it('returns a coordinate for every node, including orphans', () => {
     const nodes: LayoutInputNode[] = [
       node('root', '', { isRoot: true }),
       node('child', 'root'),
-      node('orphan', 'missing-parent', { detached: true }),
+      node('orphan', 'missing-parent'),
     ];
 
     const coords = computeMapLayout(nodes);
@@ -302,19 +302,13 @@ describe('computeMapLayout', () => {
     expect(Object.fromEntries(first)).toEqual(Object.fromEntries(second));
   });
 
-  it('places detached nodes clear of the laid-out tree bounding box and of each other', () => {
+  it('places orphans clear of the laid-out tree bounding box and of each other', () => {
     const treeDimensions = { width: 100, height: 30 };
     const nodes: LayoutInputNode[] = [
       node('root', '', { isRoot: true, dimensions: treeDimensions }),
       node('child', 'root', { dimensions: treeDimensions }),
-      node('orphan1', 'missing', {
-        detached: true,
-        dimensions: treeDimensions,
-      }),
-      node('orphan2', 'missing', {
-        detached: true,
-        dimensions: treeDimensions,
-      }),
+      node('orphan1', 'missing', { dimensions: treeDimensions }),
+      node('orphan2', 'missing', { dimensions: treeDimensions }),
     ];
 
     const coords = computeMapLayout(nodes);
@@ -324,16 +318,16 @@ describe('computeMapLayout', () => {
     }));
     const treeMinX = Math.min(...treeBoxes.map(b => b.x - b.width / 2));
     const treeMaxX = Math.max(...treeBoxes.map(b => b.x + b.width / 2));
-    const detachedBoxes = ['orphan1', 'orphan2'].map(id => ({
+    const orphanBoxes = ['orphan1', 'orphan2'].map(id => ({
       ...coords.get(id)!,
       ...treeDimensions,
     }));
-    const allClearOfTree = detachedBoxes.every(
+    const allClearOfTree = orphanBoxes.every(
       b => b.x - b.width / 2 > treeMaxX || b.x + b.width / 2 < treeMinX
     );
 
     expect(allClearOfTree).toBe(true);
-    expect(findAnyAABBOverlap(detachedBoxes)).toBeNull();
+    expect(findAnyAABBOverlap(orphanBoxes)).toBeNull();
   });
 
   /**
@@ -550,21 +544,20 @@ describe('computeMapLayout', () => {
     expect(Math.min(...gaps)).toBeCloseTo(tall.height + VERTICAL_GAP);
   });
 
-  describe('detached nodes', () => {
-    it('leaves an already-positioned detached node where the user put it', () => {
+  describe('orphans', () => {
+    it('leaves an already-positioned orphan where it is', () => {
       const nodes: LayoutInputNode[] = [
         { id: 'root', parent: '', isRoot: true, coordinates: { x: 0, y: 0 } },
         {
-          id: 'note',
-          parent: '',
-          detached: true,
+          id: 'orphan',
+          parent: 'missing',
           coordinates: { x: 900, y: -400 },
         },
       ];
 
       const coords = computeMapLayout(nodes);
 
-      expect(coords.get('note')).toEqual({ x: 900, y: -400 });
+      expect(coords.get('orphan')).toEqual({ x: 900, y: -400 });
     });
   });
 
@@ -755,10 +748,10 @@ describe('computeMapLayout', () => {
       );
     });
 
-    it('starts no tree at a detached node', () => {
+    it('lays out a second tree around its positioned root node', () => {
       const main = fourChildTree('m', { isRoot: true });
       const note = node('note', '', {
-        detached: true,
+        coordinates: { x: 900, y: -400 },
         dimensions: DEFAULT_BOX,
       });
       const noteChild = node('noteChild', 'note', {
@@ -768,10 +761,11 @@ describe('computeMapLayout', () => {
 
       const coords = computeMapLayout([...main, note, noteChild]);
 
-      expect(coords.get('noteChild')).toEqual({ x: 5, y: 700 });
-      expect(coords.get('note')!.x).toBeGreaterThan(
-        rightEdge(boxesOf(main, coords))
-      );
+      expect(coords.get('note')).toEqual({ x: 900, y: -400 });
+      expect(coords.get('noteChild')).toEqual({
+        x: 900 - NODE_HORIZONTAL_SPACING,
+        y: -400,
+      });
     });
   });
 

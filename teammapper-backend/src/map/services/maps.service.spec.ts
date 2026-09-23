@@ -76,7 +76,6 @@ describe('MapsService', () => {
         coordinatesX: 3,
         coordinatesY: 1,
         root: false,
-        detached: true,
       })
 
       const inserted = await mapsService.addNodes(map.id, [node])
@@ -97,7 +96,6 @@ describe('MapsService', () => {
         coordinatesX: 3,
         coordinatesY: 1,
         root: true,
-        detached: false,
       })
 
       const first = await mapsService.addNodes(map.id, [node])
@@ -121,7 +119,6 @@ describe('MapsService', () => {
           coordinatesX: 0,
           coordinatesY: 0,
           root,
-          detached: false,
         })
       const main = '11111111-1111-4111-8111-111111111111'
       const second = '22222222-2222-4222-8222-222222222222'
@@ -163,7 +160,6 @@ describe('MapsService', () => {
             coordinatesX: 0,
             coordinatesY: 0,
             root: isRoot,
-            detached: false,
           })
         )
       await save(root, null, true)
@@ -193,7 +189,6 @@ describe('MapsService', () => {
         coordinatesX: 3,
         coordinatesY: 3,
         root: true,
-        detached: false,
         // Entity validation accepts 1.5, and Postgres rejects it as an integer
         fontSize: 1.5,
       })

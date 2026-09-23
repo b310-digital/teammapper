@@ -123,7 +123,6 @@ export default class History {
         font: Utils.cloneObject(mergedProperty.font) as MapNodeFont,
         link: Utils.cloneObject(mergedProperty.link) as MapNodeLink,
         locked: mergedProperty.locked,
-        detached: mergedProperty.detached,
         hidden: mergedProperty.hidden,
         hasHiddenChildNodes: mergedProperty.hasHiddenChildNodes,
         isRoot: mergedProperty.isRoot,

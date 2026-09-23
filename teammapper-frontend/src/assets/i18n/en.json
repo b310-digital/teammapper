@@ -56,7 +56,6 @@
     "IMAGE_SIZE": "Changes the size of the node image",
     "START_EDIT_NODE": "Edit node text",
     "ADD_NODE": "Adds a node",
-    "ADD_DETACHED_NODE": "Add a detached node",
     "ADD_TREE": "Add a tree",
     "REMOVE_NODE": "Removes a node",
     "ZOOM_IN_MAP": "Zooms in the map",

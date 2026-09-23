@@ -24,7 +24,6 @@ describe('YjsUndoManager', () => {
       image: undefined,
       link: undefined,
       isRoot: false,
-      detached: false,
       ...overrides,
     };
   }
@@ -360,6 +359,25 @@ describe('YjsUndoManager', () => {
         A: yMapToNodeProps(nodesMap.get('A')!).coordinates,
         B: yMapToNodeProps(nodesMap.get('B')!).coordinates,
       }).toEqual({ size: 3, A: coordsA, B: coordsB });
+    });
+
+    it('undo restores a deleted tree with a parentless root', () => {
+      addNodeToMap(doc, nodesMap, { id: 'R', parent: null });
+      addNodeToMap(doc, nodesMap, { id: 'S', parent: 'R' });
+      undoManager.stopCapturing();
+      doc.transact(() => {
+        nodesMap.delete('R');
+        nodesMap.delete('S');
+      }, ORIGIN_LOCAL);
+
+      undoManager.undo();
+
+      const root = yMapToNodeProps(nodesMap.get('R')!);
+      expect({
+        parent: root.parent,
+        isRoot: root.isRoot,
+        childParent: yMapToNodeProps(nodesMap.get('S')!).parent,
+      }).toEqual({ parent: null, isRoot: false, childParent: 'R' });
     });
   });
 });

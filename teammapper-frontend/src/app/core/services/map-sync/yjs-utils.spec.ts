@@ -50,7 +50,6 @@ function createMockNode(
     image: undefined,
     link: undefined,
     isRoot: false,
-    detached: false,
     ...overrides,
   };
 }
@@ -78,7 +77,6 @@ describe('Y.Doc conversion utilities', () => {
       k: 1.5,
       isRoot: false,
       locked: true,
-      detached: true,
       coordinates: { x: 100, y: 200 },
       colors: { name: '#ff0000', background: '#00ff00', branch: '#0000ff' },
       font: { size: 16, style: 'italic', weight: 'bold' },
@@ -100,7 +98,6 @@ describe('Y.Doc conversion utilities', () => {
         k: 1.5,
         isRoot: false,
         locked: true,
-        detached: true,
         coordinates: { x: 100, y: 200 },
         colors: {
           name: '#ff0000',
@@ -122,7 +119,6 @@ describe('Y.Doc conversion utilities', () => {
       name: undefined,
       isRoot: undefined,
       locked: undefined,
-      detached: undefined,
       coordinates: undefined,
       colors: undefined,
       font: undefined,
@@ -143,10 +139,17 @@ describe('Y.Doc conversion utilities', () => {
         name: '',
         isRoot: false,
         locked: false,
-        detached: false,
         coordinates: { x: 0, y: 0 },
       })
     );
+  });
+
+  it('writes no detached entry', () => {
+    const yNode = new Y.Map<unknown>();
+    populateYMapFromNodeProps(yNode, createMockNode());
+    nodesMap.set('n3', yNode);
+
+    expect(nodesMap.get('n3')!.has('detached')).toBe(false);
   });
 });
 

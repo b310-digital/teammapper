@@ -106,10 +106,6 @@ export class MmpNode {
   @Column({ type: 'boolean', nullable: true })
   locked!: boolean | null
 
-  @Column({ type: 'boolean', default: false })
-  @IsDefined()
-  detached!: boolean
-
   @Column({ type: 'float', nullable: true })
   k!: number | null
 

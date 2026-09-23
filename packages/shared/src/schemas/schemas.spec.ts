@@ -166,7 +166,6 @@ describe('Shared Validation Schemas', () => {
         href: 'https://example.com',
       },
       locked: false,
-      detached: false,
       k: 1.5,
       hidden: true,
       hasHiddenChildNodes: true,

@@ -64,7 +64,6 @@ export const NodeBasicsSchema = v.object({
 export const NodeSchema = v.object({
   ...NodeBasicsSchema.entries,
   coordinates: CoordinatesSchema,
-  detached: v.boolean(),
   id: v.pipe(v.string(), v.nonEmpty()),
   k: v.number(),
   link: LinkSchema,

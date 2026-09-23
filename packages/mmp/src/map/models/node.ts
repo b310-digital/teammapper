@@ -38,7 +38,6 @@ export default class Node implements NodeProperties {
   public locked: boolean;
   public dom!: SVGGElement;
   public isRoot: boolean;
-  public detached: boolean;
   public hidden: boolean;
   public hasHiddenChildNodes: boolean;
 
@@ -69,7 +68,6 @@ export default class Node implements NodeProperties {
     this.link = { href: properties.link?.href || '' };
     this.locked = Boolean(properties.locked);
     this.isRoot = Boolean(properties.isRoot);
-    this.detached = Boolean(properties.detached);
     this.hidden = Boolean(properties.hidden);
     this.hasHiddenChildNodes = Boolean(properties.hasHiddenChildNodes);
 

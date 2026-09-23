@@ -126,27 +126,15 @@
     <div></div>
   </div>
 
-  @if (featureFlagMultiTree) {
-    <button
-      id="add-tree-button"
-      (click)="mmpService.addTree()"
-      [title]="'TOOLTIPS.ADD_TREE' | translate"
-      [disabled]="editDisabled"
-      color="primary"
-      mat-icon-button>
-      <mat-icon>account_tree</mat-icon>
-    </button>
-  } @else {
-    <button
-      id="add-detached-node-button"
-      (click)="addDetachedNode()"
-      [title]="'TOOLTIPS.ADD_DETACHED_NODE' | translate"
-      [disabled]="editDisabled"
-      color="primary"
-      mat-icon-button>
-      <mat-icon>add_comment</mat-icon>
-    </button>
-  }
+  <button
+    id="add-tree-button"
+    (click)="mmpService.addTree()"
+    [title]="'TOOLTIPS.ADD_TREE' | translate"
+    [disabled]="editDisabled"
+    color="primary"
+    mat-icon-button>
+    <mat-icon>account_tree</mat-icon>
+  </button>
   <button
     id="copy-node-button"
     (click)="mmpService.copyNode()"

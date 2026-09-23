@@ -16,7 +16,7 @@ const defaultSettings: Settings = {
       pictogramApiUrl: 'https://api.example.com',
       pictogramStaticUrl: 'https://static.example.com',
     },
-    featureFlags: { pictograms: true, ai: false, multiTree: false },
+    featureFlags: { pictograms: true, ai: false },
   },
   userSettings: {
     general: { language: 'en', darkMode: false },
@@ -137,7 +137,7 @@ describe('SettingsService', () => {
         ...defaultSettings,
         systemSettings: {
           ...defaultSettings.systemSettings,
-          featureFlags: { pictograms: true, ai: true, multiTree: false },
+          featureFlags: { pictograms: true, ai: true },
         },
       }
       mockedFs.readFileSync.mockReturnValue(JSON.stringify(settingsWithFlags))
@@ -148,24 +148,7 @@ describe('SettingsService', () => {
       expect(settings.systemSettings.featureFlags).toEqual({
         pictograms: true,
         ai: false,
-        multiTree: false,
       })
-    })
-
-    it('should turn multiTree on from the override file', () => {
-      mockedFs.existsSync.mockReturnValue(true)
-      mockedFs.statSync.mockReturnValue({ size: 100 } as fs.Stats)
-      mockedFs.readFileSync
-        .mockReturnValueOnce(JSON.stringify(defaultSettings))
-        .mockReturnValueOnce(
-          JSON.stringify({
-            systemSettings: { featureFlags: { multiTree: true } },
-          })
-        )
-
-      expect(service.getSettings().systemSettings.featureFlags.multiTree).toBe(
-        true
-      )
     })
   })
 })
