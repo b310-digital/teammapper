@@ -568,6 +568,213 @@ describe('computeMapLayout', () => {
     });
   });
 
+  describe('several trees', () => {
+    /** A root with four leaf children. Every id carries the prefix, so ids stay distinct across trees. */
+    function fourChildTree(
+      prefix: string,
+      rootOverrides: Partial<LayoutInputNode> = {}
+    ): LayoutInputNode[] {
+      const root = node(`${prefix}root`, '', {
+        dimensions: DEFAULT_BOX,
+        ...rootOverrides,
+      });
+      const children = [1, 2, 3, 4].map(i =>
+        node(`${prefix}${i}`, root.id, { dimensions: DEFAULT_BOX })
+      );
+      return [root, ...children];
+    }
+
+    function boxesOf(
+      nodes: LayoutInputNode[],
+      coords: Map<string, MapNodeCoordinates>
+    ): Box[] {
+      return nodes.map(n => ({ ...coords.get(n.id)!, ...DEFAULT_BOX }));
+    }
+
+    function rightEdge(boxes: Box[]): number {
+      return Math.max(...boxes.map(b => b.x + b.width / 2));
+    }
+
+    function leftEdge(boxes: Box[]): number {
+      return Math.min(...boxes.map(b => b.x - b.width / 2));
+    }
+
+    it('places a second tree without coordinates clear of the main tree, level with the main root', () => {
+      const main = fourChildTree('m', {
+        isRoot: true,
+        coordinates: { x: 0, y: 400 },
+      });
+      const second = fourChildTree('s');
+
+      const coords = computeMapLayout([...main, ...second]);
+      const mainBoxes = boxesOf(main, coords);
+      const secondBoxes = boxesOf(second, coords);
+
+      expect(leftEdge(secondBoxes)).toBeCloseTo(
+        rightEdge(mainBoxes) + NODE_HORIZONTAL_SPACING
+      );
+      expect(findAnyAABBOverlap([...mainBoxes, ...secondBoxes])).toBeNull();
+      expect(coords.get('sroot')!.y).toBe(400);
+    });
+
+    it('keeps the children of a shifted tree on both sides of its root', () => {
+      const main = fourChildTree('m', { isRoot: true });
+      const second = fourChildTree('s');
+
+      const coords = computeMapLayout([...main, ...second]);
+      const rootX = coords.get('sroot')!.x;
+      const childXs = [1, 2, 3, 4].map(i => coords.get(`s${i}`)!.x);
+
+      expect(childXs.filter(x => x < rootX)).toHaveLength(2);
+      expect(childXs.filter(x => x > rootX)).toHaveLength(2);
+    });
+
+    it('places a tree without coordinates right of a positioned tree', () => {
+      const main = fourChildTree('m', {
+        isRoot: true,
+        coordinates: { x: 0, y: 0 },
+      });
+      const positioned = fourChildTree('p', {
+        coordinates: { x: 5000, y: 3000 },
+      });
+      const unplaced = fourChildTree('u');
+
+      const coords = computeMapLayout([...main, ...positioned, ...unplaced]);
+
+      expect(leftEdge(boxesOf(unplaced, coords))).toBeCloseTo(
+        rightEdge(boxesOf([...main, ...positioned], coords)) +
+          NODE_HORIZONTAL_SPACING
+      );
+    });
+
+    it('places each tree without coordinates right of the trees before it', () => {
+      const main = fourChildTree('m', { isRoot: true });
+      const second = fourChildTree('s');
+      const third = fourChildTree('t');
+
+      const coords = computeMapLayout([...main, ...second, ...third]);
+
+      expect(leftEdge(boxesOf(third, coords))).toBeCloseTo(
+        rightEdge(boxesOf(second, coords)) + NODE_HORIZONTAL_SPACING
+      );
+    });
+
+    it('splits the children of a second root left and right at the main tree column distance', () => {
+      const main = fourChildTree('m', { isRoot: true });
+      const second = fourChildTree('s', { coordinates: { x: 1000, y: 0 } });
+
+      const coords = computeMapLayout([...main, ...second]);
+      const distances = [1, 2, 3, 4].map(i => ({
+        main: coords.get(`m${i}`)!.x - coords.get('mroot')!.x,
+        second: coords.get(`s${i}`)!.x - coords.get('sroot')!.x,
+      }));
+
+      expect(distances.filter(d => d.second < 0)).toHaveLength(2);
+      expect(distances.filter(d => d.second > 0)).toHaveLength(2);
+      expect(distances.map(d => Math.abs(d.second))).toEqual(
+        distances.map(d => Math.abs(d.main))
+      );
+    });
+
+    it('keeps a second root with coordinates at them, straddled by its children', () => {
+      const anchor = { x: 900, y: 300 };
+      const main = fourChildTree('m', { isRoot: true });
+      const second = fourChildTree('s', { coordinates: anchor });
+
+      const coords = computeMapLayout([...main, ...second]);
+      const childYs = [1, 2, 3, 4].map(i => coords.get(`s${i}`)!.y);
+
+      expect(coords.get('sroot')).toEqual(anchor);
+      expect(Math.min(...childYs)).toBeLessThan(anchor.y);
+      expect(Math.max(...childYs)).toBeGreaterThan(anchor.y);
+    });
+
+    it('moves no root when redistributing a map whose nodes all carry coordinates', () => {
+      const placed = (id: string, parent: string, x: number, y: number) =>
+        node(id, parent, { coordinates: { x, y }, dimensions: DEFAULT_BOX });
+      const nodes: LayoutInputNode[] = [
+        { ...placed('mroot', '', 40, 10), isRoot: true },
+        placed('m1', 'mroot', 500, 500),
+        placed('sroot', '', -700, 250),
+        placed('s1', 'sroot', -900, -80),
+        placed('troot', '', 1200, -600),
+      ];
+
+      const coords = computeMapLayout(nodes);
+
+      expect(coords.get('mroot')).toEqual({ x: 40, y: 10 });
+      expect(coords.get('sroot')).toEqual({ x: -700, y: 250 });
+      expect(coords.get('troot')).toEqual({ x: 1200, y: -600 });
+    });
+
+    it('gives the main tree the coordinates it gets when it is the only tree', () => {
+      const main = buildAiShape(measuredAt(DEFAULT_BOX));
+      const second = fourChildTree('s', { coordinates: { x: 2000, y: 0 } });
+
+      const alone = computeMapLayout(main);
+      const together = computeMapLayout([...main, ...second]);
+
+      for (const { id } of main) {
+        expect(together.get(id)).toEqual(alone.get(id));
+      }
+    });
+
+    it('starts a tree at a second node marked isRoot and lays out its children around it', () => {
+      const main = fourChildTree('m', { isRoot: true });
+      const anchor = { x: 900, y: 300 };
+      const second = node('sroot', '', {
+        isRoot: true,
+        coordinates: anchor,
+        dimensions: DEFAULT_BOX,
+      });
+      const child = node('s1', 'sroot', {
+        coordinates: { x: 5000, y: -2000 },
+        dimensions: DEFAULT_BOX,
+      });
+
+      const coords = computeMapLayout([...main, second, child]);
+
+      expect(coords.get('mroot')).toEqual({ x: 0, y: 0 });
+      expect(coords.get('sroot')).toEqual(anchor);
+      expect(coords.get('s1')).toEqual({
+        x: anchor.x + NODE_HORIZONTAL_SPACING,
+        y: anchor.y,
+      });
+    });
+
+    it('parks an orphan right of every tree', () => {
+      const main = fourChildTree('m', { isRoot: true });
+      const second = fourChildTree('s');
+      const orphan = node('orphan', 'missing', { dimensions: DEFAULT_BOX });
+
+      const coords = computeMapLayout([...main, ...second, orphan]);
+      const [orphanBox] = boxesOf([orphan], coords);
+
+      expect(leftEdge([orphanBox])).toBeGreaterThan(
+        rightEdge(boxesOf([...main, ...second], coords))
+      );
+    });
+
+    it('starts no tree at a detached node', () => {
+      const main = fourChildTree('m', { isRoot: true });
+      const note = node('note', '', {
+        detached: true,
+        dimensions: DEFAULT_BOX,
+      });
+      const noteChild = node('noteChild', 'note', {
+        coordinates: { x: 5, y: 700 },
+        dimensions: DEFAULT_BOX,
+      });
+
+      const coords = computeMapLayout([...main, note, noteChild]);
+
+      expect(coords.get('noteChild')).toEqual({ x: 5, y: 700 });
+      expect(coords.get('note')!.x).toBeGreaterThan(
+        rightEdge(boxesOf(main, coords))
+      );
+    });
+  });
+
   it('lays out the first node carrying a duplicated id and ignores the rest', () => {
     const firstBox = { width: 100, height: 200 };
     const secondBox = { width: 100, height: 20 };
