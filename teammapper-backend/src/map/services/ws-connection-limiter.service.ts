@@ -70,17 +70,38 @@ export class WsConnectionLimiterService implements OnModuleDestroy {
   }
 
   getClientIp(req: IncomingMessage): string {
-    if (configService.isWsTrustProxy()) {
-      const forwarded = req.headers['x-forwarded-for']
-      if (typeof forwarded === 'string') return forwarded.split(',')[0].trim()
-    }
-    return req.socket?.remoteAddress ?? 'unknown'
+    const trustProxy = configService.getTrustProxy()
+    const forwarded = req.headers['x-forwarded-for']
+    const forwardedIp =
+      trustProxy !== false && typeof forwarded === 'string'
+        ? this.pickForwardedIp(forwarded, trustProxy)
+        : null
+    return forwardedIp ?? req.socket?.remoteAddress ?? 'unknown'
   }
 
   reset(): void {
     this.globalConnectionCount = 0
     this.perIpConnectionCount.clear()
     this.perIpRateWindows.clear()
+  }
+
+  /**
+   * Picks the client IP from X-Forwarded-For the way Express does: `true`
+   * takes the leftmost entry, a hop count skips that many proxies from the
+   * right and takes the leftmost entry when the header holds fewer. Drops
+   * empty entries as Express does, and returns null when none remain.
+   */
+  private pickForwardedIp(
+    forwarded: string,
+    trustProxy: true | number
+  ): string | null {
+    const entries = forwarded
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry !== '')
+    if (entries.length === 0) return null
+    if (trustProxy === true) return entries[0]
+    return entries[Math.max(0, entries.length - trustProxy)]
   }
 
   private checkGlobalLimit(): Rejection | null {

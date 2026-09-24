@@ -140,6 +140,25 @@ describe('ImagesController (HTTP)', () => {
       expect(imagesService.storeImage).not.toHaveBeenCalled()
     })
 
+    it.each([
+      ['before', true],
+      ['after', false],
+    ])(
+      'answers 400 for a text field %s the file',
+      async (_label, fieldFirst) => {
+        const req = upload().set('Authorization', 'secret')
+        if (fieldFirst) req.field('note', 'x')
+        req.attach('file', png(), {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
+        if (!fieldFirst) req.field('note', 'x')
+        await req.expect(400)
+
+        expect(imagesService.storeImage).not.toHaveBeenCalled()
+      }
+    )
+
     it('answers 413 when the upload exceeds the map cap', async () => {
       imagesService.storeImage.mockRejectedValueOnce(
         new PayloadTooLargeException()

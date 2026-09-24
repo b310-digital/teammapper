@@ -85,13 +85,17 @@ Copy `.env.default` to `.env` and configure the variables below.
 | Variable | Description | Default |
 |---|---|---|
 | `FEATURE_YJS_RATE_LIMITING` | Enable WebSocket connection rate limiting | `false` |
-| `WS_TRUST_PROXY` | Trust `X-Forwarded-For` header for client IP resolution (enable when behind a reverse proxy) | `false` |
+| `WS_TRUST_PROXY` | Trust the `X-Forwarded-For` header for client IP resolution behind a reverse proxy: `false`, `true`, or the number of proxies in front of the backend | `false` |
 | `WS_GLOBAL_MAX_CONNECTIONS` | Maximum total WebSocket connections | `500` |
 | `WS_PER_IP_MAX_CONNECTIONS` | Maximum WebSocket connections per IP | `50` |
 | `WS_PER_IP_RATE_LIMIT` | Maximum connection attempts per IP within the rate window | `10` |
 | `WS_PER_IP_RATE_WINDOW_MS` | Sliding window duration for rate limiting in ms | `10000` |
 
-`WS_TRUST_PROXY` also sets Express `trust proxy`, so the image upload rate limit reads the same client IP.
+`WS_TRUST_PROXY` also sets Express `trust proxy`, so the image upload rate limit reads the same client IP. Its values:
+
+- `false` reads the client IP from the socket and leaves Express `trust proxy` unset.
+- A number, such as `1` behind one nginx or `2` behind a CDN and nginx, skips that many proxies from the right of `X-Forwarded-For`. A client cannot spoof its IP this way, and the proxy addresses may change. Prefer this value.
+- `true` takes the leftmost `X-Forwarded-For` entry. A client can send that entry itself and dodge the rate limits, unless the proxy overwrites the header, as nginx does with `proxy_set_header X-Forwarded-For $remote_addr`.
 
 ### Node images
 

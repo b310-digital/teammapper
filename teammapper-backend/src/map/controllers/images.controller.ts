@@ -46,9 +46,13 @@ export default class ImagesController {
   @UseGuards(ThrottlerGuard, MapExistsGuard, MapWriteAccessGuard)
   @UseInterceptors(
     FileInterceptor('file', {
+      // Multer buffers text fields in memory without a count limit, so the
+      // one allowed part is the file.
       limits: {
         fileSize: configService.getUploadImageMaxSizeBytes(),
         files: 1,
+        fields: 0,
+        parts: 1,
       },
     })
   )

@@ -27,7 +27,7 @@ The server generates a uuid per upload, and `(mapId, id)` keys the image. The sa
 
 A backend interface, `ImageStore`, puts, gets, copies and deletes the bytes of one image, and deletes all images of one map. No other code reads or writes the bytes. Map deletion and the cleanup job call it explicitly, because a foreign key cascade cannot reach a store outside the database.
 
-The server writes the bytes before the metadata row and deletes the metadata row before the bytes, so a crash never leaves a row whose bytes are missing.
+The server writes the metadata row before the bytes and deletes the metadata row before the bytes. A failed byte write leaves a row no node references, which the cleanup job removes; bytes without a row would escape the job, which reads only `mmp_image`.
 
 No operation takes a lock. Concurrent uploads can together exceed the cap by the uploads in flight, each at most `UPLOAD_IMAGE_MAX_SIZE_BYTES`. A cleanup that races a duplication can leave the copy a row without bytes, but only for an image no node references, which the next run removes.
 
@@ -35,7 +35,7 @@ No operation takes a lock. Concurrent uploads can together exceed the cap by the
 
 `mmp_image` holds `mapId`, `id`, `mimetype`, `size` and `createdAt`. The cap and the cleanup job read only this table. `mmp_image_data` holds the bytes, and only the database implementation of `ImageStore` touches it, so it behaves like the bucket that later replaces it.
 
-Both tables key on `(mapId, id)` and cascade on map delete; the bytes live in the database, so the cascade removes them with the map. A check constraint limits `mimetype` to the raster allowlist, because the GET endpoint sends it as `Content-Type`. `mmp_image_data` has no foreign key to `mmp_image`, since the bytes are written first. The migration moves no data.
+Both tables key on `(mapId, id)` and cascade on map delete; the bytes live in the database, so the cascade removes them with the map. A check constraint limits `mimetype` to the raster allowlist, because the GET endpoint sends it as `Content-Type`. `mmp_image_data` has no foreign key to `mmp_image`, so it behaves like a bucket. The migration moves no data.
 
 ### References and URLs name no store
 
@@ -55,7 +55,7 @@ Image drop today bypasses `addNodeImage` and the toolbar's resize. It goes throu
 
 ### Upload endpoint
 
-`POST /api/maps/:id/images` takes one multipart file in the field `file`, with the modification secret in the `Authorization` header, which keeps it out of access logs. The rate limit, the map lookup and the secret run as guards, so no body is read before they pass. `FileInterceptor` on memory storage enforces `UPLOAD_IMAGE_MAX_SIZE_BYTES` (413), and `ParseFilePipe` with `FileTypeValidator` checks that the magic bytes and the declared type are both raster types (422); the magic bytes matter because the client chooses the declared type freely. The server stores the declared type. `ParseFilePipe` answers one status for all its checks, so a missing file answers 422 as well.
+`POST /api/maps/:id/images` takes one multipart file in the field `file`, with the modification secret in the `Authorization` header, which keeps it out of access logs. The rate limit, the map lookup and the secret run as guards, so no body is read before they pass. `FileInterceptor` on memory storage enforces `UPLOAD_IMAGE_MAX_SIZE_BYTES` (413) and refuses any part besides the file (400), since multer buffers text fields in memory without a count limit, and `ParseFilePipe` with `FileTypeValidator` checks that the magic bytes and the declared type are both raster types (422); the magic bytes matter because the client chooses the declared type freely. The server stores the declared type. `ParseFilePipe` answers one status for all its checks, so a missing file answers 422 as well.
 
 `UPLOAD_IMAGE_MAX_SIZE_BYTES` defaults to 150000, the decoded size of the largest data URL the frontend produces.
 
@@ -63,7 +63,7 @@ The frontend shows a dedicated message for 413, which in practice means the cap,
 
 ### Rate limit
 
-`@nestjs/throttler` with its default in-memory storage limits uploads per client IP, 30 per 60 s by default. Express `trust proxy` follows the existing `WS_TRUST_PROXY`, so HTTP and WebSocket agree on the client IP.
+`@nestjs/throttler` with its default in-memory storage limits uploads per client IP, 30 per 60 s by default. Express `trust proxy` follows the existing `WS_TRUST_PROXY`, so HTTP and WebSocket agree on the client IP. `WS_TRUST_PROXY` takes `false` (the default, which leaves Express `trust proxy` unset), `true`, or a hop count. A hop count takes the client IP from the entry the outermost trusted proxy appended, so a client cannot spoof it by sending its own `X-Forwarded-For`; `true` takes the leftmost entry, which the client controls unless the proxy overwrites the header.
 
 Status codes:
 
