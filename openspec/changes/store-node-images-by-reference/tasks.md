@@ -21,10 +21,10 @@ Each section is one pull request and leaves `main` releasable. PR 1 adds storage
 
 ## 3. PR 3: upload, render and export references
 
-- [ ] 3.1 Add the image URL resolver to `packages/mmp`, and keep `node.image.src` on a failed load
-- [ ] 3.2 Register resolver and upload from `MapSyncService` on `MmpService`
-- [ ] 3.3 Upload in `addNodeImage`, with the error messages in every language file
-- [ ] 3.4 Route image drop through the toolbar's resize and `addNodeImage`, files only
-- [ ] 3.5 Inline references in all exports
-- [ ] 3.6 Update the glossary entry **Image**, and add **Image reference**
-- [ ] 3.7 Unit and E2E tests for the frontend scenarios in the specs
+- [x] 3.1 Add the image URL resolver to `packages/mmp`, and keep `node.image.src` on a failed load
+- [x] 3.2 Register resolver and upload from `MapSyncService` on `MmpService`
+- [x] 3.3 Upload in `addNodeImage`, with the error messages in every language file
+- [x] 3.4 Route image drop through the toolbar's resize and `addNodeImage`, files only
+- [x] 3.5 Inline references in all exports
+- [x] 3.6 Update the glossary entry **Image**, and add **Image reference**
+- [x] 3.7 Unit and E2E tests for the frontend scenarios in the specs
