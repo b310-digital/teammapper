@@ -264,7 +264,7 @@ describe('MapSyncService', () => {
   });
 
   describe('node images', () => {
-    const REFERENCE = 'image:3f2b8c1e-9a4d-4e7f-8b6a-1c2d3e4f5a6b';
+    const REFERENCE = 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 
     const handlers = (): ImageHandlers =>
       mmpService.registerImageHandlers.mock.calls[0][0];
@@ -298,7 +298,7 @@ describe('MapSyncService', () => {
       await openMap('secret');
 
       expect(handlers().resolveUrl(REFERENCE)).toBe(
-        'api/maps/map-uuid/images/3f2b8c1e-9a4d-4e7f-8b6a-1c2d3e4f5a6b'
+        'api/maps/map-uuid/images/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
       );
     });
 

@@ -22,7 +22,7 @@ jest.mock('@teammapper/mmp', () => ({
   NodePropertyMapping: {},
 }));
 
-const REFERENCE = 'image:3f2b8c1e-9a4d-4e7f-8b6a-1c2d3e4f5a6b';
+const REFERENCE = 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 
 const downloadFileSpy = jest
   .spyOn(UtilsService, 'downloadFile')
