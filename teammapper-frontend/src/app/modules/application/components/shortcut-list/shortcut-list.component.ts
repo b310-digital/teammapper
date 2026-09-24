@@ -1,12 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ShortcutsService } from '../../../../core/services/shortcuts/shortcuts.service';
 import { Hotkey } from 'angular2-hotkeys';
-import { Location } from '@angular/common';
-import { MatToolbar } from '@angular/material/toolbar';
-import { MatDialogTitle } from '@angular/material/dialog';
-import { MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { MatList, MatListItem } from '@angular/material/list';
 import { TranslatePipe } from '@ngx-translate/core';
 
 interface Shortcut {
@@ -15,22 +9,13 @@ interface Shortcut {
 }
 
 @Component({
-  selector: 'teammapper-shortcuts',
-  templateUrl: './shortcuts.component.html',
-  styleUrls: ['./shortcuts.component.scss'],
-  imports: [
-    MatToolbar,
-    MatDialogTitle,
-    MatIconButton,
-    MatIcon,
-    MatList,
-    MatListItem,
-    TranslatePipe,
-  ],
+  selector: 'teammapper-shortcut-list',
+  templateUrl: './shortcut-list.component.html',
+  styleUrls: ['./shortcut-list.component.scss'],
+  imports: [TranslatePipe],
 })
-export class ShortcutsComponent implements OnInit {
+export class ShortcutListComponent implements OnInit {
   private shortcutsService = inject(ShortcutsService);
-  private location = inject(Location);
 
   public shortcuts: Shortcut[] = [];
 
@@ -46,9 +31,5 @@ export class ShortcutsComponent implements OnInit {
         description: hotKey.description as string,
       };
     });
-  }
-
-  public back() {
-    this.location.back();
   }
 }

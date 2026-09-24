@@ -83,7 +83,7 @@
     "FONT_INCREASE": "フォントを拡大",
     "FONT_DECREASE": "フォントを縮小",
     "SHOW_LINKTEXT": "リンクアイコンの代わりにリンクテキストを表示",
-    "INFO": "情報画面を開く"
+    "INFO": "情報とショートカットを開く"
   },
   "MODALS": {
     "GENERAL": {
@@ -133,7 +133,8 @@
       "DELETED_AT": "マインドマップの削除予定日：",
       "DELETE_AFTER_DAYS": "このサーバーのマインドマップは {{deleteAfterDays}} 日後に削除されます。",
       "DELETE": "マインドマップを削除",
-      "CONFIRM_DELETE": "削除しますか？"
+      "CONFIRM_DELETE": "削除しますか？",
+      "SHORTCUTS_TITLE": "ショートカット"
     },
     "LINK": {
       "URL": "リンクURL（https://...）"
@@ -195,9 +196,6 @@
       "TTL": "削除予定日",
       "SHOW_LINKTEXT": "リンクテキストを表示",
       "DARK_MODE": "ダークモード"
-    },
-    "SHORTCUTS": {
-      "TITLE": "ショートカット"
     }
   },
   "MESSAGES": {

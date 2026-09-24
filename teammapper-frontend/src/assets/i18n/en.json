@@ -83,7 +83,7 @@
     "FONT_INCREASE": "Increase font ",
     "FONT_DECREASE": "Decrease font",
     "SHOW_LINKTEXT": "Show the linktext instead of the link icon",
-    "INFO": "Opens the info screen"
+    "INFO": "Opens info and shortcuts"
   },
   "MODALS": {
     "GENERAL": {
@@ -133,7 +133,8 @@
       "DELETED_AT": "Mindmap is going to be deleted at:",
       "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
       "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "CONFIRM_DELETE": "Delete?",
+      "SHORTCUTS_TITLE": "Keyboard shortcuts"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -195,9 +196,6 @@
       "TTL": "Last known date of deletion",
       "SHOW_LINKTEXT": "Show linktext",
       "DARK_MODE": "Dark mode"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Shortcuts"
     }
   },
   "MESSAGES": {

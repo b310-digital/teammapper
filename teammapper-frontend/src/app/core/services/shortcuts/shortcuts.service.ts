@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
 import { first, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
+import { DialogService } from '../dialog/dialog.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ export class ShortcutsService implements OnDestroy {
   private hotkeysService = inject(HotkeysService);
   private settingsService = inject(SettingsService);
   private router = inject(Router);
+  private dialogService = inject(DialogService);
 
   private hotKeys: Hotkey[] = [];
   private editMode: boolean | null = null;
@@ -41,7 +43,7 @@ export class ShortcutsService implements OnDestroy {
         keys: '?',
         description: 'TOOLTIPS.SHORTCUTS',
         callback: () => {
-          this.router.navigate(['app', 'shortcuts']);
+          this.dialogService.openAboutDialog();
         },
       },
       {

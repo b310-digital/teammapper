@@ -82,7 +82,7 @@
     "FONT_INCREMENT": "字体大小步长",
     "FONT_INCREASE": "增大字体",
     "FONT_DECREASE": "减小字体",
-    "INFO": "打开信息界面"
+    "INFO": "打开信息和快捷键"
   },
   "MODALS": {
     "GENERAL": {
@@ -132,7 +132,8 @@
       "DELETED_AT": "思维导图将在以下时间删除：",
       "DELETE_AFTER_DAYS": "思维导图将在此服务器上 {{deleteAfterDays}} 天后删除。",
       "DELETE": "删除思维导图",
-      "CONFIRM_DELETE": "删除？"
+      "CONFIRM_DELETE": "删除？",
+      "SHORTCUTS_TITLE": "快捷键"
     },
     "LINK": {
       "URL": "链接 URL (https://...)"
@@ -193,9 +194,6 @@
       "TITLE": "设置",
       "TTL": "最后已知删除日期",
       "DARK_MODE": "深色模式"
-    },
-    "SHORTCUTS": {
-      "TITLE": "快捷键"
     }
   },
   "MESSAGES": {

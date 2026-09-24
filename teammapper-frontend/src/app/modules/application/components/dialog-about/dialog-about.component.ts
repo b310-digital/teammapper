@@ -17,6 +17,7 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatButton } from '@angular/material/button';
 import { AsyncPipe, DatePipe } from '@angular/common';
+import { ShortcutListComponent } from '../shortcut-list/shortcut-list.component';
 
 @Component({
   selector: 'teammapper-dialog-about',
@@ -30,6 +31,7 @@ import { AsyncPipe, DatePipe } from '@angular/common';
     MatDialogActions,
     MatButton,
     MatDialogClose,
+    ShortcutListComponent,
     AsyncPipe,
     DatePipe,
     TranslatePipe,

@@ -115,6 +115,12 @@ size range. Distinct from **user settings**, which are one browser's defaults
 for the maps it creates: automatic branch colors, centering on resize, showing
 linktext, and the starting name and styling for root nodes and ordinary nodes.
 
+### Info dialog
+
+The dialog that the info button or `?` opens over the map. It shows the app
+version, the map's deletion date and the delete action, and below them every
+keyboard shortcut. Map shortcuts do not act while it is open.
+
 ## What you can do to a map
 
 ### Add, remove, select, deselect

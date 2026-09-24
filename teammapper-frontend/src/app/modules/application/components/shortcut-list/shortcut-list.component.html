@@ -1,0 +1,17 @@
+<ul class="shortcut-list">
+  @for (shortcut of shortcuts; track shortcut.description) {
+    <li class="shortcut">
+      <span class="keys">
+        @for (key of shortcut.keys; track key; let last = $last) {
+          <span class="key">{{ key }}</span>
+          @if (!last) {
+            <span>&nbsp;+&nbsp;</span>
+          }
+        }
+      </span>
+      <span class="description">
+        {{ shortcut.description | translate }}
+      </span>
+    </li>
+  }
+</ul>

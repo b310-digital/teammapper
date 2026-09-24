@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { HotkeysService } from 'angular2-hotkeys';
 import { of } from 'rxjs';
+import { DialogService } from '../dialog/dialog.service';
 import { MmpService } from '../mmp/mmp.service';
 import { SettingsService } from '../settings/settings.service';
 import { ShortcutsService } from './shortcuts.service';
@@ -12,6 +13,7 @@ import { ShortcutsService } from './shortcuts.service';
  */
 describe('ShortcutsService', () => {
   let service: ShortcutsService;
+  let dialogService: { openAboutDialog: jest.Mock };
   let mmpService: {
     selectNode: jest.Mock;
     updateNode: jest.Mock;
@@ -40,6 +42,8 @@ describe('ShortcutsService', () => {
       }),
     };
 
+    dialogService = { openAboutDialog: jest.fn() };
+
     TestBed.configureTestingModule({
       providers: [
         ShortcutsService,
@@ -50,6 +54,7 @@ describe('ShortcutsService', () => {
           useValue: { getEditModeObservable: () => of(true) },
         },
         { provide: Router, useValue: { navigate: jest.fn() } },
+        { provide: DialogService, useValue: dialogService },
       ],
     });
 
@@ -75,5 +80,11 @@ describe('ShortcutsService', () => {
     press('alt+.');
 
     expect(mmpService.updateNode).toHaveBeenCalledWith('fontSize', 14, false);
+  });
+
+  it('opens the info dialog on ?', () => {
+    press('?');
+
+    expect(dialogService.openAboutDialog).toHaveBeenCalledTimes(1);
   });
 });

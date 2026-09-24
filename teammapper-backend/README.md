@@ -137,7 +137,7 @@ The `ServeStaticModule` uses a `renderPath` regex to restrict the SPA fallback t
 /map         → Map landing
 /map/:id     → Map editor
 /app/settings   → Settings
-/app/shortcuts  → Shortcuts
+/app/shortcuts  → Not-found page (retired, kept so old links reach the SPA)
 ```
 
 **Why `renderPath` is needed:** Without it, any unknown path returns `index.html` with HTTP 200. This causes bots and crawlers that ignore `<base href="/">` to resolve the relative asset paths in the HTML against the current URL, creating infinitely nesting request loops (e.g. `/map/assets/icons/assets/icons/...`).

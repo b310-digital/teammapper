@@ -82,7 +82,7 @@
     "FONT_INCREMENT": "Dimensione passo del font",
     "FONT_INCREASE": "Aumenta font",
     "FONT_DECREASE": "Diminuisci font",
-    "INFO": "Apre la schermata delle informazioni"
+    "INFO": "Apre informazioni e scorciatoie da tastiera"
   },
   "MODALS": {
     "GENERAL": {
@@ -132,7 +132,8 @@
       "DELETED_AT": "La mappa mentale verrà eliminata a:",
       "DELETE_AFTER_DAYS": "Le mappe mentali verranno eliminate da questo server dopo {{deleteAfterDays}} giorni.",
       "DELETE": "Elimina la mappa mentale",
-      "CONFIRM_DELETE": "Eliminare?"
+      "CONFIRM_DELETE": "Eliminare?",
+      "SHORTCUTS_TITLE": "Scorciatoie da tastiera"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -193,9 +194,6 @@
       "TITLE": "Impostazioni",
       "TTL": "Ultima data di eliminazione conosciuta",
       "DARK_MODE": "Modalità scura"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Scorciatoie da tastiera"
     }
   },
   "MESSAGES": {

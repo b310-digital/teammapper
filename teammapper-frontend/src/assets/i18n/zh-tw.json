@@ -82,7 +82,7 @@
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
     "FONT_DECREASE": "Decrease font",
-    "INFO": "打開資訊畫面"
+    "INFO": "打開資訊和快捷鍵"
   },
   "MODALS": {
     "GENERAL": {
@@ -132,7 +132,8 @@
       "DELETED_AT": "Mindmap is going to be deleted at:",
       "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
       "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "CONFIRM_DELETE": "Delete?",
+      "SHORTCUTS_TITLE": "快捷鍵"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -193,9 +194,6 @@
       "TITLE": "設定",
       "TTL": "Last known date of deletion",
       "DARK_MODE": "深色模式"
-    },
-    "SHORTCUTS": {
-      "TITLE": "快捷鍵"
     }
   },
   "MESSAGES": {
