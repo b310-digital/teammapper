@@ -4,6 +4,8 @@ import {
   populateYMapFromNodeProps,
   yMapToNodeProps,
   buildYjsWsUrl,
+  buildYjsProtocols,
+  toTransmittableSecret,
   resolveClientColor,
   findAffectedNodes,
   resolveMmpPropertyUpdate,
@@ -213,6 +215,43 @@ describe('Yjs URL building', () => {
     const url = buildYjsWsUrl();
     expect(url).toMatch(/^ws:\/\//);
     // The https: -> wss: path uses the same ternary expression
+  });
+});
+
+describe('buildYjsProtocols', () => {
+  it('offers the secret as a second subprotocol', () => {
+    expect(buildYjsProtocols('my-secret')).toEqual([
+      'teammapper.v1',
+      'teammapper.secret.my-secret',
+    ]);
+  });
+
+  it.each([
+    ['an empty secret', ''],
+    ['a null secret', null],
+  ])('offers only the Yjs subprotocol for %s', (_label, secret) => {
+    expect(buildYjsProtocols(secret)).toEqual(['teammapper.v1']);
+  });
+});
+
+describe('toTransmittableSecret', () => {
+  it('keeps a UUID secret', () => {
+    const secret = '00000000-0000-0000-0000-000000000000';
+    expect(toTransmittableSecret(secret)).toBe(secret);
+  });
+
+  it.each([
+    ['a null secret', null],
+    ['an empty secret', ''],
+    ['a trailing parenthesis', 'abc)'],
+    ['a space', 'ab c'],
+    ['a slash', 'ab/c'],
+    ['a colon', 'ab:c'],
+    ['an at sign', 'ab@c'],
+    ['an umlaut', 'abä'],
+    ['an emoji', 'ab🙂'],
+  ])('returns an empty string for %s', (_label, secret) => {
+    expect(toTransmittableSecret(secret)).toBe('');
   });
 });
 

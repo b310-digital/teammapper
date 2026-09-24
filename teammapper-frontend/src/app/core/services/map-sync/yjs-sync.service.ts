@@ -20,6 +20,7 @@ import {
   populateYMapFromNodeProps,
   yMapToNodeProps,
   buildYjsWsUrl,
+  buildYjsProtocols,
   resolveClientColor,
   findAffectedNodes,
   resolveMmpPropertyUpdate,
@@ -196,7 +197,7 @@ export class YjsSyncService {
   private setupConnection(mapId: string): WebsocketProvider {
     const wsUrl = buildYjsWsUrl();
     const provider = new WebsocketProvider(wsUrl, mapId, this.doc, {
-      params: { secret: this.ctx.getModificationSecret() },
+      protocols: buildYjsProtocols(this.ctx.getModificationSecret()),
       maxBackoffTime: 5000,
       disableBc: true,
     });

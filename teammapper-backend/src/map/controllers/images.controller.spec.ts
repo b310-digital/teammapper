@@ -3,6 +3,7 @@ import { PayloadTooLargeException } from '@nestjs/common'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { ThrottlerModule } from '@nestjs/throttler'
 import request from 'supertest'
+import { MODIFICATION_SECRET_HEADER } from '@teammapper/shared'
 import ImagesController from './images.controller'
 import { MapsService } from '../services/maps.service'
 import { ImagesService } from '../services/images.service'
@@ -62,7 +63,7 @@ describe('ImagesController (HTTP)', () => {
   describe('POST /api/maps/:id/images', () => {
     it('stores a PNG posted with the secret and answers 201 with the reference', async () => {
       const response = await upload()
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
         .expect(201)
 
@@ -78,7 +79,7 @@ describe('ImagesController (HTTP)', () => {
       ['with a wrong secret', 'wrong'],
     ])('answers 403 %s', async (_label, secret) => {
       const req = upload()
-      if (secret) req.set('Authorization', secret)
+      if (secret) req.set(MODIFICATION_SECRET_HEADER, secret)
       await req
         .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
         .expect(403)
@@ -86,9 +87,26 @@ describe('ImagesController (HTTP)', () => {
       expect(imagesService.storeImage).not.toHaveBeenCalled()
     })
 
-    it('answers 422 for an SVG file', async () => {
+    it('answers 403 for the secret in Authorization only', async () => {
       await upload()
         .set('Authorization', 'secret')
+        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .expect(403)
+
+      expect(imagesService.storeImage).not.toHaveBeenCalled()
+    })
+
+    it('stores the image when basic auth fills Authorization', async () => {
+      await upload()
+        .set('Authorization', 'Basic dXNlcjpwYXNz')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
+        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .expect(201)
+    })
+
+    it('answers 422 for an SVG file', async () => {
+      await upload()
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach(
           'file',
           Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'),
@@ -104,7 +122,7 @@ describe('ImagesController (HTTP)', () => {
 
     it('answers 422 for a file declared as PNG whose bytes are no image', async () => {
       await upload()
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', Buffer.from('not an image at all'), {
           filename: 'a.png',
           contentType: 'image/png',
@@ -116,7 +134,7 @@ describe('ImagesController (HTTP)', () => {
 
     it('answers 422 for PNG bytes declared as SVG', async () => {
       await upload()
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', png(), {
           filename: 'a.svg',
           contentType: 'image/svg+xml',
@@ -125,12 +143,12 @@ describe('ImagesController (HTTP)', () => {
     })
 
     it('answers 422 without a file', async () => {
-      await upload().set('Authorization', 'secret').expect(422)
+      await upload().set(MODIFICATION_SECRET_HEADER, 'secret').expect(422)
     })
 
     it('answers 413 for a file larger than UPLOAD_IMAGE_MAX_SIZE_BYTES', async () => {
       await upload()
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', png(150_001), {
           filename: 'a.png',
           contentType: 'image/png',
@@ -146,7 +164,7 @@ describe('ImagesController (HTTP)', () => {
     ])(
       'answers 400 for a text field %s the file',
       async (_label, fieldFirst) => {
-        const req = upload().set('Authorization', 'secret')
+        const req = upload().set(MODIFICATION_SECRET_HEADER, 'secret')
         if (fieldFirst) req.field('note', 'x')
         req.attach('file', png(), {
           filename: 'a.png',
@@ -165,7 +183,7 @@ describe('ImagesController (HTTP)', () => {
       )
 
       await upload()
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
         .expect(413)
     })
@@ -174,14 +192,14 @@ describe('ImagesController (HTTP)', () => {
       mapsService.findMap.mockResolvedValueOnce(null)
 
       await upload(nextIp(), '00000000-0000-4000-8000-000000000000')
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
         .expect(404)
     })
 
     it('answers 404 for a map id that is not a uuid', async () => {
       await upload(nextIp(), 'not-a-uuid')
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
         .expect(404)
 
@@ -192,7 +210,7 @@ describe('ImagesController (HTTP)', () => {
       const ip = nextIp()
       for (let i = 0; i < 30; i++) {
         await upload(ip)
-          .set('Authorization', 'secret')
+          .set(MODIFICATION_SECRET_HEADER, 'secret')
           .attach('file', png(), {
             filename: 'a.png',
             contentType: 'image/png',
@@ -201,11 +219,11 @@ describe('ImagesController (HTTP)', () => {
       }
 
       await upload(ip)
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
         .expect(429)
       await upload()
-        .set('Authorization', 'secret')
+        .set(MODIFICATION_SECRET_HEADER, 'secret')
         .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
         .expect(201)
     })

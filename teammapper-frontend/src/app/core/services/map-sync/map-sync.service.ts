@@ -11,6 +11,7 @@ import {
   findMainRoot,
   ImageReference,
   imageIdOf,
+  MODIFICATION_SECRET_HEADER,
   normalizeMapData,
   parseImageUploadResponse,
 } from '@teammapper/shared';
@@ -23,7 +24,11 @@ import { UtilsService } from '../utils/utils.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
-import { ClientColorMapping, ClientColorMappingValue } from './yjs-utils';
+import {
+  ClientColorMapping,
+  ClientColorMappingValue,
+  toTransmittableSecret,
+} from './yjs-utils';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
 
@@ -110,7 +115,7 @@ export class MapSyncService implements OnDestroy {
     id: string,
     modificationSecret: string | null
   ): Promise<ServerMap | null> {
-    this.modificationSecret = modificationSecret ?? '';
+    await this.applyModificationSecret(modificationSecret);
     const serverMap = await this.fetchMapFromServer(id);
 
     if (!serverMap) {
@@ -258,17 +263,40 @@ export class MapSyncService implements OnDestroy {
     return `${API_URL.ROOT}/maps/${mapId}/images/${imageIdOf(reference)}`;
   }
 
-  /** Posts the image to the open map, with the secret as Authorization. */
+  /**
+   * Stores the secret from the URL fragment, or an empty string when the
+   * browser cannot send it. A dropped secret opens the map read-only, so a
+   * toast tells the user that the edit link is invalid.
+   */
+  private async applyModificationSecret(secret: string | null): Promise<void> {
+    this.modificationSecret = toTransmittableSecret(secret);
+    if (!secret || this.modificationSecret) return;
+    const msg = await this.utilsService.translate(
+      'TOASTS.INVALID_MODIFICATION_SECRET'
+    );
+    if (msg) this.toastrService.warning(msg);
+  }
+
+  /** Headers that carry the modification secret, if the map has one. */
+  private secretHeaders(): Record<string, string> {
+    return this.modificationSecret
+      ? { [MODIFICATION_SECRET_HEADER]: this.modificationSecret }
+      : {};
+  }
+
+  /** Posts the image to the open map, with the secret in its header. */
   private async uploadImage(image: Blob): Promise<ImageReference> {
     const mapId = this.attachedMapId();
     if (!mapId) throw new ImageUploadError(0);
     const form = new FormData();
     form.append('file', image, 'image');
-    const headers: Record<string, string> = this.modificationSecret
-      ? { Authorization: this.modificationSecret }
-      : {};
     const response = await this.httpService
-      .postForm(API_URL.ROOT, `/maps/${mapId}/images`, form, headers)
+      .postForm(
+        API_URL.ROOT,
+        `/maps/${mapId}/images`,
+        form,
+        this.secretHeaders()
+      )
       .catch(() => null);
     if (!response?.ok) throw new ImageUploadError(response?.status ?? 0);
     return this.referenceFromUploadResponse(response);
@@ -322,12 +350,10 @@ export class MapSyncService implements OnDestroy {
   }
 
   private async fetchMapFromServer(id: string): Promise<ServerMap | null> {
-    const secretParam = this.modificationSecret
-      ? `?secret=${encodeURIComponent(this.modificationSecret)}`
-      : '';
     const response = await this.httpService.get(
       API_URL.ROOT,
-      '/maps/' + id + secretParam
+      '/maps/' + id,
+      this.secretHeaders()
     );
     if (!response.ok) return null;
     const json: ServerMap = await response.json();

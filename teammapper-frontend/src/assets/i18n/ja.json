@@ -211,6 +211,7 @@
     "NODE_COPIED": "ノードをコピーしました！",
     "NODE_CUT": "ノードを切り取りました！",
     "MAP_IMPORT_SUCCESS": "マインドマップをインポートしました！",
+    "INVALID_MODIFICATION_SECRET": "編集リンクが無効です。マインドマップは読み取り専用で開きます。",
     "MAP_UPDATE_SUCCESS": "マインドマップを更新しました！",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "マインドマップをインポート中...",

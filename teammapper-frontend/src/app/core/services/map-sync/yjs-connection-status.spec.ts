@@ -1,3 +1,4 @@
+import { WebsocketProvider } from 'y-websocket';
 import { MapSyncContext } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
 import {
@@ -70,6 +71,19 @@ describe('YjsSyncService connection status', () => {
       FakeWebsocketProvider.instances.length - 1
     ];
   }
+
+  it('offers the secret as a subprotocol and keeps it out of the URL', () => {
+    service.initMap('test-uuid');
+
+    const call = jest.mocked(WebsocketProvider).mock.lastCall;
+    expect(call?.[0]).not.toContain('secret');
+    expect(call?.[3]).toEqual(
+      expect.objectContaining({
+        protocols: ['teammapper.v1', 'teammapper.secret.secret'],
+      })
+    );
+    expect(call?.[3]).not.toHaveProperty('params');
+  });
 
   it('reports a disconnect of the open connection', () => {
     service.initMap('test-uuid');

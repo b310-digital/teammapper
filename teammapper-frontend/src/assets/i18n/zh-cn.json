@@ -209,6 +209,7 @@
     "NODE_COPIED": "节点复制成功",
     "NODE_CUT": "节点成功切断",
     "MAP_IMPORT_SUCCESS": "成功导入思维导图",
+    "INVALID_MODIFICATION_SECRET": "编辑链接无效。思维导图将以只读方式打开。",
     "MAP_UPDATE_SUCCESS": "思维导图更新成功",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "心智图导入中",

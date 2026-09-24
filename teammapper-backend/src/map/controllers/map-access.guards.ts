@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import type { Request } from 'express'
+import { MODIFICATION_SECRET_HEADER } from '@teammapper/shared'
 import { validate as uuidValidate } from 'uuid'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MapsService } from '../services/maps.service'
@@ -35,9 +36,8 @@ export class MapExistsGuard implements CanActivate {
 }
 
 /**
- * Answers 403 unless the `Authorization` header carries the map's
- * modification secret. The header keeps the secret out of access logs. Runs
- * after `MapExistsGuard`.
+ * Answers 403 unless the `X-Map-Modification-Secret` header carries the map's
+ * modification secret. Runs after `MapExistsGuard`.
  */
 @Injectable()
 export class MapWriteAccessGuard implements CanActivate {
@@ -45,7 +45,8 @@ export class MapWriteAccessGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<MapRequest>()
     const map = request.mmpMap
     if (!map) throw new NotFoundException()
-    const secret = request.headers.authorization ?? null
+    const header = request.headers[MODIFICATION_SECRET_HEADER]
+    const secret = typeof header === 'string' ? header : null
     if (!checkWriteAccess(map.modificationSecret, secret)) {
       throw new ForbiddenException()
     }
