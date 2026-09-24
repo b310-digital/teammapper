@@ -6,7 +6,7 @@ The system SHALL allow users to upload an image file to a selected node. The ima
 #### Scenario: Upload image to a node
 - **WHEN** the user selects a node and uploads an image file
 - **THEN** the image SHALL be displayed on the node, loaded from the map's image endpoint
-- **AND** the node's image SHALL be an `image:<hash>` reference
+- **AND** the node's image SHALL be an `image:<uuid>` reference
 - **AND** the image SHALL have positive width and height
 - **AND** the image SHALL be positioned above the node text
 

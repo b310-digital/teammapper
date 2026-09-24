@@ -4,7 +4,7 @@
 Every export SHALL embed node images as data URLs, whether a node holds a data URL or a reference, so that the exported file shows its images without access to the server. This SHALL apply to SVG, PNG, JPG, PDF and JSON exports. When a referenced image cannot be fetched, the export SHALL omit that node's image and SHALL still complete.
 
 #### Scenario: Export with a missing image
-- **GIVEN** a node whose reference the image endpoint answers with not found
+- **GIVEN** a node whose reference the image endpoint answers with status 404
 - **WHEN** the user exports the map as JSON
 - **THEN** that node SHALL have no image in the file
 - **AND** the file SHALL contain no `image:` reference
@@ -29,3 +29,9 @@ A JSON import SHALL accept node images given as data URLs and SHALL keep them as
 - **WHEN** the user exports a map with images as JSON and imports the file into another map
 - **THEN** every imported node SHALL display its image
 - **AND** every imported node image SHALL be a data URL
+
+#### Scenario: Imported file with a reference
+- **GIVEN** a hand-edited JSON file whose node image is `image:` followed by a uuid the target map does not hold
+- **WHEN** the user imports the file
+- **THEN** the import SHALL complete
+- **AND** that node SHALL display no image
