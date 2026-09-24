@@ -229,7 +229,9 @@
       "EXPORT_IMAGE_ERROR": "Une erreur s'est produite lors de l'exportation de l'image. Il se peut que la mind map soit trop grande.",
       "MAP_COULD_NOT_BE_FOUND": "La carte heuristique est introuvable !",
       "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !",
-      "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré"
+      "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré",
+      "IMAGE_STORAGE_FULL": "Le stockage d'images de cette carte mentale est plein. Une image retirée libère sa place dans les 7 jours suivant son téléversement.",
+      "IMAGE_UPLOAD_ERROR": "L'image n'a pas pu être téléversée."
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",

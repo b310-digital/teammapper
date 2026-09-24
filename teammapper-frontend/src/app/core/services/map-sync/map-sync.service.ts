@@ -9,8 +9,12 @@ import {
   CachedMapOptions,
   ExportNodeProperties,
   findMainRoot,
+  ImageReference,
+  imageIdOf,
   normalizeMapData,
+  parseImageUploadResponse,
 } from '@teammapper/shared';
+import { ImageUploadError } from '../mmp/node-images';
 import { MapProperties } from '@teammapper/mmp';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
@@ -82,6 +86,11 @@ export class MapSyncService implements OnDestroy {
       this.toastrService,
       this.httpService
     );
+
+    this.mmpService.registerImageHandlers({
+      resolveUrl: reference => this.imageUrl(reference),
+      upload: image => this.uploadImage(image),
+    });
   }
 
   ngOnDestroy() {
@@ -234,6 +243,47 @@ export class MapSyncService implements OnDestroy {
       updateAttachedMap: () => this.updateAttachedMap(),
       emitClientList: () => this.extractClientListForSubscriber(),
     };
+  }
+
+  // ─── Node images ─────────────────────────────────────────────
+
+  private attachedMapId(): string | null {
+    return this.attachedMapSubject.getValue()?.cachedMap.uuid ?? null;
+  }
+
+  /** The image endpoint of the open map for a reference. */
+  private imageUrl(reference: ImageReference): string | null {
+    const mapId = this.attachedMapId();
+    if (!mapId) return null;
+    return `${API_URL.ROOT}/maps/${mapId}/images/${imageIdOf(reference)}`;
+  }
+
+  /**
+   * Posts the image to the open map. The secret goes in the Authorization
+   * header, which keeps it out of access logs.
+   */
+  private async uploadImage(image: Blob): Promise<ImageReference> {
+    const mapId = this.attachedMapId();
+    if (!mapId) throw new ImageUploadError(0);
+    const form = new FormData();
+    form.append('file', image, 'image');
+    const headers: Record<string, string> = this.modificationSecret
+      ? { Authorization: this.modificationSecret }
+      : {};
+    const response = await this.httpService
+      .postForm(API_URL.ROOT, `/maps/${mapId}/images`, form, headers)
+      .catch(() => null);
+    if (!response?.ok) throw new ImageUploadError(response?.status ?? 0);
+    return this.referenceFromUploadResponse(response);
+  }
+
+  private async referenceFromUploadResponse(
+    response: Response
+  ): Promise<ImageReference> {
+    const body: unknown = await response.json().catch(() => null);
+    const reference = parseImageUploadResponse(body);
+    if (!reference) throw new ImageUploadError(response.status);
+    return reference;
   }
 
   // ─── Shared utilities ────────────────────────────────────────

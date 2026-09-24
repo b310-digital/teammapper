@@ -231,7 +231,9 @@
       "EXPORT_IMAGE_ERROR": "画像のエクスポート中にエラーが発生しました。マインドマップが大きすぎる可能性があります。",
       "MAP_COULD_NOT_BE_FOUND": "マインドマップが見つかりませんでした！",
       "IMPORT_ERROR": "マインドマップをインポートできませんでした",
-      "AI_MERMAID_ERROR": "Mermaidを生成できませんでした"
+      "AI_MERMAID_ERROR": "Mermaidを生成できませんでした",
+      "IMAGE_STORAGE_FULL": "このマインドマップの画像ストレージがいっぱいです。削除した画像の容量は、アップロードから7日以内に解放されます。",
+      "IMAGE_UPLOAD_ERROR": "画像をアップロードできませんでした。"
     },
     "DELETE_MAP_SUCCESS": "マインドマップを削除しました！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaidを生成しました！",

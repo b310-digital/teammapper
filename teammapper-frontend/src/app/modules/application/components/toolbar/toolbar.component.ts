@@ -14,6 +14,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { AsyncPipe, NgClass } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
+import { isRasterImageFile } from 'src/app/core/services/mmp/node-images';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -145,47 +146,12 @@ export class ToolbarComponent {
     this.dialogService.openAboutDialog();
   }
 
-  private static readonly ALLOWED_IMAGE_TYPES = [
-    'image/png',
-    'image/jpeg',
-    'image/gif',
-    'image/webp',
-  ];
-
-  public initImageUpload(event: Event) {
+  public async initImageUpload(event: Event) {
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
     const file = fileUpload.files?.[0];
-    if (!file || !ToolbarComponent.ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      return;
-    }
+    if (!file || !isRasterImageFile(file)) return;
 
-    const fileReader = new FileReader();
-
-    fileReader.onload = (_fileEvent: Event) => {
-      // in case file is an image resize it
-      const img = new Image(); // create a image
-      img.src = fileReader.result?.toString() ?? ''; // result is base64-encoded Data URI
-      img.onload = (el: Event) => {
-        const resizeWidth = 360; // without px
-        const elem = document.createElement('canvas'); // create a canvas
-
-        const target = el.target as HTMLImageElement;
-        // scale the image to 360 (width) and keep aspect ratio
-        const scaleFactor = resizeWidth / target.width;
-        elem.width = resizeWidth;
-        elem.height = target.height * scaleFactor;
-
-        // draw in canvas
-        const ctx = elem.getContext('2d');
-        if (!ctx) return;
-
-        ctx.drawImage(target, 0, 0, elem.width, elem.height);
-
-        // get the base64-encoded Data URI from the resize image
-        this.mmpService.addNodeImage(ctx.canvas.toDataURL('image/jpeg', 0.5));
-      };
-    };
-    fileReader.readAsDataURL(file);
+    await this.mmpService.addNodeImage(file, true);
   }
 
   public initJSONUpload(event: Event) {

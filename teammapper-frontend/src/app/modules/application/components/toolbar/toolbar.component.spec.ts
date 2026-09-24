@@ -263,40 +263,24 @@ describe('ToolbarComponent', () => {
     expect(ctx.mmpService.addNodeLink).not.toHaveBeenCalled();
   });
 
-  it('should reject SVG file type in image upload', () => {
+  it('should reject SVG file type in image upload', async () => {
     const mockFile = new File([''], 'test.svg', { type: 'image/svg+xml' });
-    const mockFileReader = {
-      readAsDataURL: jest.fn(),
-      result: '',
-      onload: null as FileReader['onload'],
-    };
-    window.FileReader = jest.fn(
-      () => mockFileReader
-    ) as unknown as typeof FileReader;
 
-    ctx.component.initImageUpload({
+    await ctx.component.initImageUpload({
       target: { files: [mockFile] },
     } as unknown as Event);
 
-    expect(mockFileReader.readAsDataURL).not.toHaveBeenCalled();
+    expect(ctx.mmpService.addNodeImage).not.toHaveBeenCalled();
   });
 
-  it('should read image file as data URL', () => {
+  it('should hand a raster image file to addNodeImage with the resize', async () => {
     const mockFile = new File([''], 'test.jpg', { type: 'image/jpeg' });
-    const mockFileReader = {
-      readAsDataURL: jest.fn(),
-      result: '',
-      onload: null as FileReader['onload'],
-    };
-    window.FileReader = jest.fn(
-      () => mockFileReader
-    ) as unknown as typeof FileReader;
 
-    ctx.component.initImageUpload({
+    await ctx.component.initImageUpload({
       target: { files: [mockFile] },
     } as unknown as Event);
 
-    expect(mockFileReader.readAsDataURL).toHaveBeenCalledWith(mockFile);
+    expect(ctx.mmpService.addNodeImage).toHaveBeenCalledWith(mockFile, true);
   });
 
   it('should read JSON file as text', () => {

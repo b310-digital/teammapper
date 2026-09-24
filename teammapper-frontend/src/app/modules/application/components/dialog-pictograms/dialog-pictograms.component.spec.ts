@@ -5,7 +5,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { DialogPictogramsComponent } from './dialog-pictograms.component';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
-import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
 import { of } from 'rxjs';
@@ -14,7 +13,6 @@ describe('DialogPictogramsComponent', () => {
   let component: DialogPictogramsComponent;
   let fixture: ComponentFixture<DialogPictogramsComponent>;
   let mockMmpService: jest.Mocked<MmpService>;
-  let mockUtilsService: jest.Mocked<UtilsService>;
   let mockPictoService: jest.Mocked<PictogramService>;
 
   const mockPictogramResponse: IPictogramResponse[] = [
@@ -56,11 +54,6 @@ describe('DialogPictogramsComponent', () => {
       },
     } as unknown as jest.Mocked<MmpService>;
 
-    mockUtilsService = {
-      new: jest.fn(),
-      blobToBase64: jest.fn(),
-    } as unknown as jest.Mocked<UtilsService>;
-
     mockPictoService = {
       new: jest.fn(),
       getPictos: jest.fn().mockReturnValue(of([])),
@@ -72,7 +65,6 @@ describe('DialogPictogramsComponent', () => {
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: MmpService, useValue: mockMmpService },
-        { provide: UtilsService, useValue: mockUtilsService },
         { provide: PictogramService, useValue: mockPictoService },
       ],
       imports: [

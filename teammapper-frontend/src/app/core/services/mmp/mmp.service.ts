@@ -17,8 +17,16 @@ import {
   NodePropertyValue,
   UserNodeProperties,
   findRootNodes,
+  ImageReference,
+  isImageReference,
 } from '@teammapper/shared';
 import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
+import {
+  blobToDataUrl,
+  ImageHandlers,
+  ImageUploadError,
+  resizeImage,
+} from './node-images';
 import { validate as uuidValidate } from 'uuid';
 import { ExportService } from '../export/export.service';
 
@@ -58,6 +66,8 @@ export class MmpService implements OnDestroy {
   // `create` resolves them; before that there is no map to hold options for.
   private additionalOptions: AdditionalMapOptions | null = null;
   private settingsSubscription: Subscription;
+  // MapSyncService registers these; it holds the map uuid and the secret.
+  private imageHandlers: ImageHandlers | null = null;
 
   constructor() {
     const settingsService = this.settingsService;
@@ -101,7 +111,11 @@ export class MmpService implements OnDestroy {
     ref: HTMLElement,
     options?: OptionParameters
   ) {
-    const map: MmpMap = create(id, ref, options);
+    const map: MmpMap = create(id, ref, {
+      ...options,
+      resolveImageUrl: reference =>
+        this.imageHandlers?.resolveUrl(reference) ?? null,
+    });
 
     // additional options do not include the standard mmp map options
     this.additionalOptions = await this.defaultAdditionalOptions();
@@ -180,6 +194,39 @@ export class MmpService implements OnDestroy {
    */
   public exportAsJSON(): MapSnapshot {
     return this.map.instance.exportAsJSON();
+  }
+
+  /**
+   * Return the json of the mind map with every image reference replaced by a
+   * data URL, so the file works without the server. A node whose image cannot
+   * be fetched leaves the file without an image. `exportAsJSON` keeps the
+   * references for the map cache and the Mermaid export.
+   */
+  public async exportAsJSONWithInlineImages(): Promise<MapSnapshot> {
+    const snapshot = this.exportAsJSON();
+    await Promise.all(
+      snapshot.map(async node => {
+        const src = node.image?.src;
+        if (!node.image || !isImageReference(src)) return;
+        node.image.src = await this.fetchImageAsDataUrl(src);
+      })
+    );
+    return snapshot;
+  }
+
+  /** Fetches a referenced image as a data URL, or '' when that fails. */
+  private async fetchImageAsDataUrl(
+    reference: ImageReference
+  ): Promise<string> {
+    const url = this.imageHandlers?.resolveUrl(reference);
+    if (!url) return '';
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return '';
+      return await blobToDataUrl(await response.blob());
+    } catch {
+      return '';
+    }
   }
 
   /**
@@ -566,10 +613,42 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Insert an image in the selected node.
+   * Register how the open map resolves and uploads images.
    */
-  public addNodeImage(image: string | ArrayBuffer) {
-    this.updateNode('imageSrc', image);
+  public registerImageHandlers(handlers: ImageHandlers) {
+    this.imageHandlers = handlers;
+  }
+
+  /**
+   * Upload an image and set its reference on the node that was selected when
+   * the upload started. Pass `resize` for a picked or dropped file; a
+   * pictogram skips it, since it would turn a transparent background black.
+   * On failure the node keeps its image and the user sees an error.
+   */
+  public async addNodeImage(image: Blob, resize = false): Promise<void> {
+    const node = this.getSelectedNode();
+    if (!node) return;
+
+    try {
+      if (!this.imageHandlers) throw new Error('No map can take an upload');
+      const upload = resize ? await resizeImage(image) : image;
+      const reference = await this.imageHandlers.upload(upload);
+      await this.updateNode('imageSrc', reference, true, true, node.id);
+    } catch (error) {
+      await this.showImageUploadError(error);
+    }
+  }
+
+  /**
+   * A 413 means the map's cap in practice, since the resize keeps files below
+   * the size limit.
+   */
+  private async showImageUploadError(error: unknown): Promise<void> {
+    const key =
+      error instanceof ImageUploadError && error.status === 413
+        ? 'TOASTS.ERRORS.IMAGE_STORAGE_FULL'
+        : 'TOASTS.ERRORS.IMAGE_UPLOAD_ERROR';
+    this.toastrService.error(await this.utilsService.translate(key));
   }
 
   /**
@@ -703,7 +782,7 @@ export class MmpService implements OnDestroy {
     format: string,
     name: string
   ): Promise<{ success: boolean; size?: number }> {
-    const json = JSON.stringify(this.exportAsJSON());
+    const json = JSON.stringify(await this.exportAsJSONWithInlineImages());
     const uri = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`;
 
     const fileSizeKb = uri.length / 1024;
