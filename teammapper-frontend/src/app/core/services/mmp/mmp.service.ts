@@ -318,12 +318,11 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Add the root of a new tree, placed clear of every tree this client holds.
-   * The root has no parent and no main-root mark.
+   * Add the root of a new tree in the viewport, clear of every tree this
+   * client holds, and select it. The root has no parent and no main-root mark.
    */
   public addTree() {
-    const coordinates = this.map.instance.newTreeCoordinates();
-    this.map.instance.addNode({ name: '', coordinates }, true, true, null);
+    this.map.instance.addTree();
   }
 
   /**

@@ -8,8 +8,18 @@ import type { MapNodeDimensions } from '@teammapper/shared';
  * than the ones that end up drawn is what makes branches overlap.
  */
 
+/** An axis-aligned bounding box in map coordinates. */
+export interface Bounds {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
 // The x-axis spacing between parent and child nodes.
 export const NODE_HORIZONTAL_SPACING = 200;
+// The y-axis offset of a first child above its parent.
+export const NODE_VERTICAL_SPACING = 120;
 
 export const NODE_WIDTH_PADDING = 45;
 export const NODE_HEIGHT_PADDING = 30;

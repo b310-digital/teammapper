@@ -63,7 +63,7 @@ describe('MmpService', () => {
       toggleBranchVisibility: jest.fn(),
       distributeNodes: jest.fn(),
       nodeChildren: jest.fn(),
-      newTreeCoordinates: jest.fn(),
+      addTree: jest.fn(),
     },
     options: {
       update: jest.fn(),
@@ -271,27 +271,10 @@ describe('MmpService', () => {
     });
 
     describe('addTree', () => {
-      it('adds a root with no parent at the coordinates mmp picks', () => {
-        const coordinates = { x: 1400, y: 0 };
-        mockMap.instance.newTreeCoordinates.mockReturnValue(coordinates);
-
+      it('lets mmp add the tree', () => {
         service.addTree();
 
-        expect(mockMap.instance.addNode).toHaveBeenCalledWith(
-          { name: '', coordinates },
-          true,
-          true,
-          null
-        );
-      });
-
-      it('never sets the main-root mark on the new root', () => {
-        mockMap.instance.newTreeCoordinates.mockReturnValue({ x: 0, y: 0 });
-
-        service.addTree();
-
-        const [properties] = mockMap.instance.addNode.mock.calls[0];
-        expect(properties).not.toHaveProperty('isRoot');
+        expect(mockMap.instance.addTree).toHaveBeenCalled();
       });
     });
 
