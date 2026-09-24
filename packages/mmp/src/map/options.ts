@@ -92,6 +92,7 @@ export default class Options implements OptionParameters {
 
     this.map.draw.clear();
     this.map.draw.update();
+    this.map.nodes.redrawSelectionRing();
   }
 
   /**
@@ -107,6 +108,7 @@ export default class Options implements OptionParameters {
 
     this.map.draw.clear();
     this.map.draw.update();
+    this.map.nodes.redrawSelectionRing();
   }
 }
 

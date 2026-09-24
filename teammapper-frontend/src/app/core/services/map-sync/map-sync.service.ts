@@ -137,9 +137,7 @@ export class MapSyncService implements OnDestroy {
     const rawData = this.getAttachedMap().cachedMap.data;
     const normalized = normalizeMapData({ data: rawData });
     this.mmpService.new(normalized.data as unknown as ExportNodeProperties[]);
-    this.attachedNodeSubject.next(
-      this.mmpService.selectNode(this.mmpService.getRootNode().id)
-    );
+    this.attachedNodeSubject.next(this.mmpService.selectNode());
     this.syncService.initMap(this.getAttachedMap().cachedMap.uuid);
   }
 

@@ -218,19 +218,14 @@ export default class Nodes {
         if (node) {
           const background = node.getBackgroundDOM();
 
-          const color = d3.color(background.style.fill)?.darker(0.5);
+          const color = this.ringColor(node);
 
-          if (color && background.style.stroke !== color.toString()) {
+          if (color && background.style.stroke !== color) {
             this.releaseSelection(node);
 
-            background.style.stroke = color.toString();
+            background.style.stroke = color;
 
-            this.selectedNode = node;
-            this.map.events.call(
-              Event.nodeSelect,
-              node.dom,
-              this.getNodeProperties(node)
-            );
+            this.announceSelection(node);
           }
         } else {
           Log.error('The node id or the direction is not correct');
@@ -240,6 +235,41 @@ export default class Nodes {
 
     return this.selectedNode ? this.getNodeProperties(this.selectedNode) : null;
   };
+
+  /**
+   * Draw the ring on the selected node again. A full draw of the map gives
+   * every node a new DOM without the ring.
+   */
+  public redrawSelectionRing() {
+    if (!this.selectedNode) return;
+
+    const color = this.ringColor(this.selectedNode);
+    if (color) this.selectedNode.getBackgroundDOM().style.stroke = color;
+  }
+
+  /**
+   * The ring colour of a node: its background fill, darkened. Null when the
+   * fill holds no colour.
+   * @param {Node} node
+   * @returns {string | null}
+   */
+  private ringColor(node: Node): string | null {
+    const fill = node.getBackgroundDOM().style.fill;
+    return d3.color(fill)?.darker(0.5).toString() ?? null;
+  }
+
+  /**
+   * Make the node the selected node and tell listeners it took the selection.
+   * @param {Node} node
+   */
+  private announceSelection(node: Node) {
+    this.selectedNode = node;
+    this.map.events.call(
+      Event.nodeSelect,
+      node.dom,
+      this.getNodeProperties(node)
+    );
+  }
 
   /**
    * Clear the ring and the focus of the selected node, leave nothing
@@ -525,6 +555,8 @@ export default class Nodes {
       // its ancestors.
       if (this.selectedNode && !this.nodes.has(this.selectedNode.id)) {
         this.deselectNode();
+      } else {
+        this.redrawSelectionRing();
       }
     } else {
       Log.error('The root node can not be deleted');
@@ -787,10 +819,26 @@ export default class Nodes {
   };
 
   /**
-   * Set the root node as selected node.
+   * Select the main root: draw its ring and fire `nodeSelect`.
    */
   public selectRootNode() {
-    this.selectedNode = this.getRoot();
+    // A full draw replaces every node object. Drop a selected node the map no
+    // longer holds and fire no deselect: its DOM is detached, and a blur there
+    // would commit a name edit.
+    const selected = this.selectedNode;
+    if (selected && this.nodes.get(selected.id) !== selected) {
+      this.selectedNode = null;
+    }
+
+    const root = this.getRoot();
+    this.selectNode(root.id);
+
+    // selectNode draws no ring on a main root without a background colour,
+    // and the main root still takes the selection.
+    if (this.selectedNode !== root) {
+      this.releaseSelection(root);
+      this.announceSelection(root);
+    }
   }
 
   /**
