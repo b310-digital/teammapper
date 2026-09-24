@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: The Y.Doc carries node images as references or data URLs
-The `image` field of a node entry in the `nodes` Y.Map SHALL hold an `image:<hash>` reference, a data URL, or no image. A current frontend SHALL write a reference for every image it adds. A client joining a map whose nodes all reference their images SHALL receive no image bytes in the Yjs sync.
+The `image` field of a node entry in the `nodes` Y.Map SHALL hold an `image:<uuid>` reference, a data URL, or no image. A current frontend SHALL write a reference for every image it adds. A client joining a map whose nodes all reference their images SHALL receive no image bytes in the Yjs sync.
 
 #### Scenario: Map with references syncs without image bytes
 - **GIVEN** every node image of a map is a reference

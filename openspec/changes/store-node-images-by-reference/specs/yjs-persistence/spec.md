@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Node images are stored outside the node table
-The server SHALL keep referenced images outside the node table, keyed by map id and hash, and SHALL delete them together with their map. A node row SHALL hold its image as given: a reference, a data URL, or no image.
+The server SHALL keep referenced images outside the node table, keyed by map id and image id, and SHALL delete them together with their map. A node row SHALL hold its image as given: a reference, a data URL, or no image.
 
 #### Scenario: Map deletion removes its images
 - **WHEN** a map is deleted

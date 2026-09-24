@@ -1,14 +1,14 @@
 ## MODIFIED Requirements
 
 ### Requirement: Node images SHALL only accept raster formats
-The system SHALL accept a node image in two forms: an `image:<hash>` reference, where `<hash>` is 64 lowercase hex characters, or a base64-encoded data URI with a raster MIME type (JPEG, PNG, GIF, WebP). SVG images, malformed references and other values SHALL be rejected. The system SHALL store an accepted data URI unchanged.
+The system SHALL accept a node image in two forms: an `image:<uuid>` reference, where `<uuid>` is a lowercase uuid, or a base64-encoded data URI with a raster MIME type (JPEG, PNG, GIF, WebP). SVG images, malformed references and other values SHALL be rejected. The system SHALL store an accepted data URI unchanged.
 
 #### Scenario: Valid JPEG image accepted
 - **WHEN** a user uploads a JPEG image to a node
 - **THEN** the system SHALL store the image and set its reference on the node
 
 #### Scenario: Valid reference accepted
-- **WHEN** a node image is set to `image:` followed by 64 lowercase hex characters
+- **WHEN** a node image is set to `image:` followed by a lowercase uuid
 - **THEN** the system SHALL store the reference unchanged
 
 #### Scenario: Raster data URI accepted
@@ -16,7 +16,7 @@ The system SHALL accept a node image in two forms: an `image:<hash>` reference, 
 - **THEN** the system SHALL store the data URI unchanged
 
 #### Scenario: Malformed reference rejected
-- **WHEN** a node image is set to `image:../secret` or to `image:` followed by anything other than 64 lowercase hex characters
+- **WHEN** a node image is set to `image:../secret` or to `image:` followed by anything other than a lowercase uuid
 - **THEN** the system SHALL reject it and store no image
 
 #### Scenario: SVG image rejected
