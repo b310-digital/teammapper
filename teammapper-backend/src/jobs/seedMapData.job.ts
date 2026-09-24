@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core'
 import { MapsService } from '../map/services/maps.service'
-import AppModule from '../app.module'
+import { JobsModule } from './jobs.module'
 import { Logger } from '@nestjs/common'
 import { ClientMap, IMmpClientNode } from '@teammapper/shared'
 import * as crypto from 'crypto'
@@ -39,9 +39,9 @@ const createNode = (
   }
 }
 
-const createMap = (nodes: IMmpClientNode[]): ClientMap => {
+const createMap = (uuid: string, nodes: IMmpClientNode[]): ClientMap => {
   return {
-    uuid: crypto.randomUUID(),
+    uuid,
     lastModified: new Date(),
     lastAccessed: new Date(),
     createdAt: new Date(),
@@ -53,7 +53,7 @@ const createMap = (nodes: IMmpClientNode[]): ClientMap => {
 }
 
 async function bootstrap() {
-  const application = await NestFactory.createApplicationContext(AppModule)
+  const application = await NestFactory.createApplicationContext(JobsModule)
 
   const logger = new Logger('TaskRunner')
   const mapsService = application.get(MapsService)
@@ -86,7 +86,9 @@ async function bootstrap() {
     550,
     550
   )
-  const mapData: ClientMap = createMap([
+  // updateMap replaces the nodes of an existing map, so create the map first.
+  const map = await mapsService.createEmptyMap()
+  const mapData: ClientMap = createMap(map.id, [
     rootNode,
     childNode,
     secondChildNode,
