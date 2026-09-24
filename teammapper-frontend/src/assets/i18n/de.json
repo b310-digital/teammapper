@@ -83,7 +83,7 @@
     "FONT_INCREASE": "Schrift vergrößern",
     "FONT_DECREASE": "Schrift verkleinern",
     "SHOW_LINKTEXT": "Linktext statt Icon anzeigen",
-    "INFO": "Info Screen öffnen"
+    "INFO": "Info und Shortcuts öffnen"
   },
   "MODALS": {
     "GENERAL": {
@@ -133,7 +133,8 @@
       "DELETED_AT": "Diese Mindmap wird gelöscht am:",
       "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
       "DELETE": "Mindmap löschen",
-      "CONFIRM_DELETE": "Wirklich löschen?"
+      "CONFIRM_DELETE": "Wirklich löschen?",
+      "SHORTCUTS_TITLE": "Shortcuts"
     },
     "LINK": {
       "URL": "Link-URL (https://...)"
@@ -195,9 +196,6 @@
       "TTL": "Letztes bekannte Datum der Löschung",
       "SHOW_LINKTEXT": "Linktext anzeigen",
       "DARK_MODE": "Dunkelmodus"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Shortcuts"
     }
   },
   "MESSAGES": {

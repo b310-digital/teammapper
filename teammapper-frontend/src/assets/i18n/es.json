@@ -82,7 +82,7 @@
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
     "FONT_DECREASE": "Decrease font",
-    "INFO": "Abre la pantalla de información"
+    "INFO": "Abre la información y los atajos"
   },
   "MODALS": {
     "GENERAL": {
@@ -132,7 +132,8 @@
       "DELETED_AT": "Mindmap is going to be deleted at:",
       "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
       "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "CONFIRM_DELETE": "Delete?",
+      "SHORTCUTS_TITLE": "Atajos"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -193,9 +194,6 @@
       "TITLE": "Ajustes",
       "TTL": "Last known date of deletion",
       "DARK_MODE": "Modo oscuro"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Atajos"
     }
   },
   "MESSAGES": {
