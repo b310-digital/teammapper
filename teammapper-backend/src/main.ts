@@ -28,6 +28,10 @@ async function bootstrap() {
 
   app.useGlobalFilters(new GlobalExceptionFilter())
 
+  // WS_TRUST_PROXY also decides whether req.ip comes from X-Forwarded-For, so
+  // the upload rate limit and the WebSocket limiter key on the same IP.
+  app.set('trust proxy', configService.isWsTrustProxy())
+
   app.use(
     '/arasaac/api',
     createProxyMiddleware({

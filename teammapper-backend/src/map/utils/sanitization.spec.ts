@@ -53,6 +53,20 @@ describe('sanitizeImageSrc', () => {
     expect(sanitizeImageSrc(src)).toBe(src)
   })
 
+  it('should accept an image reference with a lowercase uuid', () => {
+    const src = 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+    expect(sanitizeImageSrc(src)).toBe(src)
+  })
+
+  it.each([
+    'image:../secret',
+    'image:AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE',
+    'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee?x=1',
+    'image:',
+  ])('should reject the malformed reference %p', (src) => {
+    expect(sanitizeImageSrc(src)).toBe('')
+  })
+
   it('should reject SVG data URI', () => {
     expect(sanitizeImageSrc('data:image/svg+xml;base64,PHN2Zy4=')).toBe('')
   })

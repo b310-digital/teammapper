@@ -3,7 +3,10 @@ import { DataSource } from 'typeorm'
 import { findRootNodes, MapNode } from '@teammapper/shared'
 import { MmpMap } from '../src/map/entities/mmpMap.entity'
 import { MmpNode } from '../src/map/entities/mmpNode.entity'
+import { MmpImage } from '../src/map/entities/mmpImage.entity'
+import { MmpImageData } from '../src/map/entities/mmpImageData.entity'
 import { MapsService } from '../src/map/services/maps.service'
+import { AddImageTables1790208000000 } from '../src/migrations/1790208000000-AddImageTables'
 import { hydrateYDoc } from '../src/map/utils/yDocConversion'
 import { CreateMapsAndNodes1638048135450 } from '../src/migrations/1638048135450-CreateMapsAndNodes'
 import { AddDefaultTimestampToMaps1640704269037 } from '../src/migrations/1640704269037-AddDefaultTimestampToMaps'
@@ -116,10 +119,11 @@ async function upgrade(): Promise<DataSource> {
   const migrations = [
     ...OLD_RELEASE_MIGRATIONS,
     DropDetachedPropertyFromNodes1790121600000,
+    AddImageTables1790208000000,
   ]
   const newRelease = new DataSource({
     ...reopenMigrationTestOptions(WORKER_ID, migrations),
-    entities: [MmpMap, MmpNode],
+    entities: [MmpMap, MmpNode, MmpImage, MmpImageData],
   })
   await newRelease.initialize()
   await newRelease.runMigrations()
@@ -146,6 +150,16 @@ describe('DropDetachedPropertyFromNodes (e2e)', () => {
   const db = (): DataSource => {
     if (!dataSource) throw new Error('The database was not upgraded')
     return dataSource
+  }
+
+  /** True while the migrations table lists the migration as executed. */
+  const isExecuted = async (name: string): Promise<boolean> => {
+    const table = db().options.migrationsTableName ?? 'migrations'
+    const rows: unknown[] = await db().query(
+      `SELECT 1 FROM "${table}" WHERE "name" = $1`,
+      [name]
+    )
+    return rows.length > 0
   }
 
   beforeAll(async () => {
@@ -234,7 +248,10 @@ describe('DropDetachedPropertyFromNodes (e2e)', () => {
   })
 
   it('re-adds the column with default false on the down-migration', async () => {
-    await db().undoLastMigration()
+    // Later migrations revert first, until this one is no longer executed.
+    while (await isExecuted('DropDetachedPropertyFromNodes1790121600000')) {
+      await db().undoLastMigration()
+    }
 
     const rows: { detached: boolean }[] = await db().query(
       `SELECT "detached" FROM "mmp_node" WHERE "nodeMapId" = $1`,
