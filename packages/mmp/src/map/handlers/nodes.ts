@@ -1156,8 +1156,14 @@ export default class Nodes {
 
     if (node.image.src !== '') {
       if (node.image.size !== size) {
-        const image = node.getImageDOM(),
-          box = image.getBBox(),
+        // An image that failed to load has no element; keep its value and
+        // its new size so the Y.Doc still holds both.
+        const image = node.dom.querySelector('image');
+        if (!image) {
+          node.image.size = size;
+          return true;
+        }
+        const box = image.getBBox(),
           height = size,
           width = (box.width * height) / box.height,
           y = -(height + node.dimensions.height / 2 + 5),

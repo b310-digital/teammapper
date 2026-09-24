@@ -1,5 +1,9 @@
 import { NodeColors, NodeFont, NodeImage, NodeLink } from './models/node.js';
-import type { MapNodeCoordinates, MapNodeSettings } from '@teammapper/shared';
+import type {
+  ImageReference,
+  MapNodeCoordinates,
+  MapNodeSettings,
+} from '@teammapper/shared';
 import Utils from '../utils/utils.js';
 import Map from './map.js';
 import Log from '../utils/log.js';
@@ -21,6 +25,7 @@ export default class Options implements OptionParameters {
   public defaultNode: DefaultNodeProperties;
   public rootNode: DefaultNodeProperties;
   public showLinktext: boolean;
+  public resolveImageUrl?: ImageUrlResolver;
 
   /**
    * Initialize all options.
@@ -40,6 +45,7 @@ export default class Options implements OptionParameters {
     this.zoom = parameters.zoom !== undefined ? parameters.zoom : true;
     this.showLinktext =
       parameters.showLinktext !== undefined ? parameters.showLinktext : false;
+    this.resolveImageUrl = parameters.resolveImageUrl;
 
     // Default node properties
     this.defaultNode = Utils.mergeObjects(
@@ -174,6 +180,12 @@ export interface DefaultNodeProperties {
   hidden: boolean;
 }
 
+/**
+ * Returns the URL an image reference loads from, or null when it has none.
+ * The library names no API path; the caller knows the map and the server.
+ */
+export type ImageUrlResolver = (reference: ImageReference) => string | null;
+
 export interface OptionParameters {
   fontFamily?: string;
   centerOnResize?: boolean;
@@ -185,4 +197,5 @@ export interface OptionParameters {
   defaultNode?: MapNodeSettings;
   rootNode?: MapNodeSettings;
   showLinktext?: boolean;
+  resolveImageUrl?: ImageUrlResolver;
 }
