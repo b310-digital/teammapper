@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
-import { ExportNodeProperties } from '@mmp/map/types';
 import { ReversePropertyMapping } from './server-types';
+import { collectSubtreeIds, ExportNodeProperties } from '@teammapper/shared';
 
 export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 
@@ -18,7 +18,6 @@ export function populateYMapFromNodeProps(
   yNode.set('name', nodeProps.name ?? '');
   yNode.set('isRoot', nodeProps.isRoot ?? false);
   yNode.set('locked', nodeProps.locked ?? false);
-  yNode.set('detached', nodeProps.detached ?? false);
   yNode.set('k', nodeProps.k ?? 1);
   yNode.set('coordinates', nodeProps.coordinates ?? { x: 0, y: 0 });
   yNode.set(
@@ -38,7 +37,6 @@ export function yMapToNodeProps(yNode: Y.Map<unknown>): ExportNodeProperties {
     name: (yNode.get('name') as string) ?? '',
     isRoot: (yNode.get('isRoot') as boolean) ?? false,
     locked: (yNode.get('locked') as boolean) ?? false,
-    detached: (yNode.get('detached') as boolean) ?? false,
     coordinates: (yNode.get('coordinates') as { x: number; y: number }) ?? {
       x: 0,
       y: 0,
@@ -122,91 +120,20 @@ export function resolveMmpPropertyUpdate(
   );
 }
 
-// Groups non-root nodes by their parent ID
-const groupByParent = (
-  nodes: readonly ExportNodeProperties[]
-): ReadonlyMap<string, readonly ExportNodeProperties[]> =>
-  nodes
-    .filter(n => !n.isRoot)
-    .reduce((acc, node) => {
-      const pid = node.parent ?? '';
-      acc.set(pid, [...(acc.get(pid) ?? []), node]);
-      return acc;
-    }, new Map<string, ExportNodeProperties[]>());
-
-// Recursive BFS: processes head of queue, enqueues its children, accumulates result
-const collectBreadthFirst = (
-  queue: readonly ExportNodeProperties[],
-  childrenOf: ReadonlyMap<string, readonly ExportNodeProperties[]>,
-  collected: readonly ExportNodeProperties[] = []
-): readonly ExportNodeProperties[] => {
-  if (queue.length === 0) return collected;
-  const [current, ...rest] = queue;
-  const kids = childrenOf.get(current.id) ?? [];
-  return collectBreadthFirst([...rest, ...kids], childrenOf, [
-    ...collected,
-    current,
-  ]);
-};
-
-// Appends nodes not reachable from root to prevent data loss
-const appendOrphans = (
-  ordered: readonly ExportNodeProperties[],
-  all: readonly ExportNodeProperties[]
-): ExportNodeProperties[] => {
-  const visited = new Set(ordered.map(n => n.id));
-  return [...ordered, ...all.filter(n => !visited.has(n.id))];
-};
-
-// Sorts nodes so root comes first and parents always precede their children (BFS order).
-// Orphaned nodes (not reachable from root) are appended at the end to prevent data loss.
-export const sortParentFirst = (
-  nodes: readonly ExportNodeProperties[]
-): ExportNodeProperties[] => {
-  const root = nodes.find(n => n.isRoot);
-  if (!root) return [...nodes];
-
-  const childrenOf = groupByParent(nodes);
-  const ordered = collectBreadthFirst([root], childrenOf);
-  return appendOrphans(ordered, nodes);
-};
-
-// Collects all descendant node IDs by building a parent-to-children
-// index in a single O(N) pass, then BFS-traversing from the given node.
+// Collects all descendant node IDs using the shared cycle-safe BFS algorithm.
 export function collectDescendantIds(
   nodesMap: Y.Map<Y.Map<unknown>>,
   nodeId: string
 ): string[] {
-  const childrenOf = new Map<string, string[]>();
+  const nodes: { id: string; parent: string | null }[] = [];
   nodesMap.forEach((yNode: Y.Map<unknown>, key: string) => {
-    const parent = yNode.get('parent') as string | null;
-    if (parent != null) {
-      const siblings = childrenOf.get(parent);
-      if (siblings) {
-        siblings.push(key);
-      } else {
-        childrenOf.set(parent, [key]);
-      }
-    }
+    nodes.push({
+      id: key,
+      parent: (yNode.get('parent') as string | null) ?? null,
+    });
   });
 
-  const descendants: string[] = [];
-  const visited = new Set<string>([nodeId]);
-  const queue = [nodeId];
-  let i = 0;
-
-  while (i < queue.length) {
-    const children = childrenOf.get(queue[i++]) ?? [];
-    for (const child of children) {
-      if (!visited.has(child)) {
-        visited.add(child);
-        descendants.push(child);
-        queue.push(child);
-      }
-    }
-  }
-
-  return descendants;
+  return collectSubtreeIds(nodes, nodeId);
 }
 
 export function resolveCompoundMmpUpdates(

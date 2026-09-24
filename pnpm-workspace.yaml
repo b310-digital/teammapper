@@ -1,7 +1,7 @@
 packages:
+  - 'packages/*'
   - 'teammapper-backend'
   - 'teammapper-frontend'
-  - 'teammapper-frontend/packages/*'
 # 7-day quarantine on newly published versions (mitigates fast-revoked malicious releases).
 minimumReleaseAge: 10080
 strictDepBuilds: true
@@ -17,15 +17,18 @@ allowBuilds:
 # Transitive-dep CVE pins. Audit periodically with `pnpm why <pkg>` and remove
 # entries whose selector no longer matches any node in pnpm-lock.yaml.
 overrides:
-  # GHSA-72gw-mp4g-v24j (DoS). Held back by @nestjs/platform-express.
-  'multer@<2.2.0': '>=2.2.0 <3.0.0'
+  # GHSA-72gw-mp4g-v24j (DoS) and the advisories fixed in 2.3.0. Held back by
+  # @nestjs/platform-express.
+  'multer@<2.3.0': '>=2.3.0 <3.0.0'
   'ajv@>=7.0.0-alpha.0 <8.18.0': '8.18.0'
   'underscore@<=1.13.7': '1.13.8'
-  'socket.io-parser@>=4.0.0 <4.2.6': '4.2.6'
   'picomatch@>=4.0.0 <4.0.4': '>=4.0.4 <5.0.0'
   'lodash@<4.18.0': '>=4.18.0'
   'follow-redirects@<1.16.0': '>=1.16.0'
-  'hono@<4.12.25': '>=4.12.25'
+  # GHSA-crvj-82cr-hjcx / -g6gw-c38x-mqfc / -gqvv-2mrq-wpjv / -frvp-7c67-39w9.
+  # Parent: @angular/cli > @modelcontextprotocol/sdk.
+  'hono@<4.13.5': '>=4.13.5 <5.0.0'
+  '@hono/node-server@<1.19.15': '>=1.19.15 <2.0.0'
   # GHSA-f65p-4m7j-42xc / -fph4-wmhf-6fwf / -jqff-g426-hqxp (host confusion).
   # Pulled in by ajv via @nestjs/cli > @angular-devkit/core.
   'fast-uri@<3.1.6': '>=3.1.6 <4.0.0'
@@ -42,7 +45,8 @@ overrides:
   # major-version jump (e.g. @babel/core -> 8) when newer releases age out.
   # GHSA-395f-4hp3-45gv — 1.8.4 is itself affected, the fix landed in 1.9.0.
   'shell-quote@<1.9.0': '>=1.9.0 <2.0.0'
-  'qs@>=6.11.1 <6.15.2': '>=6.15.2 <7.0.0'
+  # GHSA-4mjr-xmp4-gh2g / -x5fp-wj9c-mxmx. Parent: supertest > superagent.
+  'qs@>=6.11.1 <6.16.0': '>=6.16.0 <7.0.0'
   'esbuild@>=0.27.3 <0.28.1': '>=0.28.1 <0.29.0'
   # GHSA-23hp-3jrh-7fpw (critical) + GHSA-r292-9mhp-454m. Parent: @angular/cli > pacote.
   'tar@>=7.0.0 <7.5.21': '>=7.5.21 <8.0.0'
@@ -78,3 +82,14 @@ overrides:
   # Two majors are in the tree: @angular/build pins 7.x, node-gyp pins 6.x.
   'undici@<6.27.0': '>=6.27.0 <7.0.0'
   'undici@>=7.0.0 <7.29.0': '>=7.29.0 <8.0.0'
+  # GHSA-hmw2-7cc7-3qxx. Parent: @types/supertest > @types/superagent.
+  'form-data@>=4.0.0 <4.0.6': '>=4.0.6 <5.0.0'
+  # GHSA-64mm-vxmg-q3vj / GHSA-v422-hmwv-36x6. Parents: webpack-dev-server, which
+  # holds express 4 (body-parser 1.x), and @nestjs/platform-express (body-parser 2.x).
+  'http-proxy-middleware@>=0.16.0 <2.0.10': '>=2.0.10 <3.0.0'
+  'body-parser@<1.20.6': '>=1.20.6 <2.0.0'
+  'body-parser@>=2.0.0 <2.3.0': '>=2.3.0 <3.0.0'
+  # GHSA-4vj7-5mj6-jm8m / -jxfw-x594-9x9m. Parent: @compodoc/compodoc > @compodoc/live-server.
+  'morgan@<1.12.0': '>=1.12.0 <2.0.0'
+  # GHSA-w9m9-85wc-3x92. Parent: css-loader > postcss-modules-local-by-default.
+  'postcss-selector-parser@>=7.1.0 <7.1.3': '>=7.1.3 <8.0.0'

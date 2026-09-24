@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
 import { first, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
+import { DialogService } from '../dialog/dialog.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,10 +14,11 @@ export class ShortcutsService implements OnDestroy {
   private hotkeysService = inject(HotkeysService);
   private settingsService = inject(SettingsService);
   private router = inject(Router);
+  private dialogService = inject(DialogService);
 
-  private hotKeys: Hotkey[];
-  private editMode: boolean;
-  private settingsSubscription: Subscription;
+  private hotKeys: Hotkey[] = [];
+  private editMode: boolean | null = null;
+  private settingsSubscription: Subscription | null = null;
 
   /**
    * Add all global hot keys of the application.
@@ -32,7 +34,7 @@ export class ShortcutsService implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.settingsSubscription.unsubscribe();
+    this.settingsSubscription?.unsubscribe();
   }
 
   public registerHotKeys() {
@@ -41,7 +43,7 @@ export class ShortcutsService implements OnDestroy {
         keys: '?',
         description: 'TOOLTIPS.SHORTCUTS',
         callback: () => {
-          this.router.navigate(['app', 'shortcuts']);
+          this.dialogService.openAboutDialog();
         },
       },
       {
@@ -192,28 +194,30 @@ export class ShortcutsService implements OnDestroy {
         keys: 'alt+.',
         description: 'TOOLTIPS.FONT_INCREASE',
         callback: () => {
-          const node = this.mmpService.selectNode();
-          const size: number = node.font.size;
-          if (size >= this.mmpService.getAdditionalMapOptions().fontMaxSize)
-            return;
+          const size = this.mmpService.selectNode()?.font?.size;
+          const options = this.mmpService.getAdditionalMapOptions();
+          if (size == null || !options || size >= options.fontMaxSize) return;
 
-          const increment =
-            this.mmpService.getAdditionalMapOptions().fontIncrement;
-          this.mmpService.updateNode('fontSize', size + increment, false);
+          this.mmpService.updateNode(
+            'fontSize',
+            size + options.fontIncrement,
+            false
+          );
         },
       },
       {
         keys: 'alt+-',
         description: 'TOOLTIPS.FONT_DECREASE',
         callback: () => {
-          const node = this.mmpService.selectNode();
-          const size: number = node.font.size;
-          if (size <= this.mmpService.getAdditionalMapOptions().fontMinSize)
-            return;
+          const size = this.mmpService.selectNode()?.font?.size;
+          const options = this.mmpService.getAdditionalMapOptions();
+          if (size == null || !options || size <= options.fontMinSize) return;
 
-          const increment =
-            this.mmpService.getAdditionalMapOptions().fontIncrement;
-          this.mmpService.updateNode('fontSize', size - increment, false);
+          this.mmpService.updateNode(
+            'fontSize',
+            size - options.fontIncrement,
+            false
+          );
         },
       },
     ];

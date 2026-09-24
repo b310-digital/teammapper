@@ -1,0 +1,93 @@
+[
+  {
+    "id": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e01",
+    "parent": "",
+    "name": "Legacy root",
+    "coordinates": { "x": 0, "y": 0 },
+    "image": { "src": "", "size": 70 },
+    "colors": { "name": "#666666", "background": "#f5f5f5", "branch": "" },
+    "font": { "style": "normal", "size": 26, "weight": "normal" },
+    "link": { "href": "" },
+    "locked": false,
+    "isRoot": true,
+    "detached": false,
+    "hidden": false,
+    "k": 1
+  },
+  {
+    "id": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e02",
+    "parent": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e01",
+    "name": "Legacy child",
+    "coordinates": { "x": -200, "y": -120 },
+    "image": { "src": "", "size": 60 },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#FFC107"
+    },
+    "font": { "size": 22, "style": "normal", "weight": "normal" },
+    "link": { "href": "" },
+    "locked": true,
+    "isRoot": false,
+    "detached": false,
+    "hidden": false,
+    "k": 1
+  },
+  {
+    "id": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e03",
+    "parent": "",
+    "name": "Legacy note",
+    "coordinates": { "x": 300, "y": -150 },
+    "image": { "src": "", "size": 60 },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#546e7a"
+    },
+    "font": { "size": 22, "style": "normal", "weight": "normal" },
+    "link": { "href": "" },
+    "locked": true,
+    "isRoot": false,
+    "detached": true,
+    "hidden": false,
+    "k": 1
+  },
+  {
+    "id": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e04",
+    "parent": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e03",
+    "name": "Pasted under note",
+    "coordinates": { "x": 500, "y": -150 },
+    "image": { "src": "", "size": 60 },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#546e7a"
+    },
+    "font": { "size": 22, "style": "normal", "weight": "normal" },
+    "link": { "href": "" },
+    "locked": true,
+    "isRoot": false,
+    "detached": false,
+    "hidden": false,
+    "k": 1
+  },
+  {
+    "id": "6f1d7a52-3c1e-4b8e-9a51-0d6c2a7b1e05",
+    "parent": "",
+    "name": "Lonely note",
+    "coordinates": { "x": 300, "y": 150 },
+    "image": { "src": "", "size": 60 },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#546e7a"
+    },
+    "font": { "size": 22, "style": "normal", "weight": "normal" },
+    "link": { "href": "" },
+    "locked": true,
+    "isRoot": false,
+    "detached": true,
+    "hidden": false,
+    "k": 1
+  }
+]

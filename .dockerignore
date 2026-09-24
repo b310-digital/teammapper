@@ -27,6 +27,8 @@ teammapper-frontend/README.md
 README.md
 teammapper-backend/benchmark
 node_modules
+packages/*/node_modules
+packages/*/dist
 openspec
 docs
 coverage

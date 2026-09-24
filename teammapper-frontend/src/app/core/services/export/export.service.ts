@@ -1,48 +1,33 @@
 import { Injectable } from '@angular/core';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties, findRootNodes } from '@teammapper/shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ExportService {
   /**
-   * Convert mind map data to Mermaid syntax using functional programming approach
+   * Convert mind map data to Mermaid syntax, one `mindmap` block per tree,
+   * main tree first, since a Mermaid block allows a single root
    */
   public exportToMermaid(nodes: ExportNodeProperties[]): string {
-    if (!nodes || nodes.length === 0) {
+    const roots = findRootNodes(nodes);
+    if (roots.length === 0) {
       return 'mindmap\n  root';
     }
 
-    const rootNode = nodes.find(node => node.isRoot);
-    if (!rootNode) {
-      return 'mindmap\n  root';
-    }
-
-    // Create a map for quick parent-child lookups
     const childrenMap = this.createChildrenMap(nodes);
-
-    // Build the mermaid syntax starting from root
-    const mermaidLines = [
-      'mindmap',
-      this.buildNodeTree(rootNode, childrenMap, 1),
-    ];
-
-    return mermaidLines.join('\n');
+    return roots
+      .map(root => `mindmap\n${this.buildNodeTree(root, childrenMap, 1)}`)
+      .join('\n\n');
   }
 
   /**
    * Create a map of parent IDs to their children for efficient lookup
-   * Only includes nodes that are not detached (connected to the root)
    */
   private createChildrenMap(
     nodes: ExportNodeProperties[]
   ): Map<string, ExportNodeProperties[]> {
     return nodes.reduce((map, node) => {
-      // Skip detached nodes (not connected to root)
-      if (node.detached) {
-        return map;
-      }
-
       if (node.parent) {
         const siblings = map.get(node.parent) || [];
         map.set(node.parent, [...siblings, node]);

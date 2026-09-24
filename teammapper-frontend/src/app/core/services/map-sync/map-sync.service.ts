@@ -7,8 +7,15 @@ import {
   CachedMap,
   CachedMapEntry,
   CachedMapOptions,
-} from '../../../shared/models/cached-map.model';
-import { ExportNodeProperties, MapProperties } from '@mmp/map/types';
+  ExportNodeProperties,
+  findMainRoot,
+  ImageReference,
+  imageIdOf,
+  normalizeMapData,
+  parseImageUploadResponse,
+} from '@teammapper/shared';
+import { ImageUploadError } from '../mmp/node-images';
+import { MapProperties } from '@teammapper/mmp';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
@@ -19,8 +26,6 @@ import { ToastrService } from 'ngx-toastr';
 import { ClientColorMapping, ClientColorMappingValue } from './yjs-utils';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
-
-export { ConnectionStatus } from './map-sync-context';
 
 @Injectable({
   providedIn: 'root',
@@ -81,6 +86,11 @@ export class MapSyncService implements OnDestroy {
       this.toastrService,
       this.httpService
     );
+
+    this.mmpService.registerImageHandlers({
+      resolveUrl: reference => this.imageUrl(reference),
+      upload: image => this.uploadImage(image),
+    });
   }
 
   ngOnDestroy() {
@@ -98,13 +108,13 @@ export class MapSyncService implements OnDestroy {
 
   public async prepareExistingMap(
     id: string,
-    modificationSecret: string
-  ): Promise<ServerMap> {
-    this.modificationSecret = modificationSecret;
+    modificationSecret: string | null
+  ): Promise<ServerMap | null> {
+    this.modificationSecret = modificationSecret ?? '';
     const serverMap = await this.fetchMapFromServer(id);
 
     if (!serverMap) {
-      return;
+      return null;
     }
 
     this.syncService.setWritable(serverMap.writable !== false);
@@ -119,7 +129,9 @@ export class MapSyncService implements OnDestroy {
   }
 
   public initMap() {
-    this.mmpService.new(this.getAttachedMap().cachedMap.data);
+    const rawData = this.getAttachedMap().cachedMap.data;
+    const normalized = normalizeMapData({ data: rawData });
+    this.mmpService.new(normalized.data as unknown as ExportNodeProperties[]);
     this.attachedNodeSubject.next(
       this.mmpService.selectNode(this.mmpService.getRootNode().id)
     );
@@ -134,7 +146,7 @@ export class MapSyncService implements OnDestroy {
     return this.attachedMapSubject.asObservable();
   }
 
-  public getClientListObservable(): Observable<string[] | null> {
+  public getClientListObservable(): Observable<string[]> {
     return this.clientListSubject.asObservable();
   }
 
@@ -147,7 +159,13 @@ export class MapSyncService implements OnDestroy {
   }
 
   public getAttachedMap(): CachedMapEntry {
-    return this.attachedMapSubject.getValue();
+    const attachedMap = this.attachedMapSubject.getValue();
+
+    if (!attachedMap) {
+      throw new Error('No map is attached');
+    }
+
+    return attachedMap;
   }
 
   public getConnectionStatus(): ConnectionStatus {
@@ -227,6 +245,44 @@ export class MapSyncService implements OnDestroy {
     };
   }
 
+  // ─── Node images ─────────────────────────────────────────────
+
+  private attachedMapId(): string | null {
+    return this.attachedMapSubject.getValue()?.cachedMap.uuid ?? null;
+  }
+
+  /** The image endpoint of the open map for a reference. */
+  private imageUrl(reference: ImageReference): string | null {
+    const mapId = this.attachedMapId();
+    if (!mapId) return null;
+    return `${API_URL.ROOT}/maps/${mapId}/images/${imageIdOf(reference)}`;
+  }
+
+  /** Posts the image to the open map, with the secret as Authorization. */
+  private async uploadImage(image: Blob): Promise<ImageReference> {
+    const mapId = this.attachedMapId();
+    if (!mapId) throw new ImageUploadError(0);
+    const form = new FormData();
+    form.append('file', image, 'image');
+    const headers: Record<string, string> = this.modificationSecret
+      ? { Authorization: this.modificationSecret }
+      : {};
+    const response = await this.httpService
+      .postForm(API_URL.ROOT, `/maps/${mapId}/images`, form, headers)
+      .catch(() => null);
+    if (!response?.ok) throw new ImageUploadError(response?.status ?? 0);
+    return this.referenceFromUploadResponse(response);
+  }
+
+  private async referenceFromUploadResponse(
+    response: Response
+  ): Promise<ImageReference> {
+    const body: unknown = await response.json().catch(() => null);
+    const reference = parseImageUploadResponse(body);
+    if (!reference) throw new ImageUploadError(response.status);
+    return reference;
+  }
+
   // ─── Shared utilities ────────────────────────────────────────
 
   private colorForNode(nodeId: string): string {
@@ -234,7 +290,7 @@ export class MapSyncService implements OnDestroy {
     return matchingClient ? this.colorMapping[matchingClient].color : '';
   }
 
-  private clientForNode(nodeId: string): string {
+  private clientForNode(nodeId: string): string | undefined {
     return Object.keys(this.colorMapping)
       .filter((key: string) => this.colorMapping[key]?.nodeId === nodeId)
       .shift();
@@ -265,7 +321,7 @@ export class MapSyncService implements OnDestroy {
     this.modificationSecret = privateServerMap.modificationSecret;
   }
 
-  private async fetchMapFromServer(id: string): Promise<ServerMap> {
+  private async fetchMapFromServer(id: string): Promise<ServerMap | null> {
     const secretParam = this.modificationSecret
       ? `?secret=${encodeURIComponent(this.modificationSecret)}`
       : '';
@@ -279,13 +335,19 @@ export class MapSyncService implements OnDestroy {
   }
 
   private async postMapToServer(): Promise<PrivateServerMap> {
+    // The create endpoint requires a root node, so an absent one is a 400 and
+    // not a server-side default. Settings init leaves the cache empty when it
+    // cannot reach the server, so read the defaults back before posting.
+    const cached = this.settingsService.getCachedUserSettings();
+    const rootNode =
+      cached?.mapOptions.rootNode ??
+      (await this.settingsService.getDefaultSettings()).userSettings.mapOptions
+        .rootNode;
+
     const response = await this.httpService.post(
       API_URL.ROOT,
       '/maps/',
-      JSON.stringify({
-        rootNode:
-          this.settingsService.getCachedUserSettings().mapOptions.rootNode,
-      })
+      JSON.stringify({ rootNode })
     );
 
     return response.json();
@@ -306,9 +368,17 @@ export class MapSyncService implements OnDestroy {
   private prepareMap(serverMap: ServerMap) {
     const mapKey = this.createKey(serverMap.uuid);
     const mapProps = this.convertServerMapToMmp(serverMap);
+    const normalized = normalizeMapData({
+      ...mapProps,
+      options: serverMap.options,
+    });
     this.attachMap({
       key: mapKey,
-      cachedMap: { ...mapProps, ...{ options: serverMap.options } },
+      cachedMap: {
+        ...mapProps,
+        options: serverMap.options,
+        data: normalized.data as unknown as ExportNodeProperties[],
+      },
     });
     this.mmpService.updateAdditionalMapOptions(serverMap.options);
   }
@@ -319,7 +389,8 @@ export class MapSyncService implements OnDestroy {
     )) as CachedAdminMapValue | null;
     if (map) {
       map.ttl = new Date(serverMap.deletedAt);
-      map.rootName = serverMap.data?.[0]?.name;
+      map.rootName =
+        findMainRoot(serverMap.data)?.name ?? serverMap.data[0]?.name ?? null;
       this.storageService.set(serverMap.uuid, map);
     }
   }

@@ -56,7 +56,7 @@
     "TEXT_SIZE": "Cambia la dimensione del testo e del nodo",
     "IMAGE_SIZE": "Cambia la dimensione dell'immage del nodo",
     "ADD_NODE": "Aggiungi un nodo",
-    "ADD_DETACHED_NODE": "Aggiungi un nodo staccato",
+    "ADD_TREE": "Aggiungi un albero",
     "REMOVE_NODE": "Rimuovi un nodo",
     "ZOOM_IN_MAP": "Esegui uno zoom-avanti",
     "ZOOM_OUT_MAP": "Esegui uno zoom-indietro",
@@ -82,7 +82,7 @@
     "FONT_INCREMENT": "Dimensione passo del font",
     "FONT_INCREASE": "Aumenta font",
     "FONT_DECREASE": "Diminuisci font",
-    "INFO": "Apre la schermata delle informazioni"
+    "INFO": "Apre informazioni e scorciatoie da tastiera"
   },
   "MODALS": {
     "GENERAL": {
@@ -132,7 +132,8 @@
       "DELETED_AT": "La mappa mentale verrà eliminata a:",
       "DELETE_AFTER_DAYS": "Le mappe mentali verranno eliminate da questo server dopo {{deleteAfterDays}} giorni.",
       "DELETE": "Elimina la mappa mentale",
-      "CONFIRM_DELETE": "Eliminare?"
+      "CONFIRM_DELETE": "Eliminare?",
+      "SHORTCUTS_TITLE": "Scorciatoie da tastiera"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -191,10 +192,8 @@
       "ROOT_NODE_NAME": "Nome nodo radice",
       "NODE_NAME": "Nome nodo",
       "TITLE": "Impostazioni",
-      "TTL": "Ultima data di eliminazione conosciuta"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Scorciatoie da tastiera"
+      "TTL": "Ultima data di eliminazione conosciuta",
+      "DARK_MODE": "Modalità scura"
     }
   },
   "MESSAGES": {
@@ -213,7 +212,8 @@
     "MAP_UPDATE_SUCCESS": "Mappa mentale aggiornata con successo!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importazione della mappa mentale in corso",
-      "MAP_UPDATE_IN_PROGRESS": "Aggiornamento della mappa mentale..."
+      "MAP_UPDATE_IN_PROGRESS": "Aggiornamento della mappa mentale...",
+      "MERMAID_SEVERAL_TREES": "Ogni albero è diventato un proprio blocco mindmap. Gli strumenti Mermaid al di fuori di TeamMapper mostrano un blocco alla volta."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Non è possibile copiare il nodo radice!",
@@ -229,7 +229,9 @@
       "EXPORT_IMAGE_ERROR": "Si è verificato un errore durante l'esportazione dell'immagine. La mappa mentale potrebbe essere troppo grande.",
       "MAP_COULD_NOT_BE_FOUND": "Impossibile trovare la mappa mentale!",
       "IMPORT_ERROR": "Non è stato possibile importare la mappa mentale!",
-      "AI_MERMAID_ERROR": "Mermaid non può essere generato"
+      "AI_MERMAID_ERROR": "Mermaid non può essere generato",
+      "IMAGE_STORAGE_FULL": "Lo spazio per le immagini di questa mappa mentale è pieno. Un'immagine rimossa libera il suo spazio entro 7 giorni dal caricamento.",
+      "IMAGE_UPLOAD_ERROR": "Non è stato possibile caricare l'immagine."
     },
     "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid generato con successo!",

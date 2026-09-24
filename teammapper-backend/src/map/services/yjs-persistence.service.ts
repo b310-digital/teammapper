@@ -139,7 +139,9 @@ export class YjsPersistenceService implements OnModuleDestroy {
     }
   }
 
-  // Extracts nodes from Y.Doc, ensuring root is first with stable orderNumbers
+  // Extracts nodes from Y.Doc, ensuring root is first with stable orderNumbers.
+  // Throws when no root reaches any node, because deleteRemovedNodes would
+  // otherwise delete every node row of the map.
   private extractNodesFromYDoc(
     nodesMap: Y.Map<Y.Map<unknown>>,
     mapId: string,
@@ -149,7 +151,11 @@ export class YjsPersistenceService implements OnModuleDestroy {
     nodesMap.forEach((yNode) => {
       nodes.push({ ...yMapToMmpNode(yNode, mapId), lastModified: now })
     })
-    return orderNodesFromRoot(nodes)
+    const ordered = orderNodesFromRoot(nodes)
+    if (nodes.length > 0 && ordered.length === 0) {
+      throw new Error(`No root reaches any of the ${nodes.length} nodes`)
+    }
+    return ordered
   }
 
   private async deleteRemovedNodes(
@@ -172,6 +178,10 @@ export class YjsPersistenceService implements OnModuleDestroy {
     })
   }
 
+  // One INSERT ... ON CONFLICT DO UPDATE for all nodes. `save()` would issue
+  // one UPDATE per existing node in parallel on the same connection, which pg
+  // deprecates (queries on a client must not overlap). Entity instances keep
+  // the @BeforeInsert validation running.
   private async upsertNodes(
     queryRunner: QueryRunner,
     nodes: Partial<MmpNode>[]
@@ -179,7 +189,7 @@ export class YjsPersistenceService implements OnModuleDestroy {
     const entities = nodes.map((node) =>
       queryRunner.manager.create(MmpNode, node)
     )
-    await queryRunner.manager.save(entities)
+    await queryRunner.manager.upsert(MmpNode, entities, ['id', 'nodeMapId'])
   }
 
   private async updateMapMetadata(

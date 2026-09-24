@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { MapsService } from './maps.service'
+import { ImagesService } from './images.service'
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Logger } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
@@ -13,6 +14,7 @@ import {
 } from '../../../test/db'
 import { truncateDatabase } from 'test/helper'
 import { jest } from '@jest/globals'
+import { orderNodesFromRoot } from '../utils/nodeOrdering'
 
 describe('MapsService', () => {
   let mapsService: MapsService
@@ -38,7 +40,11 @@ describe('MapsService', () => {
       getRepositoryToken(MmpNode)
     )
 
-    mapsService = new MapsService(nodesRepo, mapsRepo)
+    mapsService = new MapsService(
+      nodesRepo,
+      mapsRepo,
+      moduleFixture.get(ImagesService)
+    )
   })
 
   afterAll(async () => {
@@ -75,7 +81,6 @@ describe('MapsService', () => {
         coordinatesX: 3,
         coordinatesY: 1,
         root: false,
-        detached: true,
       })
 
       const inserted = await mapsService.addNodes(map.id, [node])
@@ -96,7 +101,6 @@ describe('MapsService', () => {
         coordinatesX: 3,
         coordinatesY: 1,
         root: true,
-        detached: false,
       })
 
       const first = await mapsService.addNodes(map.id, [node])
@@ -109,6 +113,77 @@ describe('MapsService', () => {
       expect(allNodes.length).toBe(1)
     })
 
+    it('copies every node of a two-root map through findNodes and addNodes', async () => {
+      const source = await mapsRepo.save({})
+      const copy = await mapsRepo.save({})
+      const node = (id: string, parentId: string | null, root = false) =>
+        nodesRepo.create({
+          id,
+          nodeMapId: source.id,
+          nodeParentId: parentId ?? undefined,
+          coordinatesX: 0,
+          coordinatesY: 0,
+          root,
+        })
+      const main = '11111111-1111-4111-8111-111111111111'
+      const second = '22222222-2222-4222-8222-222222222222'
+      const secondChild = '33333333-3333-4333-8333-333333333333'
+      const ordered = orderNodesFromRoot([
+        node(secondChild, second),
+        node(second, null),
+        node(main, null, true),
+      ])
+
+      await mapsService.addNodes(source.id, ordered)
+      await mapsService.addNodes(
+        copy.id,
+        await mapsService.findNodes(source.id)
+      )
+
+      const copied = await nodesRepo.find({ where: { nodeMapId: copy.id } })
+      expect(copied.map((n) => [n.id, n.nodeParentId ?? null]).sort()).toEqual(
+        [
+          [main, null],
+          [second, null],
+          [secondChild, second],
+        ].sort()
+      )
+    })
+
+    it('duplicates a map holding a parent cycle without the cycle', async () => {
+      const source = await mapsRepo.save({})
+      const copy = await mapsRepo.save({})
+      const root = '11111111-1111-4111-8111-111111111111'
+      const a = '22222222-2222-4222-8222-222222222222'
+      const b = '33333333-3333-4333-8333-333333333333'
+      const save = (id: string, parentId: string | null, isRoot = false) =>
+        nodesRepo.save(
+          nodesRepo.create({
+            id,
+            nodeMapId: source.id,
+            nodeParentId: parentId,
+            coordinatesX: 0,
+            coordinatesY: 0,
+            root: isRoot,
+          })
+        )
+      await save(root, null, true)
+      await save(a, root)
+      await save(b, a)
+      await nodesRepo.update(
+        { id: a, nodeMapId: source.id },
+        { nodeParentId: b }
+      )
+
+      await mapsService.addNodes(
+        copy.id,
+        await mapsService.findNodes(source.id)
+      )
+
+      const copied = await nodesRepo.find({ where: { nodeMapId: copy.id } })
+      expect(copied.map((n) => n.id)).toEqual([root])
+    })
+
     it('throws and rolls back on database errors', async () => {
       const map = await mapsRepo.save({})
       const loggerSpyError = jest.spyOn(Logger.prototype, 'error')
@@ -118,9 +193,9 @@ describe('MapsService', () => {
         nodeMapId: map.id,
         coordinatesX: 3,
         coordinatesY: 3,
-        root: false,
-        detached: false,
-        nodeParentId: '99999999-9999-4999-8999-999999999999',
+        root: true,
+        // Entity validation accepts 1.5, and Postgres rejects it as an integer
+        fontSize: 1.5,
       })
 
       await expect(

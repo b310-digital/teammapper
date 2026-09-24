@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
-import { MapOptions } from '../types'
+import { DEFAULT_FONT_MAX_SIZE, MapOptions } from '@teammapper/shared'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { sanitizeNodeFields } from './sanitization'
 
@@ -15,7 +15,6 @@ export const populateYMapFromNode = (
   yNode.set('name', node.name ?? '')
   yNode.set('isRoot', node.root ?? false)
   yNode.set('locked', node.locked ?? false)
-  yNode.set('detached', node.detached ?? false)
   yNode.set('k', node.k ?? 1)
   yNode.set('coordinates', {
     x: node.coordinatesX ?? 0,
@@ -46,8 +45,7 @@ export const yMapToMmpNode = (
   mapId: string
 ): Partial<MmpNode> => {
   const coords = yNode.get('coordinates') as
-    | { x: number; y: number }
-    | undefined
+    { x: number; y: number } | undefined
   const colors = yNode.get('colors') as
     | {
         name: string
@@ -77,7 +75,6 @@ export const yMapToMmpNode = (
     name: (yNode.get('name') as string) ?? '',
     root: (yNode.get('isRoot') as boolean) ?? false,
     locked: (yNode.get('locked') as boolean) ?? false,
-    detached: (yNode.get('detached') as boolean) ?? false,
     k: (yNode.get('k') as number) ?? 1,
     coordinatesX: coords?.x ?? 0,
     coordinatesY: coords?.y ?? 0,
@@ -115,7 +112,8 @@ export const yMapToMapOptions = (
   return {
     name: (optionsMap.get('name') as string) || null,
     options: {
-      fontMaxSize: (optionsMap.get('fontMaxSize') as number) ?? 28,
+      fontMaxSize:
+        (optionsMap.get('fontMaxSize') as number) ?? DEFAULT_FONT_MAX_SIZE,
       fontMinSize: (optionsMap.get('fontMinSize') as number) ?? 6,
       fontIncrement: (optionsMap.get('fontIncrement') as number) ?? 2,
     },

@@ -1,58 +1,13 @@
-import { MmpService } from '../mmp/mmp.service';
-import { SettingsService } from '../settings/settings.service';
-import { UtilsService } from '../utils/utils.service';
-import { ToastrService } from 'ngx-toastr';
-import { HttpService } from '../../http/http.service';
-import { MapSyncContext } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
 import * as Y from 'yjs';
-import { ExportNodeProperties } from '@mmp/map/types';
-
-function createMockContext(): MapSyncContext {
-  return {
-    getAttachedMap: jest.fn().mockReturnValue({
-      key: 'map-test',
-      cachedMap: { uuid: 'test-uuid', data: [] },
-    }),
-    getModificationSecret: jest.fn().mockReturnValue('secret'),
-    getColorMapping: jest.fn().mockReturnValue({}),
-    getClientColor: jest.fn().mockReturnValue('#ff0000'),
-    colorForNode: jest.fn().mockReturnValue(''),
-    setConnectionStatus: jest.fn(),
-    setColorMapping: jest.fn(),
-    setAttachedNode: jest.fn(),
-    setClientColor: jest.fn(),
-    setCanUndo: jest.fn(),
-    setCanRedo: jest.fn(),
-    updateAttachedMap: jest.fn(),
-    emitClientList: jest.fn(),
-  };
-}
-
-function createMockMmpService(): jest.Mocked<MmpService> {
-  return {
-    on: jest.fn().mockReturnValue({
-      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
-    }),
-    selectNode: jest.fn(),
-    existNode: jest.fn().mockReturnValue(true),
-    exportAsJSON: jest.fn().mockReturnValue([]),
-  } as unknown as jest.Mocked<MmpService>;
-}
-
-function createService(
-  mmpService: jest.Mocked<MmpService> = createMockMmpService(),
-  context: MapSyncContext = createMockContext()
-): YjsSyncService {
-  return new YjsSyncService(
-    context,
-    mmpService,
-    {} as SettingsService,
-    {} as UtilsService,
-    {} as ToastrService,
-    {} as HttpService
-  );
-}
+import { ExportNodeProperties } from '@teammapper/shared';
+import { MmpService } from '../mmp/mmp.service';
+import { MapSyncContext } from './map-sync-context';
+import { populateYMapFromNodeProps } from './yjs-utils';
+import {
+  createMockContext,
+  createYjsSyncService as createService,
+} from '../../../../test/mocks/yjs-sync.mock';
 
 interface YjsSyncInternals {
   yjsWritable: boolean;
@@ -65,6 +20,7 @@ interface YjsSyncInternals {
   showImportToast: () => Promise<void>;
   loadMapFromYDoc: () => void;
   initUndoManager: () => void;
+  setupNodesObserver: () => void;
   yUndoManager: Y.UndoManager | null;
 }
 
@@ -374,6 +330,213 @@ describe('YjsSyncService', () => {
 
         expect(importToast).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('receiving trees from a peer', () => {
+    let service: YjsSyncService;
+    let mmpService: jest.Mocked<MmpService>;
+    let peer: Y.Doc;
+    let loadMap: jest.SpyInstance;
+
+    function receivingMmpService(): jest.Mocked<MmpService> {
+      return {
+        on: jest.fn().mockReturnValue({
+          subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+        }),
+        existNode: jest.fn().mockReturnValue(false),
+        addNodesFromServer: jest.fn(),
+        removeNode: jest.fn(),
+      } as unknown as jest.Mocked<MmpService>;
+    }
+
+    function node(
+      id: string,
+      parent: string | null,
+      isRoot = false
+    ): ExportNodeProperties {
+      return { id, parent, isRoot } as ExportNodeProperties;
+    }
+
+    function writeNodes(
+      nodesMap: Y.Map<Y.Map<unknown>>,
+      nodes: ExportNodeProperties[]
+    ): void {
+      for (const props of nodes) {
+        const yNode = new Y.Map<unknown>();
+        populateYMapFromNodeProps(yNode, props);
+        nodesMap.set(props.id, yNode);
+      }
+    }
+
+    /**
+     * Runs `change` in a transaction on the peer's `Y.Doc` and applies the
+     * resulting update to the service's `Y.Doc` with origin `'peer'`.
+     */
+    function peerTransacts(
+      change: (nodesMap: Y.Map<Y.Map<unknown>>, meta: Y.Map<unknown>) => void
+    ): void {
+      const doc = internals(service).yDoc;
+      peer.transact(() => {
+        change(peer.getMap('nodes'), peer.getMap('meta'));
+      });
+      Y.applyUpdate(
+        doc,
+        Y.encodeStateAsUpdate(peer, Y.encodeStateVector(doc)),
+        'peer'
+      );
+    }
+
+    function undoStackLength(): number | undefined {
+      return internals(service).yUndoManager?.undoStack.length;
+    }
+
+    function addedIds(): string[] {
+      return mmpService.addNodesFromServer.mock.calls.map(
+        ([nodes]) => nodes[0].id
+      );
+    }
+
+    beforeEach(() => {
+      mmpService = receivingMmpService();
+      service = createService(mmpService);
+      service.initMap('test-uuid');
+      internals(service).yjsSynced = true;
+      internals(service).initUndoManager();
+      peer = new Y.Doc();
+      peerTransacts(nodesMap =>
+        writeNodes(nodesMap, [node('main', null, true)])
+      );
+      internals(service).setupNodesObserver();
+      loadMap = jest
+        .spyOn(internals(service), 'loadMapFromYDoc')
+        .mockImplementation(() => undefined);
+      jest
+        .spyOn(internals(service), 'showImportToast')
+        .mockResolvedValue(undefined);
+
+      const doc = internals(service).yDoc;
+      doc.transact(() => {
+        writeNodes(doc.getMap('nodes'), [node('mine', 'main')]);
+      }, 'local');
+    });
+
+    afterEach(() => {
+      service.destroy();
+      peer.destroy();
+    });
+
+    it('applies a tree a peer adds as an ordinary add and keeps the undo stack', () => {
+      peerTransacts(nodesMap => writeNodes(nodesMap, [node('second', null)]));
+
+      expect({
+        reloaded: loadMap.mock.calls.length,
+        added: addedIds(),
+        undoStack: undoStackLength(),
+      }).toEqual({ reloaded: 0, added: ['second'], undoStack: 1 });
+    });
+
+    it('applies a tree a peer pastes as ordinary adds, parent first, and keeps the undo stack', () => {
+      peerTransacts(nodesMap =>
+        writeNodes(nodesMap, [
+          node('pastedGrandchild', 'pastedChild'),
+          node('pastedChild', 'pasted'),
+          node('pasted', null),
+        ])
+      );
+
+      expect({
+        reloaded: loadMap.mock.calls.length,
+        added: addedIds(),
+        undoStack: undoStackLength(),
+      }).toEqual({
+        reloaded: 0,
+        added: ['pasted', 'pastedChild', 'pastedGrandchild'],
+        undoStack: 1,
+      });
+    });
+
+    it('adds every parent before its child when a peer writes two trees at once', () => {
+      peerTransacts(nodesMap =>
+        writeNodes(nodesMap, [
+          node('secondChild', 'second'),
+          node('second', null),
+          node('thirdChild', 'third'),
+          node('third', null),
+        ])
+      );
+      const added = addedIds();
+
+      expect({
+        reloaded: loadMap.mock.calls.length,
+        secondFirst: added.indexOf('second') < added.indexOf('secondChild'),
+        thirdFirst: added.indexOf('third') < added.indexOf('thirdChild'),
+        count: added.length,
+        undoStack: undoStackLength(),
+      }).toEqual({
+        reloaded: 0,
+        secondFirst: true,
+        thirdFirst: true,
+        count: 4,
+        undoStack: 1,
+      });
+    });
+
+    it('applies a child a peer adds under the main root and keeps the undo stack', () => {
+      peerTransacts(nodesMap =>
+        writeNodes(nodesMap, [node('peerChild', 'main')])
+      );
+
+      expect({
+        reloaded: loadMap.mock.calls.length,
+        added: addedIds(),
+        undoStack: undoStackLength(),
+      }).toEqual({ reloaded: 0, added: ['peerChild'], undoStack: 1 });
+    });
+
+    it('adds a subtree a peer pastes under the main root parent first', () => {
+      peerTransacts(nodesMap =>
+        writeNodes(nodesMap, [
+          node('pastedGrandchild', 'pastedChild'),
+          node('pastedChild', 'main'),
+        ])
+      );
+
+      expect({
+        reloaded: loadMap.mock.calls.length,
+        added: addedIds(),
+        undoStack: undoStackLength(),
+      }).toEqual({
+        reloaded: 0,
+        added: ['pastedChild', 'pastedGrandchild'],
+        undoStack: 1,
+      });
+    });
+
+    it('reloads and clears the undo stack when a peer imports a map', () => {
+      peerTransacts((nodesMap, meta) => {
+        nodesMap.delete('main');
+        meta.set('lastMapAnnouncement', 'import');
+        writeNodes(nodesMap, [node('imported', null, true)]);
+      });
+
+      expect({
+        reloaded: loadMap.mock.calls.length,
+        undoStack: undoStackLength(),
+      }).toEqual({ reloaded: 1, undoStack: 0 });
+    });
+
+    it('reloads and clears the undo stack when a peer redistributes a map', () => {
+      peerTransacts((nodesMap, meta) => {
+        nodesMap.delete('main');
+        meta.set('lastMapAnnouncement', 'distribute');
+        writeNodes(nodesMap, [node('main', null, true), node('second', null)]);
+      });
+
+      expect({
+        reloaded: loadMap.mock.calls.length,
+        undoStack: undoStackLength(),
+      }).toEqual({ reloaded: 1, undoStack: 0 });
     });
   });
 });

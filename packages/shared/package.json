@@ -1,0 +1,44 @@
+{
+  "name": "@teammapper/shared",
+  "version": "0.0.1",
+  "private": false,
+  "description": "Cross-stack domain models, validation schemas, and algorithms for TeamMapper",
+  "sideEffects": false,
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm run clean && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json",
+    "build:watch": "concurrently \"tsc -p tsconfig.cjs.json --watch --preserveWatchOutput\" \"tsc -p tsconfig.esm.json --watch --preserveWatchOutput\"",
+    "clean": "rm -rf dist",
+    "tsc": "tsc -p tsconfig.typecheck.cjs.json && tsc -p tsconfig.typecheck.esm.json",
+    "test": "jest",
+    "lint": "eslint \"src/**/*.ts\"",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
+  },
+  "dependencies": {
+    "valibot": "^1.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "30.0.0",
+    "@types/node": "^24.13.5",
+    "concurrently": "^9.2.4",
+    "eslint": "^10.10.0",
+    "jest": "^30.5.1",
+    "ts-jest": "29.4.12",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.70.0"
+  }
+}

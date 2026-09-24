@@ -16,17 +16,19 @@
       </a>
     </div>
     <div class="spacer"></div>
-    <div class="languages">
-      <mat-select
-        (selectionChange)="updateLanguage()"
-        [(value)]="settings.general.language"
-        [title]="'TOOLTIPS.LANGUAGE' | translate">
-        @for (language of languages; track language) {
-          <mat-option [value]="language">
-            {{ 'LANGUAGES.' + language.toUpperCase() | translate }}
-          </mat-option>
-        }
-      </mat-select>
-    </div>
+    @if (settings; as userSettings) {
+      <div class="languages">
+        <mat-select
+          (selectionChange)="updateLanguage()"
+          [(value)]="userSettings.general.language"
+          [title]="'TOOLTIPS.LANGUAGE' | translate">
+          @for (language of languages; track language) {
+            <mat-option [value]="language">
+              {{ 'LANGUAGES.' + language.toUpperCase() | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </div>
+    }
   </div>
 </footer>

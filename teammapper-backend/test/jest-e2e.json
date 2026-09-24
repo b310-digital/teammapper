@@ -4,7 +4,18 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.ts$": "ts-jest",
+    "^.+\\.js$": [
+      "ts-jest",
+      {
+        "tsconfig": {
+          "allowJs": true
+        }
+      }
+    ]
   },
+  "transformIgnorePatterns": [
+    "/node_modules/(?!(\\.pnpm/)?(htmlparser2|domhandler|domutils|domelementtype|dom-serializer|entities)[@/])"
+  ],
   "modulePaths": ["<rootDir>"]
 }

@@ -1,5 +1,5 @@
 import * as Y from 'yjs';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 import {
   populateYMapFromNodeProps,
   yMapToNodeProps,
@@ -8,12 +8,11 @@ import {
   findAffectedNodes,
   resolveMmpPropertyUpdate,
   resolveCompoundMmpUpdates,
-  sortParentFirst,
   collectDescendantIds,
 } from './yjs-utils';
 
 // Mock the NodePropertyMapping module
-jest.mock('@mmp/index', () => ({
+jest.mock('@teammapper/mmp', () => ({
   NodePropertyMapping: {
     name: ['name'],
     locked: ['locked'],
@@ -33,7 +32,7 @@ jest.mock('@mmp/index', () => ({
 
 // Import NodePropertyMapping after mocking - needed for reverse mapping
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { NodePropertyMapping } from '@mmp/index';
+import { NodePropertyMapping } from '@teammapper/mmp';
 
 function createMockNode(
   overrides?: Partial<ExportNodeProperties>
@@ -51,7 +50,6 @@ function createMockNode(
     image: undefined,
     link: undefined,
     isRoot: false,
-    detached: false,
     ...overrides,
   };
 }
@@ -79,7 +77,6 @@ describe('Y.Doc conversion utilities', () => {
       k: 1.5,
       isRoot: false,
       locked: true,
-      detached: true,
       coordinates: { x: 100, y: 200 },
       colors: { name: '#ff0000', background: '#00ff00', branch: '#0000ff' },
       font: { size: 16, style: 'italic', weight: 'bold' },
@@ -101,7 +98,6 @@ describe('Y.Doc conversion utilities', () => {
         k: 1.5,
         isRoot: false,
         locked: true,
-        detached: true,
         coordinates: { x: 100, y: 200 },
         colors: {
           name: '#ff0000',
@@ -123,7 +119,6 @@ describe('Y.Doc conversion utilities', () => {
       name: undefined,
       isRoot: undefined,
       locked: undefined,
-      detached: undefined,
       coordinates: undefined,
       colors: undefined,
       font: undefined,
@@ -144,10 +139,17 @@ describe('Y.Doc conversion utilities', () => {
         name: '',
         isRoot: false,
         locked: false,
-        detached: false,
         coordinates: { x: 0, y: 0 },
       })
     );
+  });
+
+  it('writes no detached entry', () => {
+    const yNode = new Y.Map<unknown>();
+    populateYMapFromNodeProps(yNode, createMockNode());
+    nodesMap.set('n3', yNode);
+
+    expect(nodesMap.get('n3')!.has('detached')).toBe(false);
   });
 });
 
@@ -338,108 +340,6 @@ describe('findAffectedNodes', () => {
     const result = findAffectedNodes(oldMapping, newMapping);
 
     expect(result.size).toBe(0);
-  });
-});
-
-// ─── sortParentFirst ─────────────────────────────────────────
-
-describe('sortParentFirst', () => {
-  it('places root node first when children appear before parent', () => {
-    const child = createMockNode({
-      id: 'child-1',
-      parent: 'root-1',
-      isRoot: false,
-    });
-    const root = createMockNode({ id: 'root-1', parent: '', isRoot: true });
-
-    const result = sortParentFirst([child, root]);
-
-    expect(result.map(n => n.id)).toEqual(['root-1', 'child-1']);
-  });
-
-  it('ensures grandchild nodes come after their parent', () => {
-    const grandchild = createMockNode({
-      id: 'gc-1',
-      parent: 'child-1',
-      isRoot: false,
-    });
-    const child = createMockNode({
-      id: 'child-1',
-      parent: 'root-1',
-      isRoot: false,
-    });
-    const root = createMockNode({ id: 'root-1', parent: '', isRoot: true });
-
-    const result = sortParentFirst([grandchild, child, root]);
-
-    expect(result.map(n => n.id)).toEqual(['root-1', 'child-1', 'gc-1']);
-  });
-
-  it('handles already-sorted input without changing order', () => {
-    const root = createMockNode({ id: 'root-1', parent: '', isRoot: true });
-    const child1 = createMockNode({
-      id: 'c1',
-      parent: 'root-1',
-      isRoot: false,
-    });
-    const child2 = createMockNode({
-      id: 'c2',
-      parent: 'root-1',
-      isRoot: false,
-    });
-
-    const result = sortParentFirst([root, child1, child2]);
-
-    expect(result.map(n => n.id)).toEqual(['root-1', 'c1', 'c2']);
-  });
-
-  it('returns original array when no root is found', () => {
-    const node1 = createMockNode({ id: 'n1', parent: 'n2', isRoot: false });
-    const node2 = createMockNode({ id: 'n2', parent: 'n1', isRoot: false });
-
-    const result = sortParentFirst([node1, node2]);
-
-    expect(result.map(n => n.id)).toEqual(['n1', 'n2']);
-  });
-
-  it('groups sibling nodes under their shared parent', () => {
-    const root = createMockNode({ id: 'root', parent: '', isRoot: true });
-    const b = createMockNode({ id: 'b', parent: 'root', isRoot: false });
-    const a = createMockNode({ id: 'a', parent: 'root', isRoot: false });
-    const bChild = createMockNode({
-      id: 'b-child',
-      parent: 'b',
-      isRoot: false,
-    });
-
-    const result = sortParentFirst([bChild, a, b, root]);
-
-    expect(result[0].id).toBe('root');
-    expect(result.indexOf(b)).toBeLessThan(result.indexOf(bChild));
-  });
-
-  it('returns empty array for empty input', () => {
-    const result = sortParentFirst([]);
-
-    expect(result).toEqual([]);
-  });
-
-  it('appends orphaned nodes not reachable from root', () => {
-    const root = createMockNode({ id: 'root', parent: '', isRoot: true });
-    const child = createMockNode({
-      id: 'child',
-      parent: 'root',
-      isRoot: false,
-    });
-    const orphan = createMockNode({
-      id: 'orphan',
-      parent: 'deleted-parent',
-      isRoot: false,
-    });
-
-    const result = sortParentFirst([orphan, child, root]);
-
-    expect(result.map(n => n.id)).toEqual(['root', 'child', 'orphan']);
   });
 });
 

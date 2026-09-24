@@ -1,13 +1,10 @@
-@use '@angular/material' as mat;
-@use 'src/theme.scss';
-
 mat-toolbar {
   overflow-x: auto;
   touch-action: manipulation;
   height: 60px;
   padding: 0 8px;
-  border-bottom: 1px solid lightgray;
-  background-color: white !important;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-toolbar) !important;
 
   div.vertical-line {
     height: 100%;
@@ -15,7 +12,7 @@ mat-toolbar {
 
     > div {
       width: 1px;
-      background-color: #c2c2c2;
+      background-color: var(--color-border-vertical);
       height: 100%;
     }
   }
@@ -23,6 +20,27 @@ mat-toolbar {
   span.toolbar-spacer {
     flex: 1 1 auto;
     min-width: 50px;
+  }
+  button.mat-mdc-icon-button,
+  .mat-mdc-icon-button {
+    color: var(--color-toolbar-icon);
+
+    .mat-icon {
+      color: var(--color-toolbar-icon);
+    }
+
+    &:hover:not(:disabled):not(.mat-button-disabled) {
+      background-color: var(--color-bg-hover);
+    }
+
+    &:disabled,
+    &.mat-button-disabled {
+      color: var(--color-toolbar-icon-disabled);
+
+      .mat-icon {
+        color: var(--color-toolbar-icon-disabled);
+      }
+    }
   }
 }
 
@@ -32,19 +50,19 @@ mat-toolbar::-webkit-scrollbar {
 }
 
 mat-toolbar::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-bg-scroll-track);
 }
 
 mat-toolbar::-webkit-scrollbar-thumb {
-  background: mat.m2-get-color-from-palette(theme.$app-primary, 0.7);
+  background: var(--color-primary-medium);
 }
 
 mat-toolbar::-webkit-scrollbar-thumb:hover {
-  background: mat.m2-get-color-from-palette(theme.$app-primary, 0.8);
+  background: var(--color-primary-dark);
 }
 
 .label-file-upload:hover {
-  background: mat.m2-get-color-from-palette(theme.$app-primary, 0.05);
+  background: var(--color-bg-hover);
 }
 
 input[type='file'] {

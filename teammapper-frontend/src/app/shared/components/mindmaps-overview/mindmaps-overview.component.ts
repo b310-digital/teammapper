@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CachedAdminMapEntry } from '../../models/cached-map.model';
+import { CachedAdminMapEntry } from '@teammapper/shared';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { Router } from '@angular/router';
@@ -49,7 +49,7 @@ export class MindmapsOverview implements OnInit {
   public getMapUrl(entry: CachedAdminMapEntry): string {
     return this.router
       .createUrlTree([`/map/${entry.id}`], {
-        fragment: entry.cachedAdminMapValue.modificationSecret,
+        fragment: entry.cachedAdminMapValue.modificationSecret ?? undefined,
       })
       .toString();
   }

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# input-validation Specification
+
+## Purpose
+
+Makes the server reject malformed map requests, malformed collaboration messages and oversized node content with a clear error.
+
+## Requirements
 
 ### Requirement: The system SHALL validate map creation requests
 When a user creates a new map, the system SHALL verify that the request contains a valid root node with expected fields (name, colors, font, image). Malformed or missing data SHALL be rejected with a clear error.

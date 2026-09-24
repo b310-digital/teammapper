@@ -2,7 +2,7 @@ import { jest } from '@jest/globals'
 import * as fs from 'fs'
 import configService from '../config.service'
 import { SettingsService } from './settings.service'
-import { Settings } from './settings.types'
+import { Settings } from '@teammapper/shared'
 
 jest.mock('fs')
 jest.mock('../config.service')
@@ -19,7 +19,7 @@ const defaultSettings: Settings = {
     featureFlags: { pictograms: true, ai: false },
   },
   userSettings: {
-    general: { language: 'en' },
+    general: { language: 'en', darkMode: false },
     mapOptions: {
       centerOnResize: false,
       autoBranchColors: true,
@@ -72,6 +72,7 @@ describe('SettingsService', () => {
       const settings = service.getSettings()
 
       expect(settings.userSettings.general.language).toBe('en')
+      expect(settings.userSettings.general.darkMode).toBe(false)
     })
   })
 

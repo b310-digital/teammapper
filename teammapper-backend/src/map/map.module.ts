@@ -1,11 +1,11 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common'
 import { ScheduleModule } from '@nestjs/schedule'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { ThrottlerModule } from '@nestjs/throttler'
 import MapsController from './controllers/maps.controller'
-import { MmpMap } from './entities/mmpMap.entity'
-import { MmpNode } from './entities/mmpNode.entity'
+import ImagesController from './controllers/images.controller'
+import { MapDataModule } from './map-data.module'
 import { LlmUsageCounter } from './entities/llmUsageCounter.entity'
-import { MapsService } from './services/maps.service'
 import { YjsDocManagerService } from './services/yjs-doc-manager.service'
 import { YjsPersistenceService } from './services/yjs-persistence.service'
 import { YjsGateway } from './controllers/yjs-gateway.service'
@@ -20,14 +20,21 @@ import configService from '../config.service'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MmpMap, MmpNode, LlmUsageCounter]),
+    MapDataModule,
+    TypeOrmModule.forFeature([LlmUsageCounter]),
     ScheduleModule.forRoot(),
+    // Only the image upload route applies ThrottlerGuard.
+    ThrottlerModule.forRoot([
+      {
+        ttl: configService.getUploadImageRateWindowMs(),
+        limit: configService.getUploadImageRateLimit(),
+      },
+    ]),
   ],
   controllers: configService.isAiEnabled()
-    ? [MapsController, MermaidController]
-    : [MapsController],
+    ? [MapsController, ImagesController, MermaidController]
+    : [MapsController, ImagesController],
   providers: [
-    MapsService,
     TasksService,
     AiService,
     LlmUsageCounterService,
@@ -36,7 +43,6 @@ import configService from '../config.service'
     WsConnectionLimiterService,
     YjsGateway,
   ],
-  exports: [MapsService],
 })
 export class MapModule {
   configure(consumer: MiddlewareConsumer) {

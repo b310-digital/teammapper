@@ -1,6 +1,3 @@
-@use '@angular/material' as mat;
-@use 'src/theme.scss';
-
 div.about {
   height: 100%;
 
@@ -9,11 +6,11 @@ div.about {
   }
 
   section:nth-child(odd) {
-    background-color: white;
+    background-color: var(--color-bg-primary);
   }
 
   section:nth-child(even) {
-    background-color: #fafafa;
+    background-color: var(--color-bg-secondary);
   }
 
   section.about-section {
@@ -21,7 +18,7 @@ div.about {
       padding: 20px 15px 40px 15px;
 
       h1 {
-        color: mat.m2-get-color-from-palette(theme.$app-primary);
+        color: var(--color-primary);
       }
 
       div.cards {
@@ -35,7 +32,7 @@ div.about {
           margin: 10px;
 
           fa-icon {
-            color: #565656;
+            color: var(--color-text-primary);
           }
 
           ::ng-deep mat-card-header > div {
@@ -51,7 +48,7 @@ div.about {
           height: 40px;
 
           a {
-            color: mat.m2-get-color-from-palette(theme.$app-primary);
+            color: var(--color-primary);
             text-decoration: none;
             padding-left: 10px;
           }

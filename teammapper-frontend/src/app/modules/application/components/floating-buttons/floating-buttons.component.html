@@ -4,7 +4,7 @@
       id="floating-add-node"
       (click)="mmpService.addNode()"
       [title]="'TOOLTIPS.ADD_NODE' | translate"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       class="mat-elevation-z2"
       mat-mini-fab>
       <mat-icon aria-label="Add node">add</mat-icon>
@@ -15,7 +15,7 @@
       id="floating-remove-node"
       (click)="mmpService.removeNode()"
       [title]="'TOOLTIPS.REMOVE_NODE' | translate"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       class="mat-elevation-z2"
       mat-mini-fab>
       <mat-icon aria-label="Remove node">remove</mat-icon>
@@ -29,7 +29,7 @@
       [title]="'TOOLTIPS.CENTER_MAP' | translate"
       class="mat-elevation-z2"
       mat-mini-fab>
-      <mat-icon aria-label="Center" color="primary">center_focus_weak</mat-icon>
+      <mat-icon aria-label="Center">center_focus_weak</mat-icon>
     </button>
   </div>
 
@@ -40,7 +40,7 @@
       [title]="'TOOLTIPS.ZOOM_IN_MAP' | translate"
       class="mat-elevation-z2"
       mat-mini-fab>
-      <mat-icon aria-label="Zoom in" color="primary">zoom_in</mat-icon>
+      <mat-icon aria-label="Zoom in">zoom_in</mat-icon>
     </button>
   </div>
 
@@ -51,7 +51,7 @@
       [title]="'TOOLTIPS.ZOOM_OUT_MAP' | translate"
       class="mat-elevation-z2"
       mat-mini-fab>
-      <mat-icon aria-label="Zoom out" color="primary">zoom_out</mat-icon>
+      <mat-icon aria-label="Zoom out">zoom_out</mat-icon>
     </button>
   </div>
 </div>

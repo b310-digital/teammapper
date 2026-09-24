@@ -1,10 +1,6 @@
 import * as Y from 'yjs';
-import {
-  populateYMapFromNodeProps,
-  yMapToNodeProps,
-  sortParentFirst,
-} from './yjs-utils';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { populateYMapFromNodeProps, yMapToNodeProps } from './yjs-utils';
+import { ExportNodeProperties } from '@teammapper/shared';
 
 describe('YjsUndoManager', () => {
   const ORIGIN_LOCAL = 'local';
@@ -28,7 +24,6 @@ describe('YjsUndoManager', () => {
       image: undefined,
       link: undefined,
       isRoot: false,
-      detached: false,
       ...overrides,
     };
   }
@@ -39,7 +34,7 @@ describe('YjsUndoManager', () => {
     return { doc, nodesMap };
   }
 
-  function createTrackedUndoManager(scope: Y.Map<unknown>): Y.UndoManager {
+  function createTrackedUndoManager<T>(scope: Y.Map<T>): Y.UndoManager {
     return new Y.UndoManager(scope, {
       trackedOrigins: new Set([ORIGIN_LOCAL]),
     });
@@ -365,22 +360,24 @@ describe('YjsUndoManager', () => {
         B: yMapToNodeProps(nodesMap.get('B')!).coordinates,
       }).toEqual({ size: 3, A: coordsA, B: coordsB });
     });
-  });
 
-  // ─── sortParentFirst ─────────────────────────────────────────
+    it('undo restores a deleted tree with a parentless root', () => {
+      addNodeToMap(doc, nodesMap, { id: 'R', parent: null });
+      addNodeToMap(doc, nodesMap, { id: 'S', parent: 'R' });
+      undoManager.stopCapturing();
+      doc.transact(() => {
+        nodesMap.delete('R');
+        nodesMap.delete('S');
+      }, ORIGIN_LOCAL);
 
-  describe('sortParentFirst', () => {
-    it('sorts deep hierarchy in parent-first order', () => {
-      const nodes = [
-        createMockNode({ id: 'gc', parent: 'child' }),
-        createMockNode({ id: 'child', parent: 'parent' }),
-        createMockNode({ id: 'root', parent: undefined, isRoot: true }),
-        createMockNode({ id: 'parent', parent: 'root' }),
-      ];
+      undoManager.undo();
 
-      const ids = sortParentFirst(nodes).map(n => n.id);
-
-      expect(ids).toEqual(['root', 'parent', 'child', 'gc']);
+      const root = yMapToNodeProps(nodesMap.get('R')!);
+      expect({
+        parent: root.parent,
+        isRoot: root.isRoot,
+        childParent: yMapToNodeProps(nodesMap.get('S')!).parent,
+      }).toEqual({ parent: null, isRoot: false, childParent: 'R' });
     });
   });
 });

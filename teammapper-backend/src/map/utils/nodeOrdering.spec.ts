@@ -1,3 +1,5 @@
+import { Logger } from '@nestjs/common'
+import { jest } from '@jest/globals'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { orderNodesFromRoot } from './nodeOrdering'
 
@@ -8,6 +10,10 @@ const makeNode = (overrides: Partial<MmpNode>): Partial<MmpNode> => ({
 })
 
 describe('orderNodesFromRoot', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('places root node first with orderNumber 1', () => {
     const nodes = [
       makeNode({ id: 'child', nodeParentId: 'root', root: false }),
@@ -64,15 +70,70 @@ describe('orderNodesFromRoot', () => {
     expect(result.map((n) => n.orderNumber)).toEqual([1, 2, 3, 4, 5])
   })
 
-  it('returns input unchanged when no root node exists', () => {
+  it('orders a second root after the main root and before its child', () => {
+    const nodes = [
+      makeNode({ id: 'secondChild', nodeParentId: 'second' }),
+      makeNode({ id: 'second' }),
+      makeNode({ id: 'main', root: true }),
+    ]
+
+    const result = orderNodesFromRoot(nodes)
+
+    expect(result.map((n) => [n.id, n.orderNumber])).toEqual([
+      ['main', 1],
+      ['second', 2],
+      ['secondChild', 3],
+    ])
+  })
+
+  it('leaves out an orphan and its descendants', () => {
+    const nodes = [
+      makeNode({ id: 'orphanChild', nodeParentId: 'orphan' }),
+      makeNode({ id: 'orphan', nodeParentId: 'deleted' }),
+      makeNode({ id: 'child', nodeParentId: 'root' }),
+      makeNode({ id: 'root', root: true }),
+    ]
+
+    const result = orderNodesFromRoot(nodes)
+
+    expect(result.map((n) => [n.id, n.orderNumber])).toEqual([
+      ['root', 1],
+      ['child', 2],
+    ])
+  })
+
+  it('leaves out the nodes of a parent cycle', () => {
+    const nodes = [
+      makeNode({ id: 'root', root: true }),
+      makeNode({ id: 'a', nodeParentId: 'b' }),
+      makeNode({ id: 'b', nodeParentId: 'a' }),
+    ]
+
+    expect(orderNodesFromRoot(nodes).map((n) => n.id)).toEqual(['root'])
+  })
+
+  it('logs the ids of the nodes it leaves out', () => {
+    const warn = jest.spyOn(Logger, 'warn').mockImplementation(() => {})
+    const nodes = [
+      makeNode({ id: 'root', root: true }),
+      makeNode({ id: 'orphan', nodeParentId: 'deleted' }),
+    ]
+
+    orderNodesFromRoot(nodes)
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('orphan'),
+      'orderNodesFromRoot'
+    )
+  })
+
+  it('leaves out every node when no root exists', () => {
     const nodes = [
       makeNode({ id: 'a', nodeParentId: 'x' }),
       makeNode({ id: 'b', nodeParentId: 'y' }),
     ]
 
-    const result = orderNodesFromRoot(nodes)
-
-    expect(result.map((n) => n.id)).toEqual(['a', 'b'])
+    expect(orderNodesFromRoot(nodes)).toEqual([])
   })
 
   it('handles a single root node with no children', () => {

@@ -72,6 +72,36 @@ const buildDatabaseName = (workerId: string): string => {
   return `${process.env.POSTGRES_TEST_DATABASE}-${workerId}`
 }
 
+type Migrations = NonNullable<PostgresConnectionOptions['migrations']>
+
+/** Options for a worker database whose schema only the migrations build. */
+const migrationOptions = (
+  databaseName: string,
+  migrations: Migrations
+): PostgresConnectionOptions => ({
+  ...createDataSourceConfig,
+  database: databaseName,
+  synchronize: false,
+  migrations,
+})
+
+/**
+ * Recreates the worker database empty, so a test can build an older schema
+ * from its migrations and store rows in the shape that release wrote them.
+ */
+export const createMigrationTestOptions = async (
+  workerId: string,
+  migrations: Migrations
+): Promise<PostgresConnectionOptions> =>
+  migrationOptions(await setupWorkerDatabase(workerId), migrations)
+
+/** Opens the worker database that createMigrationTestOptions built, without recreating it. */
+export const reopenMigrationTestOptions = (
+  workerId: string,
+  migrations: Migrations
+): PostgresConnectionOptions =>
+  migrationOptions(buildDatabaseName(workerId), migrations)
+
 export const createTestConfiguration = async (
   workerId: string
 ): Promise<TypeOrmModuleOptions> => {

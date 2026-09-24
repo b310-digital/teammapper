@@ -13,17 +13,19 @@ import {
 } from '@nestjs/common'
 import * as v from 'valibot'
 import { MapsService } from '../services/maps.service'
+import { ImagesService } from '../services/images.service'
 import { checkWriteAccess } from '../utils/yjsProtocol'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import {
-  IMmpClientMap,
-  IMmpClientMapInfo,
-  IMmpClientPrivateMap,
-  Request,
-} from '../types'
-import { MapCreateSchema, MapDeleteSchema } from '../schemas/maps.schema'
-import { sanitizeIssues } from '../schemas/sanitize-issues'
+  ClientMap,
+  ClientMapInfo,
+  ClientPrivateMap,
+  MapCreateSchema,
+  MapDeleteSchema,
+  sanitizeIssues,
+} from '@teammapper/shared'
+import { Request } from '../types'
 import MalformedUUIDError from '../services/uuid.error'
 import { EntityNotFoundError } from 'typeorm'
 
@@ -33,14 +35,15 @@ export default class MapsController {
   constructor(
     private mapsService: MapsService,
     private yjsDocManager: YjsDocManagerService,
-    private yjsGateway: YjsGateway
+    private yjsGateway: YjsGateway,
+    private imagesService: ImagesService
   ) {}
 
   @Get(':id')
   async findOne(
     @Param('id') mapId: string,
     @Query('secret') secret?: string
-  ): Promise<IMmpClientMap | void> {
+  ): Promise<ClientMap | void> {
     try {
       const map = await this.mapsService.exportMapToClient(mapId)
       if (!map) throw new NotFoundException()
@@ -68,7 +71,7 @@ export default class MapsController {
   }
 
   @Get()
-  async findAll(@Req() req?: Request): Promise<IMmpClientMapInfo[]> {
+  async findAll(@Req() req?: Request): Promise<ClientMapInfo[]> {
     if (!req) return []
     const pid = req.pid
     if (!pid) return []
@@ -100,7 +103,7 @@ export default class MapsController {
   async create(
     @Body() body: unknown,
     @Req() req?: Request
-  ): Promise<IMmpClientPrivateMap | undefined> {
+  ): Promise<ClientPrivateMap | undefined> {
     const result = v.safeParse(MapCreateSchema, body)
     if (!result.success) {
       throw new BadRequestException(sanitizeIssues(result.issues))
@@ -126,7 +129,7 @@ export default class MapsController {
   @Post(':id/duplicate')
   async duplicate(
     @Param('id') mapId: string
-  ): Promise<IMmpClientPrivateMap | undefined> {
+  ): Promise<ClientPrivateMap | undefined> {
     const oldMap = await this.mapsService.findMap(mapId).catch((e: Error) => {
       if (e.name === 'MalformedUUIDError') {
         this.logger.warn(
@@ -140,7 +143,12 @@ export default class MapsController {
 
     const newMap = await this.mapsService.createEmptyMap()
 
+    // Read the nodes before copying the images: an image uploaded in between
+    // then gets copied too, instead of a copied reference missing its image.
     const oldNodes = await this.mapsService.findNodes(oldMap.id)
+
+    // The copies keep their ids, so the copied references resolve as is.
+    await this.imagesService.copyImages(oldMap.id, newMap.id)
 
     await this.mapsService.addNodes(newMap.id, oldNodes)
 

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# share-functionality Specification
+
+## Purpose
+
+Defines the share dialog, which offers the map link, a QR code, map duplication and the choice between an editable and a view-only link.
+
+## Requirements
 
 ### Requirement: Share dialog displays map sharing options
 The system SHALL open a share dialog when the user triggers the share action. The dialog SHALL contain a title, a QR code, a share link containing the map URL, a copy button, a download button, a duplicate button, and an editable/view-only toggle.

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
-import { UserSettings } from '../../../../shared/models/settings.model';
+import { UserSettings } from '@teammapper/shared';
 import { MatSelect, MatOption } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
@@ -15,19 +15,18 @@ export class FooterComponent implements OnInit {
   private settingsService = inject(SettingsService);
   private translateService = inject(TranslateService);
 
-  public settings: UserSettings;
-  public languages: string[];
+  public settings: UserSettings | null = null;
+  public languages: string[] = SettingsService.LANGUAGES;
 
-  public currentYear: string;
+  public currentYear = new Date().getFullYear().toString();
 
   public ngOnInit() {
     this.settings = this.settingsService.getCachedUserSettings();
-    this.languages = SettingsService.LANGUAGES;
-
-    this.currentYear = new Date().getFullYear().toString();
   }
 
   public async updateLanguage() {
+    if (!this.settings) return;
+
     await this.settingsService.updateCachedSettings(this.settings);
 
     this.translateService.use(this.settings.general.language);

@@ -1,6 +1,8 @@
+import { Logger } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
+import { PostgresQueryRunner } from 'typeorm/driver/postgres/PostgresQueryRunner'
 import { ConfigModule } from '@nestjs/config'
 import * as Y from 'yjs'
 import { v4 as uuidv4 } from 'uuid'
@@ -68,7 +70,6 @@ describe('YjsPersistenceService', () => {
       nodeMapId: map.id,
       name: 'Root',
       root: true,
-      detached: false,
       coordinatesX: 0,
       coordinatesY: 0,
       k: 1,
@@ -96,7 +97,6 @@ describe('YjsPersistenceService', () => {
     child.set('name', 'Child Node')
     child.set('isRoot', false)
     child.set('locked', false)
-    child.set('detached', false)
     child.set('k', 1)
     child.set('coordinates', { x: 100, y: 50 })
     child.set('colors', { name: '#333', background: '#fff', branch: '' })
@@ -137,6 +137,42 @@ describe('YjsPersistenceService', () => {
       doc.destroy()
     })
 
+    it('persists every other node when the Y.Doc holds an orphan', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const childId = addChildToDoc(doc, rootNode.id)
+      const orphanId = addChildToDoc(doc, uuidv4())
+      addChildToDoc(doc, orphanId)
+
+      await service.persistDoc(map.id, doc)
+
+      const dbNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
+      expect(dbNodes.map((n) => n.id).sort()).toEqual(
+        [rootNode.id, childId].sort()
+      )
+
+      doc.destroy()
+    })
+
+    it('keeps every node row when no root reaches a node of the Y.Doc', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const childId = addChildToDoc(doc, rootNode.id)
+      await service.persistDoc(map.id, doc)
+      const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
+      nodesMap.get(rootNode.id)?.set('parent', childId)
+      jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {})
+
+      await expect(service.persistDoc(map.id, doc)).rejects.toThrow()
+
+      const dbNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
+      expect(dbNodes.map((n) => n.id).sort()).toEqual(
+        [rootNode.id, childId].sort()
+      )
+
+      doc.destroy()
+    })
+
     it('updates map name from Y.Doc options', async () => {
       const { map } = await createMapWithRootNode()
       const doc = await hydrateFromDb(map)
@@ -172,7 +208,6 @@ describe('YjsPersistenceService', () => {
         nodeMapId: map.id,
         name: 'Extra Node',
         root: false,
-        detached: true,
         coordinatesX: 50,
         coordinatesY: 50,
         k: 1,
@@ -201,6 +236,46 @@ describe('YjsPersistenceService', () => {
         expect.objectContaining({ id: rootNode.id, name: 'Renamed Root' }),
       ])
 
+      doc.destroy()
+    })
+
+    it('never overlaps queries on one connection when updating many nodes', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      for (let i = 0; i < 5; i++) addChildToDoc(doc, rootNode.id)
+      await service.persistDoc(map.id, doc)
+      const inFlight = new Map<PostgresQueryRunner, number>()
+      let maxInFlight = 0
+      const original = PostgresQueryRunner.prototype.query
+      jest
+        .spyOn(PostgresQueryRunner.prototype, 'query')
+        .mockImplementation(async function (
+          this: PostgresQueryRunner,
+          ...args
+        ) {
+          const running = (inFlight.get(this) ?? 0) + 1
+          inFlight.set(this, running)
+          maxInFlight = Math.max(maxInFlight, running)
+          try {
+            return await original.apply(this, args)
+          } finally {
+            inFlight.set(this, running - 1)
+          }
+        })
+
+      await service.persistDoc(map.id, doc)
+
+      expect(maxInFlight).toBe(1)
+      doc.destroy()
+    })
+
+    it('keeps createdAt of existing nodes across persists', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      await service.persistDoc(map.id, doc)
+
+      const persisted = await nodesRepo.findOneByOrFail({ id: rootNode.id })
+      expect(persisted.createdAt).toEqual(rootNode.createdAt)
       doc.destroy()
     })
 

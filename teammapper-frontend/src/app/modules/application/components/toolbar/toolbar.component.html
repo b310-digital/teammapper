@@ -127,26 +127,28 @@
   </div>
 
   <button
-    (click)="addDetachedNode()"
-    [title]="'TOOLTIPS.ADD_DETACHED_NODE' | translate"
+    id="add-tree-button"
+    (click)="mmpService.addTree()"
+    [title]="'TOOLTIPS.ADD_TREE' | translate"
     [disabled]="editDisabled"
     color="primary"
     mat-icon-button>
-    <mat-icon>add_comment</mat-icon>
+    <mat-icon>forest</mat-icon>
   </button>
   <button
     id="copy-node-button"
     (click)="mmpService.copyNode()"
     [title]="'TOOLTIPS.COPY_NODE' | translate"
-    [disabled]="editDisabled"
+    [disabled]="nodeActionsDisabled"
     color="primary"
     mat-icon-button>
     <mat-icon>content_copy</mat-icon>
   </button>
   <button
+    id="cut-node-button"
     (click)="mmpService.cutNode()"
     [title]="'TOOLTIPS.CUT_NODE' | translate"
-    [disabled]="editDisabled"
+    [disabled]="nodeActionsDisabled"
     color="primary"
     mat-icon-button>
     <mat-icon>content_cut</mat-icon>
@@ -161,9 +163,10 @@
     <mat-icon>content_paste</mat-icon>
   </button>
   <button
+    id="hide-child-nodes-button"
     (click)="mmpService.toggleBranchVisibility()"
     [title]="'TOOLTIPS.HIDE_CHILD_NODES' | translate"
-    [disabled]="editDisabled || !canHideNodes"
+    [disabled]="nodeActionsDisabled || !canHideNodes"
     color="primary"
     mat-icon-button>
     <mat-icon>{{ hasHiddenNodes ? 'visibility_off' : 'visibility' }}</mat-icon>
@@ -207,9 +210,10 @@
   </div>
 
   <button
+    id="lock-node-button"
     (click)="mmpService.updateNode('locked')"
     [title]="'TOOLTIPS.COUPLE_NODE' | translate"
-    [disabled]="editDisabled"
+    [disabled]="nodeActionsDisabled"
     color="primary"
     mat-icon-button>
     <mat-icon>{{ node?.locked ? 'deselect' : 'select_all' }}</mat-icon>
@@ -219,16 +223,17 @@
     <button
       (click)="mmpService.removeNodeImage()"
       [title]="'TOOLTIPS.NODE_IMAGE_REMOVE' | translate"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       color="primary"
       mat-icon-button>
       <mat-icon>broken_image</mat-icon>
     </button>
   } @else {
     <button
+      id="node-image-button"
       (click)="imageUpload.click()"
       [title]="'TOOLTIPS.NODE_IMAGE' | translate"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       class="label-file-upload mat-icon-button mat-primary mat-focus-indicator"
       mat-icon-button>
       <mat-icon>image</mat-icon>
@@ -238,7 +243,7 @@
       type="file"
       (input)="initImageUpload($event)"
       accept="image/png, image/jpeg, image/gif, image/webp"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       #imageUpload />
   }
   @if (featureFlagPictograms) {
@@ -246,7 +251,7 @@
       <button
         (click)="pictogram()"
         [title]="'TOOLTIPS.PICTOGRAM' | translate"
-        [disabled]="editDisabled"
+        [disabled]="nodeActionsDisabled"
         color="primary"
         mat-icon-button>
         <mat-icon>nature_people</mat-icon>
@@ -262,7 +267,7 @@
     id="bold-button"
     (click)="toogleNodeFontWeight()"
     [title]="'TOOLTIPS.BOLD_TEXT' | translate"
-    [disabled]="editDisabled"
+    [disabled]="nodeActionsDisabled"
     color="primary"
     mat-icon-button>
     <mat-icon>format_bold</mat-icon>
@@ -271,7 +276,7 @@
     id="italic-button"
     (click)="toogleNodeFontStyle()"
     [title]="'TOOLTIPS.ITALIC_TEXT' | translate"
-    [disabled]="editDisabled"
+    [disabled]="nodeActionsDisabled"
     color="primary"
     mat-icon-button>
     <mat-icon>format_italic</mat-icon>
@@ -281,7 +286,7 @@
     <button
       (click)="removeLink()"
       [title]="'TOOLTIPS.LINK_REMOVE' | translate"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       color="primary"
       mat-icon-button>
       <mat-icon>link_off</mat-icon>
@@ -291,7 +296,7 @@
       id="add-link-button"
       (click)="addLink()"
       [title]="'TOOLTIPS.LINK_ADD' | translate"
-      [disabled]="editDisabled"
+      [disabled]="nodeActionsDisabled"
       color="primary"
       mat-icon-button>
       <mat-icon>insert_link</mat-icon>
@@ -299,14 +304,6 @@
   }
 
   <span class="toolbar-spacer"></span>
-
-  <button
-    color="primary"
-    [title]="'TOOLTIPS.SHORTCUTS' | translate"
-    mat-icon-button
-    routerLink="/app/shortcuts">
-    <mat-icon>shortcuts</mat-icon>
-  </button>
 
   <button
     color="primary"

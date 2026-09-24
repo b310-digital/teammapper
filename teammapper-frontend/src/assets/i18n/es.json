@@ -56,7 +56,7 @@
     "IMAGE_SIZE": "Cambiar el tamaño de la imagen del nodo",
     "START_EDIT_NODE": "Edit node text",
     "ADD_NODE": "Agregar un nodo",
-    "ADD_DETACHED_NODE": "Add a detached node",
+    "ADD_TREE": "Agregar un árbol",
     "REMOVE_NODE": "Quitar un nodo",
     "ZOOM_IN_MAP": "Acercar el mapa",
     "ZOOM_OUT_MAP": "Alejar el mapa",
@@ -82,7 +82,7 @@
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
     "FONT_DECREASE": "Decrease font",
-    "INFO": "Abre la pantalla de información"
+    "INFO": "Abre la información y los atajos"
   },
   "MODALS": {
     "GENERAL": {
@@ -132,7 +132,8 @@
       "DELETED_AT": "Mindmap is going to be deleted at:",
       "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
       "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "CONFIRM_DELETE": "Delete?",
+      "SHORTCUTS_TITLE": "Atajos"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -191,10 +192,8 @@
       "ROOT_NODE_NAME": "Nombre del nodo raíz",
       "NODE_NAME": "Nombre del nodo",
       "TITLE": "Ajustes",
-      "TTL": "Last known date of deletion"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Atajos"
+      "TTL": "Last known date of deletion",
+      "DARK_MODE": "Modo oscuro"
     }
   },
   "MESSAGES": {
@@ -214,7 +213,8 @@
     "MAP_UPDATE_SUCCESS": "¡Mapa mental actualizado correctamente!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importación de mapas mentales en curso",
-      "MAP_UPDATE_IN_PROGRESS": "Actualizando mapa mental..."
+      "MAP_UPDATE_IN_PROGRESS": "Actualizando mapa mental...",
+      "MERMAID_SEVERAL_TREES": "Cada árbol se convirtió en su propio bloque mindmap. Las herramientas de Mermaid fuera de TeamMapper muestran un bloque a la vez."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "No es posible copiar el nodo raíz.",
@@ -230,7 +230,9 @@
       "EXPORT_IMAGE_ERROR": "Se ha producido un error durante la exportación de la imagen. El mapa mental puede ser demasiado grande.",
       "MAP_COULD_NOT_BE_FOUND": "No se ha encontrado el mapa mental.",
       "IMPORT_ERROR": "No se ha podido importar el mapa mental.",
-      "AI_MERMAID_ERROR": "No se pudo generar Mermaid"
+      "AI_MERMAID_ERROR": "No se pudo generar Mermaid",
+      "IMAGE_STORAGE_FULL": "El almacenamiento de imágenes de este mapa mental está lleno. Una imagen eliminada libera su espacio en los 7 días siguientes a su subida.",
+      "IMAGE_UPLOAD_ERROR": "No se pudo subir la imagen."
     },
     "DELETE_MAP_SUCCESS": "¡Mapa mental borrado con éxito!",
     "AI_MERMAID_GENERATED_SUCCESS": "¡Mermaid generado con éxito!",

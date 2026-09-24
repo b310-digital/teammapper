@@ -1,0 +1,40 @@
+{
+  "name": "@teammapper/mermaid-mindmap-parser",
+  "private": false,
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/mermaid-mindmap-parser.js",
+  "author": {
+    "name": "b310 digital gmbh",
+    "url": "http://b310.de"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc --project tsconfig.build.json",
+    "build:types": "tsc --project tsconfig.build.json",
+    "build:js": "vite build",
+    "tsc": "tsc -p tsconfig.json --noEmit",
+    "preview": "vite preview",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
+  },
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/mermaid-mindmap-parser.js",
+      "require": "./dist/mermaid-mindmap-parser.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "dompurify": "3.4.15"
+  },
+  "devDependencies": {
+    "jison": "0.4.18",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.0"
+  }
+}

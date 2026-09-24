@@ -32,9 +32,9 @@ const createMockMap = (secret: string | null = 'test-secret'): MmpMap => {
 }
 
 interface MockWs {
-  on: jest.Mock
+  on: jest.Mock<(event: string, handler: WsEventHandler) => void>
   close: jest.Mock
-  send: jest.Mock
+  send: jest.Mock<(data: Uint8Array, cb?: (err?: Error) => void) => void>
   terminate: jest.Mock
   ping: jest.Mock
   readyState: number
@@ -54,7 +54,7 @@ const createMockWs = (): MockWs => {
       handlers.get(event)!.push(handler)
     }),
     close: jest.fn(),
-    send: jest.fn((_data: Uint8Array | Buffer, cb?: (err?: Error) => void) => {
+    send: jest.fn((_data: Uint8Array, cb?: (err?: Error) => void) => {
       if (cb) cb()
     }),
     terminate: jest.fn(),

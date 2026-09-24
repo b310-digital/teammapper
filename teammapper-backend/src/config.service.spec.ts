@@ -73,4 +73,22 @@ describe('ConfigService', () => {
       expect(config.getLogLevels()).toEqual(['error', 'warn', 'log', 'debug'])
     })
   })
+
+  describe('getTrustProxy', () => {
+    it.each([
+      [undefined, false],
+      ['false', false],
+      ['0', false],
+      ['-1', false],
+      ['1.5', false],
+      ['yes', false],
+      ['true', true],
+      ['TRUE', true],
+      ['1', 1],
+      [' 2 ', 2],
+    ])('reads WS_TRUST_PROXY=%p as %p', (value, expected) => {
+      const config = createConfigService({ WS_TRUST_PROXY: value })
+      expect(config.getTrustProxy()).toBe(expected)
+    })
+  })
 })

@@ -1,12 +1,13 @@
 import { MmpMap } from 'src/map/entities/mmpMap.entity'
 import { MmpNode } from 'src/map/entities/mmpNode.entity'
 import * as crypto from 'crypto'
-import { IMmpClientMap, IMmpClientNodeBasics } from 'src/map/types'
+import { ClientMap, IMmpClientNodeBasics } from '@teammapper/shared'
 
 export const createMmpMap = (overrides = {}): MmpMap => ({
   id: crypto.randomUUID(),
   adminId: 'admin-id',
   modificationSecret: 'modification-secret',
+  ownerExternalId: null,
   name: 'Test Map',
   lastModified: new Date('1970-01-01'),
   lastAccessed: new Date('1970-01-01'),
@@ -20,7 +21,7 @@ export const createMmpMap = (overrides = {}): MmpMap => ({
   ...overrides,
 })
 
-export const createMmpClientMap = (overrides = {}): IMmpClientMap => ({
+export const createMmpClientMap = (overrides = {}): ClientMap => ({
   uuid: crypto.randomUUID(),
   data: [],
   deleteAfterDays: 30,

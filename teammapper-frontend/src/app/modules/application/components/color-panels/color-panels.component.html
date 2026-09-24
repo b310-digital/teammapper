@@ -7,19 +7,15 @@
         readonly
         (colorPickerChange)="colorPickerChange('backgroundColor', $event)"
         (cpToggleChange)="
-          colorPickerToggleChange(
-            $event,
-            'backgroundColor',
-            node.colors.background
-          )
+          colorPickerToggleChange($event, 'backgroundColor', colors.background)
         "
-        [(colorPicker)]="node.colors.background"
+        [(colorPicker)]="colors.background"
         [cpPositionOffset]="'-500%'"
         [cpPresetColors]="options.presetColors"
         [cpPresetLabel]="''"
         [cpDisableInput]="true"
         [cpWidth]="options.width"
-        [style.background]="node.colors.background"
+        [style.background]="colors.background"
         [title]="'TOOLTIPS.NODE_COLOR' | translate"
         class="background-color"
         cpPosition="left"
@@ -28,33 +24,33 @@
         readonly
         (colorPickerChange)="colorPickerChange('nameColor', $event)"
         (cpToggleChange)="
-          colorPickerToggleChange($event, 'nameColor', node.colors.name)
+          colorPickerToggleChange($event, 'nameColor', colors.name)
         "
-        [(colorPicker)]="node.colors.name"
+        [(colorPicker)]="colors.name"
         [cpPositionOffset]="'-500%'"
         [cpPresetColors]="options.presetColors"
         [cpPresetLabel]="''"
         [cpDisableInput]="true"
         [cpWidth]="options.width"
-        [style.background]="node.colors.name"
+        [style.background]="colors.name"
         [title]="'TOOLTIPS.TEXT_COLOR' | translate"
         class="text-color"
         cpPosition="left"
         [disabled]="editDisabled" />
-      @if (node.colors.branch) {
+      @if (colors.branch) {
         <input
           readonly
           (colorPickerChange)="colorPickerChange('branchColor', $event)"
           (cpToggleChange)="
-            colorPickerToggleChange($event, 'branchColor', node.colors.branch)
+            colorPickerToggleChange($event, 'branchColor', colors.branch)
           "
-          [(colorPicker)]="node.colors.branch"
+          [(colorPicker)]="colors.branch"
           [cpPositionOffset]="'-500%'"
           [cpPresetColors]="options.presetColors"
           [cpPresetLabel]="''"
           [cpDisableInput]="true"
           [cpWidth]="options.width"
-          [style.background]="node.colors.branch"
+          [style.background]="colors.branch"
           [title]="'TOOLTIPS.BRANCH_COLOR' | translate"
           class="branch-color"
           cpPosition="left"

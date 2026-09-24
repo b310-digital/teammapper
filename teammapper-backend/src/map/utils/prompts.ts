@@ -1,15 +1,4 @@
-export const SUPPORTED_LANGUAGES = [
-  'en',
-  'fr',
-  'de',
-  'it',
-  'zh-tw',
-  'zh-cn',
-  'es',
-  'pt-br',
-] as const
-
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
+import { SupportedLanguage } from '@teammapper/shared'
 
 export const SYSTEM_PROMPT = `You are an expert in drawing mindmaps.
    The user provides a topic in <topic> tags. Create a helpful, small mindmap about it in the language specified by the lang attribute.

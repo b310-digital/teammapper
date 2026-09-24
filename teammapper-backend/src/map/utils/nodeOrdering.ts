@@ -1,46 +1,29 @@
+import { Logger } from '@nestjs/common'
 import { MmpNode } from '../entities/mmpNode.entity'
+import { assignOrderNumbers, sortNodesParentFirst } from '@teammapper/shared'
 
-// Groups non-root nodes by their parent ID
-const groupByParentId = (
-  nodes: ReadonlyArray<Partial<MmpNode>>
-): ReadonlyMap<string, ReadonlyArray<Partial<MmpNode>>> =>
-  nodes
-    .filter((n) => !n.root)
-    .reduce((acc, node) => {
-      const pid = node.nodeParentId ?? ''
-      acc.set(pid, [...(acc.get(pid) ?? []), node])
-      return acc
-    }, new Map<string, Partial<MmpNode>[]>())
-
-// Recursive breadth-first search: processes head of queue, enqueues its children, accumulates result
-const collectBreadthFirst = (
-  queue: ReadonlyArray<Partial<MmpNode>>,
-  childrenOf: ReadonlyMap<string, ReadonlyArray<Partial<MmpNode>>>,
-  collected: ReadonlyArray<Partial<MmpNode>> = []
-): ReadonlyArray<Partial<MmpNode>> => {
-  if (queue.length === 0) return collected
-  const [current, ...rest] = queue
-  const kids = childrenOf.get(current.id ?? '') ?? []
-  return collectBreadthFirst([...rest, ...kids], childrenOf, [
-    ...collected,
-    current,
-  ])
-}
-
-// Assigns sequential orderNumbers starting from 1
-const assignOrderNumbers = (
-  nodes: ReadonlyArray<Partial<MmpNode>>
-): Partial<MmpNode>[] =>
-  nodes.map((node, index) => ({ ...node, orderNumber: index + 1 }))
-
-// Orders nodes via breadth-first search (root first, parents before children) with sequential orderNumbers
+// Orders nodes tree by tree, main tree first, parents before children, with
+// sequential orderNumbers. Leaves out every node no root reaches, since such
+// a node can never pass the parent foreign key.
 export const orderNodesFromRoot = (
   nodes: ReadonlyArray<Partial<MmpNode>>
 ): Partial<MmpNode>[] => {
-  const root = nodes.find((n) => n.root)
-  if (!root) return [...nodes]
+  const adapted = nodes.map((n) => ({
+    node: n,
+    id: n.id ?? '',
+    parent: n.nodeParentId ?? null,
+    isRoot: Boolean(n.root),
+  }))
 
-  const childrenOf = groupByParentId(nodes)
-  const ordered = collectBreadthFirst([root], childrenOf)
-  return assignOrderNumbers(ordered)
+  const { ordered, unreached } = sortNodesParentFirst(adapted)
+  logUnreached(unreached.map((a) => a.id))
+  return assignOrderNumbers(ordered.map((a) => ({ ...a.node })))
+}
+
+const logUnreached = (ids: string[]): void => {
+  if (ids.length === 0) return
+  Logger.warn(
+    `Leaving out ${ids.length} nodes no root reaches: ${ids.join(', ')}`,
+    'orderNodesFromRoot'
+  )
 }

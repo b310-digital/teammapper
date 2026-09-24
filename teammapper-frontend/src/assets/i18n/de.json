@@ -56,7 +56,7 @@
     "IMAGE_SIZE": "Bildgröße",
     "START_EDIT_NODE": "Knoten Text bearbeiten",
     "ADD_NODE": "Knoten hinzufügen",
-    "ADD_DETACHED_NODE": "Freien Knoten hinzufügen (z.B. für Kommentare)",
+    "ADD_TREE": "Baum hinzufügen",
     "REMOVE_NODE": "Knoten löschen",
     "ZOOM_IN_MAP": "Mindmap vergrößern",
     "ZOOM_OUT_MAP": "Mindmap verkleinern",
@@ -83,7 +83,7 @@
     "FONT_INCREASE": "Schrift vergrößern",
     "FONT_DECREASE": "Schrift verkleinern",
     "SHOW_LINKTEXT": "Linktext statt Icon anzeigen",
-    "INFO": "Info Screen öffnen"
+    "INFO": "Info und Shortcuts öffnen"
   },
   "MODALS": {
     "GENERAL": {
@@ -133,7 +133,8 @@
       "DELETED_AT": "Diese Mindmap wird gelöscht am:",
       "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
       "DELETE": "Mindmap löschen",
-      "CONFIRM_DELETE": "Wirklich löschen?"
+      "CONFIRM_DELETE": "Wirklich löschen?",
+      "SHORTCUTS_TITLE": "Shortcuts"
     },
     "LINK": {
       "URL": "Link-URL (https://...)"
@@ -193,10 +194,8 @@
       "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
       "TITLE": "Einstellungen",
       "TTL": "Letztes bekannte Datum der Löschung",
-      "SHOW_LINKTEXT": "Linktext anzeigen"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Shortcuts"
+      "SHOW_LINKTEXT": "Linktext anzeigen",
+      "DARK_MODE": "Dunkelmodus"
     }
   },
   "MESSAGES": {
@@ -217,7 +216,8 @@
     "MAP_UPDATE_SUCCESS": "Mindmap erfolgreich aktualisiert!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert...",
-      "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert..."
+      "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert...",
+      "MERMAID_SEVERAL_TREES": "Jeder Baum wurde zu einem eigenen mindmap-Block. Mermaid-Werkzeuge außerhalb von TeamMapper stellen nur einen Block auf einmal dar."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
@@ -233,7 +233,9 @@
       "EXPORT_IMAGE_ERROR": "Beim Bild-Export ist ein Fehler aufgetreten. Womöglich ist die Mindmap zu groß.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap konnte nicht gefunden werden!",
       "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!",
-      "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden."
+      "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden.",
+      "IMAGE_STORAGE_FULL": "Der Bildspeicher dieser Mindmap ist voll. Ein entferntes Bild gibt seinen Platz innerhalb von 7 Tagen nach dem Hochladen frei.",
+      "IMAGE_UPLOAD_ERROR": "Das Bild konnte nicht hochgeladen werden."
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",

@@ -22,17 +22,18 @@ ENV APP_BACKEND_PATH=${APP_PATH}/teammapper-backend
 ENV APP_FRONTEND_PATH=${APP_PATH}/teammapper-frontend
 
 COPY --chown=node:node package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY --chown=node:node packages ./packages/
 COPY --chown=node:node teammapper-backend/package.json $APP_BACKEND_PATH/
 COPY --chown=node:node teammapper-frontend/package.json $APP_FRONTEND_PATH/
-COPY --chown=node:node teammapper-frontend/packages $APP_FRONTEND_PATH/packages
 RUN pnpm install --frozen-lockfile
+
+RUN pnpm --filter @teammapper/* run build
 
 COPY --chown=node:node teammapper-backend $APP_BACKEND_PATH/
 RUN pnpm --filter teammapper-backend run build
 
 COPY --chown=node:node teammapper-frontend $APP_FRONTEND_PATH/
-RUN pnpm --filter @teammapper/mermaid-mindmap-parser run build \
- && GENERATE_SOURCEMAP=false pnpm --filter teammapper-frontend run build:prod \
+RUN GENERATE_SOURCEMAP=false pnpm --filter teammapper-frontend run build:prod \
  && mv $APP_FRONTEND_PATH/dist $APP_BACKEND_PATH/client
 
 RUN pnpm --filter teammapper-backend deploy --prod --legacy /home/node/deploy

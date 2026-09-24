@@ -22,3 +22,6 @@ runs:
 
     - shell: bash
       run: pnpm install --frozen-lockfile
+
+    - shell: bash
+      run: pnpm run build:packages

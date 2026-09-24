@@ -10,15 +10,17 @@
     "node": "^24.0"
   },
   "scripts": {
-    "dev": "concurrently \"pnpm --filter teammapper-backend start:dev\" \"pnpm --filter teammapper-frontend start\"",
+    "dev": "pnpm run build:packages && concurrently \"pnpm --filter @teammapper/shared run build:watch\" \"pnpm --filter @teammapper/mmp run build:watch\" \"pnpm --filter teammapper-backend start:dev\" \"pnpm --filter teammapper-frontend start\"",
     "backend:dev": "pnpm --filter teammapper-backend start:dev",
     "frontend:dev": "pnpm --filter teammapper-frontend start",
     "build": "pnpm run build:prod",
-    "build:prod": "pnpm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && pnpm run build:backend:prod && pnpm run migrate:prod",
+    "build:packages": "pnpm --filter '@teammapper/*' run build",
+    "build:prod": "pnpm run build:packages && pnpm run build:frontend:prod && cp teammapper-frontend/dist -TRv teammapper-backend/client && pnpm run build:backend:prod && pnpm run migrate:prod",
     "build:backend:prod": "pnpm --filter teammapper-backend run build",
     "build:frontend:prod": "GENERATE_SOURCEMAP=false pnpm --filter teammapper-frontend run build:prod",
-    "clean": "rm -rf teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist",
+    "clean": "rm -rf teammapper-backend/dist teammapper-backend/client teammapper-frontend/dist packages/*/dist",
     "format": "pnpm --filter '*' run format",
+    "format:check": "pnpm --filter '*' run format:check",
     "install:frozen": "pnpm install --frozen-lockfile",
     "lint": "pnpm --filter '*' run lint",
     "migrate:dev": "pnpm --filter teammapper-backend run dev:typeorm:migrate",
@@ -32,11 +34,11 @@
     "tsc": "pnpm --filter '*' run tsc"
   },
   "devDependencies": {
-    "@secretlint/secretlint-rule-preset-recommend": "^11.4.1",
-    "concurrently": "9.2.1",
-    "eslint": "^10.1.0",
-    "prettier": "^3.8.1",
-    "secretlint": "^11.4.1",
+    "@secretlint/secretlint-rule-preset-recommend": "^11.7.1",
+    "concurrently": "9.2.4",
+    "eslint": "^10.10.0",
+    "prettier": "^3.9.6",
+    "secretlint": "^11.7.1",
     "typescript": "~5.9.3"
   }
 }

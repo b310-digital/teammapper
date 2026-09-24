@@ -1,4 +1,10 @@
-## ADDED Requirements
+# ai-mindmap-generation Specification
+
+## Purpose
+
+Lets a user generate a mind map from a text description and a language.
+
+## Requirements
 
 ### Requirement: The system SHALL generate a mindmap from a text description
 A user SHALL be able to submit a text description and a language, and receive a generated mindmap in return.

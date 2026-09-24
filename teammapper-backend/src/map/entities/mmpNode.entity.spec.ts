@@ -8,7 +8,6 @@ const buildValidNode = (): MmpNode => {
   node.root = false
   node.coordinatesX = 0
   node.coordinatesY = 0
-  node.detached = false
   node.nodeMapId = '00000000-0000-0000-0000-000000000002'
   node.orderNumber = 1
   return node

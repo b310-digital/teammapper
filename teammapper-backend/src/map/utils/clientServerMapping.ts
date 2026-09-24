@@ -1,14 +1,18 @@
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
-import { IMmpClientMap, IMmpClientNode, IMmpClientNodeBasics } from '../types'
+import {
+  ClientMap,
+  DEFAULT_ROOT_COLOR_BACKGROUND,
+  DEFAULT_ROOT_COLOR_NAME,
+  DEFAULT_ROOT_FONT_SIZE,
+  DEFAULT_ROOT_FONT_STYLE,
+  DEFAULT_ROOT_FONT_WEIGHT,
+  DEFAULT_ROOT_NAME,
+  IMmpClientNode,
+  IMmpClientNodeBasics,
+  MapNode,
+} from '@teammapper/shared'
 import { sanitizeNodeFields } from './sanitization'
-
-const DEFAULT_COLOR_NAME = '#787878'
-const DEFAULT_COLOR_BACKGROUND = '#f0f6f5'
-const DEFAULT_FONT_SIZE = 20
-const DEFAULT_FONT_STYLE = 'normal'
-const DEFAULT_FONT_WEIGHT = 'normal'
-const DEFAULT_NAME = 'Root node'
 
 const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   colors: {
@@ -29,13 +33,14 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
     href: serverNode.linkHref || '',
   },
   id: serverNode.id,
-  detached: serverNode.detached || false,
   image: { src: serverNode.imageSrc || '', size: serverNode.imageSize || 0 },
   k: serverNode.k || 1,
   locked: serverNode.locked || false,
   name: serverNode.name || '',
   parent: serverNode.nodeParentId,
   isRoot: serverNode.root || false,
+  hidden: false,
+  hasHiddenChildNodes: false,
 })
 
 const mapMmpMapToClient = (
@@ -43,7 +48,7 @@ const mapMmpMapToClient = (
   serverNodes: MmpNode[],
   deletedAt: Date,
   deleteAfterDays: number
-): IMmpClientMap => {
+): ClientMap => {
   return {
     uuid: serverMap.id,
     data: serverNodes.map((node) => mapMmpNodeToClient(node)),
@@ -57,7 +62,7 @@ const mapMmpMapToClient = (
 }
 
 const mapClientNodeToMmpNode = (
-  clientNode: IMmpClientNode,
+  clientNode: IMmpClientNode | MapNode,
   mapId: string
 ): Partial<MmpNode> =>
   sanitizeNodeFields({
@@ -75,7 +80,6 @@ const mapClientNodeToMmpNode = (
     k: clientNode.k,
     linkHref: clientNode.link?.href,
     locked: clientNode.locked,
-    detached: clientNode.detached,
     name: clientNode.name,
     nodeParentId: clientNode.parent || undefined, // This is needed because a client root node defines its parent as an empty string, which is an invalid UUID format
     root: clientNode.isRoot,
@@ -99,23 +103,22 @@ const mapClientBasicNodeToMmpRootNode = (
 
   return {
     ...sanitized,
-    colorsBackground: sanitized.colorsBackground || DEFAULT_COLOR_BACKGROUND,
-    colorsName: sanitized.colorsName || DEFAULT_COLOR_NAME,
+    colorsBackground:
+      sanitized.colorsBackground || DEFAULT_ROOT_COLOR_BACKGROUND,
+    colorsName: sanitized.colorsName || DEFAULT_ROOT_COLOR_NAME,
     coordinatesX: 0,
     coordinatesY: 0,
-    fontSize: clientRootNodeBasics.font.size || DEFAULT_FONT_SIZE,
-    fontStyle: sanitized.fontStyle || DEFAULT_FONT_STYLE,
-    fontWeight: sanitized.fontWeight || DEFAULT_FONT_WEIGHT,
+    fontSize: clientRootNodeBasics.font.size || DEFAULT_ROOT_FONT_SIZE,
+    fontStyle: sanitized.fontStyle || DEFAULT_ROOT_FONT_STYLE,
+    fontWeight: sanitized.fontWeight || DEFAULT_ROOT_FONT_WEIGHT,
     imageSize: clientRootNodeBasics.image?.size,
-    name: sanitized.name || DEFAULT_NAME,
+    name: sanitized.name || DEFAULT_ROOT_NAME,
     root: true,
-    detached: false,
     nodeMapId: mapId,
   }
 }
 
 export {
-  mapMmpNodeToClient,
   mapClientNodeToMmpNode,
   mapClientBasicNodeToMmpRootNode,
   mapMmpMapToClient,

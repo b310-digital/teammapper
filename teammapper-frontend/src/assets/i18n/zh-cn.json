@@ -56,7 +56,7 @@
     "IMAGE_SIZE": "图片大小",
     "START_EDIT_NODE": "编辑节点",
     "ADD_NODE": "新增节点",
-    "ADD_DETACHED_NODE": "添加独立节点",
+    "ADD_TREE": "添加树",
     "REMOVE_NODE": "删除节点",
     "ZOOM_IN_MAP": "放大",
     "ZOOM_OUT_MAP": "缩小",
@@ -82,7 +82,7 @@
     "FONT_INCREMENT": "字体大小步长",
     "FONT_INCREASE": "增大字体",
     "FONT_DECREASE": "减小字体",
-    "INFO": "打开信息界面"
+    "INFO": "打开信息和快捷键"
   },
   "MODALS": {
     "GENERAL": {
@@ -132,7 +132,8 @@
       "DELETED_AT": "思维导图将在以下时间删除：",
       "DELETE_AFTER_DAYS": "思维导图将在此服务器上 {{deleteAfterDays}} 天后删除。",
       "DELETE": "删除思维导图",
-      "CONFIRM_DELETE": "删除？"
+      "CONFIRM_DELETE": "删除？",
+      "SHORTCUTS_TITLE": "快捷键"
     },
     "LINK": {
       "URL": "链接 URL (https://...)"
@@ -191,10 +192,8 @@
       "ROOT_NODE_NAME": "根节点名称",
       "NODE_NAME": "节点名称",
       "TITLE": "设置",
-      "TTL": "最后已知删除日期"
-    },
-    "SHORTCUTS": {
-      "TITLE": "快捷键"
+      "TTL": "最后已知删除日期",
+      "DARK_MODE": "深色模式"
     }
   },
   "MESSAGES": {
@@ -213,7 +212,8 @@
     "MAP_UPDATE_SUCCESS": "思维导图更新成功",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "心智图导入中",
-      "MAP_UPDATE_IN_PROGRESS": "更新思维导图"
+      "MAP_UPDATE_IN_PROGRESS": "更新思维导图",
+      "MERMAID_SEVERAL_TREES": "每棵树都成为一个独立的 mindmap 块。TeamMapper 之外的 Mermaid 工具一次只能渲染一个块。"
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "无法复制根节点！",
@@ -229,7 +229,9 @@
       "EXPORT_IMAGE_ERROR": "导出图像时发生错误。思维导图可能过大。",
       "MAP_COULD_NOT_BE_FOUND": "找不到思维导图！",
       "IMPORT_ERROR": "无法导入思维导图！",
-      "AI_MERMAID_ERROR": "无法生成Mermaid"
+      "AI_MERMAID_ERROR": "无法生成Mermaid",
+      "IMAGE_STORAGE_FULL": "此思维导图的图片存储空间已满。移除的图片会在上传后 7 天内释放其空间。",
+      "IMAGE_UPLOAD_ERROR": "无法上传图片。"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",

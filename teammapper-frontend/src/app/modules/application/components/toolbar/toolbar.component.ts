@@ -1,8 +1,11 @@
 import { Component, Input, inject } from '@angular/core';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
-import { MmpService } from 'src/app/core/services/mmp/mmp.service';
+import {
+  ExportFormat,
+  MmpService,
+} from 'src/app/core/services/mmp/mmp.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MatToolbar } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
@@ -11,6 +14,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { AsyncPipe, NgClass } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
+import { isRasterImageFile } from 'src/app/core/services/mmp/node-images';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -36,8 +40,8 @@ export class ToolbarComponent {
   private dialogService = inject(DialogService);
   private settingsService = inject(SettingsService);
 
-  @Input() public node: ExportNodeProperties;
-  @Input() public editDisabled: boolean;
+  @Input() public node: ExportNodeProperties | null = null;
+  @Input() public editDisabled = false;
   public featureFlagPictograms: boolean;
   public featureFlagAI: boolean;
 
@@ -50,9 +54,9 @@ export class ToolbarComponent {
     this.featureFlagAI = flags?.ai ?? false;
   }
 
-  public async exportMap(format: string) {
+  public async exportMap(format: ExportFormat) {
     const result = await this.mmpService.exportMap(format);
-    if (result.size > 1000 && format === 'json')
+    if (result.size !== undefined && result.size > 1000 && format === 'json')
       alert(
         this.translationService.instant('MESSAGES.JSON_FILE_SIZE_TOO_LARGE')
       );
@@ -62,6 +66,14 @@ export class ToolbarComponent {
     return (
       this.mmpService.nodeChildren()?.filter(node => node.hidden).length > 0
     );
+  }
+
+  /**
+   * True when editing is off or no node is selected. The node buttons bind to
+   * this getter; add tree and paste do not.
+   */
+  get nodeActionsDisabled(): boolean {
+    return this.editDisabled || !this.mmpService.hasSelectedNode();
   }
 
   // In some cases the mmpService is not yet initialized so trying to call getSelectedNode() will throw an error
@@ -97,9 +109,10 @@ export class ToolbarComponent {
   }
 
   public toogleNodeFontStyle() {
-    const currentStyle = this.mmpService.selectNode().font.style;
+    const selected = this.mmpService.selectNode();
+    if (!selected) return;
 
-    if (currentStyle === 'italic') {
+    if (selected.font?.style === 'italic') {
       this.mmpService.updateNode('fontStyle', 'normal');
     } else {
       this.mmpService.updateNode('fontStyle', 'italic');
@@ -110,11 +123,8 @@ export class ToolbarComponent {
     const linkInput = prompt(
       this.translationService.instant('MODALS.LINK.URL')
     );
-    if (this.isValidLink(linkInput)) this.mmpService.addNodeLink(linkInput);
-  }
-
-  public addDetachedNode() {
-    this.mmpService.addNode({ detached: true, name: '' });
+    if (linkInput !== null && this.isValidLink(linkInput))
+      this.mmpService.addNodeLink(linkInput);
   }
 
   public removeLink() {
@@ -122,9 +132,10 @@ export class ToolbarComponent {
   }
 
   public toogleNodeFontWeight() {
-    const currentWeight = this.mmpService.selectNode().font.weight;
+    const selected = this.mmpService.selectNode();
+    if (!selected) return;
 
-    if (currentWeight === 'bold') {
+    if (selected.font?.weight === 'bold') {
       this.mmpService.updateNode('fontWeight', 'normal');
     } else {
       this.mmpService.updateNode('fontWeight', 'bold');
@@ -135,56 +146,24 @@ export class ToolbarComponent {
     this.dialogService.openAboutDialog();
   }
 
-  private static readonly ALLOWED_IMAGE_TYPES = [
-    'image/png',
-    'image/jpeg',
-    'image/gif',
-    'image/webp',
-  ];
-
-  public initImageUpload(event: InputEvent) {
+  public async initImageUpload(event: Event) {
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
     const file = fileUpload.files?.[0];
-    if (!file || !ToolbarComponent.ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      return;
-    }
+    if (!file || !isRasterImageFile(file)) return;
 
-    const fileReader = new FileReader();
-
-    fileReader.onload = (_fileEvent: Event) => {
-      // in case file is an image resize it
-      const img = new Image(); // create a image
-      img.src = fileReader.result.toString(); // result is base64-encoded Data URI
-      img.onload = (el: Event) => {
-        const resizeWidth = 360; // without px
-        const elem = document.createElement('canvas'); // create a canvas
-
-        const target = el.target as HTMLImageElement;
-        // scale the image to 360 (width) and keep aspect ratio
-        const scaleFactor = resizeWidth / target.width;
-        elem.width = resizeWidth;
-        elem.height = target.height * scaleFactor;
-
-        // draw in canvas
-        const ctx = elem.getContext('2d');
-        ctx.drawImage(target, 0, 0, elem.width, elem.height);
-
-        // get the base64-encoded Data URI from the resize image
-        this.mmpService.addNodeImage(ctx.canvas.toDataURL('image/jpeg', 0.5));
-      };
-    };
-    fileReader.readAsDataURL(file);
+    await this.mmpService.addNodeImage(file, true);
   }
 
-  public initJSONUpload(event: InputEvent) {
+  public initJSONUpload(event: Event) {
     const fileReader = new FileReader();
 
     fileReader.onload = (_fileEvent: Event) => {
-      this.mmpService.importMap(fileReader.result.toString());
+      this.mmpService.importMap(fileReader.result?.toString() ?? '');
     };
 
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
-    fileReader.readAsText(fileUpload.files[0]);
+    const file = fileUpload.files?.[0];
+    if (file) fileReader.readAsText(file);
   }
 
   private isValidLink(input: string): boolean {

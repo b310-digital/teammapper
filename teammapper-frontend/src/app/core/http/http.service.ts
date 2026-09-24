@@ -4,7 +4,6 @@ import { Injectable } from '@angular/core';
  * All the API urls used with the http service.
  */
 export enum API_URL {
-  LOCAL_ASSETS = './assets/data/',
   ROOT = 'api',
 }
 
@@ -45,5 +44,18 @@ export class HttpService {
       body,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  /**
+   * Constructs a multipart `POST` request. The browser sets the content type
+   * with its boundary, so none is given here.
+   */
+  public postForm(
+    apiUrl: API_URL,
+    endpoint: string,
+    body: FormData,
+    headers: Record<string, string> = {}
+  ): Promise<Response> {
+    return fetch(`${apiUrl}${endpoint}`, { method: 'POST', body, headers });
   }
 }

@@ -6,7 +6,7 @@ jest.mock('../../config.service', () => ({
   __esModule: true,
   default: {
     isYjsRateLimitingEnabled: jest.fn(() => true),
-    isWsTrustProxy: jest.fn(() => false),
+    getTrustProxy: jest.fn((): boolean | number => false),
     getWsGlobalMaxConnections: jest.fn(() => 500),
     getWsPerIpMaxConnections: jest.fn(() => 50),
     getWsPerIpRateLimit: jest.fn(() => 10),
@@ -52,7 +52,7 @@ describe('WsConnectionLimiterService', () => {
   afterEach(() => {
     service.reset()
     mockedConfig.isYjsRateLimitingEnabled.mockReturnValue(true)
-    mockedConfig.isWsTrustProxy.mockReturnValue(false)
+    mockedConfig.getTrustProxy.mockReturnValue(false)
   })
 
   describe('checkLimits', () => {
@@ -182,14 +182,49 @@ describe('WsConnectionLimiterService', () => {
     })
 
     it('uses x-forwarded-for when trust proxy is enabled', () => {
-      mockedConfig.isWsTrustProxy.mockReturnValue(true)
+      mockedConfig.getTrustProxy.mockReturnValue(true)
       const req = createForwardedRequest('203.0.113.50, 70.41.3.18')
 
       expect(service.getClientIp(req)).toBe('203.0.113.50')
     })
 
+    it('skips one proxy from the right with a hop count of 1', () => {
+      mockedConfig.getTrustProxy.mockReturnValue(1)
+      const req = createForwardedRequest('1.1.1.1, 203.0.113.50, 70.41.3.18')
+
+      expect(service.getClientIp(req)).toBe('70.41.3.18')
+    })
+
+    it('skips two proxies from the right with a hop count of 2', () => {
+      mockedConfig.getTrustProxy.mockReturnValue(2)
+      const req = createForwardedRequest('1.1.1.1, 203.0.113.50, 70.41.3.18')
+
+      expect(service.getClientIp(req)).toBe('203.0.113.50')
+    })
+
+    it('takes the leftmost entry when the hop count exceeds the entries', () => {
+      mockedConfig.getTrustProxy.mockReturnValue(5)
+      const req = createForwardedRequest('203.0.113.50, 70.41.3.18')
+
+      expect(service.getClientIp(req)).toBe('203.0.113.50')
+    })
+
+    it('skips empty entries when counting hops', () => {
+      mockedConfig.getTrustProxy.mockReturnValue(1)
+      const req = createForwardedRequest('203.0.113.50, 70.41.3.18,, ')
+
+      expect(service.getClientIp(req)).toBe('70.41.3.18')
+    })
+
+    it('falls back to remoteAddress when the header holds no entry', () => {
+      mockedConfig.getTrustProxy.mockReturnValue(true)
+      const req = createForwardedRequest(' , ', '192.168.1.1')
+
+      expect(service.getClientIp(req)).toBe('192.168.1.1')
+    })
+
     it('falls back to remoteAddress when trust proxy enabled but no header', () => {
-      mockedConfig.isWsTrustProxy.mockReturnValue(true)
+      mockedConfig.getTrustProxy.mockReturnValue(true)
       const req = createMockRequest('192.168.1.1')
 
       expect(service.getClientIp(req)).toBe('192.168.1.1')

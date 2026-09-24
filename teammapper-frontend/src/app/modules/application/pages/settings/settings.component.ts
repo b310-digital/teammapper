@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { UserSettings } from '../../../../shared/models/settings.model';
+import { UserSettings } from '@teammapper/shared';
+import { AdditionalMapOptions } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { Location, AsyncPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
-import { CachedMapOptions } from 'src/app/shared/models/cached-map.model';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatDialogTitle } from '@angular/material/dialog';
 import { MatIconButton } from '@angular/material/button';
@@ -61,9 +61,9 @@ export class SettingsComponent {
   private location = inject(Location);
 
   public readonly languages: string[];
-  public settings: UserSettings;
-  public mapOptions: CachedMapOptions;
-  public editMode: Observable<boolean>;
+  public settings: UserSettings | null;
+  public mapOptions: AdditionalMapOptions | null;
+  public editMode: Observable<boolean | null>;
 
   constructor() {
     this.languages = SettingsService.LANGUAGES;
@@ -73,36 +73,48 @@ export class SettingsComponent {
   }
 
   public async updateGeneralMapOptions() {
+    if (!this.settings) return;
+
     await this.settingsService.updateCachedSettings(this.settings);
   }
 
   public async updateMapOptions() {
-    await this.validateMapOptionsInput();
+    if (!this.mapOptions) return;
+
+    await this.validateMapOptionsInput(this.mapOptions);
     this.mapSyncService.updateMapOptions(this.mapOptions);
   }
 
   public async updateLanguage() {
+    if (!this.settings) return;
+
     await this.settingsService.updateCachedSettings(this.settings);
 
     this.translateService.use(this.settings.general.language);
+  }
+
+  public async updateDarkMode() {
+    if (!this.settings) return;
+
+    await this.settingsService.setDarkMode(this.settings.general.darkMode);
   }
 
   public back() {
     this.location.back();
   }
 
-  private async validateMapOptionsInput() {
+  private async validateMapOptionsInput(mapOptions: AdditionalMapOptions) {
     const defaultSettings: UserSettings = (
       await this.settingsService.getDefaultSettings()
     ).userSettings;
     if (
-      this.mapOptions.fontIncrement > this.mapOptions.fontMaxSize ||
-      this.mapOptions.fontIncrement < 1
+      mapOptions.fontIncrement > mapOptions.fontMaxSize ||
+      mapOptions.fontIncrement < 1
     )
-      this.mapOptions.fontIncrement = defaultSettings.mapOptions.fontIncrement;
-    if (this.mapOptions.fontMaxSize > 99 || this.mapOptions.fontMaxSize < 15)
-      this.mapOptions.fontMaxSize = defaultSettings.mapOptions.fontMaxSize;
-    if (this.mapOptions.fontMinSize > 99 || this.mapOptions.fontMinSize < 15)
-      this.mapOptions.fontMinSize = defaultSettings.mapOptions.fontMinSize;
+      mapOptions.fontIncrement = defaultSettings.mapOptions.fontIncrement;
+    if (mapOptions.fontMaxSize > 99 || mapOptions.fontMaxSize < 15)
+      mapOptions.fontMaxSize = defaultSettings.mapOptions.fontMaxSize;
+    if (mapOptions.fontMinSize > 99 || mapOptions.fontMinSize < 15)
+      mapOptions.fontMinSize = defaultSettings.mapOptions.fontMinSize;
   }
 }

@@ -56,7 +56,7 @@
     "TEXT_SIZE": "Change la taille du texte et du noeud",
     "IMAGE_SIZE": "Change la taille de l'image du noeud",
     "ADD_NODE": "Ajoute un noeud",
-    "ADD_DETACHED_NODE": "Add a detached node",
+    "ADD_TREE": "Ajoute un arbre",
     "REMOVE_NODE": "Supprime un noeud",
     "ZOOM_IN_MAP": "Zoom sur la carte",
     "ZOOM_OUT_MAP": "Dézoom la carte",
@@ -82,7 +82,7 @@
     "FONT_INCREMENT": "Font size step",
     "FONT_INCREASE": "Increase font ",
     "FONT_DECREASE": "Decrease font",
-    "INFO": "Ouvre l’écran d’informations"
+    "INFO": "Ouvre les informations et les raccourcis"
   },
   "MODALS": {
     "GENERAL": {
@@ -132,7 +132,8 @@
       "DELETED_AT": "Mindmap is going to be deleted at:",
       "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
       "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "CONFIRM_DELETE": "Delete?",
+      "SHORTCUTS_TITLE": "Raccourcis"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -191,10 +192,8 @@
       "ROOT_NODE_NAME": "Nom du noeud racine",
       "NODE_NAME": "Nom du noeud",
       "TITLE": "Paramètres",
-      "TTL": "Last known date of deletion"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Raccourcis"
+      "TTL": "Last known date of deletion",
+      "DARK_MODE": "Mode sombre"
     }
   },
   "MESSAGES": {
@@ -214,7 +213,8 @@
     "MAP_UPDATE_SUCCESS": "Mise à jour réussie de la carte heuristique !",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importation de Mindmap en cours",
-      "MAP_UPDATE_IN_PROGRESS": "Mise à jour de la carte heuristique..."
+      "MAP_UPDATE_IN_PROGRESS": "Mise à jour de la carte heuristique...",
+      "MERMAID_SEVERAL_TREES": "Chaque arbre est devenu son propre bloc mindmap. Les outils Mermaid hors de TeamMapper affichent un bloc à la fois."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Il n'est pas possible de copier le noeud racine !",
@@ -230,7 +230,9 @@
       "EXPORT_IMAGE_ERROR": "Une erreur s'est produite lors de l'exportation de l'image. Il se peut que la mind map soit trop grande.",
       "MAP_COULD_NOT_BE_FOUND": "La carte heuristique est introuvable !",
       "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !",
-      "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré"
+      "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré",
+      "IMAGE_STORAGE_FULL": "Le stockage d'images de cette carte mentale est plein. Une image retirée libère sa place dans les 7 jours suivant son téléversement.",
+      "IMAGE_UPLOAD_ERROR": "L'image n'a pas pu être téléversée."
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",

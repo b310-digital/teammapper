@@ -8,8 +8,7 @@ import {
 import * as v from 'valibot'
 import { AiService } from '../services/ai.service'
 import { RateLimitExceptionFilter } from './rate-limit-exception.filter'
-import { MermaidCreateSchema } from '../schemas/mermaid.schema'
-import { sanitizeIssues } from '../schemas/sanitize-issues'
+import { MermaidCreateSchema, sanitizeIssues } from '@teammapper/shared'
 
 @UseFilters(RateLimitExceptionFilter)
 @Controller('api/mermaid')

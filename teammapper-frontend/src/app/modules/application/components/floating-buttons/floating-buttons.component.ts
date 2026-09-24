@@ -13,5 +13,10 @@ import { TranslatePipe } from '@ngx-translate/core';
 export class FloatingButtonsComponent {
   mmpService = inject(MmpService);
 
-  @Input() public editDisabled: boolean;
+  @Input() public editDisabled = false;
+
+  /** Adding a child and removing a node both need a selected node. */
+  get nodeActionsDisabled(): boolean {
+    return this.editDisabled || !this.mmpService.hasSelectedNode();
+  }
 }

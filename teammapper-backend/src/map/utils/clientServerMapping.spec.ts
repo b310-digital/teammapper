@@ -2,7 +2,7 @@ import {
   mapClientNodeToMmpNode,
   mapClientBasicNodeToMmpRootNode,
 } from './clientServerMapping'
-import { IMmpClientNode } from '../types'
+import { IMmpClientNode } from '@teammapper/shared'
 
 const buildClientNode = (
   overrides: Partial<IMmpClientNode> = {}
@@ -16,9 +16,10 @@ const buildClientNode = (
   link: { href: '' },
   k: 1,
   locked: false,
-  detached: false,
   isRoot: false,
   parent: 'parent-uuid',
+  hidden: false,
+  hasHiddenChildNodes: false,
   ...overrides,
 })
 

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ExportService } from './export.service';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 
 describe('ExportService', () => {
   let service: ExportService;
@@ -198,34 +198,33 @@ describe('ExportService', () => {
       expect(result).toBe(expected);
     });
 
-    it('should ignore detached nodes', () => {
+    it('should export one block per tree, main tree first', () => {
       const nodes: ExportNodeProperties[] = [
-        {
-          id: 'root',
-          parent: '',
-          name: 'Root',
-          isRoot: true,
-        } as ExportNodeProperties,
-        {
-          id: 'attached',
-          parent: 'root',
-          name: 'Attached Node',
-          isRoot: false,
-        } as ExportNodeProperties,
-        {
-          id: 'detached',
-          parent: 'root',
-          name: 'Detached Node',
-          isRoot: false,
-          detached: true,
-        } as ExportNodeProperties,
-      ];
+        { id: 'second', parent: '', name: 'Second', isRoot: false },
+        { id: 'b', parent: 'second', name: 'B', isRoot: false },
+        { id: 'root', parent: '', name: 'Root', isRoot: true },
+        { id: 'a', parent: 'root', name: 'A', isRoot: false },
+      ] as ExportNodeProperties[];
 
       const result = service.exportToMermaid(nodes);
       const expected = `mindmap
   Root
-    Attached Node`;
+    A
+
+mindmap
+  Second
+    B`;
       expect(result).toBe(expected);
+    });
+
+    it('should export a root without children as its own block', () => {
+      const nodes: ExportNodeProperties[] = [
+        { id: 'root', parent: '', name: 'Root', isRoot: true },
+        { id: 'lone', parent: '', name: 'Lone', isRoot: false },
+      ] as ExportNodeProperties[];
+
+      const result = service.exportToMermaid(nodes);
+      expect(result).toBe('mindmap\n  Root\n\nmindmap\n  Lone');
     });
   });
 });

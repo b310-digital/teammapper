@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals'
 
 import { AiService, SYSTEM_PROMPT_TOKEN_OVERHEAD } from './ai.service'
-import { LlmUsageCounterService } from './llm-usage-counter.service'
+import type { LlmUsageCounting } from './llm-usage-counter.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'
 import { generateText } from 'ai'
 import * as aiProvider from '../utils/aiProvider'
@@ -23,28 +23,27 @@ interface FakeUsageState {
   requestsCount: number
 }
 
-const buildUsageCounterMock = (state: FakeUsageState) =>
-  ({
-    reserve: jest.fn(
-      async (_dateUsage: string, tokens: number, cap?: number) => {
-        const proposed = state.tokensUsed + tokens
-        if (cap !== undefined && proposed > cap) return null
-        state.tokensUsed = proposed
-        state.requestsCount += 1
-        return {
-          tokensUsed: state.tokensUsed,
-          requestsCount: state.requestsCount,
-        }
-      }
-    ),
-    adjustTokens: jest.fn(async (_dateUsage: string, delta: number) => {
-      state.tokensUsed = Math.max(0, state.tokensUsed + delta)
-    }),
-    release: jest.fn(async (_dateUsage: string, tokens: number) => {
-      state.tokensUsed = Math.max(0, state.tokensUsed - tokens)
-      state.requestsCount = Math.max(0, state.requestsCount - 1)
-    }),
-  }) as unknown as LlmUsageCounterService
+const buildUsageCounterMock = (
+  state: FakeUsageState
+): jest.Mocked<LlmUsageCounting> => ({
+  reserve: jest.fn(async (_dateUsage: string, tokens: number, cap?: number) => {
+    const proposed = state.tokensUsed + tokens
+    if (cap !== undefined && proposed > cap) return null
+    state.tokensUsed = proposed
+    state.requestsCount += 1
+    return {
+      tokensUsed: state.tokensUsed,
+      requestsCount: state.requestsCount,
+    }
+  }),
+  adjustTokens: jest.fn(async (_dateUsage: string, delta: number) => {
+    state.tokensUsed = Math.max(0, state.tokensUsed + delta)
+  }),
+  release: jest.fn(async (_dateUsage: string, tokens: number) => {
+    state.tokensUsed = Math.max(0, state.tokensUsed - tokens)
+    state.requestsCount = Math.max(0, state.requestsCount - 1)
+  }),
+})
 
 describe('AiService', () => {
   let aiService: AiService
@@ -52,7 +51,7 @@ describe('AiService', () => {
   let createProviderMock: CreateProviderMock
   let getLLMConfigMock: GetLLMConfigMock
   let usageState: FakeUsageState
-  let usageCounter: LlmUsageCounterService
+  let usageCounter: jest.Mocked<LlmUsageCounting>
 
   beforeAll(async () => {
     jest.useFakeTimers({ advanceTimers: true })
@@ -196,12 +195,9 @@ describe('AiService', () => {
 
       // No reservation was created for the rejected call, so totals reflect
       // only the first call's actual (100) and one request — and no rollback.
-      const releaseMock = usageCounter.release as jest.MockedFunction<
-        typeof usageCounter.release
-      >
       expect({
         ...usageState,
-        releaseCalls: releaseMock.mock.calls.length,
+        releaseCalls: usageCounter.release.mock.calls.length,
       }).toEqual({
         tokensUsed: 100,
         requestsCount: 1,
@@ -258,11 +254,7 @@ describe('AiService', () => {
         model: 'gpt-4',
       } satisfies LLMProps)
       aiService = new AiService(usageCounter)
-      ;(
-        usageCounter.adjustTokens as jest.MockedFunction<
-          typeof usageCounter.adjustTokens
-        >
-      ).mockRejectedValueOnce(new Error('db hiccup'))
+      usageCounter.adjustTokens.mockRejectedValueOnce(new Error('db hiccup'))
 
       // Reconciliation failure must not propagate, must not release.
       await aiService.generateMermaid('short', 'en')
@@ -279,9 +271,7 @@ describe('AiService', () => {
         model: 'gpt-4',
       } satisfies LLMProps)
       aiService = new AiService(usageCounter)
-      ;(
-        usageCounter.release as jest.MockedFunction<typeof usageCounter.release>
-      ).mockRejectedValueOnce(new Error('db unreachable'))
+      usageCounter.release.mockRejectedValueOnce(new Error('db unreachable'))
 
       generateTextMock.mockRejectedValueOnce(new Error('boom'))
       await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(

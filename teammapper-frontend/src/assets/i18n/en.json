@@ -56,7 +56,7 @@
     "IMAGE_SIZE": "Changes the size of the node image",
     "START_EDIT_NODE": "Edit node text",
     "ADD_NODE": "Adds a node",
-    "ADD_DETACHED_NODE": "Add a detached node",
+    "ADD_TREE": "Add a tree",
     "REMOVE_NODE": "Removes a node",
     "ZOOM_IN_MAP": "Zooms in the map",
     "ZOOM_OUT_MAP": "Zooms out the map",
@@ -83,7 +83,7 @@
     "FONT_INCREASE": "Increase font ",
     "FONT_DECREASE": "Decrease font",
     "SHOW_LINKTEXT": "Show the linktext instead of the link icon",
-    "INFO": "Opens the info screen"
+    "INFO": "Opens info and shortcuts"
   },
   "MODALS": {
     "GENERAL": {
@@ -133,7 +133,8 @@
       "DELETED_AT": "Mindmap is going to be deleted at:",
       "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
       "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "CONFIRM_DELETE": "Delete?",
+      "SHORTCUTS_TITLE": "Keyboard shortcuts"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -193,10 +194,8 @@
       "NODE_NAME": "Node name",
       "TITLE": "Settings",
       "TTL": "Last known date of deletion",
-      "SHOW_LINKTEXT": "Show linktext"
-    },
-    "SHORTCUTS": {
-      "TITLE": "Shortcuts"
+      "SHOW_LINKTEXT": "Show linktext",
+      "DARK_MODE": "Dark mode"
     }
   },
   "MESSAGES": {
@@ -216,7 +215,8 @@
     "MAP_UPDATE_SUCCESS": "Mindmap successfully updated!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importing mindmap...",
-      "MAP_UPDATE_IN_PROGRESS": "Updating mindmap..."
+      "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
+      "MERMAID_SEVERAL_TREES": "Each tree became its own mindmap block. Mermaid tools outside TeamMapper render one block at a time."
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",
@@ -232,7 +232,9 @@
       "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!",
       "IMPORT_ERROR": "Could not import mindmap",
-      "AI_MERMAID_ERROR": "Mermaid could not be generated"
+      "AI_MERMAID_ERROR": "Mermaid could not be generated",
+      "IMAGE_STORAGE_FULL": "The image storage of this mind map is full. A removed image frees its space within 7 days of its upload.",
+      "IMAGE_UPLOAD_ERROR": "The image could not be uploaded."
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",

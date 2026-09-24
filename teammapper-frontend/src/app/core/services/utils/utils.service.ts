@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { isRasterImageFile } from '../mmp/node-images';
 
 @Injectable({
   providedIn: 'root',
@@ -34,9 +35,11 @@ export class UtilsService {
   }
 
   /**
-   * Return an observable for drop events for images.
+   * Return an observable of raster image files dropped onto the page. A drop
+   * of markup, such as an image dragged from another web page, yields only a
+   * remote URL, which the upload cannot take, so it emits nothing.
    */
-  public static observableDroppedImages(): Observable<string> {
+  public static observableDroppedImages(): Observable<File> {
     return new Observable(subscriber => {
       window.document.ondragover = (event: DragEvent) => {
         event.preventDefault();
@@ -45,22 +48,9 @@ export class UtilsService {
       window.document.body.ondrop = (event: DragEvent) => {
         event.preventDefault();
 
-        if (event.dataTransfer.files[0]) {
-          const fileReader = new FileReader();
-
-          fileReader.onload = () => {
-            subscriber.next(fileReader.result.toString());
-          };
-
-          fileReader.onerror = subscriber.error;
-
-          fileReader.readAsDataURL(event.dataTransfer.files[0]);
-        } else {
-          subscriber.next(
-            event.dataTransfer
-              .getData('text/html')
-              .match(/src\s*=\s*"(.+?)"/)[1]
-          );
+        const droppedFile = event.dataTransfer?.files[0];
+        if (droppedFile && isRasterImageFile(droppedFile)) {
+          subscriber.next(droppedFile);
         }
       };
     });
@@ -114,7 +104,10 @@ export class UtilsService {
    * Return true if the two objects have the same structure (same keys).
    */
   public static isSameJSONStructure(json1: object, json2: object): boolean {
-    function checkObjectStructure(object1: object, object2: object): boolean {
+    function checkObjectStructure(
+      object1: Record<string, unknown>,
+      object2: Record<string, unknown>
+    ): boolean {
       for (const key of Object.keys(object1)) {
         if (
           !Object.prototype.hasOwnProperty.call(object1, key) ||
@@ -124,7 +117,12 @@ export class UtilsService {
         }
 
         if (typeof object1[key] === 'object') {
-          if (!checkObjectStructure(object1[key], object2[key])) {
+          if (
+            !checkObjectStructure(
+              object1[key] as Record<string, unknown>,
+              object2[key] as Record<string, unknown>
+            )
+          ) {
             return false;
           }
         }
@@ -133,8 +131,11 @@ export class UtilsService {
       return true;
     }
 
+    const first = json1 as Record<string, unknown>;
+    const second = json2 as Record<string, unknown>;
+
     return (
-      checkObjectStructure(json1, json2) && checkObjectStructure(json2, json1)
+      checkObjectStructure(first, second) && checkObjectStructure(second, first)
     );
   }
 
@@ -155,18 +156,5 @@ export class UtilsService {
     message = await this.translate(message);
 
     return confirm(message);
-  }
-
-  /**
-   * Converts a blob to a data url
-   */
-  public blobToBase64(blob: Blob): Promise<string | ArrayBuffer> {
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    return new Promise(resolve => {
-      reader.onloadend = () => {
-        resolve(reader.result);
-      };
-    });
   }
 }

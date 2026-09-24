@@ -1,3 +1,4 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   TranslateService,
@@ -12,7 +13,7 @@ import { ToolbarComponent } from './toolbar.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
-import { ExportNodeProperties } from '@mmp/map/types';
+import { ExportNodeProperties } from '@teammapper/shared';
 import { of, Observable, BehaviorSubject } from 'rxjs';
 import { provideRouter } from '@angular/router';
 
@@ -26,10 +27,12 @@ class MmpServiceStub {
   exportMap = jest.fn();
   nodeChildren = jest.fn().mockReturnValue([]);
   getSelectedNode = jest.fn();
+  hasSelectedNode = jest.fn().mockReturnValue(true);
   selectNode = jest.fn();
   updateNode = jest.fn();
   addNodeLink = jest.fn();
   addNode = jest.fn();
+  addTree = jest.fn();
   removeNodeLink = jest.fn();
   toggleBranchVisibility = jest.fn();
   distributeNodes = jest.fn();
@@ -117,6 +120,15 @@ async function setupTestBed(): Promise<TestContext> {
     canUndoSubject,
     canRedoSubject,
   };
+}
+
+/**
+ * Re-render after a stub changes what the selection getters return. The test
+ * bed runs zoneless, so nothing marks the view dirty on its own.
+ */
+function refresh(ctx: TestContext): void {
+  ctx.fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+  ctx.fixture.detectChanges();
 }
 
 describe('ToolbarComponent', () => {
@@ -251,40 +263,24 @@ describe('ToolbarComponent', () => {
     expect(ctx.mmpService.addNodeLink).not.toHaveBeenCalled();
   });
 
-  it('should reject SVG file type in image upload', () => {
+  it('should reject SVG file type in image upload', async () => {
     const mockFile = new File([''], 'test.svg', { type: 'image/svg+xml' });
-    const mockFileReader = {
-      readAsDataURL: jest.fn(),
-      result: '',
-      onload: null,
-    };
-    window.FileReader = jest.fn(
-      () => mockFileReader
-    ) as unknown as typeof FileReader;
 
-    ctx.component.initImageUpload({
+    await ctx.component.initImageUpload({
       target: { files: [mockFile] },
-    } as unknown as InputEvent);
+    } as unknown as Event);
 
-    expect(mockFileReader.readAsDataURL).not.toHaveBeenCalled();
+    expect(ctx.mmpService.addNodeImage).not.toHaveBeenCalled();
   });
 
-  it('should read image file as data URL', () => {
+  it('should hand a raster image file to addNodeImage with the resize', async () => {
     const mockFile = new File([''], 'test.jpg', { type: 'image/jpeg' });
-    const mockFileReader = {
-      readAsDataURL: jest.fn(),
-      result: '',
-      onload: null,
-    };
-    window.FileReader = jest.fn(
-      () => mockFileReader
-    ) as unknown as typeof FileReader;
 
-    ctx.component.initImageUpload({
+    await ctx.component.initImageUpload({
       target: { files: [mockFile] },
-    } as unknown as InputEvent);
+    } as unknown as Event);
 
-    expect(mockFileReader.readAsDataURL).toHaveBeenCalledWith(mockFile);
+    expect(ctx.mmpService.addNodeImage).toHaveBeenCalledWith(mockFile, true);
   });
 
   it('should read JSON file as text', () => {
@@ -294,7 +290,7 @@ describe('ToolbarComponent', () => {
     const mockFileReader = {
       readAsText: jest.fn(),
       result: '{}',
-      onload: null,
+      onload: null as FileReader['onload'],
     };
     window.FileReader = jest.fn(
       () => mockFileReader
@@ -302,7 +298,7 @@ describe('ToolbarComponent', () => {
 
     ctx.component.initJSONUpload({
       target: { files: [mockFile] },
-    } as unknown as InputEvent);
+    } as unknown as Event);
 
     expect(mockFileReader.readAsText).toHaveBeenCalledWith(mockFile);
   });
@@ -365,6 +361,81 @@ describe('ToolbarComponent', () => {
       button.click();
 
       expect(ctx.mmpService.distributeNodes).toHaveBeenCalled();
+    });
+  });
+
+  describe('with nothing selected', () => {
+    const disabled = (selector: string): boolean | undefined =>
+      ctx.fixture.nativeElement.querySelector(selector)?.disabled;
+
+    beforeEach(() => {
+      ctx.mmpService.hasSelectedNode.mockReturnValue(false);
+      ctx.mmpService.selectNode.mockReturnValue(null);
+      refresh(ctx);
+    });
+
+    it('disables the buttons that act on the selected node', () => {
+      for (const selector of [
+        '#copy-node-button',
+        '#cut-node-button',
+        '#hide-child-nodes-button',
+        '#lock-node-button',
+        '#node-image-button',
+        '#image-upload',
+        '#bold-button',
+        '#italic-button',
+        '#add-link-button',
+      ]) {
+        expect(disabled(selector)).toBe(true);
+      }
+    });
+
+    it('keeps paste, add tree and distribute enabled', () => {
+      for (const selector of [
+        '#paste-node-button',
+        '#add-tree-button',
+        '#distribute-nodes-button',
+      ]) {
+        expect(disabled(selector)).toBe(false);
+      }
+    });
+
+    it('enables the node buttons again once a node is selected', () => {
+      ctx.mmpService.hasSelectedNode.mockReturnValue(true);
+      refresh(ctx);
+
+      expect(disabled('#copy-node-button')).toBe(false);
+    });
+
+    it('changes no font style or weight', () => {
+      ctx.component.toogleNodeFontStyle();
+      ctx.component.toogleNodeFontWeight();
+
+      expect(ctx.mmpService.updateNode).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('add tree', () => {
+    const query = (selector: string): HTMLButtonElement | null =>
+      ctx.fixture.nativeElement.querySelector(selector);
+
+    it('shows the add-tree button and no detached-node button', () => {
+      expect(query('#add-tree-button')).not.toBeNull();
+      expect(query('#add-detached-node-button')).toBeNull();
+    });
+
+    it('adds a tree when the add-tree button is clicked', () => {
+      query('#add-tree-button')?.click();
+
+      expect(ctx.mmpService.addTree).toHaveBeenCalled();
+      expect(ctx.mmpService.addNode).not.toHaveBeenCalled();
+    });
+
+    it('keeps the add-tree button enabled with nothing selected', () => {
+      ctx.mmpService.hasSelectedNode.mockReturnValue(false);
+      refresh(ctx);
+
+      expect(query('#add-tree-button')?.disabled).toBe(false);
     });
   });
 });

@@ -20,6 +20,9 @@ export interface LLMProps {
   timeoutMs?: string
 }
 
+/** Whether to trust X-Forwarded-For: never, always, or for that many hops. */
+export type TrustProxy = boolean | number
+
 class ConfigService {
   private env: EnvProps
 
@@ -75,9 +78,15 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
-  public isWsTrustProxy(): boolean {
-    const value = this.getValue('WS_TRUST_PROXY', false)
-    return value?.toLowerCase() === 'true'
+  /**
+   * Reads WS_TRUST_PROXY: `true` trusts every proxy, a positive integer
+   * trusts that many hops, anything else trusts none.
+   */
+  public getTrustProxy(): TrustProxy {
+    const value = this.getValue('WS_TRUST_PROXY', false)?.trim().toLowerCase()
+    if (value === 'true') return true
+    if (value && /^[1-9]\d*$/.test(value)) return parseInt(value, 10)
+    return false
   }
 
   public isYjsRateLimitingEnabled(): boolean {
@@ -99,6 +108,24 @@ class ConfigService {
 
   public getWsPerIpRateWindowMs(): number {
     return this.parsePositiveInt('WS_PER_IP_RATE_WINDOW_MS', 10000)
+  }
+
+  /** Total bytes of the images one map may hold; 50 MB by default. */
+  public getMaxImageBytesPerMap(): number {
+    return this.parsePositiveInt('MAX_IMAGE_BYTES_PER_MAP', 50_000_000)
+  }
+
+  /** Largest single image upload in bytes; the frontend resize stays below the default. */
+  public getUploadImageMaxSizeBytes(): number {
+    return this.parsePositiveInt('UPLOAD_IMAGE_MAX_SIZE_BYTES', 150_000)
+  }
+
+  public getUploadImageRateLimit(): number {
+    return this.parsePositiveInt('UPLOAD_IMAGE_RATE_LIMIT', 30)
+  }
+
+  public getUploadImageRateWindowMs(): number {
+    return this.parsePositiveInt('UPLOAD_IMAGE_RATE_WINDOW_MS', 60_000)
   }
 
   private parsePositiveInt(key: string, fallback: number): number {

@@ -4,18 +4,20 @@ import { Repository, QueryRunner, In } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
-  IMmpClientMap,
+  ClientMap,
   IMmpClientNodeBasics,
-  IMmpClientMapInfo,
-} from '../types'
+  ClientMapInfo,
+} from '@teammapper/shared'
 import {
   mapClientBasicNodeToMmpRootNode,
   mapClientNodeToMmpNode,
   mapMmpMapToClient,
 } from '../utils/clientServerMapping'
+import { orderNodesFromRoot } from '../utils/nodeOrdering'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid'
 import MalformedUUIDError from './uuid.error'
+import { ImagesService } from './images.service'
 
 @Injectable()
 export class MapsService {
@@ -25,7 +27,8 @@ export class MapsService {
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
-    private mapsRepository: Repository<MmpMap>
+    private mapsRepository: Repository<MmpMap>,
+    private imagesService: ImagesService
   ) {}
 
   private async findRootNode(mapId: string): Promise<MmpNode | null> {
@@ -34,13 +37,13 @@ export class MapsService {
     })
   }
 
-  async getMapsOfUser(userId: string): Promise<IMmpClientMapInfo[]> {
+  async getMapsOfUser(userId: string): Promise<ClientMapInfo[]> {
     if (!userId) return []
     const mapsOfUser = await this.mapsRepository.find({
       where: { ownerExternalId: userId },
     })
 
-    const mapsInfo: IMmpClientMapInfo[] = await Promise.all(
+    const mapsInfo: ClientMapInfo[] = await Promise.all(
       mapsOfUser.map(async (map: MmpMap) => {
         return {
           uuid: map.id,
@@ -52,7 +55,11 @@ export class MapsService {
       })
     )
 
-    mapsInfo.sort((a, b) => (b.ttl?.getTime() ?? 0) - (a.ttl?.getTime() ?? 0))
+    mapsInfo.sort(
+      (a, b) =>
+        (b.ttl ? new Date(b.ttl).getTime() : 0) -
+        (a.ttl ? new Date(a.ttl).getTime() : 0)
+    )
 
     return mapsInfo.slice(0, 20)
   }
@@ -76,7 +83,7 @@ export class MapsService {
     await this.mapsRepository.update(uuid, { lastAccessed })
   }
 
-  async exportMapToClient(uuid: string): Promise<IMmpClientMap | undefined> {
+  async exportMapToClient(uuid: string): Promise<ClientMap | undefined> {
     const map = await this.findMap(uuid)
     if (!map) {
       this.logger.warn(`exportMapToClient(): Map was not found`)
@@ -96,7 +103,9 @@ export class MapsService {
    * Bulk-inserts nodes into a map within a single transaction. Used by the
    * REST duplicate-map endpoint, where the source nodes are already valid
    * MmpNode entities. Yjs persistence has its own path that does not rely on
-   * this method.
+   * this method. The method saves row by row, so the parent foreign key
+   * requires parents first. It orders the nodes that way and leaves out every
+   * node no root reaches.
    */
   async addNodes(mapId: string, nodes: Partial<MmpNode>[]): Promise<MmpNode[]> {
     if (!mapId || nodes.length === 0) {
@@ -114,7 +123,7 @@ export class MapsService {
       const nodesToCreate = await this.filterOutExistingNodes(
         queryRunner,
         mapId,
-        nodes as MmpNode[]
+        orderNodesFromRoot(nodes) as MmpNode[]
       )
 
       const createdNodes = await this.saveAllNodesInTransaction(
@@ -246,7 +255,7 @@ export class MapsService {
   /**
    * Replaces all nodes in a map atomically. Used by REST import flows.
    */
-  async updateMap(clientMap: IMmpClientMap): Promise<MmpMap | null> {
+  async updateMap(clientMap: ClientMap): Promise<MmpMap | null> {
     const queryRunner = await this.createQueryRunner()
 
     try {
@@ -275,7 +284,7 @@ export class MapsService {
 
   private async saveValidNodes(
     queryRunner: QueryRunner,
-    clientMap: IMmpClientMap
+    clientMap: ClientMap
   ): Promise<void> {
     const mmpNodes = clientMap.data.map((x) =>
       mapClientNodeToMmpNode(x, clientMap.uuid)
@@ -354,20 +363,31 @@ export class MapsService {
       (id) => id['map_id']
     )
 
-    if (outdatedMapsIdsFlat.length > 0) {
-      return (
-        await this.mapsRepository
-          .createQueryBuilder()
-          .where('id IN (:...ids)', { ids: outdatedMapsIdsFlat })
-          .delete()
-          .execute()
-      ).affected
-    }
+    if (outdatedMapsIdsFlat.length === 0) return 0
 
-    return 0
+    const affected = (
+      await this.mapsRepository
+        .createQueryBuilder()
+        .where('id IN (:...ids)', { ids: outdatedMapsIdsFlat })
+        .delete()
+        .execute()
+    ).affected
+    await this.deleteImagesOfMaps(outdatedMapsIdsFlat)
+    return affected
   }
 
+  private async deleteImagesOfMaps(mapIds: string[]): Promise<void> {
+    for (const mapId of mapIds) {
+      await this.imagesService.deleteImagesOfMap(mapId)
+    }
+  }
+
+  /**
+   * Deletes the map, then its images. The foreign key cascade reaches only
+   * what the database holds, so the image store is called explicitly.
+   */
   async deleteMap(uuid: string): Promise<void> {
     await this.mapsRepository.delete({ id: uuid })
+    await this.imagesService.deleteImagesOfMap(uuid)
   }
 }

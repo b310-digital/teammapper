@@ -1,15 +1,15 @@
 import {
   Component,
   ElementRef,
-  ViewChild,
   OnDestroy,
   AfterViewInit,
   inject,
+  viewChild,
 } from '@angular/core';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
-import { CachedMapEntry } from 'src/app/shared/models/cached-map.model';
+import { CachedMapEntry } from '@teammapper/shared';
 
 import { first, Subscription } from 'rxjs';
 
@@ -23,9 +23,9 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private mmpService = inject(MmpService);
   private mapSyncService = inject(MapSyncService);
 
-  @ViewChild('map') mapWrapper: ElementRef<HTMLElement>;
+  readonly mapWrapper = viewChild.required<ElementRef<HTMLElement>>('map');
 
-  private mapSyncServiceSubscription: Subscription;
+  private mapSyncServiceSubscription: Subscription | null = null;
 
   public async ngAfterViewInit() {
     const settings = this.settingsService.getCachedUserSettings();
@@ -34,10 +34,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       .getAttachedMapObservable()
       .pipe(first((val: CachedMapEntry | null) => val !== null))
       .subscribe(async (_result: CachedMapEntry | null) => {
+        // With no cached settings mmp falls back to its own defaults rather
+        // than refusing to draw the map.
         await this.mmpService.create(
           'map_1',
-          this.mapWrapper.nativeElement,
-          settings.mapOptions
+          this.mapWrapper().nativeElement,
+          settings?.mapOptions
         );
         this.mapSyncService.initMap();
       });
@@ -46,6 +48,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy() {
     this.mapSyncService.reset();
     this.mmpService.remove();
-    this.mapSyncServiceSubscription.unsubscribe();
+    this.mapSyncServiceSubscription?.unsubscribe();
   }
 }

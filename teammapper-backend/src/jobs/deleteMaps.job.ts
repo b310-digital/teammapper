@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core'
 import { MapsService } from '../map/services/maps.service'
-import AppModule from '../app.module'
+import { JobsModule } from './jobs.module'
 import { Logger } from '@nestjs/common'
 import configService from '../config.service'
 
 async function bootstrap() {
-  const application = await NestFactory.createApplicationContext(AppModule)
+  const application = await NestFactory.createApplicationContext(JobsModule)
 
   const logger = new Logger('TaskRunner')
   const mapsService = application.get(MapsService)

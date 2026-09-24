@@ -1,9 +1,7 @@
 import sanitizeHtml from 'sanitize-html'
+import { isImageDataUrl, isImageReference } from '@teammapper/shared'
 import { MmpNode } from '../entities/mmpNode.entity'
 
-const ALLOWED_IMAGE_MIMES = ['jpeg', 'png', 'gif', 'webp']
-const IMAGE_DATA_URI_REGEX =
-  /^data:image\/(jpeg|png|gif|webp);base64,[A-Za-z0-9+/=]+$/
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/
 const ALLOWED_FONT_STYLES = ['normal', 'italic']
 const ALLOWED_FONT_WEIGHTS = ['normal', 'bold']
@@ -15,10 +13,10 @@ const sanitizeName = (name: string | undefined | null): string => {
   return sanitizeHtml(name, { allowedTags: [], allowedAttributes: {} })
 }
 
-/** Validate imageSrc is a safe raster base64 data URI. Returns empty string for invalid values. */
+/** Validate imageSrc is an image reference or a safe raster base64 data URI. Returns empty string for invalid values. */
 const sanitizeImageSrc = (src: string | undefined | null): string => {
   if (!src) return ''
-  return IMAGE_DATA_URI_REGEX.test(src) ? src : ''
+  return isImageReference(src) || isImageDataUrl(src) ? src : ''
 }
 
 /** Validate linkHref uses only http or https protocol. Returns empty string for invalid values. */
@@ -85,8 +83,4 @@ export {
   sanitizeFontStyle,
   sanitizeFontWeight,
   sanitizeNodeFields,
-  ALLOWED_IMAGE_MIMES,
-  ALLOWED_LINK_PROTOCOLS,
-  ALLOWED_FONT_STYLES,
-  ALLOWED_FONT_WEIGHTS,
 }

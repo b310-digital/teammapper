@@ -6,11 +6,11 @@ import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
-import { ExportNodeProperties } from '@mmp/map/types';
 import { createMockUtilsService } from '../../../../test/mocks/utils-service.mock';
 import { Observable } from 'rxjs';
-import { UserSettings } from '../../../shared/models/settings.model';
+import { ExportNodeProperties, UserSettings } from '@teammapper/shared';
 import { YjsSyncService } from './yjs-sync.service';
+import { ImageHandlers, ImageUploadError } from '../mmp/node-images';
 
 // Narrow accessor: only exposes the sync service handle, not its internals
 function getSync(service: MapSyncService): YjsSyncService {
@@ -33,7 +33,6 @@ function createMockNode(
     image: undefined,
     link: undefined,
     isRoot: false,
-    detached: false,
     ...overrides,
   };
 }
@@ -42,6 +41,7 @@ describe('MapSyncService', () => {
   let service: MapSyncService;
   let mmpService: jest.Mocked<MmpService>;
   let settingsService: jest.Mocked<SettingsService>;
+  let httpService: jest.Mocked<HttpService>;
 
   const mockNode = createMockNode({ id: 'node-1', name: 'Test Node' });
   const mockMapSnapshot: ExportNodeProperties[] = [mockNode];
@@ -59,10 +59,13 @@ describe('MapSyncService', () => {
       removeNode: jest.fn(),
       highlightNode: jest.fn(),
       exportAsJSON: jest.fn().mockReturnValue([]),
-      undo: jest.fn(),
-      redo: jest.fn(),
-      history: jest.fn().mockReturnValue({ snapshots: [], index: 0 }),
+      registerImageHandlers: jest.fn(),
     } as unknown as jest.Mocked<MmpService>;
+    httpService = {
+      get: jest.fn(),
+      post: jest.fn(),
+      postForm: jest.fn(),
+    } as unknown as jest.Mocked<HttpService>;
 
     settingsService = {
       getCachedUserSettings: jest.fn(),
@@ -89,10 +92,7 @@ describe('MapSyncService', () => {
       providers: [
         MapSyncService,
         { provide: MmpService, useValue: mmpService },
-        {
-          provide: HttpService,
-          useValue: { get: jest.fn(), post: jest.fn() },
-        },
+        { provide: HttpService, useValue: httpService },
         {
           provide: StorageService,
           useValue: { get: jest.fn(), set: jest.fn() },
@@ -140,7 +140,12 @@ describe('MapSyncService', () => {
     it('loads map data into mmpService on initMap', () => {
       service.initMap();
 
-      expect(mmpService.new).toHaveBeenCalledWith(mockMapSnapshot);
+      expect(mmpService.new).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'node-1',
+          name: 'Test Node',
+        }),
+      ]);
     });
 
     it('selects root node on initMap', () => {
@@ -255,6 +260,85 @@ describe('MapSyncService', () => {
       await service.prepareExistingMap('test-uuid', '');
 
       expect(setWritableSpy).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe('node images', () => {
+    const REFERENCE = 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+
+    const handlers = (): ImageHandlers =>
+      mmpService.registerImageHandlers.mock.calls[0][0];
+
+    const openMap = async (secret: string) => {
+      // A failed fetch still stores the secret the page was opened with.
+      httpService.get.mockResolvedValueOnce({ ok: false } as Response);
+      await service.prepareExistingMap('map-uuid', secret);
+      service.attachMap({
+        key: 'map-map-uuid',
+        cachedMap: {
+          uuid: 'map-uuid',
+          data: [],
+          lastModified: 0,
+          createdAt: 0,
+          deletedAt: 0,
+          deleteAfterDays: 30,
+          options: {},
+        },
+      });
+    };
+
+    const uploadResponse = (status: number, body: unknown): Response =>
+      ({
+        ok: status >= 200 && status < 300,
+        status,
+        json: () => Promise.resolve(body),
+      }) as unknown as Response;
+
+    it('resolves a reference to the image endpoint of the open map', async () => {
+      await openMap('secret');
+
+      expect(handlers().resolveUrl(REFERENCE)).toBe(
+        'api/maps/map-uuid/images/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+      );
+    });
+
+    it('resolves nothing while no map is open', () => {
+      expect(handlers().resolveUrl(REFERENCE)).toBeNull();
+    });
+
+    it('posts the file with the secret in the Authorization header', async () => {
+      await openMap('secret');
+      httpService.postForm.mockResolvedValueOnce(
+        uploadResponse(201, { reference: REFERENCE })
+      );
+
+      const reference = await handlers().upload(new Blob(['x']));
+
+      expect(reference).toBe(REFERENCE);
+      const [, endpoint, form, headers] = httpService.postForm.mock.calls[0];
+      expect(endpoint).toBe('/maps/map-uuid/images');
+      expect(form.get('file')).toBeInstanceOf(Blob);
+      expect(headers).toEqual({ Authorization: 'secret' });
+    });
+
+    it('throws the status of a rejected upload', async () => {
+      await openMap('secret');
+      httpService.postForm.mockResolvedValueOnce(uploadResponse(413, {}));
+
+      await expect(handlers().upload(new Blob(['x']))).rejects.toEqual(
+        new ImageUploadError(413)
+      );
+    });
+
+    it('rejects a response that carries no reference', async () => {
+      await openMap('secret');
+      httpService.postForm.mockResolvedValueOnce(
+        uploadResponse(201, { reference: 'https://example.com/a.png' })
+      );
+
+      await expect(handlers().upload(new Blob(['x']))).rejects.toBeInstanceOf(
+        ImageUploadError
+      );
     });
   });
 

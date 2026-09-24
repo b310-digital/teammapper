@@ -83,7 +83,8 @@
               "app",
               ".app",
               "host.docker.internal"
-            ]
+            ],
+            "prebundle": false
           },
           "configurations": {
             "production": {
@@ -110,24 +111,8 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html", "e2e/**/*.ts"]
           }
-        },
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "teammapper:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "teammapper:serve:production"
-            }
-          }
-        },
-        "deploy": {
-          "builder": "angular-cli-ghpages:deploy",
-          "options": {}
         }
       }
     }
