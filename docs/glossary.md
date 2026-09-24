@@ -86,10 +86,9 @@ the icon. "Linktext" is the app's own compound.
 ### Image
 
 An optional picture on a node. Always "image", never "picture" or
-"attachment". A node holds at most one, in one of two forms: an **image
-reference**, which every image a current frontend adds uses, or an inline
-raster data URL, which existing maps, older clients and imports carry. Exports
-write every image as a data URL.
+"attachment". A node holds at most one. A current frontend adds every image as
+an **image reference**; existing maps, older clients and imports carry an
+inline raster data URL. Exports write every image as a data URL.
 
 ### Image reference
 

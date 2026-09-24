@@ -258,10 +258,7 @@ export class MapSyncService implements OnDestroy {
     return `${API_URL.ROOT}/maps/${mapId}/images/${imageIdOf(reference)}`;
   }
 
-  /**
-   * Posts the image to the open map. The secret goes in the Authorization
-   * header, which keeps it out of access logs.
-   */
+  /** Posts the image to the open map, with the secret as Authorization. */
   private async uploadImage(image: Blob): Promise<ImageReference> {
     const mapId = this.attachedMapId();
     if (!mapId) throw new ImageUploadError(0);

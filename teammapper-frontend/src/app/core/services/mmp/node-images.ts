@@ -1,4 +1,4 @@
-import { ImageReference, RASTER_IMAGE_MIME_TYPES } from '@teammapper/shared';
+import { ImageReference, isRasterImageMimeType } from '@teammapper/shared';
 import type { ImageUrlResolver } from '@teammapper/mmp';
 
 /** Width in pixels the toolbar and the drop resize an image to. */
@@ -25,7 +25,7 @@ export class ImageUploadError extends Error {
 
 /** True for a PNG, JPEG, GIF or WebP file; the server accepts no other. */
 export const isRasterImageFile = (file: Blob): boolean =>
-  (RASTER_IMAGE_MIME_TYPES as readonly string[]).includes(file.type);
+  isRasterImageMimeType(file.type);
 
 const loadImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {

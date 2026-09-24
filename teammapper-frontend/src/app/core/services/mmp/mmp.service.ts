@@ -630,9 +630,13 @@ export class MmpService implements OnDestroy {
     if (!node) return;
 
     try {
-      if (!this.imageHandlers) throw new Error('No map can take an upload');
+      if (!this.imageHandlers)
+        throw new Error('No image handlers are registered');
       const upload = resize ? await resizeImage(image) : image;
       const reference = await this.imageHandlers.upload(upload);
+      // The upload succeeded; a node deleted meanwhile needs no image and no
+      // error. The cleanup job deletes the unused image.
+      if (!this.existNode(node.id)) return;
       await this.updateNode('imageSrc', reference, true, true, node.id);
     } catch (error) {
       await this.showImageUploadError(error);

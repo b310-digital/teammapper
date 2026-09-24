@@ -568,6 +568,17 @@ describe('MmpService', () => {
       upload = jest.fn().mockResolvedValue(REFERENCE);
       service.registerImageHandlers({ resolveUrl: jest.fn(), upload });
       mockMap.instance.getSelectedNode.mockReturnValue({ id: 'node-a' });
+      mockMap.instance.existNode.mockReturnValue(true);
+    });
+
+    it('sets no image and shows no error when the node was deleted during the upload', async () => {
+      mockMap.instance.existNode.mockReturnValue(false);
+
+      await service.addNodeImage(image);
+
+      expect(upload).toHaveBeenCalled();
+      expect(mockMap.instance.updateNode).not.toHaveBeenCalled();
+      expect(toastrService.error).not.toHaveBeenCalled();
     });
 
     it('uploads the image and sets the reference on the selected node', async () => {
