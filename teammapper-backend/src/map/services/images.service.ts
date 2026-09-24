@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 import {
+  IMAGE_REFERENCE_PREFIX,
   ImageReference,
   RasterImageMimeType,
   toImageReference,
@@ -10,6 +11,11 @@ import {
 import { MmpImage } from '../entities/mmpImage.entity'
 import { ImageStore } from './image-store'
 import configService from '../../config.service'
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** How long an unused image survives after its upload, so undo can restore it. */
+export const UNUSED_IMAGE_RETENTION_DAYS = 7
 
 /** An upload that already passed the size and type checks. */
 export interface ImageUpload {
@@ -23,7 +29,7 @@ export interface StoredImage {
   mimetype: RasterImageMimeType
 }
 
-/** Stores and reads node images. */
+/** Stores, reads, copies and deletes node images. */
 @Injectable()
 export class ImagesService {
   private readonly logger = new Logger(ImagesService.name)
@@ -64,6 +70,65 @@ export class ImagesService {
     const data = await this.imageStore.get(mapId, imageId)
     if (!data) return null
     return { data, mimetype: image.mimetype }
+  }
+
+  /**
+   * Copies every image of the source map to the target map under the same
+   * id, so no node reference needs rewriting. The copies count as uploaded
+   * now.
+   */
+  async copyImages(sourceMapId: string, targetMapId: string): Promise<void> {
+    const images = await this.imagesRepository.find({
+      where: { mapId: sourceMapId },
+    })
+    if (images.length === 0) return
+    await this.imageStore.copy(
+      sourceMapId,
+      targetMapId,
+      images.map((image) => image.id)
+    )
+    await this.imagesRepository.insert(
+      images.map(({ id, mimetype, size }) => ({
+        mapId: targetMapId,
+        id,
+        mimetype,
+        size,
+      }))
+    )
+  }
+
+  /** Deletes the metadata rows of a map, then the bytes. */
+  async deleteImagesOfMap(mapId: string): Promise<void> {
+    await this.imagesRepository.delete({ mapId })
+    await this.imageStore.deleteAllOfMap(mapId)
+  }
+
+  /**
+   * Deletes every image that no node row of its map references and that was
+   * uploaded more than `afterDays` days ago. Keeping recent images lets undo
+   * restore a removed image for that long. Returns the number deleted.
+   */
+  async deleteUnusedImages(
+    afterDays = UNUSED_IMAGE_RETENTION_DAYS
+  ): Promise<number> {
+    const uploadedBefore = new Date(Date.now() - afterDays * DAY_MS)
+    const unused = await this.findUnusedImages(uploadedBefore)
+    for (const image of unused) {
+      await this.imagesRepository.delete({ mapId: image.mapId, id: image.id })
+      await this.imageStore.delete(image.mapId, image.id)
+    }
+    return unused.length
+  }
+
+  private findUnusedImages(uploadedBefore: Date): Promise<MmpImage[]> {
+    return this.imagesRepository
+      .createQueryBuilder('image')
+      .where('image.createdAt < :uploadedBefore', { uploadedBefore })
+      .andWhere(
+        `NOT EXISTS (SELECT 1 FROM "mmp_node" "node" WHERE "node"."nodeMapId" = "image"."mapId" AND "node"."imageSrc" = :prefix || "image"."id"::text)`,
+        { prefix: IMAGE_REFERENCE_PREFIX }
+      )
+      .getMany()
   }
 
   /** Sum of the sizes of the map's images, read from the metadata table. */

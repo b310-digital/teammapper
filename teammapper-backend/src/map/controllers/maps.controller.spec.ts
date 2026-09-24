@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import MapsController from './maps.controller'
 import { MapsService } from '../services/maps.service'
+import { ImagesService } from '../services/images.service'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import { INestApplication, NotFoundException } from '@nestjs/common'
@@ -20,6 +21,7 @@ describe('MapsController', () => {
   let mapsController: MapsController
   let mapsService: MapsService
   let yjsDocManager: YjsDocManagerService
+  let imagesService: ImagesService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -46,12 +48,17 @@ describe('MapsController', () => {
           provide: YjsGateway,
           useValue: { closeConnectionsForMap: jest.fn() },
         },
+        {
+          provide: ImagesService,
+          useValue: { copyImages: jest.fn() },
+        },
       ],
     }).compile()
 
     mapsController = module.get<MapsController>(MapsController)
     mapsService = module.get<MapsService>(MapsService)
     yjsDocManager = module.get<YjsDocManagerService>(YjsDocManagerService)
+    imagesService = module.get<ImagesService>(ImagesService)
   })
 
   describe('duplicate', () => {
@@ -84,6 +91,10 @@ describe('MapsController', () => {
       const response = await mapsController.duplicate(oldMap.id)
 
       expect(response).toEqual(result)
+      expect(imagesService.copyImages).toHaveBeenCalledWith(
+        oldMap.id,
+        newMap.id
+      )
 
       expect(newMap.name).toEqual(oldMap.name)
       expect(newMap.lastModified).toEqual(oldMap.lastModified)
@@ -376,6 +387,10 @@ describe('MapsController (HTTP wire contract)', () => {
         {
           provide: YjsGateway,
           useValue: { closeConnectionsForMap: jest.fn() },
+        },
+        {
+          provide: ImagesService,
+          useValue: { copyImages: jest.fn() },
         },
       ],
     }).compile()
