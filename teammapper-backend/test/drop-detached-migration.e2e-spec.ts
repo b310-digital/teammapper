@@ -6,6 +6,8 @@ import { MmpNode } from '../src/map/entities/mmpNode.entity'
 import { MmpImage } from '../src/map/entities/mmpImage.entity'
 import { MmpImageData } from '../src/map/entities/mmpImageData.entity'
 import { MapsService } from '../src/map/services/maps.service'
+import { ImagesService } from '../src/map/services/images.service'
+import { DatabaseImageStore } from '../src/map/services/database-image-store.service'
 import { AddImageTables1790208000000 } from '../src/migrations/1790208000000-AddImageTables'
 import { hydrateYDoc } from '../src/map/utils/yDocConversion'
 import { CreateMapsAndNodes1638048135450 } from '../src/migrations/1638048135450-CreateMapsAndNodes'
@@ -165,9 +167,14 @@ describe('DropDetachedPropertyFromNodes (e2e)', () => {
   beforeAll(async () => {
     await seedOldRelease()
     dataSource = await upgrade()
+    const imagesService = new ImagesService(
+      dataSource.getRepository(MmpImage),
+      new DatabaseImageStore(dataSource.getRepository(MmpImageData))
+    )
     mapsService = new MapsService(
       dataSource.getRepository(MmpNode),
-      dataSource.getRepository(MmpMap)
+      dataSource.getRepository(MmpMap),
+      imagesService
     )
   })
 

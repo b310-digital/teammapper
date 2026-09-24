@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { MapsService } from './maps.service'
+import { ImagesService } from './images.service'
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Logger } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
@@ -39,7 +40,11 @@ describe('MapsService', () => {
       getRepositoryToken(MmpNode)
     )
 
-    mapsService = new MapsService(nodesRepo, mapsRepo)
+    mapsService = new MapsService(
+      nodesRepo,
+      mapsRepo,
+      moduleFixture.get(ImagesService)
+    )
   })
 
   afterAll(async () => {

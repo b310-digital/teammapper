@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common'
 import * as v from 'valibot'
 import { MapsService } from '../services/maps.service'
+import { ImagesService } from '../services/images.service'
 import { checkWriteAccess } from '../utils/yjsProtocol'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
@@ -34,7 +35,8 @@ export default class MapsController {
   constructor(
     private mapsService: MapsService,
     private yjsDocManager: YjsDocManagerService,
-    private yjsGateway: YjsGateway
+    private yjsGateway: YjsGateway,
+    private imagesService: ImagesService
   ) {}
 
   @Get(':id')
@@ -141,7 +143,12 @@ export default class MapsController {
 
     const newMap = await this.mapsService.createEmptyMap()
 
+    // Read the nodes before copying the images: an image uploaded in between
+    // then gets copied too, instead of a copied reference missing its image.
     const oldNodes = await this.mapsService.findNodes(oldMap.id)
+
+    // The copies keep their ids, so the copied references resolve as is.
+    await this.imagesService.copyImages(oldMap.id, newMap.id)
 
     await this.mapsService.addNodes(newMap.id, oldNodes)
 

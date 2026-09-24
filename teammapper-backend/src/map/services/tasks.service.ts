@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { MapsService } from './maps.service'
+import { ImagesService } from './images.service'
 import configService from '../../config.service'
 
 /*
@@ -12,7 +13,10 @@ import configService from '../../config.service'
 export class TasksService {
   private readonly logger = new Logger(TasksService.name)
 
-  constructor(private mapsService: MapsService) {}
+  constructor(
+    private mapsService: MapsService,
+    private imagesService: ImagesService
+  ) {}
 
   // every day midnight
   @Cron('0 0 * * *', { timeZone: 'UTC' })
@@ -23,5 +27,13 @@ export class TasksService {
     )
     this.logger.log('Deleted rows: ' + affected)
     this.logger.log('--- Finished deleting maps ---')
+  }
+
+  // every day 01:00, one hour after the map deletion
+  @Cron('0 1 * * *', { timeZone: 'UTC' })
+  async deleteUnusedImages() {
+    this.logger.log('--- Deleting unused images ... ---')
+    const deleted = await this.imagesService.deleteUnusedImages()
+    this.logger.log('Deleted images: ' + deleted)
   }
 }

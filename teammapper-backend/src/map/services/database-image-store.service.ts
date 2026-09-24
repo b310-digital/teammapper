@@ -24,4 +24,28 @@ export class DatabaseImageStore extends ImageStore {
     })
     return row?.data ?? null
   }
+
+  /** Copies inside the database, so the bytes never pass through the server. */
+  async copy(
+    sourceMapId: string,
+    targetMapId: string,
+    imageIds: string[]
+  ): Promise<void> {
+    if (imageIds.length === 0) return
+    await this.imageDataRepository.query(
+      `INSERT INTO "mmp_image_data" ("mapId", "id", "data")
+       SELECT $1, "id", "data" FROM "mmp_image_data"
+       WHERE "mapId" = $2 AND "id" = ANY($3::uuid[])
+       ON CONFLICT DO NOTHING`,
+      [targetMapId, sourceMapId, imageIds]
+    )
+  }
+
+  async delete(mapId: string, imageId: string): Promise<void> {
+    await this.imageDataRepository.delete({ mapId, id: imageId })
+  }
+
+  async deleteAllOfMap(mapId: string): Promise<void> {
+    await this.imageDataRepository.delete({ mapId })
+  }
 }

@@ -17,6 +17,7 @@ import { orderNodesFromRoot } from '../utils/nodeOrdering'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid'
 import MalformedUUIDError from './uuid.error'
+import { ImagesService } from './images.service'
 
 @Injectable()
 export class MapsService {
@@ -26,7 +27,8 @@ export class MapsService {
     @InjectRepository(MmpNode)
     private nodesRepository: Repository<MmpNode>,
     @InjectRepository(MmpMap)
-    private mapsRepository: Repository<MmpMap>
+    private mapsRepository: Repository<MmpMap>,
+    private imagesService: ImagesService
   ) {}
 
   private async findRootNode(mapId: string): Promise<MmpNode | null> {
@@ -361,20 +363,31 @@ export class MapsService {
       (id) => id['map_id']
     )
 
-    if (outdatedMapsIdsFlat.length > 0) {
-      return (
-        await this.mapsRepository
-          .createQueryBuilder()
-          .where('id IN (:...ids)', { ids: outdatedMapsIdsFlat })
-          .delete()
-          .execute()
-      ).affected
-    }
+    if (outdatedMapsIdsFlat.length === 0) return 0
 
-    return 0
+    const affected = (
+      await this.mapsRepository
+        .createQueryBuilder()
+        .where('id IN (:...ids)', { ids: outdatedMapsIdsFlat })
+        .delete()
+        .execute()
+    ).affected
+    await this.deleteImagesOfMaps(outdatedMapsIdsFlat)
+    return affected
   }
 
+  private async deleteImagesOfMaps(mapIds: string[]): Promise<void> {
+    for (const mapId of mapIds) {
+      await this.imagesService.deleteImagesOfMap(mapId)
+    }
+  }
+
+  /**
+   * Deletes the map, then its images. The foreign key cascade reaches only
+   * what the database holds, so the image store is called explicitly.
+   */
   async deleteMap(uuid: string): Promise<void> {
     await this.mapsRepository.delete({ id: uuid })
+    await this.imagesService.deleteImagesOfMap(uuid)
   }
 }

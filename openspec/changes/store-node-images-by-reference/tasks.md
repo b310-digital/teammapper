@@ -15,9 +15,9 @@ Each section is one pull request and leaves `main` releasable. PR 1 adds storage
 
 ## 2. PR 2: images follow their map, cleanup of unused images
 
-- [ ] 2.1 Copy images on map duplication and delete them on map deletion
-- [ ] 2.2 Add the daily job in `tasks.service.ts`
-- [ ] 2.3 Tests for the duplication, deletion and cleanup scenarios
+- [x] 2.1 Copy images on map duplication and delete them on map deletion
+- [x] 2.2 Add the daily job in `tasks.service.ts`
+- [x] 2.3 Tests for the duplication, deletion and cleanup scenarios
 
 ## 3. PR 3: upload, render and export references
 
