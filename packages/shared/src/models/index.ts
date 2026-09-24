@@ -28,6 +28,11 @@ export interface MapNodeFont {
 }
 
 export interface MapNodeImage {
+  /**
+   * An `image:<uuid>` reference or a raster data URL. Empty or null means no
+   * image. Typed as string because rows, caches and imports carry unchecked
+   * values; narrow with `isImageReference` and `isImageDataUrl`.
+   */
   src?: string | null;
   size?: number | null;
 }

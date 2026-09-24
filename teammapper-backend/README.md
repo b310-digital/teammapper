@@ -91,6 +91,17 @@ Copy `.env.default` to `.env` and configure the variables below.
 | `WS_PER_IP_RATE_LIMIT` | Maximum connection attempts per IP within the rate window | `10` |
 | `WS_PER_IP_RATE_WINDOW_MS` | Sliding window duration for rate limiting in ms | `10000` |
 
+`WS_TRUST_PROXY` also sets Express `trust proxy`, so the image upload rate limit reads the same client IP.
+
+### Node images
+
+| Variable | Description | Default |
+|---|---|---|
+| `MAX_IMAGE_BYTES_PER_MAP` | Total bytes of the images one map may hold; the server answers 413 to an upload above it | `50000000` |
+| `UPLOAD_IMAGE_MAX_SIZE_BYTES` | Largest single image upload in bytes; the server answers 413 to a larger file | `150000` |
+| `UPLOAD_IMAGE_RATE_LIMIT` | Maximum image uploads per client IP within the rate window | `30` |
+| `UPLOAD_IMAGE_RATE_WINDOW_MS` | Window of the image upload rate limit in ms | `60000` |
+
 ### AI / LLM Integration
 
 | Variable | Description | Default |

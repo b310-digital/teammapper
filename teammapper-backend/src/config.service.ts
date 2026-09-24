@@ -101,6 +101,24 @@ class ConfigService {
     return this.parsePositiveInt('WS_PER_IP_RATE_WINDOW_MS', 10000)
   }
 
+  /** Total bytes of the images one map may hold; 50 MB by default. */
+  public getMaxImageBytesPerMap(): number {
+    return this.parsePositiveInt('MAX_IMAGE_BYTES_PER_MAP', 50_000_000)
+  }
+
+  /** Largest single image upload in bytes; the frontend resize stays below the default. */
+  public getUploadImageMaxSizeBytes(): number {
+    return this.parsePositiveInt('UPLOAD_IMAGE_MAX_SIZE_BYTES', 150_000)
+  }
+
+  public getUploadImageRateLimit(): number {
+    return this.parsePositiveInt('UPLOAD_IMAGE_RATE_LIMIT', 30)
+  }
+
+  public getUploadImageRateWindowMs(): number {
+    return this.parsePositiveInt('UPLOAD_IMAGE_RATE_WINDOW_MS', 60_000)
+  }
+
   private parsePositiveInt(key: string, fallback: number): number {
     const raw = this.getValue(key, false)
     if (!raw) return fallback

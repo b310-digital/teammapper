@@ -260,6 +260,24 @@ describe('yDocConversion', () => {
     })
   })
 
+  describe('node images', () => {
+    it.each([
+      ['a reference', 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'],
+      ['a data URL', 'data:image/png;base64,iVBORw0KGgo='],
+    ])('keeps %s unchanged through hydrate and persist', (_label, src) => {
+      const doc = new Y.Doc()
+      hydrateYDoc(doc, [createTestNode({ imageSrc: src })], createTestMap())
+      const yNode = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
+        'node-1'
+      )!
+
+      expect(yNode.get('image')).toEqual({ src, size: 80 })
+      expect(yMapToMmpNode(yNode, 'map-1').imageSrc).toBe(src)
+
+      doc.destroy()
+    })
+  })
+
   describe('yMapToMmpNode sanitization', () => {
     it('should sanitize malicious fields from Y.Map data', () => {
       const doc = new Y.Doc()
