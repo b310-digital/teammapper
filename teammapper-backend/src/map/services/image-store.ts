@@ -1,7 +1,7 @@
 /**
  * Puts, gets, copies and deletes the bytes of node images. No other code reads
  * or writes image bytes, so a later object storage switch replaces only the
- * implementation. Callers write the bytes before the metadata row and delete
+ * implementation. Callers write the metadata row before the bytes and delete
  * the metadata row before the bytes.
  */
 export abstract class ImageStore {

@@ -15,6 +15,7 @@ import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpImage } from '../entities/mmpImage.entity'
 import { ImagesService, ImageUpload } from './images.service'
 import { MapsService } from './maps.service'
+import { ImageStore } from './image-store'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -31,6 +32,7 @@ describe('ImagesService', () => {
   let mapsRepo: Repository<MmpMap>
   let nodesRepo: Repository<MmpNode>
   let imagesRepo: Repository<MmpImage>
+  let imageStore: ImageStore
 
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
@@ -48,6 +50,7 @@ describe('ImagesService', () => {
     mapsRepo = moduleFixture.get(getRepositoryToken(MmpMap))
     nodesRepo = moduleFixture.get(getRepositoryToken(MmpNode))
     imagesRepo = moduleFixture.get(getRepositoryToken(MmpImage))
+    imageStore = moduleFixture.get(ImageStore)
   })
 
   afterAll(async () => {
@@ -233,6 +236,25 @@ describe('ImagesService', () => {
       await referenceFromNode(other, reference)
 
       expect(await imagesService.deleteUnusedImages()).toBe(1)
+    })
+
+    it('deletes the metadata row an upload left when its byte write failed', async () => {
+      const map = await createMap()
+      jest
+        .spyOn(imageStore, 'put')
+        .mockRejectedValueOnce(new Error('write failed'))
+
+      await expect(
+        imagesService.storeImage(map.id, pngUpload())
+      ).rejects.toThrow('write failed')
+      const [row] = await imagesRepo.findBy({ mapId: map.id })
+      await imagesRepo.update(
+        { mapId: map.id, id: row.id },
+        { createdAt: new Date(Date.now() - 8 * DAY_MS) }
+      )
+
+      expect(await imagesService.deleteUnusedImages()).toBe(1)
+      expect(await imagesRepo.count({ where: { mapId: map.id } })).toBe(0)
     })
   })
 })

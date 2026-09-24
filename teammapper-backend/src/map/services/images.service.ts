@@ -41,8 +41,9 @@ export class ImagesService {
   ) {}
 
   /**
-   * Checks the map's cap, writes the bytes, then the metadata row, so a crash
-   * never leaves a row whose bytes are missing.
+   * Checks the map's cap, writes the metadata row, then the bytes. A failed
+   * byte write leaves a row no node references, which deleteUnusedImages
+   * removes, and never bytes without a row, which no job would find.
    */
   async storeImage(
     mapId: string,
@@ -50,13 +51,13 @@ export class ImagesService {
   ): Promise<ImageReference> {
     await this.assertBelowCap(mapId, upload.size)
     const id = uuidv4()
-    await this.imageStore.put(mapId, id, upload.buffer)
     await this.imagesRepository.insert({
       mapId,
       id,
       mimetype: upload.mimetype,
       size: upload.size,
     })
+    await this.imageStore.put(mapId, id, upload.buffer)
     return toImageReference(id)
   }
 
@@ -75,18 +76,13 @@ export class ImagesService {
   /**
    * Copies every image of the source map to the target map under the same
    * id, so no node reference needs rewriting. The copies count as uploaded
-   * now.
+   * now. Writes the metadata rows before the bytes, as storeImage does.
    */
   async copyImages(sourceMapId: string, targetMapId: string): Promise<void> {
     const images = await this.imagesRepository.find({
       where: { mapId: sourceMapId },
     })
     if (images.length === 0) return
-    await this.imageStore.copy(
-      sourceMapId,
-      targetMapId,
-      images.map((image) => image.id)
-    )
     await this.imagesRepository.insert(
       images.map(({ id, mimetype, size }) => ({
         mapId: targetMapId,
@@ -94,6 +90,11 @@ export class ImagesService {
         mimetype,
         size,
       }))
+    )
+    await this.imageStore.copy(
+      sourceMapId,
+      targetMapId,
+      images.map((image) => image.id)
     )
   }
 

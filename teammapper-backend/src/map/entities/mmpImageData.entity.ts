@@ -3,8 +3,9 @@ import { MmpMap } from './mmpMap.entity'
 
 /**
  * The bytes of one uploaded image, which only `DatabaseImageStore` reads and
- * writes. The table has no foreign key to `mmp_image`, because the upload
- * writes the bytes before the metadata row.
+ * writes. The table has no foreign key to `mmp_image`. The upload writes the
+ * metadata row first, so a failed byte write leaves an unused row that
+ * `ImagesService.deleteUnusedImages` removes.
  */
 // Columns take `!` and no initializer; AGENTS.md, TypeScript strictness rule 3.
 @Entity('mmp_image_data')

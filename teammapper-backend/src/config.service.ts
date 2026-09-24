@@ -20,6 +20,9 @@ export interface LLMProps {
   timeoutMs?: string
 }
 
+/** Whether to trust X-Forwarded-For: never, always, or for that many hops. */
+export type TrustProxy = boolean | number
+
 class ConfigService {
   private env: EnvProps
 
@@ -75,9 +78,15 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
-  public isWsTrustProxy(): boolean {
-    const value = this.getValue('WS_TRUST_PROXY', false)
-    return value?.toLowerCase() === 'true'
+  /**
+   * Reads WS_TRUST_PROXY: `true` trusts every proxy, a positive integer
+   * trusts that many hops, anything else trusts none.
+   */
+  public getTrustProxy(): TrustProxy {
+    const value = this.getValue('WS_TRUST_PROXY', false)?.trim().toLowerCase()
+    if (value === 'true') return true
+    if (value && /^[1-9]\d*$/.test(value)) return parseInt(value, 10)
+    return false
   }
 
   public isYjsRateLimitingEnabled(): boolean {
