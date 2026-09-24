@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { Path } from 'd3';
 import DOMPurify from 'dompurify';
+import { isImageReference } from '@teammapper/shared';
 import Map, { DomElements } from '../map.js';
 import Utils from '../../utils/utils.js';
 import Node from '../models/node.js';
@@ -294,21 +295,24 @@ export default class Draw {
       node.dom.appendChild(domImage);
     }
 
-    if (
-      DOMPurify.sanitize(node.image.src) !== '' &&
-      !this.base64regex.test(node.image.src)
-    ) {
+    const src = node.image.src;
+    const url = this.imageUrlOf(src);
+
+    if (url !== null) {
       const image = new Image();
 
-      image.src = DOMPurify.sanitize(node.image.src);
+      image.src = url;
 
       image.onload = () => {
+        // A newer image replaced this one while it loaded.
+        if (node.image.src !== src) return;
+
         const h = node.image.size,
           w = (image.width * h) / image.height,
           y = -(h + node.dimensions.height / 2 + 5),
           x = -w / 2;
 
-        domImage.setAttribute('href', DOMPurify.sanitize(node.image.src));
+        domImage.setAttribute('href', url);
         domImage.setAttribute('height', h.toString());
         domImage.setAttribute('width', w.toString());
         domImage.setAttribute('y', y.toString());
@@ -316,13 +320,28 @@ export default class Draw {
         domImage.setAttribute('clip-path', 'inset(0% round 15px)');
       };
 
-      image.onerror = function () {
+      // Hide the image and keep its value: clearing it would erase the
+      // image in the Y.Doc for every client on a network error.
+      image.onerror = () => {
+        if (node.image.src !== src) return;
         domImage.remove();
-        node.image.src = '';
       };
     } else {
       domImage.remove();
     }
+  }
+
+  /**
+   * Returns the URL an image value loads from: the resolved URL of a
+   * reference, a data URL as is, or null for an empty or unsafe value.
+   */
+  private imageUrlOf(src: string): string | null {
+    if (isImageReference(src)) {
+      return this.map.options.resolveImageUrl?.(src) ?? null;
+    }
+    const sanitized = DOMPurify.sanitize(src);
+    if (sanitized === '' || this.base64regex.test(src)) return null;
+    return sanitized;
   }
 
   /**
@@ -390,11 +409,11 @@ export default class Draw {
    * @param {Node} node
    */
   public updateImagePosition(node: Node) {
-    if (DOMPurify.sanitize(node.image.src) !== '') {
-      const image = node.getImageDOM(),
-        y = -(image.getBBox().height + node.dimensions.height / 2 + 5);
-      image.setAttribute('y', y.toString());
-    }
+    // An image that failed to load keeps its value but has no element.
+    const image = node.dom.querySelector('image');
+    if (!image) return;
+    const y = -(image.getBBox().height + node.dimensions.height / 2 + 5);
+    image.setAttribute('y', y.toString());
   }
 
   /**

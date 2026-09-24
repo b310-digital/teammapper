@@ -261,7 +261,10 @@ export default class Export {
             callback();
           }
         };
+        // Drop an image that cannot be fetched, so the export carries no
+        // URL that depends on the server.
         img.onerror = () => {
+          image.remove();
           counter--;
 
           if (counter === 0) {

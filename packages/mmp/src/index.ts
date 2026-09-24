@@ -3,7 +3,7 @@ import MmpMap from './map/map.js';
 import { PropertyMapping } from './map/handlers/nodes.js';
 
 export { MmpMap };
-export type { OptionParameters } from './map/options.js';
+export type { OptionParameters, ImageUrlResolver } from './map/options.js';
 export type { MapProperties } from './map/types.js';
 export type { NodeColors } from './map/models/node.js';
 
