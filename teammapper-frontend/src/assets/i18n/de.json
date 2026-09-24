@@ -232,7 +232,9 @@
       "EXPORT_IMAGE_ERROR": "Beim Bild-Export ist ein Fehler aufgetreten. Womöglich ist die Mindmap zu groß.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap konnte nicht gefunden werden!",
       "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!",
-      "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden."
+      "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden.",
+      "IMAGE_STORAGE_FULL": "Der Bildspeicher dieser Mindmap ist voll. Ein entferntes Bild gibt seinen Platz innerhalb von 7 Tagen nach dem Hochladen frei.",
+      "IMAGE_UPLOAD_ERROR": "Das Bild konnte nicht hochgeladen werden."
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",

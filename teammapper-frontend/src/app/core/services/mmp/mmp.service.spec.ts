@@ -6,6 +6,7 @@ import { UtilsService } from '../utils/utils.service';
 import * as mmp from '@teammapper/mmp';
 import { Subject } from 'rxjs';
 import { OptionParameters } from '@teammapper/mmp';
+import { ImageUploadError } from './node-images';
 
 jest.mock('dompurify', () => {
   return {
@@ -20,6 +21,8 @@ jest.mock('@teammapper/mmp', () => ({
   create: jest.fn(),
   NodePropertyMapping: {},
 }));
+
+const REFERENCE = 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 
 const downloadFileSpy = jest
   .spyOn(UtilsService, 'downloadFile')
@@ -132,7 +135,23 @@ describe('MmpService', () => {
 
       await service.create(id, element, options);
 
-      expect(mmp.create).toHaveBeenCalledWith(id, element, options);
+      expect(mmp.create).toHaveBeenCalledWith(
+        id,
+        element,
+        expect.objectContaining(options)
+      );
+    });
+
+    it('passes a resolver that asks the registered image handlers', async () => {
+      const resolveUrl = jest.fn().mockReturnValue('api/maps/m/images/i');
+      service.registerImageHandlers({ resolveUrl, upload: jest.fn() });
+
+      await service.create('test-id', document.createElement('div'));
+      const passed: OptionParameters = (mmp.create as jest.Mock).mock
+        .calls[0][2];
+
+      expect(passed.resolveImageUrl?.(REFERENCE)).toBe('api/maps/m/images/i');
+      expect(resolveUrl).toHaveBeenCalledWith(REFERENCE);
     });
 
     it('should initialize additional options with defaults', async () => {
@@ -405,12 +424,75 @@ describe('MmpService', () => {
       });
 
       it('should export to JSON', async () => {
-        mockMap.instance.exportAsJSON.mockReturnValue({ some: 'data' });
+        mockMap.instance.exportAsJSON.mockReturnValue([{ id: 'root' }]);
 
         const result = await service.exportMap('json');
 
         expect(result.success).toBe(true);
         expect(downloadFileSpy).toHaveBeenCalled();
+      });
+
+      describe('JSON with image references', () => {
+        const DATA_URL = 'data:image/png;base64,aW1hZ2U=';
+        const originalFetch = global.fetch;
+
+        const nodeWith = (id: string, src: string) => ({
+          id,
+          image: { src, size: 60 },
+        });
+
+        const downloadedJson = (): string => {
+          const uri: string = downloadFileSpy.mock.calls[0][1];
+          return decodeURIComponent(uri.replace(/^data:[^,]*,/, ''));
+        };
+
+        beforeEach(async () => {
+          await service.create('test-id', document.createElement('div'));
+          service.registerImageHandlers({
+            resolveUrl: jest.fn().mockReturnValue('api/maps/m/images/i'),
+            upload: jest.fn(),
+          });
+        });
+
+        afterEach(() => {
+          global.fetch = originalFetch;
+        });
+
+        it('inlines each referenced image as a data URL', async () => {
+          global.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            blob: () =>
+              Promise.resolve(new Blob(['image'], { type: 'image/png' })),
+          });
+          mockMap.instance.exportAsJSON.mockReturnValue([
+            nodeWith('a', REFERENCE),
+            nodeWith('b', DATA_URL),
+          ]);
+
+          await service.exportMap('json');
+
+          const json = downloadedJson();
+          expect(json).not.toContain('image:');
+          expect(JSON.parse(json)).toEqual([
+            nodeWith('a', DATA_URL),
+            nodeWith('b', DATA_URL),
+          ]);
+        });
+
+        it('drops an image the endpoint answers with 404', async () => {
+          global.fetch = jest
+            .fn()
+            .mockResolvedValue({ ok: false, status: 404 });
+          mockMap.instance.exportAsJSON.mockReturnValue([
+            nodeWith('a', REFERENCE),
+          ]);
+
+          const result = await service.exportMap('json');
+
+          expect(result.success).toBe(true);
+          expect(downloadedJson()).not.toContain('image:');
+          expect(JSON.parse(downloadedJson())).toEqual([nodeWith('a', '')]);
+        });
       });
 
       it('should export to PNG', async () => {
@@ -474,6 +556,90 @@ describe('MmpService', () => {
       service.distributeNodes();
 
       expect(mockMap.instance.distributeNodes).toHaveBeenCalled();
+    });
+  });
+
+  describe('addNodeImage', () => {
+    const image = new Blob(['image'], { type: 'image/png' });
+    let upload: jest.Mock;
+
+    beforeEach(async () => {
+      await service.create('test-id', document.createElement('div'));
+      upload = jest.fn().mockResolvedValue(REFERENCE);
+      service.registerImageHandlers({ resolveUrl: jest.fn(), upload });
+      mockMap.instance.getSelectedNode.mockReturnValue({ id: 'node-a' });
+      mockMap.instance.existNode.mockReturnValue(true);
+    });
+
+    it('sets no image and shows no error when the node was deleted during the upload', async () => {
+      mockMap.instance.existNode.mockReturnValue(false);
+
+      await service.addNodeImage(image);
+
+      expect(upload).toHaveBeenCalled();
+      expect(mockMap.instance.updateNode).not.toHaveBeenCalled();
+      expect(toastrService.error).not.toHaveBeenCalled();
+    });
+
+    it('uploads the image and sets the reference on the selected node', async () => {
+      await service.addNodeImage(image);
+
+      expect(upload).toHaveBeenCalledWith(image);
+      expect(mockMap.instance.updateNode).toHaveBeenCalledWith(
+        'imageSrc',
+        REFERENCE,
+        true,
+        true,
+        'node-a'
+      );
+    });
+
+    it('sets the reference on the node selected when the upload started', async () => {
+      let finishUpload: (reference: string) => void = () => undefined;
+      upload.mockReturnValue(
+        new Promise(resolve => {
+          finishUpload = resolve;
+        })
+      );
+
+      const adding = service.addNodeImage(image);
+      mockMap.instance.getSelectedNode.mockReturnValue({ id: 'node-b' });
+      finishUpload(REFERENCE);
+      await adding;
+
+      expect(mockMap.instance.updateNode).toHaveBeenCalledTimes(1);
+      expect(mockMap.instance.updateNode.mock.calls[0][4]).toBe('node-a');
+    });
+
+    it('keeps the image and says the storage is full on a 413', async () => {
+      upload.mockRejectedValue(new ImageUploadError(413));
+
+      await service.addNodeImage(image);
+
+      expect(mockMap.instance.updateNode).not.toHaveBeenCalled();
+      expect(utilsService.translate).toHaveBeenCalledWith(
+        'TOASTS.ERRORS.IMAGE_STORAGE_FULL'
+      );
+      expect(toastrService.error).toHaveBeenCalled();
+    });
+
+    it('shows the generic message for any other failure', async () => {
+      upload.mockRejectedValue(new ImageUploadError(0));
+
+      await service.addNodeImage(image);
+
+      expect(mockMap.instance.updateNode).not.toHaveBeenCalled();
+      expect(utilsService.translate).toHaveBeenCalledWith(
+        'TOASTS.ERRORS.IMAGE_UPLOAD_ERROR'
+      );
+    });
+
+    it('does nothing when no node is selected', async () => {
+      mockMap.instance.getSelectedNode.mockReturnValue(undefined);
+
+      await service.addNodeImage(image);
+
+      expect(upload).not.toHaveBeenCalled();
     });
   });
 });

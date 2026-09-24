@@ -82,8 +82,9 @@ export class ApplicationComponent implements OnInit, OnDestroy {
 
   public handleImageDropObservable() {
     this.imageDropSubscription =
-      UtilsService.observableDroppedImages().subscribe((image: string) => {
-        this.mmpService.updateNode('imageSrc', image);
+      UtilsService.observableDroppedImages().subscribe((image: File) => {
+        // addNodeImage shows its own errors, so nothing awaits it.
+        void this.mmpService.addNodeImage(image, true);
       });
   }
 

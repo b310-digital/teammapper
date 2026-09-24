@@ -45,4 +45,17 @@ export class HttpService {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  /**
+   * Constructs a multipart `POST` request. The browser sets the content type
+   * with its boundary, so none is given here.
+   */
+  public postForm(
+    apiUrl: API_URL,
+    endpoint: string,
+    body: FormData,
+    headers: Record<string, string> = {}
+  ): Promise<Response> {
+    return fetch(`${apiUrl}${endpoint}`, { method: 'POST', body, headers });
+  }
 }

@@ -86,7 +86,16 @@ the icon. "Linktext" is the app's own compound.
 ### Image
 
 An optional picture on a node. Always "image", never "picture" or
-"attachment". A node holds at most one.
+"attachment". A node holds at most one. A current frontend adds every image as
+an **image reference**; existing maps, older clients and imports carry an
+inline raster data URL. Exports write every image as a data URL.
+
+### Image reference
+
+The value `image:<uuid>` a node holds for an image the server stores for its
+map. The server generates the uuid per upload; the map and the uuid together
+name the image, so a duplicated map resolves the same references. Never
+"image id" for the whole value: the image id is the uuid alone.
 
 ### Pictogram
 

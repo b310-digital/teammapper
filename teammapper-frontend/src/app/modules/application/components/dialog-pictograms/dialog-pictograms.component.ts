@@ -14,7 +14,6 @@ import {
 } from '@angular/cdk/layout';
 import { map } from 'rxjs/operators';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
-import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import {
   MatDialogTitle,
   MatDialogContent,
@@ -64,7 +63,6 @@ export class DialogPictogramsComponent {
   private pictoService = inject(PictogramService);
   private breakpointObserver = inject(BreakpointObserver);
   private mmpService = inject(MmpService);
-  private utilsService = inject(UtilsService);
 
   public pictos = signal<IPictogramResponse[]>([]);
   public onPictogramAdd = new EventEmitter();
@@ -103,7 +101,8 @@ export class DialogPictogramsComponent {
 
   async getImageFileOfId(id: number) {
     this.pictoService.getPictoImage(id).subscribe(async img => {
-      this.mmpService.addNodeImage(await this.utilsService.blobToBase64(img));
+      // No resize: it would turn the transparent background black.
+      await this.mmpService.addNodeImage(img);
       this.onPictogramAdd.emit();
     });
   }

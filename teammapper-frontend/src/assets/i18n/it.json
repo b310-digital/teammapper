@@ -229,7 +229,9 @@
       "EXPORT_IMAGE_ERROR": "Si è verificato un errore durante l'esportazione dell'immagine. La mappa mentale potrebbe essere troppo grande.",
       "MAP_COULD_NOT_BE_FOUND": "Impossibile trovare la mappa mentale!",
       "IMPORT_ERROR": "Non è stato possibile importare la mappa mentale!",
-      "AI_MERMAID_ERROR": "Mermaid non può essere generato"
+      "AI_MERMAID_ERROR": "Mermaid non può essere generato",
+      "IMAGE_STORAGE_FULL": "Lo spazio per le immagini di questa mappa mentale è pieno. Un'immagine rimossa libera il suo spazio entro 7 giorni dal caricamento.",
+      "IMAGE_UPLOAD_ERROR": "Non è stato possibile caricare l'immagine."
     },
     "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid generato con successo!",
