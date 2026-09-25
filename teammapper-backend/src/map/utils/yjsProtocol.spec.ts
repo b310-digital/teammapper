@@ -13,6 +13,8 @@ import {
   parseAwarenessClientIds,
   extractPathname,
   parseQueryParams,
+  parseSecretSubprotocol,
+  selectSubprotocol,
   checkWriteAccess,
   toUint8Array,
 } from './yjsProtocol'
@@ -179,6 +181,40 @@ describe('yjsProtocol', () => {
         mapId: 'abc',
         secret: null,
       })
+    })
+  })
+
+  describe('selectSubprotocol', () => {
+    it('selects the Yjs subprotocol over the secret one', () => {
+      const offered = new Set(['teammapper.v1', 'teammapper.secret.xyz'])
+      expect(selectSubprotocol(offered)).toBe('teammapper.v1')
+    })
+
+    it('selects none when the Yjs subprotocol is not offered', () => {
+      expect(selectSubprotocol(new Set(['teammapper.secret.xyz']))).toBe(false)
+    })
+  })
+
+  describe('parseSecretSubprotocol', () => {
+    it('reads the secret from the offered subprotocols', () => {
+      expect(
+        parseSecretSubprotocol('teammapper.v1, teammapper.secret.xyz')
+      ).toBe('xyz')
+    })
+
+    it('reads the secret without whitespace after the comma', () => {
+      expect(
+        parseSecretSubprotocol('teammapper.v1,teammapper.secret.xyz')
+      ).toBe('xyz')
+    })
+
+    it.each([
+      ['a missing header', undefined],
+      ['an empty header', ''],
+      ['no secret subprotocol', 'teammapper.v1'],
+      ['an empty secret', 'teammapper.v1, teammapper.secret.'],
+    ])('returns null for %s', (_label, header) => {
+      expect(parseSecretSubprotocol(header)).toBeNull()
     })
   })
 

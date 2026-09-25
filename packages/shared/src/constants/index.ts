@@ -26,3 +26,22 @@ export const DEFAULT_ROOT_FONT_SIZE = 20;
 export const DEFAULT_FONT_MAX_SIZE = 48;
 export const DEFAULT_ROOT_FONT_STYLE = 'normal';
 export const DEFAULT_ROOT_FONT_WEIGHT = 'normal';
+
+/**
+ * HTTP header that carries a map's modification secret. Access logs record the
+ * URL and skip this header. The client leaves `Authorization` free for basic
+ * auth or an auth proxy in front of TeamMapper. The name is lowercase because
+ * Node lowercases incoming header names.
+ */
+export const MODIFICATION_SECRET_HEADER = 'x-map-modification-secret';
+
+/**
+ * WebSocket subprotocol the server selects for the Yjs connection. The browser
+ * `WebSocket` constructor sends no custom header, so the client offers the
+ * modification secret as a second subprotocol,
+ * `<YJS_SECRET_SUBPROTOCOL_PREFIX><secret>`. The server selects
+ * `YJS_SUBPROTOCOL` alone, so the handshake response carries no secret.
+ * RFC 9110 requires a subprotocol to be a token, and a uuid secret is one.
+ */
+export const YJS_SUBPROTOCOL = 'teammapper.v1';
+export const YJS_SECRET_SUBPROTOCOL_PREFIX = 'teammapper.secret.';

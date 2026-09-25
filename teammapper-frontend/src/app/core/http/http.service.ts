@@ -14,8 +14,12 @@ export class HttpService {
   /**
    * Constructs a `GET` request that returns the response body as a JSON object.
    */
-  public async get(apiUrl: API_URL, endpoint: string): Promise<Response> {
-    return fetch(`${apiUrl}${endpoint}`);
+  public async get(
+    apiUrl: API_URL,
+    endpoint: string,
+    headers: Record<string, string> = {}
+  ): Promise<Response> {
+    return fetch(`${apiUrl}${endpoint}`, { headers });
   }
 
   public delete(

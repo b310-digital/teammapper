@@ -1,6 +1,11 @@
 import * as Y from 'yjs';
 import { ReversePropertyMapping } from './server-types';
-import { collectSubtreeIds, ExportNodeProperties } from '@teammapper/shared';
+import {
+  collectSubtreeIds,
+  ExportNodeProperties,
+  YJS_SECRET_SUBPROTOCOL_PREFIX,
+  YJS_SUBPROTOCOL,
+} from '@teammapper/shared';
 
 export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 
@@ -67,6 +72,31 @@ export function buildYjsWsUrl(): string {
   const baseHref = document.querySelector('base')?.getAttribute('href') ?? '/';
   const path = baseHref.endsWith('/') ? baseHref : baseHref + '/';
   return `${protocol}//${host}${path}yjs`;
+}
+
+/**
+ * Lists the subprotocols the Yjs WebSocket offers. The browser `WebSocket`
+ * sends no custom header, and a URL would put the secret into access logs, so
+ * the client offers the modification secret as a second subprotocol. Without a
+ * secret the client offers `YJS_SUBPROTOCOL` alone.
+ */
+export function buildYjsProtocols(secret: string | null): string[] {
+  return secret
+    ? [YJS_SUBPROTOCOL, `${YJS_SECRET_SUBPROTOCOL_PREFIX}${secret}`]
+    : [YJS_SUBPROTOCOL];
+}
+
+// RFC 7230 token characters, the set RFC 6455 requires of a subprotocol.
+const TOKEN_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
+/**
+ * Returns the secret when it consists of token characters only, and an empty
+ * string otherwise. The secret comes from the URL fragment, and the browser
+ * throws on a subprotocol with a non-token character and on a header value
+ * above U+00FF. A dropped secret opens the map read-only.
+ */
+export function toTransmittableSecret(secret: string | null): string {
+  return secret && TOKEN_PATTERN.test(secret) ? secret : '';
 }
 
 export function resolveClientColor(

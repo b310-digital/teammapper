@@ -3,6 +3,10 @@ import * as syncProtocol from 'y-protocols/sync'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
+import {
+  YJS_SECRET_SUBPROTOCOL_PREFIX,
+  YJS_SUBPROTOCOL,
+} from '@teammapper/shared'
 
 // Message types matching y-websocket client protocol
 export const MESSAGE_SYNC = 0
@@ -119,6 +123,8 @@ export const extractPathname = (url: string | undefined): string => {
 
 // Parses mapId and secret from WebSocket URL query or path params
 // Supports both legacy (/yjs?mapId=<id>) and y-websocket (/yjs/<id>?secret=...)
+// The `secret` query param is the fallback for clients that predate the
+// secret subprotocol (see `parseSecretSubprotocol`)
 export const parseQueryParams = (
   url: string | undefined
 ): ParsedQueryParams => {
@@ -133,6 +139,25 @@ export const parseQueryParams = (
   } catch {
     return { mapId: null, secret: null }
   }
+}
+
+// Selects the Yjs subprotocol and skips the secret one, so the handshake
+// response carries no modification secret
+export const selectSubprotocol = (protocols: Set<string>): string | false =>
+  protocols.has(YJS_SUBPROTOCOL) ? YJS_SUBPROTOCOL : false
+
+// Reads the modification secret from an offered subprotocol
+// `teammapper.secret.<secret>` in a `Sec-WebSocket-Protocol` header
+export const parseSecretSubprotocol = (
+  header: string | undefined
+): string | null => {
+  if (!header) return null
+  const offer = header
+    .split(',')
+    .map((protocol) => protocol.trim())
+    .find((protocol) => protocol.startsWith(YJS_SECRET_SUBPROTOCOL_PREFIX))
+  const secret = offer?.slice(YJS_SECRET_SUBPROTOCOL_PREFIX.length)
+  return secret ? secret : null
 }
 
 // Checks write access: writable if map has no secret, or secret matches

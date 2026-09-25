@@ -1,10 +1,4 @@
-# yjs-write-access Specification
-
-## Purpose
-
-Defines how the server tells a client over HTTP whether it may modify a map, and how the WebSocket server enforces that decision.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: HTTP-based write-access determination
 The `GET /api/maps/:id` endpoint SHALL read an optional modification secret from the `X-Map-Modification-Secret` header and SHALL NOT read a `secret` query parameter. The server SHALL compare the secret against the map's `modificationSecret` using the existing `checkWriteAccess()` utility and return a `writable` boolean field in the response.
@@ -51,30 +45,3 @@ When the frontend fetches a map via `fetchMapFromServer`, it SHALL send the stor
 - **WHEN** the server response does not include a `writable` field
 - **THEN** `yjsWritable` SHALL default to `true`
 - **AND** server-side enforcement SHALL still apply (client writes silently dropped if unauthorized)
-
-### Requirement: Removal of custom WebSocket message type 4
-The custom `MESSAGE_WRITE_ACCESS` (type 4) WebSocket message SHALL be removed from both frontend and backend. The server SHALL NOT send write-access messages over WebSocket. The client SHALL NOT register custom message handlers or raw WebSocket listeners for write-access.
-
-#### Scenario: Server does not send write-access message
-- **WHEN** a WebSocket connection is established in `setupSync()`
-- **THEN** the server SHALL NOT call `encodeWriteAccessMessage()` or send a type 4 message
-- **AND** the server SHALL still send SyncStep1, SyncStep2, and awareness messages
-
-#### Scenario: Client does not hack messageHandlers
-- **WHEN** the `WebsocketProvider` is created
-- **THEN** the client SHALL NOT modify `wsProvider.messageHandlers[4]`
-- **AND** the client SHALL NOT attach raw `ws.addEventListener('message', ...)` listeners for write-access parsing
-
-#### Scenario: Protocol utils cleaned up
-- **WHEN** the codebase is updated
-- **THEN** `MESSAGE_WRITE_ACCESS` and `encodeWriteAccessMessage()` SHALL NOT exist in `yjsProtocol.ts`
-- **AND** `MESSAGE_WRITE_ACCESS` and `parseWriteAccessBytes()` SHALL NOT exist in `yjs-utils.ts`
-- **AND** `checkWriteAccess()` SHALL remain in `yjsProtocol.ts` (used by gateway and controller)
-
-### Requirement: Server-side enforcement unchanged
-The `processReadOnlySyncMessage` function in the Yjs gateway SHALL continue to silently drop SyncStep2 and Update messages from read-only clients. This is the security boundary and is NOT affected by the move from WebSocket to HTTP for permission signaling.
-
-#### Scenario: Read-only client writes are dropped
-- **WHEN** a client connected without a valid secret sends a Y.Doc update
-- **THEN** the server SHALL silently drop the update via `processReadOnlySyncMessage`
-- **AND** no error SHALL be sent to the client (silent drop allows continued reading)

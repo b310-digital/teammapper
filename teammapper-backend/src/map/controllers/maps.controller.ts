@@ -8,7 +8,7 @@ import {
   NotFoundException,
   Param,
   Post,
-  Query,
+  Headers,
   Logger,
 } from '@nestjs/common'
 import * as v from 'valibot'
@@ -23,6 +23,7 @@ import {
   ClientPrivateMap,
   MapCreateSchema,
   MapDeleteSchema,
+  MODIFICATION_SECRET_HEADER,
   sanitizeIssues,
 } from '@teammapper/shared'
 import { Request } from '../types'
@@ -42,7 +43,7 @@ export default class MapsController {
   @Get(':id')
   async findOne(
     @Param('id') mapId: string,
-    @Query('secret') secret?: string
+    @Headers(MODIFICATION_SECRET_HEADER) secret?: string
   ): Promise<ClientMap | void> {
     try {
       const map = await this.mapsService.exportMapToClient(mapId)

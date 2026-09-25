@@ -7,7 +7,9 @@ import { MmpMap } from '../entities/mmpMap.entity'
 import { WebSocket } from 'ws'
 import * as Y from 'yjs'
 import { jest } from '@jest/globals'
-import type { IncomingMessage } from 'http'
+import { createServer } from 'http'
+import type { IncomingMessage, Server } from 'http'
+import type { AddressInfo } from 'net'
 import type { HttpAdapterHost } from '@nestjs/core'
 import {
   WS_CLOSE_MISSING_PARAM,
@@ -88,6 +90,16 @@ const createMockRequest = (
     socket: { remoteAddress: ip },
     headers: {},
   } as unknown as IncomingMessage
+}
+
+// Adds the `Sec-WebSocket-Protocol` offer a browser sends from the
+// `protocols` argument of its `WebSocket` constructor
+const withSubprotocols = (
+  req: IncomingMessage,
+  offer: string
+): IncomingMessage => {
+  req.headers['sec-websocket-protocol'] = offer
+  return req
 }
 
 // Triggers the private handleConnection method — the WebSocket 'connection'
@@ -318,6 +330,43 @@ describe('YjsGateway', () => {
       expect(doc.getMap('nodes').has('new-node')).toBe(true)
       clientDoc.destroy()
     })
+
+    // Sends an update that adds a node, and reports whether the server kept it
+    const serverAppliesWrite = (ws: MockWs): boolean => {
+      const clientDoc = new Y.Doc()
+      clientDoc.getMap('nodes').set('new-node', new Y.Map())
+      ws._triggerMessage(
+        encodeSyncUpdateMessage(Y.encodeStateAsUpdate(clientDoc))
+      )
+      clientDoc.destroy()
+      return doc.getMap('nodes').has('new-node')
+    }
+
+    it('applies writes from a client offering the secret subprotocol', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
+      const ws = createMockWs()
+      const req = withSubprotocols(
+        createMockRequest('map-1'),
+        'teammapper.v1, teammapper.secret.secret-123'
+      )
+
+      await connectClient(gateway, ws, req)
+
+      expect(serverAppliesWrite(ws)).toBe(true)
+    })
+
+    it('prefers the secret subprotocol over the query secret', async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
+      const ws = createMockWs()
+      const req = withSubprotocols(
+        createMockRequest('map-1', 'secret-123'),
+        'teammapper.v1, teammapper.secret.wrong-secret'
+      )
+
+      await connectClient(gateway, ws, req)
+
+      expect(serverAppliesWrite(ws)).toBe(false)
+    })
   })
 
   // ─── Disconnect handling ───────────────────────────────────
@@ -456,6 +505,66 @@ describe('YjsGateway', () => {
       expect(ws2.close).not.toHaveBeenCalled()
 
       doc2.destroy()
+    })
+  })
+
+  // ─── Handshake ─────────────────────────────────────────────
+
+  describe('handshake', () => {
+    let server: Server
+    let realGateway: YjsGateway
+
+    beforeEach(async () => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      server = createServer()
+      const host = { httpAdapter: { getHttpServer: () => server } }
+      realGateway = new YjsGateway(
+        host as unknown as HttpAdapterHost,
+        docManager,
+        {
+          registerDebounce: jest.fn(),
+          unregisterDebounce: jest.fn(),
+        } as unknown as YjsPersistenceService,
+        mapsService,
+        limiter
+      )
+      realGateway.onModuleInit()
+      await new Promise<void>((resolve) => server.listen(0, resolve))
+    })
+
+    afterEach(async () => {
+      realGateway.onModuleDestroy()
+      await new Promise<void>((resolve) => server.close(() => resolve()))
+    })
+
+    // Opens a socket offering the given subprotocols and resolves with the
+    // subprotocol the server selected
+    const selectedProtocol = (protocols: string[]): Promise<string> => {
+      const { port } = server.address() as AddressInfo
+      const client = new WebSocket(
+        `ws://127.0.0.1:${port}/yjs/map-1`,
+        protocols
+      )
+      return new Promise((resolve, reject) => {
+        client.on('open', () => {
+          resolve(client.protocol)
+          client.close()
+        })
+        client.on('error', reject)
+      })
+    }
+
+    it('selects the Yjs subprotocol and leaves the secret out of the response', async () => {
+      const protocol = await selectedProtocol([
+        'teammapper.v1',
+        'teammapper.secret.test-secret',
+      ])
+
+      expect(protocol).toBe('teammapper.v1')
+    })
+
+    it('accepts a client that offers no subprotocol', async () => {
+      expect(await selectedProtocol([])).toBe('')
     })
   })
 })
