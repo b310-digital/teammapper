@@ -10,6 +10,8 @@ import { orderNodesFromRoot } from '../utils/nodeOrdering'
 interface DebounceEntry {
   doc: Y.Doc
   timer: ReturnType<typeof setTimeout> | null
+  // When the oldest change the pending timer covers arrived
+  pendingSince: number | null
   observer: () => void
 }
 
@@ -18,7 +20,8 @@ export class YjsPersistenceService implements OnModuleDestroy {
   private readonly logger = new Logger(YjsPersistenceService.name)
   private readonly debounceTimers = new Map<string, DebounceEntry>()
   private readonly DEBOUNCE_MS = 2_000
-  private readonly FLUSH_TIMEOUT_MS = 5_000
+  // Upper bound on how long continuous editing can postpone a persist
+  private readonly MAX_DEBOUNCE_MS = 10_000
 
   constructor(
     @InjectRepository(MmpNode)
@@ -27,13 +30,12 @@ export class YjsPersistenceService implements OnModuleDestroy {
     private readonly mapsRepository: Repository<MmpMap>
   ) {}
 
-  async onModuleDestroy(): Promise<void> {
-    const pendingFlush = this.clearAllTimersAndObservers()
-
-    if (pendingFlush.length === 0) return
-
-    this.logger.log(`Flushing ${pendingFlush.length} pending docs on shutdown`)
-    await this.flushWithTimeout(pendingFlush)
+  // YjsDocManagerService persists every loaded doc on shutdown, so this only
+  // stops the timers from firing against a closing connection
+  onModuleDestroy(): void {
+    for (const mapId of Array.from(this.debounceTimers.keys())) {
+      this.unregisterDebounce(mapId)
+    }
   }
 
   // Persists a Y.Doc's nodes and options to the database in a transaction
@@ -86,7 +88,12 @@ export class YjsPersistenceService implements OnModuleDestroy {
     }
 
     doc.on('update', observer)
-    this.debounceTimers.set(mapId, { doc, timer: null, observer })
+    this.debounceTimers.set(mapId, {
+      doc,
+      timer: null,
+      pendingSince: null,
+      observer,
+    })
   }
 
   // Removes debounce observer and cancels pending timer
@@ -99,44 +106,60 @@ export class YjsPersistenceService implements OnModuleDestroy {
     this.debounceTimers.delete(mapId)
   }
 
-  // Immediately persists, skipping debounce (used on last client disconnect)
-  async persistImmediately(mapId: string, doc: Y.Doc): Promise<void> {
+  // Immediately persists, skipping debounce (used on last client disconnect
+  // and shutdown). Returns whether the doc reached the database.
+  async persistImmediately(mapId: string, doc: Y.Doc): Promise<boolean> {
     this.cancelDebounceTimer(mapId)
 
     try {
       await this.persistDoc(mapId, doc)
+      return true
     } catch (error) {
       this.logger.error(
         `Immediate persist failed for map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
       )
-      // Do not crash — error is logged, retry will happen on next debounce
+      return false
     }
   }
 
+  // Waits for a pause of DEBOUNCE_MS, but persists at the latest
+  // MAX_DEBOUNCE_MS after the first change it covers
   private resetDebounceTimer(mapId: string, doc: Y.Doc): void {
-    this.cancelDebounceTimer(mapId)
-
     const entry = this.debounceTimers.get(mapId)
     if (!entry) return
 
-    entry.timer = setTimeout(async () => {
-      try {
-        await this.persistDoc(mapId, doc)
-      } catch (error) {
-        this.logger.error(
-          `Debounced persist failed for map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
-        )
-        // Do not crash — retry on next debounce cycle
-      }
-    }, this.DEBOUNCE_MS)
+    if (entry.timer) clearTimeout(entry.timer)
+    const now = Date.now()
+    const pendingSince = entry.pendingSince ?? now
+    entry.pendingSince = pendingSince
+    const delay = Math.min(
+      this.DEBOUNCE_MS,
+      pendingSince + this.MAX_DEBOUNCE_MS - now
+    )
+
+    entry.timer = setTimeout(
+      async () => {
+        entry.timer = null
+        entry.pendingSince = null
+        try {
+          await this.persistDoc(mapId, doc)
+        } catch (error) {
+          this.logger.error(
+            `Debounced persist failed for map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
+          )
+          // Do not crash — retry on next debounce cycle
+        }
+      },
+      Math.max(0, delay)
+    )
   }
 
   private cancelDebounceTimer(mapId: string): void {
     const entry = this.debounceTimers.get(mapId)
-    if (entry?.timer) {
-      clearTimeout(entry.timer)
-      entry.timer = null
-    }
+    if (!entry) return
+    if (entry.timer) clearTimeout(entry.timer)
+    entry.timer = null
+    entry.pendingSince = null
   }
 
   // Extracts nodes from Y.Doc, ensuring root is first with stable orderNumbers.
@@ -228,37 +251,5 @@ export class YjsPersistenceService implements OnModuleDestroy {
         `Release failed: ${error instanceof Error ? error.message : String(error)}`
       )
     }
-  }
-
-  private clearAllTimersAndObservers(): Array<{
-    mapId: string
-    doc: Y.Doc
-  }> {
-    const pendingFlush: Array<{ mapId: string; doc: Y.Doc }> = []
-
-    for (const [mapId, entry] of this.debounceTimers) {
-      entry.doc.off('update', entry.observer)
-      if (entry.timer) {
-        clearTimeout(entry.timer)
-        pendingFlush.push({ mapId, doc: entry.doc })
-      }
-    }
-    this.debounceTimers.clear()
-
-    return pendingFlush
-  }
-
-  private async flushWithTimeout(
-    entries: Array<{ mapId: string; doc: Y.Doc }>
-  ): Promise<void> {
-    const flushPromise = Promise.allSettled(
-      entries.map(({ mapId, doc }) => this.persistDoc(mapId, doc))
-    )
-
-    const timeoutPromise = new Promise<void>((resolve) =>
-      setTimeout(resolve, this.FLUSH_TIMEOUT_MS)
-    )
-
-    await Promise.race([flushPromise, timeoutPromise])
   }
 }

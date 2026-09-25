@@ -409,6 +409,25 @@ describe('YjsGateway', () => {
       expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
 
+    it('cleans up a client that left while the setup awaited the database', async () => {
+      const ws = createMockWs()
+      limiter.getClientIp.mockReturnValue('10.0.0.2')
+      mapsService.findMap.mockImplementation(async () => {
+        ws.readyState = WebSocket.CLOSED
+        return createMockMap()
+      })
+
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret', '10.0.0.2')
+      )
+
+      expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.2')
+      expect(docManager.notifyClientCount).toHaveBeenLastCalledWith('map-1', 0)
+      expect(ws.send).not.toHaveBeenCalled()
+    })
+
     it('survives notifyClientCount errors without crashing', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap())
       const ws = createMockWs()

@@ -1,11 +1,14 @@
 import sanitizeHtml from 'sanitize-html'
-import { isImageDataUrl, isImageReference } from '@teammapper/shared'
+import {
+  isImageDataUrl,
+  isImageReference,
+  isSafeLinkHref,
+} from '@teammapper/shared'
 import { MmpNode } from '../entities/mmpNode.entity'
 
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/
 const ALLOWED_FONT_STYLES = ['normal', 'italic']
 const ALLOWED_FONT_WEIGHTS = ['normal', 'bold']
-const ALLOWED_LINK_PROTOCOLS = ['http:', 'https:']
 
 /** Strip all HTML tags from a node name, returning plain text only. */
 const sanitizeName = (name: string | undefined | null): string => {
@@ -20,15 +23,8 @@ const sanitizeImageSrc = (src: string | undefined | null): string => {
 }
 
 /** Validate linkHref uses only http or https protocol. Returns empty string for invalid values. */
-const sanitizeLinkHref = (href: string | undefined | null): string => {
-  if (!href) return ''
-  try {
-    const url = new URL(href)
-    return ALLOWED_LINK_PROTOCOLS.includes(url.protocol) ? href : ''
-  } catch {
-    return ''
-  }
-}
+const sanitizeLinkHref = (href: string | undefined | null): string =>
+  href && isSafeLinkHref(href) ? href : ''
 
 /** Validate a hex color value (#rrggbb or #rrggbbaa). Returns empty string for invalid values. */
 const sanitizeColor = (color: string | undefined | null): string => {

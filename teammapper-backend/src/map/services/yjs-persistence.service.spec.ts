@@ -352,6 +352,28 @@ describe('YjsPersistenceService', () => {
       service.unregisterDebounce(map.id)
       doc.destroy()
     })
+
+    it('persists during continuous editing once the max wait passes', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const persistSpy = jest
+        .spyOn(service, 'persistDoc')
+        .mockResolvedValue(undefined)
+
+      service.registerDebounce(map.id, doc)
+      const yRoot = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
+        rootNode.id
+      )!
+      for (let i = 0; i < 11; i++) {
+        yRoot.set('name', `Change ${i}`)
+        await jest.advanceTimersByTimeAsync(1_000)
+      }
+
+      expect(persistSpy).toHaveBeenCalledTimes(1)
+
+      service.unregisterDebounce(map.id)
+      doc.destroy()
+    })
   })
 
   describe('persistImmediately', () => {
@@ -377,12 +399,24 @@ describe('YjsPersistenceService', () => {
       doc.destroy()
     })
 
-    it('handles persist errors without throwing', async () => {
-      const doc = new Y.Doc()
+    it('reports success', async () => {
+      const { map } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
 
-      await expect(
-        service.persistImmediately(uuidv4(), doc)
-      ).resolves.toBeUndefined()
+      await expect(service.persistImmediately(map.id, doc)).resolves.toBe(true)
+
+      doc.destroy()
+    })
+
+    it('reports a failed persist without throwing', async () => {
+      const doc = new Y.Doc()
+      jest
+        .spyOn(service, 'persistDoc')
+        .mockRejectedValue(new Error('database unavailable'))
+
+      await expect(service.persistImmediately(uuidv4(), doc)).resolves.toBe(
+        false
+      )
 
       doc.destroy()
     })
@@ -412,26 +446,6 @@ describe('YjsPersistenceService', () => {
   })
 
   describe('onModuleDestroy', () => {
-    it('clears active timers and flushes pending docs', async () => {
-      const { map, rootNode } = await createMapWithRootNode()
-      const doc = await hydrateFromDb(map)
-      const persistSpy = jest
-        .spyOn(service, 'persistDoc')
-        .mockResolvedValue(undefined)
-
-      service.registerDebounce(map.id, doc)
-      const yRoot = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
-        rootNode.id
-      )!
-      yRoot.set('name', 'Pending Change')
-
-      await service.onModuleDestroy()
-
-      expect(persistSpy).toHaveBeenCalledWith(map.id, doc)
-
-      doc.destroy()
-    })
-
     it('does not fire debounce timers after shutdown', async () => {
       const { map, rootNode } = await createMapWithRootNode()
       const doc = await hydrateFromDb(map)
@@ -445,8 +459,7 @@ describe('YjsPersistenceService', () => {
       )!
       yRoot.set('name', 'Change')
 
-      await service.onModuleDestroy()
-      persistSpy.mockClear()
+      service.onModuleDestroy()
 
       await jest.advanceTimersByTimeAsync(3_000)
 
@@ -463,8 +476,7 @@ describe('YjsPersistenceService', () => {
         .mockResolvedValue(undefined)
 
       service.registerDebounce(map.id, doc)
-      await service.onModuleDestroy()
-      persistSpy.mockClear()
+      service.onModuleDestroy()
 
       const yRoot = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
         rootNode.id
@@ -475,16 +487,6 @@ describe('YjsPersistenceService', () => {
       expect(persistSpy).not.toHaveBeenCalled()
 
       doc.destroy()
-    })
-
-    it('skips flush when no timers are active', async () => {
-      const persistSpy = jest
-        .spyOn(service, 'persistDoc')
-        .mockResolvedValue(undefined)
-
-      await service.onModuleDestroy()
-
-      expect(persistSpy).not.toHaveBeenCalled()
     })
   })
 })
