@@ -772,7 +772,10 @@ export class YjsSyncService {
   }
 
   private updateAwarenessSelection(nodeId: string | null): void {
-    if (!this.wsProvider) return;
+    // The map load on first sync selects the root before setupAwareness runs.
+    // A write then would make pickClientColor count this client's own colour
+    // as taken.
+    if (!this.wsProvider || this.yjsAwarenessHandler === null) return;
     this.wsProvider.awareness.setLocalStateField('user', {
       color: this.ctx.getClientColor(),
       selectedNodeId: nodeId,

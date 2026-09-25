@@ -38,12 +38,33 @@ const LEGACY_SNAPSHOT: MapSnapshot = [
   legacyNode('pasted', 'note', { coordinates: { x: 700, y: -400 } }),
 ];
 
-/** A map stub around the real node handler and history, drawing nothing. */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/** The parts of a node's DOM that selection reads: the background and name. */
+function nodeDom(fill: string): SVGGElement {
+  const group = document.createElementNS(SVG_NS, 'g');
+  const background = document.createElementNS(SVG_NS, 'path');
+  background.style.fill = fill;
+  const foreignObject = document.createElementNS(SVG_NS, 'foreignObject');
+  foreignObject.appendChild(document.createElement('div'));
+  group.append(background, foreignObject);
+  return group;
+}
+
+/**
+ * A map stub around the real node handler and history. Its draw gives each
+ * node the DOM that selection reads.
+ */
 function makeMap(): MmpMap {
+  const update = jest.fn(() => {
+    for (const node of map.nodes.getNodes()) {
+      node.dom = nodeDom(node.colors.background);
+    }
+  });
   const map = {
     rootId: '',
     options: { defaultNode: DefaultNodeValues },
-    draw: { clear: jest.fn(), update: jest.fn() },
+    draw: { clear: jest.fn(), update },
     zoom: { center: jest.fn() },
     events: { call: jest.fn() },
     export: { asJSON: () => [] },

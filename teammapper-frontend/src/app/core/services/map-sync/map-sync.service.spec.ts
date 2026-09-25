@@ -154,18 +154,22 @@ describe('MapSyncService', () => {
       ]);
     });
 
-    it('selects root node on initMap', () => {
+    it('attaches the node the map load selected', () => {
       const rootNode = createMockNode({
         id: 'root',
         name: 'Root',
         isRoot: true,
       });
-      mmpService.getRootNode.mockReturnValue(rootNode);
       mmpService.selectNode.mockReturnValue(rootNode);
+      const attached: (ExportNodeProperties | null)[] = [];
+      service
+        .getAttachedNodeObservable()
+        .subscribe(node => attached.push(node));
 
       service.initMap();
 
-      expect(mmpService.selectNode).toHaveBeenCalledWith('root');
+      expect(mmpService.selectNode).toHaveBeenCalledWith();
+      expect(attached[attached.length - 1]).toBe(rootNode);
     });
   });
 

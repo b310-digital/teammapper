@@ -57,9 +57,11 @@ function makeMap(view: Bounds | null = null) {
   // No zoom transform applies in these tests, so `fixCoordinates` returns its
   // input.
   nodes.fixCoordinates = (coordinates: MapNodeCoordinates) => coordinates;
-  // No node has a DOM in these tests, so selecting one records the call only.
+  // No node has a DOM in these tests, so selecting one records the call only,
+  // and a redraw draws no ring.
   const selectNode = jest.fn();
   nodes.selectNode = selectNode;
+  nodes.redrawSelectionRing = jest.fn();
 
   const root = makeNode({ id: 'root', isRoot: true });
   const branch = makeNode({
