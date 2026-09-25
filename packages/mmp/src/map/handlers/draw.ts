@@ -336,7 +336,7 @@ export default class Draw {
 
   /**
    * Returns the URL an image value loads from: the resolved URL of a
-   * reference, a data URL as is, or null for an empty or unsafe value.
+   * reference, a base64 raster data URL as is, or null for any other value.
    */
   private imageUrlOf(src: string): string | null {
     if (isImageReference(src)) {
