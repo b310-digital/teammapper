@@ -7,22 +7,26 @@ import { MmpNode } from '../entities/mmpNode.entity'
 import {
   ExtractedImage,
   extractImageDataUrls,
+  ImageDataUrlExtraction,
   NodeImageReplacement,
   NodeImageSrc,
 } from '../utils/imageExtraction'
 import { ImagesService } from './images.service'
 
 /** How many maps one batch reads. */
-export const IMAGE_EXTRACTION_MAP_BATCH_SIZE = 100
+const MAP_BATCH_SIZE = 100
 
 /** What an image extraction run changed. */
 export interface ImageExtractionResult {
+  /** Maps with at least one changed node. */
   maps: number
+  /** Stored images that at least one changed node references. */
   images: number
+  /** Nodes whose data URL the service replaced with an image reference. */
   nodes: number
-  /** Nodes that kept their data URL; the log names each one. */
+  /** Nodes that kept their data URL. The service logs each one. */
   failedNodes: number
-  /** Maps whose extraction stopped with an error; the log names each one. */
+  /** Maps whose extraction threw. The service logs each one. */
   failedMaps: number
 }
 
@@ -47,6 +51,19 @@ const addResults = (
   failedMaps: a.failedMaps + b.failedMaps,
 })
 
+/** Counts what the extraction of one map changed. */
+const mapResult = (
+  plan: ImageDataUrlExtraction,
+  replaced: NodeImageReplacement[]
+): ImageExtractionResult => ({
+  maps: replaced.length > 0 ? 1 : 0,
+  images: new Set(replaced.map(({ reference }) => reference)).size,
+  nodes: replaced.length,
+  failedNodes:
+    plan.failedNodeIds.length + plan.replacements.length - replaced.length,
+  failedMaps: 0,
+})
+
 /** The nodes whose replacement points at the image. */
 const nodeIdsOf = (
   replacements: NodeImageReplacement[],
@@ -60,18 +77,18 @@ const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error)
 
 /**
- * Moves the inline data URLs of nodes into the image tables and replaces
- * them with image references. Reads maps in batches by primary key and the
- * nodes of each map by its index, so one run reads every node once and holds
- * one map's images in memory at a time.
+ * Moves the data URLs of nodes into the image tables and replaces each with an
+ * image reference. The service reads maps in batches by primary key and, per
+ * map, only the nodes holding a data URL, so a run holds one map's images in
+ * memory at a time.
  *
- * Safe to run while the server runs and to run again. A node only changes
- * while it still holds the data URL that was read. A map open during the run
- * can write its data URLs back; the next run moves them, and the cleanup job
- * deletes the images that became unused.
+ * You can run the job while the server runs, and run it again. The service
+ * changes a node only while the node still holds the data URL the service
+ * read. A map open during the run can write its data URLs back; the next run
+ * moves them, and the cleanup job deletes the images that became unused.
  *
- * Every node that keeps its data URL is logged with its map id and node id,
- * and the run continues with the next image or map.
+ * The service logs every node that keeps its data URL, with its map id and
+ * node id, and continues with the next image or map.
  */
 @Injectable()
 export class ImageExtractionService {
@@ -85,10 +102,10 @@ export class ImageExtractionService {
     private imagesService: ImagesService
   ) {}
 
-  /** Moves the inline images of every map; reports after each batch. */
+  /** Extracts the images of every map; reports the total after each batch. */
   async extractAllMaps(
     onBatch: (total: ImageExtractionResult) => void = () => undefined,
-    batchSize = IMAGE_EXTRACTION_MAP_BATCH_SIZE
+    batchSize = MAP_BATCH_SIZE
   ): Promise<ImageExtractionResult> {
     let total = EMPTY_RESULT
     let mapIds = await this.mapIdsAfter(null, batchSize)
@@ -100,90 +117,66 @@ export class ImageExtractionService {
     return total
   }
 
-  /** Stores the inline images of one map and points its nodes at them. */
+  /** Stores the images of one map and points its nodes at them. */
   async extractMap(mapId: string): Promise<ImageExtractionResult> {
-    const { images, replacements, failedNodeIds } = extractImageDataUrls(
-      await this.nodesWithDataUrl(mapId)
-    )
+    const plan = extractImageDataUrls(await this.nodesWithDataUrl(mapId))
     this.logFailedNodes(
       mapId,
-      failedNodeIds,
-      'the data URL is no valid image of its declared type'
+      plan.failedNodeIds,
+      'the data URL is not a valid image of its declared type'
     )
-    const stored = await this.storeImages(mapId, images, replacements)
-    const nodes = await this.replaceDataUrls(mapId, stored.replacements)
-    return {
-      maps: nodes > 0 ? 1 : 0,
-      images: stored.images,
-      nodes,
-      failedNodes: failedNodeIds.length + replacements.length - nodes,
-      failedMaps: 0,
-    }
+    const stored = await this.storeImages(mapId, plan)
+    return mapResult(plan, await this.replaceDataUrls(mapId, stored))
   }
 
-  /** Extracts each map; a failed map is logged and counted, not rethrown. */
+  /** Extracts each map; logs and counts a map that throws, and continues. */
   private async extractMaps(mapIds: string[]): Promise<ImageExtractionResult> {
     let total = EMPTY_RESULT
     for (const mapId of mapIds) {
-      total = addResults(total, await this.extractMapOrLog(mapId))
+      try {
+        total = addResults(total, await this.extractMap(mapId))
+      } catch (error) {
+        this.logger.error(
+          `Map ${mapId}: extraction failed: ${errorMessage(error)}`
+        )
+        total = addResults(total, { ...EMPTY_RESULT, failedMaps: 1 })
+      }
     }
     return total
   }
 
-  private async extractMapOrLog(mapId: string): Promise<ImageExtractionResult> {
-    try {
-      return await this.extractMap(mapId)
-    } catch (error) {
-      this.logger.error(
-        `Map ${mapId}: extraction failed: ${errorMessage(error)}`
-      )
-      return { ...EMPTY_RESULT, failedMaps: 1 }
+  /** Stores each image; returns the replacements whose image it stored. */
+  private async storeImages(
+    mapId: string,
+    { images, replacements }: ImageDataUrlExtraction
+  ): Promise<NodeImageReplacement[]> {
+    const failedIds = new Set<string>()
+    for (const image of images) {
+      const stored = await this.storeImage(mapId, image, replacements)
+      if (!stored) failedIds.add(image.id)
     }
+    return replacements.filter(
+      ({ reference }) => !failedIds.has(imageIdOf(reference))
+    )
   }
 
   /**
-   * Stores each image; returns how many were stored and the replacements of
-   * the nodes whose image was stored. A failed image is logged with the nodes
-   * that keep its data URL.
+   * Stores one image and returns true. On failure, logs every node that keeps
+   * the data URL and returns false.
    */
-  private async storeImages(
-    mapId: string,
-    images: ExtractedImage[],
-    replacements: NodeImageReplacement[]
-  ): Promise<{ images: number; replacements: NodeImageReplacement[] }> {
-    const failedIds = new Set<string>()
-    for (const image of images) {
-      const error = await this.storeImage(mapId, image)
-      if (error === null) continue
-      failedIds.add(image.id)
-      this.logFailedNodes(
-        mapId,
-        nodeIdsOf(replacements, image.id),
-        `storing the image failed: ${error}`
-      )
-    }
-    return {
-      images: images.length - failedIds.size,
-      replacements: replacements.filter(
-        ({ reference }) => !failedIds.has(imageIdOf(reference))
-      ),
-    }
-  }
-
-  /** Stores one image; returns the error message, or null on success. */
   private async storeImage(
     mapId: string,
-    { id, mimetype, data, size }: ExtractedImage
-  ): Promise<string | null> {
+    { id, mimetype, data }: ExtractedImage,
+    replacements: NodeImageReplacement[]
+  ): Promise<boolean> {
     try {
-      await this.imagesService.storeExistingImage(mapId, id, {
-        buffer: data,
-        mimetype,
-        size,
-      })
-      return null
+      const upload = { buffer: data, mimetype, size: data.length }
+      await this.imagesService.storeImageWithoutCap(mapId, id, upload)
+      return true
     } catch (error) {
-      return errorMessage(error)
+      const reason = `storing the image failed: ${errorMessage(error)}`
+      this.logFailedNodes(mapId, nodeIdsOf(replacements, id), reason)
+      return false
     }
   }
 
@@ -197,12 +190,12 @@ export class ImageExtractionService {
 
   /** The next batch of map ids in primary key order. */
   private async mapIdsAfter(
-    lastId: string | null | undefined,
+    lastId: string | null,
     batchSize: number
   ): Promise<string[]> {
     const maps = await this.mapsRepository.find({
       select: { id: true },
-      where: lastId ? { id: MoreThan(lastId) } : {},
+      where: lastId === null ? {} : { id: MoreThan(lastId) },
       order: { id: 'ASC' },
       take: batchSize,
     })
@@ -216,21 +209,18 @@ export class ImageExtractionService {
     })
   }
 
-  /**
-   * Replaces each data URL a node still holds; returns the nodes changed. A
-   * node that changed its image meanwhile, or whose update fails, is logged.
-   */
+  /** Replaces each data URL a node still holds; returns the replaced ones. */
   private async replaceDataUrls(
     mapId: string,
     replacements: NodeImageReplacement[]
-  ): Promise<number> {
-    let changed = 0
+  ): Promise<NodeImageReplacement[]> {
+    const replaced: NodeImageReplacement[] = []
     for (const replacement of replacements) {
       const reason = await this.replaceDataUrl(mapId, replacement)
-      if (reason === null) changed++
+      if (reason === null) replaced.push(replacement)
       else this.logFailedNodes(mapId, [replacement.nodeId], reason)
     }
-    return changed
+    return replaced
   }
 
   /** Replaces one data URL; returns why the node kept it, or null. */

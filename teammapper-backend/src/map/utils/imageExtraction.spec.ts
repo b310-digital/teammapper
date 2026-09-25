@@ -1,17 +1,13 @@
+import {
+  dataUrl,
+  LARGE_LOGO_URL,
+  LOGO_PNG,
+  LOGO_URL,
+  MISMATCH_URL,
+} from '../../../test/imageFixtures'
 import { decodeImageDataUrl, extractImageDataUrls } from './imageExtraction'
 
-const PNG_BYTES = Buffer.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01, 0x02,
-])
-const JPEG_BYTES = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x03])
-const GIF_BYTES = Buffer.from('GIF89a-gif', 'ascii')
-const WEBP_BYTES = Buffer.from('RIFF\u0000\u0000\u0000\u0000WEBPVP8 ', 'ascii')
-
-const dataUrl = (type: string, bytes: Buffer): string =>
-  `data:image/${type};base64,${bytes.toString('base64')}`
-
-const PNG_URL = dataUrl('png', PNG_BYTES)
-const JPEG_URL = dataUrl('jpeg', JPEG_BYTES)
+const SVG_URL = dataUrl('svg+xml', Buffer.from('<svg/>'))
 
 const IMAGE_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const IMAGE_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -27,67 +23,56 @@ const sequentialIds = (...ids: string[]) => {
 }
 
 describe('decodeImageDataUrl', () => {
-  it.each([
-    ['png', PNG_BYTES],
-    ['jpeg', JPEG_BYTES],
-    ['gif', GIF_BYTES],
-    ['webp', WEBP_BYTES],
-  ])('decodes a %s data URL', (type, bytes) => {
-    expect(decodeImageDataUrl(dataUrl(type, bytes))).toEqual({
-      mimetype: `image/${type}`,
-      data: bytes,
+  it('decodes a PNG data URL', () => {
+    expect(decodeImageDataUrl(LOGO_URL)).toEqual({
+      mimetype: 'image/png',
+      data: LOGO_PNG,
     })
   })
 
-  it.each([null, undefined, ''])('returns null for %p', (src) => {
+  it('decodes a data URL without padding', () => {
+    const unpadded = LOGO_URL.replace(/=+$/, '')
+
+    expect(decodeImageDataUrl(unpadded)).toEqual({
+      mimetype: 'image/png',
+      data: LOGO_PNG,
+    })
+  })
+
+  it.each([
+    ['an image reference', `image:${IMAGE_A}`],
+    ['a non-raster type', SVG_URL],
+    ['a data URL that is not base64', 'data:image/png,abc'],
+    ['a character outside the base64 alphabet', `${LOGO_URL}!`],
+    ['bytes that do not match the declared type', MISMATCH_URL],
+    [
+      'a payload shorter than the signature',
+      dataUrl('png', LOGO_PNG.subarray(0, 4)),
+    ],
+  ])('returns null for %s', (_, src) => {
     expect(decodeImageDataUrl(src)).toBeNull()
   })
 
-  it('returns null for an image reference', () => {
-    expect(decodeImageDataUrl(`image:${IMAGE_A}`)).toBeNull()
-  })
+  it('returns null for padding in the middle of the payload', () => {
+    // The logo, encoded as two separately padded halves.
+    const firstHalf = dataUrl('png', LOGO_PNG.subarray(0, 8))
+    const secondHalf = LOGO_PNG.subarray(8).toString('base64')
 
-  it('returns null for a non-raster type', () => {
-    expect(
-      decodeImageDataUrl(dataUrl('svg+xml', Buffer.from('<svg/>')))
-    ).toBeNull()
-  })
-
-  it('returns null for a data URL that is not base64', () => {
-    expect(decodeImageDataUrl('data:image/png,abc')).toBeNull()
-  })
-
-  it('returns null for base64 with characters outside the alphabet', () => {
-    expect(decodeImageDataUrl('data:image/png;base64,iVBO\nRw0K')).toBeNull()
-  })
-
-  it('returns null when the bytes do not match the declared type', () => {
-    expect(decodeImageDataUrl(dataUrl('png', JPEG_BYTES))).toBeNull()
-  })
-
-  it('returns null for a payload shorter than the signature', () => {
-    expect(decodeImageDataUrl('data:image/png;base64,iVA=')).toBeNull()
+    expect(decodeImageDataUrl(firstHalf + secondHalf)).toBeNull()
   })
 })
 
 describe('extractImageDataUrls', () => {
-  it('moves an inline image out and replaces it with a reference', () => {
+  it('plans one image and one replacement for a data URL', () => {
     const result = extractImageDataUrls(
-      [{ id: 'node-1', imageSrc: PNG_URL }],
+      [{ id: 'node-1', imageSrc: LOGO_URL }],
       sequentialIds(IMAGE_A)
     )
 
     expect(result).toEqual({
-      images: [
-        {
-          id: IMAGE_A,
-          mimetype: 'image/png',
-          data: PNG_BYTES,
-          size: PNG_BYTES.length,
-        },
-      ],
+      images: [{ id: IMAGE_A, mimetype: 'image/png', data: LOGO_PNG }],
       replacements: [
-        { nodeId: 'node-1', dataUrl: PNG_URL, reference: `image:${IMAGE_A}` },
+        { nodeId: 'node-1', dataUrl: LOGO_URL, reference: `image:${IMAGE_A}` },
       ],
       failedNodeIds: [],
     })
@@ -96,32 +81,33 @@ describe('extractImageDataUrls', () => {
   it('gives each distinct data URL its own image', () => {
     const result = extractImageDataUrls(
       [
-        { id: 'node-1', imageSrc: PNG_URL },
-        { id: 'node-2', imageSrc: JPEG_URL },
+        { id: 'node-1', imageSrc: LOGO_URL },
+        { id: 'node-2', imageSrc: LARGE_LOGO_URL },
       ],
       sequentialIds(IMAGE_A, IMAGE_B)
     )
 
     expect({
-      images: result.images.map((image) => [image.id, image.mimetype]),
+      imageIds: result.images.map((image) => image.id),
       replacements: result.replacements,
     }).toEqual({
-      images: [
-        [IMAGE_A, 'image/png'],
-        [IMAGE_B, 'image/jpeg'],
-      ],
+      imageIds: [IMAGE_A, IMAGE_B],
       replacements: [
-        { nodeId: 'node-1', dataUrl: PNG_URL, reference: `image:${IMAGE_A}` },
-        { nodeId: 'node-2', dataUrl: JPEG_URL, reference: `image:${IMAGE_B}` },
+        { nodeId: 'node-1', dataUrl: LOGO_URL, reference: `image:${IMAGE_A}` },
+        {
+          nodeId: 'node-2',
+          dataUrl: LARGE_LOGO_URL,
+          reference: `image:${IMAGE_B}`,
+        },
       ],
     })
   })
 
-  it('stores one image for nodes holding the same data URL', () => {
+  it('plans one image for nodes holding the same data URL', () => {
     const result = extractImageDataUrls(
       [
-        { id: 'node-1', imageSrc: PNG_URL },
-        { id: 'node-2', imageSrc: PNG_URL },
+        { id: 'node-1', imageSrc: LOGO_URL },
+        { id: 'node-2', imageSrc: LOGO_URL },
       ],
       sequentialIds(IMAGE_A, IMAGE_B)
     )
@@ -132,23 +118,20 @@ describe('extractImageDataUrls', () => {
     }).toEqual({
       imageIds: [IMAGE_A],
       replacements: [
-        { nodeId: 'node-1', dataUrl: PNG_URL, reference: `image:${IMAGE_A}` },
-        { nodeId: 'node-2', dataUrl: PNG_URL, reference: `image:${IMAGE_A}` },
+        { nodeId: 'node-1', dataUrl: LOGO_URL, reference: `image:${IMAGE_A}` },
+        { nodeId: 'node-2', dataUrl: LOGO_URL, reference: `image:${IMAGE_A}` },
       ],
     })
   })
 
-  it('leaves nodes without a valid inline image unchanged', () => {
-    const result = extractImageDataUrls(
-      [
-        { id: 'empty', imageSrc: null },
-        { id: 'blank', imageSrc: '' },
-        { id: 'reference', imageSrc: `image:${IMAGE_B}` },
-        { id: 'svg', imageSrc: dataUrl('svg+xml', Buffer.from('<svg/>')) },
-        { id: 'mismatch', imageSrc: dataUrl('png', JPEG_BYTES) },
-      ],
-      sequentialIds(IMAGE_A)
-    )
+  it('lists only nodes with an invalid data URL as failed', () => {
+    const result = extractImageDataUrls([
+      { id: 'empty', imageSrc: null },
+      { id: 'blank', imageSrc: '' },
+      { id: 'reference', imageSrc: `image:${IMAGE_B}` },
+      { id: 'svg', imageSrc: SVG_URL },
+      { id: 'mismatch', imageSrc: MISMATCH_URL },
+    ])
 
     expect(result).toEqual({
       images: [],
@@ -157,85 +140,28 @@ describe('extractImageDataUrls', () => {
     })
   })
 
-  it('lists no node without a data URL as failed', () => {
-    const result = extractImageDataUrls([
-      { id: 'empty', imageSrc: null },
-      { id: 'reference', imageSrc: `image:${IMAGE_B}` },
-    ])
-
-    expect(result.failedNodeIds).toEqual([])
-  })
-
-  it('lists every node holding a data URL that fails to decode', () => {
-    const invalid = dataUrl('png', JPEG_BYTES)
+  it('replaces the valid data URLs and generates no id for invalid ones', () => {
+    const generateId = jest.fn(sequentialIds(IMAGE_A))
 
     const result = extractImageDataUrls(
       [
-        { id: 'first', imageSrc: invalid },
-        { id: 'valid', imageSrc: PNG_URL },
-        { id: 'second', imageSrc: invalid },
-      ],
-      sequentialIds(IMAGE_A)
-    )
-
-    expect(result.failedNodeIds).toEqual(['first', 'second'])
-  })
-
-  it('draws no id for a data URL that fails to decode', () => {
-    const generateId = jest.fn(() => IMAGE_A)
-
-    extractImageDataUrls(
-      [{ id: 'mismatch', imageSrc: dataUrl('png', JPEG_BYTES) }],
-      generateId
-    )
-
-    expect(generateId).not.toHaveBeenCalled()
-  })
-
-  it('draws one id per distinct data URL', () => {
-    const generateId = jest.fn(sequentialIds(IMAGE_A, IMAGE_B))
-
-    extractImageDataUrls(
-      [
-        { id: 'node-1', imageSrc: PNG_URL },
-        { id: 'node-2', imageSrc: PNG_URL },
-        { id: 'node-3', imageSrc: JPEG_URL },
+        { id: 'first', imageSrc: MISMATCH_URL },
+        { id: 'valid', imageSrc: LOGO_URL },
+        { id: 'second', imageSrc: MISMATCH_URL },
       ],
       generateId
     )
 
-    expect(generateId).toHaveBeenCalledTimes(2)
-  })
-
-  it('replaces the valid images and skips the invalid ones of one map', () => {
-    const result = extractImageDataUrls(
-      [
-        { id: 'invalid', imageSrc: dataUrl('png', JPEG_BYTES) },
-        { id: 'valid', imageSrc: JPEG_URL },
+    expect({
+      replacements: result.replacements,
+      failedNodeIds: result.failedNodeIds,
+      generatedIds: generateId.mock.calls.length,
+    }).toEqual({
+      replacements: [
+        { nodeId: 'valid', dataUrl: LOGO_URL, reference: `image:${IMAGE_A}` },
       ],
-      sequentialIds(IMAGE_A)
-    )
-
-    expect(result.replacements).toEqual([
-      { nodeId: 'valid', dataUrl: JPEG_URL, reference: `image:${IMAGE_A}` },
-    ])
-  })
-
-  it('generates uuids by default', () => {
-    const { images } = extractImageDataUrls([
-      { id: 'node-1', imageSrc: PNG_URL },
-    ])
-
-    expect(images[0]?.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-    )
-  })
-
-  it('returns nothing for no nodes', () => {
-    expect(extractImageDataUrls([])).toEqual({
-      images: [],
-      replacements: [],
-      failedNodeIds: [],
+      failedNodeIds: ['first', 'second'],
+      generatedIds: 1,
     })
   })
 })

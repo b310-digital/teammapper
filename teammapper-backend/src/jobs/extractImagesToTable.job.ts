@@ -12,7 +12,7 @@ async function bootstrap() {
   logger.log('--- Extracting inline images to the image tables ... ---')
   const result = await imageExtractionService.extractAllMaps((total) =>
     logger.log(
-      `Maps changed: ${total.maps}, images stored: ${total.images}, nodes changed: ${total.nodes}, nodes failed: ${total.failedNodes}, maps failed: ${total.failedMaps}`
+      `Maps changed: ${total.maps}, images extracted: ${total.images}, nodes changed: ${total.nodes}, nodes failed: ${total.failedNodes}, maps failed: ${total.failedMaps}`
     )
   )
   logger.log(

@@ -3,12 +3,20 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { ConfigModule } from '@nestjs/config'
 import { Logger } from '@nestjs/common'
 import { Repository } from 'typeorm'
-import AppModule from '../../app.module'
+import { imageIdOf, isImageReference } from '@teammapper/shared'
 import {
   createTestConfiguration,
   destroyWorkerDatabase,
 } from '../../../test/db'
 import { truncateDatabase } from '../../../test/helper'
+import {
+  LARGE_LOGO_PNG,
+  LARGE_LOGO_URL,
+  MISMATCH_URL,
+  LOGO_PNG,
+  LOGO_URL,
+} from '../../../test/imageFixtures'
+import { MapDataModule } from '../map-data.module'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpImage } from '../entities/mmpImage.entity'
@@ -18,17 +26,6 @@ import {
   ImageExtractionService,
 } from './image-extraction.service'
 
-const PNG_BYTES = Buffer.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01, 0x02,
-])
-const JPEG_BYTES = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x03])
-
-const dataUrl = (type: string, bytes: Buffer): string =>
-  `data:image/${type};base64,${bytes.toString('base64')}`
-
-const PNG_URL = dataUrl('png', PNG_BYTES)
-const JPEG_URL = dataUrl('jpeg', JPEG_BYTES)
-const MISMATCH_URL = dataUrl('png', JPEG_BYTES)
 const UPLOADED_REFERENCE = 'image:99999999-9999-4999-8999-999999999999'
 
 describe('ImageExtractionService', () => {
@@ -46,8 +43,9 @@ describe('ImageExtractionService', () => {
         TypeOrmModule.forRoot(
           await createTestConfiguration(process.env.JEST_WORKER_ID || '')
         ),
-        AppModule,
+        MapDataModule,
       ],
+      providers: [ImageExtractionService],
     }).compile()
 
     imageExtractionService = moduleFixture.get(ImageExtractionService)
@@ -109,69 +107,82 @@ describe('ImageExtractionService', () => {
   /** The image a node references, read as the image endpoint reads it. */
   const imageOf = async (map: MmpMap, nodeId: string) => {
     const src = await imageSrcOf(map, nodeId)
-    if (!src?.startsWith('image:')) throw new Error(`${nodeId} is inline`)
-    return imagesService.readImage(map.id, src.slice('image:'.length))
+    if (!isImageReference(src)) throw new Error(`${nodeId} is inline`)
+    return imagesService.readImage(map.id, imageIdOf(src))
   }
 
   describe('extractMap', () => {
     it('stores each inline image and points its node at it', async () => {
       const map = await createMap()
-      const [pngNode, jpegNode] = await createNodes(map, [PNG_URL, JPEG_URL])
+      const [logoNode, largeLogoNode] = await createNodes(map, [
+        LOGO_URL,
+        LARGE_LOGO_URL,
+      ])
 
       const result = await imageExtractionService.extractMap(map.id)
 
       expect({
         result,
-        png: await imageOf(map, pngNode!),
-        jpeg: await imageOf(map, jpegNode!),
+        logo: await imageOf(map, logoNode!),
+        largeLogo: await imageOf(map, largeLogoNode!),
       }).toEqual({
         result: { maps: 1, images: 2, nodes: 2, failedNodes: 0, failedMaps: 0 },
-        png: { mimetype: 'image/png', data: PNG_BYTES },
-        jpeg: { mimetype: 'image/jpeg', data: JPEG_BYTES },
+        logo: { mimetype: 'image/png', data: LOGO_PNG },
+        largeLogo: { mimetype: 'image/png', data: LARGE_LOGO_PNG },
       })
     })
 
     it('stores one image for nodes holding the same data URL', async () => {
       const map = await createMap()
-      const [first, second] = await createNodes(map, [PNG_URL, PNG_URL])
+      const [first, second] = await createNodes(map, [LOGO_URL, LOGO_URL])
 
-      await imageExtractionService.extractMap(map.id)
+      const result = await imageExtractionService.extractMap(map.id)
 
       expect({
+        result,
         shared:
           (await imageSrcOf(map, first!)) === (await imageSrcOf(map, second!)),
-        images: await imagesRepo.count({ where: { mapId: map.id } }),
-      }).toEqual({ shared: true, images: 1 })
+        rows: await imagesRepo.count({ where: { mapId: map.id } }),
+      }).toEqual({
+        result: { maps: 1, images: 1, nodes: 2, failedNodes: 0, failedMaps: 0 },
+        shared: true,
+        rows: 1,
+      })
     })
 
     it('records the byte size of the image', async () => {
       const map = await createMap()
-      await createNodes(map, [PNG_URL])
+      await createNodes(map, [LOGO_URL])
 
       await imageExtractionService.extractMap(map.id)
 
       const [image] = await imagesRepo.find({ where: { mapId: map.id } })
-      expect(image?.size).toBe(PNG_BYTES.length)
+      expect(image?.size).toBe(LOGO_PNG.length)
     })
 
-    it('keeps an invalid data URL, a reference and an empty image', async () => {
+    it('keeps an invalid data URL, a reference and an empty image, and logs the invalid one', async () => {
       const map = await createMap()
       const ids = await createNodes(map, [
         MISMATCH_URL,
         UPLOADED_REFERENCE,
         null,
       ])
-
-      spyOnWarnings()
+      const warn = spyOnWarnings()
 
       const result = await imageExtractionService.extractMap(map.id)
 
       expect({
         result,
         srcs: await Promise.all(ids.map((id) => imageSrcOf(map, id))),
+        logs: warn.mock.calls,
       }).toEqual({
         result: { maps: 0, images: 0, nodes: 0, failedNodes: 1, failedMaps: 0 },
         srcs: [MISMATCH_URL, UPLOADED_REFERENCE, null],
+        logs: [
+          [
+            `Map ${map.id}, node ${ids[0]}: kept the inline image: the data URL is not a valid image of its declared type`,
+          ],
+        ],
       })
     })
 
@@ -180,7 +191,7 @@ describe('ImageExtractionService', () => {
       process.env.MAX_IMAGE_BYTES_PER_MAP = '1'
       try {
         const map = await createMap()
-        await createNodes(map, [PNG_URL])
+        await createNodes(map, [LOGO_URL])
 
         const result = await imageExtractionService.extractMap(map.id)
 
@@ -193,17 +204,17 @@ describe('ImageExtractionService', () => {
 
     it('keeps a node that changed its image during the move', async () => {
       const map = await createMap()
-      const [nodeId] = await createNodes(map, [PNG_URL])
-      const storeExistingImage =
-        imagesService.storeExistingImage.bind(imagesService)
+      const [nodeId] = await createNodes(map, [LOGO_URL])
+      const storeImageWithoutCap =
+        imagesService.storeImageWithoutCap.bind(imagesService)
       jest
-        .spyOn(imagesService, 'storeExistingImage')
+        .spyOn(imagesService, 'storeImageWithoutCap')
         .mockImplementationOnce(async (...args) => {
           await nodesRepo.update(
             { nodeMapId: map.id, id: nodeId! },
-            { imageSrc: JPEG_URL }
+            { imageSrc: LARGE_LOGO_URL }
           )
-          return storeExistingImage(...args)
+          return storeImageWithoutCap(...args)
         })
       const warn = spyOnWarnings()
 
@@ -214,8 +225,8 @@ describe('ImageExtractionService', () => {
         src: await imageSrcOf(map, nodeId!),
         logs: warn.mock.calls,
       }).toEqual({
-        result: { maps: 0, images: 1, nodes: 0, failedNodes: 1, failedMaps: 0 },
-        src: JPEG_URL,
+        result: { maps: 0, images: 0, nodes: 0, failedNodes: 1, failedMaps: 0 },
+        src: LARGE_LOGO_URL,
         logs: [
           [
             `Map ${map.id}, node ${nodeId}: kept the inline image: the node changed its image meanwhile`,
@@ -224,34 +235,20 @@ describe('ImageExtractionService', () => {
       })
     })
 
-    it('logs the map and node id of a data URL that fails to decode', async () => {
-      const map = await createMap()
-      const [nodeId] = await createNodes(map, [MISMATCH_URL])
-      const warn = spyOnWarnings()
-
-      await imageExtractionService.extractMap(map.id)
-
-      expect(warn.mock.calls).toEqual([
-        [
-          `Map ${map.id}, node ${nodeId}: kept the inline image: the data URL is no valid image of its declared type`,
-        ],
-      ])
-    })
-
     it('logs every node of an image that fails to store and keeps its data URL', async () => {
       const map = await createMap()
       const [first, second, other] = await createNodes(map, [
-        PNG_URL,
-        PNG_URL,
-        JPEG_URL,
+        LOGO_URL,
+        LOGO_URL,
+        LARGE_LOGO_URL,
       ])
-      const storeExistingImage =
-        imagesService.storeExistingImage.bind(imagesService)
+      const storeImageWithoutCap =
+        imagesService.storeImageWithoutCap.bind(imagesService)
       jest
-        .spyOn(imagesService, 'storeExistingImage')
+        .spyOn(imagesService, 'storeImageWithoutCap')
         .mockImplementation(async (mapId, id, upload) => {
-          if (upload.mimetype === 'image/png') throw new Error('disk full')
-          return storeExistingImage(mapId, id, upload)
+          if (upload.buffer.equals(LOGO_PNG)) throw new Error('disk full')
+          return storeImageWithoutCap(mapId, id, upload)
         })
       const warn = spyOnWarnings()
 
@@ -264,8 +261,8 @@ describe('ImageExtractionService', () => {
         logs: warn.mock.calls,
       }).toEqual({
         result: { maps: 1, images: 1, nodes: 1, failedNodes: 2, failedMaps: 0 },
-        srcs: [PNG_URL, PNG_URL],
-        other: { mimetype: 'image/jpeg', data: JPEG_BYTES },
+        srcs: [LOGO_URL, LOGO_URL],
+        other: { mimetype: 'image/png', data: LARGE_LOGO_PNG },
         logs: [first, second].map((nodeId) => [
           `Map ${map.id}, node ${nodeId}: kept the inline image: storing the image failed: disk full`,
         ]),
@@ -274,7 +271,7 @@ describe('ImageExtractionService', () => {
 
     it('changes nothing on a second run', async () => {
       const map = await createMap()
-      const [nodeId] = await createNodes(map, [PNG_URL])
+      const [nodeId] = await createNodes(map, [LOGO_URL])
       await imageExtractionService.extractMap(map.id)
       const reference = await imageSrcOf(map, nodeId!)
 
@@ -295,7 +292,7 @@ describe('ImageExtractionService', () => {
   describe('extractAllMaps', () => {
     it('moves the images of every map across batches', async () => {
       const maps = [await createMap(), await createMap(), await createMap()]
-      for (const map of maps) await createNodes(map, [PNG_URL, JPEG_URL])
+      for (const map of maps) await createNodes(map, [LOGO_URL, LARGE_LOGO_URL])
       const batches: ImageExtractionResult[] = []
 
       const result = await imageExtractionService.extractAllMaps(
@@ -315,8 +312,8 @@ describe('ImageExtractionService', () => {
     it('stores each image under the map of its node', async () => {
       const mapA = await createMap()
       const mapB = await createMap()
-      const [nodeA] = await createNodes(mapA, [PNG_URL])
-      const [nodeB] = await createNodes(mapB, [PNG_URL])
+      const [nodeA] = await createNodes(mapA, [LOGO_URL])
+      const [nodeB] = await createNodes(mapB, [LOGO_URL])
 
       await imageExtractionService.extractAllMaps()
 
@@ -324,15 +321,15 @@ describe('ImageExtractionService', () => {
         await imageOf(mapA, nodeA!),
         await imageOf(mapB, nodeB!),
       ]).toEqual([
-        { mimetype: 'image/png', data: PNG_BYTES },
-        { mimetype: 'image/png', data: PNG_BYTES },
+        { mimetype: 'image/png', data: LOGO_PNG },
+        { mimetype: 'image/png', data: LOGO_PNG },
       ])
     })
 
     it('logs the id of a map that fails and continues with the next', async () => {
       const failing = await createMap()
       const working = await createMap()
-      const [nodeId] = await createNodes(working, [PNG_URL])
+      const [nodeId] = await createNodes(working, [LOGO_URL])
       const extractMap = imageExtractionService.extractMap.bind(
         imageExtractionService
       )
@@ -352,7 +349,7 @@ describe('ImageExtractionService', () => {
         logs: error.mock.calls,
       }).toEqual({
         result: { maps: 1, images: 1, nodes: 1, failedNodes: 0, failedMaps: 1 },
-        image: { mimetype: 'image/png', data: PNG_BYTES },
+        image: { mimetype: 'image/png', data: LOGO_PNG },
         logs: [[`Map ${failing.id}: extraction failed: connection lost`]],
       })
     })

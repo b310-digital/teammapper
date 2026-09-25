@@ -217,7 +217,7 @@ Trigger the unused image cleanup (also executed daily at 01:00 UTC). It deletes 
 docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend run prod:data:images:cleanup
 ```
 
-Extract the images that nodes hold inline as base64 data URLs into the image tables, replacing each with an image reference. Run it once after upgrading to a release that stores images by reference. It works through the maps in batches, so it can run while the app runs, and it can be run again: a later run extracts only what is still inline.
+Extract the images that nodes hold inline as base64 data URLs into the image tables, replacing each with an image reference. Run the job once after upgrading to a release that stores images by reference. You can run the job while the app runs: the job changes a node only while the node still holds the data URL the job read. A map open during the run can write its data URLs back, so run the job a second time; each run extracts only what is still inline. The job keeps a data URL that is not a valid raster image, such as an SVG, and logs a warning for it on every run.
 
 ```
 docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend run prod:data:images:extract-to-table

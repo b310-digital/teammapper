@@ -3,66 +3,68 @@ import {
   IMAGE_DATA_URL_REGEX,
   ImageReference,
   isRasterImageMimeType,
-  RasterImageMimeType,
   toImageReference,
 } from '@teammapper/shared'
+import { MmpNode } from '../entities/mmpNode.entity'
+import { StoredImage } from '../services/images.service'
 import { matchesRasterSignature } from './rasterImageValidator'
 
-/** The image column of one node row. */
-export interface NodeImageSrc {
+/** The node columns the extraction reads. */
+export type NodeImageSrc = Pick<MmpNode, 'id' | 'imageSrc'>
+
+/** A decoded data URL and the image id the job stores it under. */
+export interface ExtractedImage extends StoredImage {
   id: string
-  imageSrc: string | null
 }
 
-/** The type and bytes of one image. */
-export interface DecodedImage {
-  mimetype: RasterImageMimeType
-  data: Buffer
-}
-
-/** An inline image moved out of its nodes, under the id it is stored with. */
-export interface ExtractedImage extends DecodedImage {
-  id: string
-  size: number
-}
-
-/** The reference that replaces the inline image of one node. */
+/** The image reference that replaces the data URL of one node. */
 export interface NodeImageReplacement {
   nodeId: string
   dataUrl: string
   reference: ImageReference
 }
 
+/** The images to store and the node changes that point at them. */
 export interface ImageDataUrlExtraction {
   images: ExtractedImage[]
   replacements: NodeImageReplacement[]
-  /** Nodes whose data URL does not decode to a raster image of its type. */
+  /** Nodes whose data URL does not decode to an image of its declared type. */
   failedNodeIds: string[]
 }
 
+/** Base64 with at most two padding characters, and those only at the end. */
+const BASE64_PAYLOAD_REGEX = /^[A-Za-z0-9+/]+={0,2}$/
+
+/**
+ * Decodes a base64 payload, padded or not. Returns null for a `=` before the
+ * end, because Buffer.from may decode such a payload to fewer bytes, and
+ * truncated bytes can still pass the signature check.
+ */
+const decodeBase64 = (payload: string): Buffer | null =>
+  BASE64_PAYLOAD_REGEX.test(payload) ? Buffer.from(payload, 'base64') : null
+
 /**
  * Returns the type and bytes of a raster base64 data URL, or null when the
- * value is no such data URL or its bytes do not match the declared type. The
- * image endpoint sends the stored type as Content-Type, so the bytes decide,
- * as on upload.
+ * value is not such a data URL or its bytes do not match the declared type.
+ * The image endpoint sends the stored type as Content-Type, so the decoder
+ * checks the magic bytes, as the upload validator does.
  */
-export const decodeImageDataUrl = (
-  src: string | null | undefined
-): DecodedImage | null => {
-  if (!src) return null
+export const decodeImageDataUrl = (src: string): StoredImage | null => {
   const match = IMAGE_DATA_URL_REGEX.exec(src)
   if (!match) return null
   const mimetype = `image/${match[1]}`
   if (!isRasterImageMimeType(mimetype)) return null
-  const data = Buffer.from(src.slice(src.indexOf(',') + 1), 'base64')
-  return matchesRasterSignature(mimetype, data) ? { mimetype, data } : null
+  const data = decodeBase64(src.slice(src.indexOf(',') + 1))
+  if (!data || !matchesRasterSignature(mimetype, data)) return null
+  return { mimetype, data }
 }
 
 /**
- * Moves every valid inline image of one map's nodes out into an image and
- * replaces it with a reference. Nodes holding the same data URL share one
- * image. A node without a data URL gets no replacement, and a node whose data
- * URL does not decode is listed in `failedNodeIds`.
+ * Plans the extraction of one map and reads or writes nothing. The planner
+ * decodes each distinct data URL once, generates one image id for it, and
+ * pairs every node holding it with the matching image reference. A node
+ * without a data URL gets no replacement, and a node whose data URL fails to
+ * decode goes into `failedNodeIds`.
  */
 export const extractImageDataUrls = (
   nodes: NodeImageSrc[],
@@ -91,13 +93,11 @@ export const extractImageDataUrls = (
   return { images, replacements, failedNodeIds }
 }
 
-/** Decodes one data URL and draws an id for it only when it decodes. */
+/** Decodes one data URL and generates an image id only when it decodes. */
 const extract = (
   src: string,
   generateId: () => string
 ): ExtractedImage | null => {
   const decoded = decodeImageDataUrl(src)
-  return decoded
-    ? { ...decoded, id: generateId(), size: decoded.data.length }
-    : null
+  return decoded ? { ...decoded, id: generateId() } : null
 }
