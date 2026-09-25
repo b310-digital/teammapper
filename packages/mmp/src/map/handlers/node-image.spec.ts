@@ -5,14 +5,15 @@ import { DefaultNodeValues } from '../options.js';
 import MmpMap from '../map.js';
 
 /**
- * A node image is a data URL, drawn as is, or an `image:<uuid>` reference,
- * drawn from the URL the map's resolver returns. A failed load hides the
- * image and keeps the value.
+ * A node image is a base64 raster data URL, drawn as is, or an
+ * `image:<uuid>` reference, drawn from the URL the map's resolver returns.
+ * The renderer loads no other value. A failed load hides the image and keeps
+ * the value.
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const REFERENCE = 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
-const DATA_URL = 'data:image/png;base64,iVBORw0KGgo=';
+const DATA_URL = 'data:image/png;base64,logo';
 
 /** Stands in for the browser Image, so a test decides how a load ends. */
 class FakeImage {
@@ -105,6 +106,22 @@ describe('node images', () => {
     expect(node.dom.querySelector('image')?.getAttribute('href')).toBe(
       '/api/maps/m/images/i'
     );
+  });
+
+  it.each([
+    'https://example.local/tracker.png',
+    'http://127.0.0.1/x.png',
+    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>',
+    'data:image/svg+xml,svg',
+    'data:text/html,hello',
+  ])('loads nothing for the value %p', src => {
+    const { draw } = makeMap();
+    const node = makeNode(src);
+
+    draw.setImage(node);
+
+    expect(FakeImage.created).toHaveLength(0);
+    expect(node.dom.querySelector('image')).toBeNull();
   });
 
   it('draws no image for a reference without a resolver', () => {

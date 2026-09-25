@@ -79,9 +79,9 @@ from the map's automatic branch colors setting instead of an explicit one.
 
 ### Link
 
-A single web address attached to a node. The map draws it as an icon, or as
-**linktext** when that setting is on: the address written out inline instead of
-the icon. "Linktext" is the app's own compound.
+A single http or https address attached to a node. The map draws it as an
+icon, or as **linktext** when that setting is on: the address written out inline
+instead of the icon. "Linktext" is the app's own compound.
 
 ### Image
 

@@ -26,6 +26,9 @@ async function bootstrap() {
     logger: configService.getLogLevels(),
   })
 
+  // Runs the onModuleDestroy hooks on SIGTERM, which persist the open maps
+  app.enableShutdownHooks()
+
   app.useGlobalFilters(new GlobalExceptionFilter())
 
   // WS_TRUST_PROXY also decides whether req.ip comes from X-Forwarded-For, so

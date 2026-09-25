@@ -49,12 +49,12 @@ describe('YjsDocManagerService', () => {
     jest.useFakeTimers({ advanceTimers: true })
     mapsService = createMockMapsService()
     persistenceService = createMockPersistenceService()
-    persistenceService.persistImmediately.mockResolvedValue(undefined)
+    persistenceService.persistImmediately.mockResolvedValue(true)
     service = new YjsDocManagerService(mapsService, persistenceService)
   })
 
-  afterEach(() => {
-    service.onModuleDestroy()
+  afterEach(async () => {
+    await service.onModuleDestroy()
     jest.useRealTimers()
   })
 
@@ -195,6 +195,74 @@ describe('YjsDocManagerService', () => {
       expect(service.hasDoc('map-1')).toBe(true)
     })
 
+    it('keeps the doc when a client connects while the last persist runs', async () => {
+      await setupConnectedDoc()
+      let finishPersist: (saved: boolean) => void = () => undefined
+      persistenceService.persistImmediately.mockReturnValueOnce(
+        new Promise((resolve) => {
+          finishPersist = resolve
+        })
+      )
+
+      const disconnect = service.notifyClientCount('map-1', 0)
+      await service.getOrCreateDoc('map-1')
+      await service.notifyClientCount('map-1', 1)
+      finishPersist(true)
+      await disconnect
+      await jest.advanceTimersByTimeAsync(31_000)
+
+      expect(service.hasDoc('map-1')).toBe(true)
+    })
+
+    it('keeps a doc whose last persist failed until a retry succeeds', async () => {
+      await setupConnectedDoc()
+      persistenceService.persistImmediately
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(false)
+
+      await service.notifyClientCount('map-1', 0)
+      await jest.advanceTimersByTimeAsync(2 * 31_000)
+      expect(service.hasDoc('map-1')).toBe(true)
+      expect(persistenceService.persistImmediately).toHaveBeenCalledTimes(3)
+
+      await jest.advanceTimersByTimeAsync(31_000)
+      expect(service.hasDoc('map-1')).toBe(false)
+    })
+
+    it('evicts an unsaved doc once the persist failed five times', async () => {
+      await setupConnectedDoc()
+      persistenceService.persistImmediately.mockResolvedValue(false)
+
+      await service.notifyClientCount('map-1', 0)
+      await jest.advanceTimersByTimeAsync(4 * 31_000)
+      expect(service.hasDoc('map-1')).toBe(true)
+      expect(persistenceService.persistImmediately).toHaveBeenCalledTimes(5)
+
+      await jest.advanceTimersByTimeAsync(31_000)
+      expect(service.hasDoc('map-1')).toBe(false)
+    })
+
+    it('keeps a doc a client loaded while a persist retry runs', async () => {
+      await setupConnectedDoc()
+      persistenceService.persistImmediately.mockResolvedValueOnce(false)
+      await service.notifyClientCount('map-1', 0)
+      let finishRetry: (saved: boolean) => void = () => undefined
+      persistenceService.persistImmediately.mockReturnValueOnce(
+        new Promise((resolve) => {
+          finishRetry = resolve
+        })
+      )
+
+      await jest.advanceTimersByTimeAsync(31_000)
+      await service.getOrCreateDoc('map-1')
+      finishRetry(true)
+      await jest.advanceTimersByTimeAsync(0)
+      await service.notifyClientCount('map-1', 1)
+      await jest.advanceTimersByTimeAsync(31_000)
+
+      expect(service.hasDoc('map-1')).toBe(true)
+    })
+
     it('reuses in-memory doc during grace period', async () => {
       setupWithNodes()
       const doc1 = await service.getOrCreateDoc('map-1')
@@ -228,6 +296,43 @@ describe('YjsDocManagerService', () => {
       jest.advanceTimersByTime(31_000)
 
       expect(service.hasDoc('map-1')).toBe(true)
+    })
+  })
+
+  describe('onModuleDestroy', () => {
+    it('persists every loaded doc before dropping it', async () => {
+      await setupConnectedDoc()
+
+      await service.onModuleDestroy()
+
+      expect(persistenceService.persistImmediately).toHaveBeenCalledWith(
+        'map-1',
+        expect.anything()
+      )
+      expect(service.hasDoc('map-1')).toBe(false)
+    })
+
+    it('drops the docs when the flush exceeds the timeout', async () => {
+      await setupConnectedDoc()
+      persistenceService.persistImmediately.mockReturnValueOnce(
+        new Promise(() => undefined)
+      )
+
+      const destroy = service.onModuleDestroy()
+      await jest.advanceTimersByTimeAsync(5_000)
+      await destroy
+
+      expect(service.hasDoc('map-1')).toBe(false)
+    })
+
+    it('ignores disconnects that the shutdown causes', async () => {
+      await setupConnectedDoc()
+      await service.onModuleDestroy()
+      persistenceService.persistImmediately.mockClear()
+
+      await service.notifyClientCount('map-1', 0)
+
+      expect(persistenceService.persistImmediately).not.toHaveBeenCalled()
     })
   })
 
