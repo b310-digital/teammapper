@@ -221,12 +221,12 @@ describe('YjsDocManagerService', () => {
         .mockResolvedValueOnce(false)
 
       await service.notifyClientCount('map-1', 0)
-      await jest.advanceTimersByTimeAsync(31_000)
+      await jest.advanceTimersByTimeAsync(2 * 31_000)
       expect(service.hasDoc('map-1')).toBe(true)
+      expect(persistenceService.persistImmediately).toHaveBeenCalledTimes(3)
 
       await jest.advanceTimersByTimeAsync(31_000)
       expect(service.hasDoc('map-1')).toBe(false)
-      expect(persistenceService.persistImmediately).toHaveBeenCalledTimes(3)
     })
 
     it('evicts an unsaved doc once the persist failed five times', async () => {
@@ -234,12 +234,33 @@ describe('YjsDocManagerService', () => {
       persistenceService.persistImmediately.mockResolvedValue(false)
 
       await service.notifyClientCount('map-1', 0)
-      await jest.advanceTimersByTimeAsync(3 * 31_000)
+      await jest.advanceTimersByTimeAsync(4 * 31_000)
       expect(service.hasDoc('map-1')).toBe(true)
+      expect(persistenceService.persistImmediately).toHaveBeenCalledTimes(5)
 
       await jest.advanceTimersByTimeAsync(31_000)
       expect(service.hasDoc('map-1')).toBe(false)
-      expect(persistenceService.persistImmediately).toHaveBeenCalledTimes(5)
+    })
+
+    it('keeps a doc a client loaded while a persist retry runs', async () => {
+      await setupConnectedDoc()
+      persistenceService.persistImmediately.mockResolvedValueOnce(false)
+      await service.notifyClientCount('map-1', 0)
+      let finishRetry: (saved: boolean) => void = () => undefined
+      persistenceService.persistImmediately.mockReturnValueOnce(
+        new Promise((resolve) => {
+          finishRetry = resolve
+        })
+      )
+
+      await jest.advanceTimersByTimeAsync(31_000)
+      await service.getOrCreateDoc('map-1')
+      finishRetry(true)
+      await jest.advanceTimersByTimeAsync(0)
+      await service.notifyClientCount('map-1', 1)
+      await jest.advanceTimersByTimeAsync(31_000)
+
+      expect(service.hasDoc('map-1')).toBe(true)
     })
 
     it('reuses in-memory doc during grace period', async () => {
@@ -288,6 +309,19 @@ describe('YjsDocManagerService', () => {
         'map-1',
         expect.anything()
       )
+      expect(service.hasDoc('map-1')).toBe(false)
+    })
+
+    it('drops the docs when the flush exceeds the timeout', async () => {
+      await setupConnectedDoc()
+      persistenceService.persistImmediately.mockReturnValueOnce(
+        new Promise(() => undefined)
+      )
+
+      const destroy = service.onModuleDestroy()
+      await jest.advanceTimersByTimeAsync(5_000)
+      await destroy
+
       expect(service.hasDoc('map-1')).toBe(false)
     })
 

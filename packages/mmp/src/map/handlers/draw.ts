@@ -368,7 +368,7 @@ export default class Draw {
     }
 
     // A peer's link reaches this client before the server sanitizes it, so
-    // the scheme is checked here: DOMPurify leaves a `javascript:` URL as is.
+    // the renderer checks the scheme: DOMPurify keeps a `javascript:` URL.
     if (isSafeLinkHref(node.link.href)) {
       domLink.setAttribute('href', node.link.href);
       domLink.setAttribute('target', '_self');

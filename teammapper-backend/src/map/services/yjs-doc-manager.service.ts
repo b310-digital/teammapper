@@ -32,8 +32,9 @@ export class YjsDocManagerService implements OnModuleDestroy {
     private readonly persistenceService: YjsPersistenceService
   ) {}
 
-  // Persists every loaded doc before dropping it, so a shutdown loses no
-  // edit the debounce has not saved yet
+  // Persists every loaded doc before dropping it, so a shutdown keeps the
+  // edits the debounce has not saved yet. The flush gives up after
+  // FLUSH_TIMEOUT_MS, and an edit that arrives during the flush is lost.
   async onModuleDestroy(): Promise<void> {
     this.shuttingDown = true
     const entries = Array.from(this.docs)
@@ -141,19 +142,14 @@ export class YjsDocManagerService implements OnModuleDestroy {
   ): Promise<void> {
     await this.persistEntry(mapId, entry)
     // A client may have connected while the persist ran
-    if (this.docs.get(mapId) !== entry || entry.clients > 0) return
-    this.startGraceTimer(mapId, entry)
+    if (this.isIdle(mapId, entry)) this.startGraceTimer(mapId, entry)
   }
 
   private startGraceTimer(mapId: string, entry: DocEntry): void {
     this.cancelGraceTimer(entry)
     entry.graceTimer = setTimeout(() => {
       entry.graceTimer = null
-      this.evictDoc(mapId, entry).catch((error) => {
-        this.logger.error(
-          `Eviction failed for map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
-        )
-      })
+      this.evictDoc(mapId, entry)
     }, this.GRACE_PERIOD_MS)
   }
 
@@ -173,25 +169,27 @@ export class YjsDocManagerService implements OnModuleDestroy {
     entry.failedPersists = saved ? 0 : entry.failedPersists + 1
   }
 
-  // Drops the doc once nobody uses it. A doc the last persist failed to save
-  // is the only copy of those changes, so it stays for another grace period
-  // per retry, up to MAX_FAILED_PERSISTS failures.
-  private async evictDoc(mapId: string, entry: DocEntry): Promise<void> {
-    if (this.docs.get(mapId) !== entry || entry.clients > 0) return
+  // Whether the entry is still loaded and no client uses it
+  private isIdle(mapId: string, entry: DocEntry): boolean {
+    return this.docs.get(mapId) === entry && entry.clients === 0
+  }
 
+  // Drops an idle doc. A doc the last persist failed to save holds the only
+  // copy of those changes, so the manager retries the persist and waits
+  // another grace period, up to MAX_FAILED_PERSISTS failures.
+  private evictDoc(mapId: string, entry: DocEntry): void {
+    if (!this.isIdle(mapId, entry)) return
+
+    if (entry.unsaved && entry.failedPersists < this.MAX_FAILED_PERSISTS) {
+      this.logger.warn(`Retrying persist of unsaved Y.Doc for map ${mapId}`)
+      // persistImmediately reports failures instead of throwing
+      void this.onLastClientDisconnect(mapId, entry)
+      return
+    }
     if (entry.unsaved) {
-      await this.persistEntry(mapId, entry)
-      if (this.docs.get(mapId) !== entry || entry.clients > 0) return
-      if (entry.unsaved) {
-        if (entry.failedPersists < this.MAX_FAILED_PERSISTS) {
-          this.logger.warn(`Keeping unsaved Y.Doc for map ${mapId} in memory`)
-          this.startGraceTimer(mapId, entry)
-          return
-        }
-        this.logger.error(
-          `Evicting Y.Doc for map ${mapId} after ${entry.failedPersists} failed persists; its unsaved changes are lost`
-        )
-      }
+      this.logger.error(
+        `Evicting Y.Doc for map ${mapId} after ${entry.failedPersists} failed persists; its unsaved changes are lost`
+      )
     }
 
     entry.doc.destroy()
@@ -212,7 +210,8 @@ export class YjsDocManagerService implements OnModuleDestroy {
   private async flushWithTimeout(
     entries: Array<[string, DocEntry]>
   ): Promise<void> {
-    const flushPromise = Promise.allSettled(
+    // persistImmediately reports failures instead of throwing
+    const flushPromise = Promise.all(
       entries.map(([mapId, entry]) =>
         this.persistenceService.persistImmediately(mapId, entry.doc)
       )

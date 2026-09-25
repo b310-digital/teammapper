@@ -4,11 +4,6 @@ import Node from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
 import MmpMap from '../map.js';
 
-/**
- * A peer's link is drawn before the server sanitizes it, so the renderer
- * draws only http and https links.
- */
-
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 function makeDraw(): Draw {

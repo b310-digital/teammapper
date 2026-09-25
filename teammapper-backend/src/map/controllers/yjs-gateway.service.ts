@@ -346,7 +346,8 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     })
 
     // The client may have left while the setup awaited the database. Its
-    // 'close' event has fired already, so release what the setup took here.
+    // 'close' event has fired already, so handleClose runs here to release
+    // the limiter slot and report the lower client count.
     if (ws.readyState === WebSocket.CLOSED) {
       this.handleClose(ws, mapId, awareness)
       return

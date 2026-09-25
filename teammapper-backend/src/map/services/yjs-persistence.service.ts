@@ -30,8 +30,8 @@ export class YjsPersistenceService implements OnModuleDestroy {
     private readonly mapsRepository: Repository<MmpMap>
   ) {}
 
-  // YjsDocManagerService persists every loaded doc on shutdown, so this only
-  // stops the timers from firing against a closing connection
+  // YjsDocManagerService persists every loaded doc on shutdown, so this
+  // removes the observers and cancels the timers without persisting
   onModuleDestroy(): void {
     for (const mapId of Array.from(this.debounceTimers.keys())) {
       this.unregisterDebounce(mapId)
@@ -79,8 +79,11 @@ export class YjsPersistenceService implements OnModuleDestroy {
     }
   }
 
-  // Registers a Y.Doc update observer that triggers debounced persistence
+  // Registers a Y.Doc update observer that triggers debounced persistence.
+  // Every connection calls this, so a second call for the same doc keeps the
+  // pending timer instead of restarting it.
   registerDebounce(mapId: string, doc: Y.Doc): void {
+    if (this.debounceTimers.get(mapId)?.doc === doc) return
     this.unregisterDebounce(mapId)
 
     const observer = (): void => {
@@ -106,8 +109,8 @@ export class YjsPersistenceService implements OnModuleDestroy {
     this.debounceTimers.delete(mapId)
   }
 
-  // Immediately persists, skipping debounce (used on last client disconnect
-  // and shutdown). Returns whether the doc reached the database.
+  // Persists without waiting for the debounce, on last client disconnect and
+  // on shutdown. Returns whether the doc reached the database.
   async persistImmediately(mapId: string, doc: Y.Doc): Promise<boolean> {
     this.cancelDebounceTimer(mapId)
 
@@ -147,7 +150,7 @@ export class YjsPersistenceService implements OnModuleDestroy {
           this.logger.error(
             `Debounced persist failed for map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
           )
-          // Do not crash — retry on next debounce cycle
+          // The next edit schedules another persist
         }
       },
       Math.max(0, delay)

@@ -24,7 +24,7 @@ const sanitizeImageSrc = (src: string | undefined | null): string => {
 
 /** Validate linkHref uses only http or https protocol. Returns empty string for invalid values. */
 const sanitizeLinkHref = (href: string | undefined | null): string =>
-  href && isSafeLinkHref(href) ? href : ''
+  isSafeLinkHref(href) ? href : ''
 
 /** Validate a hex color value (#rrggbb or #rrggbbaa). Returns empty string for invalid values. */
 const sanitizeColor = (color: string | undefined | null): string => {

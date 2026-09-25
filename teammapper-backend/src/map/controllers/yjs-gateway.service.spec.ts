@@ -409,7 +409,7 @@ describe('YjsGateway', () => {
       expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
 
-    it('cleans up a client that left while the setup awaited the database', async () => {
+    it('releases a client that left while the setup awaited the database', async () => {
       const ws = createMockWs()
       limiter.getClientIp.mockReturnValue('10.0.0.2')
       mapsService.findMap.mockImplementation(async () => {

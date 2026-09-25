@@ -374,6 +374,27 @@ describe('YjsPersistenceService', () => {
       service.unregisterDebounce(map.id)
       doc.destroy()
     })
+
+    it('keeps the pending persist when another client registers the doc', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const persistSpy = jest
+        .spyOn(service, 'persistDoc')
+        .mockResolvedValue(undefined)
+
+      service.registerDebounce(map.id, doc)
+      const yRoot = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
+        rootNode.id
+      )!
+      yRoot.set('name', 'Change')
+      service.registerDebounce(map.id, doc)
+      await jest.advanceTimersByTimeAsync(3_000)
+
+      expect(persistSpy).toHaveBeenCalledWith(map.id, doc)
+
+      service.unregisterDebounce(map.id)
+      doc.destroy()
+    })
   })
 
   describe('persistImmediately', () => {
