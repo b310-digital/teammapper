@@ -211,6 +211,12 @@ Trigger delete job (also executed daily with cron task scheduler):
 docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend run prod:data:maps:cleanup
 ```
 
+Trigger the unused image cleanup (also executed daily at 01:00 UTC). It deletes images that no node of their map references and that are older than 7 days:
+
+```
+docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend run prod:data:images:cleanup
+```
+
 #### Running further queries
 
 Example of running sql via typeorm:

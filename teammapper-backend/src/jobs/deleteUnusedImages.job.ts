@@ -1,21 +1,18 @@
 import { NestFactory } from '@nestjs/core'
-import { MapsService } from '../map/services/maps.service'
+import { ImagesService } from '../map/services/images.service'
 import { JobsModule } from './jobs.module'
 import { Logger } from '@nestjs/common'
-import configService from '../config.service'
 
 async function bootstrap() {
   const application = await NestFactory.createApplicationContext(JobsModule)
 
   const logger = new Logger('TaskRunner')
-  const mapsService = application.get(MapsService)
+  const imagesService = application.get(ImagesService)
 
-  logger.log('--- Deleting old maps ... ---')
-  const result = await mapsService.deleteOutdatedMaps(
-    configService.deleteAfterDays()
-  )
-  logger.log('Deleted rows: ' + result)
-  logger.log('--- Finished deleting maps ---')
+  logger.log('--- Deleting unused images ... ---')
+  const result = await imagesService.deleteUnusedImages()
+  logger.log('Deleted images: ' + result)
+  logger.log('--- Finished deleting unused images ---')
 
   await application.close()
   process.exit(0)
