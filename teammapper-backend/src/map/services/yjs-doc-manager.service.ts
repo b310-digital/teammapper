@@ -11,7 +11,7 @@ interface DocEntry {
   clients: number
   // Whether the doc holds changes the last persist failed to save
   unsaved: boolean
-  // Persists that failed in a row since the last client left
+  // Persists that failed in a row; a successful persist resets the count
   failedPersists: number
 }
 
