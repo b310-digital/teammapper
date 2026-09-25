@@ -135,8 +135,9 @@ keyboard shortcut. Map shortcuts do not act while it is open.
 ### Add, remove, select, deselect
 
 The four basic node operations. Adding takes a parent. Adding a tree takes
-none: the toolbar's "add tree" button creates a root node clear of the other
-trees. Removing a node removes its descendants with it, so removing a root node
+none: the toolbar's "add tree" button creates a root node at the nearest spot
+to the middle of the viewport that keeps clear of the other trees, and selects
+it. Removing a node removes its descendants with it, so removing a root node
 removes its tree. No one can remove the main root.
 
 Deselecting leaves no node selected, the main root included. With nothing
@@ -157,8 +158,11 @@ calls it distributing all nodes evenly.
 ### Copy, cut, paste
 
 Clipboard operations over a node and its whole subtree. No one can copy or cut
-the main root. With nothing selected, paste adds the copied nodes as a new tree
-clear of the other trees. No pasted node becomes the main root.
+the main root. With nothing selected, paste adds the copied nodes as a new tree.
+The client picks the spot for the pasted tree the way it picks one for an added
+tree, clear of the other trees, and pans the view to show the pasted tree. The
+paste leaves the selection empty, so a second paste adds a second tree. No
+pasted node becomes the main root.
 
 ### Undo / Redo
 
@@ -171,6 +175,12 @@ and there is no restore.
 ### Zoom, center
 
 Scale the view, and move the main root back to the middle of the viewport.
+
+### Viewport
+
+The part of the map one client shows on screen. Zooming and panning
+change the viewport; they change no node's coordinates. Each client has its own
+viewport, so a collaborator may not see a tree you just added.
 
 ### Import
 

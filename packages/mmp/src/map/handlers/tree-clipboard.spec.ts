@@ -4,6 +4,8 @@ import MmpMap from '../map.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
 import { Event } from './events.js';
+import type { Bounds } from './node-geometry.js';
+import { NEW_TREE_GAP, treeBounds } from './tree-placement.js';
 import type {
   ExportNodeProperties,
   MapNodeCoordinates,
@@ -36,14 +38,18 @@ function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
  * A map holding the main tree (root, branch) and a second tree whose root
  * has a left-hand child with a grandchild and a right-hand child.
  */
-function makeMap() {
+function makeMap(view: Bounds | null = null) {
   const events = { call: jest.fn() };
+  // `view` is the visible area the zoom stub reports. The default null stands
+  // for jsdom's svg, which has no size.
+  const zoom = { visibleArea: jest.fn(() => view), panIntoView: jest.fn() };
   const map = {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
     draw: { update: jest.fn(), clear: jest.fn() },
     history: { save: jest.fn() },
     events,
+    zoom,
   } as unknown as MmpMap;
 
   const nodes = new Nodes(map);
@@ -51,6 +57,9 @@ function makeMap() {
   // No zoom transform applies in these tests, so `fixCoordinates` returns its
   // input.
   nodes.fixCoordinates = (coordinates: MapNodeCoordinates) => coordinates;
+  // No node has a DOM in these tests, so selecting one records the call only.
+  const selectNode = jest.fn();
+  nodes.selectNode = selectNode;
 
   const root = makeNode({ id: 'root', isRoot: true });
   const branch = makeNode({
@@ -80,7 +89,7 @@ function makeMap() {
 
   const clipboard = new CopyPaste(map);
 
-  return { nodes, clipboard, tree, events };
+  return { nodes, clipboard, tree, events, zoom, selectNode };
 }
 
 function ids(nodes: Node[]): string[] {
@@ -299,5 +308,63 @@ describe('pasteTree', () => {
     expect(() => clipboard.pasteTree()).toThrow(
       'There are not nodes in the mmp clipboard'
     );
+  });
+
+  it('leaves the selection alone and pans the view to the pasted tree', () => {
+    const { pasted, nodes, selectNode, zoom } = pasteSecondTree();
+
+    // No node has a size in these tests, so the bounding box of the pasted
+    // nodes equals the copied footprint moved to the pasted root.
+    const [pastedTree] = treeBounds(pasted, () => pasted[0]);
+    expect(selectNode).not.toHaveBeenCalled();
+    expect(nodes.getSelectedNode()).toBeNull();
+    expect(zoom.panIntoView).toHaveBeenCalledWith(pastedTree);
+  });
+
+  it('adds a second tree on a second paste with nothing selected', () => {
+    const { clipboard, nodes, events } = makeMap();
+    clipboard.copy('second');
+
+    clipboard.pasteTree();
+    clipboard.pasteTree();
+
+    const pasteCalls = events.call.mock.calls.filter(
+      ([event]) => event === Event.nodePaste
+    );
+    const roots = pasteCalls.map(([, , pasted]) => {
+      const [first] = pasted as ExportNodeProperties[];
+      return nodes.getNode(first.id);
+    });
+    expect(roots).toHaveLength(2);
+    expect(roots[0]).not.toBe(roots[1]);
+    roots.forEach(root => expect(root?.parent).toBeNull());
+    expect(nodes.getNodes()).toHaveLength(14);
+  });
+
+  it('keeps the whole pasted tree clear of the other trees', () => {
+    // The middle of the viewport, (1000, -100), lies on the second tree.
+    const context = makeMap({ minX: 600, maxX: 1400, minY: -400, maxY: 200 });
+    const size = { width: 120, height: 40 };
+    context.nodes.getNodes().forEach(node => (node.dimensions = { ...size }));
+    context.clipboard.copy('second');
+
+    context.clipboard.pasteTree();
+
+    const pasted = pastedNodes(context.nodes, context.events);
+    pasted.forEach(node => (node.dimensions = { ...size }));
+    const [pastedTree] = treeBounds(pasted, () => pasted[0]);
+    const others = treeBounds(
+      context.nodes.getNodes().filter(node => !pasted.includes(node)),
+      node => context.nodes.getTreeRoot(node)
+    );
+    expect(others).toHaveLength(2);
+    others.forEach(tree => {
+      const clear =
+        pastedTree.maxX <= tree.minX - NEW_TREE_GAP ||
+        pastedTree.minX >= tree.maxX + NEW_TREE_GAP ||
+        pastedTree.maxY <= tree.minY - NEW_TREE_GAP ||
+        pastedTree.minY >= tree.maxY + NEW_TREE_GAP;
+      expect(clear).toBe(true);
+    });
   });
 });

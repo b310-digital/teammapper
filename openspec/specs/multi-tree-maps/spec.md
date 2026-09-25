@@ -61,11 +61,25 @@ The system SHALL lay out every tree with the branching, column spacing, alignmen
 - **THEN** the child SHALL receive the same branch color a child of the main root receives
 
 ### Requirement: A new tree is placed clear of the trees at creation
-The client that creates a tree SHALL place its root clear of the bounding box of every tree that client holds, and SHALL store the root's coordinates. The system SHALL keep every root at its stored coordinates. The system SHALL NOT move a tree to keep it clear of others after creation.
+The client that creates a tree SHALL start from the middle of its viewport and place the root at the nearest spot where the new tree's bounding box stays clear of the bounding box of every tree that client holds. The client SHALL store the root's coordinates, select the new root, and pan the view just far enough to show it. The system SHALL keep every root at its stored coordinates. The system SHALL NOT move a tree to keep it clear of others after creation.
+
+#### Scenario: New tree in empty space
+- **WHEN** the user creates a tree while the middle of the viewport shows no tree
+- **THEN** the new root SHALL appear in the middle of the viewport
 
 #### Scenario: New tree avoids the existing trees
-- **WHEN** the user creates a tree on a map that already shows two trees
-- **THEN** the new tree's bounding box SHALL NOT overlap either existing bounding box
+- **WHEN** the user creates a tree while the middle of the viewport shows another tree
+- **THEN** the new root SHALL appear at the nearest spot clear of the other trees
+- **AND** the new tree's bounding box SHALL NOT overlap any existing bounding box
+
+#### Scenario: No room in the viewport
+- **WHEN** the user creates a tree while other trees fill the whole viewport
+- **THEN** the new root SHALL appear at the nearest clear spot outside the viewport
+- **AND** the view SHALL pan until the new root is visible
+
+#### Scenario: New tree is selected
+- **WHEN** the user creates a tree
+- **THEN** the new root SHALL be the selected node
 
 #### Scenario: First child of a new tree stays clear
 - **WHEN** the user creates a tree and adds one child narrower than two horizontal spacings to its root
@@ -98,8 +112,14 @@ The system SHALL copy a root that does not carry the main-root mark together wit
 #### Scenario: Copy and paste a tree
 - **WHEN** the user copies a root with two descendants, deselects, and pastes
 - **THEN** a new tree with three nodes SHALL appear
-- **AND** the new tree SHALL be placed clear of the trees the client holds
+- **AND** the client SHALL pick the spot for the new tree the way it picks one for a created tree, with every pasted node clear of the trees the client holds
+- **AND** the view SHALL pan to show the pasted tree
 - **AND** the new root SHALL NOT carry the main-root mark
+
+#### Scenario: Paste a tree twice
+- **WHEN** the user copies a root, deselects, and pastes twice
+- **THEN** two new trees SHALL appear
+- **AND** neither pasted root SHALL be a descendant of the other
 
 #### Scenario: Paste a tree onto a selected node
 - **WHEN** the user copies a root and pastes with a node selected

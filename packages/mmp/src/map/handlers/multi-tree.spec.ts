@@ -2,7 +2,13 @@ import Nodes from './nodes.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
 import MmpMap from '../map.js';
-import { NODE_HORIZONTAL_SPACING } from './node-geometry.js';
+import { NODE_HORIZONTAL_SPACING, type Bounds } from './node-geometry.js';
+import {
+  NEW_TREE_FOOTPRINT,
+  NEW_TREE_GAP,
+  nodeBounds,
+  treeBounds,
+} from './tree-placement.js';
 import type { ExportNodeProperties } from '@teammapper/shared';
 
 /**
@@ -37,18 +43,26 @@ function exported(
   };
 }
 
-function makeMap(): {
+/**
+ * `view` is the visible area the zoom stub reports. The default null stands
+ * for jsdom's svg, which has no size.
+ */
+function makeMap(view: Bounds | null = null): {
   handler: Nodes;
   internals: NodesInternals;
   nodes: Record<string, Node>;
   history: { save: jest.Mock };
+  zoom: { visibleArea: jest.Mock; panIntoView: jest.Mock };
 } {
   const history = { save: jest.fn() };
+  const zoom = { visibleArea: jest.fn(() => view), panIntoView: jest.fn() };
   const map = {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
     draw: { update: jest.fn() },
+    events: { call: jest.fn() },
     history,
+    zoom,
   } as unknown as MmpMap;
 
   const handler = new Nodes(map);
@@ -70,7 +84,7 @@ function makeMap(): {
   for (const node of Object.values(nodes)) internals.nodes.set(node.id, node);
   internals.selectedNode = branch;
 
-  return { handler, internals, nodes, history };
+  return { handler, internals, nodes, history, zoom };
 }
 
 describe('addNodes', () => {
@@ -202,6 +216,103 @@ describe('newTreeCoordinates', () => {
 
     expect(added.coordinates).toEqual(coordinates);
     expect(added.parent).toBeNull();
+  });
+});
+
+describe('newTreeCoordinates with a viewport', () => {
+  /** Whether the footprint at `point` comes within the gap of any tree. */
+  function crowdsATree(handler: Nodes, point: { x: number; y: number }) {
+    const placed = {
+      minX: point.x + NEW_TREE_FOOTPRINT.minX,
+      maxX: point.x + NEW_TREE_FOOTPRINT.maxX,
+      minY: point.y + NEW_TREE_FOOTPRINT.minY,
+      maxY: point.y + NEW_TREE_FOOTPRINT.maxY,
+    };
+    const trees = treeBounds(handler.getNodes(), node =>
+      handler.getTreeRoot(node)
+    );
+
+    return trees.some(
+      tree =>
+        placed.minX < tree.maxX + NEW_TREE_GAP &&
+        placed.maxX > tree.minX - NEW_TREE_GAP &&
+        placed.minY < tree.maxY + NEW_TREE_GAP &&
+        placed.maxY > tree.minY - NEW_TREE_GAP
+    );
+  }
+
+  it('places the new root in the middle of a free viewport', () => {
+    const { handler } = makeMap({
+      minX: 3000,
+      maxX: 3800,
+      minY: -300,
+      maxY: 300,
+    });
+
+    expect(handler.newTreeCoordinates()).toEqual({ x: 3400, y: 0 });
+  });
+
+  it('moves the new tree to the nearest clear spot when a tree fills the middle', () => {
+    const { handler, nodes } = makeMap({
+      minX: 600,
+      maxX: 1400,
+      minY: -300,
+      maxY: 300,
+    });
+    nodes.secondRoot.dimensions = { width: 120, height: 60 };
+
+    const coordinates = handler.newTreeCoordinates();
+
+    // The footprint reaches 30 below the new root, and the second tree plus
+    // the gap reaches 130 above y = 0. Rising 160 is the shortest move on
+    // any side.
+    expect(coordinates).toEqual({ x: 1000, y: -160 });
+    expect(crowdsATree(handler, coordinates)).toBe(false);
+  });
+
+  it('places the new tree outside a viewport a tree fills and pans to it', () => {
+    const view = { minX: 900, maxX: 1100, minY: -100, maxY: 100 };
+    const { handler, nodes, zoom } = makeMap(view);
+    nodes.secondRoot.dimensions = { width: 2000, height: 1000 };
+    handler.selectNode = jest.fn();
+
+    const { x, y } = handler.newTreeCoordinates();
+    const crowds = crowdsATree(handler, { x, y });
+    const root = handler.addTree();
+
+    const inView =
+      x >= view.minX && x <= view.maxX && y >= view.minY && y <= view.maxY;
+    expect(inView).toBe(false);
+    expect(crowds).toBe(false);
+    expect(root.coordinates).toEqual({ x, y });
+    expect(zoom.panIntoView).toHaveBeenCalledWith(nodeBounds(root));
+  });
+});
+
+describe('addTree', () => {
+  it('adds a root with no parent and no main-root mark', () => {
+    const { handler } = makeMap();
+    handler.selectNode = jest.fn();
+
+    const root = handler.addTree();
+
+    expect(root.parent).toBeNull();
+    expect(root.isRoot).toBe(false);
+    expect(root.coordinates).toEqual({
+      x: 1000 + 2 * NODE_HORIZONTAL_SPACING,
+      y: 0,
+    });
+  });
+
+  it('selects the new root and pans the view to it', () => {
+    const { handler, zoom } = makeMap();
+    const selectNode = jest.fn();
+    handler.selectNode = selectNode;
+
+    const root = handler.addTree();
+
+    expect(selectNode).toHaveBeenCalledWith(root.id);
+    expect(zoom.panIntoView).toHaveBeenCalledWith(nodeBounds(root));
   });
 });
 
