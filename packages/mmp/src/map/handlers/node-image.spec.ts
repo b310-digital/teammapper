@@ -107,6 +107,20 @@ describe('node images', () => {
     );
   });
 
+  it.each([
+    'https://example.local/tracker.png',
+    'http://127.0.0.1/x.png',
+    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>',
+  ])('loads nothing for the value %p', src => {
+    const { draw } = makeMap();
+    const node = makeNode(src);
+
+    draw.setImage(node);
+
+    expect(FakeImage.created).toHaveLength(0);
+    expect(node.dom.querySelector('image')).toBeNull();
+  });
+
   it('draws no image for a reference without a resolver', () => {
     const { draw } = makeMap();
     const node = makeNode(REFERENCE);
