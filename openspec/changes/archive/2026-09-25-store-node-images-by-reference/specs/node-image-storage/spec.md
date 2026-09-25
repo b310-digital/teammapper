@@ -15,7 +15,7 @@ The server SHALL store each upload per map under a new uuid and SHALL return the
 - **AND** both references SHALL resolve to the image
 
 ### Requirement: Clients upload an image through the map's image endpoint
-`POST /api/maps/:id/images` SHALL take one multipart file in the field `file`, SHALL require the map's modification secret in the `Authorization` header, and SHALL accept a file only when both its content and its declared type are raster types (JPEG, PNG, GIF, WebP). `UPLOAD_IMAGE_MAX_SIZE_BYTES` SHALL default to 150000. The endpoint SHALL respond with:
+`POST /api/maps/:id/images` SHALL take one multipart file in the field `file`, SHALL require the map's modification secret in the `X-Map-Modification-Secret` header, SHALL ignore `Authorization`, which basic auth or an auth proxy in front of TeamMapper may fill, and SHALL accept a file only when both its content and its declared type are raster types (JPEG, PNG, GIF, WebP). `UPLOAD_IMAGE_MAX_SIZE_BYTES` SHALL default to 150000. The endpoint SHALL respond with:
 
 - 201 and `{ reference }` when it stored the image,
 - 403 for a missing or wrong secret,
@@ -27,11 +27,15 @@ The server SHALL store each upload per map under a new uuid and SHALL return the
 A rejected upload SHALL store no image.
 
 #### Scenario: Upload with a valid secret
-- **WHEN** a client posts a PNG file with the map's modification secret in the `Authorization` header
+- **WHEN** a client posts a PNG file with the map's modification secret in the `X-Map-Modification-Secret` header
+- **THEN** the server SHALL respond with status 201 and the image's reference
+
+#### Scenario: Upload behind basic auth
+- **WHEN** a client posts a PNG file with basic auth credentials in `Authorization` and the modification secret in `X-Map-Modification-Secret`
 - **THEN** the server SHALL respond with status 201 and the image's reference
 
 #### Scenario: Upload without a valid secret
-- **WHEN** a client posts an image without the secret in the `Authorization` header, or with a wrong one
+- **WHEN** a client posts an image without the secret in the `X-Map-Modification-Secret` header, or with a wrong one, or with the secret in `Authorization` only
 - **THEN** the server SHALL respond with status 403
 
 #### Scenario: Non-raster file rejected

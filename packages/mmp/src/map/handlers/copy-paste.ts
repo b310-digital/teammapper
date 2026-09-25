@@ -8,6 +8,8 @@ import type {
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { Event } from './events.js';
+import type { Bounds } from './node-geometry.js';
+import { moveBounds, nodeBounds, unionBounds } from './tree-placement.js';
 
 const ORIGIN: MapNodeCoordinates = { x: 0, y: 0 };
 
@@ -22,6 +24,11 @@ export default class CopyPaste {
   // The x of the copied tree's root at copy time. A cut removes the copied
   // nodes, so paste cannot look the root up on the map.
   private copiedTreeRootX = 0;
+
+  // The bounding box of the copied nodes relative to the copied node, read at
+  // copy time, while the browser still holds their measured sizes. Null until
+  // the first copy.
+  private copiedFootprint: Bounds | null = null;
 
   // Whether the running paste adds a tree. A tree paste makes the copied node
   // the root, so old sides count from that node instead of the old tree root.
@@ -75,10 +82,27 @@ export default class CopyPaste {
    * @param {Node} node
    */
   private copyToClipboard(node: Node) {
-    this.copiedNodes = [node, ...this.map.nodes.getDescendants(node)].map(
-      copied => this.map.nodes.getNodeProperties(copied, false)
+    const copied = [node, ...this.map.nodes.getDescendants(node)];
+    this.copiedNodes = copied.map(copiedNode =>
+      this.map.nodes.getNodeProperties(copiedNode, false)
     );
     this.copiedTreeRootX = this.map.nodes.getTreeRoot(node).coordinates.x;
+    this.copiedFootprint = this.footprintOf(copied, node.coordinates);
+  }
+
+  /** The bounding box of `nodes` relative to `origin`. */
+  private footprintOf(nodes: Node[], origin: MapNodeCoordinates): Bounds {
+    return nodes
+      .map(node =>
+        nodeBounds({
+          coordinates: {
+            x: node.coordinates.x - origin.x,
+            y: node.coordinates.y - origin.y,
+          },
+          dimensions: node.dimensions,
+        })
+      )
+      .reduce(unionBounds);
   }
 
   /**
@@ -96,13 +120,18 @@ export default class CopyPaste {
   };
 
   /**
-   * Paste the nodes of the mmp clipboard as an independent tree, its root
-   * placed at `newTreeCoordinates`, whatever node is selected.
+   * Paste the nodes of the mmp clipboard as an independent tree, whatever
+   * node is selected. `newTreeCoordinates` places the root so that the whole
+   * pasted tree stays clear of the other trees, and the view then pans to
+   * show the whole pasted tree. The selection stays as it was: the frontend
+   * pastes as a tree only while nothing is selected, so a second paste adds
+   * another tree instead of nesting the copy under the first one.
    */
   public pasteTree = () => {
-    this.requireCopiedNodes();
+    const footprint = this.requireCopiedFootprint();
 
-    this.pasteInto(null);
+    const root = this.pasteInto(null);
+    this.map.zoom.panIntoView(moveBounds(footprint, root.coordinates));
   };
 
   private requireCopiedNodes() {
@@ -111,32 +140,49 @@ export default class CopyPaste {
     }
   }
 
+  /** The footprint of the copied nodes. Throws when nothing is copied. */
+  private requireCopiedFootprint(): Bounds {
+    this.requireCopiedNodes();
+    const footprint = this.copiedFootprint;
+    if (!footprint) Log.error('There are not nodes in the mmp clipboard');
+
+    return footprint;
+  }
+
   /**
    * Add the copied nodes under `parent`, or as a new tree for null, and
-   * announce them in one paste event.
+   * announce them in one paste event. Returns the node pasted in place of the
+   * copied node.
    */
-  private pasteInto(parent: Node | null) {
+  private pasteInto(parent: Node | null): Node {
     this.pastingTree = parent === null;
     const newNodes: Node[] = [];
-    this.addCopiedNode(this.copiedNodes[0], parent, newNodes);
+    const pastedNode = this.addCopiedNode(
+      this.copiedNodes[0],
+      parent,
+      newNodes
+    );
 
     this.map.draw.clear();
     this.map.draw.update();
+    this.map.nodes.redrawSelectionRing();
     this.map.history.save();
 
     const pasted = newNodes.map(node => this.map.nodes.getNodeProperties(node));
     this.map.events.call(Event.nodePaste, parent?.dom, pasted);
+
+    return pastedNode;
   }
 
   /**
    * Add a copied node under `newParentNode`, then its copied children under
-   * the node just created.
+   * the node just created. Returns the node just created.
    */
   private addCopiedNode(
     nodeProperties: ExportNodeProperties,
     newParentNode: Node | null,
     newNodes: Node[]
-  ) {
+  ): Node {
     const createdNode = this.map.nodes.addNode(
       this.pastedProperties(nodeProperties, newParentNode),
       false,
@@ -148,6 +194,8 @@ export default class CopyPaste {
     this.getChildrenInCopiedNodes(nodeProperties.id).forEach(child =>
       this.addCopiedNode(child, createdNode, newNodes)
     );
+
+    return createdNode;
   }
 
   /**
@@ -187,7 +235,8 @@ export default class CopyPaste {
 
   /**
    * The coordinates of a pasted node:
-   * - a pasted root takes `newTreeCoordinates()`
+   * - a pasted root takes `newTreeCoordinates()` for the footprint of the
+   *   copied nodes
    * - the first node pasted under a parent takes `undefined`, and `addNode`
    *   places it
    * - every other node keeps its offset to its own copied parent
@@ -196,7 +245,9 @@ export default class CopyPaste {
     nodeProperties: ExportNodeProperties,
     newParentNode: Node | null
   ): MapNodeCoordinates | undefined {
-    if (!newParentNode) return this.map.nodes.newTreeCoordinates();
+    if (!newParentNode) {
+      return this.map.nodes.newTreeCoordinates(this.requireCopiedFootprint());
+    }
     if (nodeProperties.id === this.copiedNodes[0].id) return undefined;
 
     return this.calculatePastedCoordinates(nodeProperties, newParentNode);

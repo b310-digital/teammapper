@@ -26,6 +26,12 @@ const SIGNATURES: Record<RasterImageMimeType, (buffer: Buffer) => boolean> = {
     startsWith(buffer, ascii('RIFF')) && startsWith(buffer, ascii('WEBP'), 8),
 }
 
+/** True when the bytes start with the magic bytes of the given raster type. */
+export const matchesRasterSignature = (
+  mimetype: RasterImageMimeType,
+  buffer: Buffer
+): boolean => SIGNATURES[mimetype](buffer)
+
 /**
  * Accepts a file only when its declared type is a raster type and its magic
  * bytes match that type. The client chooses the declared type freely, so the
@@ -41,7 +47,7 @@ export class RasterImageValidator extends FileValidator<
 
   isValid(file?: UploadedImageFile): boolean {
     if (!file?.buffer || !isRasterImageMimeType(file.mimetype)) return false
-    return SIGNATURES[file.mimetype](file.buffer)
+    return matchesRasterSignature(file.mimetype, file.buffer)
   }
 
   buildErrorMessage(): string {

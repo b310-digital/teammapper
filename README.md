@@ -203,6 +203,22 @@ If needed, you can make the connection to Postgres more secure by using a SSL co
 
     within the docker-compose-prod file.
 
+#### Migrating node images to image references
+
+TeamMapper stores a node image in its own table, and the node holds an `image:<uuid>` reference to it. Earlier releases wrote each image into the node as a base64 data URL.
+
+The current release supports both forms. Maps with inline data URLs keep loading, rendering, syncing and exporting as before, so the migration is optional and you can run it at any time. We still recommend it: a map that holds inline images sends the full image bytes on every map load and in every sync message. Move existing images to the new storage once after upgrading:
+
+1. Upgrade and start the app. The app runs the migrations on start, which create the image tables.
+2. Extract the inline images. The app can keep running during the job:
+
+    ```bash
+    docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend run prod:data:images:extract-to-table
+    ```
+
+3. Run the same command a second time. A map open during the first run can write its data URLs back, and each run extracts only the images still held inline.
+4. Read the job's warnings. The job keeps any data URL that is not a valid raster image, such as an SVG, and warns about it on every run.
+
 #### Running jobs
 
 Trigger delete job (also executed daily with cron task scheduler):
@@ -215,6 +231,12 @@ Trigger the unused image cleanup (also executed daily at 01:00 UTC). It deletes 
 
 ```
 docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend run prod:data:images:cleanup
+```
+
+Extract the images that nodes hold inline as base64 data URLs into the image tables, replacing each with an image reference. See [Migrating node images to image references](#migrating-node-images-to-image-references) for when and how often to run the job:
+
+```
+docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend run prod:data:images:extract-to-table
 ```
 
 #### Running further queries

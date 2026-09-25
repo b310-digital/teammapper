@@ -212,6 +212,7 @@
     "NODE_COPIED": "Node successfully copied!",
     "NODE_CUT": "Node successfully cut!",
     "MAP_IMPORT_SUCCESS": "Mindmap successfully imported!",
+    "INVALID_MODIFICATION_SECRET": "The edit link is invalid. The mind map opens read-only.",
     "MAP_UPDATE_SUCCESS": "Mindmap successfully updated!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importing mindmap...",

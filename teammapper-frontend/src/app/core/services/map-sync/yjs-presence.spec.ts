@@ -19,7 +19,8 @@ interface AwarenessUser {
 
 /**
  * Replaces y-websocket's WebsocketProvider. Each test writes peer awareness
- * states into `states`.
+ * states into `states`. A local write stores the state in `states` under the
+ * doc's client id, as in y-protocols.
  */
 class FakeWebsocketProvider {
   public static latest: FakeWebsocketProvider | null = null;
@@ -27,7 +28,9 @@ class FakeWebsocketProvider {
   public readonly states = new Map<number, { user: AwarenessUser }>();
   public readonly awareness = {
     getStates: () => this.states,
-    setLocalStateField: jest.fn(),
+    setLocalStateField: jest.fn((_field: string, user: AwarenessUser) => {
+      this.states.set(this.localClientId, { user });
+    }),
     on: jest.fn(),
     off: jest.fn(),
   };
@@ -36,7 +39,7 @@ class FakeWebsocketProvider {
   public readonly disconnect = jest.fn();
   public readonly destroy = jest.fn();
 
-  constructor() {
+  constructor(private readonly localClientId: number) {
     FakeWebsocketProvider.latest = this;
   }
 }
@@ -44,7 +47,10 @@ class FakeWebsocketProvider {
 jest.mock('y-websocket', () => ({
   WebsocketProvider: jest
     .fn()
-    .mockImplementation(() => new FakeWebsocketProvider()),
+    .mockImplementation(
+      (_url: string, _room: string, doc: { clientID: number }) =>
+        new FakeWebsocketProvider(doc.clientID)
+    ),
 }));
 
 interface PresenceInternals {
@@ -92,52 +98,84 @@ describe('YjsSyncService presence', () => {
     mmpService = capturingMmpService();
     service = createYjsSyncService(mmpService, context);
     service.initMap('test-uuid');
-    (service as unknown as PresenceInternals).setupAwareness();
   });
 
   afterEach(() => {
     service.destroy();
   });
 
-  it('broadcasts the id of a selected node', () => {
-    handlers['nodeSelect']({ id: 'branch' } as ExportNodeProperties);
+  describe('before awareness setup', () => {
+    it('broadcasts nothing on a select and attaches the node', () => {
+      handlers['nodeSelect']({ id: 'root' } as ExportNodeProperties);
 
-    expect(lastBroadcast()).toEqual([
-      'user',
-      { color: '#ff0000', selectedNodeId: 'branch' },
-    ]);
-  });
-
-  it('broadcasts an empty selection on deselect', () => {
-    handlers['nodeSelect']({ id: 'branch' } as ExportNodeProperties);
-
-    handlers['nodeDeselect']({ id: 'branch' } as ExportNodeProperties);
-
-    expect(lastBroadcast()).toEqual([
-      'user',
-      { color: '#ff0000', selectedNodeId: null },
-    ]);
-  });
-
-  it('attaches no node on deselect', () => {
-    handlers['nodeDeselect']({ id: 'branch' } as ExportNodeProperties);
-
-    expect(context.setAttachedNode).toHaveBeenLastCalledWith(null);
-  });
-
-  it('draws no ring for a peer that selects nothing', () => {
-    (context.getColorMapping as jest.Mock).mockReturnValue({
-      [PEER_ID]: { color: '#0000ff', nodeId: 'branch' },
-    });
-    provider().states.set(PEER_ID, {
-      user: { color: '#0000ff', selectedNodeId: null },
+      expect(provider().awareness.setLocalStateField).not.toHaveBeenCalled();
+      expect(context.setAttachedNode).toHaveBeenLastCalledWith({ id: 'root' });
     });
 
-    (service as unknown as PresenceInternals).updateFromAwareness();
+    it('keeps the client colour when setup follows a select', () => {
+      handlers['nodeSelect']({ id: 'root' } as ExportNodeProperties);
 
-    expect(context.setColorMapping).toHaveBeenLastCalledWith({
-      [PEER_ID]: { color: '#0000ff', nodeId: '' },
+      (service as unknown as PresenceInternals).setupAwareness();
+
+      expect(context.setClientColor).toHaveBeenLastCalledWith('#ff0000');
+      expect(lastBroadcast()).toEqual([
+        'user',
+        { color: '#ff0000', selectedNodeId: null },
+      ]);
     });
-    expect(mmpService.highlightNode).toHaveBeenCalledWith('branch', '', false);
+  });
+
+  describe('after awareness setup', () => {
+    beforeEach(() => {
+      (service as unknown as PresenceInternals).setupAwareness();
+    });
+
+    it('broadcasts the id of a selected node', () => {
+      handlers['nodeSelect']({ id: 'branch' } as ExportNodeProperties);
+
+      expect(lastBroadcast()).toEqual([
+        'user',
+        { color: '#ff0000', selectedNodeId: 'branch' },
+      ]);
+    });
+
+    it('broadcasts an empty selection on deselect', () => {
+      handlers['nodeSelect']({ id: 'branch' } as ExportNodeProperties);
+
+      handlers['nodeDeselect']({ id: 'branch' } as ExportNodeProperties);
+
+      expect(lastBroadcast()).toEqual([
+        'user',
+        { color: '#ff0000', selectedNodeId: null },
+      ]);
+    });
+
+    it('attaches no node on deselect', () => {
+      handlers['nodeDeselect']({ id: 'branch' } as ExportNodeProperties);
+
+      expect(context.setAttachedNode).toHaveBeenLastCalledWith(null);
+    });
+
+    it('draws no ring for a peer that selects nothing', () => {
+      (context.getColorMapping as jest.Mock).mockReturnValue({
+        [PEER_ID]: { color: '#0000ff', nodeId: 'branch' },
+      });
+      provider().states.set(PEER_ID, {
+        user: { color: '#0000ff', selectedNodeId: null },
+      });
+
+      (service as unknown as PresenceInternals).updateFromAwareness();
+
+      expect(context.setColorMapping).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          [PEER_ID]: { color: '#0000ff', nodeId: '' },
+        })
+      );
+      expect(mmpService.highlightNode).toHaveBeenCalledWith(
+        'branch',
+        '',
+        false
+      );
+    });
   });
 });

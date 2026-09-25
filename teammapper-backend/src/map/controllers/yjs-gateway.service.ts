@@ -32,6 +32,8 @@ import {
   ConnectionMeta,
   extractPathname,
   parseQueryParams,
+  parseSecretSubprotocol,
+  selectSubprotocol,
   checkWriteAccess,
   toUint8Array,
   encodeSyncStep1Message,
@@ -79,6 +81,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     const wss = new WebSocketServer({
       noServer: true,
       maxPayload: WS_MAX_PAYLOAD,
+      handleProtocols: selectSubprotocol,
     })
     this.wss = wss
 
@@ -203,7 +206,10 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     signal: AbortSignal
   ): Promise<void> {
     try {
-      const { mapId, secret } = parseQueryParams(req.url)
+      const { mapId, secret: querySecret } = parseQueryParams(req.url)
+      const secret =
+        parseSecretSubprotocol(req.headers['sec-websocket-protocol']) ??
+        querySecret
       if (!mapId) {
         this.rejectConnection(ws, ip, WS_CLOSE_MISSING_PARAM, 'Missing mapId')
         return

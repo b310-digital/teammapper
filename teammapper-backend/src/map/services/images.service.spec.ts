@@ -10,6 +10,7 @@ import {
   destroyWorkerDatabase,
 } from '../../../test/db'
 import { truncateDatabase } from '../../../test/helper'
+import { LOGO_PNG } from '../../../test/imageFixtures'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpImage } from '../entities/mmpImage.entity'
@@ -19,11 +20,11 @@ import { ImageStore } from './image-store'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-const pngUpload = (size = 64): ImageUpload => {
-  const buffer = Buffer.alloc(size)
-  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(buffer)
-  return { buffer, mimetype: 'image/png', size }
-}
+const pngUpload = (): ImageUpload => ({
+  buffer: LOGO_PNG,
+  mimetype: 'image/png',
+  size: LOGO_PNG.length,
+})
 
 describe('ImagesService', () => {
   let moduleFixture: TestingModule
@@ -111,13 +112,14 @@ describe('ImagesService', () => {
 
     it('rejects an upload above the map cap and stores nothing', async () => {
       const previous = process.env.MAX_IMAGE_BYTES_PER_MAP
-      process.env.MAX_IMAGE_BYTES_PER_MAP = '1000'
+      // The cap fits one logo.
+      process.env.MAX_IMAGE_BYTES_PER_MAP = String(LOGO_PNG.length)
       try {
         const map = await createMap()
-        await imagesService.storeImage(map.id, pngUpload(900))
+        await imagesService.storeImage(map.id, pngUpload())
 
         await expect(
-          imagesService.storeImage(map.id, pngUpload(200))
+          imagesService.storeImage(map.id, pngUpload())
         ).rejects.toThrow(PayloadTooLargeException)
         expect(await imagesRepo.count({ where: { mapId: map.id } })).toBe(1)
       } finally {

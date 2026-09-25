@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines how users move from the map view to the settings and shortcuts pages and back.
+Defines how users move from the map view to the settings page and back.
 
 ## Requirements
 
@@ -14,10 +14,3 @@ The system SHALL provide a settings navigation button that opens the settings pa
 - **THEN** the settings page SHALL be visible and the map SHALL not be present
 - **WHEN** the user closes settings
 - **THEN** the map SHALL be visible again
-
-### Requirement: User can navigate to the shortcuts page
-The system SHALL provide a shortcuts navigation button that navigates to the keyboard shortcuts page.
-
-#### Scenario: Navigate to shortcuts page
-- **WHEN** the user clicks the shortcuts navigation button
-- **THEN** the application SHALL navigate to the shortcuts page

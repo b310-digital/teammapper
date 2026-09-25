@@ -210,6 +210,7 @@
     "NODE_COPIED": "¡Nodo copiado con éxito!",
     "NODE_CUT": "¡Nodo cortado con éxito!",
     "MAP_IMPORT_SUCCESS": "¡Mapa mental importado correctamente!",
+    "INVALID_MODIFICATION_SECRET": "El enlace de edición no es válido. El mapa mental se abre en modo de solo lectura.",
     "MAP_UPDATE_SUCCESS": "¡Mapa mental actualizado correctamente!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Importación de mapas mentales en curso",

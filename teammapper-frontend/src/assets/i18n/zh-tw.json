@@ -210,6 +210,7 @@
     "NODE_COPIED": "Node successfully copied!",
     "NODE_CUT": "Node successfully cut!",
     "MAP_IMPORT_SUCCESS": "Map successfully imported!",
+    "INVALID_MODIFICATION_SECRET": "編輯連結無效。心智圖將以唯讀方式開啟。",
     "MAP_UPDATE_SUCCESS": "Mindmap successfully updated!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Map import in progress...",

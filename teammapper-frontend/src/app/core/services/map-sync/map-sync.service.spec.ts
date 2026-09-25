@@ -10,11 +10,17 @@ import { createMockUtilsService } from '../../../../test/mocks/utils-service.moc
 import { Observable } from 'rxjs';
 import { ExportNodeProperties, UserSettings } from '@teammapper/shared';
 import { YjsSyncService } from './yjs-sync.service';
+import { MapSyncContext } from './map-sync-context';
 import { ImageHandlers, ImageUploadError } from '../mmp/node-images';
 
 // Narrow accessor: only exposes the sync service handle, not its internals
 function getSync(service: MapSyncService): YjsSyncService {
   return (service as unknown as { syncService: YjsSyncService }).syncService;
+}
+
+// The context the Yjs connection reads its subprotocol secret from
+function getSyncContext(service: MapSyncService): MapSyncContext {
+  return (getSync(service) as unknown as { ctx: MapSyncContext }).ctx;
 }
 
 function createMockNode(
@@ -148,18 +154,22 @@ describe('MapSyncService', () => {
       ]);
     });
 
-    it('selects root node on initMap', () => {
+    it('attaches the node the map load selected', () => {
       const rootNode = createMockNode({
         id: 'root',
         name: 'Root',
         isRoot: true,
       });
-      mmpService.getRootNode.mockReturnValue(rootNode);
       mmpService.selectNode.mockReturnValue(rootNode);
+      const attached: (ExportNodeProperties | null)[] = [];
+      service
+        .getAttachedNodeObservable()
+        .subscribe(node => attached.push(node));
 
       service.initMap();
 
-      expect(mmpService.selectNode).toHaveBeenCalledWith('root');
+      expect(mmpService.selectNode).toHaveBeenCalledWith();
+      expect(attached[attached.length - 1]).toBe(rootNode);
     });
   });
 
@@ -198,7 +208,7 @@ describe('MapSyncService', () => {
       httpService = TestBed.inject(HttpService) as jest.Mocked<HttpService>;
     });
 
-    it('appends secret param to HTTP request when secret is set', async () => {
+    it('sends the secret in X-Map-Modification-Secret and keeps the URL bare', async () => {
       httpService.get.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ ...mockServerMap, writable: true }),
@@ -208,11 +218,12 @@ describe('MapSyncService', () => {
 
       expect(httpService.get).toHaveBeenCalledWith(
         expect.anything(),
-        expect.stringContaining('?secret=my-secret')
+        '/maps/test-uuid',
+        { 'x-map-modification-secret': 'my-secret' }
       );
     });
 
-    it('omits secret param when modification secret is empty', async () => {
+    it('omits the secret header when modification secret is empty', async () => {
       httpService.get.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ ...mockServerMap, writable: true }),
@@ -222,8 +233,49 @@ describe('MapSyncService', () => {
 
       expect(httpService.get).toHaveBeenCalledWith(
         expect.anything(),
-        '/maps/test-uuid'
+        '/maps/test-uuid',
+        {}
       );
+    });
+
+    describe('with a secret the browser cannot send', () => {
+      beforeEach(async () => {
+        httpService.get.mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ ...mockServerMap, writable: false }),
+        } as unknown as Response);
+
+        await service.prepareExistingMap('test-uuid', 'geheim-ä)');
+      });
+
+      it('omits the secret header', () => {
+        expect(httpService.get).toHaveBeenCalledWith(
+          expect.anything(),
+          '/maps/test-uuid',
+          {}
+        );
+      });
+
+      it('gives the Yjs connection no secret', () => {
+        expect(getSyncContext(service).getModificationSecret()).toBe('');
+      });
+
+      it('warns that the edit link is invalid', () => {
+        expect(TestBed.inject(ToastrService).warning).toHaveBeenCalledWith(
+          'TOASTS.INVALID_MODIFICATION_SECRET'
+        );
+      });
+    });
+
+    it('shows no warning for a valid secret', async () => {
+      httpService.get.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ ...mockServerMap, writable: true }),
+      } as unknown as Response);
+
+      await service.prepareExistingMap('test-uuid', 'my-secret');
+
+      expect(TestBed.inject(ToastrService).warning).not.toHaveBeenCalled();
     });
 
     it('sets writable true on sync service when response writable is true', async () => {
@@ -306,7 +358,7 @@ describe('MapSyncService', () => {
       expect(handlers().resolveUrl(REFERENCE)).toBeNull();
     });
 
-    it('posts the file with the secret in the Authorization header', async () => {
+    it('posts the file with the secret in X-Map-Modification-Secret', async () => {
       await openMap('secret');
       httpService.postForm.mockResolvedValueOnce(
         uploadResponse(201, { reference: REFERENCE })
@@ -318,7 +370,7 @@ describe('MapSyncService', () => {
       const [, endpoint, form, headers] = httpService.postForm.mock.calls[0];
       expect(endpoint).toBe('/maps/map-uuid/images');
       expect(form.get('file')).toBeInstanceOf(Blob);
-      expect(headers).toEqual({ Authorization: 'secret' });
+      expect(headers).toEqual({ 'x-map-modification-secret': 'secret' });
     });
 
     it('throws the status of a rejected upload', async () => {

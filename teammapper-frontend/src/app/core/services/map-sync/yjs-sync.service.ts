@@ -20,6 +20,7 @@ import {
   populateYMapFromNodeProps,
   yMapToNodeProps,
   buildYjsWsUrl,
+  buildYjsProtocols,
   resolveClientColor,
   findAffectedNodes,
   resolveMmpPropertyUpdate,
@@ -196,7 +197,7 @@ export class YjsSyncService {
   private setupConnection(mapId: string): WebsocketProvider {
     const wsUrl = buildYjsWsUrl();
     const provider = new WebsocketProvider(wsUrl, mapId, this.doc, {
-      params: { secret: this.ctx.getModificationSecret() },
+      protocols: buildYjsProtocols(this.ctx.getModificationSecret()),
       maxBackoffTime: 5000,
       disableBc: true,
     });
@@ -771,7 +772,10 @@ export class YjsSyncService {
   }
 
   private updateAwarenessSelection(nodeId: string | null): void {
-    if (!this.wsProvider) return;
+    // The map load on first sync selects the root before setupAwareness runs.
+    // A write then would make pickClientColor count this client's own colour
+    // as taken.
+    if (!this.wsProvider || this.yjsAwarenessHandler === null) return;
     this.wsProvider.awareness.setLocalStateField('user', {
       color: this.ctx.getClientColor(),
       selectedNodeId: nodeId,

@@ -7,7 +7,18 @@ import { Event } from './events.js';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { computeMapLayout, LayoutInputNode } from './layout.js';
-import { NODE_HORIZONTAL_SPACING } from './node-geometry.js';
+import {
+  NODE_HORIZONTAL_SPACING,
+  NODE_VERTICAL_SPACING,
+  type Bounds,
+} from './node-geometry.js';
+import {
+  findClearSpot,
+  NEW_TREE_FOOTPRINT,
+  NEW_TREE_GAP,
+  nodeBounds,
+  treeBounds,
+} from './tree-placement.js';
 import type {
   ExportNodeProperties,
   MapNodeColors,
@@ -22,7 +33,6 @@ import type {
 } from '@teammapper/shared';
 
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
-const NODE_VERTICAL_SPACING = 120; // The initial vertical spacing for the first child node
 export const PropertyMapping = {
   name: ['name'],
   locked: ['locked'],
@@ -208,19 +218,14 @@ export default class Nodes {
         if (node) {
           const background = node.getBackgroundDOM();
 
-          const color = d3.color(background.style.fill)?.darker(0.5);
+          const color = this.ringColor(node);
 
-          if (color && background.style.stroke !== color.toString()) {
+          if (color && background.style.stroke !== color) {
             this.releaseSelection(node);
 
-            background.style.stroke = color.toString();
+            background.style.stroke = color;
 
-            this.selectedNode = node;
-            this.map.events.call(
-              Event.nodeSelect,
-              node.dom,
-              this.getNodeProperties(node)
-            );
+            this.announceSelection(node);
           }
         } else {
           Log.error('The node id or the direction is not correct');
@@ -230,6 +235,41 @@ export default class Nodes {
 
     return this.selectedNode ? this.getNodeProperties(this.selectedNode) : null;
   };
+
+  /**
+   * Draw the ring on the selected node again. A full draw of the map gives
+   * every node a new DOM without the ring.
+   */
+  public redrawSelectionRing() {
+    if (!this.selectedNode) return;
+
+    const color = this.ringColor(this.selectedNode);
+    if (color) this.selectedNode.getBackgroundDOM().style.stroke = color;
+  }
+
+  /**
+   * The ring colour of a node: its background fill, darkened. Null when the
+   * fill holds no colour.
+   * @param {Node} node
+   * @returns {string | null}
+   */
+  private ringColor(node: Node): string | null {
+    const fill = node.getBackgroundDOM().style.fill;
+    return d3.color(fill)?.darker(0.5).toString() ?? null;
+  }
+
+  /**
+   * Make the node the selected node and tell listeners it took the selection.
+   * @param {Node} node
+   */
+  private announceSelection(node: Node) {
+    this.selectedNode = node;
+    this.map.events.call(
+      Event.nodeSelect,
+      node.dom,
+      this.getNodeProperties(node)
+    );
+  }
 
   /**
    * Clear the ring and the focus of the selected node, leave nothing
@@ -515,6 +555,8 @@ export default class Nodes {
       // its ancestors.
       if (this.selectedNode && !this.nodes.has(this.selectedNode.id)) {
         this.deselectNode();
+      } else {
+        this.redrawSelectionRing();
       }
     } else {
       Log.error('The root node can not be deleted');
@@ -670,15 +712,58 @@ export default class Nodes {
   }
 
   /**
-   * Returns the coordinates for the root of a new tree: its centre twice
-   * NODE_HORIZONTAL_SPACING right of the bounding box of every node this
-   * client holds, level with the main root. `pickColumn` puts a root's first
-   * child one spacing to its left, so the second spacing keeps that column
-   * clear of the other trees. The client writes these coordinates with the
+   * Returns the coordinates for the root of a new tree whose nodes take
+   * `footprint`, given relative to the root. The search starts in the middle
+   * of the viewport and returns the nearest point where the footprint keeps
+   * NEW_TREE_GAP clear of the bounding box of every tree this client holds,
+   * inside the viewport or not. The client writes these coordinates with the
    * root, so the root keeps them from then on.
+   *
+   * Without a viewport to measure, as in jsdom, the root goes twice
+   * NODE_HORIZONTAL_SPACING right of the bounding box of every node, level
+   * with the main root. `pickColumn` puts a root's first child one spacing to
+   * its left, so the second spacing keeps that column clear of the other
+   * trees.
+   * @param {Bounds} footprint
    * @returns {MapNodeCoordinates} coordinates
    */
-  public newTreeCoordinates = (): MapNodeCoordinates => {
+  public newTreeCoordinates = (
+    footprint: Bounds = NEW_TREE_FOOTPRINT
+  ): MapNodeCoordinates => {
+    const view = this.map.zoom.visibleArea();
+    if (!view) return this.rightOfEveryTree();
+
+    const start = {
+      x: (view.minX + view.maxX) / 2,
+      y: (view.minY + view.maxY) / 2,
+    };
+    const trees = treeBounds(this.getNodes(), node => this.getTreeRoot(node));
+
+    return findClearSpot(start, footprint, trees, NEW_TREE_GAP);
+  };
+
+  /**
+   * Add the root of a new tree at `newTreeCoordinates`, then select it and
+   * pan the view the shortest distance that shows it. The root has no parent
+   * and no main-root mark. The frontend's nodeCreate handler may select the
+   * root already. addTree selects it anyway, so the mmp API does not depend
+   * on that handler.
+   * @returns {Node} the new root
+   */
+  public addTree = (): Node => {
+    const root = this.addNode(
+      { name: '', coordinates: this.newTreeCoordinates() },
+      true,
+      true,
+      null
+    );
+    this.selectNode(root.id);
+    this.map.zoom.panIntoView(nodeBounds(root));
+
+    return root;
+  };
+
+  private rightOfEveryTree(): MapNodeCoordinates {
     const rightEdge = this.getNodes().reduce(
       (edge, node) =>
         Math.max(edge, node.coordinates.x + node.dimensions.width / 2),
@@ -689,7 +774,7 @@ export default class Nodes {
       x: rightEdge + 2 * NODE_HORIZONTAL_SPACING,
       y: this.getRoot().coordinates.y,
     };
-  };
+  }
 
   /**
    * Return all descendants of a node.
@@ -734,10 +819,26 @@ export default class Nodes {
   };
 
   /**
-   * Set the root node as selected node.
+   * Select the main root: draw its ring and fire `nodeSelect`.
    */
   public selectRootNode() {
-    this.selectedNode = this.getRoot();
+    // A full draw replaces every node object. Drop a selected node the map no
+    // longer holds and fire no deselect: its DOM is detached, and a blur there
+    // would commit a name edit.
+    const selected = this.selectedNode;
+    if (selected && this.nodes.get(selected.id) !== selected) {
+      this.selectedNode = null;
+    }
+
+    const root = this.getRoot();
+    this.selectNode(root.id);
+
+    // selectNode draws no ring on a main root without a background colour,
+    // and the main root still takes the selection.
+    if (this.selectedNode !== root) {
+      this.releaseSelection(root);
+      this.announceSelection(root);
+    }
   }
 
   /**

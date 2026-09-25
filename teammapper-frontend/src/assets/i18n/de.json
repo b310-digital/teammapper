@@ -213,6 +213,7 @@
     "NODE_COPIED": "Knoten erfolgreich kopiert!",
     "NODE_CUT": "Knoten erfolgreich ausgeschnitten!",
     "MAP_IMPORT_SUCCESS": "Mindmap erfolgreich importiert!",
+    "INVALID_MODIFICATION_SECRET": "Der Bearbeitungslink ist ungültig. Die Mindmap öffnet schreibgeschützt.",
     "MAP_UPDATE_SUCCESS": "Mindmap erfolgreich aktualisiert!",
     "WARNINGS": {
       "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert...",

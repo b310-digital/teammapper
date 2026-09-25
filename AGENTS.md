@@ -20,6 +20,15 @@ opens with a table of the other words to avoid.
 Add an entry when you introduce a concept, and correct one when a rename makes
 it wrong.
 
+## Test fixtures
+
+Never write binary data into a test: no byte arrays, no base64 literals, no
+buffers filled by hand. A reader cannot tell what such bytes hold. Load a file
+the repository already ships instead, such as the TeamMapper logo in
+`teammapper-frontend/src/assets/icons/`, and take the smallest variant that
+serves the test. `teammapper-backend/test/imageFixtures.ts` loads the logo for
+the backend specs. Do not commit a binary file whose only purpose is a test.
+
 ## E2E tests
 
 The suite in `teammapper-frontend/e2e` drives a browser in the `playwright`
