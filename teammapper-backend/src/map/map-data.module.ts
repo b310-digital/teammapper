@@ -6,6 +6,7 @@ import { MmpImage } from './entities/mmpImage.entity'
 import { MmpImageData } from './entities/mmpImageData.entity'
 import { MapsService } from './services/maps.service'
 import { ImagesService } from './services/images.service'
+import { ImageExtractionService } from './services/image-extraction.service'
 import { ImageStore } from './services/image-store'
 import { DatabaseImageStore } from './services/database-image-store.service'
 
@@ -20,8 +21,9 @@ import { DatabaseImageStore } from './services/database-image-store.service'
   providers: [
     MapsService,
     ImagesService,
+    ImageExtractionService,
     { provide: ImageStore, useClass: DatabaseImageStore },
   ],
-  exports: [MapsService, ImagesService, TypeOrmModule],
+  exports: [MapsService, ImagesService, ImageExtractionService, TypeOrmModule],
 })
 export class MapDataModule {}

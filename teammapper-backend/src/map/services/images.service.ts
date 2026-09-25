@@ -51,6 +51,20 @@ export class ImagesService {
   ): Promise<ImageReference> {
     await this.assertBelowCap(mapId, upload.size)
     const id = uuidv4()
+    await this.storeExistingImage(mapId, id, upload)
+    return toImageReference(id)
+  }
+
+  /**
+   * Stores an image the map already holds inline under the given id, without
+   * the cap check: the cap limits uploads, not images a map already has.
+   * Writes the metadata row before the bytes, as storeImage does.
+   */
+  async storeExistingImage(
+    mapId: string,
+    id: string,
+    upload: ImageUpload
+  ): Promise<void> {
     await this.imagesRepository.insert({
       mapId,
       id,
@@ -58,7 +72,6 @@ export class ImagesService {
       size: upload.size,
     })
     await this.imageStore.put(mapId, id, upload.buffer)
-    return toImageReference(id)
   }
 
   /** Returns the image the map holds, or null for any other id. */
