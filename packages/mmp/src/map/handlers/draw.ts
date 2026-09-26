@@ -1,7 +1,11 @@
 import * as d3 from 'd3';
 import { Path } from 'd3';
 import DOMPurify from 'dompurify';
-import { isImageReference, isSafeLinkHref } from '@teammapper/shared';
+import {
+  isImageDataUrl,
+  isImageReference,
+  isSafeLinkHref,
+} from '@teammapper/shared';
 import Map, { DomElements } from '../map.js';
 import Utils from '../../utils/utils.js';
 import Node from '../models/node.js';
@@ -17,7 +21,6 @@ import {
  */
 export default class Draw {
   private map: Map;
-  private base64regex = /[^a-zA-Z0-9+/;:,=]/i;
   private editing = false;
   private mapRef: HTMLElement;
 
@@ -333,15 +336,13 @@ export default class Draw {
 
   /**
    * Returns the URL an image value loads from: the resolved URL of a
-   * reference, a data URL as is, or null for an empty or unsafe value.
+   * reference, a base64 raster data URL as is, or null for any other value.
    */
   private imageUrlOf(src: string): string | null {
     if (isImageReference(src)) {
       return this.map.options.resolveImageUrl?.(src) ?? null;
     }
-    const sanitized = DOMPurify.sanitize(src);
-    if (sanitized === '' || this.base64regex.test(src)) return null;
-    return sanitized;
+    return isImageDataUrl(src) ? src : null;
   }
 
   /**
