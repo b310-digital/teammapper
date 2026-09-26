@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import { Path } from 'd3';
 import DOMPurify from 'dompurify';
-import { isImageReference } from '@teammapper/shared';
+import { isImageReference, isSafeLinkHref } from '@teammapper/shared';
 import Map, { DomElements } from '../map.js';
 import Utils from '../../utils/utils.js';
 import Node from '../models/node.js';
@@ -367,8 +367,10 @@ export default class Draw {
       this.updateLinkStyle(domText, node);
     }
 
-    if (DOMPurify.sanitize(node.link.href) !== '') {
-      domLink.setAttribute('href', DOMPurify.sanitize(node.link.href));
+    // A peer's link reaches this client before the server sanitizes it, so
+    // the renderer checks the scheme: DOMPurify keeps a `javascript:` URL.
+    if (isSafeLinkHref(node.link.href)) {
+      domLink.setAttribute('href', node.link.href);
       domLink.setAttribute('target', '_self');
     } else {
       domLink.remove();
@@ -421,7 +423,7 @@ export default class Draw {
    * @param {Node} node
    */
   public updateLinkPosition(node: Node) {
-    if (DOMPurify.sanitize(node.link.href) !== '') {
+    if (isSafeLinkHref(node.link.href)) {
       const link = node.getLinkDOM(),
         y = node.dimensions.height;
       link.setAttribute('y', y.toString());
