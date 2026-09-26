@@ -33,9 +33,11 @@
     "dev:data:maps:cleanup": "ts-node ./src/jobs/deleteMaps.job.ts",
     "dev:data:maps:seed": "ts-node ./src/jobs/seedMapData.job.ts",
     "dev:data:images:cleanup": "ts-node ./src/jobs/deleteUnusedImages.job.ts",
+    "dev:data:images:extract-to-table": "ts-node ./src/jobs/extractImagesToTable.job.ts",
     "benchmark:ai": "ts-node ./benchmark/run-benchmark.ts",
     "prod:data:maps:cleanup": "node ./dist/jobs/deleteMaps.job.js",
     "prod:data:images:cleanup": "node ./dist/jobs/deleteUnusedImages.job.js",
+    "prod:data:images:extract-to-table": "node ./dist/jobs/extractImagesToTable.job.js",
     "prod:typeorm:migrate": "typeorm migration:run --dataSource dist/data-source.js"
   },
   "dependencies": {

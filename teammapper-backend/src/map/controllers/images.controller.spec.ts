@@ -9,14 +9,9 @@ import { MapsService } from '../services/maps.service'
 import { ImagesService } from '../services/images.service'
 import { createMmpMap } from '../utils/tests/mapFactories'
 import { GlobalExceptionFilter } from '../../filters/global-exception.filter'
+import { LOGO_PNG } from '../../../test/imageFixtures'
 
 const IMAGE_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
-const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
-const png = (size = 64): Buffer => {
-  const buffer = Buffer.alloc(size)
-  Buffer.from(PNG_SIGNATURE).copy(buffer)
-  return buffer
-}
 
 // Each test posts from its own IP, so the rate limit of one test does not
 // leak into the next.
@@ -64,13 +59,19 @@ describe('ImagesController (HTTP)', () => {
     it('stores a PNG posted with the secret and answers 201 with the reference', async () => {
       const response = await upload()
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(201)
 
       expect(response.body).toEqual({ reference: `image:${IMAGE_ID}` })
       expect(imagesService.storeImage).toHaveBeenCalledWith(
         map.id,
-        expect.objectContaining({ mimetype: 'image/png', size: 64 })
+        expect.objectContaining({
+          mimetype: 'image/png',
+          size: LOGO_PNG.length,
+        })
       )
     })
 
@@ -81,7 +82,10 @@ describe('ImagesController (HTTP)', () => {
       const req = upload()
       if (secret) req.set(MODIFICATION_SECRET_HEADER, secret)
       await req
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(403)
 
       expect(imagesService.storeImage).not.toHaveBeenCalled()
@@ -90,7 +94,10 @@ describe('ImagesController (HTTP)', () => {
     it('answers 403 for the secret in Authorization only', async () => {
       await upload()
         .set('Authorization', 'secret')
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(403)
 
       expect(imagesService.storeImage).not.toHaveBeenCalled()
@@ -100,7 +107,10 @@ describe('ImagesController (HTTP)', () => {
       await upload()
         .set('Authorization', 'Basic dXNlcjpwYXNz')
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(201)
     })
 
@@ -135,7 +145,7 @@ describe('ImagesController (HTTP)', () => {
     it('answers 422 for PNG bytes declared as SVG', async () => {
       await upload()
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(), {
+        .attach('file', LOGO_PNG, {
           filename: 'a.svg',
           contentType: 'image/svg+xml',
         })
@@ -149,7 +159,8 @@ describe('ImagesController (HTTP)', () => {
     it('answers 413 for a file larger than UPLOAD_IMAGE_MAX_SIZE_BYTES', async () => {
       await upload()
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(150_001), {
+        // The logo, padded with zero bytes past the limit.
+        .attach('file', Buffer.concat([LOGO_PNG, Buffer.alloc(150_001)]), {
           filename: 'a.png',
           contentType: 'image/png',
         })
@@ -166,7 +177,7 @@ describe('ImagesController (HTTP)', () => {
       async (_label, fieldFirst) => {
         const req = upload().set(MODIFICATION_SECRET_HEADER, 'secret')
         if (fieldFirst) req.field('note', 'x')
-        req.attach('file', png(), {
+        req.attach('file', LOGO_PNG, {
           filename: 'a.png',
           contentType: 'image/png',
         })
@@ -184,7 +195,10 @@ describe('ImagesController (HTTP)', () => {
 
       await upload()
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(413)
     })
 
@@ -193,14 +207,20 @@ describe('ImagesController (HTTP)', () => {
 
       await upload(nextIp(), '00000000-0000-4000-8000-000000000000')
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(404)
     })
 
     it('answers 404 for a map id that is not a uuid', async () => {
       await upload(nextIp(), 'not-a-uuid')
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(404)
 
       expect(mapsService.findMap).not.toHaveBeenCalled()
@@ -211,7 +231,7 @@ describe('ImagesController (HTTP)', () => {
       for (let i = 0; i < 30; i++) {
         await upload(ip)
           .set(MODIFICATION_SECRET_HEADER, 'secret')
-          .attach('file', png(), {
+          .attach('file', LOGO_PNG, {
             filename: 'a.png',
             contentType: 'image/png',
           })
@@ -220,18 +240,24 @@ describe('ImagesController (HTTP)', () => {
 
       await upload(ip)
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(429)
       await upload()
         .set(MODIFICATION_SECRET_HEADER, 'secret')
-        .attach('file', png(), { filename: 'a.png', contentType: 'image/png' })
+        .attach('file', LOGO_PNG, {
+          filename: 'a.png',
+          contentType: 'image/png',
+        })
         .expect(201)
     })
   })
 
   describe('GET /api/maps/:id/images/:imageId', () => {
     it('answers 200 with the bytes, the type and the cache headers, without a secret', async () => {
-      const data = png()
+      const data = LOGO_PNG
       imagesService.readImage.mockResolvedValueOnce({
         data,
         mimetype: 'image/png',

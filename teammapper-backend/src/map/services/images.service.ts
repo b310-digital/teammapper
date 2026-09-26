@@ -40,17 +40,29 @@ export class ImagesService {
     private imageStore: ImageStore
   ) {}
 
-  /**
-   * Checks the map's cap, writes the metadata row, then the bytes. A failed
-   * byte write leaves a row no node references, which deleteUnusedImages
-   * removes, and never bytes without a row, which no job would find.
-   */
+  /** Checks the map's cap, then stores the upload under a new id. */
   async storeImage(
     mapId: string,
     upload: ImageUpload
   ): Promise<ImageReference> {
     await this.assertBelowCap(mapId, upload.size)
     const id = uuidv4()
+    await this.storeImageWithoutCap(mapId, id, upload)
+    return toImageReference(id)
+  }
+
+  /**
+   * Writes the metadata row, then the bytes. A failed byte write leaves a row
+   * no node references, which deleteUnusedImages removes, and never bytes
+   * without a row, which no job would find. The image extraction job calls
+   * this method, because the cap limits uploads and a map may already hold
+   * more inline image bytes than the cap allows.
+   */
+  async storeImageWithoutCap(
+    mapId: string,
+    id: string,
+    upload: ImageUpload
+  ): Promise<void> {
     await this.imagesRepository.insert({
       mapId,
       id,
@@ -58,7 +70,6 @@ export class ImagesService {
       size: upload.size,
     })
     await this.imageStore.put(mapId, id, upload.buffer)
-    return toImageReference(id)
   }
 
   /** Returns the image the map holds, or null for any other id. */
@@ -76,7 +87,8 @@ export class ImagesService {
   /**
    * Copies every image of the source map to the target map under the same
    * id, so no node reference needs rewriting. The copies count as uploaded
-   * now. Writes the metadata rows before the bytes, as storeImage does.
+   * now. Writes the metadata rows before the bytes, as storeImageWithoutCap
+   * does.
    */
   async copyImages(sourceMapId: string, targetMapId: string): Promise<void> {
     const images = await this.imagesRepository.find({
