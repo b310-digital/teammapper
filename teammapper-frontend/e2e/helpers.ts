@@ -10,3 +10,20 @@ export async function createMap(page: Page) {
   await expect(page.getByText('Root node')).toBeVisible();
   await expect(page.locator('#add-tree-button')).toBeEnabled();
 }
+
+/**
+ * Adds a tree through the toolbar and names its root `name`. Adding a tree
+ * pans the view to the new root with a transition, and a click on the map
+ * stops that transition wherever it is, so the click waits until the root is
+ * fully in the viewport. The map does not scroll, so a root left outside it
+ * cannot be clicked afterwards.
+ */
+export async function addTree(page: Page, name: string) {
+  await page.locator('#add-tree-button').click();
+  await page.keyboard.type(name);
+  await expect(page.getByText(name, { exact: true })).toBeInViewport({
+    ratio: 1,
+  });
+  await page.locator('.map').click();
+  await expect(page.getByText(name, { exact: true })).toBeVisible();
+}

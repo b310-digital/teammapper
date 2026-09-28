@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 import type { ExportNodeProperties } from '@teammapper/shared';
 import type { Readable } from 'stream';
-import { createMap } from './helpers';
+import { addTree, createMap } from './helpers';
 
 /** Adds a child to the node named `parent` and names it `name`. */
 async function addChild(page: Page, parent: string, name: string) {
@@ -25,14 +25,6 @@ async function exportNodes(page: Page): Promise<ExportNodeProperties[]> {
   await page.locator("button[title='Exports the map as JSON']").click();
   const download = await downloadPromise;
   return JSON.parse(await readStream(await download.createReadStream()));
-}
-
-/** Adds a tree through the toolbar and names its root `name`. */
-async function addTree(page: Page, name: string) {
-  await page.locator('#add-tree-button').click();
-  await page.keyboard.type(name);
-  await page.locator('.map').click();
-  await expect(page.getByText(name, { exact: true })).toBeVisible();
 }
 
 /**
