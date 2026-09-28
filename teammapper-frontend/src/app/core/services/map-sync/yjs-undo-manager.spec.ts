@@ -18,7 +18,7 @@ describe('YjsUndoManager', () => {
       k: 1,
       colors: { branch: '#000000' },
       font: { size: 14, style: 'normal', weight: 'normal' },
-      locked: false,
+      protected: false,
       hidden: false,
       coordinates: undefined,
       image: undefined,
@@ -294,12 +294,13 @@ describe('YjsUndoManager', () => {
       );
     });
 
-    it('undo restores a deleted node with its coordinates', () => {
+    it('undo restores a deleted node with its coordinates and protection', () => {
       const coords = { x: 200, y: -120 };
       addNodeToMap(doc, nodesMap, {
         id: 'n1',
         parent: 'root',
         coordinates: coords,
+        protected: true,
       });
       undoManager.stopCapturing();
       doc.transact(() => nodesMap.delete('n1'), ORIGIN_LOCAL);
@@ -307,7 +308,11 @@ describe('YjsUndoManager', () => {
       undoManager.undo();
 
       expect(yMapToNodeProps(nodesMap.get('n1')!)).toEqual(
-        expect.objectContaining({ id: 'n1', coordinates: coords })
+        expect.objectContaining({
+          id: 'n1',
+          coordinates: coords,
+          protected: true,
+        })
       );
     });
 

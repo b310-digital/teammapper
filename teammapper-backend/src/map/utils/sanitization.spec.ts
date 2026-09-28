@@ -243,7 +243,7 @@ describe('sanitizeNodeFields', () => {
       coordinatesX: 100,
       coordinatesY: 200,
       fontSize: 14,
-      locked: true,
+      protected: true,
       nodeMapId: 'map-123',
     }
 
@@ -254,7 +254,7 @@ describe('sanitizeNodeFields', () => {
       coordinatesX: 100,
       coordinatesY: 200,
       fontSize: 14,
-      locked: true,
+      protected: true,
       nodeMapId: 'map-123',
     })
   })

@@ -33,7 +33,7 @@ function createMockNode(
     k: 1,
     colors: { branch: '#000000' },
     font: { size: 14, style: 'normal', weight: 'normal' },
-    locked: false,
+    protected: false,
     hidden: false,
     coordinates: undefined,
     image: undefined,

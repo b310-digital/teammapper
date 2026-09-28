@@ -93,7 +93,7 @@ export default class MmpMap {
    */
   private createMmpInstance(): MmpInstance {
     return (this.instance = {
-      addNode: this.nodes.addNode,
+      addNode: this.nodes.addNodeUnlessProtected,
       addNodes: this.nodes.addNodes,
       addTree: this.nodes.addTree,
       center: this.zoom.center,
@@ -114,6 +114,9 @@ export default class MmpMap {
       on: this.events.on,
       pasteNode: this.copyPaste.paste,
       pasteTree: this.copyPaste.pasteTree,
+      protectBranch: this.nodes.protectBranch,
+      protectingNode: this.nodes.protectingNode,
+      releaseBranch: this.nodes.releaseBranch,
       remove: this.remove,
       removeNode: this.nodes.removeNode,
       selectNode: this.nodes.selectNode,
@@ -132,12 +135,12 @@ export interface MmpInstance {
     updateHistory?: boolean,
     parentId?: string | null,
     overwriteId?: string
-  ) => Node;
+  ) => Node | null;
   addNodes: (nodes: ExportNodeProperties[], updateHistory?: boolean) => void;
   addTree: () => Node;
   center: (type?: 'zoom' | 'position', duration?: number) => void;
   copyNode: (id?: string) => void;
-  cutNode: (id?: string) => void;
+  cutNode: (id?: string) => boolean;
   applyCoordinatesToMapSnapshot: (mapSnapshot: MapSnapshot) => MapSnapshot;
   distributeNodes: (notifyWithEvent?: boolean) => void;
   getSelectedNode: () => Node | null;
@@ -153,6 +156,9 @@ export interface MmpInstance {
   on: (event: string, callback: (...args: unknown[]) => void) => void;
   pasteNode: (id?: string) => void;
   pasteTree: () => void;
+  protectBranch: (id?: string) => void;
+  protectingNode: (id?: string) => string | null;
+  releaseBranch: (id?: string) => void;
   remove: () => void;
   removeNode: (id?: string, notifyWithEvent?: boolean) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;

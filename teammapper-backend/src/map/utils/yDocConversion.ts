@@ -14,7 +14,7 @@ export const populateYMapFromNode = (
   yNode.set('parent', node.nodeParentId ?? null)
   yNode.set('name', node.name ?? '')
   yNode.set('isRoot', node.root ?? false)
-  yNode.set('locked', node.locked ?? false)
+  yNode.set('protected', node.protected ?? false)
   yNode.set('k', node.k ?? 1)
   yNode.set('coordinates', {
     x: node.coordinatesX ?? 0,
@@ -74,7 +74,7 @@ export const yMapToMmpNode = (
     nodeParentId: parent || undefined,
     name: (yNode.get('name') as string) ?? '',
     root: (yNode.get('isRoot') as boolean) ?? false,
-    locked: (yNode.get('locked') as boolean) ?? false,
+    protected: (yNode.get('protected') as boolean) ?? false,
     k: (yNode.get('k') as number) ?? 1,
     coordinatesX: coords?.x ?? 0,
     coordinatesY: coords?.y ?? 0,

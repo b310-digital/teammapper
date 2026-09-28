@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "选择下方节点",
     "SELECT_NODE_ABOVE": "选择上方节点",
     "EDIT_NODE": "编辑节点",
-    "COUPLE_NODE": "锁定节点",
+    "PROTECT_BRANCH": "保护此分支",
+    "RELEASE_PROTECTION": "解除保护",
     "NODE_IMAGE": "向节点添加图片",
     "NODE_IMAGE_REMOVE": "从节点中移除图片",
     "PICTOGRAM": "图标",
@@ -214,6 +215,7 @@
     "INVALID_MODIFICATION_SECRET": "编辑链接无效。思维导图将以只读方式打开。",
     "MAP_UPDATE_SUCCESS": "思维导图更新成功",
     "WARNINGS": {
+      "NODE_PROTECTED": "此分支已受保护。解除保护后才能编辑。",
       "MAP_IMPORT_IN_PROGRESS": "心智图导入中",
       "MAP_UPDATE_IN_PROGRESS": "更新思维导图",
       "MERMAID_SEVERAL_TREES": "每棵树都成为一个独立的 mindmap 块。TeamMapper 之外的 Mermaid 工具一次只能渲染一个块。"
@@ -222,7 +224,6 @@
       "ROOT_NODE_COPIED": "无法复制根节点！",
       "ROOT_NODE_CUT": "不可能切断根节点！",
       "ROOT_NODE_DELETED": "无法删除根节点！",
-      "ROOT_NODE_LOCKED": "无法锁定根节点！",
       "NO_NODES_IN_CLIPBOARD": "剪贴板中没有节点！",
       "NODE_COPY_GENERIC": "尝试复制节点时发生错误。",
       "NODE_CUT_GENERIC": "在尝试切割节点时发生错误。",

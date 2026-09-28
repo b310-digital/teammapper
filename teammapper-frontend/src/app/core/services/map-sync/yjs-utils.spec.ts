@@ -17,7 +17,7 @@ import {
 jest.mock('@teammapper/mmp', () => ({
   NodePropertyMapping: {
     name: ['name'],
-    locked: ['locked'],
+    protected: ['protected'],
     coordinates: ['coordinates'],
     imageSrc: ['image', 'src'],
     imageSize: ['image', 'size'],
@@ -46,7 +46,7 @@ function createMockNode(
     k: 1,
     colors: { branch: '#000000' },
     font: { size: 14, style: 'normal', weight: 'normal' },
-    locked: false,
+    protected: false,
     hidden: false,
     coordinates: undefined,
     image: undefined,
@@ -78,7 +78,7 @@ describe('Y.Doc conversion utilities', () => {
       parent: 'root',
       k: 1.5,
       isRoot: false,
-      locked: true,
+      protected: true,
       coordinates: { x: 100, y: 200 },
       colors: { name: '#ff0000', background: '#00ff00', branch: '#0000ff' },
       font: { size: 16, style: 'italic', weight: 'bold' },
@@ -99,7 +99,7 @@ describe('Y.Doc conversion utilities', () => {
         parent: 'root',
         k: 1.5,
         isRoot: false,
-        locked: true,
+        protected: true,
         coordinates: { x: 100, y: 200 },
         colors: {
           name: '#ff0000',
@@ -120,7 +120,7 @@ describe('Y.Doc conversion utilities', () => {
       k: undefined,
       name: undefined,
       isRoot: undefined,
-      locked: undefined,
+      protected: undefined,
       coordinates: undefined,
       colors: undefined,
       font: undefined,
@@ -140,7 +140,7 @@ describe('Y.Doc conversion utilities', () => {
         k: 1,
         name: '',
         isRoot: false,
-        locked: false,
+        protected: false,
         coordinates: { x: 0, y: 0 },
       })
     );
@@ -263,9 +263,9 @@ describe('Y.Doc property application to MMP', () => {
     expect(updates).toEqual([{ prop: 'name', val: 'New Name' }]);
   });
 
-  it('resolves simple property (locked) via reverse mapping', () => {
-    const updates = resolveMmpPropertyUpdate('locked', true);
-    expect(updates).toEqual([{ prop: 'locked', val: true }]);
+  it('resolves simple property (protected) via reverse mapping', () => {
+    const updates = resolveMmpPropertyUpdate('protected', true);
+    expect(updates).toEqual([{ prop: 'protected', val: true }]);
   });
 
   it('resolves compound property (colors) via reverse mapping', () => {

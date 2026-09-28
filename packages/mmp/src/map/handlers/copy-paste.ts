@@ -60,20 +60,21 @@ export default class CopyPaste {
 
   /**
    * Remove and copy the node with the id passed as parameter or
-   * the selected node in the mmp clipboard.
+   * the selected node in the mmp clipboard. The method refuses a branch that
+   * is or holds a protected node and announces the refusal.
    * @param {string} id
+   * @returns {boolean} true when the method cut the node
    */
-  public cut = (id?: string) => {
+  public cut = (id?: string): boolean => {
     const node = this.map.nodes.getTargetNode(id);
-    if (!node) return;
+    if (!node) return false;
 
-    if (!node.isRoot) {
-      this.copyToClipboard(node);
+    if (node.isRoot) return Log.error('The root node can not be cut');
+    if (this.map.nodes.refusesLocalRemoval(node)) return false;
 
-      this.map.nodes.removeNode(node.id);
-    } else {
-      Log.error('The root node can not be cut');
-    }
+    this.copyToClipboard(node);
+    this.map.nodes.removeNode(node.id);
+    return true;
   };
 
   /**
@@ -115,6 +116,8 @@ export default class CopyPaste {
 
     const node = this.map.nodes.getTargetNode(id);
     if (!node) return;
+
+    if (this.map.nodes.refusesLocalChange(node)) return;
 
     this.pasteInto(node);
   };
@@ -200,7 +203,8 @@ export default class CopyPaste {
 
   /**
    * The properties a pasted node gets. Every pasted node gets
-   * `isRoot = false`, whatever the copied node carried.
+   * `isRoot = false` and starts unprotected, whatever the copied node
+   * carried.
    */
   private pastedProperties(
     nodeProperties: ExportNodeProperties,
@@ -215,7 +219,7 @@ export default class CopyPaste {
       image: copy.image,
       colors: { ...copy.colors, branch },
       font: copy.font,
-      locked: copy.locked,
+      protected: false,
       isRoot: false,
     };
   }

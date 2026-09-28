@@ -96,7 +96,7 @@ describe('YjsPersistenceService', () => {
     child.set('parent', parentId)
     child.set('name', 'Child Node')
     child.set('isRoot', false)
-    child.set('locked', false)
+    child.set('protected', false)
     child.set('k', 1)
     child.set('coordinates', { x: 100, y: 50 })
     child.set('colors', { name: '#333', background: '#fff', branch: '' })

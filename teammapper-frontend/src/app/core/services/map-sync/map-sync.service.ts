@@ -198,6 +198,16 @@ export class MapSyncService implements OnDestroy {
     this.syncService.redo();
   }
 
+  /**
+   * Protect or release the branch of the selected node in one transaction,
+   * so peers never see a child released before its parent is protected.
+   */
+  public toggleBranchProtection(): void {
+    this.syncService.transactLocally(() =>
+      this.mmpService.toggleBranchProtection()
+    );
+  }
+
   public updateMapOptions(options?: CachedMapOptions) {
     this.syncService.updateMapOptions(options);
   }

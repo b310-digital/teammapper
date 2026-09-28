@@ -207,6 +207,34 @@ describe('YjsSyncService', () => {
       expect(nodesMap.get('root')?.get('coordinates')).toEqual({ x: 5, y: 5 });
     });
 
+    it('sends a branch protection as one update that one undo reverts', () => {
+      const doc = internals(service).yDoc;
+      const nodesMap = seedRootNode('root');
+      seedRootNode('child');
+      const updates = jest.fn();
+      doc.on('update', updates);
+
+      service.transactLocally(() => {
+        for (const [id, flag] of [
+          ['child', false],
+          ['root', true],
+        ] as const) {
+          handlers['nodeUpdate']({
+            nodeProperties: { id, protected: flag },
+            changedProperty: 'protected',
+          });
+        }
+      });
+      const updatesSent = updates.mock.calls.length;
+      service.undo();
+
+      expect({
+        updatesSent,
+        root: nodesMap.get('root')?.get('protected'),
+        child: nodesMap.get('child')?.get('protected'),
+      }).toEqual({ updatesSent: 1, root: undefined, child: undefined });
+    });
+
     describe('on a receiving client', () => {
       let nodesMap: Y.Map<Y.Map<unknown>>;
       let importToast: jest.SpyInstance;

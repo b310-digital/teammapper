@@ -213,13 +213,18 @@
   </div>
 
   <button
-    id="lock-node-button"
-    (click)="mmpService.updateNode('locked')"
-    [title]="'TOOLTIPS.COUPLE_NODE' | translate"
+    id="protect-branch-button"
+    (click)="toggleBranchProtection()"
+    [title]="
+      (branchProtected
+        ? 'TOOLTIPS.RELEASE_PROTECTION'
+        : 'TOOLTIPS.PROTECT_BRANCH'
+      ) | translate
+    "
     [disabled]="nodeActionsDisabled"
     color="primary"
     mat-icon-button>
-    <mat-icon>{{ node?.locked ? 'deselect' : 'select_all' }}</mat-icon>
+    <mat-icon>{{ branchProtected ? 'lock_open' : 'lock' }}</mat-icon>
   </button>
 
   @if (node?.image?.src) {

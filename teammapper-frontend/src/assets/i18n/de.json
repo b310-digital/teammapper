@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "Knoten unten auswählen",
     "SELECT_NODE_ABOVE": "Knoten oben auswählen",
     "EDIT_NODE": "Änderungen am Text eines Knotens erlauben",
-    "COUPLE_NODE": "Knoten koppeln oder entkoppeln",
+    "PROTECT_BRANCH": "Diesen Zweig schützen",
+    "RELEASE_PROTECTION": "Schutz aufheben",
     "NODE_IMAGE": "Bild zum Knoten hinzufügen",
     "NODE_IMAGE_REMOVE": "Bild vom Knoten entfernen",
     "PICTOGRAM": "Piktrogramm",
@@ -217,6 +218,7 @@
     "INVALID_MODIFICATION_SECRET": "Der Bearbeitungslink ist ungültig. Die Mindmap öffnet schreibgeschützt.",
     "MAP_UPDATE_SUCCESS": "Mindmap erfolgreich aktualisiert!",
     "WARNINGS": {
+      "NODE_PROTECTED": "Dieser Zweig ist geschützt. Hebe den Schutz auf, um ihn zu bearbeiten.",
       "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert...",
       "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert...",
       "MERMAID_SEVERAL_TREES": "Jeder Baum wurde zu einem eigenen mindmap-Block. Mermaid-Werkzeuge außerhalb von TeamMapper stellen nur einen Block auf einmal dar."
@@ -225,7 +227,6 @@
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",
       "ROOT_NODE_CUT": "Es ist nicht möglich, den Hauptknoten zu auszuschneiden!",
       "ROOT_NODE_DELETED": "Es ist nicht möglich, den Hauptknoten zu löschen!",
-      "ROOT_NODE_LOCKED": "Es ist nicht möglich, den Hauptknoten zu koppeln!",
       "NO_NODES_IN_CLIPBOARD": "Es sind keine Knoten in der Zwischenablage!",
       "NODE_COPY_GENERIC": "Beim Kopieren des Knotens ist ein Fehler aufgetreten.",
       "NODE_CUT_GENERIC": "Beim Ausschneiden des Knotens ist ein Fehler aufgetreten.",

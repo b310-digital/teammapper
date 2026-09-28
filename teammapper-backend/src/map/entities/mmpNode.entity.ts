@@ -103,8 +103,8 @@ export class MmpNode {
   @MaxLength(2048)
   linkHref!: string | null
 
-  @Column({ type: 'boolean', nullable: true })
-  locked!: boolean | null
+  @Column({ type: 'boolean', default: false })
+  protected!: boolean
 
   @Column({ type: 'float', nullable: true })
   k!: number | null

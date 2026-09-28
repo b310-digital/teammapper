@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "選擇下方的節點",
     "SELECT_NODE_ABOVE": "選擇上方的節點",
     "EDIT_NODE": "編輯選取的節點文字",
-    "COUPLE_NODE": "鎖定選取的節點",
+    "PROTECT_BRANCH": "保護此分支",
+    "RELEASE_PROTECTION": "解除保護",
     "NODE_IMAGE": "新增圖片於當前節點",
     "NODE_IMAGE_REMOVE": "從節點中移除圖片",
     "PICTOGRAM": "Pictrogram",
@@ -214,6 +215,7 @@
     "INVALID_MODIFICATION_SECRET": "編輯連結無效。心智圖將以唯讀方式開啟。",
     "MAP_UPDATE_SUCCESS": "Mindmap successfully updated!",
     "WARNINGS": {
+      "NODE_PROTECTED": "此分支已受保護。解除保護後才能編輯。",
       "MAP_IMPORT_IN_PROGRESS": "Map import in progress...",
       "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
       "MERMAID_SEVERAL_TREES": "每棵樹都成為一個獨立的 mindmap 區塊。TeamMapper 以外的 Mermaid 工具一次只能呈現一個區塊。"
@@ -222,7 +224,6 @@
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",
       "ROOT_NODE_CUT": "It's not possible to cut the root node!",
       "ROOT_NODE_DELETED": "無法刪除根節點！",
-      "ROOT_NODE_LOCKED": "無法鎖定根節點！",
       "NO_NODES_IN_CLIPBOARD": "剪貼簿中沒有節點！",
       "NODE_COPY_GENERIC": "An error occurred whilst trying to copy the node.",
       "NODE_CUT_GENERIC": "An error occurred whilst trying to cut the node.",

@@ -122,7 +122,7 @@ export default class History {
         colors: Utils.cloneObject(mergedProperty.colors) as MapNodeColors,
         font: Utils.cloneObject(mergedProperty.font) as MapNodeFont,
         link: Utils.cloneObject(mergedProperty.link) as MapNodeLink,
-        locked: mergedProperty.locked,
+        protected: mergedProperty.protected,
         hidden: mergedProperty.hidden,
         hasHiddenChildNodes: mergedProperty.hasHiddenChildNodes,
         isRoot: mergedProperty.isRoot,
@@ -193,7 +193,6 @@ export default class History {
       typeof node.parent === 'string' || node.parent === null,
       typeof node.k === 'number',
       typeof node.name === 'string',
-      typeof node.locked === 'boolean',
       // older maps do not include the link prop yet
       node.link === undefined || typeof node.link.href === 'string',
       Boolean(
@@ -239,7 +238,6 @@ export default class History {
         : '';
       target.k = oldNode.value.k;
       target.name = oldNode.value.name;
-      target.locked = oldNode.value.fixed;
       target.coordinates = {
         x: oldNode.value.x,
         y: oldNode.value.y,

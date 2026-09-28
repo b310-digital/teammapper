@@ -33,7 +33,6 @@ const defaultSettings: Settings = {
         image: { src: '', size: 60 },
         colors: { name: '#666666', background: '#f5f5f5', branch: '#546e7a' },
         font: { size: 22, style: 'normal', weight: 'normal' },
-        locked: true,
       },
       rootNode: {
         name: 'Root node',

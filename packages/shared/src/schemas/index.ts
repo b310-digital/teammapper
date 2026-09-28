@@ -67,9 +67,9 @@ export const NodeSchema = v.object({
   id: v.pipe(v.string(), v.nonEmpty()),
   k: v.number(),
   link: LinkSchema,
-  locked: v.boolean(),
   parent: v.nullable(v.string()),
   isRoot: v.boolean(),
+  protected: v.optional(v.boolean(), false),
   hidden: v.optional(v.boolean(), false),
   hasHiddenChildNodes: v.optional(v.boolean(), false),
 });

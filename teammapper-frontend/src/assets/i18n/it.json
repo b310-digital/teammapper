@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "Seleziona nodo in alto",
     "SELECT_NODE_ABOVE": "Seleziona nodo in basso",
     "EDIT_NODE": "Permetti di modificare il testo del nodo",
-    "COUPLE_NODE": "Blocca o sblocca il nodo",
+    "PROTECT_BRANCH": "Proteggi questo ramo",
+    "RELEASE_PROTECTION": "Rimuovi la protezione",
     "NODE_IMAGE": "Aggiungi un'immagine al nodo",
     "NODE_IMAGE_REMOVE": "Rimuove un'immagine dal nodo",
     "PICTOGRAM": "Pittogramma",
@@ -214,6 +215,7 @@
     "INVALID_MODIFICATION_SECRET": "Il link di modifica non è valido. La mappa mentale si apre in sola lettura.",
     "MAP_UPDATE_SUCCESS": "Mappa mentale aggiornata con successo!",
     "WARNINGS": {
+      "NODE_PROTECTED": "Questo ramo è protetto. Rimuovi la protezione per modificarlo.",
       "MAP_IMPORT_IN_PROGRESS": "Importazione della mappa mentale in corso",
       "MAP_UPDATE_IN_PROGRESS": "Aggiornamento della mappa mentale...",
       "MERMAID_SEVERAL_TREES": "Ogni albero è diventato un proprio blocco mindmap. Gli strumenti Mermaid al di fuori di TeamMapper mostrano un blocco alla volta."
@@ -222,7 +224,6 @@
       "ROOT_NODE_COPIED": "Non è possibile copiare il nodo radice!",
       "ROOT_NODE_CUT": "Non è possibile tagliare il nodo radice!",
       "ROOT_NODE_DELETED": "Non è possibile eliminare il nodo radice!",
-      "ROOT_NODE_LOCKED": "Non è possibile bloccare il nodo radice!",
       "NO_NODES_IN_CLIPBOARD": "Non ci sono nodi negli appunti!",
       "NODE_COPY_GENERIC": "Si è verificato un errore durante il tentativo di copiare il nodo.",
       "NODE_CUT_GENERIC": "Si è verificato un errore durante il tentativo di tagliare il nodo.",

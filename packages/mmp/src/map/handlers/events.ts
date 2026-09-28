@@ -67,4 +67,5 @@ export enum Event {
   nodePaste = 'mmp-node-paste',
   nodeRemove = 'mmp-node-remove',
   distribute = 'mmp-distribute',
+  nodeProtected = 'mmp-node-protected',
 }

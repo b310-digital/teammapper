@@ -30,7 +30,6 @@ describe('FooterComponent', () => {
     image: { src: '', size: 60 },
     colors: { name: '#787878', background: '#f9f9f9', branch: '#577a96' },
     font: { size: 16, style: 'normal', weight: 'normal' },
-    locked: true,
   };
 
   const mockSettings: UserSettings = {

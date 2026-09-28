@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "下のノードを選択",
     "SELECT_NODE_ABOVE": "上のノードを選択",
     "EDIT_NODE": "ノードのテキストを編集",
-    "COUPLE_NODE": "ノードをグループ化／解除",
+    "PROTECT_BRANCH": "このブランチを保護",
+    "RELEASE_PROTECTION": "保護を解除",
     "NODE_IMAGE": "ノードに画像を追加",
     "NODE_IMAGE_REMOVE": "ノードから画像を削除",
     "PICTOGRAM": "ピクトグラム",
@@ -216,6 +217,7 @@
     "INVALID_MODIFICATION_SECRET": "編集リンクが無効です。マインドマップは読み取り専用で開きます。",
     "MAP_UPDATE_SUCCESS": "マインドマップを更新しました！",
     "WARNINGS": {
+      "NODE_PROTECTED": "このブランチは保護されています。編集するには保護を解除してください。",
       "MAP_IMPORT_IN_PROGRESS": "マインドマップをインポート中...",
       "MAP_UPDATE_IN_PROGRESS": "マインドマップを更新中...",
       "MERMAID_SEVERAL_TREES": "各ツリーはそれぞれ独立した mindmap ブロックになりました。TeamMapper 以外の Mermaid ツールは一度に 1 つのブロックしか表示しません。"
@@ -224,7 +226,6 @@
       "ROOT_NODE_COPIED": "ルートノードはコピーできません！",
       "ROOT_NODE_CUT": "ルートノードは切り取りできません！",
       "ROOT_NODE_DELETED": "ルートノードは削除できません！",
-      "ROOT_NODE_LOCKED": "ルートノードはロックできません！",
       "NO_NODES_IN_CLIPBOARD": "クリップボードにノードがありません！",
       "NODE_COPY_GENERIC": "ノードのコピー中にエラーが発生しました。",
       "NODE_CUT_GENERIC": "ノードの切り取り中にエラーが発生しました。",

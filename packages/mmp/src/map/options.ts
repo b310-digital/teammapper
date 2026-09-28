@@ -136,7 +136,6 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     style: 'normal',
     weight: 'normal',
   },
-  locked: true,
   hidden: false,
   isRoot: false,
 };
@@ -165,7 +164,6 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     style: 'normal',
     weight: 'normal',
   },
-  locked: true,
   isRoot: true,
   hidden: false,
 };
@@ -177,7 +175,6 @@ export interface DefaultNodeProperties {
   link: NodeLink;
   colors: NodeColors;
   font: NodeFont;
-  locked: boolean;
   isRoot: boolean;
   hidden: boolean;
 }

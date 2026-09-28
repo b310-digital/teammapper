@@ -150,6 +150,21 @@ export class YjsSyncService {
     this.yUndoManager?.redo();
   }
 
+  /**
+   * Run a local change that writes several nodes as one transaction. Yjs
+   * joins the transactions of the node writes into this one, so peers receive
+   * a single update and one undo reverts the whole change.
+   */
+  transactLocally(change: () => void): void {
+    if (!this.yDoc) {
+      change();
+      return;
+    }
+    this.yUndoManager?.stopCapturing();
+    this.doc.transact(change, LOCAL_ORIGIN);
+    this.yUndoManager?.stopCapturing();
+  }
+
   updateMapOptions(options?: CachedMapOptions): void {
     this.writeMapOptionsToYDoc(options);
   }

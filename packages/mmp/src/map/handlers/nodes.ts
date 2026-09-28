@@ -35,7 +35,7 @@ import type {
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
 export const PropertyMapping = {
   name: ['name'],
-  locked: ['locked'],
+  protected: ['protected'],
   coordinates: ['coordinates'],
   imageSrc: ['image', 'src'],
   imageSize: ['image', 'size'],
@@ -82,7 +82,6 @@ export default class Nodes {
         x: 0,
         y: 0,
       },
-      locked: false,
       id: rootId,
       parent: null,
       hidden: false,
@@ -106,6 +105,23 @@ export default class Nodes {
   }
 
   /**
+   * Add a node like addNode. A local add under a protected parent adds
+   * nothing, announces the refusal and returns null. addNode itself stays
+   * unguarded because remote writes, paste and new trees call it.
+   */
+  public addNodeUnlessProtected = (
+    ...args: Parameters<Nodes['addNode']>
+  ): Node | null => {
+    const [, notifyWithEvent = true, , parentId] = args;
+    const parentNode = this.resolveParent(parentId);
+    if (parentNode && this.refusesLocalChange(parentNode, notifyWithEvent)) {
+      return null;
+    }
+
+    return this.addNode(...args);
+  };
+
+  /**
    * Add a node in the map.
    * @param {UserNodeProperties} userProperties
    * @param {string | null} parentId the parent's id, null to add a root, or
@@ -120,7 +136,6 @@ export default class Nodes {
     overwriteId?: string
   ): Node => {
     const parentNode = this.resolveParent(parentId);
-
     const properties: NodeProperties = Utils.mergeObjects(
       this.map.options.defaultNode,
       userProperties,
@@ -458,6 +473,10 @@ export default class Nodes {
       Log.error('The property must be a string', 'type');
     }
 
+    // Hiding and changing the protection itself stay allowed.
+    const guarded = property !== 'protected' && property !== 'hidden';
+    if (guarded && this.refusesLocalChange(node, notifyWithEvent)) return;
+
     let updated: boolean | void = false;
     const propertyPath =
       PropertyMapping[property as keyof typeof PropertyMapping];
@@ -469,8 +488,8 @@ export default class Nodes {
       case 'name':
         updated = this.updateNodeName(node, value as string);
         break;
-      case 'locked':
-        updated = this.updateNodeLockedStatus(node, value as boolean);
+      case 'protected':
+        updated = this.updateNodeProtected(node, value as boolean);
         break;
       case 'coordinates':
         updated = this.updateNodeCoordinatesWithoutDescendants(
@@ -532,6 +551,8 @@ export default class Nodes {
     const node = this.getTargetNode(id);
     if (!node) return;
 
+    if (this.refusesLocalRemoval(node, notifyWithEvent)) return;
+
     if (!node.isRoot) {
       this.nodes.delete(node.id);
 
@@ -561,6 +582,112 @@ export default class Nodes {
     } else {
       Log.error('The root node can not be deleted');
     }
+  };
+
+  /**
+   * Return the id of the node carrying the protection of the node with `id`,
+   * or of the selected node: the node itself or its nearest protected
+   * ancestor. Null when the node is not protected or nothing is selected.
+   * @param {string} id
+   * @returns {string | null}
+   */
+  public protectingNode = (id?: string): string | null => {
+    const visited = new Set<Node>();
+    let node = this.getTargetNode(id) ?? null;
+
+    while (node && !visited.has(node)) {
+      if (node.protected) return node.id;
+      visited.add(node);
+      node = node.parent;
+    }
+    return null;
+  };
+
+  /**
+   * Tell whether the node or one of its ancestors carries the protection.
+   * @param {Node} node
+   * @returns {boolean}
+   */
+  public isProtected(node: Node): boolean {
+    return this.protectingNode(node.id) !== null;
+  }
+
+  /**
+   * Refuse a local change of the node when its branch is protected: announce
+   * the refusal and return true. A remote write arrives with notifyWithEvent
+   * false, and the method lets it through.
+   * @param {Node} node
+   * @param {boolean} notifyWithEvent
+   * @returns {boolean}
+   */
+  public refusesLocalChange(node: Node, notifyWithEvent = true): boolean {
+    if (!notifyWithEvent || !this.isProtected(node)) return false;
+
+    this.refuseProtected(node);
+    return true;
+  }
+
+  /**
+   * Refuse a local removal of the node when the node is protected or holds a
+   * protected descendant, since the removal would delete a protected node.
+   * @param {Node} node
+   * @param {boolean} notifyWithEvent
+   * @returns {boolean}
+   */
+  public refusesLocalRemoval(node: Node, notifyWithEvent = true): boolean {
+    if (!notifyWithEvent) return false;
+    if (this.refusesLocalChange(node)) return true;
+    if (!this.getDescendants(node).some(descendant => descendant.protected)) {
+      return false;
+    }
+
+    this.refuseProtected(node);
+    return true;
+  }
+
+  /**
+   * Announce that a protected branch refused a local edit of the node.
+   * @param {Node} node
+   */
+  public refuseProtected(node: Node) {
+    this.map.events.call(
+      Event.nodeProtected,
+      node.dom,
+      this.getNodeProperties(node)
+    );
+  }
+
+  /**
+   * Protect the node with `id`, or the selected node, and every node below
+   * it. The method clears the flag of every protected descendant, so each
+   * path from a root to a leaf holds at most one flag. A node that is
+   * already protected stays as it is. The caller wraps the call in one sync
+   * transaction when it needs peers to receive the writes together.
+   * @param {string} id
+   */
+  public protectBranch = (id?: string) => {
+    const node = this.getTargetNode(id);
+    if (!node || this.isProtected(node)) return;
+
+    this.getDescendants(node)
+      .filter(descendant => descendant.protected)
+      .forEach(descendant =>
+        this.updateNode('protected', false, true, false, descendant.id)
+      );
+    this.updateNode('protected', true, true, false, node.id);
+    this.map.history.save();
+  };
+
+  /**
+   * Release the protection of the branch the node with `id`, or the selected
+   * node, belongs to, which releases every node below the protecting node.
+   * @param {string} id
+   */
+  public releaseBranch = (id?: string) => {
+    const protecting = this.protectingNode(id);
+    if (protecting === null) return;
+
+    this.updateNode('protected', false, true, true, protecting);
   };
 
   /**
@@ -596,7 +723,7 @@ export default class Nodes {
       colors: Utils.cloneObject(node.colors) as MapNodeColors,
       font: Utils.cloneObject(node.font) as MapNodeFont,
       link: Utils.cloneObject(node.link) as MapNodeLink,
-      locked: node.locked,
+      protected: node.protected,
       isRoot: node.isRoot,
       hidden: node.hidden,
       hasHiddenChildNodes: node.hasHiddenChildNodes,
@@ -1180,6 +1307,7 @@ export default class Nodes {
       node.getNameDOM().style.color = sanitizedColor;
 
       node.colors.name = sanitizedColor;
+      this.map.draw.updateProtectionIcon(node);
       return true;
     } else {
       return false;
@@ -1392,23 +1520,21 @@ export default class Nodes {
   };
 
   /**
-   * Update the node locked status.
+   * Update the protection flag of the node and redraw its lock badge.
    * @param {Node} node
    * @param {boolean} flag
    * @returns {boolean}
    */
-  private updateNodeLockedStatus = (node: Node, flag: boolean): boolean => {
-    if (flag && typeof flag !== 'boolean') {
-      Log.error('The node locked status must be a boolean', 'type');
+  private updateNodeProtected = (node: Node, flag: boolean): boolean => {
+    if (typeof flag !== 'boolean') {
+      Log.error('The protected value must be a boolean', 'type');
     }
 
-    if (!node.isRoot) {
-      node.locked = flag || !node.locked;
-      return true;
-    } else {
-      Log.error('The root node can not be locked');
-      return false;
-    }
+    if (node.protected === flag) return false;
+
+    node.protected = flag;
+    this.map.draw.updateProtectionIcon(node);
+    return true;
   };
 
   /**

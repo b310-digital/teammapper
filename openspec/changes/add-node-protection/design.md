@@ -34,12 +34,12 @@ The field leaves `UserNodeProperties`, the node schema, `normalizeMapData`, the 
 
 A node gains `protected: boolean`. The schema declares it `v.optional(v.boolean(), false)`, so older JSON files import unprotected. A node is **protected** when it or any ancestor carries the flag. The flag sits on the top node only, so protecting a branch is one write and a peer adding a node below it needs no extra write.
 
-The shared package adds `protectingNode(nodes, id)`, which walks up the parents and returns the id of the nearest ancestor-or-self with the flag, or `null`. Both the renderer and the toolbar use it.
+`Nodes.protectingNode(id)` in `packages/mmp` walks up `Node.parent` and returns the id of the nearest ancestor-or-self with the flag, or `null`. The walk costs one step per ancestor and stops at a parent cycle. The toolbar reads it on every change detection through `MmpInstance.protectingNode`, so it must not scan the whole map. Only the renderer needs the lookup, so the shared package gets no copy.
 
 At most one flag lies on any path from a root to a leaf:
 
 - Protecting a node that is already protected is not offered: the button shows "release".
-- Protecting a node clears the flag on every descendant in the same transaction.
+- Protecting a node clears the flag on every descendant. `MapSyncService.toggleBranchProtection` runs the toggle inside one local Y.Doc transaction, so peers receive every flag write as one update and one undo reverts them together.
 
 Releasing from any node of a protected branch clears the flag on `protectingNode`, which releases the whole branch in one write.
 
@@ -60,7 +60,7 @@ The check runs only when `notifyWithEvent` is true. Remote writes, undo and redo
 
 Dragging an unprotected ancestor moves a protected branch along unchanged in shape. Copy is allowed. A pasted copy starts unprotected. Hiding and showing stay allowed because they are per-client view state.
 
-`MmpService` turns `nodeProtected` into a snackbar: "This branch is protected. Release the lock to edit it."
+`MmpService` turns `nodeProtected` into a toastr warning: "This branch is protected. Release the protection to edit it."
 
 **Alternative rejected:** checking in `YjsSyncService` before the write. The renderer would already have changed the node locally, and rolling it back would flicker.
 
