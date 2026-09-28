@@ -1,5 +1,8 @@
 import * as v from 'valibot';
 import {
+  AI_CHILDREN_PER_NODE,
+  AI_LEVELS,
+  AI_MAX_NODES,
   MAX_FONT_STYLE_LENGTH,
   MAX_FONT_WEIGHT_LENGTH,
   MAX_IMAGE_SRC_LENGTH,
@@ -90,18 +93,57 @@ export const MapDeleteSchema = v.object({
   adminId: v.pipe(v.string(), v.nonEmpty()),
 });
 
-export const MermaidCreateSchema = v.object({
+const optionalIntegerInRange = (range: {
+  min: number;
+  max: number;
+  default: number;
+}) =>
+  v.optional(
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(range.min),
+      v.maxValue(range.max)
+    ),
+    range.default
+  );
+
+/** Counts the nodes below the main root of a map with the given shape. */
+export const aiMapNodeCount = ({
+  levels,
+  childrenPerNode,
+}: {
+  levels: number;
+  childrenPerNode: number;
+}): number =>
+  Array.from({ length: levels }, (_, i) => childrenPerNode ** (i + 1)).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+
+const MermaidCreateFieldsSchema = v.object({
   mindmapDescription: v.pipe(
     v.string(),
     v.nonEmpty(),
     v.maxLength(MAX_MERMAID_DESCRIPTION_LENGTH)
   ),
   language: v.picklist([...SUPPORTED_LANGUAGES]),
+  levels: optionalIntegerInRange(AI_LEVELS),
+  childrenPerNode: optionalIntegerInRange(AI_CHILDREN_PER_NODE),
 });
+
+export const MermaidCreateSchema = v.pipe(
+  MermaidCreateFieldsSchema,
+  v.check(
+    input => aiMapNodeCount(input) <= AI_MAX_NODES,
+    `The map shape may ask for at most ${AI_MAX_NODES} nodes`
+  )
+);
 
 export type IMmpClientNodeBasics = v.InferOutput<typeof NodeBasicsSchema>;
 export type IMmpClientNode = v.InferOutput<typeof NodeSchema>;
 export type MermaidCreateInput = v.InferOutput<typeof MermaidCreateSchema>;
+export type AiMapShape = Pick<MermaidCreateInput, 'levels' | 'childrenPerNode'>;
 
 // Issue sanitization to prevent sensitive information leakage
 type AnyIssue = v.BaseIssue<unknown>;

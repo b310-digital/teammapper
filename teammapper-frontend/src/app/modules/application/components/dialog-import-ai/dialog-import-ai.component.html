@@ -18,6 +18,50 @@
       [placeholder]="'MODALS.IMPORT_AI.PLACEHOLDER' | translate">
     </textarea>
   </mat-form-field>
+  <div class="shape-fields">
+    <div class="shape-field">
+      <label for="ai-levels">
+        {{ 'MODALS.IMPORT_AI.LABEL_LEVELS' | translate }}: {{ levels }}
+      </label>
+      <mat-slider
+        color="primary"
+        [min]="AI_LEVELS.min"
+        [max]="AI_LEVELS.max"
+        step="1"
+        discrete
+        showTickMarks>
+        <input
+          matSliderThumb
+          id="ai-levels"
+          [ngModel]="levels"
+          (ngModelChange)="setLevels($event)" />
+      </mat-slider>
+    </div>
+    <div class="shape-field">
+      <label for="ai-children-per-node">
+        {{ 'MODALS.IMPORT_AI.LABEL_CHILDREN_PER_NODE' | translate }}:
+        {{ childrenPerNode }}
+      </label>
+      <mat-slider
+        color="primary"
+        [min]="AI_CHILDREN_PER_NODE.min"
+        [max]="AI_CHILDREN_PER_NODE.max"
+        step="1"
+        discrete
+        showTickMarks>
+        <input
+          matSliderThumb
+          id="ai-children-per-node"
+          [ngModel]="childrenPerNode"
+          (ngModelChange)="setChildrenPerNode($event)" />
+      </mat-slider>
+    </div>
+  </div>
+  @if (aiModel) {
+    <div class="ai-model">
+      {{ 'MODALS.IMPORT_AI.MODEL' | translate: { model: aiModel } }}
+    </div>
+  }
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-raised-button [mat-dialog-close]="true">

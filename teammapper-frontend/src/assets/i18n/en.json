@@ -108,6 +108,9 @@
       "CONTENT": "Generate a mindmap directly from your description using AI. Simply describe what you want to map and the AI will create it for you.",
       "LABEL_DESCRIPTION": "Describe your mindmap",
       "PLACEHOLDER": "E.g. History of Travel",
+      "LABEL_LEVELS": "Levels below the main root",
+      "LABEL_CHILDREN_PER_NODE": "Child nodes per node",
+      "MODEL": "Model: {{model}}",
       "BUTTON_GENERATE": "Generate & Import"
     },
     "PICTOGRAMS": {
@@ -242,6 +245,7 @@
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
+    "AI_MERMAID_TRUNCATED": "The model reached its output limit before finishing the mind map. Try fewer levels or child nodes.",
     "AI_MERMAID_GENERATING": "Creating Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "Please provide a description for the mindmap"
   },

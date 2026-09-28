@@ -7,7 +7,7 @@ import type {
   GradingReport,
 } from './benchmark.types'
 import type { LLMProps } from '../src/config.service'
-import { SYSTEM_PROMPT } from '../src/map/utils/prompts'
+import { DEFAULT_AI_MAP_SHAPE, systemPrompt } from '../src/map/utils/prompts'
 import { writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 
@@ -80,11 +80,11 @@ export class BenchmarkRunner {
     fixture: BenchmarkFixture
   ): Promise<{ rawOutput: string; error: string | null }> {
     try {
-      const rawOutput = await this.aiService.generateMermaid(
+      const { mermaid } = await this.aiService.generateMermaid(
         fixture.mindmapDescription,
         fixture.language
       )
-      return { rawOutput, error: null }
+      return { rawOutput: mermaid, error: null }
     } catch (err: unknown) {
       const error = err instanceof Error ? err.message : String(err)
       return { rawOutput: '', error }
@@ -102,7 +102,7 @@ export class BenchmarkRunner {
       timestamp: new Date().toISOString(),
       provider: this.llmConfig.provider ?? 'unknown',
       model: this.llmConfig.model ?? 'unknown',
-      systemPrompt: SYSTEM_PROMPT,
+      systemPrompt: systemPrompt(DEFAULT_AI_MAP_SHAPE),
       results,
       averages,
       overallAverage,

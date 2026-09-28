@@ -210,6 +210,14 @@ JSON export. Import discards the current content rather than merging.
 Describe a mind map in prose and have the server write Mermaid syntax for it.
 The app then imports that syntax the normal way. Not available on every server.
 
+The request may set the map's shape: **levels**, the node levels below the
+main root (1 to 3, default 2), and **children per node**, the most child nodes
+any node gets (1 to 4, default 4). A shape may ask for at most 20 nodes below
+the main root, so 3 levels allow at most 2 children per node. The server drops
+every node the LLM writes beyond that shape, along with its descendants, and
+never adds a node the LLM omitted. When the LLM runs out of output tokens, the
+app warns the user and imports whatever part of the map arrived.
+
 ### Export
 
 Write the map out. Six formats: JSON, Mermaid, SVG, PNG, JPEG and PDF.

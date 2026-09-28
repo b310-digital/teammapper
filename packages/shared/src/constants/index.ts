@@ -19,6 +19,13 @@ export const MAX_FONT_STYLE_LENGTH = 20;
 export const MAX_FONT_WEIGHT_LENGTH = 20;
 export const MAX_MERMAID_DESCRIPTION_LENGTH = 5000;
 
+/** Levels of nodes below the main root that AI generate asks for. */
+export const AI_LEVELS = { min: 1, max: 3, default: 2 } as const;
+/** Child nodes per node that AI generate asks for. */
+export const AI_CHILDREN_PER_NODE = { min: 1, max: 4, default: 4 } as const;
+/** Most nodes below the main root that one AI generate request may ask for. */
+export const AI_MAX_NODES = 20;
+
 export const DEFAULT_ROOT_NAME = 'Root node';
 export const DEFAULT_ROOT_COLOR_NAME = '#787878';
 export const DEFAULT_ROOT_COLOR_BACKGROUND = '#f0f6f5';

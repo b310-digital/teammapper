@@ -107,6 +107,9 @@
       "CONTENT": "Générez une carte mentale directement à partir de votre description en utilisant l'IA. Décrivez simplement ce que vous souhaitez cartographier et l'IA la créera pour vous.",
       "LABEL_DESCRIPTION": "Décrivez votre carte mentale",
       "PLACEHOLDER": "Par exemple, créez une carte mentale d'une maison avec les pièces, les meubles et le jardin",
+      "LABEL_LEVELS": "Niveaux sous la racine",
+      "LABEL_CHILDREN_PER_NODE": "Nœuds enfants par nœud",
+      "MODEL": "Modèle : {{model}}",
       "BUTTON_GENERATE": "Générer & Importer"
     },
     "PICTOGRAMS": {
@@ -240,6 +243,7 @@
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",
+    "AI_MERMAID_TRUNCATED": "Le modèle a atteint sa limite de sortie avant de terminer la carte mentale. Essayez moins de niveaux ou de nœuds enfants.",
     "AI_MERMAID_GENERATING": "Création de Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "Veuillez fournir une description pour la carte mentale"
   },

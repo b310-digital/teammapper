@@ -21,9 +21,11 @@ export default class AiController {
     if (!result.success) {
       throw new BadRequestException(sanitizeIssues(result.issues))
     }
-    return this.aiService.generateMermaid(
-      result.output.mindmapDescription,
-      result.output.language
-    )
+    const { mindmapDescription, language, levels, childrenPerNode } =
+      result.output
+    return this.aiService.generateMermaid(mindmapDescription, language, {
+      levels,
+      childrenPerNode,
+    })
   }
 }

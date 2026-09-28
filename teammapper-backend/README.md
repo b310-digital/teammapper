@@ -117,10 +117,18 @@ Copy `.env.default` to `.env` and configure the variables below.
 | `AI_LLM_TPM` | Tokens per minute limit (per-process, soft) | - |
 | `AI_LLM_TPD` | Tokens per day limit (DB-backed, hard ceiling across restarts/instances) | - |
 | `AI_LLM_RPM` | Requests per minute limit (per-process) | - |
-| `AI_LLM_MAX_OUTPUT_TOKENS` | Per-call cap on generated tokens | `1024` |
-| `AI_LLM_TIMEOUT_MS` | Per-call abort timeout in ms | `30000` |
+| `AI_LLM_MAX_OUTPUT_TOKENS` | Per-call cap on generated tokens, reasoning included | `4096` |
+| `AI_LLM_TIMEOUT_MS` | Per-call abort timeout in ms | `60000` |
 
 > **Migration note:** The previous `stackit` provider value for `AI_LLM_PROVIDER` has been replaced by `openai-compatible`. If you were using `AI_LLM_PROVIDER=stackit`, change it to `AI_LLM_PROVIDER=openai-compatible`.
+
+> **Migration note:** Each call now reserves its full output cap against
+> `AI_LLM_TPM` and `AI_LLM_TPD` until the LLM reports its real usage. With the
+> default cap, one call reserves about 4300 tokens, so a lower `AI_LLM_TPM` or
+> `AI_LLM_TPD` rejects every call, and a limit of `0` rejects every call on
+> purpose. A model without a reasoning phase needs less: 1024 tokens and 30000 ms
+> were the defaults before reasoning models. `LOG_LEVEL=debug` logs the token
+> counts of each call.
 
 ### Authentication
 
