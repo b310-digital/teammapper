@@ -29,4 +29,3 @@ The three sections shipped together in one pull request. Section 1 removes the o
 - [x] 3.6 Add the tooltips and the notice to every language file
 - [x] 3.7 Add the **Protected branch** glossary entry
 - [x] 3.8 mmp specs: every refused action leaves the node unchanged; remote updates and undo apply inside a protected branch; dragging an unprotected parent moves a protected child; protecting a parent clears a child's flag
-- [x] 3.9 E2E: client A protects a branch, client B sees the badge, cannot rename a child, releases it, then renames it
