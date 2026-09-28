@@ -138,8 +138,13 @@ export class YjsSyncService {
 
   // ─── Public API ─────────────────────────────────────────────
 
+  /**
+   * Sets whether this client may edit the map. Edit mode follows the flag from
+   * the first sync on, whichever of the sync and this call comes first.
+   */
   setWritable(writable: boolean): void {
     this.yjsWritable = writable;
+    if (this.yjsSynced) this.settingsService.setEditMode(writable);
   }
 
   undo(): void {

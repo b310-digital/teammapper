@@ -2,6 +2,7 @@ import { YjsSyncService } from './yjs-sync.service';
 import * as Y from 'yjs';
 import { ExportNodeProperties } from '@teammapper/shared';
 import { MmpService } from '../mmp/mmp.service';
+import { SettingsService } from '../settings/settings.service';
 import { MapSyncContext } from './map-sync-context';
 import { populateYMapFromNodeProps } from './yjs-utils';
 import {
@@ -30,10 +31,14 @@ function internals(service: YjsSyncService): YjsSyncInternals {
 
 describe('YjsSyncService', () => {
   describe('setWritable', () => {
+    let settingsService: jest.Mocked<SettingsService>;
     let service: YjsSyncService;
 
     beforeEach(() => {
-      service = createService();
+      settingsService = {
+        setEditMode: jest.fn(),
+      } as unknown as jest.Mocked<SettingsService>;
+      service = createService(undefined, createMockContext(), settingsService);
     });
 
     it('sets yjsWritable to true', () => {
@@ -46,6 +51,20 @@ describe('YjsSyncService', () => {
       service.setWritable(false);
 
       expect(internals(service).yjsWritable).toBe(false);
+    });
+
+    it('does not change edit mode before the first sync', () => {
+      service.setWritable(true);
+
+      expect(settingsService.setEditMode).not.toHaveBeenCalled();
+    });
+
+    it('sets edit mode when called after the first sync', () => {
+      internals(service).yjsSynced = true;
+
+      service.setWritable(true);
+
+      expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
     });
   });
 
