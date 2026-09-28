@@ -25,6 +25,37 @@ test('changes language in settings', async ({ page }) => {
   await expect(page.locator('mat-select')).toBeVisible();
 });
 
+test('deletes a map that is not open from the map list', async ({ page }) => {
+  const createMap = async (): Promise<string> => {
+    await page.goto('/');
+    await page.getByText('Create mind map').click();
+    await page.waitForURL(/\/map\/[0-9a-f-]+/);
+    const match = page.url().match(/\/map\/([0-9a-f-]+)/);
+    if (!match) throw new Error(`No map id in ${page.url()}`);
+    return match[1];
+  };
+  const closedMapId = await createMap();
+  const openMapId = await createMap();
+
+  await page.locator('button[routerlink="/app/settings"]').click();
+  await page.locator('.mat-mdc-tab').nth(2).click();
+
+  const closedMapRow = page.locator('mat-list-item', {
+    has: page.locator(`a[href*="${closedMapId}"]`),
+  });
+  const openMapRow = page.locator('mat-list-item', {
+    has: page.locator(`a[href*="${openMapId}"]`),
+  });
+  await expect(closedMapRow.first()).toBeVisible();
+
+  page.once('dialog', dialog => dialog.accept());
+  await closedMapRow.first().locator('.delete-map-button').click();
+
+  await expect(page.getByText('Mindmap successfully deleted!')).toBeVisible();
+  await expect(closedMapRow).toHaveCount(0);
+  await expect(openMapRow.first()).toBeVisible();
+});
+
 test('modifies map options in settings', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();

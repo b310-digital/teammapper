@@ -129,11 +129,8 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "DELETED_AT": "Mindmap is going to be deleted at:",
-      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-      "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?",
-      "SHORTCUTS_TITLE": "快捷鍵"
+      "SHORTCUTS_TITLE": "快捷鍵",
+      "DELETION_MOVED": "提示：此心智圖的刪除日期已移至設定中的「地圖選項」。心智圖的建立者也可以在那裡刪除它。"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -192,8 +189,13 @@
       "ROOT_NODE_NAME": "根節點名稱",
       "NODE_NAME": "節點名稱",
       "TITLE": "設定",
-      "TTL": "Last known date of deletion",
-      "DARK_MODE": "深色模式"
+      "TTL": "最後已知的刪除日期",
+      "DARK_MODE": "深色模式",
+      "DELETION": "刪除",
+      "DELETED_AT": "此心智圖的刪除日期：",
+      "DELETE_AFTER_DAYS": "此伺服器會在 {{deleteAfterDays}} 天後刪除心智圖。",
+      "DELETE": "刪除心智圖",
+      "CONFIRM_DELETE": "確定要刪除嗎？"
     }
   },
   "MESSAGES": {
@@ -232,9 +234,10 @@
       "IMPORT_ERROR": "Mindmap could not be imported!",
       "AI_MERMAID_ERROR": "無法生成Mermaid",
       "IMAGE_STORAGE_FULL": "此心智圖的圖片儲存空間已滿。移除的圖片會在上傳後 7 天內釋放其空間。",
-      "IMAGE_UPLOAD_ERROR": "無法上傳圖片。"
+      "IMAGE_UPLOAD_ERROR": "無法上傳圖片。",
+      "DELETE_MAP_ERROR": "無法刪除心智圖。"
     },
-    "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
+    "DELETE_MAP_SUCCESS": "心智圖已成功刪除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",
     "AI_MERMAID_GENERATING": "正在創建Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "請提供心智圖的描述"

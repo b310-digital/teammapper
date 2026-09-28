@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateModule } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { MapNodeSettings, UserSettings } from '@teammapper/shared';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
@@ -55,6 +56,7 @@ describe('SettingsComponent', () => {
           useValue: {
             updateMapOptions: jest.fn(),
             fetchUserMapsFromServer: async () => [],
+            getAttachedMapObservable: () => new BehaviorSubject(null),
           },
         },
         {
@@ -66,6 +68,7 @@ describe('SettingsComponent', () => {
             getCachedAdminMapEntries: async () => [],
           },
         },
+        { provide: ToastrService, useValue: {} },
       ],
     }).compileComponents();
 

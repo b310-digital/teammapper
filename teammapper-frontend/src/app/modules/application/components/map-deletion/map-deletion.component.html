@@ -1,0 +1,29 @@
+@if (attachedMap | async; as attached) {
+  <mat-card class="map-deletion">
+    <mat-card-header>
+      <mat-card-title>{{
+        'PAGES.SETTINGS.DELETION' | translate
+      }}</mat-card-title>
+    </mat-card-header>
+    <hr />
+    <mat-card-content>
+      <p>
+        {{
+          'PAGES.SETTINGS.DELETE_AFTER_DAYS'
+            | translate: { deleteAfterDays: attached.cachedMap.deleteAfterDays }
+        }}
+      </p>
+      <p class="deleted-at">
+        {{ 'PAGES.SETTINGS.DELETED_AT' | translate }}
+        {{ attached.cachedMap.deletedAt | date: 'yyyy-MM-dd' }}
+      </p>
+    </mat-card-content>
+    @if (mapAdminId | async) {
+      <mat-card-actions>
+        <button mat-raised-button (click)="deleteMap()" color="warn">
+          {{ 'PAGES.SETTINGS.DELETE' | translate }}
+        </button>
+      </mat-card-actions>
+    }
+  </mat-card>
+}

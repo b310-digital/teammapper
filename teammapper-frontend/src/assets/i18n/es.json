@@ -129,11 +129,8 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "DELETED_AT": "Mindmap is going to be deleted at:",
-      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-      "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?",
-      "SHORTCUTS_TITLE": "Atajos"
+      "SHORTCUTS_TITLE": "Atajos",
+      "DELETION_MOVED": "Nota: la fecha de eliminación de este mapa está ahora en Ajustes, en Opciones del mapa. Quien creó el mapa también puede eliminarlo allí."
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -192,8 +189,13 @@
       "ROOT_NODE_NAME": "Nombre del nodo raíz",
       "NODE_NAME": "Nombre del nodo",
       "TITLE": "Ajustes",
-      "TTL": "Last known date of deletion",
-      "DARK_MODE": "Modo oscuro"
+      "TTL": "Última fecha de eliminación conocida",
+      "DARK_MODE": "Modo oscuro",
+      "DELETION": "Eliminación",
+      "DELETED_AT": "Este mapa se eliminará el:",
+      "DELETE_AFTER_DAYS": "Este servidor elimina los mapas después de {{deleteAfterDays}} días.",
+      "DELETE": "Eliminar mapa",
+      "CONFIRM_DELETE": "¿Eliminar?"
     }
   },
   "MESSAGES": {
@@ -232,7 +234,8 @@
       "IMPORT_ERROR": "No se ha podido importar el mapa mental.",
       "AI_MERMAID_ERROR": "No se pudo generar Mermaid",
       "IMAGE_STORAGE_FULL": "El almacenamiento de imágenes de este mapa mental está lleno. Una imagen eliminada libera su espacio en los 7 días siguientes a su subida.",
-      "IMAGE_UPLOAD_ERROR": "No se pudo subir la imagen."
+      "IMAGE_UPLOAD_ERROR": "No se pudo subir la imagen.",
+      "DELETE_MAP_ERROR": "No se pudo eliminar el mapa."
     },
     "DELETE_MAP_SUCCESS": "¡Mapa mental borrado con éxito!",
     "AI_MERMAID_GENERATED_SUCCESS": "¡Mermaid generado con éxito!",

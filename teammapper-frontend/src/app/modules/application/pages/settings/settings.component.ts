@@ -25,6 +25,7 @@ import { FormsModule } from '@angular/forms';
 import { MatInput } from '@angular/material/input';
 import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
 import { MindmapsOverview } from 'src/app/shared/components/mindmaps-overview/mindmaps-overview.component';
+import { MapDeletionComponent } from '../../components/map-deletion/map-deletion.component';
 
 @Component({
   selector: 'teammapper-settings',
@@ -32,6 +33,7 @@ import { MindmapsOverview } from 'src/app/shared/components/mindmaps-overview/mi
   styleUrls: ['./settings.component.scss'],
   imports: [
     MindmapsOverview,
+    MapDeletionComponent,
     MatToolbar,
     MatDialogTitle,
     MatIconButton,

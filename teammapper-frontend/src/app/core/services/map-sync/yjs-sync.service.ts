@@ -14,7 +14,6 @@ import { MmpService } from '../mmp/mmp.service';
 import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
-import { API_URL, HttpService } from '../../http/http.service';
 import {
   ClientColorMapping,
   populateYMapFromNodeProps,
@@ -106,8 +105,7 @@ export class YjsSyncService {
     private mmpService: MmpService,
     private settingsService: SettingsService,
     private utilsService: UtilsService,
-    private toastrService: ToastrService,
-    private httpService: HttpService
+    private toastrService: ToastrService
   ) {}
 
   /**
@@ -154,10 +152,6 @@ export class YjsSyncService {
 
   updateMapOptions(options?: CachedMapOptions): void {
     this.writeMapOptionsToYDoc(options);
-  }
-
-  async deleteMap(adminId: string): Promise<void> {
-    await this.deleteMapViaHttp(adminId);
   }
 
   // ─── Connection lifecycle ───────────────────────────────────
@@ -579,15 +573,6 @@ export class YjsSyncService {
       optionsMap.set('fontMinSize', options.fontMinSize);
       optionsMap.set('fontIncrement', options.fontIncrement);
     }, LOCAL_ORIGIN);
-  }
-
-  private async deleteMapViaHttp(adminId: string): Promise<void> {
-    const mapId = this.ctx.getAttachedMap().cachedMap.uuid;
-    await this.httpService.delete(
-      API_URL.ROOT,
-      `/maps/${mapId}`,
-      JSON.stringify({ adminId })
-    );
   }
 
   // ─── Y.Doc observers (Y.Doc → MMP) ─────────────────────────

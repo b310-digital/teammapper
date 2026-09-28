@@ -130,11 +130,8 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "DELETED_AT": "Mindmap is going to be deleted at:",
-      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-      "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?",
-      "SHORTCUTS_TITLE": "Keyboard shortcuts"
+      "SHORTCUTS_TITLE": "Keyboard shortcuts",
+      "DELETION_MOVED": "Hint: The deletion date of this mind map is now in the settings under Map options. If you created the mind map, you can also delete it there."
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -195,7 +192,12 @@
       "TITLE": "Settings",
       "TTL": "Last known date of deletion",
       "SHOW_LINKTEXT": "Show linktext",
-      "DARK_MODE": "Dark mode"
+      "DARK_MODE": "Dark mode",
+      "DELETION": "Deletion",
+      "DELETED_AT": "Mindmap is going to be deleted at:",
+      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
+      "DELETE": "Delete mindmap",
+      "CONFIRM_DELETE": "Delete?"
     }
   },
   "MESSAGES": {
@@ -234,7 +236,8 @@
       "IMPORT_ERROR": "Could not import mindmap",
       "AI_MERMAID_ERROR": "Mermaid could not be generated",
       "IMAGE_STORAGE_FULL": "The image storage of this mind map is full. A removed image frees its space within 7 days of its upload.",
-      "IMAGE_UPLOAD_ERROR": "The image could not be uploaded."
+      "IMAGE_UPLOAD_ERROR": "The image could not be uploaded.",
+      "DELETE_MAP_ERROR": "The mind map could not be deleted."
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
