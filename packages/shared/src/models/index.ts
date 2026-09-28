@@ -55,7 +55,8 @@ export interface UserNodeProperties {
   link?: MapNodeLink;
   colors?: MapNodeColors;
   font?: MapNodeFont;
-  locked?: boolean;
+  /** Protects this node and its descendants against local edits. */
+  protected?: boolean;
   isRoot?: boolean;
   hidden?: boolean;
   hasHiddenChildNodes?: boolean;
@@ -141,7 +142,6 @@ export interface MapNodeSettings {
   image: MapNodeImage;
   colors: MapNodeColors;
   font: MapNodeFont;
-  locked?: boolean;
 }
 
 /**
@@ -163,7 +163,7 @@ export interface UserSettings {
 
 export type NodeProperty =
   | 'name'
-  | 'locked'
+  | 'protected'
   | 'coordinates'
   | 'imageSrc'
   | 'imageSize'
@@ -248,6 +248,7 @@ export interface MmpEventPayloadMap {
   nodePaste: ExportNodeProperties[];
   nodeRemove: ExportNodeProperties;
   distribute: void;
+  nodeProtected: ExportNodeProperties;
 }
 
 export type MmpEventType = keyof MmpEventPayloadMap;

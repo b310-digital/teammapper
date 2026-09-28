@@ -121,6 +121,20 @@ export class MmpService implements OnDestroy {
     this.additionalOptions = await this.defaultAdditionalOptions();
 
     this.currentMap = map;
+    map.instance.on('nodeProtected', () => void this.showProtectedNotice());
+  }
+
+  /**
+   * Tell the user that a protected branch refused the edit. A color picker
+   * sends an update on every pointer move, so the method skips the notice
+   * while an identical one is still on screen.
+   */
+  private async showProtectedNotice(): Promise<void> {
+    const message = await this.utilsService.translate(
+      'TOASTS.WARNINGS.NODE_PROTECTED'
+    );
+    if (this.toastrService.findDuplicate('', message, true, false)) return;
+    this.toastrService.warning(message);
   }
 
   /**
@@ -401,19 +415,29 @@ export class MmpService implements OnDestroy {
         updateHistory,
         id
       );
-    } catch (e) {
-      if (errorMessage(e) == 'The root node can not be locked') {
-        const rootNodeFailureMessage = await this.utilsService.translate(
-          'TOASTS.ERRORS.ROOT_NODE_LOCKED'
-        );
-        this.toastrService.error(rootNodeFailureMessage);
-      } else {
-        const genericErrorMessage = await this.utilsService.translate(
-          'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
-        );
-        this.toastrService.error(genericErrorMessage);
-      }
+    } catch {
+      const genericErrorMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
+      );
+      this.toastrService.error(genericErrorMessage);
     }
+  }
+
+  /**
+   * Return the id of the node protecting the selected node, itself or an
+   * ancestor, or null when the selected node is not protected or no map exists.
+   */
+  public protectingNode(): string | null {
+    return this.currentMap?.instance.protectingNode() ?? null;
+  }
+
+  /**
+   * Protect the selected node and its branch, or release the protection of
+   * the branch the selected node belongs to.
+   */
+  public toggleBranchProtection() {
+    if (this.protectingNode() === null) this.map.instance.protectBranch();
+    else this.map.instance.releaseBranch();
   }
 
   /**
@@ -474,7 +498,7 @@ export class MmpService implements OnDestroy {
     if (!nodeId && !this.hasSelectedNode()) return;
 
     try {
-      this.map.instance.cutNode(nodeId);
+      if (!this.map.instance.cutNode(nodeId)) return;
 
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_CUT');

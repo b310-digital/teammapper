@@ -64,6 +64,9 @@ describe('MmpService', () => {
       distributeNodes: jest.fn(),
       nodeChildren: jest.fn(),
       addTree: jest.fn(),
+      protectBranch: jest.fn(),
+      protectingNode: jest.fn(),
+      releaseBranch: jest.fn(),
     },
     options: {
       update: jest.fn(),
@@ -100,6 +103,8 @@ describe('MmpService', () => {
       success: jest.fn(),
       error: jest.fn(),
       info: jest.fn(),
+      warning: jest.fn(),
+      findDuplicate: jest.fn().mockReturnValue(null),
     };
 
     TestBed.configureTestingModule({
@@ -296,6 +301,61 @@ describe('MmpService', () => {
         mockMap.instance.getSelectedNode.mockReturnValue({ id: 'selected' });
 
         expect(service.hasSelectedNode()).toBe(true);
+      });
+    });
+
+    describe('branch protection', () => {
+      const notifyProtected = async () => {
+        const [, callback] = mockMap.instance.on.mock.calls.find(
+          ([event]) => event === 'nodeProtected'
+        );
+        callback();
+        await new Promise(resolve => setTimeout(resolve));
+      };
+
+      it('protects the branch of an unprotected node', () => {
+        mockMap.instance.protectingNode.mockReturnValue(null);
+
+        service.toggleBranchProtection();
+
+        expect(mockMap.instance.protectBranch).toHaveBeenCalled();
+        expect(mockMap.instance.releaseBranch).not.toHaveBeenCalled();
+      });
+
+      it('releases the branch of a protected node', () => {
+        mockMap.instance.protectingNode.mockReturnValue('parent-id');
+
+        service.toggleBranchProtection();
+
+        expect(mockMap.instance.releaseBranch).toHaveBeenCalled();
+      });
+
+      it('shows the notice when mmp refuses an edit', async () => {
+        await notifyProtected();
+
+        expect(utilsService.translate).toHaveBeenCalledWith(
+          'TOASTS.WARNINGS.NODE_PROTECTED'
+        );
+        expect(toastrService.warning).toHaveBeenCalledWith('translated-text');
+      });
+
+      it('does not repeat a notice still on screen', async () => {
+        toastrService.findDuplicate?.mockReturnValue(
+          {} as ReturnType<ToastrService['findDuplicate']>
+        );
+
+        await notifyProtected();
+
+        expect(toastrService.warning).not.toHaveBeenCalled();
+      });
+
+      it('reports no success for a refused cut', async () => {
+        mockMap.instance.getSelectedNode.mockReturnValue({ id: 'selected' });
+        mockMap.instance.cutNode.mockReturnValue(false);
+
+        await service.cutNode();
+
+        expect(toastrService.success).not.toHaveBeenCalled();
       });
     });
 

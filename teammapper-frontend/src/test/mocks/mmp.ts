@@ -9,7 +9,7 @@
  */
 export const NodePropertyMapping = {
   name: ['name'],
-  locked: ['locked'],
+  protected: ['protected'],
   coordinates: ['coordinates'],
   imageSrc: ['image', 'src'],
   imageSize: ['image', 'size'],

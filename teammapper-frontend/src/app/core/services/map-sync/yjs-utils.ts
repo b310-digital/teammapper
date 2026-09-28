@@ -22,7 +22,7 @@ export function populateYMapFromNodeProps(
   yNode.set('parent', nodeProps.parent ?? null);
   yNode.set('name', nodeProps.name ?? '');
   yNode.set('isRoot', nodeProps.isRoot ?? false);
-  yNode.set('locked', nodeProps.locked ?? false);
+  yNode.set('protected', nodeProps.protected ?? false);
   yNode.set('k', nodeProps.k ?? 1);
   yNode.set('coordinates', nodeProps.coordinates ?? { x: 0, y: 0 });
   yNode.set(
@@ -41,7 +41,7 @@ export function yMapToNodeProps(yNode: Y.Map<unknown>): ExportNodeProperties {
     k: (yNode.get('k') as number) ?? 1,
     name: (yNode.get('name') as string) ?? '',
     isRoot: (yNode.get('isRoot') as boolean) ?? false,
-    locked: (yNode.get('locked') as boolean) ?? false,
+    protected: (yNode.get('protected') as boolean) ?? false,
     coordinates: (yNode.get('coordinates') as { x: number; y: number }) ?? {
       x: 0,
       y: 0,

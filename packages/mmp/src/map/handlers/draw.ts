@@ -83,7 +83,10 @@ export default class Draw {
     let tapedTwice = false;
 
     // When doing an initial draw, all nodes appear in dom.nodes
-    dom.nodes.each((node: Node) => this.updateHiddenChildrenIcon(node));
+    dom.nodes.each((node: Node) => {
+      this.updateHiddenChildrenIcon(node);
+      this.updateProtectionIcon(node);
+    });
 
     const outer = dom.nodes
       .enter()
@@ -165,6 +168,7 @@ export default class Draw {
       this.setLink(node);
       // Sometimes, undo/redo will not render nodes in dom.nodes, but instead all nodes will only be present in dom.nodes.enter(), so we also need to check for hidden children there
       this.updateHiddenChildrenIcon(node);
+      this.updateProtectionIcon(node);
     });
 
     dom.branches
@@ -279,6 +283,7 @@ export default class Draw {
 
     this.updateImagePosition(node);
     this.updateLinkPosition(node);
+    this.updateProtectionIcon(node);
 
     this.updateNodeNameContainer(node);
   }
@@ -408,6 +413,32 @@ export default class Draw {
   }
 
   /**
+   * Draw a lock badge past the top right corner of a node carrying the
+   * protection, mirroring the hidden eye icon, and remove it otherwise.
+   * Descendants protected through an ancestor show no badge. Each call
+   * repositions and recolors the badge, so it follows a resize or a new name
+   * color.
+   * @param {Node} node
+   */
+  public updateProtectionIcon(node: Node) {
+    let icon = node.getProtectionIconDOM();
+    if (!node.protected) {
+      icon?.remove();
+      return;
+    }
+
+    if (!icon) {
+      icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      icon.textContent = 'lock';
+      icon.classList.add('protected-icon', 'material-icons');
+      node.dom.appendChild(icon);
+    }
+    icon.style.setProperty('fill', DOMPurify.sanitize(node.colors.name));
+    icon.setAttribute('y', (-node.dimensions.height + 30).toString());
+    icon.setAttribute('x', (node.dimensions.width / 2).toString());
+  }
+
+  /**
    * Update the node image position.
    * @param {Node} node
    */
@@ -436,6 +467,8 @@ export default class Draw {
    * @param {Node} node
    */
   public enableNodeNameEditing(node: Node) {
+    if (this.map.nodes.refusesLocalChange(node)) return;
+
     this.editing = true;
     const name = node.getNameDOM();
     name.setAttribute('contenteditable', 'true');
@@ -506,7 +539,9 @@ export default class Draw {
       if (name.innerHTML !== node.name) {
         this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML));
       }
-      name.innerHTML = DOMPurify.sanitize(name.innerHTML);
+      // Write node.name back, so the DOM drops the typed text when a peer
+      // protected the branch during the edit and updateNode refused it.
+      name.innerHTML = DOMPurify.sanitize(node.name);
       this.updateNodeShapes(node);
 
       name.ondblclick =

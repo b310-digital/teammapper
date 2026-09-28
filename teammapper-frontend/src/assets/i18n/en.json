@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "Selects the node below",
     "SELECT_NODE_ABOVE": "Selects the node above",
     "EDIT_NODE": "Allows to edit the text of the node",
-    "COUPLE_NODE": "Groups or ungroups the node",
+    "PROTECT_BRANCH": "Protect this branch",
+    "RELEASE_PROTECTION": "Release protection",
     "NODE_IMAGE": "Adds an image to the node",
     "NODE_IMAGE_REMOVE": "Removes an image from the node",
     "PICTOGRAM": "Pictrogram",
@@ -216,6 +217,7 @@
     "INVALID_MODIFICATION_SECRET": "The edit link is invalid. The mind map opens read-only.",
     "MAP_UPDATE_SUCCESS": "Mindmap successfully updated!",
     "WARNINGS": {
+      "NODE_PROTECTED": "This branch is protected. Release the protection to edit it.",
       "MAP_IMPORT_IN_PROGRESS": "Importing mindmap...",
       "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
       "MERMAID_SEVERAL_TREES": "Each tree became its own mindmap block. Mermaid tools outside TeamMapper render one block at a time."
@@ -224,7 +226,6 @@
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",
       "ROOT_NODE_CUT": "It's not possible to cut the root node!",
       "ROOT_NODE_DELETED": "It's not possible to delete the root node!",
-      "ROOT_NODE_LOCKED": "It's not possible to lock the root node!",
       "NO_NODES_IN_CLIPBOARD": "There are no nodes in the clipboard!",
       "NODE_COPY_GENERIC": "An error occurred whilst trying to copy the node.",
       "NODE_CUT_GENERIC": "An error occurred whilst trying to cut the node.",

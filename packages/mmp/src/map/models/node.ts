@@ -35,7 +35,7 @@ export default class Node implements NodeProperties {
   public colors: NodeColors;
   public font: NodeFont;
   public link: NodeLink;
-  public locked: boolean;
+  public protected: boolean;
   public dom!: SVGGElement;
   public isRoot: boolean;
   public hidden: boolean;
@@ -66,7 +66,7 @@ export default class Node implements NodeProperties {
       weight: properties.font?.weight || 'normal',
     };
     this.link = { href: properties.link?.href || '' };
-    this.locked = Boolean(properties.locked);
+    this.protected = Boolean(properties.protected);
     this.isRoot = Boolean(properties.isRoot);
     this.hidden = Boolean(properties.hidden);
     this.hasHiddenChildNodes = Boolean(properties.hasHiddenChildNodes);
@@ -136,6 +136,14 @@ export default class Node implements NodeProperties {
     return this.dom.querySelector<SVGTextElement>(
       'text.hidden-icon'
     ) as SVGTextElement;
+  }
+
+  /**
+   * Returns the SVG text of the protection lock badge.
+   * @returns {SVGTextElement | null} text
+   */
+  public getProtectionIconDOM(): SVGTextElement | null {
+    return this.dom.querySelector<SVGTextElement>('text.protected-icon');
   }
 }
 

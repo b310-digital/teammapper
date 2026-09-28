@@ -165,7 +165,7 @@ describe('Shared Validation Schemas', () => {
       link: {
         href: 'https://example.com',
       },
-      locked: false,
+      protected: true,
       k: 1.5,
       hidden: true,
       hasHiddenChildNodes: true,
@@ -191,6 +191,20 @@ describe('Shared Validation Schemas', () => {
         expect(result.output.hidden).toBe(false);
         expect(result.output.hasHiddenChildNodes).toBe(false);
       }
+    });
+
+    it('keeps protected and defaults it to false when omitted', () => {
+      expect(v.parse(NodeSchema, validNode).protected).toBe(true);
+      const withoutProtection = { ...validNode };
+      delete (withoutProtection as { protected?: boolean }).protected;
+      expect(v.parse(NodeSchema, withoutProtection).protected).toBe(false);
+    });
+
+    it('accepts and drops the locked field of older files', () => {
+      const legacy = { ...validNode, locked: true };
+      const result = v.safeParse(NodeSchema, legacy);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.output).not.toHaveProperty('locked');
     });
 
     it('permits non-breaking schema additions (tolerant validation)', () => {

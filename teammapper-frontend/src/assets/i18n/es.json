@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "Seleccionar el nodo de abajo",
     "SELECT_NODE_ABOVE": "Seleccionar el nodo de arriba",
     "EDIT_NODE": "Permitir editar el texto del nodo",
-    "COUPLE_NODE": "Bloquear o desbloquear el nodo",
+    "PROTECT_BRANCH": "Proteger esta rama",
+    "RELEASE_PROTECTION": "Quitar la protección",
     "NODE_IMAGE": "Añadir una imagen al nodo",
     "NODE_IMAGE_REMOVE": "Elimina una imagen del nodo",
     "PICTOGRAM": "Pictrogram",
@@ -214,6 +215,7 @@
     "INVALID_MODIFICATION_SECRET": "El enlace de edición no es válido. El mapa mental se abre en modo de solo lectura.",
     "MAP_UPDATE_SUCCESS": "¡Mapa mental actualizado correctamente!",
     "WARNINGS": {
+      "NODE_PROTECTED": "Esta rama está protegida. Quita la protección para editarla.",
       "MAP_IMPORT_IN_PROGRESS": "Importación de mapas mentales en curso",
       "MAP_UPDATE_IN_PROGRESS": "Actualizando mapa mental...",
       "MERMAID_SEVERAL_TREES": "Cada árbol se convirtió en su propio bloque mindmap. Las herramientas de Mermaid fuera de TeamMapper muestran un bloque a la vez."
@@ -222,7 +224,6 @@
       "ROOT_NODE_COPIED": "No es posible copiar el nodo raíz.",
       "ROOT_NODE_CUT": "No es posible cortar el nodo raíz.",
       "ROOT_NODE_DELETED": "¡No es posible eliminar el nodo raíz!",
-      "ROOT_NODE_LOCKED": "¡No es posible bloquear el nodo raíz!",
       "NO_NODES_IN_CLIPBOARD": "¡No hay nodos en el portapapeles!",
       "NODE_COPY_GENERIC": "Se ha producido un error al intentar copiar el nodo.",
       "NODE_CUT_GENERIC": "Se ha producido un error al intentar cortar el nodo.",

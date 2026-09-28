@@ -14,6 +14,9 @@ export default class Drag {
   private dragging = false;
   private orientation: boolean | undefined;
   private descendants: Node[] = [];
+  // 'refused' when the drag started on a protected node, 'announced' once the
+  // first move showed the notice. Both states keep the node in place.
+  private refusal: 'none' | 'refused' | 'announced' = 'none';
 
   /**
    * Get the associated map instance and initialize the d3 drag behavior.
@@ -52,6 +55,7 @@ export default class Drag {
    * @param {Node} node
    */
   private started(_: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
+    this.refusal = this.map.nodes.isProtected(node) ? 'refused' : 'none';
     this.orientation = this.map.nodes.getOrientation(node);
     this.descendants = this.map.nodes.getDescendants(node);
 
@@ -59,10 +63,17 @@ export default class Drag {
   }
 
   /**
-   * Move the dragged node and if it is locked all their descendants.
+   * Move the dragged node and all its descendants. A protected node stays
+   * where it is, and the first move announces the refusal.
    * @param {Node} node
    */
   private dragged(event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
+    if (this.refusal === 'refused') this.map.nodes.refuseProtected(node);
+    if (this.refusal !== 'none') {
+      this.refusal = 'announced';
+      return;
+    }
+
     const dy = event.dy,
       dx = event.dx;
 
@@ -73,29 +84,7 @@ export default class Drag {
     // Move graphically the node in new coordinates
     node.dom.setAttribute('transform', 'translate(' + [x, y] + ')');
 
-    // If the node is locked move also descendants
-    if (node.locked) {
-      // Check if old and new orientation are equal
-      const newOrientation = this.map.nodes.getOrientation(node),
-        orientationIsChanged = newOrientation !== this.orientation,
-        root = node;
-
-      for (const node of this.descendants) {
-        let x = (node.coordinates.x += dx);
-        const y = (node.coordinates.y += dy);
-
-        if (orientationIsChanged) {
-          x = node.coordinates.x +=
-            (root.coordinates.x - node.coordinates.x) * 2;
-        }
-
-        node.dom.setAttribute('transform', 'translate(' + [x, y] + ')');
-      }
-
-      if (orientationIsChanged) {
-        this.orientation = newOrientation;
-      }
-    }
+    this.moveDescendants(node, dx, dy);
 
     // Update all mind map branches
     d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
@@ -111,6 +100,31 @@ export default class Drag {
   }
 
   /**
+   * Move the descendants along with the dragged node, mirrored when the node
+   * crosses to the other side of its tree root.
+   * @param {Node} root the dragged node
+   */
+  private moveDescendants(root: Node, dx: number, dy: number) {
+    const newOrientation = this.map.nodes.getOrientation(root),
+      orientationIsChanged = newOrientation !== this.orientation;
+
+    for (const node of this.descendants) {
+      let x = (node.coordinates.x += dx);
+      const y = (node.coordinates.y += dy);
+
+      if (orientationIsChanged) {
+        x = node.coordinates.x += (root.coordinates.x - node.coordinates.x) * 2;
+      }
+
+      node.dom.setAttribute('transform', 'translate(' + [x, y] + ')');
+    }
+
+    if (orientationIsChanged) {
+      this.orientation = newOrientation;
+    }
+  }
+
+  /**
    * If the node was actually dragged change the state of dragging and save the snapshot.
    * @param {Node} node
    */
@@ -119,13 +133,11 @@ export default class Drag {
       this.dragging = false;
       this.map.history.save();
 
-      if (node.locked) {
-        for (const node of this.descendants) {
-          this.map.events.call(Event.nodeUpdate, node.dom, {
-            nodeProperties: this.map.nodes.getNodeProperties(node),
-            changedProperty: 'coordinates',
-          });
-        }
+      for (const node of this.descendants) {
+        this.map.events.call(Event.nodeUpdate, node.dom, {
+          nodeProperties: this.map.nodes.getNodeProperties(node),
+          changedProperty: 'coordinates',
+        });
       }
 
       this.map.events.call(Event.nodeUpdate, node.dom, {

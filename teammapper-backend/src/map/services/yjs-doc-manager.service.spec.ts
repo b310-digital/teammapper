@@ -19,7 +19,7 @@ const createMockNode = (id: string, root = false): MmpNode => {
   node.nodeMapId = 'map-1'
   node.name = 'Node'
   node.root = root
-  node.locked = false
+  node.protected = false
   node.k = 1
   node.coordinatesX = 0
   node.coordinatesY = 0

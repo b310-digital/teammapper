@@ -16,7 +16,7 @@ const createTestNode = (overrides: Partial<MmpNode> = {}): MmpNode => {
   node.nodeParentId = null
   node.name = 'Test Node'
   node.root = true
-  node.locked = false
+  node.protected = false
   node.k = 1.5
   node.coordinatesX = 100
   node.coordinatesY = 200
@@ -53,7 +53,7 @@ const yNodeToPlainObject = (yNode: Y.Map<unknown>) => ({
   parent: yNode.get('parent'),
   name: yNode.get('name'),
   isRoot: yNode.get('isRoot'),
-  locked: yNode.get('locked'),
+  protected: yNode.get('protected'),
   k: yNode.get('k'),
   coordinates: yNode.get('coordinates'),
   colors: yNode.get('colors'),
@@ -81,7 +81,7 @@ describe('yDocConversion', () => {
         parent: null,
         name: 'Test Node',
         isRoot: true,
-        locked: false,
+        protected: false,
         k: 1.5,
         coordinates: { x: 100, y: 200 },
         colors: { name: '#333333', background: '#ffffff', branch: '#999999' },
@@ -101,6 +101,15 @@ describe('yDocConversion', () => {
       doc.destroy()
     })
 
+    it('round-trips the protected flag', () => {
+      const { yNode, doc } = populateAndGet(createTestNode({ protected: true }))
+
+      expect(yNode.get('protected')).toBe(true)
+      expect(yMapToMmpNode(yNode, 'map-1').protected).toBe(true)
+
+      doc.destroy()
+    })
+
     it('defaults nullable fields to safe values', () => {
       const { yNode, doc } = populateAndGet(
         createTestNode({
@@ -114,14 +123,13 @@ describe('yDocConversion', () => {
           imageSrc: null,
           imageSize: null,
           linkHref: null,
-          locked: null,
           k: null,
         })
       )
 
       expect(yNodeToPlainObject(yNode)).toMatchObject({
         name: '',
-        locked: false,
+        protected: false,
         k: 1,
         colors: { name: '', background: '', branch: '' },
         font: { style: '', size: 12, weight: '' },
@@ -141,7 +149,7 @@ describe('yDocConversion', () => {
         id: 'node-1',
         name: 'Test Node',
         root: true,
-        locked: false,
+        protected: false,
         k: 1.5,
         coordinatesX: 100,
         coordinatesY: 200,
@@ -289,7 +297,7 @@ describe('yDocConversion', () => {
         yNode.set('parent', null)
         yNode.set('name', '<img src=x onerror=alert(1)>Hello')
         yNode.set('isRoot', true)
-        yNode.set('locked', false)
+        yNode.set('protected', false)
         yNode.set('k', 1)
         yNode.set('coordinates', { x: 0, y: 0 })
         yNode.set('colors', {

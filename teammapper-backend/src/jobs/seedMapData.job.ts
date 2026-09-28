@@ -29,7 +29,7 @@ const createNode = (
       size: 0,
     },
     k: 0,
-    locked: false,
+    protected: false,
     name: 'Seed Data',
     parent: parentId,
     isRoot: isRoot,

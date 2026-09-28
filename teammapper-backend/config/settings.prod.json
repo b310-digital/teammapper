@@ -27,7 +27,7 @@
       "fontIncrement": 5,
       "defaultNode": {
         "name": "",
-       "link": {
+        "link": {
           "href": ""
         },
         "image": {
@@ -43,8 +43,7 @@
           "size": 22,
           "style": "normal",
           "weight": "normal"
-        },
-        "locked": true
+        }
       },
       "rootNode": {
         "name": "Root node",

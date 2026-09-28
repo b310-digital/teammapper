@@ -234,7 +234,7 @@ export class ImportService {
       id: nodeId,
       parent: parentId,
       name: node.descr || node.nodeId || defaultNode.name,
-      locked: !isRoot,
+      protected: false,
       isRoot,
       hidden: false,
       font: {

@@ -8,54 +8,12 @@ import { MmpImageData } from '../src/map/entities/mmpImageData.entity'
 import { MapsService } from '../src/map/services/maps.service'
 import { ImagesService } from '../src/map/services/images.service'
 import { DatabaseImageStore } from '../src/map/services/database-image-store.service'
-import { AddImageTables1790208000000 } from '../src/migrations/1790208000000-AddImageTables'
 import { hydrateYDoc } from '../src/map/utils/yDocConversion'
-import { CreateMapsAndNodes1638048135450 } from '../src/migrations/1638048135450-CreateMapsAndNodes'
-import { AddDefaultTimestampToMaps1640704269037 } from '../src/migrations/1640704269037-AddDefaultTimestampToMaps'
-import { AddAdminIdForMaps1640939564906 } from '../src/migrations/1640939564906-AddAdminIdForMaps'
-import { AddNodeMapIdAsPrimaryColumnOnNodes1644079415806 } from '../src/migrations/1644079415806-AddNodeMapIdAsPrimaryColumnOnNodes'
-import { AddIndexToForeignKeysOnMmpNode1663839669273 } from '../src/migrations/1663839669273-AddIndexToForeignKeysOnMmpNode'
-import { AddIndexForNodesParents1663927754319 } from '../src/migrations/1663927754319-AddIndexForNodesParents'
-import { AddOptionsToMap1668360651755 } from '../src/migrations/1668360651755-AddOptionsToMap'
-import { AddLinkHrefToNode1678605712865 } from '../src/migrations/1678605712865-AddLinkHrefToNode'
-import { AddModificationSecretToMaps1678976170981 } from '../src/migrations/1678976170981-AddModificationSecretToMaps'
-import { AddLastModifiedToNodes1679478438937 } from '../src/migrations/1679478438937-AddLastModifiedToNodes'
-import { AddDetachedPropertyToNodes1701777634545 } from '../src/migrations/1701777634545-AddDetachedPropertyToNodes'
-import { AddLastAccessedFieldToMap1718959806227 } from '../src/migrations/1718959806227-AddLastAccessedFieldToMap'
-import { AddCreatedAtToMap1724314314717 } from '../src/migrations/1724314314717-AddCreatedAtToMap'
-import { AddCreatedAtToNode1724314435583 } from '../src/migrations/1724314435583-AddCreatedAtToNode'
-import { AddDefaultToCreatedAtMmpMap1724325535133 } from '../src/migrations/1724325535133-AddDefaultToCreatedAtMmpMap'
-import { AddDefaultToCreatedAtMmpNode1724325567562 } from '../src/migrations/1724325567562-AddDefaultToCreatedAtMmpNode'
-import { AddOwnerId1765782220832 } from '../src/migrations/1765782220832-AddOwnerId'
-import { AddLlmUsageCounter1778265117672 } from '../src/migrations/1778265117672-AddLlmUsageCounter'
-import { DropDetachedPropertyFromNodes1790121600000 } from '../src/migrations/1790121600000-DropDetachedPropertyFromNodes'
+import { createMigrationTestOptions, destroyWorkerDatabase } from './db'
 import {
-  createMigrationTestOptions,
-  destroyWorkerDatabase,
-  reopenMigrationTestOptions,
-} from './db'
-
-/** Every migration of the release that still stored `detached`. */
-const OLD_RELEASE_MIGRATIONS = [
-  CreateMapsAndNodes1638048135450,
-  AddDefaultTimestampToMaps1640704269037,
-  AddAdminIdForMaps1640939564906,
-  AddNodeMapIdAsPrimaryColumnOnNodes1644079415806,
-  AddIndexToForeignKeysOnMmpNode1663839669273,
-  AddIndexForNodesParents1663927754319,
-  AddOptionsToMap1668360651755,
-  AddLinkHrefToNode1678605712865,
-  AddModificationSecretToMaps1678976170981,
-  AddLastModifiedToNodes1679478438937,
-  AddDetachedPropertyToNodes1701777634545,
-  AddLastAccessedFieldToMap1718959806227,
-  AddCreatedAtToMap1724314314717,
-  AddCreatedAtToNode1724314435583,
-  AddDefaultToCreatedAtMmpMap1724325535133,
-  AddDefaultToCreatedAtMmpNode1724325567562,
-  AddOwnerId1765782220832,
-  AddLlmUsageCounter1778265117672,
-]
+  DETACHED_RELEASE_MIGRATIONS,
+  upgradeToCurrentRelease,
+} from './migrations'
 
 const WORKER_ID = process.env.JEST_WORKER_ID || ''
 
@@ -102,7 +60,7 @@ async function insertOldDataSet(dataSource: DataSource): Promise<void> {
 /** Builds the old release's schema from its migrations and stores the data set. */
 async function seedOldRelease(): Promise<void> {
   const oldRelease = new DataSource(
-    await createMigrationTestOptions(WORKER_ID, OLD_RELEASE_MIGRATIONS)
+    await createMigrationTestOptions(WORKER_ID, DETACHED_RELEASE_MIGRATIONS)
   )
   await oldRelease.initialize()
   try {
@@ -114,22 +72,6 @@ async function seedOldRelease(): Promise<void> {
   } finally {
     await oldRelease.destroy()
   }
-}
-
-/** Opens the database as the new release does and runs its pending migration. */
-async function upgrade(): Promise<DataSource> {
-  const migrations = [
-    ...OLD_RELEASE_MIGRATIONS,
-    DropDetachedPropertyFromNodes1790121600000,
-    AddImageTables1790208000000,
-  ]
-  const newRelease = new DataSource({
-    ...reopenMigrationTestOptions(WORKER_ID, migrations),
-    entities: [MmpMap, MmpNode, MmpImage, MmpImageData],
-  })
-  await newRelease.initialize()
-  await newRelease.runMigrations()
-  return newRelease
 }
 
 async function detachedColumnExists(dataSource: DataSource): Promise<boolean> {
@@ -166,7 +108,7 @@ describe('DropDetachedPropertyFromNodes (e2e)', () => {
 
   beforeAll(async () => {
     await seedOldRelease()
-    dataSource = await upgrade()
+    dataSource = await upgradeToCurrentRelease(WORKER_ID)
     const imagesService = new ImagesService(
       dataSource.getRepository(MmpImage),
       new DatabaseImageStore(dataSource.getRepository(MmpImageData))

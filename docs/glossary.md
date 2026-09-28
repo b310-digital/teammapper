@@ -57,7 +57,7 @@ branch to it. A map holds at least one root node, the main root.
 ### Main root
 
 The one root node per map that the app creates with the map. No one can delete,
-copy, cut or lock it. The stored flag `isRoot` marks the main root only, so do
+copy or cut it. The stored flag `isRoot` marks the main root only, so do
 not read `isRoot` to learn whether a node has a parent.
 
 ### Orphaned node
@@ -102,13 +102,22 @@ name the image, so a duplicated map resolves the same references. Never
 A symbol from the ARASAAC library. You search the pictogram dialog by term and
 insert the symbol as a node image. Not available on every server.
 
-### Locked node
+### Protected branch
 
-A node that drags its descendants along. Locking changes dragging only; it does
-not prevent editing.
+A node and every node below it, which a user marks as finished to tell others
+not to change them. The app stores the flag `protected` on the top node of the
+branch only and draws a lock badge on that node. A node counts as protected
+when it or an ancestor carries the flag. Any writable client protects a branch
+or releases it again from the toolbar's lock button, and the flag syncs to
+every client.
 
-The toolbar calls this "groups or ungroups the node" and the root node's error
-message calls it locking. Write "locked".
+A protected branch refuses local edits: rename, style, image, link, drag, add
+child, paste, remove and cut. Peer writes, undo, redo, redistribute and import
+still apply. The server enforces nothing, so any user who can edit the map can
+release the branch and edit it.
+
+Write "protect" and "release". Avoid "lock" for the concept, and "freeze" or
+"read-only", which name a client that cannot write.
 
 ### Hidden node
 
@@ -155,7 +164,8 @@ and the floating buttons disable them. Paste is the exception: it adds a tree
 
 ### Drag
 
-Move a node by pointer. A locked node drags its descendants along.
+Move a node by pointer. A node drags its descendants along. A protected node
+does not move.
 
 ### Redistribute
 

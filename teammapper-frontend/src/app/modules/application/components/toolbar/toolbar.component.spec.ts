@@ -38,6 +38,7 @@ class MmpServiceStub {
   distributeNodes = jest.fn();
   addNodeImage = jest.fn();
   importMap = jest.fn();
+  protectingNode = jest.fn().mockReturnValue(null);
 }
 
 interface TestContext {
@@ -47,6 +48,7 @@ interface TestContext {
   mapSyncService: {
     undo: jest.Mock;
     redo: jest.Mock;
+    toggleBranchProtection: jest.Mock;
     canUndo$: Observable<boolean>;
     canRedo$: Observable<boolean>;
   };
@@ -63,6 +65,7 @@ async function setupTestBed(): Promise<TestContext> {
   const mapSyncService = {
     undo: jest.fn(),
     redo: jest.fn(),
+    toggleBranchProtection: jest.fn(),
     canUndo$: canUndoSubject.asObservable(),
     canRedo$: canRedoSubject.asObservable(),
   };
@@ -379,7 +382,7 @@ describe('ToolbarComponent', () => {
         '#copy-node-button',
         '#cut-node-button',
         '#hide-child-nodes-button',
-        '#lock-node-button',
+        '#protect-branch-button',
         '#node-image-button',
         '#image-upload',
         '#bold-button',
@@ -412,6 +415,30 @@ describe('ToolbarComponent', () => {
       ctx.component.toogleNodeFontWeight();
 
       expect(ctx.mmpService.updateNode).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('protect branch', () => {
+    const icon = (): string | undefined =>
+      ctx.fixture.nativeElement
+        .querySelector('#protect-branch-button mat-icon')
+        ?.textContent.trim();
+
+    it('offers to protect an unprotected node', () => {
+      expect(icon()).toBe('lock');
+    });
+
+    it('offers to release a node inside a protected branch', () => {
+      ctx.mmpService.protectingNode.mockReturnValue('parent-id');
+      refresh(ctx);
+
+      expect(icon()).toBe('lock_open');
+    });
+
+    it('toggles the protection when clicked', () => {
+      ctx.fixture.nativeElement.querySelector('#protect-branch-button').click();
+
+      expect(ctx.mapSyncService.toggleBranchProtection).toHaveBeenCalled();
     });
   });
 
