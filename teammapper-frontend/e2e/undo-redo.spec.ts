@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { createMap } from './helpers';
 
 test('tests undo and redo functionality', async ({ page }) => {
-  await page.goto('/');
-  await page.getByText('Create mind map').click();
-  await expect(page.getByText('Root node')).toBeVisible();
+  await createMap(page);
 
   // Add a node
   await page.locator("button[title='Adds a node']").click();

@@ -43,12 +43,13 @@ function createMockMmpService(): jest.Mocked<MmpService> {
 
 export function createYjsSyncService(
   mmpService: jest.Mocked<MmpService> = createMockMmpService(),
-  context: MapSyncContext = createMockContext()
+  context: MapSyncContext = createMockContext(),
+  settingsService: SettingsService = {} as SettingsService
 ): YjsSyncService {
   return new YjsSyncService(
     context,
     mmpService,
-    {} as SettingsService,
+    settingsService,
     {} as UtilsService,
     {} as ToastrService
   );

@@ -2,7 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { Router } from '@angular/router';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
-import { first, Subscription } from 'rxjs';
+import { distinctUntilChanged, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
 import { DialogService } from '../dialog/dialog.service';
 
@@ -21,12 +21,14 @@ export class ShortcutsService implements OnDestroy {
   private settingsSubscription: Subscription | null = null;
 
   /**
-   * Add all global hot keys of the application.
+   * Add all global hot keys of the application. The viewer keys work at once,
+   * and the edit keys follow edit mode, which stays unknown until the map
+   * connection syncs and can change when a map turns out writable.
    */
   public init() {
     this.settingsSubscription = this.settingsService
       .getEditModeObservable()
-      .pipe(first((val: boolean | null) => val !== null))
+      .pipe(distinctUntilChanged())
       .subscribe((result: boolean | null) => {
         this.editMode = result;
         this.registerHotKeys();
@@ -221,6 +223,8 @@ export class ShortcutsService implements OnDestroy {
         },
       },
     ];
+
+    if (this.hotKeys.length > 0) this.hotkeysService.remove(this.hotKeys);
 
     if (this.editMode) {
       this.hotKeys = [...viewerHotkeys, ...editHotkeys].map(this.getHotKey);

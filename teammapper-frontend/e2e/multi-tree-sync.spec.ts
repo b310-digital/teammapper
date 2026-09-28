@@ -1,11 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
-
-/** Adds a tree through the add-tree button, which writes a root to the Y.Doc. */
-async function addTree(page: Page, name: string): Promise<void> {
-  await page.locator('#add-tree-button').click();
-  await page.keyboard.type(name);
-  await page.locator('.map').click();
-}
+import { test, expect } from '@playwright/test';
+import { addTree } from './helpers';
 
 test('two clients each add a tree and both render every tree', async ({
   page,

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { HotkeysService } from 'angular2-hotkeys';
-import { of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { DialogService } from '../dialog/dialog.service';
 import { MmpService } from '../mmp/mmp.service';
 import { SettingsService } from '../settings/settings.service';
@@ -14,6 +14,8 @@ import { ShortcutsService } from './shortcuts.service';
 describe('ShortcutsService', () => {
   let service: ShortcutsService;
   let dialogService: { openAboutDialog: jest.Mock };
+  let editMode: BehaviorSubject<boolean | null>;
+  let hotkeysService: { add: jest.Mock; remove: jest.Mock };
   let mmpService: {
     selectNode: jest.Mock;
     updateNode: jest.Mock;
@@ -43,15 +45,17 @@ describe('ShortcutsService', () => {
     };
 
     dialogService = { openAboutDialog: jest.fn() };
+    editMode = new BehaviorSubject<boolean | null>(true);
+    hotkeysService = { add: jest.fn(), remove: jest.fn() };
 
     TestBed.configureTestingModule({
       providers: [
         ShortcutsService,
         { provide: MmpService, useValue: mmpService },
-        { provide: HotkeysService, useValue: { add: jest.fn() } },
+        { provide: HotkeysService, useValue: hotkeysService },
         {
           provide: SettingsService,
-          useValue: { getEditModeObservable: () => of(true) },
+          useValue: { getEditModeObservable: () => editMode },
         },
         { provide: Router, useValue: { navigate: jest.fn() } },
         { provide: DialogService, useValue: dialogService },
@@ -86,5 +90,37 @@ describe('ShortcutsService', () => {
     press('?');
 
     expect(dialogService.openAboutDialog).toHaveBeenCalledTimes(1);
+  });
+
+  describe('before the map connection reports edit mode', () => {
+    beforeEach(() => {
+      editMode.next(null);
+    });
+
+    it('opens the info dialog on ?', () => {
+      press('?');
+
+      expect(dialogService.openAboutDialog).toHaveBeenCalledTimes(1);
+    });
+
+    it('registers no edit keys', () => {
+      expect(() => press('alt+.')).toThrow('No hotkey for alt+.');
+    });
+
+    it('registers the edit keys once edit mode turns on', () => {
+      editMode.next(true);
+
+      press('alt+.');
+
+      expect(mmpService.selectNode).toHaveBeenCalled();
+    });
+
+    it('removes the keys it registered before', () => {
+      const registered = service.getHotKeys();
+
+      editMode.next(true);
+
+      expect(hotkeysService.remove).toHaveBeenCalledWith(registered);
+    });
   });
 });

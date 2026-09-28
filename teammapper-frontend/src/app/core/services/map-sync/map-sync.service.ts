@@ -365,7 +365,6 @@ export class MapSyncService implements OnDestroy {
 
   private setupNewMapState(privateServerMap: PrivateServerMap): void {
     this.prepareMap(privateServerMap.map);
-    this.settingsService.setEditMode(true);
     this.modificationSecret = privateServerMap.modificationSecret;
   }
 
