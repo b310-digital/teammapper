@@ -1,9 +1,51 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
-const mockMermaidResponse = `mindmap
+const mockMermaid = `mindmap
   root((AI Generated))
     Branch One
     Branch Two`;
+
+const enableAi = (page: Page) =>
+  page.route('**/api/settings', async route => {
+    const response = await route.fetch();
+    const json = await response.json();
+    json.systemSettings.featureFlags.ai = true;
+    json.systemSettings.info.aiModel = 'test-model';
+    await route.fulfill({ response, json });
+  });
+
+const openAiDialog = async (page: Page) => {
+  await page.goto('/');
+  await page.getByText('Create mind map').click();
+  await expect(page.locator('.map')).toBeVisible();
+  await page.locator('#menu-import').click();
+  await page.locator('#ai-upload').click();
+  const dialog = page.locator('mat-dialog-container');
+  await expect(dialog).toBeVisible();
+  return dialog;
+};
+
+test('AI import sends the map shape and warns about a truncated map', async ({
+  page,
+}) => {
+  let requestBody: unknown;
+  await page.route('**/api/mermaid/create', async route => {
+    requestBody = route.request().postDataJSON();
+    await route.fulfill({
+      status: 201,
+      json: { mermaid: mockMermaid, truncated: true },
+    });
+  });
+  await enableAi(page);
+
+  const dialog = await openAiDialog(page);
+  await expect(dialog).toContainText('test-model');
+  await dialog.locator('textarea').fill('A mindmap about testing');
+  await dialog.locator('button[color="primary"]').click();
+
+  await expect(page.locator('.toast-warning')).toBeVisible();
+  expect(requestBody).toMatchObject({ levels: 2, childrenPerNode: 4 });
+});
 
 test('AI import dialog disables button during generation', async ({ page }) => {
   // Use a promise to control when the mock responds
@@ -18,30 +60,12 @@ test('AI import dialog disables button during generation', async ({ page }) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     await route.fulfill({
       status: 201,
-      contentType: 'text/plain',
-      body: mockMermaidResponse,
+      json: { mermaid: mockMermaid, truncated: false },
     });
   });
+  await enableAi(page);
 
-  // Ensure AI feature flag is enabled
-  await page.route('**/api/settings', async route => {
-    const response = await route.fetch();
-    const json = await response.json();
-    json.systemSettings.featureFlags.ai = true;
-    await route.fulfill({ response, json });
-  });
-
-  await page.goto('/');
-  await page.getByText('Create mind map').click();
-  await expect(page.locator('.map')).toBeVisible();
-
-  // Open import menu and click AI
-  await page.locator('#menu-import').click();
-  await page.locator('#ai-upload').click();
-
-  // Wait for dialog
-  const dialog = page.locator('mat-dialog-container');
-  await expect(dialog).toBeVisible();
+  const dialog = await openAiDialog(page);
 
   // Fill in description
   await dialog.locator('textarea').fill('A mindmap about testing');

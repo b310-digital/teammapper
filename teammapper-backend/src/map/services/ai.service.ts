@@ -1,8 +1,17 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
-import { generateText, LanguageModel } from 'ai'
-import { SupportedLanguage } from '@teammapper/shared'
-import { SYSTEM_PROMPT, userPrompt } from '../utils/prompts'
+import { generateText, LanguageModel, LanguageModelUsage } from 'ai'
+import {
+  AiMapShape,
+  MermaidCreateResult,
+  SupportedLanguage,
+} from '@teammapper/shared'
+import {
+  DEFAULT_AI_MAP_SHAPE,
+  systemPrompt,
+  userPrompt,
+} from '../utils/prompts'
 import { createProvider } from '../utils/aiProvider'
+import { pruneMindmap } from '../utils/pruneMindmap'
 import configService from '../../config.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'
 import {
@@ -11,8 +20,12 @@ import {
 } from './llm-usage-counter.service'
 
 export const SYSTEM_PROMPT_TOKEN_OVERHEAD = 200
-const DEFAULT_MAX_OUTPUT_TOKENS = 1024
-const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
+// The share of the output cap that the estimate of one call reserves.
+export const OUTPUT_TOKEN_ESTIMATE_SHARE = 0.1
+// A reasoning model spends its thinking from the same output budget as the
+// answer, so both defaults leave room for a long think.
+const DEFAULT_MAX_OUTPUT_TOKENS = 6144
+const DEFAULT_REQUEST_TIMEOUT_MS = 60_000
 
 interface PerMinuteEntry {
   time: number
@@ -63,54 +76,80 @@ export class AiService {
 
   async generateMermaid(
     mindmapDescription: string,
-    language: SupportedLanguage
-  ): Promise<string> {
+    language: SupportedLanguage,
+    shape: AiMapShape = DEFAULT_AI_MAP_SHAPE
+  ): Promise<MermaidCreateResult> {
     const provider = createProvider(this.llmConfig)
-    if (!provider || !this.llmConfig.model) return ''
+    if (!provider || !this.llmConfig.model) {
+      return { mermaid: '', truncated: false }
+    }
 
     const estimated = this.estimateTokens(mindmapDescription)
     const reservation = await this.reserveBudget(estimated)
-    let text: string
-    let actual: number
+    let generated: MermaidCreateResult
+    let usage: LanguageModelUsage
     try {
       const result = await this.callLlm(
         provider(this.llmConfig.model),
         mindmapDescription,
-        language
+        language,
+        shape
       )
-      text = result.text
-      actual = result.usage.totalTokens ?? 0
+      generated = {
+        mermaid: pruneMindmap(result.text, shape),
+        truncated: result.finishReason === 'length',
+      }
+      usage = result.usage
     } catch (err) {
       await this.releaseReservation(reservation)
       throw err
     }
     // Reconciliation is best-effort: a failure here must not roll back a
     // successful LLM call (would silently under-bill the budget).
-    await this.tryCommitReservation(reservation, actual)
+    await this.tryCommitReservation(reservation, usage.totalTokens ?? 0)
+    this.logUsage(estimated, usage)
+    return generated
+  }
+
+  /** Logs the token counts of one LLM call. */
+  private logUsage(estimated: number, usage: LanguageModelUsage): void {
     this.logger.debug(
-      `LLM call billed ${actual} tokens (estimated ${estimated})`
+      `LLM call billed ${usage.totalTokens ?? 0} tokens (estimated ${estimated}, ` +
+        `input ${usage.inputTokens ?? 0}, output ${usage.outputTokens ?? 0}, ` +
+        `reasoning ${usage.outputTokenDetails?.reasoningTokens ?? 0}, ` +
+        `cap ${this.limits.maxOutputTokens})`
     )
-    return text
   }
 
+  /**
+   * Estimates the tokens one call bills: the input, the system prompt and a
+   * share of the output cap. The reservation holds this estimate until the
+   * call reports its real usage.
+   */
   estimateTokens(input: string): number {
-    return Math.ceil(input.length / 4) + SYSTEM_PROMPT_TOKEN_OVERHEAD
+    return (
+      Math.ceil(input.length / 4) +
+      SYSTEM_PROMPT_TOKEN_OVERHEAD +
+      Math.ceil(this.limits.maxOutputTokens * OUTPUT_TOKEN_ESTIMATE_SHARE)
+    )
   }
 
+  /** Reads a positive integer limit; anything else counts as unset. */
   private static parseInt(raw: string | undefined): number | undefined {
     if (!raw) return undefined
     const value = Number.parseInt(raw, 10)
-    return Number.isFinite(value) ? value : undefined
+    return Number.isFinite(value) && value > 0 ? value : undefined
   }
 
   private async callLlm(
     model: LanguageModel,
     description: string,
-    language: SupportedLanguage
+    language: SupportedLanguage,
+    shape: AiMapShape
   ) {
     return await generateText({
       model,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt(shape),
       prompt: userPrompt(description, language),
       maxOutputTokens: this.limits.maxOutputTokens,
       abortSignal: AbortSignal.timeout(this.limits.timeoutMs),

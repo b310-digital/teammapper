@@ -107,6 +107,9 @@
       "CONTENT": "Gere um mapa mental diretamente da sua descrição usando IA. Simplesmente descreva o que você deseja mapear e a IA criará para você.",
       "LABEL_DESCRIPTION": "Descreva seu mapa mental",
       "PLACEHOLDER": "Por exemplo, crie um mapa mental de uma casa com cômodos, móveis e jardim",
+      "LABEL_LEVELS": "Níveis abaixo da raiz",
+      "LABEL_CHILDREN_PER_NODE": "Nós filhos por nó",
+      "MODEL": "Modelo: {{model}}",
       "BUTTON_GENERATE": "Gerar e Importar"
     },
     "PICTOGRAMS": {
@@ -240,6 +243,7 @@
     },
     "DELETE_MAP_SUCCESS": "Mapa mental excluído com sucesso!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid gerado com sucesso!",
+    "AI_MERMAID_TRUNCATED": "A IA ficou sem espaço e o mapa mental ficou incompleto. Tente menos níveis ou nós filhos.",
     "AI_MERMAID_GENERATING": "Criando Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "Por favor, forneça uma descrição para o mapa mental"
   },

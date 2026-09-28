@@ -107,6 +107,9 @@
       "CONTENT": "使用AI直接从您的描述生成思维导图。只需描述您想要映射的内容，AI就会为您创建它。",
       "LABEL_DESCRIPTION": "描述您的思维导图",
       "PLACEHOLDER": "例如，创建一个房子的思维导图，包括房间、家具和花园",
+      "LABEL_LEVELS": "根节点下的层级数",
+      "LABEL_CHILDREN_PER_NODE": "每个节点的子节点数",
+      "MODEL": "模型：{{model}}",
       "BUTTON_GENERATE": "生成并导入"
     },
     "PICTOGRAMS": {
@@ -240,6 +243,7 @@
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",
+    "AI_MERMAID_TRUNCATED": "AI 输出已达上限，思维导图不完整。请减少层级或子节点数量。",
     "AI_MERMAID_GENERATING": "正在创建Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "请提供思维导图的描述"
   },

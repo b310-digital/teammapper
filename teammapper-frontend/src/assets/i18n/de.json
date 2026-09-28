@@ -108,6 +108,9 @@
       "CONTENT": "Generiere eine Mindmap direkt aus deiner Beschreibung mit KI. Beschreibe einfach, was du visualisieren möchtest und die KI erstellt es für dich.",
       "LABEL_DESCRIPTION": "Beschreibe deine Mindmap",
       "PLACEHOLDER": "Zum Beispiel: Geschichte des Reisens",
+      "LABEL_LEVELS": "Ebenen unter dem Hauptknoten",
+      "LABEL_CHILDREN_PER_NODE": "Unterknoten pro Knoten",
+      "MODEL": "Modell: {{model}}",
       "BUTTON_GENERATE": "Generieren & Importieren"
     },
     "PICTOGRAMS": {
@@ -243,6 +246,7 @@
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",
+    "AI_MERMAID_TRUNCATED": "Der KI ging der Platz aus, die Mindmap ist unvollständig. Versuche weniger Ebenen oder Unterknoten.",
     "AI_MERMAID_GENERATING": "Mermaid wird erstellt...",
     "AI_DESCRIPTION_REQUIRED": "Bitte gib eine Beschreibung für die Mindmap ein"
   },

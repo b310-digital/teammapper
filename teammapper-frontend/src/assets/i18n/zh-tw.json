@@ -107,6 +107,9 @@
       "CONTENT": "使用AI直接從您的描述生成心智圖。只需描述您想要映射的內容，AI就會為您創建它。",
       "LABEL_DESCRIPTION": "描述您的心智圖",
       "PLACEHOLDER": "例如，創建一個房子的心智圖，包括房間、家具和花園",
+      "LABEL_LEVELS": "根節點下的層級數",
+      "LABEL_CHILDREN_PER_NODE": "每個節點的子節點數",
+      "MODEL": "模型：{{model}}",
       "BUTTON_GENERATE": "生成並匯入"
     },
     "PICTOGRAMS": {
@@ -240,6 +243,7 @@
     },
     "DELETE_MAP_SUCCESS": "心智圖已成功刪除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",
+    "AI_MERMAID_TRUNCATED": "AI 輸出已達上限，心智圖不完整。請減少層級或子節點數量。",
     "AI_MERMAID_GENERATING": "正在創建Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "請提供心智圖的描述"
   },

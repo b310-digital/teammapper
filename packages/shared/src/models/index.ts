@@ -106,9 +106,18 @@ export interface ClientPrivateMap {
   modificationSecret: string | null;
 }
 
+/** The server's answer to an AI generate request. */
+export interface MermaidCreateResult {
+  mermaid: string;
+  /** True when the LLM hit its output token cap and cut the map short. */
+  truncated: boolean;
+}
+
 export interface SystemSettingsInfo {
   name: string;
   version: string;
+  /** The LLM that AI generate uses; null when AI generate is off. */
+  aiModel: string | null;
 }
 
 export interface SystemSettingsUrls {

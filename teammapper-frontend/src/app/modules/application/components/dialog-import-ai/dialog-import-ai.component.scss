@@ -10,3 +10,21 @@
 .ml-5 {
   margin-left: 5px;
 }
+
+.shape-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  .shape-field {
+    display: flex;
+    flex: 1 1 160px;
+    flex-direction: column;
+  }
+}
+
+.ai-model {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+}

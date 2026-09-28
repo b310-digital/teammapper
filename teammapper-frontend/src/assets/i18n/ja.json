@@ -108,6 +108,9 @@
       "CONTENT": "説明からAIが直接マインドマップを生成します。マッピングしたい内容を説明するだけで、AIが作成します。",
       "LABEL_DESCRIPTION": "マインドマップの説明",
       "PLACEHOLDER": "例：旅行の歴史",
+      "LABEL_LEVELS": "ルートより下の階層数",
+      "LABEL_CHILDREN_PER_NODE": "ノードごとの子ノード数",
+      "MODEL": "モデル: {{model}}",
       "BUTTON_GENERATE": "生成してインポート"
     },
     "PICTOGRAMS": {
@@ -242,6 +245,7 @@
     },
     "DELETE_MAP_SUCCESS": "マインドマップを削除しました！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaidを生成しました！",
+    "AI_MERMAID_TRUNCATED": "AIの出力が上限に達し、マインドマップが途中で切れました。レベルか子ノードの数を減らしてください。",
     "AI_MERMAID_GENERATING": "Mermaidを作成中...",
     "AI_DESCRIPTION_REQUIRED": "マインドマップの説明を入力してください"
   },

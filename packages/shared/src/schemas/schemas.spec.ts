@@ -315,5 +315,71 @@ describe('Shared Validation Schemas', () => {
         }).success
       ).toBe(false);
     });
+
+    it('defaults the MermaidCreateSchema shape when omitted', () => {
+      const result = v.safeParse(MermaidCreateSchema, {
+        mindmapDescription: 'valid',
+        language: 'en',
+      });
+      expect(result.success && result.output.levels).toBe(2);
+      expect(result.success && result.output.childrenPerNode).toBe(4);
+    });
+
+    it.each([
+      { levels: 0 },
+      { levels: 4 },
+      { levels: 1.5 },
+      { levels: '2' },
+      { childrenPerNode: 0 },
+      { childrenPerNode: 5 },
+      { childrenPerNode: Number.NaN },
+      { childrenPerNode: null },
+    ])('rejects MermaidCreateSchema shape %o', shape => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'en',
+          ...shape,
+        }).success
+      ).toBe(false);
+    });
+
+    it('accepts the MermaidCreateSchema shape bounds', () => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'en',
+          levels: 3,
+          childrenPerNode: 1,
+        }).success
+      ).toBe(true);
+    });
+
+    it.each([
+      { levels: 3, childrenPerNode: 2 },
+      { levels: 2, childrenPerNode: 3 },
+      { levels: 2, childrenPerNode: 4 },
+    ])('accepts the MermaidCreateSchema shape %o', shape => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'en',
+          ...shape,
+        }).success
+      ).toBe(true);
+    });
+
+    it.each([
+      { levels: 3, childrenPerNode: 3 },
+      { levels: 3, childrenPerNode: 4 },
+    ])('rejects the MermaidCreateSchema shape %o as too many nodes', shape => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'en',
+          ...shape,
+        }).success
+      ).toBe(false);
+    });
   });
 });
