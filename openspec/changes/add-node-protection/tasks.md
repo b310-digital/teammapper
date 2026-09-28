@@ -17,7 +17,7 @@ The three sections shipped together in one pull request. Section 1 removes the o
 - [x] 2.3 Add the `protected` column to `MmpNode` and the migration, and map it in `clientServerMapping` and the backend Y.Doc conversion
 - [x] 2.4 Carry `protected` in the frontend Y.Doc conversion, the mmp `Node` model and `getNodeProperties`, and add it to `updateNode`
 - [x] 2.5 Copy the flag in map duplication and JSON export, write `false` for pasted nodes and Mermaid import
-- [x] 2.6 Tests: `protectingNode` for self, ancestor and none; the flag round-trips through the database, the Y.Doc and a duplicate; undo of a delete restores it
+- [x] 2.6 Tests: `protectingNode` for self, ancestor and none; the flag round-trips through the client mapping and the Y.Doc; undo of a delete restores it
 
 ## 3. Protect, release and refuse
 
