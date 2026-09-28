@@ -60,6 +60,7 @@
       @if (mapOptions && settings; as userSettings) {
         <mat-tab [label]="'PAGES.SETTINGS.MAP_OPTIONS' | translate">
           <div class="content map-options">
+            <teammapper-map-deletion></teammapper-map-deletion>
             <mat-card class="map-options-map">
               <mat-card-header>
                 <mat-card-title>{{

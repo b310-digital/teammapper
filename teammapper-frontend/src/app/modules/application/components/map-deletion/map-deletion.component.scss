@@ -1,0 +1,16 @@
+mat-card.map-deletion {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+
+  hr {
+    margin-top: 0;
+    margin-bottom: 20px;
+    border: 0;
+    height: 1px;
+    background-color: var(--color-border);
+  }
+
+  mat-card-actions {
+    padding: 0 16px;
+  }
+}

@@ -2,7 +2,6 @@ import { MmpService } from '../../app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../app/core/services/settings/settings.service';
 import { UtilsService } from '../../app/core/services/utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
-import { HttpService } from '../../app/core/http/http.service';
 import { MapSyncContext } from '../../app/core/services/map-sync/map-sync-context';
 import { YjsSyncService } from '../../app/core/services/map-sync/yjs-sync.service';
 
@@ -51,7 +50,6 @@ export function createYjsSyncService(
     mmpService,
     {} as SettingsService,
     {} as UtilsService,
-    {} as ToastrService,
-    {} as HttpService
+    {} as ToastrService
   );
 }

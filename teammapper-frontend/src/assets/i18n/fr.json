@@ -129,11 +129,8 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "DELETED_AT": "Mindmap is going to be deleted at:",
-      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-      "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?",
-      "SHORTCUTS_TITLE": "Raccourcis"
+      "SHORTCUTS_TITLE": "Raccourcis",
+      "DELETION_MOVED": "Remarque : la date de suppression de cette carte se trouve désormais dans les paramètres, sous Options de carte. La personne qui a créé la carte peut aussi la supprimer à cet endroit."
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -192,8 +189,13 @@
       "ROOT_NODE_NAME": "Nom du noeud racine",
       "NODE_NAME": "Nom du noeud",
       "TITLE": "Paramètres",
-      "TTL": "Last known date of deletion",
-      "DARK_MODE": "Mode sombre"
+      "TTL": "Dernière date de suppression connue",
+      "DARK_MODE": "Mode sombre",
+      "DELETION": "Suppression",
+      "DELETED_AT": "Cette carte sera supprimée le :",
+      "DELETE_AFTER_DAYS": "Ce serveur supprime les cartes après {{deleteAfterDays}} jours.",
+      "DELETE": "Supprimer la carte",
+      "CONFIRM_DELETE": "Supprimer ?"
     }
   },
   "MESSAGES": {
@@ -232,7 +234,8 @@
       "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !",
       "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré",
       "IMAGE_STORAGE_FULL": "Le stockage d'images de cette carte mentale est plein. Une image retirée libère sa place dans les 7 jours suivant son téléversement.",
-      "IMAGE_UPLOAD_ERROR": "L'image n'a pas pu être téléversée."
+      "IMAGE_UPLOAD_ERROR": "L'image n'a pas pu être téléversée.",
+      "DELETE_MAP_ERROR": "La carte n'a pas pu être supprimée."
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",

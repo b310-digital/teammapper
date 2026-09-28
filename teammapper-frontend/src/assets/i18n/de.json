@@ -130,11 +130,8 @@
       "LINK_TYPE_EDIT": "Änderungen erlauben"
     },
     "INFO": {
-      "DELETED_AT": "Diese Mindmap wird gelöscht am:",
-      "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
-      "DELETE": "Mindmap löschen",
-      "CONFIRM_DELETE": "Wirklich löschen?",
-      "SHORTCUTS_TITLE": "Shortcuts"
+      "SHORTCUTS_TITLE": "Shortcuts",
+      "DELETION_MOVED": "Hinweis: Das Löschdatum dieser Mindmap steht jetzt in den Einstellungen unter Mindmap Optionen. Wer die Mindmap erstellt hat, kann sie dort auch löschen."
     },
     "LINK": {
       "URL": "Link-URL (https://...)"
@@ -195,7 +192,12 @@
       "TITLE": "Einstellungen",
       "TTL": "Letztes bekannte Datum der Löschung",
       "SHOW_LINKTEXT": "Linktext anzeigen",
-      "DARK_MODE": "Dunkelmodus"
+      "DARK_MODE": "Dunkelmodus",
+      "DELETION": "Löschung",
+      "DELETED_AT": "Diese Mindmap wird gelöscht am:",
+      "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
+      "DELETE": "Mindmap löschen",
+      "CONFIRM_DELETE": "Wirklich löschen?"
     }
   },
   "MESSAGES": {
@@ -235,7 +237,8 @@
       "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!",
       "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden.",
       "IMAGE_STORAGE_FULL": "Der Bildspeicher dieser Mindmap ist voll. Ein entferntes Bild gibt seinen Platz innerhalb von 7 Tagen nach dem Hochladen frei.",
-      "IMAGE_UPLOAD_ERROR": "Das Bild konnte nicht hochgeladen werden."
+      "IMAGE_UPLOAD_ERROR": "Das Bild konnte nicht hochgeladen werden.",
+      "DELETE_MAP_ERROR": "Die Mindmap konnte nicht gelöscht werden."
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",

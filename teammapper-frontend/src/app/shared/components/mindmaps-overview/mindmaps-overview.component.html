@@ -20,6 +20,21 @@
                 {{ 'PAGES.SETTINGS.TTL' | translate }}:
                 {{ ownedEntry.cachedAdminMapValue.ttl | date: 'yyyy-MM-dd' }}
               </span>
+              @if (ownedEntry.cachedAdminMapValue.adminId) {
+                <button
+                  matListItemMeta
+                  mat-icon-button
+                  class="delete-map-button"
+                  (click)="deleteMap(ownedEntry)"
+                  [title]="'PAGES.SETTINGS.DELETE' | translate"
+                  [attr.aria-label]="
+                    ('PAGES.SETTINGS.DELETE' | translate) +
+                    ': ' +
+                    getMapTitle(ownedEntry)
+                  ">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
             </mat-list-item>
           }
         </mat-list>
@@ -49,6 +64,21 @@
               {{ 'PAGES.SETTINGS.TTL' | translate }}:
               {{ cachedMapEntry.cachedAdminMapValue.ttl | date: 'yyyy-MM-dd' }}
             </span>
+            @if (cachedMapEntry.cachedAdminMapValue.adminId) {
+              <button
+                matListItemMeta
+                mat-icon-button
+                class="delete-map-button"
+                (click)="deleteMap(cachedMapEntry)"
+                [title]="'PAGES.SETTINGS.DELETE' | translate"
+                [attr.aria-label]="
+                  ('PAGES.SETTINGS.DELETE' | translate) +
+                  ': ' +
+                  getMapTitle(cachedMapEntry)
+                ">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
           </mat-list-item>
         }
       </mat-list>

@@ -129,11 +129,8 @@
       "LINK_TYPE_EDIT": "Osservare e modificare"
     },
     "INFO": {
-      "DELETED_AT": "La mappa mentale verrà eliminata a:",
-      "DELETE_AFTER_DAYS": "Le mappe mentali verranno eliminate da questo server dopo {{deleteAfterDays}} giorni.",
-      "DELETE": "Elimina la mappa mentale",
-      "CONFIRM_DELETE": "Eliminare?",
-      "SHORTCUTS_TITLE": "Scorciatoie da tastiera"
+      "SHORTCUTS_TITLE": "Scorciatoie da tastiera",
+      "DELETION_MOVED": "Nota: la data di eliminazione di questa mappa mentale si trova ora nelle impostazioni, in Opzioni mappa. Chi ha creato la mappa può anche eliminarla da lì."
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -193,7 +190,12 @@
       "NODE_NAME": "Nome nodo",
       "TITLE": "Impostazioni",
       "TTL": "Ultima data di eliminazione conosciuta",
-      "DARK_MODE": "Modalità scura"
+      "DARK_MODE": "Modalità scura",
+      "DELETION": "Eliminazione",
+      "DELETED_AT": "La mappa mentale verrà eliminata a:",
+      "DELETE_AFTER_DAYS": "Le mappe mentali verranno eliminate da questo server dopo {{deleteAfterDays}} giorni.",
+      "DELETE": "Elimina la mappa mentale",
+      "CONFIRM_DELETE": "Eliminare?"
     }
   },
   "MESSAGES": {
@@ -232,7 +234,8 @@
       "IMPORT_ERROR": "Non è stato possibile importare la mappa mentale!",
       "AI_MERMAID_ERROR": "Mermaid non può essere generato",
       "IMAGE_STORAGE_FULL": "Lo spazio per le immagini di questa mappa mentale è pieno. Un'immagine rimossa libera il suo spazio entro 7 giorni dal caricamento.",
-      "IMAGE_UPLOAD_ERROR": "Non è stato possibile caricare l'immagine."
+      "IMAGE_UPLOAD_ERROR": "Non è stato possibile caricare l'immagine.",
+      "DELETE_MAP_ERROR": "Non è stato possibile eliminare la mappa mentale."
     },
     "DELETE_MAP_SUCCESS": "Mappa mentale cancellata con successo!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid generato con successo!",

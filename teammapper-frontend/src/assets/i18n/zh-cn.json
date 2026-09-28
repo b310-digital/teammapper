@@ -129,11 +129,8 @@
       "LINK_TYPE_EDIT": "查看并修改"
     },
     "INFO": {
-      "DELETED_AT": "思维导图将在以下时间删除：",
-      "DELETE_AFTER_DAYS": "思维导图将在此服务器上 {{deleteAfterDays}} 天后删除。",
-      "DELETE": "删除思维导图",
-      "CONFIRM_DELETE": "删除？",
-      "SHORTCUTS_TITLE": "快捷键"
+      "SHORTCUTS_TITLE": "快捷键",
+      "DELETION_MOVED": "提示：此思维导图的删除日期已移至设置中的“思维导图选项”。思维导图的创建者也可以在那里删除它。"
     },
     "LINK": {
       "URL": "链接 URL (https://...)"
@@ -193,7 +190,12 @@
       "NODE_NAME": "节点名称",
       "TITLE": "设置",
       "TTL": "最后已知删除日期",
-      "DARK_MODE": "深色模式"
+      "DARK_MODE": "深色模式",
+      "DELETION": "删除",
+      "DELETED_AT": "思维导图将在以下时间删除：",
+      "DELETE_AFTER_DAYS": "思维导图将在此服务器上 {{deleteAfterDays}} 天后删除。",
+      "DELETE": "删除思维导图",
+      "CONFIRM_DELETE": "删除？"
     }
   },
   "MESSAGES": {
@@ -232,7 +234,8 @@
       "IMPORT_ERROR": "无法导入思维导图！",
       "AI_MERMAID_ERROR": "无法生成Mermaid",
       "IMAGE_STORAGE_FULL": "此思维导图的图片存储空间已满。移除的图片会在上传后 7 天内释放其空间。",
-      "IMAGE_UPLOAD_ERROR": "无法上传图片。"
+      "IMAGE_UPLOAD_ERROR": "无法上传图片。",
+      "DELETE_MAP_ERROR": "无法删除思维导图。"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",

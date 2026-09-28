@@ -130,11 +130,8 @@
       "LINK_TYPE_EDIT": "閲覧と編集"
     },
     "INFO": {
-      "DELETED_AT": "マインドマップの削除予定日：",
-      "DELETE_AFTER_DAYS": "このサーバーのマインドマップは {{deleteAfterDays}} 日後に削除されます。",
-      "DELETE": "マインドマップを削除",
-      "CONFIRM_DELETE": "削除しますか？",
-      "SHORTCUTS_TITLE": "ショートカット"
+      "SHORTCUTS_TITLE": "ショートカット",
+      "DELETION_MOVED": "注：このマインドマップの削除予定日は、設定の「マップオプション」に移動しました。マインドマップの作成者は、そこで削除することもできます。"
     },
     "LINK": {
       "URL": "リンクURL（https://...）"
@@ -195,7 +192,12 @@
       "TITLE": "設定",
       "TTL": "削除予定日",
       "SHOW_LINKTEXT": "リンクテキストを表示",
-      "DARK_MODE": "ダークモード"
+      "DARK_MODE": "ダークモード",
+      "DELETION": "削除",
+      "DELETED_AT": "マインドマップの削除予定日：",
+      "DELETE_AFTER_DAYS": "このサーバーのマインドマップは {{deleteAfterDays}} 日後に削除されます。",
+      "DELETE": "マインドマップを削除",
+      "CONFIRM_DELETE": "削除しますか？"
     }
   },
   "MESSAGES": {
@@ -234,7 +236,8 @@
       "IMPORT_ERROR": "マインドマップをインポートできませんでした",
       "AI_MERMAID_ERROR": "Mermaidを生成できませんでした",
       "IMAGE_STORAGE_FULL": "このマインドマップの画像ストレージがいっぱいです。削除した画像の容量は、アップロードから7日以内に解放されます。",
-      "IMAGE_UPLOAD_ERROR": "画像をアップロードできませんでした。"
+      "IMAGE_UPLOAD_ERROR": "画像をアップロードできませんでした。",
+      "DELETE_MAP_ERROR": "マインドマップを削除できませんでした。"
     },
     "DELETE_MAP_SUCCESS": "マインドマップを削除しました！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaidを生成しました！",

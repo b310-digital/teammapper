@@ -71,6 +71,7 @@ describe('MapSyncService', () => {
       get: jest.fn(),
       post: jest.fn(),
       postForm: jest.fn(),
+      delete: jest.fn(),
     } as unknown as jest.Mocked<HttpService>;
 
     settingsService = {
@@ -188,6 +189,31 @@ describe('MapSyncService', () => {
       service.redo();
 
       expect(redoSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteMap', () => {
+    it('sends the admin id for the given map', async () => {
+      httpService.delete.mockResolvedValueOnce({ ok: true } as Response);
+
+      expect(await service.deleteMap('map-1', 'admin-1')).toBe(true);
+      expect(httpService.delete).toHaveBeenCalledWith(
+        expect.anything(),
+        '/maps/map-1',
+        JSON.stringify({ adminId: 'admin-1' })
+      );
+    });
+
+    it('resolves to false on an error status', async () => {
+      httpService.delete.mockResolvedValueOnce({ ok: false } as Response);
+
+      expect(await service.deleteMap('map-1', 'admin-1')).toBe(false);
+    });
+
+    it('resolves to false when the request fails', async () => {
+      httpService.delete.mockRejectedValueOnce(new TypeError('offline'));
+
+      expect(await service.deleteMap('map-1', 'admin-1')).toBe(false);
     });
   });
 
