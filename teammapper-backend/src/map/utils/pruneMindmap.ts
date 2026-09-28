@@ -22,13 +22,17 @@ const HEADER = /^\s*mindmap\s*$/i
 const DECORATION = /^\s*(::|%%)/
 
 /**
- * Removes the nodes of LLM-written Mermaid mindmap syntax that exceed the
- * requested shape: nodes deeper than `levels` below the root, and child nodes
- * beyond the first `childrenPerNode` of a parent, and every top-level node
- * after the root. A removed node takes its descendants with it. The model follows the shape in the prompt only
- * loosely, and removing surplus nodes is the one correction the server can
- * make without a second call. Lines before the first `mindmap` header pass
- * through unchanged, and every header starts a new tree.
+ * Removes the parts of LLM-written Mermaid `mindmap` syntax that exceed the
+ * requested shape:
+ *
+ * - every line before the first `mindmap` header
+ * - nodes deeper than `levels` below the root
+ * - child nodes beyond the first `childrenPerNode` of a parent
+ * - every top-level node after the root
+ *
+ * A removed node takes its descendants with it. The LLM does not follow the
+ * shape in the prompt exactly, and the server can remove surplus nodes
+ * without a second call. Every header starts a new tree.
  */
 export const pruneMindmap = (mermaid: string, shape: AiMapShape): string => {
   let state: PruneState | null = null
@@ -43,11 +47,12 @@ export const pruneMindmap = (mermaid: string, shape: AiMapShape): string => {
 }
 
 /**
- * Decides whether one line survives. A header line, a blank line and any line
- * before the first header always survive; a decoration follows its node.
+ * Decides whether one line survives. A line before the first header drops, a
+ * header line and a blank line survive, and a decoration follows its node.
  */
 const keepLine = (line: string, state: PruneState | null): boolean => {
-  if (state === null || HEADER.test(line) || line.trim() === '') return true
+  if (state === null) return false
+  if (HEADER.test(line) || line.trim() === '') return true
   if (DECORATION.test(line)) return state.lastKept
   state.lastKept = keepNode(line.search(/\S/), state)
   return state.lastKept

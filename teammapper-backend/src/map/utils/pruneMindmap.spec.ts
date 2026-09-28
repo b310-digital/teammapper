@@ -115,11 +115,22 @@ describe('pruneMindmap', () => {
     )
   })
 
-  it('passes text without a mindmap header through unchanged', () => {
-    const mermaid = lines('Root', '  A', '  B')
+  it('drops the lines before the first mindmap header', () => {
+    const mermaid = lines(
+      'Here is your map:',
+      '```mermaid',
+      'mindmap',
+      '  Root'
+    )
 
     expect(pruneMindmap(mermaid, { levels: 1, childrenPerNode: 1 })).toBe(
-      mermaid
+      lines('mindmap', '  Root')
     )
+  })
+
+  it('returns nothing for text without a mindmap header', () => {
+    const mermaid = lines('Root', '  A', '  B')
+
+    expect(pruneMindmap(mermaid, { levels: 1, childrenPerNode: 1 })).toBe('')
   })
 })

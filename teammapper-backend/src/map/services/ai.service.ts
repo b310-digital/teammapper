@@ -20,11 +20,9 @@ import {
 } from './llm-usage-counter.service'
 
 export const SYSTEM_PROMPT_TOKEN_OVERHEAD = 200
-// The share of the output cap that the estimate of one call reserves.
-export const OUTPUT_TOKEN_ESTIMATE_SHARE = 0.1
 // A reasoning model spends its thinking from the same output budget as the
-// answer, so both defaults leave room for a long think.
-const DEFAULT_MAX_OUTPUT_TOKENS = 6144
+// answer, so both defaults leave room for long reasoning output.
+export const DEFAULT_MAX_OUTPUT_TOKENS = 4096
 const DEFAULT_REQUEST_TIMEOUT_MS = 60_000
 
 interface PerMinuteEntry {
@@ -62,14 +60,14 @@ export class AiService {
     private readonly usageCounter: LlmUsageCounting
   ) {
     this.limits = {
-      tpm: AiService.parseInt(this.llmConfig.tpm),
-      rpm: AiService.parseInt(this.llmConfig.rpm),
-      tpd: AiService.parseInt(this.llmConfig.tpd),
+      tpm: AiService.parseLimit(this.llmConfig.tpm),
+      rpm: AiService.parseLimit(this.llmConfig.rpm),
+      tpd: AiService.parseLimit(this.llmConfig.tpd),
       maxOutputTokens:
-        AiService.parseInt(this.llmConfig.maxOutputTokens) ??
+        AiService.parsePositive(this.llmConfig.maxOutputTokens) ??
         DEFAULT_MAX_OUTPUT_TOKENS,
       timeoutMs:
-        AiService.parseInt(this.llmConfig.timeoutMs) ??
+        AiService.parsePositive(this.llmConfig.timeoutMs) ??
         DEFAULT_REQUEST_TIMEOUT_MS,
     }
   }
@@ -122,23 +120,29 @@ export class AiService {
   }
 
   /**
-   * Estimates the tokens one call bills: the input, the system prompt and a
-   * share of the output cap. The reservation holds this estimate until the
-   * call reports its real usage.
+   * Estimates the most tokens one call can bill: the input, the system prompt
+   * and the full output cap. The reservation holds this estimate until the
+   * call reports its real usage, so parallel calls cannot overshoot a limit.
    */
   estimateTokens(input: string): number {
     return (
       Math.ceil(input.length / 4) +
       SYSTEM_PROMPT_TOKEN_OVERHEAD +
-      Math.ceil(this.limits.maxOutputTokens * OUTPUT_TOKEN_ESTIMATE_SHARE)
+      this.limits.maxOutputTokens
     )
   }
 
-  /** Reads a positive integer limit; anything else counts as unset. */
-  private static parseInt(raw: string | undefined): number | undefined {
+  /** Reads a rate limit. A limit of 0 blocks every call. */
+  private static parseLimit(raw: string | undefined): number | undefined {
     if (!raw) return undefined
     const value = Number.parseInt(raw, 10)
-    return Number.isFinite(value) && value > 0 ? value : undefined
+    return Number.isFinite(value) ? value : undefined
+  }
+
+  /** Reads a positive integer; anything else counts as unset. */
+  private static parsePositive(raw: string | undefined): number | undefined {
+    const value = AiService.parseLimit(raw)
+    return value !== undefined && value > 0 ? value : undefined
   }
 
   private async callLlm(

@@ -10,26 +10,6 @@ export const DEFAULT_AI_MAP_SHAPE: AiMapShape = {
   childrenPerNode: AI_CHILDREN_PER_NODE.default,
 }
 
-/**
- * Writes an example map with exactly the requested shape, so the model copies
- * the node count along with the syntax. A fixed example pulls the answer
- * towards its own shape instead.
- */
-const exampleMap = ({ levels, childrenPerNode }: AiMapShape): string => {
-  const branch = (label: string, level: number): string[] => {
-    const line = `${'  '.repeat(level + 1)}${label}`
-    if (level === levels) return [line]
-    const children = Array.from({ length: childrenPerNode }, (_, i) =>
-      branch(level === 0 ? `Subtopic ${i + 1}` : `${label}.${i + 1}`, level + 1)
-    )
-    return [line, ...children.flat()]
-  }
-  // Indent every line like the rest of the prompt template.
-  return ['mindmap', ...branch('Root Topic', 0)]
-    .map((line) => `   ${line}`)
-    .join('\n')
-}
-
 // The shape values reach this function only after MermaidCreateSchema has
 // validated them as small integers, so no user text enters the system prompt.
 export const systemPrompt = (shape: AiMapShape) =>
@@ -38,11 +18,19 @@ export const systemPrompt = (shape: AiMapShape) =>
    Please use simple mermaid syntax style.
 
    <example>
-${exampleMap(shape)}
+   mindmap
+     Root Topic
+       Subtopic A
+         Detail 1
+         Detail 2
+       Subtopic B
+         Detail 3
+         Detail 4
    </example>
 
    <format_rules>
-   - ONLY ANSWER with the direct mermaid syntax WITHOUT explanations or anything else. Stick to the syntax and the shape of the given example.
+   - ONLY ANSWER with the direct mermaid syntax WITHOUT explanations or anything else. Stick to the syntax of the given example.
+   - The example shows the syntax only. Take the number of levels and child nodes from the rules below, not from the example.
    - Do NOT wrap the output in markdown code fences (\`\`\`mermaid or \`\`\`). Start your response directly with "mindmap".
    - Do NOT use special characters such as ", <, >, {, } or backticks in node labels — paraphrase instead.
    - Use exactly ${shape.levels} levels of nodes below the root. Count the root's children as level 1. Do not add further nesting levels.

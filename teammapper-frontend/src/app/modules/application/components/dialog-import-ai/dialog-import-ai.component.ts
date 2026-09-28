@@ -124,20 +124,21 @@ export class DialogImportAiComponent {
   }
 
   /**
-   * Imports the generated map and closes the dialog. Reports success only
-   * after the import, and warns when the LLM cut the map short.
+   * Imports the generated map and closes the dialog. Warns first when the LLM
+   * cut the map short, so the advice shows even when nothing imports, and
+   * reports success only after the import.
    */
   private async importResult(result: MermaidCreateResult): Promise<void> {
-    if (!result.mermaid.trim()) return this.showGenerateError();
-    if (!(await this.importService.importFromMermaid(result.mermaid))) return;
-    this.toastService.success(
-      await this.utilsService.translate('TOASTS.AI_MERMAID_GENERATED_SUCCESS')
-    );
     if (result.truncated) {
       this.toastService.warning(
         await this.utilsService.translate('TOASTS.AI_MERMAID_TRUNCATED')
       );
     }
+    if (!result.mermaid.trim()) return this.showGenerateError();
+    if (!(await this.importService.importFromMermaid(result.mermaid))) return;
+    this.toastService.success(
+      await this.utilsService.translate('TOASTS.AI_MERMAID_GENERATED_SUCCESS')
+    );
     this.dialogRef.close();
   }
 

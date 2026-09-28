@@ -243,7 +243,7 @@
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",
-    "AI_MERMAID_TRUNCATED": "L'IA a manqué de place et la carte mentale est incomplète. Essayez moins de niveaux ou de nœuds enfants.",
+    "AI_MERMAID_TRUNCATED": "Le modèle a atteint sa limite de sortie avant de terminer la carte mentale. Essayez moins de niveaux ou de nœuds enfants.",
     "AI_MERMAID_GENERATING": "Création de Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "Veuillez fournir une description pour la carte mentale"
   },

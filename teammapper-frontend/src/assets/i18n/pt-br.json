@@ -243,7 +243,7 @@
     },
     "DELETE_MAP_SUCCESS": "Mapa mental excluído com sucesso!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid gerado com sucesso!",
-    "AI_MERMAID_TRUNCATED": "A IA ficou sem espaço e o mapa mental ficou incompleto. Tente menos níveis ou nós filhos.",
+    "AI_MERMAID_TRUNCATED": "O modelo atingiu seu limite de saída antes de terminar o mapa mental. Tente menos níveis ou nós filhos.",
     "AI_MERMAID_GENERATING": "Criando Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "Por favor, forneça uma descrição para o mapa mental"
   },

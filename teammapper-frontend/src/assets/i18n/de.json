@@ -246,7 +246,7 @@
     },
     "DELETE_MAP_SUCCESS": "Mindmap erfolgreich gelöscht!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid erfolgreich generiert",
-    "AI_MERMAID_TRUNCATED": "Der KI ging der Platz aus, die Mindmap ist unvollständig. Versuche weniger Ebenen oder Unterknoten.",
+    "AI_MERMAID_TRUNCATED": "Das Modell hat sein Ausgabelimit erreicht, bevor die Mindmap fertig war. Versuche weniger Ebenen oder Unterknoten.",
     "AI_MERMAID_GENERATING": "Mermaid wird erstellt...",
     "AI_DESCRIPTION_REQUIRED": "Bitte gib eine Beschreibung für die Mindmap ein"
   },

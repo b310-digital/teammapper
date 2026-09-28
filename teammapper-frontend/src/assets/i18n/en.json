@@ -245,7 +245,7 @@
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
-    "AI_MERMAID_TRUNCATED": "The AI ran out of space and cut the mind map short. Try fewer levels or child nodes.",
+    "AI_MERMAID_TRUNCATED": "The model reached its output limit before finishing the mind map. Try fewer levels or child nodes.",
     "AI_MERMAID_GENERATING": "Creating Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "Please provide a description for the mindmap"
   },
