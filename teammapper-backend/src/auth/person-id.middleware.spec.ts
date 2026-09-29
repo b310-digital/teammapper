@@ -47,9 +47,15 @@ describe('PersonIdMiddleware', () => {
     expect(resolvePid(undefined)).toBeUndefined()
   })
 
-  it('leaves the pid unset when no secret is configured', () => {
+  it('leaves the pid unset when the secret is not set', () => {
     const token = sign({ pid: PID })
     delete process.env.JWT_SECRET
+    expect(resolvePid(token)).toBeUndefined()
+  })
+
+  it('leaves the pid unset when the secret is empty', () => {
+    const token = sign({ pid: PID })
+    process.env.JWT_SECRET = ''
     expect(resolvePid(token)).toBeUndefined()
   })
 
