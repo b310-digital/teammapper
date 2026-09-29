@@ -20,7 +20,6 @@ export interface LlmUsageCounting {
     cap?: number
   ): Promise<{ tokensUsed: number; requestsCount: number } | null>
   adjustTokens(dateUsage: string, delta: number): Promise<void>
-  release(dateUsage: string, tokens: number): Promise<void>
 }
 
 /**
@@ -80,20 +79,6 @@ export class LlmUsageCounterService implements LlmUsageCounting {
     await this.repo.query(
       `UPDATE llm_usage_counter SET "tokensUsed" = GREATEST(0, "tokensUsed" + $2) WHERE "dateUsage" = $1`,
       [dateUsage, delta]
-    )
-  }
-
-  /**
-   * Roll back a reservation entirely (token-wise and request-wise),
-   * e.g. after a failed `generateText` call.
-   */
-  async release(dateUsage: string, tokens: number): Promise<void> {
-    await this.repo.query(
-      `UPDATE llm_usage_counter
-         SET "tokensUsed" = GREATEST(0, "tokensUsed" - $2),
-             "requestsCount" = GREATEST(0, "requestsCount" - 1)
-       WHERE "dateUsage" = $1`,
-      [dateUsage, tokens]
     )
   }
 }

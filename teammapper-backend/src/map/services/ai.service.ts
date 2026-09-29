@@ -19,7 +19,6 @@ import {
   LlmUsageCounterService,
 } from './llm-usage-counter.service'
 
-export const SYSTEM_PROMPT_TOKEN_OVERHEAD = 200
 // A reasoning model spends its thinking from the same output budget as the
 // answer, so both defaults leave room for long reasoning output.
 export const DEFAULT_MAX_OUTPUT_TOKENS = 4096
@@ -82,31 +81,26 @@ export class AiService {
       return { mermaid: '', truncated: false }
     }
 
-    const estimated = this.estimateTokens(mindmapDescription)
+    const system = systemPrompt(shape)
+    const prompt = userPrompt(mindmapDescription, language)
+    const estimated = this.estimateTokens(system, prompt)
     const reservation = await this.reserveBudget(estimated)
-    let generated: MermaidCreateResult
-    let usage: LanguageModelUsage
-    try {
-      const result = await this.callLlm(
-        provider(this.llmConfig.model),
-        mindmapDescription,
-        language,
-        shape
-      )
-      generated = {
-        mermaid: pruneMindmap(result.text, shape),
-        truncated: result.finishReason === 'length',
-      }
-      usage = result.usage
-    } catch (err) {
-      await this.releaseReservation(reservation)
-      throw err
+    // A failed call keeps its reservation: the provider may have billed it.
+    const result = await this.callLlm(
+      provider(this.llmConfig.model),
+      system,
+      prompt
+    )
+    // Without reported usage the estimate stays booked.
+    await this.tryCommitReservation(
+      reservation,
+      result.usage.totalTokens ?? estimated
+    )
+    this.logUsage(estimated, result.usage)
+    return {
+      mermaid: pruneMindmap(result.text, shape),
+      truncated: result.finishReason === 'length',
     }
-    // Reconciliation is best-effort: a failure here must not roll back a
-    // successful LLM call (would silently under-bill the budget).
-    await this.tryCommitReservation(reservation, usage.totalTokens ?? 0)
-    this.logUsage(estimated, usage)
-    return generated
   }
 
   /** Logs the token counts of one LLM call. */
@@ -120,16 +114,13 @@ export class AiService {
   }
 
   /**
-   * Estimates the most tokens one call can bill: the input, the system prompt
-   * and the full output cap. The reservation holds this estimate until the
-   * call reports its real usage, so parallel calls cannot overshoot a limit.
+   * Estimates the most tokens one call can bill: one token per character of
+   * the prompts sent, which no tokenizer exceeds, plus the full output cap.
+   * The reservation holds this estimate until the call reports its real usage,
+   * so parallel calls cannot overshoot a limit.
    */
-  estimateTokens(input: string): number {
-    return (
-      Math.ceil(input.length / 4) +
-      SYSTEM_PROMPT_TOKEN_OVERHEAD +
-      this.limits.maxOutputTokens
-    )
+  private estimateTokens(system: string, prompt: string): number {
+    return system.length + prompt.length + this.limits.maxOutputTokens
   }
 
   /** Reads a rate limit. A limit of 0 blocks every call. */
@@ -145,16 +136,11 @@ export class AiService {
     return value !== undefined && value > 0 ? value : undefined
   }
 
-  private async callLlm(
-    model: LanguageModel,
-    description: string,
-    language: SupportedLanguage,
-    shape: AiMapShape
-  ) {
+  private async callLlm(model: LanguageModel, system: string, prompt: string) {
     return await generateText({
       model,
-      system: systemPrompt(shape),
-      prompt: userPrompt(description, language),
+      system,
+      prompt,
       maxOutputTokens: this.limits.maxOutputTokens,
       abortSignal: AbortSignal.timeout(this.limits.timeoutMs),
     })
@@ -230,23 +216,6 @@ export class AiService {
     } catch (err) {
       this.logger.warn(
         `Failed to reconcile actual tokens for ${reservation.dateUsage}; keeping conservative reservation. ${(err as Error).message}`
-      )
-    }
-  }
-
-  private async releaseReservation(reservation: Reservation): Promise<void> {
-    this.tokensUsedPerMinute = this.tokensUsedPerMinute.filter(
-      (e) => e !== reservation.entry
-    )
-    try {
-      await this.usageCounter.release(
-        reservation.dateUsage,
-        reservation.estimated
-      )
-    } catch (err) {
-      // Don't mask the original error from the caller's catch path.
-      this.logger.error(
-        `Failed to release reserved tokens for ${reservation.dateUsage}: ${(err as Error).message}`
       )
     }
   }

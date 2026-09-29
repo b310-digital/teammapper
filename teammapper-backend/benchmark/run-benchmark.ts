@@ -6,7 +6,6 @@ import type { LlmUsageCounting } from '../src/map/services/llm-usage-counter.ser
 const noUsageCounter: LlmUsageCounting = {
   reserve: async () => ({ tokensUsed: 0, requestsCount: 0 }),
   adjustTokens: async () => {},
-  release: async () => {},
 }
 
 async function main(): Promise<void> {
