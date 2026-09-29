@@ -198,7 +198,7 @@
       "SHOW_LINKTEXT": "リンクテキストを表示",
       "DARK_MODE": "ダークモード",
       "DELETION": "削除",
-      "DELETED_AT": "マインドマップの削除予定日：",
+      "DELETED_AT": "削除日：",
       "DELETE_AFTER_DAYS": "このサーバーのマインドマップは {{deleteAfterDays}} 日後に削除されます。",
       "DELETE": "マインドマップを削除",
       "CONFIRM_DELETE": "削除しますか？"

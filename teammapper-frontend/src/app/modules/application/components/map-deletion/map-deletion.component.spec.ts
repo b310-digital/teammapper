@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { CachedMapEntry } from '@teammapper/shared';
@@ -52,6 +52,7 @@ describe('MapDeletionComponent', () => {
         { provide: ToastrService, useValue: toastrService },
       ],
     }).compileComponents();
+    TestBed.inject(TranslateService).use('de');
 
     fixture = TestBed.createComponent(MapDeletionComponent);
     fixture.detectChanges();
@@ -73,7 +74,7 @@ describe('MapDeletionComponent', () => {
 
     expect(
       fixture.nativeElement.querySelector('.deleted-at').textContent
-    ).toContain('2026-10-28');
+    ).toContain('28.10.2026');
   });
 
   it('renders nothing while no map is attached', async () => {

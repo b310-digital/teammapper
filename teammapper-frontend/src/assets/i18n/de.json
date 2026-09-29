@@ -198,7 +198,7 @@
       "SHOW_LINKTEXT": "Linktext anzeigen",
       "DARK_MODE": "Dunkelmodus",
       "DELETION": "Löschung",
-      "DELETED_AT": "Diese Mindmap wird gelöscht am:",
+      "DELETED_AT": "Löschdatum:",
       "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
       "DELETE": "Mindmap löschen",
       "CONFIRM_DELETE": "Wirklich löschen?"

@@ -196,7 +196,7 @@
       "TTL": "最後已知的刪除日期",
       "DARK_MODE": "深色模式",
       "DELETION": "刪除",
-      "DELETED_AT": "此心智圖的刪除日期：",
+      "DELETED_AT": "刪除日期：",
       "DELETE_AFTER_DAYS": "此伺服器會在 {{deleteAfterDays}} 天後刪除心智圖。",
       "DELETE": "刪除心智圖",
       "CONFIRM_DELETE": "確定要刪除嗎？"

@@ -16,8 +16,9 @@ import { MatList, MatListItem, MatListItemMeta } from '@angular/material/list';
 import { MatLine } from '@angular/material/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LocalizedDatePipe } from 'src/app/shared/pipes/localized-date.pipe';
 
 @Component({
   selector: 'teammapper-mindmaps-overview',
@@ -34,7 +35,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     MatLine,
     MatIconButton,
     MatIcon,
-    DatePipe,
+    LocalizedDatePipe,
     TranslatePipe,
     CommonModule,
   ],

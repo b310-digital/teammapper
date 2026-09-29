@@ -196,7 +196,7 @@
       "TTL": "Ultima data di eliminazione conosciuta",
       "DARK_MODE": "Modalità scura",
       "DELETION": "Eliminazione",
-      "DELETED_AT": "La mappa mentale verrà eliminata a:",
+      "DELETED_AT": "Data di eliminazione:",
       "DELETE_AFTER_DAYS": "Le mappe mentali verranno eliminate da questo server dopo {{deleteAfterDays}} giorni.",
       "DELETE": "Elimina la mappa mentale",
       "CONFIRM_DELETE": "Eliminare?"

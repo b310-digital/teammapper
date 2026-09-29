@@ -18,7 +18,7 @@
               </span>
               <span matLine>
                 {{ 'PAGES.SETTINGS.TTL' | translate }}:
-                {{ ownedEntry.cachedAdminMapValue.ttl | date: 'yyyy-MM-dd' }}
+                {{ ownedEntry.cachedAdminMapValue.ttl | localizedDate }}
               </span>
               @if (ownedEntry.cachedAdminMapValue.adminId) {
                 <button
@@ -62,7 +62,7 @@
             </span>
             <span matLine>
               {{ 'PAGES.SETTINGS.TTL' | translate }}:
-              {{ cachedMapEntry.cachedAdminMapValue.ttl | date: 'yyyy-MM-dd' }}
+              {{ cachedMapEntry.cachedAdminMapValue.ttl | localizedDate }}
             </span>
             @if (cachedMapEntry.cachedAdminMapValue.adminId) {
               <button

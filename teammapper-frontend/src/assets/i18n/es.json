@@ -196,7 +196,7 @@
       "TTL": "Última fecha de eliminación conocida",
       "DARK_MODE": "Modo oscuro",
       "DELETION": "Eliminación",
-      "DELETED_AT": "Este mapa se eliminará el:",
+      "DELETED_AT": "Fecha de eliminación:",
       "DELETE_AFTER_DAYS": "Este servidor elimina los mapas después de {{deleteAfterDays}} días.",
       "DELETE": "Eliminar mapa",
       "CONFIRM_DELETE": "¿Eliminar?"

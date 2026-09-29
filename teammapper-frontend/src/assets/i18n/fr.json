@@ -196,7 +196,7 @@
       "TTL": "Dernière date de suppression connue",
       "DARK_MODE": "Mode sombre",
       "DELETION": "Suppression",
-      "DELETED_AT": "Cette carte sera supprimée le :",
+      "DELETED_AT": "Date de suppression :",
       "DELETE_AFTER_DAYS": "Ce serveur supprime les cartes après {{deleteAfterDays}} jours.",
       "DELETE": "Supprimer la carte",
       "CONFIRM_DELETE": "Supprimer ?"
