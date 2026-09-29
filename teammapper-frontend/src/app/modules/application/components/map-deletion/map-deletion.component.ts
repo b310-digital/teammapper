@@ -12,7 +12,8 @@ import {
   MatCardActions,
 } from '@angular/material/card';
 import { MatButton } from '@angular/material/button';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
+import { LocalizedDatePipe } from 'src/app/shared/pipes/localized-date.pipe';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 
@@ -28,7 +29,7 @@ import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
     MatCardActions,
     MatButton,
     AsyncPipe,
-    DatePipe,
+    LocalizedDatePipe,
     TranslatePipe,
   ],
 })

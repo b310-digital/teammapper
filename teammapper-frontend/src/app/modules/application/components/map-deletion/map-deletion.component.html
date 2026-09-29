@@ -15,7 +15,7 @@
       </p>
       <p class="deleted-at">
         {{ 'PAGES.SETTINGS.DELETED_AT' | translate }}
-        {{ attached.cachedMap.deletedAt | date: 'dd.MM.yyyy' }}
+        {{ attached.cachedMap.deletedAt | localizedDate }}
       </p>
     </mat-card-content>
     @if (mapAdminId | async) {

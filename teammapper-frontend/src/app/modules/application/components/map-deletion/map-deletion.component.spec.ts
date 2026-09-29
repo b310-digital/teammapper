@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { CachedMapEntry } from '@teammapper/shared';
@@ -52,6 +52,7 @@ describe('MapDeletionComponent', () => {
         { provide: ToastrService, useValue: toastrService },
       ],
     }).compileComponents();
+    TestBed.inject(TranslateService).use('de');
 
     fixture = TestBed.createComponent(MapDeletionComponent);
     fixture.detectChanges();
