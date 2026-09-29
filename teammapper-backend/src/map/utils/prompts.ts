@@ -50,5 +50,9 @@ export const systemPrompt = (shape: AiMapShape) =>
    Do not explain the refusal.
    </content_policy>`
 
+// Escapes the markup characters so a description cannot close the <topic> tag.
+const escapeMarkup = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 export const userPrompt = (description: string, language: SupportedLanguage) =>
-  `<topic lang="${language}">${description}</topic>`
+  `<topic lang="${language}">${escapeMarkup(description)}</topic>`

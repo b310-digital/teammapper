@@ -1,5 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
-import { generateText, LanguageModel, LanguageModelUsage } from 'ai'
+import {
+  APICallError,
+  generateText,
+  LanguageModel,
+  LanguageModelUsage,
+} from 'ai'
 import {
   AiMapShape,
   MermaidCreateResult,
@@ -19,7 +24,6 @@ import {
   LlmUsageCounterService,
 } from './llm-usage-counter.service'
 
-export const SYSTEM_PROMPT_TOKEN_OVERHEAD = 200
 // A reasoning model spends its thinking from the same output budget as the
 // answer, so both defaults leave room for long reasoning output.
 export const DEFAULT_MAX_OUTPUT_TOKENS = 4096
@@ -82,37 +86,33 @@ export class AiService {
       return { mermaid: '', truncated: false }
     }
 
-    const estimated = this.estimateTokens(mindmapDescription)
+    const system = systemPrompt(shape)
+    const prompt = userPrompt(mindmapDescription, language)
+    const estimated = this.estimateTokens(system, prompt)
     const reservation = await this.reserveBudget(estimated)
-    let generated: MermaidCreateResult
-    let usage: LanguageModelUsage
-    try {
-      const result = await this.callLlm(
-        provider(this.llmConfig.model),
-        mindmapDescription,
-        language,
-        shape
-      )
-      generated = {
-        mermaid: pruneMindmap(result.text, shape),
-        truncated: result.finishReason === 'length',
-      }
-      usage = result.usage
-    } catch (err) {
-      await this.releaseReservation(reservation)
-      throw err
+    const result = await this.callLlmOrRefund(
+      reservation,
+      provider(this.llmConfig.model),
+      system,
+      prompt
+    )
+    const booked = AiService.bookedTokens(result.usage, estimated)
+    await this.tryCommitReservation(reservation, booked)
+    this.logUsage(booked, estimated, result.usage)
+    return {
+      mermaid: pruneMindmap(result.text, shape),
+      truncated: result.finishReason === 'length',
     }
-    // Reconciliation is best-effort: a failure here must not roll back a
-    // successful LLM call (would silently under-bill the budget).
-    await this.tryCommitReservation(reservation, usage.totalTokens ?? 0)
-    this.logUsage(estimated, usage)
-    return generated
   }
 
   /** Logs the token counts of one LLM call. */
-  private logUsage(estimated: number, usage: LanguageModelUsage): void {
+  private logUsage(
+    booked: number,
+    estimated: number,
+    usage: LanguageModelUsage
+  ): void {
     this.logger.debug(
-      `LLM call billed ${usage.totalTokens ?? 0} tokens (estimated ${estimated}, ` +
+      `LLM call booked ${booked} tokens (estimated ${estimated}, ` +
         `input ${usage.inputTokens ?? 0}, output ${usage.outputTokens ?? 0}, ` +
         `reasoning ${usage.outputTokenDetails?.reasoningTokens ?? 0}, ` +
         `cap ${this.limits.maxOutputTokens})`
@@ -120,16 +120,44 @@ export class AiService {
   }
 
   /**
-   * Estimates the most tokens one call can bill: the input, the system prompt
-   * and the full output cap. The reservation holds this estimate until the
-   * call reports its real usage, so parallel calls cannot overshoot a limit.
+   * Estimates the most tokens one call can bill: one token per UTF-8 byte of
+   * the prompts sent, because a byte-level tokenizer emits at most one token
+   * per byte, plus the full output cap. The reservation holds this estimate
+   * until the call reports its real usage, so parallel calls cannot overshoot
+   * a limit.
    */
-  estimateTokens(input: string): number {
+  private estimateTokens(system: string, prompt: string): number {
     return (
-      Math.ceil(input.length / 4) +
-      SYSTEM_PROMPT_TOKEN_OVERHEAD +
+      Buffer.byteLength(system, 'utf8') +
+      Buffer.byteLength(prompt, 'utf8') +
       this.limits.maxOutputTokens
     )
+  }
+
+  /**
+   * Picks the tokens to book for a finished call: the larger of the reported
+   * total and the reported input plus output. A provider that reports nothing
+   * keeps the estimate booked.
+   */
+  private static bookedTokens(
+    usage: LanguageModelUsage,
+    estimated: number
+  ): number {
+    const parts = (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
+    const reported = Math.max(usage.totalTokens ?? 0, parts)
+    return reported > 0 ? reported : estimated
+  }
+
+  /**
+   * Reports whether the provider rejected a call before running the model and
+   * so billed nothing: no connection, or a 4xx other than 408 and 429. A
+   * timeout or a 5xx may have run the model and counts as billed.
+   */
+  private static isUnbilled(err: unknown): boolean {
+    if (!APICallError.isInstance(err)) return false
+    const status = err.statusCode
+    if (status === undefined) return true
+    return status >= 400 && status < 500 && status !== 408 && status !== 429
   }
 
   /** Reads a rate limit. A limit of 0 blocks every call. */
@@ -145,19 +173,42 @@ export class AiService {
     return value !== undefined && value > 0 ? value : undefined
   }
 
-  private async callLlm(
+  /**
+   * Calls the LLM. A failed call keeps its reservation, because the provider
+   * may have billed it, unless the provider rejected the call unbilled.
+   */
+  private async callLlmOrRefund(
+    reservation: Reservation,
     model: LanguageModel,
-    description: string,
-    language: SupportedLanguage,
-    shape: AiMapShape
+    system: string,
+    prompt: string
   ) {
+    try {
+      return await this.callLlm(model, system, prompt)
+    } catch (err) {
+      if (AiService.isUnbilled(err)) await this.refundReservation(reservation)
+      throw err
+    }
+  }
+
+  // One reservation pays for one attempt, so the SDK must not retry.
+  private async callLlm(model: LanguageModel, system: string, prompt: string) {
     return await generateText({
       model,
-      system: systemPrompt(shape),
-      prompt: userPrompt(description, language),
+      system,
+      prompt,
       maxOutputTokens: this.limits.maxOutputTokens,
+      maxRetries: 0,
       abortSignal: AbortSignal.timeout(this.limits.timeoutMs),
     })
+  }
+
+  /** Removes the per-minute entry and books 0 tokens for the day. */
+  private async refundReservation(reservation: Reservation): Promise<void> {
+    this.tokensUsedPerMinute = this.tokensUsedPerMinute.filter(
+      (e) => e !== reservation.entry
+    )
+    await this.tryCommitReservation(reservation, 0)
   }
 
   private async reserveBudget(estimated: number): Promise<Reservation> {
@@ -228,25 +279,9 @@ export class AiService {
         actual - reservation.estimated
       )
     } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err)
       this.logger.warn(
-        `Failed to reconcile actual tokens for ${reservation.dateUsage}; keeping conservative reservation. ${(err as Error).message}`
-      )
-    }
-  }
-
-  private async releaseReservation(reservation: Reservation): Promise<void> {
-    this.tokensUsedPerMinute = this.tokensUsedPerMinute.filter(
-      (e) => e !== reservation.entry
-    )
-    try {
-      await this.usageCounter.release(
-        reservation.dateUsage,
-        reservation.estimated
-      )
-    } catch (err) {
-      // Don't mask the original error from the caller's catch path.
-      this.logger.error(
-        `Failed to release reserved tokens for ${reservation.dateUsage}: ${(err as Error).message}`
+        `Failed to reconcile actual tokens for ${reservation.dateUsage}; keeping conservative reservation. ${reason}`
       )
     }
   }
