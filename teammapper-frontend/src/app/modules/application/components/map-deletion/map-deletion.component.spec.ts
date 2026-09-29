@@ -73,7 +73,7 @@ describe('MapDeletionComponent', () => {
 
     expect(
       fixture.nativeElement.querySelector('.deleted-at').textContent
-    ).toContain('2026-10-28');
+    ).toContain('28.10.2026');
   });
 
   it('renders nothing while no map is attached', async () => {

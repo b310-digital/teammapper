@@ -196,7 +196,7 @@
       "TTL": "Última data de exclusão conhecida",
       "DARK_MODE": "Modo escuro",
       "DELETION": "Exclusão",
-      "DELETED_AT": "Este mapa será excluído em:",
+      "DELETED_AT": "Data de exclusão:",
       "DELETE_AFTER_DAYS": "Este servidor exclui os mapas após {{deleteAfterDays}} dias.",
       "DELETE": "Excluir mapa",
       "CONFIRM_DELETE": "Excluir?"
