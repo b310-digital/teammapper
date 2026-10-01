@@ -30,11 +30,11 @@
     "dist"
   ],
   "dependencies": {
-    "dompurify": "3.4.15"
+    "dompurify": "3.4.16"
   },
   "devDependencies": {
     "jison": "0.4.18",
     "typescript": "~5.9.3",
-    "vite": "^8.3.0"
+    "vite": "^8.3.1"
   }
 }
