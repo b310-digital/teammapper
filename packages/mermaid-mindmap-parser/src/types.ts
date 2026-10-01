@@ -12,6 +12,7 @@ interface MindmapNode {
   children: MindmapNode[];
   width: number;
   padding: number;
+  isRoot: boolean;
   section?: number;
   height?: number;
   class?: string;
