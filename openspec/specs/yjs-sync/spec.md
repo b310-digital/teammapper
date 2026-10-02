@@ -37,17 +37,22 @@ The server SHALL expose a WebSocket endpoint at the `/yjs` path, mounted on the 
 - **THEN** the server SHALL close the WebSocket connection with an appropriate error code
 
 ### Requirement: Y.Doc structure mirrors node model
-Each Y.Doc SHALL contain a `Y.Map("nodes")` where keys are node IDs and values are `Y.Map` instances with the same fields as `ExportNodeProperties` (id, parent, name, isRoot, locked, k, coordinates, colors, font, image, link). `isRoot` SHALL mark the main root. A node with no parent is a root, and a Y.Doc MAY hold several roots. Exactly one node SHALL carry the main-root mark. The detached property SHALL NOT be written. A separate `Y.Map("mapOptions")` SHALL hold map-level metadata.
+
+Each Y.Doc SHALL contain a `Y.Map("nodes")` where keys are node IDs and values are `Y.Map` instances with the same fields as `ExportNodeProperties` (id, parent, name, isRoot, protected, k, coordinates, colors, font, image, link). `isRoot` SHALL mark the main root. A node with no parent is a root, and a Y.Doc MAY hold several roots. Exactly one node SHALL carry the main-root mark. The detached and locked properties SHALL NOT be written. A separate `Y.Map("mapOptions")` SHALL hold map-level metadata.
 
 #### Scenario: Y.Doc hydrated from database
+
 - **WHEN** a Y.Doc is created from database rows
 - **THEN** each MmpNode row SHALL be converted to a Y.Map entry in the `nodes` map with all `ExportNodeProperties` fields populated
 
 #### Scenario: Node added to Y.Doc
+
 - **WHEN** a client adds a new entry to the `nodes` Y.Map
 - **THEN** the entry SHALL be a Y.Map containing all required `ExportNodeProperties` fields
+- **AND** `protected` SHALL be `false` unless the node is protected
 
 #### Scenario: Y.Doc holds several roots
+
 - **WHEN** a map with three trees is hydrated
 - **THEN** the `nodes` map SHALL hold three entries with no parent
 - **AND** one of them SHALL carry the main-root mark
