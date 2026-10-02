@@ -134,7 +134,7 @@ docker run -v "$(pwd)":/path ghcr.io/gitleaks/gitleaks:latest dir /path --verbos
 -   Execute the tests
 
     ```bash
-    docker compose exec app pnpm --filter teammapper-backend run test:e2e
+    docker compose exec app pnpm --filter teammapper-backend run test
     ```
 
 ### Production
