@@ -1,47 +1,18 @@
-import * as d3 from 'd3';
 import Nodes from './nodes.js';
-import Draw from './draw.js';
+import { fakeDraw } from '../../test/fake-draw.js';
 import Node from '../models/node.js';
 import MmpMap from '../map.js';
 
-interface StubMap {
-  id: string;
-  draw: {
-    update: jest.Mock;
-    drawBranch: jest.Mock;
-    redrawBranches: () => void;
-    map: { id: string };
-  };
-  history: { save: jest.Mock };
-  events: { emit: jest.Mock };
-}
+type StubMap = ReturnType<typeof stubMap>;
 
-function stubMap(): StubMap {
+function stubMap() {
   return {
     id: 'test-map',
-    draw: {
-      update: jest.fn(),
-      // The real `drawBranch` returns nothing for a node without a parent.
-      drawBranch: jest.fn((node: Node) => (node.parent ? 'M0,0' : undefined)),
-      // The real redraw, reading the map id and drawBranch from this stub.
-      redrawBranches: Draw.prototype.redrawBranches,
-      map: { id: 'test-map' },
-    },
+    // Every node measured at 100 by 30.
+    draw: fakeDraw(() => ({ width: 100, height: 30 })),
     history: { save: jest.fn() },
     events: { emit: jest.fn() },
   };
-}
-
-/** Branch paths the way `draw.update()` binds them: one per node but the root. */
-function attachBranchPaths(mapId: string, nodes: Node[]): void {
-  d3.select(document.body)
-    .append('svg')
-    .selectAll('path')
-    .data<Node>(nodes.slice(1))
-    .enter()
-    .append('path')
-    .attr('class', `${mapId}_branch`)
-    .attr('id', node => `${node.id}_branch`);
 }
 
 /** Only the fields distribution reads, hence the cast. */
@@ -57,7 +28,6 @@ function liveNode(
     isRoot: false,
     hidden: false,
     coordinates: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 30 },
     ...overrides,
   } as unknown as Node;
 }
@@ -86,10 +56,6 @@ function aiShapedNodes(): Node[] {
 }
 
 describe('distributeNodes', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
   it('writes new coordinates onto the live nodes', () => {
     const nodes = aiShapedNodes();
     const { handler } = handlerWith(nodes);
@@ -124,22 +90,6 @@ describe('distributeNodes', () => {
     expect(new Set(hiddenYs).size).toBe(4);
   });
 
-  it('updates the transform of a node that has been drawn', () => {
-    const root = liveNode('root', null, { isRoot: true });
-    const setAttribute = jest.fn();
-    const child = liveNode('child', root, {
-      dom: { setAttribute } as unknown as SVGGElement,
-    });
-    const { handler } = handlerWith([root, child]);
-
-    handler.distributeNodes();
-
-    expect(setAttribute).toHaveBeenCalledWith(
-      'transform',
-      expect.stringContaining('translate(')
-    );
-  });
-
   it('records the whole redistribution as a single history entry', () => {
     const { handler, map } = handlerWith(aiShapedNodes());
 
@@ -172,25 +122,6 @@ describe('distributeNodes', () => {
 
     const events = map.events.emit.mock.calls.map(call => call[0]);
     expect(events).not.toContain('distribute');
-  });
-
-  it('redraws every branch, dropping the path of a second root', () => {
-    const root = liveNode('root', null, { isRoot: true });
-    const child = liveNode('child', root);
-    const loose = liveNode('loose', null);
-    const nodes = [root, child, loose];
-    const { handler, map } = handlerWith(nodes);
-    attachBranchPaths(map.id, nodes);
-
-    handler.distributeNodes();
-
-    expect(document.getElementById('child_branch')?.getAttribute('d')).toBe(
-      'M0,0'
-    );
-    // Nothing to draw for a parentless node, so the attribute is dropped.
-    expect(
-      document.getElementById('loose_branch')?.getAttribute('d')
-    ).toBeNull();
   });
 
   it('leaves an empty map alone', () => {

@@ -76,22 +76,12 @@ export default class Drag {
     const dy = event.dy,
       dx = event.dx;
 
-    // Set new coordinates
-    const x = (node.coordinates.x += dx),
-      y = (node.coordinates.y += dy);
-
-    // Move graphically the node in new coordinates
-    node.dom.setAttribute('transform', 'translate(' + [x, y] + ')');
+    node.coordinates.x += dx;
+    node.coordinates.y += dy;
 
     this.moveDescendants(node, dx, dy);
 
-    // Update all mind map branches
-    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
-      'd',
-      (node: Node) => {
-        return this.map.draw.drawBranch(node)?.toString() ?? null;
-      }
-    );
+    this.map.draw.renderPositions([node, ...this.descendants]);
 
     // This is here and not in the started function because started function
     // is also executed when there is no drag events
@@ -108,14 +98,12 @@ export default class Drag {
       orientationIsChanged = newOrientation !== this.orientation;
 
     for (const node of this.descendants) {
-      let x = (node.coordinates.x += dx);
-      const y = (node.coordinates.y += dy);
+      node.coordinates.x += dx;
+      node.coordinates.y += dy;
 
       if (orientationIsChanged) {
-        x = node.coordinates.x += (root.coordinates.x - node.coordinates.x) * 2;
+        node.coordinates.x += (root.coordinates.x - node.coordinates.x) * 2;
       }
-
-      node.dom.setAttribute('transform', 'translate(' + [x, y] + ')');
     }
 
     if (orientationIsChanged) {

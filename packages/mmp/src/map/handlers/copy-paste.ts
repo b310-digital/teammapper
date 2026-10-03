@@ -8,7 +8,7 @@ import type {
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import type { Bounds } from './node-geometry.js';
-import { moveBounds, nodeBounds, unionBounds } from './tree-placement.js';
+import { moveBounds, unionBounds } from './tree-placement.js';
 
 const ORIGIN: MapNodeCoordinates = { x: 0, y: 0 };
 
@@ -94,12 +94,9 @@ export default class CopyPaste {
   private footprintOf(nodes: Node[], origin: MapNodeCoordinates): Bounds {
     return nodes
       .map(node =>
-        nodeBounds({
-          coordinates: {
-            x: node.coordinates.x - origin.x,
-            y: node.coordinates.y - origin.y,
-          },
-          dimensions: node.dimensions,
+        moveBounds(this.map.nodes.boundsOf(node), {
+          x: -origin.x,
+          y: -origin.y,
         })
       )
       .reduce(unionBounds);
@@ -185,10 +182,8 @@ export default class CopyPaste {
     newParentNode: Node | null,
     newNodes: Node[]
   ): Node {
-    const createdNode = this.map.nodes.addNode(
+    const createdNode = this.map.nodes.insertNode(
       this.pastedProperties(nodeProperties, newParentNode),
-      false,
-      false,
       newParentNode?.id ?? null
     );
     newNodes.push(createdNode);

@@ -82,6 +82,7 @@ export default class MmpMap {
   private destroy = () => {
     d3.select(window).on('resize.' + this.id, null);
     this.events.unsubscribeAll();
+    this.draw.destroy();
     this.dom.svg.remove();
 
     const instanceRecord = this.instance as unknown as Record<string, unknown>;

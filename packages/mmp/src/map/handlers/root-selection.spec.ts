@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import Nodes from './nodes.js';
+import { fakeDraw } from '../../test/fake-draw.js';
 import History from './history.js';
 import MmpMap from '../map.js';
 import Options, {
@@ -8,37 +9,19 @@ import Options, {
 } from '../options.js';
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-/** The parts of a node's DOM that selection reads: the background and name. */
-function nodeDom(fill: string): SVGGElement {
-  const group = document.createElementNS(SVG_NS, 'g');
-  const background = document.createElementNS(SVG_NS, 'path');
-  background.style.fill = fill;
-  const foreignObject = document.createElementNS(SVG_NS, 'foreignObject');
-  foreignObject.appendChild(document.createElement('div'));
-  group.append(background, foreignObject);
-  return group;
-}
-
 /**
- * A map stub around the real node handler and history. Its draw gives each
- * node a DOM filled with the node's background colour.
+ * A map stub around the real node handler and history, with a renderer that
+ * keeps the rings.
  */
 function makeMap() {
   const events = { emit: jest.fn() };
-  const update = jest.fn(() => {
-    for (const node of map.nodes.getNodes()) {
-      node.dom = nodeDom(node.colors.background);
-    }
-  });
   const map = {
     rootId: '',
     options: {
       defaultNode: DefaultNodeValues,
       rootNode: DefaultRootNodeValues,
     },
-    draw: { clear: jest.fn(), update },
+    draw: fakeDraw(),
     zoom: { center: jest.fn() },
     events,
     export: { asJSON: () => [] },
@@ -94,7 +77,7 @@ describe('a map load', () => {
     map.history.new(snapshot('root'), false);
 
     const root = map.nodes.getRoot();
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
     expect(map.nodes.getSelectedNode()).toBe(root);
   });
 
@@ -118,7 +101,7 @@ describe('a map load', () => {
     map.history.new(snapshot('root'), false);
 
     const root = map.nodes.getRoot();
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
     expect(firedEvents(events)).toEqual(['nodeSelect']);
   });
 
@@ -131,7 +114,7 @@ describe('a map load', () => {
 
     const root = map.nodes.getRoot();
     expect(root.id).toBe('other-root');
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
     expect(firedEvents(events)).toEqual(['nodeSelect']);
     expect(events.emit.mock.calls[0][1].id).toBe('other-root');
   });
@@ -142,7 +125,7 @@ describe('a map load', () => {
     map.history.new(undefined, false);
 
     const root = map.nodes.getRoot();
-    expect(root.getBackgroundDOM().style.stroke).toBe(
+    expect(map.draw.ringOf(root)).toBe(
       ring(DefaultRootNodeValues.colors.background)
     );
     expect(events.emit).toHaveBeenCalledWith(
@@ -162,7 +145,7 @@ describe('a map load', () => {
 });
 
 describe('an edit mode change after a map load', () => {
-  it('draws the ring on the new DOM of the selected root', () => {
+  it('draws the ring on the selected root again', () => {
     const { map } = makeMap();
     map.history.new(snapshot('root'), false);
 
@@ -170,12 +153,12 @@ describe('an edit mode change after a map load', () => {
 
     const root = map.nodes.getRoot();
     expect(map.nodes.getSelectedNode()).toBe(root);
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
   });
 });
 
 describe('removing a node after a map load', () => {
-  it('draws the ring on the new DOM of the selected root', () => {
+  it('draws the ring on the selected root again', () => {
     const { map } = makeMap();
     map.history.new(snapshot('root'), false);
 
@@ -183,7 +166,7 @@ describe('removing a node after a map load', () => {
 
     const root = map.nodes.getRoot();
     expect(map.nodes.getSelectedNode()).toBe(root);
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
   });
 });
 
