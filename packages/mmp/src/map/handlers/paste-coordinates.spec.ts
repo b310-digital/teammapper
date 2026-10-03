@@ -52,7 +52,7 @@ function makeHandler(liveNodes: Node[]): {
   const map = { rootId: ROOT.id } as unknown as MmpMap;
   const nodes = new Nodes(map);
   map.nodes = nodes;
-  [ROOT, ...liveNodes].forEach(node => nodes.setNode(node.id, node));
+  [ROOT, ...liveNodes].forEach(node => nodes.setNode(node));
   // No zoom transform applies in these tests, so this is the identity.
   nodes.fixCoordinates = (coordinates: MapNodeCoordinates) => coordinates;
 
@@ -188,7 +188,7 @@ describe('calculatePastedCoordinates', () => {
 
       handler.copy(oldParentNode.id);
       nodes.clear();
-      [ROOT, newParent].forEach(node => nodes.setNode(node.id, node));
+      [ROOT, newParent].forEach(node => nodes.setNode(node));
 
       expect(handler.copiedTreeRootX).toBe(secondTreeRootX);
       expect(handler.calculatePastedCoordinates(pasted, newParent)).toEqual({

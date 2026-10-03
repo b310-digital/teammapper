@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import Events from './handlers/events.js';
+import Events, { MmpEventCallback } from './handlers/events.js';
 import Zoom from './handlers/zoom.js';
 import Draw from './handlers/draw.js';
 import Options, { OptionParameters } from './options.js';
@@ -12,6 +12,7 @@ import Node from './models/node.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
+  MmpEventType,
   NodeProperty,
   NodePropertyValue,
   UserNodeProperties,
@@ -75,9 +76,12 @@ export default class MmpMap {
   }
 
   /**
-   * Remove permanently mmp instance.
+   * Remove the map for good: its svg, every subscription and the resize
+   * listener on the window.
    */
-  private remove = () => {
+  private destroy = () => {
+    d3.select(window).on('resize.' + this.id, null);
+    this.events.unsubscribeAll();
     this.dom.svg.remove();
 
     const instanceRecord = this.instance as unknown as Record<string, unknown>;
@@ -117,7 +121,7 @@ export default class MmpMap {
       protectBranch: this.nodes.protectBranch,
       protectingNode: this.nodes.protectingNode,
       releaseBranch: this.nodes.releaseBranch,
-      remove: this.remove,
+      destroy: this.destroy,
       removeNode: this.nodes.removeNode,
       selectNode: this.nodes.selectNode,
       unsubscribeAll: this.events.unsubscribeAll,
@@ -150,16 +154,16 @@ export interface MmpInstance {
   exportAsImage: (callback: (url: string) => void, type?: string) => void;
   exportAsJSON: () => MapSnapshot;
   exportRootProperties: () => ExportNodeProperties;
-  highlightNode: (id: string, color: string, notifyWithEvent?: boolean) => void;
+  highlightNode: (id: string, color: string) => void;
   new: (snapshot?: MapSnapshot, notifyWithEvent?: boolean) => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];
-  on: (event: string, callback: (...args: unknown[]) => void) => void;
+  on: <K extends MmpEventType>(event: K, callback: MmpEventCallback<K>) => void;
   pasteNode: (id?: string) => void;
   pasteTree: () => void;
   protectBranch: (id?: string) => void;
   protectingNode: (id?: string) => string | null;
   releaseBranch: (id?: string) => void;
-  remove: () => void;
+  destroy: () => void;
   removeNode: (id?: string, notifyWithEvent?: boolean) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;
   unsubscribeAll: () => void;

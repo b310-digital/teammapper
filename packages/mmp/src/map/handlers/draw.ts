@@ -5,7 +5,9 @@ import {
   isImageDataUrl,
   isImageReference,
   isSafeLinkHref,
+  type NodeProperty,
 } from '@teammapper/shared';
+import type { NodeView } from './node-view.js';
 import Map, { DomElements } from '../map.js';
 import Utils from '../../utils/utils.js';
 import Node from '../models/node.js';
@@ -19,7 +21,7 @@ import {
 /**
  * Draw the map and update it.
  */
-export default class Draw {
+export default class Draw implements NodeView {
   private map: Map;
   private editing = false;
   private mapRef: HTMLElement;
@@ -158,7 +160,7 @@ export default class Draw {
     // Set background of the node
     outer
       .insert('path', 'foreignObject')
-      .style('fill', (node: Node) => DOMPurify.sanitize(node.colors.background))
+      .style('fill', (node: Node) => node.colors.background)
       .style('stroke-width', 3)
       .attr('d', (node: Node) => this.drawNodeBackground(node).toString());
 
@@ -174,8 +176,8 @@ export default class Draw {
     dom.branches
       .enter()
       .insert('path', 'g')
-      .style('fill', (node: Node) => DOMPurify.sanitize(node.colors.branch))
-      .style('stroke', (node: Node) => DOMPurify.sanitize(node.colors.branch))
+      .style('fill', (node: Node) => node.colors.branch)
+      .style('stroke', (node: Node) => node.colors.branch)
       /**
        * dom.branches includes all branches rendered on screen, but dom.branches.enter() includes "new" branches given by the client,
        * so we need an additional visibility check done here
@@ -187,6 +189,111 @@ export default class Draw {
 
     dom.nodes.exit().remove();
     dom.branches.exit().remove();
+  }
+
+  /**
+   * Draw the property of the node as its model holds it.
+   * @param {Node} node
+   * @param {NodeProperty} property
+   */
+  public renderNodeProperty(node: Node, property: NodeProperty) {
+    switch (property) {
+      case 'name':
+        node.getNameDOM().innerHTML = DOMPurify.sanitize(node.name);
+        this.updateNodeShapes(node);
+        break;
+      case 'coordinates':
+        node.dom.setAttribute(
+          'transform',
+          'translate(' + [node.coordinates.x, node.coordinates.y] + ')'
+        );
+        this.redrawBranches();
+        break;
+      case 'imageSrc':
+        this.setImage(node);
+        break;
+      case 'imageSize':
+        this.resizeImage(node);
+        break;
+      case 'linkHref':
+        this.setLink(node);
+        break;
+      case 'backgroundColor':
+        this.paintBackground(node);
+        break;
+      case 'branchColor': {
+        const branch = document.getElementById(node.id + '_branch');
+        if (branch)
+          branch.style.fill = branch.style.stroke = node.colors.branch;
+        break;
+      }
+      case 'nameColor':
+        node.getNameDOM().style.color = node.colors.name;
+        this.updateProtectionIcon(node);
+        break;
+      case 'fontSize':
+        node.getNameDOM().style.fontSize = node.font.size + 'px';
+        this.updateNodeShapes(node);
+        break;
+      case 'fontWeight':
+        node.getNameDOM().style.fontWeight = node.font.weight;
+        this.updateNodeShapes(node);
+        break;
+      case 'fontStyle':
+        node.getNameDOM().style.fontStyle = node.font.style;
+        break;
+      case 'protected':
+        this.updateProtectionIcon(node);
+        break;
+      case 'hidden':
+        // The caller hides and shows nodes with a full update.
+        break;
+    }
+  }
+
+  /**
+   * Redraw the branch of every node.
+   */
+  public redrawBranches() {
+    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
+      'd',
+      (node: Node) => this.drawBranch(node)?.toString() ?? null
+    );
+  }
+
+  /**
+   * Fill the node background and darken the selection ring along with it.
+   * @param {Node} node
+   */
+  private paintBackground(node: Node) {
+    const background = node.getBackgroundDOM();
+    background.style.fill = node.colors.background;
+
+    if (background.style.stroke !== '') {
+      const darker = d3.color(node.colors.background)?.darker(0.5);
+      if (darker) background.style.stroke = darker.toString();
+    }
+  }
+
+  /**
+   * Scale the node image to its size. An image that failed to load has no
+   * element, and its size waits in the model.
+   * @param {Node} node
+   */
+  private resizeImage(node: Node) {
+    const image = node.dom.querySelector('image');
+    if (!image) return;
+
+    const box = image.getBBox(),
+      height = node.image.size,
+      width = (box.width * height) / box.height,
+      y = -(height + node.dimensions.height / 2 + 5),
+      x = -width / 2;
+
+    image.setAttribute('height', height.toString());
+    image.setAttribute('width', width.toString());
+    image.setAttribute('y', y.toString());
+    image.setAttribute('x', x.toString());
   }
 
   /**
@@ -276,10 +383,7 @@ export default class Draw {
     d3.select<SVGPathElement, Node>(background).attr('d', (node: Node) =>
       this.drawNodeBackground(node).toString()
     );
-    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
-      'd',
-      (node: Node) => this.drawBranch(node)?.toString() ?? null
-    );
+    this.redrawBranches();
 
     this.updateImagePosition(node);
     this.updateLinkPosition(node);
@@ -394,7 +498,7 @@ export default class Draw {
       domIcon.textContent = 'visibility_off';
       domIcon.classList.add('hidden-icon');
       domIcon.classList.add('material-icons');
-      domIcon.style.setProperty('fill', DOMPurify.sanitize(node.colors.name));
+      domIcon.style.setProperty('fill', node.colors.name);
       domIcon.setAttribute('y', (-node.dimensions.height + 30).toString());
       domIcon.setAttribute('x', '-60');
       node.dom.appendChild(domIcon);
@@ -433,7 +537,7 @@ export default class Draw {
       icon.classList.add('protected-icon', 'material-icons');
       node.dom.appendChild(icon);
     }
-    icon.style.setProperty('fill', DOMPurify.sanitize(node.colors.name));
+    icon.style.setProperty('fill', node.colors.name);
     icon.setAttribute('y', (-node.dimensions.height + 30).toString());
     icon.setAttribute('x', (node.dimensions.width / 2).toString());
   }
@@ -615,13 +719,10 @@ export default class Draw {
   private createNodeNameDOM(node: Node) {
     const div = document.createElement('div');
 
-    div.style.setProperty(
-      'font-size',
-      DOMPurify.sanitize(node.font.size.toString()) + 'px'
-    );
-    div.style.setProperty('color', DOMPurify.sanitize(node.colors.name));
-    div.style.setProperty('font-style', DOMPurify.sanitize(node.font.style));
-    div.style.setProperty('font-weight', DOMPurify.sanitize(node.font.weight));
+    div.style.setProperty('font-size', node.font.size + 'px');
+    div.style.setProperty('color', node.colors.name);
+    div.style.setProperty('font-style', node.font.style);
+    div.style.setProperty('font-weight', node.font.weight);
 
     div.style.setProperty('touch-action', 'none');
     div.style.setProperty('display', 'inline-block');
@@ -682,7 +783,7 @@ export default class Draw {
       domText.textContent = 'link';
       domText.classList.add('material-icons');
     }
-    domText.style.setProperty('fill', DOMPurify.sanitize(node.colors.link));
+    domText.style.setProperty('fill', node.colors.link);
     domText.setAttribute('y', node.dimensions.height.toString());
     domText.setAttribute('text-anchor', 'middle');
   }

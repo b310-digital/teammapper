@@ -1,6 +1,7 @@
 import Map from '../map.js';
 import Node, { NodeProperties } from '../models/node.js';
-import { Event } from './events.js';
+import * as v from 'valibot';
+import { LinkSchema, NodeSchema } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { DefaultNodeValues } from '../options.js';
@@ -14,6 +15,16 @@ import type {
   MapSnapshot,
   OldMmpNode,
 } from '@teammapper/shared';
+
+/**
+ * A node of a snapshot the map accepts. Older maps carry no link and no
+ * main-root mark.
+ */
+const SnapshotNodeSchema = v.object({
+  ...NodeSchema.entries,
+  link: v.optional(LinkSchema),
+  isRoot: v.optional(v.boolean()),
+});
 
 /**
  * Hold the snapshot of the current map and rebuild the map from one.
@@ -45,7 +56,10 @@ export default class History {
    * Replace old map with a new one or create a new empty map.
    * @param {MapSnapshot} snapshot
    */
-  public new = (snapshot?: MapSnapshot, notifyWithEvent = true) => {
+  public new = (input?: MapSnapshot, notifyWithEvent = true) => {
+    // The conversions below write to the snapshot, and the caller keeps its own.
+    const snapshot = input === undefined ? undefined : Utils.cloneObject(input);
+
     if (snapshot === undefined) {
       this.map.nodes.clear();
 
@@ -58,7 +72,7 @@ export default class History {
 
       this.save();
 
-      if (notifyWithEvent) this.map.events.call(Event.create, this.map.dom);
+      if (notifyWithEvent) this.map.events.emit('create', {});
     } else if (this.checkSnapshotStructure(snapshot)) {
       const previousData = this.map.export.asJSON();
 
@@ -78,10 +92,9 @@ export default class History {
         );
       } else {
         this.save();
-        if (notifyWithEvent)
-          this.map.events.call(Event.create, this.map.dom, {
-            previousMap: previousData,
-          });
+        if (notifyWithEvent) {
+          this.map.events.emit('create', { previousMapData: previousData });
+        }
       }
     } else {
       Log.error('The snapshot is not correct');
@@ -129,7 +142,7 @@ export default class History {
       };
 
       const node: Node = new Node(properties);
-      this.map.nodes.setNode(node.id, node);
+      this.map.nodes.setNode(node);
 
       if (mergedProperty.isRoot) this.map.rootId = mergedProperty.id;
     });
@@ -173,53 +186,7 @@ export default class History {
       this.convertOldMmp(snapshot as unknown as OldMmpNode[]);
     }
 
-    for (const node of snapshot) {
-      if (!this.checkNodeProperties(node)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * Check the snapshot node properties and return true if they are authentic.
-   * @param {ExportNodeProperties} node
-   * @return {boolean} result
-   */
-  private checkNodeProperties(node: ExportNodeProperties) {
-    const conditions: boolean[] = [
-      typeof node.id === 'string',
-      typeof node.parent === 'string' || node.parent === null,
-      typeof node.k === 'number',
-      typeof node.name === 'string',
-      // older maps do not include the link prop yet
-      node.link === undefined || typeof node.link.href === 'string',
-      Boolean(
-        node.coordinates &&
-        typeof node.coordinates.x === 'number' &&
-        typeof node.coordinates.y === 'number'
-      ),
-      Boolean(
-        node.image &&
-        typeof node.image.size === 'number' &&
-        typeof node.image.src === 'string'
-      ),
-      Boolean(
-        node.colors &&
-        typeof node.colors.background === 'string' &&
-        typeof node.colors.branch === 'string' &&
-        typeof node.colors.name === 'string'
-      ),
-      Boolean(
-        node.font &&
-        typeof node.font.size === 'number' &&
-        typeof node.font.weight === 'string' &&
-        typeof node.font.style === 'string'
-      ),
-    ];
-
-    return conditions.every(condition => condition);
+    return snapshot.every(node => v.is(SnapshotNodeSchema, node));
   }
 
   /**
@@ -237,6 +204,7 @@ export default class History {
         ? 'map_node_' + oldNode.value.parent.substr(4)
         : '';
       target.k = oldNode.value.k;
+      target.isRoot = !oldNode.value.parent;
       target.name = oldNode.value.name;
       target.coordinates = {
         x: oldNode.value.x,

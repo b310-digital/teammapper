@@ -2,7 +2,6 @@ import * as d3 from 'd3';
 import { DragBehavior, D3DragEvent } from 'd3';
 import Map from '../map.js';
 import Node from '../models/node.js';
-import { Event } from './events.js';
 
 /**
  * Manage the drag events of the nodes.
@@ -133,17 +132,15 @@ export default class Drag {
       this.dragging = false;
       this.map.history.save();
 
-      for (const node of this.descendants) {
-        this.map.events.call(Event.nodeUpdate, node.dom, {
-          nodeProperties: this.map.nodes.getNodeProperties(node),
+      // The drag moved each node many times, so no single previous value
+      // describes the change.
+      for (const moved of [...this.descendants, node]) {
+        this.map.events.emit('nodeUpdate', {
+          nodeProperties: this.map.nodes.getNodeProperties(moved),
           changedProperty: 'coordinates',
+          previousValue: undefined,
         });
       }
-
-      this.map.events.call(Event.nodeUpdate, node.dom, {
-        nodeProperties: this.map.nodes.getNodeProperties(node),
-        changedProperty: 'coordinates',
-      });
     }
   }
 }

@@ -1,14 +1,19 @@
 import * as d3 from 'd3';
 import Nodes from './nodes.js';
+import Draw from './draw.js';
 import Node from '../models/node.js';
 import MmpMap from '../map.js';
-import { Event } from './events.js';
 
 interface StubMap {
   id: string;
-  draw: { update: jest.Mock; drawBranch: jest.Mock };
+  draw: {
+    update: jest.Mock;
+    drawBranch: jest.Mock;
+    redrawBranches: () => void;
+    map: { id: string };
+  };
   history: { save: jest.Mock };
-  events: { call: jest.Mock };
+  events: { emit: jest.Mock };
 }
 
 function stubMap(): StubMap {
@@ -18,9 +23,12 @@ function stubMap(): StubMap {
       update: jest.fn(),
       // The real `drawBranch` returns nothing for a node without a parent.
       drawBranch: jest.fn((node: Node) => (node.parent ? 'M0,0' : undefined)),
+      // The real redraw, reading the map id and drawBranch from this stub.
+      redrawBranches: Draw.prototype.redrawBranches,
+      map: { id: 'test-map' },
     },
     history: { save: jest.fn() },
-    events: { call: jest.fn() },
+    events: { emit: jest.fn() },
   };
 }
 
@@ -54,16 +62,10 @@ function liveNode(
   } as unknown as Node;
 }
 
-interface NodesInternals {
-  nodes: Map<string, Node>;
-}
-
 function handlerWith(nodes: Node[]): { handler: Nodes; map: StubMap } {
   const map = stubMap();
   const handler = new Nodes(map as unknown as MmpMap);
-  (handler as unknown as NodesInternals).nodes = new Map(
-    nodes.map(node => [node.id, node])
-  );
+  nodes.forEach(node => handler.setNode(node));
 
   return { handler, map };
 }
@@ -159,8 +161,8 @@ describe('distributeNodes', () => {
 
     handler.distributeNodes();
 
-    const events = map.events.call.mock.calls.map(call => call[0]);
-    expect(events).toContain(Event.distribute);
+    const events = map.events.emit.mock.calls.map(call => call[0]);
+    expect(events).toContain('distribute');
   });
 
   it('does not emit the distribute event when notification is suppressed', () => {
@@ -168,8 +170,8 @@ describe('distributeNodes', () => {
 
     handler.distributeNodes(false);
 
-    const events = map.events.call.mock.calls.map(call => call[0]);
-    expect(events).not.toContain(Event.distribute);
+    const events = map.events.emit.mock.calls.map(call => call[0]);
+    expect(events).not.toContain('distribute');
   });
 
   it('redraws every branch, dropping the path of a second root', () => {

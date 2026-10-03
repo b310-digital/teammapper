@@ -66,7 +66,7 @@ function makeMap(): MmpMap {
     options: { defaultNode: DefaultNodeValues },
     draw: { clear: jest.fn(), update },
     zoom: { center: jest.fn() },
-    events: { call: jest.fn() },
+    events: { emit: jest.fn() },
     export: { asJSON: () => [] },
   } as unknown as MmpMap;
   map.nodes = new Nodes(map);

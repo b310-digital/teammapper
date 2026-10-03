@@ -2,7 +2,6 @@ import * as d3 from 'd3';
 import Nodes from './nodes.js';
 import History from './history.js';
 import MmpMap from '../map.js';
-import { Event } from './events.js';
 import Options, {
   DefaultNodeValues,
   DefaultRootNodeValues,
@@ -27,7 +26,7 @@ function nodeDom(fill: string): SVGGElement {
  * node a DOM filled with the node's background colour.
  */
 function makeMap() {
-  const events = { call: jest.fn() };
+  const events = { emit: jest.fn() };
   const update = jest.fn(() => {
     for (const node of map.nodes.getNodes()) {
       node.dom = nodeDom(node.colors.background);
@@ -82,8 +81,8 @@ function ring(fill: string): string | undefined {
 }
 
 /** The event names mmp fired, in order. */
-function firedEvents(events: { call: jest.Mock }): string[] {
-  return events.call.mock.calls.map(call => call[0]);
+function firedEvents(events: { emit: jest.Mock }): string[] {
+  return events.emit.mock.calls.map(call => call[0]);
 }
 
 // A map load selects the main root: it draws the ring on the root and tells
@@ -104,38 +103,37 @@ describe('a map load', () => {
 
     map.history.new(snapshot('root'), false);
 
-    expect(events.call).toHaveBeenCalledWith(
-      Event.nodeSelect,
-      expect.anything(),
+    expect(events.emit).toHaveBeenCalledWith(
+      'nodeSelect',
       expect.objectContaining({ id: 'root' })
     );
-    expect(firedEvents(events)).not.toContain(Event.create);
+    expect(firedEvents(events)).not.toContain('create');
   });
 
   it('rings the new root DOM when the same map loads twice', () => {
     const { map, events } = makeMap();
     map.history.new(snapshot('root'), false);
-    events.call.mockClear();
+    events.emit.mockClear();
 
     map.history.new(snapshot('root'), false);
 
     const root = map.nodes.getRoot();
     expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
+    expect(firedEvents(events)).toEqual(['nodeSelect']);
   });
 
   it('selects the new root when a map with another root loads', () => {
     const { map, events } = makeMap();
     map.history.new(snapshot('root'), false);
-    events.call.mockClear();
+    events.emit.mockClear();
 
     map.history.new(snapshot('other-root'), false);
 
     const root = map.nodes.getRoot();
     expect(root.id).toBe('other-root');
     expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
-    expect(events.call.mock.calls[0][2].id).toBe('other-root');
+    expect(firedEvents(events)).toEqual(['nodeSelect']);
+    expect(events.emit.mock.calls[0][1].id).toBe('other-root');
   });
 
   it('rings the root it creates when no snapshot is given', () => {
@@ -147,9 +145,8 @@ describe('a map load', () => {
     expect(root.getBackgroundDOM().style.stroke).toBe(
       ring(DefaultRootNodeValues.colors.background)
     );
-    expect(events.call).toHaveBeenCalledWith(
-      Event.nodeSelect,
-      root.dom,
+    expect(events.emit).toHaveBeenCalledWith(
+      'nodeSelect',
       expect.objectContaining({ id: root.id })
     );
   });
@@ -160,7 +157,7 @@ describe('a map load', () => {
     map.history.new(snapshot('root', ''), false);
 
     expect(map.nodes.getSelectedNode()?.id).toBe('root');
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
+    expect(firedEvents(events)).toEqual(['nodeSelect']);
   });
 });
 
@@ -195,11 +192,11 @@ describe('selectRootNode', () => {
     const { map, events } = makeMap();
     map.history.new(snapshot('root'), false);
     map.nodes.deselectNode();
-    events.call.mockClear();
+    events.emit.mockClear();
 
     map.nodes.selectRootNode();
     map.nodes.selectRootNode();
 
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
+    expect(firedEvents(events)).toEqual(['nodeSelect']);
   });
 });

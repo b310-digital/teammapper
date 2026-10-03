@@ -18,7 +18,6 @@ import type { ExportNodeProperties } from '@teammapper/shared';
  */
 
 interface NodesInternals {
-  nodes: Map<string, Node>;
   selectedNode: Node | null;
   moveSelectionOnLevel(selected: Node, direction: boolean): void;
   moveSelectionOnBranch(selected: Node, direction: boolean): void;
@@ -59,8 +58,8 @@ function makeMap(view: Bounds | null = null): {
   const map = {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
-    draw: { update: jest.fn() },
-    events: { call: jest.fn() },
+    draw: { update: jest.fn(), renderNodeProperty: jest.fn() },
+    events: { emit: jest.fn() },
     history,
     zoom,
   } as unknown as MmpMap;
@@ -81,7 +80,7 @@ function makeMap(view: Bounds | null = null): {
   });
 
   const nodes = { root, branch, secondRoot };
-  for (const node of Object.values(nodes)) internals.nodes.set(node.id, node);
+  for (const node of Object.values(nodes)) handler.store.set(node);
   internals.selectedNode = branch;
 
   return { handler, internals, nodes, history, zoom };
@@ -377,7 +376,7 @@ describe('moveSelectionOnLevel', () => {
         coordinates: { x: 800, y: 200 },
       }),
     ];
-    children.forEach(child => internals.nodes.set(child.id, child));
+    children.forEach(child => handler.store.set(child));
     const selectNode = jest.fn();
     handler.selectNode = selectNode;
 
@@ -402,7 +401,7 @@ describe('moveSelectionOnBranch', () => {
         coordinates: { x: 1200, y: 0 },
       }),
     ];
-    children.forEach(child => internals.nodes.set(child.id, child));
+    children.forEach(child => handler.store.set(child));
     const selectNode = jest.fn();
     handler.selectNode = selectNode;
 

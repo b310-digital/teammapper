@@ -100,6 +100,9 @@ importers:
       uuid:
         specifier: 13.0.2
         version: 13.0.2
+      valibot:
+        specifier: ^1.5.0
+        version: 1.5.0(typescript@5.9.3)
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1

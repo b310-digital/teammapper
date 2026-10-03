@@ -11,7 +11,6 @@ import MmpMap from '../map.js';
  */
 
 interface NodesInternals {
-  nodes: Map<string, Node>;
   selectedNode: Node;
 }
 
@@ -22,7 +21,7 @@ function makeTree(): {
 } {
   const map = {
     options: { defaultNode: DefaultNodeValues },
-    draw: { update: jest.fn() },
+    draw: { update: jest.fn(), renderNodeProperty: jest.fn() },
     history: { save: jest.fn() },
   } as unknown as MmpMap;
 
@@ -57,7 +56,7 @@ function makeTree(): {
   });
 
   const nodes = { root, first, second, grandchild };
-  for (const node of Object.values(nodes)) internals.nodes.set(node.id, node);
+  for (const node of Object.values(nodes)) handler.store.set(node);
 
   return { handler, internals, nodes };
 }
@@ -101,7 +100,7 @@ describe('toggleBranchVisibility', () => {
       k: 1,
       coordinates: { x: 200, y: 200 },
     });
-    internals.nodes.set(late.id, late);
+    handler.store.set(late);
 
     handler.toggleBranchVisibility();
 

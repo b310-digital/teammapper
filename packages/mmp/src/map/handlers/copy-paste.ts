@@ -7,7 +7,6 @@ import type {
 } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
-import { Event } from './events.js';
 import type { Bounds } from './node-geometry.js';
 import { moveBounds, nodeBounds, unionBounds } from './tree-placement.js';
 
@@ -172,7 +171,7 @@ export default class CopyPaste {
     this.map.history.save();
 
     const pasted = newNodes.map(node => this.map.nodes.getNodeProperties(node));
-    this.map.events.call(Event.nodePaste, parent?.dom, pasted);
+    this.map.events.emit('nodePaste', pasted);
 
     return pastedNode;
   }

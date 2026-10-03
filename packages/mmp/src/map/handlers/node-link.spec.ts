@@ -11,7 +11,7 @@ function makeDraw(): Draw {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
     draw: { update: jest.fn(), clear: jest.fn() },
-    events: { call: jest.fn() },
+    events: { emit: jest.fn() },
     history: { save: jest.fn() },
   } as unknown as MmpMap;
   const draw = new Draw(map, document.createElement('div'));
