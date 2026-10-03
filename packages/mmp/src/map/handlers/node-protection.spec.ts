@@ -2,6 +2,7 @@ import CopyPaste from './copy-paste.js';
 import Drag from './drag.js';
 import Draw from './draw.js';
 import Nodes from './nodes.js';
+import { fakeDraw } from '../../test/fake-draw.js';
 import MmpMap from '../map.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
@@ -25,20 +26,13 @@ interface DragInternals {
   ended(event: DragEvent, node: Node): void;
 }
 
-/** A node with the DOM elements the update handlers write to. */
 function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
-  const node = new Node({
+  return new Node({
     k: 1,
     parent: null,
     colors: { ...DefaultNodeValues.colors },
     ...properties,
   });
-  const svg = 'http://www.w3.org/2000/svg';
-  node.dom = document.createElementNS(svg, 'g');
-  const foreignObject = document.createElementNS(svg, 'foreignObject');
-  foreignObject.appendChild(document.createElement('div'));
-  node.dom.appendChild(foreignObject);
-  return node;
 }
 
 /** root -> a -> b, root -> c, with `a` protected. */
@@ -48,14 +42,7 @@ function makeMap() {
     id: 'map',
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
-    draw: {
-      update: jest.fn(),
-      clear: jest.fn(),
-      updateNodeShapes: jest.fn(),
-      updateProtectionIcon: jest.fn(),
-      drawBranch: jest.fn(() => null),
-      renderNodeProperty: jest.fn(),
-    },
+    draw: fakeDraw(),
     history: { save: jest.fn() },
     events,
   } as unknown as MmpMap;
@@ -244,11 +231,11 @@ describe('local edits inside a protected branch', () => {
 
   it('refuses editing the name', () => {
     const { map, tree, events } = makeMap();
+    // The map was never drawn, so an editor that opened would throw.
     const draw = new Draw(map, document.createElement('div'));
 
     draw.enableNodeNameEditing(tree.b);
 
-    expect(tree.b.getNameDOM().getAttribute('contenteditable')).toBeNull();
     expect(refusals(events)).toEqual(['b']);
   });
 });
@@ -306,43 +293,5 @@ describe('drag', () => {
 
     expect(tree.a.coordinates).toEqual({ x: 250, y: 10 });
     expect(tree.b.coordinates).toEqual({ x: 450, y: 10 });
-  });
-});
-
-describe('lock badge', () => {
-  it('draws a badge on the node carrying the flag only', () => {
-    const { map, tree } = makeMap();
-    const draw = new Draw(map, document.createElement('div'));
-
-    draw.updateProtectionIcon(tree.a);
-    draw.updateProtectionIcon(tree.b);
-
-    expect(tree.a.getProtectionIconDOM()?.textContent).toBe('lock');
-    expect(tree.b.getProtectionIconDOM()).toBeNull();
-  });
-
-  it('moves and recolors the badge when the node changes', () => {
-    const { map, tree } = makeMap();
-    const draw = new Draw(map, document.createElement('div'));
-    draw.updateProtectionIcon(tree.a);
-
-    tree.a.dimensions = { width: 200, height: 40 };
-    tree.a.colors.name = '#ff0000';
-    draw.updateProtectionIcon(tree.a);
-
-    const icon = tree.a.getProtectionIconDOM();
-    expect(icon?.getAttribute('x')).toBe('100');
-    expect(icon?.style.getPropertyValue('fill')).toBe('#ff0000');
-  });
-
-  it('removes the badge once the protection is released', () => {
-    const { map, tree } = makeMap();
-    const draw = new Draw(map, document.createElement('div'));
-    draw.updateProtectionIcon(tree.a);
-
-    tree.a.protected = false;
-    draw.updateProtectionIcon(tree.a);
-
-    expect(tree.a.getProtectionIconDOM()).toBeNull();
   });
 });

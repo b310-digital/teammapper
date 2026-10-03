@@ -1,5 +1,6 @@
 import CopyPaste from './copy-paste.js';
 import Nodes from './nodes.js';
+import { fakeDraw } from '../../test/fake-draw.js';
 import MmpMap from '../map.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
@@ -8,6 +9,7 @@ import { NEW_TREE_GAP, treeBounds } from './tree-placement.js';
 import type {
   ExportNodeProperties,
   MapNodeCoordinates,
+  MapNodeDimensions,
 } from '@teammapper/shared';
 
 /**
@@ -39,13 +41,14 @@ function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
  */
 function makeMap(view: Bounds | null = null) {
   const events = { emit: jest.fn() };
+  const sizes = new Map<string, MapNodeDimensions>();
   // `view` is the visible area the zoom stub reports. The default null stands
   // for jsdom's svg, which has no size.
   const zoom = { visibleArea: jest.fn(() => view), panIntoView: jest.fn() };
   const map = {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
-    draw: { update: jest.fn(), clear: jest.fn() },
+    draw: fakeDraw(node => sizes.get(node.id) ?? { width: 0, height: 0 }),
     history: { save: jest.fn() },
     events,
     zoom,
@@ -90,7 +93,7 @@ function makeMap(view: Bounds | null = null) {
 
   const clipboard = new CopyPaste(map);
 
-  return { nodes, clipboard, tree, events, zoom, selectNode };
+  return { nodes, clipboard, tree, events, zoom, selectNode, sizes };
 }
 
 function ids(nodes: Node[]): string[] {
@@ -314,7 +317,7 @@ describe('pasteTree', () => {
 
     // No node has a size in these tests, so the bounding box of the pasted
     // nodes equals the copied footprint moved to the pasted root.
-    const [pastedTree] = treeBounds(pasted, () => pasted[0]);
+    const [pastedTree] = treeBounds(pasted, () => pasted[0], nodes.boundsOf);
     expect(selectNode).not.toHaveBeenCalled();
     expect(nodes.getSelectedNode()).toBeNull();
     expect(zoom.panIntoView).toHaveBeenCalledWith(pastedTree);
@@ -344,17 +347,24 @@ describe('pasteTree', () => {
     // The middle of the viewport, (1000, -100), lies on the second tree.
     const context = makeMap({ minX: 600, maxX: 1400, minY: -400, maxY: 200 });
     const size = { width: 120, height: 40 };
-    context.nodes.getNodes().forEach(node => (node.dimensions = { ...size }));
+    context.nodes
+      .getNodes()
+      .forEach(node => context.sizes.set(node.id, { ...size }));
     context.clipboard.copy('second');
 
     context.clipboard.pasteTree();
 
     const pasted = pastedNodes(context.nodes, context.events);
-    pasted.forEach(node => (node.dimensions = { ...size }));
-    const [pastedTree] = treeBounds(pasted, () => pasted[0]);
+    pasted.forEach(node => context.sizes.set(node.id, { ...size }));
+    const [pastedTree] = treeBounds(
+      pasted,
+      () => pasted[0],
+      context.nodes.boundsOf
+    );
     const others = treeBounds(
       context.nodes.getNodes().filter(node => !pasted.includes(node)),
-      node => context.nodes.getTreeRoot(node)
+      node => context.nodes.getTreeRoot(node),
+      context.nodes.boundsOf
     );
     expect(others).toHaveLength(2);
     others.forEach(tree => {

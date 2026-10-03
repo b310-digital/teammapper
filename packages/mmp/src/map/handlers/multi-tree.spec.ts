@@ -1,4 +1,5 @@
 import Nodes from './nodes.js';
+import { fakeDraw } from '../../test/fake-draw.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
 import MmpMap from '../map.js';
@@ -6,10 +7,12 @@ import { NODE_HORIZONTAL_SPACING, type Bounds } from './node-geometry.js';
 import {
   NEW_TREE_FOOTPRINT,
   NEW_TREE_GAP,
-  nodeBounds,
   treeBounds,
 } from './tree-placement.js';
-import type { ExportNodeProperties } from '@teammapper/shared';
+import type {
+  ExportNodeProperties,
+  MapNodeDimensions,
+} from '@teammapper/shared';
 
 /**
  * A map may hold several trees. A node with no parent is a root, whether or
@@ -52,13 +55,15 @@ function makeMap(view: Bounds | null = null): {
   nodes: Record<string, Node>;
   history: { save: jest.Mock };
   zoom: { visibleArea: jest.Mock; panIntoView: jest.Mock };
+  sizes: Map<string, MapNodeDimensions>;
 } {
+  const sizes = new Map<string, MapNodeDimensions>();
   const history = { save: jest.fn() };
   const zoom = { visibleArea: jest.fn(() => view), panIntoView: jest.fn() };
   const map = {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
-    draw: { update: jest.fn(), renderNodeProperty: jest.fn() },
+    draw: fakeDraw(node => sizes.get(node.id) ?? { width: 0, height: 0 }),
     events: { emit: jest.fn() },
     history,
     zoom,
@@ -83,7 +88,7 @@ function makeMap(view: Bounds | null = null): {
   for (const node of Object.values(nodes)) handler.store.set(node);
   internals.selectedNode = branch;
 
-  return { handler, internals, nodes, history, zoom };
+  return { handler, internals, nodes, history, zoom, sizes };
 }
 
 describe('addNodes', () => {
@@ -154,15 +159,19 @@ describe('addNode', () => {
 });
 
 describe('newTreeCoordinates', () => {
-  function sizeNodes(nodes: Record<string, Node>, width: number): void {
+  function sizeNodes(
+    sizes: Map<string, MapNodeDimensions>,
+    nodes: Record<string, Node>,
+    width: number
+  ): void {
     for (const node of Object.values(nodes)) {
-      node.dimensions = { width, height: 30 };
+      sizes.set(node.id, { width, height: 30 });
     }
   }
 
   it('places the new root two spacings right of the bounding box of every tree', () => {
-    const { handler, nodes } = makeMap();
-    sizeNodes(nodes, 120);
+    const { handler, nodes, sizes } = makeMap();
+    sizeNodes(sizes, nodes, 120);
     const rightEdge = nodes.secondRoot.coordinates.x + 60;
 
     expect(handler.newTreeCoordinates().x).toBe(
@@ -171,8 +180,8 @@ describe('newTreeCoordinates', () => {
   });
 
   it("keeps the new root's first child clear of the other trees", () => {
-    const { handler, nodes } = makeMap();
-    sizeNodes(nodes, 120);
+    const { handler, nodes, sizes } = makeMap();
+    sizeNodes(sizes, nodes, 120);
     const rightEdge = nodes.secondRoot.coordinates.x + 60;
     const root = handler.addNode(
       { coordinates: handler.newTreeCoordinates() },
@@ -182,17 +191,17 @@ describe('newTreeCoordinates', () => {
     );
 
     const child = handler.addNode({}, false, false, root.id);
-    child.dimensions = { width: 120, height: 30 };
+    sizes.set(child.id, { width: 120, height: 30 });
 
     expect(child.coordinates.x).toBeLessThan(root.coordinates.x);
     expect(child.coordinates.x - 60).toBeGreaterThan(rightEdge);
   });
 
   it("measures the right edge from each node's width", () => {
-    const { handler, nodes } = makeMap();
-    sizeNodes(nodes, 100);
+    const { handler, nodes, sizes } = makeMap();
+    sizeNodes(sizes, nodes, 100);
     nodes.branch.coordinates = { x: 950, y: 0 };
-    nodes.branch.dimensions = { width: 400, height: 30 };
+    sizes.set(nodes.branch.id, { width: 400, height: 30 });
 
     expect(handler.newTreeCoordinates().x).toBe(
       1150 + 2 * NODE_HORIZONTAL_SPACING
@@ -227,8 +236,10 @@ describe('newTreeCoordinates with a viewport', () => {
       minY: point.y + NEW_TREE_FOOTPRINT.minY,
       maxY: point.y + NEW_TREE_FOOTPRINT.maxY,
     };
-    const trees = treeBounds(handler.getNodes(), node =>
-      handler.getTreeRoot(node)
+    const trees = treeBounds(
+      handler.getNodes(),
+      node => handler.getTreeRoot(node),
+      handler.boundsOf
     );
 
     return trees.some(
@@ -252,13 +263,13 @@ describe('newTreeCoordinates with a viewport', () => {
   });
 
   it('moves the new tree to the nearest clear spot when a tree fills the middle', () => {
-    const { handler, nodes } = makeMap({
+    const { handler, nodes, sizes } = makeMap({
       minX: 600,
       maxX: 1400,
       minY: -300,
       maxY: 300,
     });
-    nodes.secondRoot.dimensions = { width: 120, height: 60 };
+    sizes.set(nodes.secondRoot.id, { width: 120, height: 60 });
 
     const coordinates = handler.newTreeCoordinates();
 
@@ -271,8 +282,8 @@ describe('newTreeCoordinates with a viewport', () => {
 
   it('places the new tree outside a viewport a tree fills and pans to it', () => {
     const view = { minX: 900, maxX: 1100, minY: -100, maxY: 100 };
-    const { handler, nodes, zoom } = makeMap(view);
-    nodes.secondRoot.dimensions = { width: 2000, height: 1000 };
+    const { handler, nodes, zoom, sizes } = makeMap(view);
+    sizes.set(nodes.secondRoot.id, { width: 2000, height: 1000 });
     handler.selectNode = jest.fn();
 
     const { x, y } = handler.newTreeCoordinates();
@@ -284,7 +295,7 @@ describe('newTreeCoordinates with a viewport', () => {
     expect(inView).toBe(false);
     expect(crowds).toBe(false);
     expect(root.coordinates).toEqual({ x, y });
-    expect(zoom.panIntoView).toHaveBeenCalledWith(nodeBounds(root));
+    expect(zoom.panIntoView).toHaveBeenCalledWith(handler.boundsOf(root));
   });
 });
 
@@ -311,7 +322,7 @@ describe('addTree', () => {
     const root = handler.addTree();
 
     expect(selectNode).toHaveBeenCalledWith(root.id);
-    expect(zoom.panIntoView).toHaveBeenCalledWith(nodeBounds(root));
+    expect(zoom.panIntoView).toHaveBeenCalledWith(handler.boundsOf(root));
   });
 });
 

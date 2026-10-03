@@ -99,11 +99,15 @@ describe('treeBounds', () => {
       [rootB, rootB],
     ]);
 
-    const bounds = treeBounds([rootA, childA, rootB], node => {
-      const root = roots.get(node);
-      if (!root) throw new Error('unknown node');
-      return root;
-    });
+    const bounds = treeBounds(
+      [rootA, childA, rootB],
+      node => {
+        const root = roots.get(node);
+        if (!root) throw new Error('unknown node');
+        return root;
+      },
+      nodeBounds
+    );
 
     expect(bounds).toEqual([
       { minX: -240, maxX: 50, minY: -140, maxY: 20 },

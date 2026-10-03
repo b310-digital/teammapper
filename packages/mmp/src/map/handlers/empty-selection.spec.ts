@@ -1,4 +1,5 @@
 import Nodes from './nodes.js';
+import { fakeDraw } from '../../test/fake-draw.js';
 import CopyPaste from './copy-paste.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
@@ -10,23 +11,13 @@ import MmpMap from '../map.js';
  * map load selects the main root again.
  */
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-/** The parts of a node's DOM that selection reads: the background and name. */
-function nodeDom(): SVGGElement {
-  const group = document.createElementNS(SVG_NS, 'g');
-  const background = document.createElementNS(SVG_NS, 'path');
-  background.style.fill = 'rgb(255, 255, 255)';
-  const foreignObject = document.createElementNS(SVG_NS, 'foreignObject');
-  foreignObject.appendChild(document.createElement('div'));
-  group.append(background, foreignObject);
-  return group;
-}
-
 function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
-  const node = new Node({ k: 1, parent: null, ...properties });
-  node.dom = nodeDom();
-  return node;
+  return new Node({
+    k: 1,
+    parent: null,
+    colors: { background: '#ffffff' },
+    ...properties,
+  });
 }
 
 function makeMap() {
@@ -35,11 +26,7 @@ function makeMap() {
   const map = {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
-    draw: {
-      update: jest.fn(),
-      clear: jest.fn(),
-      renderNodeProperty: jest.fn(),
-    },
+    draw: fakeDraw(),
     events,
     history,
   } as unknown as MmpMap;
@@ -81,7 +68,7 @@ describe('deselectNode', () => {
   });
 
   it('tells listeners which node lost the selection', () => {
-    const { handler, events, nodes } = makeMap();
+    const { map, handler, events, nodes } = makeMap();
     handler.selectNode(nodes.branch.id);
     events.emit.mockClear();
 
@@ -91,7 +78,7 @@ describe('deselectNode', () => {
       'nodeDeselect',
       expect.objectContaining({ id: nodes.branch.id })
     );
-    expect(nodes.branch.getBackgroundDOM().style.stroke).toBe('');
+    expect(map.draw.ringOf(nodes.branch)).toBeNull();
   });
 
   it('fires nothing when nothing is selected', () => {

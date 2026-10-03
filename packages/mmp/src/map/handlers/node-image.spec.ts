@@ -1,7 +1,5 @@
-import Draw from './draw.js';
-import Nodes from './nodes.js';
-import Node from '../models/node.js';
-import { DefaultNodeValues } from '../options.js';
+import { create } from '../../index.js';
+import { DefaultRootNodeValues } from '../options.js';
 import MmpMap from '../map.js';
 
 /**
@@ -11,7 +9,6 @@ import MmpMap from '../map.js';
  * the value.
  */
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
 const REFERENCE = 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 const DATA_URL = 'data:image/png;base64,logo';
 
@@ -43,32 +40,35 @@ const lastImage = (): FakeImage => {
   return image;
 };
 
-function makeMap(resolveImageUrl?: (reference: string) => string | null) {
-  const map = {
-    rootId: 'root',
-    options: { defaultNode: DefaultNodeValues, resolveImageUrl },
-    draw: { update: jest.fn(), clear: jest.fn() },
-    events: { emit: jest.fn() },
-    history: { save: jest.fn() },
-  } as unknown as MmpMap;
-  const draw = new Draw(map, document.createElement('div'));
-  map.draw = draw;
-  map.nodes = new Nodes(map);
-  return { map, draw };
+/** A map whose only node, the root, shows the image `src`. */
+function makeMap(
+  src: string,
+  resolveImageUrl?: (reference: string) => string | null
+) {
+  const ref = document.createElement('div');
+  document.body.appendChild(ref);
+  const map = create('map', ref, { resolveImageUrl });
+  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
+  map.dom.svg.attr('viewBox', '0 0 800 600');
+  map.instance.new([
+    {
+      ...DefaultRootNodeValues,
+      id: 'root',
+      parent: null,
+      k: 1,
+      isRoot: true,
+      image: { src, size: 60 },
+    },
+  ]);
+  return map;
 }
 
-function makeNode(src: string): Node {
-  const node = new Node({
-    id: 'root',
-    k: 1,
-    parent: null,
-    isRoot: true,
-    image: { src, size: 60 },
-  });
-  node.dom = document.createElementNS(SVG_NS, 'g');
-  node.dimensions = { width: 100, height: 40 };
-  return node;
+function setImage(map: MmpMap, src: string) {
+  map.instance.updateNode('imageSrc', src, false, false, 'root');
 }
+
+const drawnImage = (map: MmpMap) =>
+  map.dom.g.node()?.querySelector('image') ?? null;
 
 describe('node images', () => {
   const originalImage = globalThis.Image;
@@ -80,32 +80,25 @@ describe('node images', () => {
 
   afterEach(() => {
     globalThis.Image = originalImage;
+    document.body.innerHTML = '';
   });
 
   it('draws a data URL as is', () => {
-    const { draw } = makeMap();
-    const node = makeNode(DATA_URL);
+    const map = makeMap(DATA_URL);
 
-    draw.setImage(node);
     lastImage().load();
 
-    expect(node.dom.querySelector('image')?.getAttribute('href')).toBe(
-      DATA_URL
-    );
+    expect(drawnImage(map)?.getAttribute('href')).toBe(DATA_URL);
   });
 
   it('draws a reference from the URL the resolver returns', () => {
     const resolve = jest.fn(() => '/api/maps/m/images/i');
-    const { draw } = makeMap(resolve);
-    const node = makeNode(REFERENCE);
+    const map = makeMap(REFERENCE, resolve);
 
-    draw.setImage(node);
     lastImage().load();
 
     expect(resolve).toHaveBeenCalledWith(REFERENCE);
-    expect(node.dom.querySelector('image')?.getAttribute('href')).toBe(
-      '/api/maps/m/images/i'
-    );
+    expect(drawnImage(map)?.getAttribute('href')).toBe('/api/maps/m/images/i');
   });
 
   it.each([
@@ -115,87 +108,69 @@ describe('node images', () => {
     'data:image/svg+xml,svg',
     'data:text/html,hello',
   ])('loads nothing for the value %p', src => {
-    const { draw } = makeMap();
-    const node = makeNode(src);
-
-    draw.setImage(node);
+    const map = makeMap(src);
 
     expect(FakeImage.created).toHaveLength(0);
-    expect(node.dom.querySelector('image')).toBeNull();
+    expect(drawnImage(map)).toBeNull();
   });
 
   it('draws no image for a reference without a resolver', () => {
-    const { draw } = makeMap();
-    const node = makeNode(REFERENCE);
-
-    draw.setImage(node);
+    const map = makeMap(REFERENCE);
 
     expect(FakeImage.created).toHaveLength(0);
-    expect(node.dom.querySelector('image')).toBeNull();
+    expect(drawnImage(map)).toBeNull();
   });
 
   it('hides an image that fails to load and keeps its value', () => {
-    const { draw } = makeMap(() => '/api/maps/m/images/i');
-    const node = makeNode(REFERENCE);
+    const map = makeMap(REFERENCE, () => '/api/maps/m/images/i');
 
-    draw.setImage(node);
     lastImage().fail();
 
-    expect(node.dom.querySelector('image')).toBeNull();
-    expect(node.image.src).toBe(REFERENCE);
+    expect(drawnImage(map)).toBeNull();
+    expect(map.instance.exportRootProperties().image?.src).toBe(REFERENCE);
   });
 
   it('keeps the reference when the size of an image that failed to load changes', () => {
-    const { map, draw } = makeMap(() => '/api/maps/m/images/i');
-    const node = makeNode(REFERENCE);
-    map.nodes.setNode(node);
-    draw.setImage(node);
+    const map = makeMap(REFERENCE, () => '/api/maps/m/images/i');
     lastImage().fail();
 
-    map.nodes.updateNode('imageSize', 90, false, false, node.id);
+    map.instance.updateNode('imageSize', 90, false, false, 'root');
 
-    expect(node.image).toEqual({ src: REFERENCE, size: 90 });
+    expect(map.instance.exportRootProperties().image).toEqual({
+      src: REFERENCE,
+      size: 90,
+    });
+    expect(drawnImage(map)).toBeNull();
   });
 
-  it('positions no image when a data URL failed to load', () => {
-    const { draw } = makeMap();
-    const node = makeNode(DATA_URL);
-    draw.setImage(node);
+  it('loads an image that failed once only when its value changes', () => {
+    const map = makeMap(DATA_URL);
     lastImage().fail();
 
-    expect(() => draw.updateImagePosition(node)).not.toThrow();
-    expect(node.image.src).toBe(DATA_URL);
+    map.instance.updateNode('nameColor', '#ff0000', false, false, 'root');
+
+    expect(FakeImage.created).toHaveLength(1);
   });
 
   it('keeps the new image when the replaced one fails to load late', () => {
-    const { draw } = makeMap(() => '/api/maps/m/images/i');
-    const node = makeNode(REFERENCE);
+    const map = makeMap(REFERENCE, () => '/api/maps/m/images/i');
 
-    draw.setImage(node);
     const stale = lastImage();
-    node.image.src = DATA_URL;
-    draw.setImage(node);
+    setImage(map, DATA_URL);
     lastImage().load();
     stale.fail();
 
-    expect(node.dom.querySelector('image')?.getAttribute('href')).toBe(
-      DATA_URL
-    );
+    expect(drawnImage(map)?.getAttribute('href')).toBe(DATA_URL);
   });
 
   it('ignores a load that finishes after the image was replaced', () => {
-    const { draw } = makeMap(() => '/api/maps/m/images/i');
-    const node = makeNode(REFERENCE);
+    const map = makeMap(REFERENCE, () => '/api/maps/m/images/i');
 
-    draw.setImage(node);
     const stale = lastImage();
-    node.image.src = DATA_URL;
-    draw.setImage(node);
+    setImage(map, DATA_URL);
     lastImage().load();
     stale.load();
 
-    expect(node.dom.querySelector('image')?.getAttribute('href')).toBe(
-      DATA_URL
-    );
+    expect(drawnImage(map)?.getAttribute('href')).toBe(DATA_URL);
   });
 });
