@@ -1,38 +1,87 @@
 import * as d3 from 'd3';
-import { Path } from 'd3';
 import DOMPurify from 'dompurify';
 import {
   isImageDataUrl,
   isImageReference,
-  isSafeLinkHref,
+  type MapNodeDimensions,
+  type MapNodeFont,
   type NodeProperty,
 } from '@teammapper/shared';
 import type { NodeView } from './node-view.js';
-import Map, { DomElements } from '../map.js';
+import MmpMap, { DomElements } from '../map.js';
 import Utils from '../../utils/utils.js';
 import Node from '../models/node.js';
 import {
   MIN_TEXT_EXTENT,
-  NODE_HEIGHT_PADDING,
-  NODE_WIDTH_PADDING,
-  estimateTextExtent,
+  measureNodeExtent,
+  measureTextExtent,
+  withPadding,
 } from './node-geometry.js';
+import {
+  NODE_PARTS,
+  nameElements,
+  type LoadedImage,
+  type NodeGroups,
+  type PartContext,
+} from './node-parts.js';
+
+type BranchPaths = d3.Selection<SVGPathElement, Node, d3.BaseType, unknown>;
+
+interface Layers {
+  branches: d3.Selection<SVGGElement, unknown, null, undefined>;
+  nodes: d3.Selection<SVGGElement, unknown, null, undefined>;
+}
+
+/** An image value the renderer loads, and how far the load got. */
+interface ImageLoad {
+  src: string;
+  url: string;
+  ratio: number | null;
+}
 
 /**
- * Draw the map and update it.
+ * Draw the map and update it. Nodes and branches are joined to the node
+ * store with d3, each node from the parts in `NODE_PARTS`. Every render
+ * writes, then measures the names, then writes what depends on their size.
+ * The sizes stay with the renderer: drawing never writes to the model.
  */
 export default class Draw implements NodeView {
-  private map: Map;
-  private editing = false;
+  private map: MmpMap;
   private mapRef: HTMLElement;
+  private layerSelections: Layers | null = null;
+  private editingId: string | null = null;
+  private tappedTwice = false;
+
+  /** The measured size of each drawn name. */
+  private readonly textExtents = new Map<string, MapNodeDimensions>();
+  private readonly rings = new Map<string, string>();
+  private readonly images = new Map<string, ImageLoad>();
+  private readonly resizeObserver: ResizeObserver | null;
+  private readonly observed = new WeakSet<Element>();
 
   /**
    * Get the associated map instance.
    * @param {Map} map
    */
-  constructor(map: Map, ref: HTMLElement) {
+  constructor(map: MmpMap, ref: HTMLElement) {
     this.map = map;
     this.mapRef = ref;
+    // A name changes size when its font loads and while the person types.
+    this.resizeObserver =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(entries =>
+            this.resize(
+              entries.map(entry =>
+                d3.select<Element, Node>(entry.target).datum()
+              )
+            )
+          );
+  }
+
+  private get layers(): Layers {
+    if (!this.layerSelections) throw new Error('The map is not created yet');
+    return this.layerSelections;
   }
 
   /**
@@ -62,133 +111,45 @@ export default class Draw implements NodeView {
         this.map.nodes.deselectNode();
       });
 
-    return { container, svg, g: svg.append('g') };
+    const g = svg.append('g');
+    this.layerSelections = {
+      branches: g.append('g').attr('class', 'branches'),
+      nodes: g.append('g').attr('class', 'nodes'),
+    };
+
+    return { container, svg, g };
   }
 
   /**
-   * Update the dom of the map with the (new) nodes.
+   * Join the nodes and branches to the node store and draw all of them.
+   * Hidden nodes stay in the DOM with visibility hidden, so their updates
+   * still take effect.
    */
   public update() {
     const nodes = this.map.nodes.getNodes();
 
-    // Set visibility: hidden instead of filtering out nodes to still allow updates such as text, images and pictograms to take effect "behind the curtain"
-    const dom = {
-      nodes: this.map.dom.g
-        .selectAll('.' + this.map.id + '_node')
-        .data(nodes, (d: unknown) => (d as Node).id)
-        .style('visibility', d => (d.hidden ? 'hidden' : 'visible')),
-      branches: this.map.dom.g
-        .selectAll('.' + this.map.id + '_branch')
-        .data(nodes.slice(1), (d: unknown) => (d as Node).id)
-        .style('visibility', d => (d.hidden ? 'hidden' : 'visible')),
-    };
-    let tapedTwice = false;
-
-    // When doing an initial draw, all nodes appear in dom.nodes
-    dom.nodes.each((node: Node) => {
-      this.updateHiddenChildrenIcon(node);
-      this.updateProtectionIcon(node);
-    });
-
-    const outer = dom.nodes
-      .enter()
-      .append('g')
-      .style('cursor', 'pointer')
-      .style('touch-action', 'none')
-      /**
-       * dom.nodes includes all nodes rendered on screen, but dom.nodes.enter() includes "new" nodes given by the client,
-       * so we need an additional visibility check done here
-       */
-      .style('visibility', (node: Node) => (node.hidden ? 'hidden' : 'visible'))
-      .attr('class', this.map.id + '_node')
-      .attr('id', function (node: Node) {
-        node.dom = this;
-        return node.id;
-      })
-      .attr(
-        'transform',
-        (node: Node) =>
-          'translate(' + node.coordinates.x + ',' + node.coordinates.y + ')'
-      )
-      .on('dblclick', (event: MouseEvent, node: Node) => {
-        if (!this.map.options.edit) return;
-
-        event.stopPropagation();
-        this.enableNodeNameEditing(node);
-      })
-      .on(
-        'touchstart',
-        (event: TouchEvent, node: Node) => {
-          if (!this.map.options.edit) return false;
-          // When not clicking a link and not in edit mode, disable all mobile native touch events
-          // A single tap is supposed to move the node in this application
-          if (!this.isLinkTarget(event) && !this.editing) {
-            event.preventDefault();
-          }
-
-          // a single tap should enter moving node mode - not a selection
-          if (!tapedTwice) {
-            tapedTwice = true;
-
-            setTimeout(function () {
-              tapedTwice = false;
-            }, 300);
-
-            return false;
-          }
-
-          this.enableNodeNameEditing(node);
-        },
-        { passive: false }
+    const groups = this.nodeGroups()
+      .data(nodes, node => node.id)
+      .join(
+        enter => this.enterNodes(enter),
+        update => update,
+        exit => this.exitNodes(exit)
       );
-    if (this.map.options.drag === true) {
-      outer.call(this.map.drag.getDragBehavior());
-    } else {
-      outer.on('mousedown', (node: Node) => {
-        this.map.nodes.selectNode(node.id);
-      });
+    const branches = this.branchPaths()
+      .data(
+        nodes.filter(node => node.parent !== null),
+        node => node.id
+      )
+      .join(enter =>
+        enter.append<SVGPathElement>('path').attr('class', 'branch')
+      );
+
+    const ids = new Set(nodes.map(node => node.id));
+    for (const state of [this.textExtents, this.rings, this.images]) {
+      for (const id of state.keys()) if (!ids.has(id)) state.delete(id);
     }
 
-    // Set text of the node
-    outer
-      .insert('foreignObject')
-      .html((node: Node) => this.createNodeNameDOM(node))
-      .each((node: Node) => {
-        this.updateNodeNameContainer(node);
-      });
-
-    // Set background of the node
-    outer
-      .insert('path', 'foreignObject')
-      .style('fill', (node: Node) => node.colors.background)
-      .style('stroke-width', 3)
-      .attr('d', (node: Node) => this.drawNodeBackground(node).toString());
-
-    // Set image and link of the node
-    outer.each((node: Node) => {
-      this.setImage(node);
-      this.setLink(node);
-      // Sometimes, undo/redo will not render nodes in dom.nodes, but instead all nodes will only be present in dom.nodes.enter(), so we also need to check for hidden children there
-      this.updateHiddenChildrenIcon(node);
-      this.updateProtectionIcon(node);
-    });
-
-    dom.branches
-      .enter()
-      .insert('path', 'g')
-      .style('fill', (node: Node) => node.colors.branch)
-      .style('stroke', (node: Node) => node.colors.branch)
-      /**
-       * dom.branches includes all branches rendered on screen, but dom.branches.enter() includes "new" branches given by the client,
-       * so we need an additional visibility check done here
-       */
-      .style('visibility', (node: Node) => (node.hidden ? 'hidden' : 'visible'))
-      .attr('class', this.map.id + '_branch')
-      .attr('id', (node: Node) => node.id + '_branch')
-      .attr('d', (node: Node) => this.drawBranch(node)?.toString() ?? null);
-
-    dom.nodes.exit().remove();
-    dom.branches.exit().remove();
+    this.render(groups, branches);
   }
 
   /**
@@ -197,373 +158,98 @@ export default class Draw implements NodeView {
    * @param {NodeProperty} property
    */
   public renderNodeProperty(node: Node, property: NodeProperty) {
-    switch (property) {
-      case 'name':
-        node.getNameDOM().innerHTML = DOMPurify.sanitize(node.name);
-        this.updateNodeShapes(node);
-        break;
-      case 'coordinates':
-        node.dom.setAttribute(
-          'transform',
-          'translate(' + [node.coordinates.x, node.coordinates.y] + ')'
-        );
-        this.redrawBranches();
-        break;
-      case 'imageSrc':
-        this.setImage(node);
-        break;
-      case 'imageSize':
-        this.resizeImage(node);
-        break;
-      case 'linkHref':
-        this.setLink(node);
-        break;
-      case 'backgroundColor':
-        this.paintBackground(node);
-        break;
-      case 'branchColor': {
-        const branch = document.getElementById(node.id + '_branch');
-        if (branch)
-          branch.style.fill = branch.style.stroke = node.colors.branch;
-        break;
-      }
-      case 'nameColor':
-        node.getNameDOM().style.color = node.colors.name;
-        this.updateProtectionIcon(node);
-        break;
-      case 'fontSize':
-        node.getNameDOM().style.fontSize = node.font.size + 'px';
-        this.updateNodeShapes(node);
-        break;
-      case 'fontWeight':
-        node.getNameDOM().style.fontWeight = node.font.weight;
-        this.updateNodeShapes(node);
-        break;
-      case 'fontStyle':
-        node.getNameDOM().style.fontStyle = node.font.style;
-        break;
-      case 'protected':
-        this.updateProtectionIcon(node);
-        break;
-      case 'hidden':
-        // The caller hides and shows nodes with a full update.
-        break;
+    // The caller hides and shows nodes with a full update.
+    if (property === 'hidden') return;
+
+    // The selection ring darkens along with the background.
+    if (property === 'backgroundColor' && this.rings.has(node.id)) {
+      this.setRing(node, this.ringColor(node));
     }
+    this.render(this.nodeGroupsOf([node]), this.branchPathsOf([node]));
   }
 
   /**
-   * Redraw the branch of every node.
+   * Move the drawn nodes to their coordinates, along with their branches and
+   * those of their children.
+   * @param {Node[]} nodes
    */
-  public redrawBranches() {
-    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
-      'd',
-      (node: Node) => this.drawBranch(node)?.toString() ?? null
-    );
-  }
-
-  /**
-   * Fill the node background and darken the selection ring along with it.
-   * @param {Node} node
-   */
-  private paintBackground(node: Node) {
-    const background = node.getBackgroundDOM();
-    background.style.fill = node.colors.background;
-
-    if (background.style.stroke !== '') {
-      const darker = d3.color(node.colors.background)?.darker(0.5);
-      if (darker) background.style.stroke = darker.toString();
-    }
-  }
-
-  /**
-   * Scale the node image to its size. An image that failed to load has no
-   * element, and its size waits in the model.
-   * @param {Node} node
-   */
-  private resizeImage(node: Node) {
-    const image = node.dom.querySelector('image');
-    if (!image) return;
-
-    const box = image.getBBox(),
-      height = node.image.size,
-      width = (box.width * height) / box.height,
-      y = -(height + node.dimensions.height / 2 + 5),
-      x = -width / 2;
-
-    image.setAttribute('height', height.toString());
-    image.setAttribute('width', width.toString());
-    image.setAttribute('y', y.toString());
-    image.setAttribute('x', x.toString());
+  public renderPositions(nodes: Node[]) {
+    this.nodeGroupsOf(nodes).attr('transform', translate);
+    this.branchPathsOf(nodes).attr('d', node => this.branchShape(node));
   }
 
   /**
    * Remove all nodes and branches of the map.
    */
   public clear() {
-    d3.selectAll(
-      '.' + this.map.id + '_node, .' + this.map.id + '_branch'
-    ).remove();
+    this.nodeGroups().call(groups => this.exitNodes(groups));
+    this.branchPaths().remove();
+    this.rings.clear();
   }
 
   /**
-   * Draw the background shape of the node.
-   * @param {Node} node
-   * @returns {Path} path
-   */
-  public drawNodeBackground(node: Node): Path {
-    const name = node.getNameDOM(),
-      path = d3.path();
-
-    node.dimensions.width = name.clientWidth + NODE_WIDTH_PADDING;
-    node.dimensions.height = name.clientHeight + NODE_HEIGHT_PADDING;
-
-    const x = node.dimensions.width / 2,
-      y = node.dimensions.height / 2,
-      k = node.k;
-
-    path.moveTo(-x, k / 3);
-    path.bezierCurveTo(-x, -y + 10, -x + 10, -y, k, -y);
-    path.bezierCurveTo(x - 10, -y, x, -y + 10, x, k / 3);
-    path.bezierCurveTo(x, y - 10, x - 10, y, k, y);
-    path.bezierCurveTo(-x + 10, y, -x, y - 10, -x, k / 3);
-    path.closePath();
-
-    return path;
-  }
-
-  /**
-   * Draw the branch of the node.
-   * @param {Node} node
-   * @returns {Path | null} path, or null for a node without a parent
-   */
-  public drawBranch(node: Node): Path | null {
-    if (node.parent === null) return null;
-
-    const parent = node.parent,
-      path = d3.path(),
-      level = node.getLevel(),
-      width = 22 - (level < 6 ? level : 6) * 3,
-      mx = (parent.coordinates.x + node.coordinates.x) / 2,
-      ory =
-        parent.coordinates.y < node.coordinates.y + node.dimensions.height / 2
-          ? -1
-          : 1,
-      orx = parent.coordinates.x > node.coordinates.x ? -1 : 1,
-      inv = orx * ory;
-
-    path.moveTo(parent.coordinates.x, parent.coordinates.y - width * 0.8);
-    path.bezierCurveTo(
-      mx - width * inv,
-      parent.coordinates.y - width / 2,
-      parent.coordinates.x - (width / 2) * inv,
-      node.coordinates.y + node.dimensions.height / 2 - width / 3,
-      node.coordinates.x - (node.dimensions.width / 3) * orx,
-      node.coordinates.y + node.dimensions.height / 2 + 3
-    );
-    path.bezierCurveTo(
-      parent.coordinates.x + (width / 2) * inv,
-      node.coordinates.y + node.dimensions.height / 2 + width / 3,
-      mx + width * inv,
-      parent.coordinates.y + width / 2,
-      parent.coordinates.x,
-      parent.coordinates.y + width * 0.8
-    );
-    path.closePath();
-
-    return path;
-  }
-
-  /**
-   * Update the node HTML elements.
+   * The size of the node's box. A node not measured yet gets the size its
+   * name has on a canvas.
    * @param {Node} node
    */
-  public updateNodeShapes(node: Node) {
-    const background = node.getBackgroundDOM();
-
-    d3.select<SVGPathElement, Node>(background).attr('d', (node: Node) =>
-      this.drawNodeBackground(node).toString()
-    );
-    this.redrawBranches();
-
-    this.updateImagePosition(node);
-    this.updateLinkPosition(node);
-    this.updateProtectionIcon(node);
-
-    this.updateNodeNameContainer(node);
-  }
+  public dimensionsOf = (node: Node): MapNodeDimensions =>
+    withPadding(this.textExtentOf(node));
 
   /**
-   * Set main properties of node image and create it if it does not exist.
+   * The size a node box gets for a name in a font, before it is drawn.
+   */
+  public estimateExtent = (
+    name: string,
+    font: MapNodeFont
+  ): MapNodeDimensions =>
+    measureNodeExtent(name, { ...font, family: this.map.options.fontFamily });
+
+  /**
+   * The color of the ring around the node, null for none.
    * @param {Node} node
    */
-  public setImage(node: Node) {
-    let domImage = node.getImageDOM();
-
-    if (!domImage) {
-      domImage = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'image'
-      );
-      node.dom.appendChild(domImage);
-    }
-
-    const src = node.image.src;
-    const url = this.imageUrlOf(src);
-
-    if (url !== null) {
-      const image = new Image();
-
-      image.src = url;
-
-      image.onload = () => {
-        // A newer image replaced this one while it loaded.
-        if (node.image.src !== src) return;
-
-        const h = node.image.size,
-          w = (image.width * h) / image.height,
-          y = -(h + node.dimensions.height / 2 + 5),
-          x = -w / 2;
-
-        domImage.setAttribute('href', url);
-        domImage.setAttribute('height', h.toString());
-        domImage.setAttribute('width', w.toString());
-        domImage.setAttribute('y', y.toString());
-        domImage.setAttribute('x', x.toString());
-        domImage.setAttribute('clip-path', 'inset(0% round 15px)');
-      };
-
-      // Hide the image and keep its value: clearing it would erase the
-      // image in the Y.Doc for every client on a network error.
-      image.onerror = () => {
-        if (node.image.src !== src) return;
-        domImage.remove();
-      };
-    } else {
-      domImage.remove();
-    }
+  public ringOf(node: Node): string | null {
+    return this.rings.get(node.id) ?? null;
   }
 
   /**
-   * Returns the URL an image value loads from: the resolved URL of a
-   * reference, a base64 raster data URL as is, or null for any other value.
+   * Draw a ring in `color` around the node, or none for null or ''.
+   * @param {Node} node
+   * @param {string | null} color
    */
-  private imageUrlOf(src: string): string | null {
-    if (isImageReference(src)) {
-      return this.map.options.resolveImageUrl?.(src) ?? null;
-    }
-    return isImageDataUrl(src) ? src : null;
+  public setRing(node: Node, color: string | null) {
+    if (color) this.rings.set(node.id, color);
+    else this.rings.delete(node.id);
+
+    this.nodeGroupsOf([node])
+      .selectChildren<SVGPathElement, Node>('path.background')
+      .style('stroke', () => color || null);
   }
 
   /**
-   * Set main properties of node image and create it if it does not exist.
+   * The ring color of a node: its background color, darkened. Null when the
+   * background holds no color.
    * @param {Node} node
    */
-  public setLink(node: Node) {
-    let domLink = node.getLinkDOM();
-    let domText: SVGTextElement | null;
-
-    if (!domLink) {
-      // create new dom elements if they do not exist
-      domLink = document.createElementNS('http://www.w3.org/2000/svg', 'a');
-      domText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      node.dom.appendChild(domLink);
-      domLink.appendChild(domText);
-    } else {
-      domText = domLink.querySelector('text');
-    }
-
-    if (domText) {
-      // Set the correct styling of the link
-      this.updateLinkStyle(domText, node);
-    }
-
-    // A peer's link reaches this client before the server sanitizes it, so
-    // the renderer checks the scheme: DOMPurify keeps a `javascript:` URL.
-    if (isSafeLinkHref(node.link.href)) {
-      domLink.setAttribute('href', node.link.href);
-      domLink.setAttribute('target', '_self');
-    } else {
-      domLink.remove();
-    }
+  public ringColor(node: Node): string | null {
+    return d3.color(node.colors.background)?.darker(0.5).toString() ?? null;
   }
 
   /**
-   * Set a hidden eye icon if child nodes are hidden.
+   * True while the person edits the name of the node.
    * @param {Node} node
    */
-  public setHiddenChildrenIcon(node: Node) {
-    let domIcon = node.getHiddenChildIconDOM();
-    if (!domIcon) {
-      domIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      domIcon.textContent = 'visibility_off';
-      domIcon.classList.add('hidden-icon');
-      domIcon.classList.add('material-icons');
-      domIcon.style.setProperty('fill', node.colors.name);
-      domIcon.setAttribute('y', (-node.dimensions.height + 30).toString());
-      domIcon.setAttribute('x', '-60');
-      node.dom.appendChild(domIcon);
-    }
+  public isEditing(node: Node): boolean {
+    const name = this.nameOf(node);
+    return name !== null && name.ownerDocument.activeElement === name;
   }
 
   /**
-   * Explicitly remove the hidden eye icon even if not set
+   * Take the focus from the name of the node, which ends its editing.
    * @param {Node} node
    */
-  public removeHiddenChildrenIcon(node: Node) {
-    const domIcon = node.getHiddenChildIconDOM();
-    if (domIcon) {
-      domIcon.remove();
-    }
-  }
-
-  /**
-   * Draw a lock badge past the top right corner of a node carrying the
-   * protection, mirroring the hidden eye icon, and remove it otherwise.
-   * Descendants protected through an ancestor show no badge. Each call
-   * repositions and recolors the badge, so it follows a resize or a new name
-   * color.
-   * @param {Node} node
-   */
-  public updateProtectionIcon(node: Node) {
-    let icon = node.getProtectionIconDOM();
-    if (!node.protected) {
-      icon?.remove();
-      return;
-    }
-
-    if (!icon) {
-      icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      icon.textContent = 'lock';
-      icon.classList.add('protected-icon', 'material-icons');
-      node.dom.appendChild(icon);
-    }
-    icon.style.setProperty('fill', node.colors.name);
-    icon.setAttribute('y', (-node.dimensions.height + 30).toString());
-    icon.setAttribute('x', (node.dimensions.width / 2).toString());
-  }
-
-  /**
-   * Update the node image position.
-   * @param {Node} node
-   */
-  public updateImagePosition(node: Node) {
-    // An image that failed to load keeps its value but has no element.
-    const image = node.dom.querySelector('image');
-    if (!image) return;
-    const y = -(image.getBBox().height + node.dimensions.height / 2 + 5);
-    image.setAttribute('y', y.toString());
-  }
-
-  /**
-   * Update the node link position.
-   * @param {Node} node
-   */
-  public updateLinkPosition(node: Node) {
-    if (isSafeLinkHref(node.link.href)) {
-      const link = node.getLinkDOM(),
-        y = node.dimensions.height;
-      link.setAttribute('y', y.toString());
-    }
+  public blurName(node: Node) {
+    this.nameOf(node)?.blur();
   }
 
   /**
@@ -573,8 +259,10 @@ export default class Draw implements NodeView {
   public enableNodeNameEditing(node: Node) {
     if (this.map.nodes.refusesLocalChange(node)) return;
 
-    this.editing = true;
-    const name = node.getNameDOM();
+    const name = this.nameOf(node);
+    if (!name) return;
+
+    this.editingId = node.id;
     name.setAttribute('contenteditable', 'true');
     name.innerHTML = DOMPurify.sanitize(node.name);
 
@@ -582,14 +270,8 @@ export default class Draw implements NodeView {
 
     name.style.setProperty('cursor', 'auto');
 
-    this.updateNodeShapes(node);
-
     name.ondblclick = name.onmousedown = event => {
       event.stopPropagation();
-    };
-
-    name.oninput = () => {
-      this.updateNodeShapes(node);
     };
 
     // Allow only some shortcuts.
@@ -638,105 +320,308 @@ export default class Draw implements NodeView {
     };
 
     name.onblur = () => {
-      this.editing = false;
-
-      if (name.innerHTML !== node.name) {
-        this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML));
-      }
-      // Write node.name back, so the DOM drops the typed text when a peer
-      // protected the branch during the edit and updateNode refused it.
-      name.innerHTML = DOMPurify.sanitize(node.name);
-      this.updateNodeShapes(node);
+      this.editingId = null;
 
       name.ondblclick =
         name.onmousedown =
         name.onblur =
         name.onkeydown =
-        name.oninput =
         name.onpaste =
           null;
 
       name.setAttribute('contenteditable', 'false');
       name.style.setProperty('cursor', 'pointer');
 
-      name.blur();
+      if (name.innerHTML !== node.name) {
+        this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML));
+      }
+      // Draw node.name back, so the DOM drops the typed text when a peer
+      // protected the branch during the edit and updateNode refused it.
+      this.render(this.nodeGroupsOf([node]), this.branchPathsOf([node]));
     };
   }
 
   /**
-   * Check if given node has hidden children and render the eye icon if so
-   * @param {Node} node
+   * Draw, measure and finish the given node groups and branches. Each step
+   * passes over all of them, so no size is read between two writes.
    */
-  private updateHiddenChildrenIcon(node: Node) {
-    if (node.hasHiddenChildNodes) {
-      this.setHiddenChildrenIcon(node);
-    } else {
-      this.removeHiddenChildrenIcon(node);
-    }
+  private render(groups: NodeGroups, branches: BranchPaths) {
+    const context = this.partContext();
+
+    groups
+      .attr('transform', translate)
+      .style('visibility', node => (node.hidden ? 'hidden' : 'visible'));
+    NODE_PARTS.forEach(part => part.draw(groups, context));
+    this.observe(groups);
+    branches
+      .style('fill', node => node.colors.branch)
+      .style('stroke', node => node.colors.branch)
+      .style('visibility', node => (node.hidden ? 'hidden' : 'visible'));
+
+    this.measure(groups);
+
+    this.finish(groups, branches, context);
   }
 
   /**
-   * Update node name container (foreign object) dimensions.
-   * @param {Node} node
+   * Measure the names of nodes whose size changed after their last render
+   * and finish those nodes.
+   * @param {Node[]} nodes
    */
-  private updateNodeNameContainer(node: Node) {
-    const name = node.getNameDOM(),
-      foreignObject: SVGForeignObjectElement =
-        name?.parentNode as SVGForeignObjectElement;
+  private resize(nodes: Node[]) {
+    const changed = this.measure(this.nodeGroupsOf(nodes));
+    if (changed.length === 0) return;
 
-    const [width, height]: number[] = (() => {
-      if (!this.browserIsFirefox()) {
-        // Default case
-        // Text is rendered based on needed width and height
-        // works well at least for chrome and safari
-        name.style.setProperty('width', 'auto');
-        name.style.setProperty('height', 'auto');
-        return [name.clientWidth, name.clientHeight];
-      } else {
-        // More recent versions of firefox seem to render too late to actually fetch the width and height of the dom element.
-        // In these cases, try to approximate height and width before rendering.
-        name.style.setProperty('width', '100%');
-        name.style.setProperty('height', '100%');
-        const { width, height } = estimateTextExtent(
-          name.textContent,
-          node.font.size
-        );
-        return [width, height];
+    this.finish(
+      this.nodeGroupsOf(changed),
+      this.branchPathsOf(changed),
+      this.partContext()
+    );
+  }
+
+  /**
+   * Read the size of every name in the groups in one pass.
+   * @returns {Node[]} the nodes whose size changed
+   */
+  private measure(groups: NodeGroups): Node[] {
+    const changed: Node[] = [];
+
+    nameElements(groups).each((node, i, names) => {
+      const width = names[i].offsetWidth,
+        height = names[i].offsetHeight;
+      // A name the browser has not laid out keeps its estimate.
+      if (width === 0 && height === 0) return;
+
+      const extent = {
+        width: Math.max(width, MIN_TEXT_EXTENT),
+        height: Math.max(height, MIN_TEXT_EXTENT),
+      };
+      const known = this.textExtents.get(node.id);
+      if (known?.width === extent.width && known.height === extent.height) {
+        return;
       }
-    })().map((value: number) => Math.max(value, MIN_TEXT_EXTENT));
+      this.textExtents.set(node.id, extent);
+      changed.push(node);
+    });
 
-    foreignObject.setAttribute('x', (-width / 2).toString());
-    foreignObject.setAttribute('y', (-height / 2).toString());
-    foreignObject.setAttribute('width', width.toString());
-    foreignObject.setAttribute('height', height.toString());
+    return changed;
+  }
+
+  /** Write everything that depends on the size of the nodes. */
+  private finish(
+    groups: NodeGroups,
+    branches: BranchPaths,
+    context: PartContext
+  ) {
+    NODE_PARTS.forEach(part => part.finish(groups, context));
+    branches.attr('d', node => this.branchShape(node));
+  }
+
+  private partContext(): PartContext {
+    return {
+      textExtentOf: node => this.textExtentOf(node),
+      dimensionsOf: this.dimensionsOf,
+      ringOf: node => this.ringOf(node),
+      imageOf: node => this.imageOf(node),
+      isEditing: node => this.editingId === node.id,
+      fontFamily: this.map.options.fontFamily,
+      showLinktext: this.map.options.showLinktext,
+    };
+  }
+
+  private textExtentOf(node: Node): MapNodeDimensions {
+    return (
+      this.textExtents.get(node.id) ??
+      measureTextExtent(node.name, {
+        ...node.font,
+        family: this.map.options.fontFamily,
+      })
+    );
   }
 
   /**
-   * Create a string with HTML of the node name div.
+   * The loaded image of the node. Starts loading an image the node shows
+   * for the first time, and renders the node again once the load ends.
    * @param {Node} node
-   * @returns {string} html
    */
-  private createNodeNameDOM(node: Node) {
-    const div = document.createElement('div');
+  private imageOf(node: Node): LoadedImage | null {
+    const src = node.image.src;
+    const known = this.images.get(node.id);
+    if (known?.src === src) {
+      return known.ratio === null
+        ? null
+        : { url: known.url, ratio: known.ratio };
+    }
 
-    div.style.setProperty('font-size', node.font.size + 'px');
-    div.style.setProperty('color', node.colors.name);
-    div.style.setProperty('font-style', node.font.style);
-    div.style.setProperty('font-weight', node.font.weight);
+    this.images.delete(node.id);
+    const url = this.imageUrlOf(src);
+    if (url === null) return null;
 
-    div.style.setProperty('touch-action', 'none');
-    div.style.setProperty('display', 'inline-block');
-    div.style.setProperty('white-space', 'pre');
-    div.style.setProperty('width', 'auto');
-    div.style.setProperty('height', 'auto');
-    div.style.setProperty('font-family', this.map.options.fontFamily);
-    div.style.setProperty('text-align', 'center');
-    // fix against cursor jumping out of nodes on firefox if empty
-    div.style.setProperty('min-width', '20px');
+    const load: ImageLoad = { src, url, ratio: null };
+    this.images.set(node.id, load);
 
-    div.innerHTML = DOMPurify.sanitize(node.name);
+    const image = new Image();
+    image.src = url;
+    const settle = (ratio: number | null) => {
+      // A newer image replaced this one while it loaded.
+      if (this.images.get(node.id) !== load) return;
+      // A failed image stays hidden and keeps its value: clearing it would
+      // erase the image in the Y.Doc for every client on a network error.
+      load.ratio = ratio;
+      this.render(this.nodeGroupsOf([node]), this.branchPathsOf([]));
+    };
+    image.onload = () => settle(image.width / image.height);
+    image.onerror = () => settle(null);
 
-    return div.outerHTML;
+    return null;
+  }
+
+  /**
+   * Returns the URL an image value loads from: the resolved URL of a
+   * reference, a base64 raster data URL as is, or null for any other value.
+   */
+  private imageUrlOf(src: string): string | null {
+    if (isImageReference(src)) {
+      return this.map.options.resolveImageUrl?.(src) ?? null;
+    }
+    return isImageDataUrl(src) ? src : null;
+  }
+
+  /**
+   * The shape of the branch from the node's parent to the node, null for a
+   * node without a parent.
+   * @param {Node} node
+   */
+  private branchShape(node: Node): string | null {
+    if (node.parent === null) return null;
+
+    const parent = node.parent,
+      { width: nodeWidth, height: nodeHeight } = this.dimensionsOf(node),
+      path = d3.path(),
+      level = node.getLevel(),
+      width = 22 - (level < 6 ? level : 6) * 3,
+      mx = (parent.coordinates.x + node.coordinates.x) / 2,
+      ory = parent.coordinates.y < node.coordinates.y + nodeHeight / 2 ? -1 : 1,
+      orx = parent.coordinates.x > node.coordinates.x ? -1 : 1,
+      inv = orx * ory;
+
+    path.moveTo(parent.coordinates.x, parent.coordinates.y - width * 0.8);
+    path.bezierCurveTo(
+      mx - width * inv,
+      parent.coordinates.y - width / 2,
+      parent.coordinates.x - (width / 2) * inv,
+      node.coordinates.y + nodeHeight / 2 - width / 3,
+      node.coordinates.x - (nodeWidth / 3) * orx,
+      node.coordinates.y + nodeHeight / 2 + 3
+    );
+    path.bezierCurveTo(
+      parent.coordinates.x + (width / 2) * inv,
+      node.coordinates.y + nodeHeight / 2 + width / 3,
+      mx + width * inv,
+      parent.coordinates.y + width / 2,
+      parent.coordinates.x,
+      parent.coordinates.y + width * 0.8
+    );
+    path.closePath();
+
+    return path.toString();
+  }
+
+  private nodeGroups(): NodeGroups {
+    return this.layers.nodes.selectChildren<SVGGElement, Node>('g.node');
+  }
+
+  private branchPaths(): BranchPaths {
+    return this.layers.branches.selectChildren<SVGPathElement, Node>(
+      'path.branch'
+    );
+  }
+
+  private nodeGroupsOf(nodes: Node[]): NodeGroups {
+    const ids = new Set(nodes.map(node => node.id));
+    return this.nodeGroups().filter(node => ids.has(node.id));
+  }
+
+  /** The branches of the nodes and of their children. */
+  private branchPathsOf(nodes: Node[]): BranchPaths {
+    const ids = new Set(nodes.map(node => node.id));
+    return this.branchPaths().filter(
+      node =>
+        ids.has(node.id) || (node.parent !== null && ids.has(node.parent.id))
+    );
+  }
+
+  private nameOf(node: Node): HTMLDivElement | null {
+    return nameElements(this.nodeGroupsOf([node])).node();
+  }
+
+  private enterNodes(
+    enter: d3.Selection<d3.EnterElement, Node, d3.BaseType, unknown>
+  ): NodeGroups {
+    const groups = enter
+      .append('g')
+      .attr('class', 'node')
+      .style('cursor', 'pointer')
+      .style('touch-action', 'none')
+      .on('dblclick', (event: MouseEvent, node: Node) => {
+        if (!this.map.options.edit) return;
+
+        event.stopPropagation();
+        this.enableNodeNameEditing(node);
+      })
+      .on(
+        'touchstart',
+        (event: TouchEvent, node: Node) => {
+          if (!this.map.options.edit) return false;
+          // When not clicking a link and not in edit mode, disable all mobile native touch events
+          // A single tap is supposed to move the node in this application
+          if (!this.isLinkTarget(event) && this.editingId === null) {
+            event.preventDefault();
+          }
+
+          // a single tap should enter moving node mode - not a selection
+          if (!this.tappedTwice) {
+            this.tappedTwice = true;
+
+            setTimeout(() => {
+              this.tappedTwice = false;
+            }, 300);
+
+            return false;
+          }
+
+          this.enableNodeNameEditing(node);
+        },
+        { passive: false }
+      );
+
+    if (this.map.options.drag === true) {
+      groups.call(this.map.drag.getDragBehavior());
+    } else {
+      groups.on('mousedown', (_event: MouseEvent, node: Node) => {
+        this.map.nodes.selectNode(node.id);
+      });
+    }
+
+    return groups;
+  }
+
+  /** Observe the names of the groups that are drawn for the first time. */
+  private observe(groups: NodeGroups) {
+    if (!this.resizeObserver) return;
+
+    nameElements(groups).each((_node, i, names) => {
+      if (this.observed.has(names[i])) return;
+      this.observed.add(names[i]);
+      this.resizeObserver?.observe(names[i]);
+    });
+  }
+
+  private exitNodes(exit: NodeGroups) {
+    nameElements(exit).each((_node, i, names) =>
+      this.resizeObserver?.unobserve(names[i])
+    );
+    exit.remove();
   }
 
   /**
@@ -747,44 +632,8 @@ export default class Draw implements NodeView {
   private isLinkTarget(event: TouchEvent): boolean {
     return (event.target as Element).classList[0] === 'link-text';
   }
+}
 
-  /**
-   * Checks if the browser is firefox
-   * @returns {boolean}
-   */
-  private browserIsFirefox(): boolean {
-    return navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-  }
-
-  /**
-   * Truncates Text to a maximum Length
-   * @param text
-   * @param maxLength
-   */
-  private truncateText(text: string, maxLength = 50): string {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength - 3) + '...';
-  }
-
-  /**
-   * Set linktext or link icon based on options
-   * @param domText The dom element for the linktext
-   * @param node The node that should be modified
-   */
-  private updateLinkStyle(domText: SVGTextElement, node: Node) {
-    domText.classList.add('link-text');
-    const showLinktext = this.map.options.showLinktext;
-    if (showLinktext) {
-      domText.textContent = this.truncateText(node.link.href);
-      domText.classList.remove('material-icons');
-      domText.style.setProperty('text-decoration', 'underline');
-      domText.style.setProperty('font-style', 'italic');
-    } else {
-      domText.textContent = 'link';
-      domText.classList.add('material-icons');
-    }
-    domText.style.setProperty('fill', node.colors.link);
-    domText.setAttribute('y', node.dimensions.height.toString());
-    domText.setAttribute('text-anchor', 'middle');
-  }
+function translate(node: Node): string {
+  return 'translate(' + node.coordinates.x + ',' + node.coordinates.y + ')';
 }

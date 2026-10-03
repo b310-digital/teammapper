@@ -147,6 +147,12 @@ admin the delete action. The map list, which the settings' third tab and the
 start page both show, offers the same delete action for every listed map whose
 admin id the browser holds, open or not.
 
+### Node part
+
+One visual element of a drawn node: its background, name, image, link, hidden
+eye icon or lock badge. The renderer in `packages/mmp` draws every node from
+the parts in `NODE_PARTS`, so a new visual element is a new part. A coined term.
+
 ## What you can do to a map
 
 ### Add, remove, select, deselect

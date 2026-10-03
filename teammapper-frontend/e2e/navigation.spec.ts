@@ -25,7 +25,7 @@ test.describe('info dialog', () => {
   });
 
   const dialog = (page: Page) => page.locator('mat-dialog-container');
-  const nodes = (page: Page) => page.locator('.map [class$="_node"]');
+  const nodes = (page: Page) => page.locator('.map g.node');
 
   test('info button opens the dialog with the shortcut list', async ({
     page,
