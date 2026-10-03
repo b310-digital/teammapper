@@ -191,7 +191,7 @@ export type NodePropertyValue =
 export interface NodeUpdateEvent {
   nodeProperties: ExportNodeProperties;
   previousValue: unknown;
-  changedProperty: NodeProperty | string;
+  changedProperty: NodeProperty;
 }
 
 export interface MapCreateEvent {

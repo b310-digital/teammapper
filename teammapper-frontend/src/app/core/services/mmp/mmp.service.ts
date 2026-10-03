@@ -13,6 +13,7 @@ import {
   MapOptions,
   MapSnapshot,
   MmpEventPayloadMap,
+  MmpEventType,
   NodeProperty,
   NodePropertyValue,
   UserNodeProperties,
@@ -143,8 +144,7 @@ export class MmpService implements OnDestroy {
   public remove() {
     if (!this.currentMap) return;
 
-    this.currentMap.instance.unsubscribeAll();
-    this.currentMap.instance.remove();
+    this.currentMap.instance.destroy();
     this.currentMap = null;
   }
 
@@ -264,14 +264,12 @@ export class MmpService implements OnDestroy {
   /**
    * Return the subscribe of the mind mmp event with the node or nothing.
    */
-  public on<K extends keyof MmpEventPayloadMap>(
+  public on<K extends MmpEventType>(
     event: K
-  ): Observable<MmpEventPayloadMap[K]>;
-  public on<T = unknown>(event: string): Observable<T>;
-  public on(event: string): Observable<unknown> {
+  ): Observable<MmpEventPayloadMap[K]> {
     return new Observable(observer => {
-      this.map.instance.on(event, (args: unknown) => {
-        observer.next(args);
+      this.map.instance.on(event, payload => {
+        observer.next(payload);
       });
     });
   }
@@ -375,12 +373,8 @@ export class MmpService implements OnDestroy {
   /**
    * Highlights a node
    */
-  public highlightNode(
-    nodeId: string,
-    color: string,
-    notifyWithEvent = true
-  ): void {
-    return this.map.instance.highlightNode(nodeId, color, notifyWithEvent);
+  public highlightNode(nodeId: string, color: string): void {
+    this.map.instance.highlightNode(nodeId, color);
   }
 
   /**

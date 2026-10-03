@@ -38,7 +38,7 @@ describe('MmpService', () => {
   const mockMap = {
     instance: {
       unsubscribeAll: jest.fn(),
-      remove: jest.fn(),
+      destroy: jest.fn(),
       new: jest.fn(),
       zoomIn: jest.fn(),
       zoomOut: jest.fn(),
@@ -179,13 +179,12 @@ describe('MmpService', () => {
       await service.create('test-id', document.createElement('div'));
       service.remove();
 
-      expect(mockMap.instance.unsubscribeAll).toHaveBeenCalled();
-      expect(mockMap.instance.remove).toHaveBeenCalled();
+      expect(mockMap.instance.destroy).toHaveBeenCalled();
     });
 
     it('should do nothing if no map exists', () => {
       service.remove();
-      expect(mockMap.instance.unsubscribeAll).not.toHaveBeenCalled();
+      expect(mockMap.instance.destroy).not.toHaveBeenCalled();
     });
   });
 

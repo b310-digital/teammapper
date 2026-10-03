@@ -13,15 +13,14 @@ function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
  * out, so it never counts as its own sibling.
  */
 function placementOf(node: Node, existing: Node[]): MapNodeCoordinates {
-  const handler = new Nodes({
-    rootId: 'root',
-  } as unknown as MmpMap) as unknown as {
-    nodes: Map<string, Node>;
-    calculateCoordinates(node: Node): MapNodeCoordinates;
-  };
-  handler.nodes = new Map([...existing, node].map(each => [each.id, each]));
+  const handler = new Nodes({ rootId: 'root' } as unknown as MmpMap);
+  [...existing, node].forEach(each => handler.setNode(each));
 
-  return handler.calculateCoordinates(node);
+  return (
+    handler as unknown as {
+      calculateCoordinates(node: Node): MapNodeCoordinates;
+    }
+  ).calculateCoordinates(node);
 }
 
 describe('calculateCoordinates', () => {

@@ -3,7 +3,6 @@ import Nodes from './nodes.js';
 import MmpMap from '../map.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
-import { Event } from './events.js';
 import type { Bounds } from './node-geometry.js';
 import { NEW_TREE_GAP, treeBounds } from './tree-placement.js';
 import type {
@@ -39,7 +38,7 @@ function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
  * has a left-hand child with a grandchild and a right-hand child.
  */
 function makeMap(view: Bounds | null = null) {
-  const events = { call: jest.fn() };
+  const events = { emit: jest.fn() };
   // `view` is the visible area the zoom stub reports. The default null stands
   // for jsdom's svg, which has no size.
   const zoom = { visibleArea: jest.fn(() => view), panIntoView: jest.fn() };
@@ -87,7 +86,7 @@ function makeMap(view: Bounds | null = null) {
   });
 
   const tree = { root, branch, second, left, grandchild, right };
-  Object.values(tree).forEach(node => nodes.setNode(node.id, node));
+  Object.values(tree).forEach(node => nodes.setNode(node));
 
   const clipboard = new CopyPaste(map);
 
@@ -99,11 +98,9 @@ function ids(nodes: Node[]): string[] {
 }
 
 /** The nodes the last paste created, read from its paste event. */
-function pastedNodes(nodes: Nodes, events: { call: jest.Mock }): Node[] {
-  const call = events.call.mock.calls.find(
-    ([event]) => event === Event.nodePaste
-  );
-  const pasted = (call?.[2] ?? []) as ExportNodeProperties[];
+function pastedNodes(nodes: Nodes, events: { emit: jest.Mock }): Node[] {
+  const call = events.emit.mock.calls.find(([event]) => event === 'nodePaste');
+  const pasted = (call?.[1] ?? []) as ExportNodeProperties[];
 
   return pasted.map(properties => nodes.getNode(properties.id) as Node);
 }
@@ -273,8 +270,8 @@ describe('pasteTree', () => {
       parent: inner,
       coordinates: { x: 1050, y: -360 },
     });
-    context.nodes.setNode(inner.id, inner);
-    context.nodes.setNode(innermost.id, innermost);
+    context.nodes.setNode(inner);
+    context.nodes.setNode(innermost);
     context.clipboard.copy('right');
     const expectedRoot = context.nodes.newTreeCoordinates();
 
@@ -330,10 +327,10 @@ describe('pasteTree', () => {
     clipboard.pasteTree();
     clipboard.pasteTree();
 
-    const pasteCalls = events.call.mock.calls.filter(
-      ([event]) => event === Event.nodePaste
+    const pasteCalls = events.emit.mock.calls.filter(
+      ([event]) => event === 'nodePaste'
     );
-    const roots = pasteCalls.map(([, , pasted]) => {
+    const roots = pasteCalls.map(([, pasted]) => {
       const [first] = pasted as ExportNodeProperties[];
       return nodes.getNode(first.id);
     });

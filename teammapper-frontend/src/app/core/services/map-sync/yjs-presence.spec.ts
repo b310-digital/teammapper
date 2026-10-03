@@ -171,11 +171,7 @@ describe('YjsSyncService presence', () => {
           [PEER_ID]: { color: '#0000ff', nodeId: '' },
         })
       );
-      expect(mmpService.highlightNode).toHaveBeenCalledWith(
-        'branch',
-        '',
-        false
-      );
+      expect(mmpService.highlightNode).toHaveBeenCalledWith('branch', '');
     });
   });
 });

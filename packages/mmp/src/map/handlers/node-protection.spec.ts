@@ -5,7 +5,6 @@ import Nodes from './nodes.js';
 import MmpMap from '../map.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
-import { Event } from './events.js';
 import type {
   ExportNodeProperties,
   MapNodeCoordinates,
@@ -44,7 +43,7 @@ function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
 
 /** root -> a -> b, root -> c, with `a` protected. */
 function makeMap() {
-  const events = { call: jest.fn() };
+  const events = { emit: jest.fn() };
   const map = {
     id: 'map',
     rootId: 'root',
@@ -55,6 +54,7 @@ function makeMap() {
       updateNodeShapes: jest.fn(),
       updateProtectionIcon: jest.fn(),
       drawBranch: jest.fn(() => null),
+      renderNodeProperty: jest.fn(),
     },
     history: { save: jest.fn() },
     events,
@@ -76,18 +76,18 @@ function makeMap() {
   const b = makeNode({ id: 'b', parent: a, coordinates: { x: 400, y: 0 } });
   const c = makeNode({ id: 'c', parent: root, coordinates: { x: -200, y: 0 } });
   const tree = { root, a, b, c };
-  Object.values(tree).forEach(node => nodes.setNode(node.id, node));
+  Object.values(tree).forEach(node => nodes.setNode(node));
 
   return { map, nodes, tree, events, clipboard: new CopyPaste(map) };
 }
 
-function calls(events: { call: jest.Mock }, event: Event): unknown[][] {
-  return events.call.mock.calls.filter(([name]) => name === event);
+function calls(events: { emit: jest.Mock }, event: string): unknown[][] {
+  return events.emit.mock.calls.filter(([name]) => name === event);
 }
 
-function refusals(events: { call: jest.Mock }): string[] {
-  return calls(events, Event.nodeProtected).map(
-    ([, , properties]) => (properties as ExportNodeProperties).id
+function refusals(events: { emit: jest.Mock }): string[] {
+  return calls(events, 'nodeProtected').map(
+    ([, properties]) => (properties as ExportNodeProperties).id
   );
 }
 
@@ -133,8 +133,8 @@ describe('protectBranch', () => {
 
     nodes.protectBranch('root');
 
-    const changed = calls(events, Event.nodeUpdate).map(
-      ([, , update]) =>
+    const changed = calls(events, 'nodeUpdate').map(
+      ([, update]) =>
         (update as { nodeProperties: ExportNodeProperties }).nodeProperties.id
     );
     expect(changed).toEqual(['a', 'root']);
@@ -191,7 +191,7 @@ describe('local edits inside a protected branch', () => {
   it('refuses removing an ancestor of a protected node', () => {
     const { nodes, tree, events } = makeMap();
     const d = makeNode({ id: 'd', parent: tree.root });
-    nodes.setNode(d.id, d);
+    nodes.setNode(d);
     tree.a.parent = d;
 
     nodes.removeNode('d');
@@ -278,7 +278,7 @@ describe('changes that stay allowed', () => {
 
     clipboard.paste('c');
 
-    const pasted = (calls(events, Event.nodePaste)[0][2] ??
+    const pasted = (calls(events, 'nodePaste')[0][1] ??
       []) as ExportNodeProperties[];
     expect(pasted).toHaveLength(2);
     expect(pasted.every(node => node.protected === false)).toBe(true);
@@ -293,7 +293,7 @@ describe('drag', () => {
     drag(map, tree.b, 50, 50);
 
     expect(tree.b.coordinates).toEqual({ x: 400, y: 0 });
-    expect(calls(events, Event.nodeUpdate)).toHaveLength(0);
+    expect(calls(events, 'nodeUpdate')).toHaveLength(0);
     expect(refusals(events)).toEqual(['b']);
   });
 

@@ -499,10 +499,7 @@ export class YjsSyncService {
     if (!yNode) return;
 
     this.doc.transact(() => {
-      const topLevelKey =
-        NodePropertyMapping[
-          event.changedProperty as keyof typeof NodePropertyMapping
-        ][0];
+      const topLevelKey = NodePropertyMapping[event.changedProperty][0];
       const value =
         event.nodeProperties[topLevelKey as keyof ExportNodeProperties];
       yNode.set(topLevelKey, value);
@@ -818,7 +815,7 @@ export class YjsSyncService {
     for (const nodeId of nodeIds) {
       if (!this.mmpService.existNode(nodeId)) continue;
       const color = this.ctx.colorForNode(nodeId);
-      this.mmpService.highlightNode(nodeId, color, false);
+      this.mmpService.highlightNode(nodeId, color);
     }
   }
 }

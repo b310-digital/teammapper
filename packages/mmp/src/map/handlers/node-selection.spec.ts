@@ -35,12 +35,11 @@ function selectionAfterBranchMove(
 ): string[] {
   const handler = new Nodes({ rootId: ROOT.id } as unknown as MmpMap);
   const internals = handler as unknown as {
-    nodes: Map<string, Node>;
     moveSelectionOnBranch(selected: Node, direction: boolean): void;
   };
 
   for (const node of [ROOT, LEFT_CHILD, LEFT_GRANDCHILD, RIGHT_CHILD]) {
-    internals.nodes.set(node.id, node);
+    handler.store.set(node);
   }
 
   const selectNode = jest.fn();

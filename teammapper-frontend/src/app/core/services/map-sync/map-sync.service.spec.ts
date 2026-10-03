@@ -7,7 +7,6 @@ import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import { createMockUtilsService } from '../../../../test/mocks/utils-service.mock';
-import { Observable } from 'rxjs';
 import { ExportNodeProperties, UserSettings } from '@teammapper/shared';
 import { YjsSyncService } from './yjs-sync.service';
 import { MapSyncContext } from './map-sync-context';
@@ -85,7 +84,7 @@ describe('MapSyncService', () => {
     const subscribeMock = jest.fn().mockReturnValue({ unsubscribe: jest.fn() });
     mmpService.on.mockReturnValue({
       subscribe: subscribeMock,
-    } as unknown as Observable<unknown>);
+    } as unknown as ReturnType<MmpService['on']>);
 
     mmpService.getRootNode.mockReturnValue(
       createMockNode({ id: 'root', name: 'Root', isRoot: true })

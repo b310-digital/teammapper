@@ -1,0 +1,514 @@
+import * as d3 from 'd3';
+import { create } from '../index.js';
+import MmpMap from './map.js';
+import type {
+  ExportNodeProperties,
+  MapSnapshot,
+  NodeProperty,
+  NodeUpdateEvent,
+  OldMmpNode,
+} from '@teammapper/shared';
+
+/**
+ * The frontend reaches the library through `MmpInstance` alone, so these specs
+ * drive a real map through it: every node property, the protection and the
+ * events.
+ */
+
+const IMAGE_REFERENCE = 'image:5f0c4b1e-3a8d-4c6e-9f2a-7b1d2e3f4a5b';
+
+function makeMap(): MmpMap {
+  const ref = document.createElement('div');
+  document.body.appendChild(ref);
+  const map = create('map', ref);
+  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
+  map.dom.svg.attr('viewBox', '0 0 800 600');
+  map.instance.new();
+  return map;
+}
+
+/** The main root with one child, which the map selects. */
+function makeMapWithChild() {
+  const map = makeMap();
+  const child = map.instance.addNode({ name: 'child' });
+  if (!child) throw new Error('addNode added no child');
+  map.instance.selectNode(child.id);
+  return { map, child: child.id };
+}
+
+function exported(map: MmpMap, id: string): ExportNodeProperties {
+  const node = map.instance.exportAsJSON().find(n => n.id === id);
+  if (!node) throw new Error('no node ' + id);
+  return node;
+}
+
+function nodeDom(id: string): SVGGElement {
+  const dom = document.getElementById(id);
+  if (!(dom instanceof SVGGElement)) throw new Error('no dom for ' + id);
+  return dom;
+}
+
+function nameDom(id: string): HTMLDivElement {
+  const div = nodeDom(id).querySelector('foreignObject > div');
+  if (!(div instanceof HTMLDivElement)) throw new Error('no name for ' + id);
+  return div;
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === 'object') {
+    Object.values(value).forEach(deepFreeze);
+    Object.freeze(value);
+  }
+  return value;
+}
+
+afterEach(() => {
+  document.body.innerHTML = '';
+});
+
+interface PropertyCase {
+  property: NodeProperty;
+  value: unknown;
+  read: (node: ExportNodeProperties) => unknown;
+  rendered?: (id: string) => unknown;
+}
+
+const PROPERTY_CASES: PropertyCase[] = [
+  {
+    property: 'name',
+    value: 'Renamed',
+    read: n => n.name,
+    rendered: id => nameDom(id).innerHTML,
+  },
+  {
+    property: 'coordinates',
+    value: { x: 320, y: 140 },
+    read: n => n.coordinates,
+    rendered: id => nodeDom(id).getAttribute('transform'),
+  },
+  {
+    property: 'imageSrc',
+    value: IMAGE_REFERENCE,
+    read: n => n.image?.src,
+  },
+  {
+    property: 'linkHref',
+    value: 'https://example.com/',
+    read: n => n.link?.href,
+    rendered: id => nodeDom(id).querySelector('a')?.getAttribute('href'),
+  },
+  {
+    property: 'backgroundColor',
+    value: '#ff0000',
+    read: n => n.colors?.background,
+    rendered: id => nodeDom(id).querySelector('path')?.style.fill,
+  },
+  {
+    property: 'branchColor',
+    value: '#00ff00',
+    read: n => n.colors?.branch,
+    rendered: id => document.getElementById(id + '_branch')?.style.stroke,
+  },
+  {
+    property: 'nameColor',
+    value: '#0000ff',
+    read: n => n.colors?.name,
+    rendered: id => nameDom(id).style.color,
+  },
+  {
+    property: 'fontWeight',
+    value: 'bold',
+    read: n => n.font?.weight,
+    rendered: id => nameDom(id).style.fontWeight,
+  },
+  {
+    property: 'fontStyle',
+    value: 'italic',
+    read: n => n.font?.style,
+    rendered: id => nameDom(id).style.fontStyle,
+  },
+  {
+    property: 'fontSize',
+    value: 24,
+    read: n => n.font?.size,
+    rendered: id => nameDom(id).style.fontSize,
+  },
+  {
+    property: 'hidden',
+    value: true,
+    read: n => n.hidden,
+  },
+  {
+    property: 'protected',
+    value: true,
+    read: n => n.protected,
+    rendered: id => nodeDom(id).querySelector('text.protected-icon') !== null,
+  },
+];
+
+/** What the DOM shows once a property took its case value. */
+const RENDERED: Partial<Record<NodeProperty, unknown>> = {
+  name: 'Renamed',
+  coordinates: 'translate(320,140)',
+  linkHref: 'https://example.com/',
+  backgroundColor: '#ff0000',
+  branchColor: '#00ff00',
+  nameColor: 'rgb(0, 0, 255)',
+  fontWeight: 'bold',
+  fontStyle: 'italic',
+  fontSize: '24px',
+  protected: true,
+};
+
+describe('updateNode', () => {
+  describe.each(PROPERTY_CASES)('$property', ({ property, value, read }) => {
+    it('writes the value to the model', () => {
+      const { map, child } = makeMapWithChild();
+
+      map.instance.updateNode(property, value, true, true, child);
+
+      expect(read(exported(map, child))).toEqual(value);
+    });
+
+    it('announces the change with the previous value', () => {
+      const { map, child } = makeMapWithChild();
+      const previousValue = read(exported(map, child));
+      const updates: NodeUpdateEvent[] = [];
+      map.instance.on('nodeUpdate', event => updates.push(event));
+
+      map.instance.updateNode(property, value, true, true, child);
+
+      expect(updates).toHaveLength(1);
+      expect(updates[0].changedProperty).toBe(property);
+      expect(updates[0].previousValue).toEqual(previousValue);
+      expect(read(updates[0].nodeProperties)).toEqual(value);
+    });
+
+    it('announces nothing when the value stays the same', () => {
+      const { map, child } = makeMapWithChild();
+      map.instance.updateNode(property, value, true, true, child);
+      const listener = jest.fn();
+      map.instance.on('nodeUpdate', listener);
+
+      map.instance.updateNode(property, value, true, true, child);
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('announces nothing without notifyWithEvent', () => {
+      const { map, child } = makeMapWithChild();
+      const listener = jest.fn();
+      map.instance.on('nodeUpdate', listener);
+
+      map.instance.updateNode(property, value, false, true, child);
+
+      expect(listener).not.toHaveBeenCalled();
+      expect(read(exported(map, child))).toEqual(value);
+    });
+  });
+
+  describe.each(PROPERTY_CASES.filter(c => c.rendered))(
+    '$property',
+    ({ property, value, rendered }) => {
+      it('draws the value', () => {
+        const { map, child } = makeMapWithChild();
+
+        map.instance.updateNode(property, value, true, true, child);
+
+        expect(rendered?.(child)).toEqual(RENDERED[property]);
+      });
+    }
+  );
+
+  it('sets the image size of a node with an image', () => {
+    const { map, child } = makeMapWithChild();
+    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, true, true, child);
+
+    map.instance.updateNode('imageSize', 40, true, true, child);
+
+    expect(exported(map, child).image?.size).toBe(40);
+  });
+
+  it('refuses an image size on a node without an image', () => {
+    const { map, child } = makeMapWithChild();
+
+    expect(() =>
+      map.instance.updateNode('imageSize', 40, true, true, child)
+    ).toThrow();
+  });
+
+  it('targets the selected node without an id', () => {
+    const { map, child } = makeMapWithChild();
+
+    map.instance.updateNode('name', 'Selected');
+
+    expect(exported(map, child).name).toBe('Selected');
+  });
+
+  it('refuses a branch color on a root node', () => {
+    const map = makeMap();
+    const root = map.instance.exportRootProperties().id;
+
+    expect(() =>
+      map.instance.updateNode('branchColor', '#00ff00', true, true, root)
+    ).toThrow();
+  });
+
+  it('refuses a property it does not know', () => {
+    const { map, child } = makeMapWithChild();
+
+    expect(() =>
+      map.instance.updateNode('shadow', '1px', true, true, child)
+    ).toThrow();
+  });
+
+  it.each<[NodeProperty, unknown]>([
+    ['backgroundColor', 'red'],
+    ['backgroundColor', 'expression(alert(1))'],
+    ['nameColor', '#fff;background:url(x)'],
+    ['branchColor', 42],
+    ['linkHref', 'javascript:alert(1)'],
+    ['fontSize', 'big'],
+    ['fontWeight', 'x'.repeat(1000)],
+    ['name', 42],
+    ['hidden', 'yes'],
+    ['protected', 1],
+    ['coordinates', { x: 'left', y: 0 }],
+  ])('refuses %s %p and keeps the model', (property, value) => {
+    const { map, child } = makeMapWithChild();
+    const before = exported(map, child);
+
+    expect(() =>
+      map.instance.updateNode(property, value, false, false, child)
+    ).toThrow();
+    expect(exported(map, child)).toEqual(before);
+  });
+
+  it('clears a color, a link and an image with an empty value', () => {
+    const { map, child } = makeMapWithChild();
+    map.instance.updateNode(
+      'linkHref',
+      'https://example.com',
+      true,
+      true,
+      child
+    );
+    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, true, true, child);
+
+    map.instance.updateNode('backgroundColor', '', true, true, child);
+    map.instance.updateNode('linkHref', '', true, true, child);
+    map.instance.updateNode('imageSrc', '', true, true, child);
+
+    const node = exported(map, child);
+    expect(node.colors?.background).toBe('');
+    expect(node.link?.href).toBe('');
+    expect(node.image?.src).toBe('');
+  });
+});
+
+describe('protection', () => {
+  /** root -> parent -> child, with parent protected. */
+  function makeProtectedMap() {
+    const map = makeMap();
+    const parent = map.instance.addNode({ name: 'parent' });
+    if (!parent) throw new Error('addNode added no parent');
+    const child = map.instance.addNode(
+      { name: 'child' },
+      true,
+      true,
+      parent.id
+    );
+    if (!child) throw new Error('addNode added no child');
+    map.instance.protectBranch(parent.id);
+    return { map, parent: parent.id, child: child.id };
+  }
+
+  it.each(
+    PROPERTY_CASES.filter(
+      c => c.property !== 'hidden' && c.property !== 'protected'
+    )
+  )(
+    'refuses a local $property change below it',
+    ({ property, value, read }) => {
+      const { map, child } = makeProtectedMap();
+      const before = read(exported(map, child));
+      const refused: ExportNodeProperties[] = [];
+      map.instance.on('nodeProtected', node => refused.push(node));
+
+      map.instance.updateNode(property, value, true, true, child);
+
+      expect(read(exported(map, child))).toEqual(before);
+      expect(refused.map(node => node.id)).toEqual([child]);
+    }
+  );
+
+  it('applies a remote change below it', () => {
+    const { map, child } = makeProtectedMap();
+
+    map.instance.updateNode('name', 'Remote', false, true, child);
+
+    expect(exported(map, child).name).toBe('Remote');
+  });
+
+  it('still lets a node below it hide', () => {
+    const { map, child } = makeProtectedMap();
+
+    map.instance.updateNode('hidden', true, true, true, child);
+
+    expect(exported(map, child).hidden).toBe(true);
+  });
+
+  it('refuses a local child and a local removal', () => {
+    const { map, parent, child } = makeProtectedMap();
+    const refused = jest.fn();
+    map.instance.on('nodeProtected', refused);
+
+    expect(map.instance.addNode({ name: 'x' }, true, true, parent)).toBeNull();
+    map.instance.removeNode(child);
+
+    expect(map.instance.existNode(child)).toBe(true);
+    expect(map.instance.nodeChildren(parent)).toHaveLength(1);
+    expect(refused).toHaveBeenCalledTimes(2);
+  });
+
+  it('names the protecting node and releases the branch', () => {
+    const { map, parent, child } = makeProtectedMap();
+
+    expect(map.instance.protectingNode(child)).toBe(parent);
+    map.instance.releaseBranch(child);
+
+    expect(map.instance.protectingNode(child)).toBeNull();
+  });
+});
+
+describe('events', () => {
+  it('announces a new node, its selection and its removal', () => {
+    const map = makeMap();
+    const created: string[] = [];
+    const selected: string[] = [];
+    const deselected: string[] = [];
+    const removed: string[] = [];
+    map.instance.on('nodeCreate', node => created.push(node.id));
+    map.instance.on('nodeSelect', node => selected.push(node.id));
+    map.instance.on('nodeDeselect', node => deselected.push(node.id));
+    map.instance.on('nodeRemove', node => removed.push(node.id));
+    const root = map.instance.exportRootProperties().id;
+
+    const node = map.instance.addNode({ name: 'a' });
+    if (!node) throw new Error('addNode added no node');
+    map.instance.updateNode(
+      'backgroundColor',
+      '#ff0000',
+      false,
+      false,
+      node.id
+    );
+    map.instance.selectNode(node.id);
+    map.instance.removeNode(node.id);
+
+    expect(created).toEqual([node.id]);
+    expect(selected).toEqual([node.id]);
+    expect(deselected).toEqual([root, node.id]);
+    expect(removed).toEqual([node.id]);
+  });
+
+  it('hands the previous map to create listeners', () => {
+    const map = makeMap();
+    const previous = map.instance.exportAsJSON();
+    const payloads: (MapSnapshot | undefined)[] = [];
+    map.instance.on('create', event => payloads.push(event.previousMapData));
+
+    map.instance.new(map.instance.exportAsJSON());
+
+    expect(payloads).toEqual([previous]);
+  });
+
+  it('announces a distribute without a payload', () => {
+    const { map } = makeMapWithChild();
+    const listener = jest.fn();
+    map.instance.on('distribute', listener);
+
+    map.instance.distributeNodes();
+
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses an event it does not know', () => {
+    const map = makeMap();
+
+    expect(() =>
+      map.instance.on('nodeHover' as 'nodeSelect', jest.fn())
+    ).toThrow();
+  });
+});
+
+describe('destroy', () => {
+  it('removes the svg, every subscription and the resize listener', () => {
+    const map = makeMap();
+    const ref = map.dom.container.node();
+    const listener = jest.fn();
+    map.instance.on('nodeSelect', listener);
+
+    map.instance.destroy();
+
+    expect(ref?.querySelector('svg')).toBeNull();
+    expect(d3.select(window).on('resize.map')).toBeUndefined();
+    map.events.emit(
+      'nodeSelect',
+      map.nodes.getNodeProperties(map.nodes.getRoot())
+    );
+    expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+describe('new with a snapshot', () => {
+  it('leaves the passed snapshot unchanged when it re-hides a branch', () => {
+    const { map, child } = makeMapWithChild();
+    const root = map.instance.exportRootProperties().id;
+    map.instance.selectNode(root);
+    map.instance.toggleBranchVisibility();
+    const snapshot = map.instance
+      .exportAsJSON()
+      .map(node => ({ ...node, hidden: false, hasHiddenChildNodes: false }));
+    const copy = JSON.parse(JSON.stringify(snapshot));
+
+    map.instance.new(deepFreeze(snapshot));
+
+    expect(snapshot).toEqual(copy);
+    expect(exported(map, child).hidden).toBe(true);
+  });
+
+  it('leaves a legacy snapshot unchanged', () => {
+    const map = makeMap();
+    const legacy: OldMmpNode[] = [
+      {
+        key: 'node0',
+        value: {
+          name: 'Legacy',
+          x: 0,
+          y: 0,
+          k: 1,
+          'background-color': '#ffffff',
+          'text-color': '#000000',
+        },
+      },
+    ];
+    const copy = JSON.parse(JSON.stringify(legacy));
+
+    map.instance.new(deepFreeze(legacy) as unknown as MapSnapshot);
+
+    expect(legacy).toEqual(copy);
+    expect(map.instance.exportAsJSON().map(n => n.name)).toEqual(['Legacy']);
+  });
+
+  it('refuses a snapshot whose node carries an invalid color', () => {
+    const map = makeMap();
+    const snapshot = map.instance
+      .exportAsJSON()
+      .map(node => ({ ...node, colors: { ...node.colors, name: 'red' } }));
+
+    expect(() => map.instance.new(snapshot)).toThrow(
+      'The snapshot is not correct'
+    );
+  });
+});

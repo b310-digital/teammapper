@@ -1,9 +1,11 @@
 import Node, { NodeProperties } from '../models/node.js';
+import NodeStore from '../models/node-store.js';
+import type { NodeView } from './node-view.js';
 import MmpMap from '../map.js';
 import * as d3 from 'd3';
-import DOMPurify from 'dompurify';
+import * as v from 'valibot';
 import { v4 as uuidv4 } from 'uuid';
-import { Event } from './events.js';
+import { CssColorSchema, NodePropertySchemas } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { computeMapLayout, LayoutInputNode } from './layout.js';
@@ -47,7 +49,10 @@ export const PropertyMapping = {
   fontSize: ['font', 'size'],
   nameColor: ['colors', 'name'],
   hidden: ['hidden'],
-} as const;
+} as const satisfies Record<NodeProperty, readonly string[]>;
+
+const isNodeProperty = (property: string): property is NodeProperty =>
+  Object.keys(PropertyMapping).includes(property);
 
 /**
  * Manage the nodes of the map.
@@ -59,14 +64,17 @@ export default class Nodes {
    */
   constructor(map: MmpMap) {
     this.map = map;
-
-    this.nodes = new Map();
   }
   static NodePropertyMapping: typeof PropertyMapping = PropertyMapping;
 
   private map: MmpMap;
 
-  private nodes: Map<string, Node>;
+  public readonly store = new NodeStore();
+
+  /** The view every node change reports to. */
+  private get view(): NodeView {
+    return this.map.draw;
+  }
   // deselectNode sets this to null. A map load selects the main root.
   private selectedNode: Node | null = null;
 
@@ -97,7 +105,7 @@ export default class Nodes {
       node.coordinates.y = coordinates.y || node.coordinates.y;
     }
 
-    this.nodes.set(properties.id, node);
+    this.store.set(node);
 
     this.map.draw.update();
 
@@ -159,7 +167,7 @@ export default class Nodes {
 
     const node: Node = new Node(properties);
 
-    this.nodes.set(properties.id, node);
+    this.store.set(node);
 
     if (
       !properties.coordinates?.x &&
@@ -175,12 +183,9 @@ export default class Nodes {
       this.map.history.save();
     }
 
-    if (notifyWithEvent)
-      this.map.events.call(
-        Event.nodeCreate,
-        node.dom,
-        this.getNodeProperties(node)
-      );
+    if (notifyWithEvent) {
+      this.map.events.emit('nodeCreate', this.getNodeProperties(node));
+    }
     return node;
   };
 
@@ -229,7 +234,7 @@ export default class Nodes {
       }
 
       if (!this.nodeSelectionTo(id)) {
-        const node = this.nodes.get(id);
+        const node = this.store.get(id);
         if (node) {
           const background = node.getBackgroundDOM();
 
@@ -279,11 +284,7 @@ export default class Nodes {
    */
   private announceSelection(node: Node) {
     this.selectedNode = node;
-    this.map.events.call(
-      Event.nodeSelect,
-      node.dom,
-      this.getNodeProperties(node)
-    );
+    this.map.events.emit('nodeSelect', this.getNodeProperties(node));
   }
 
   /**
@@ -314,47 +315,21 @@ export default class Nodes {
     // The blur runs first: the name editor's onblur commits the name through
     // updateNode without an id, which targets the selected node.
     this.selectedNode = null;
-    this.map.events.call(
-      Event.nodeDeselect,
-      previous.dom,
-      this.getNodeProperties(previous)
-    );
+    this.map.events.emit('nodeDeselect', this.getNodeProperties(previous));
   }
 
   /**
-   * Highlighs node with a border
+   * Draw a ring in `color` around the node, as a peer's selection does. A
+   * peer picks its own color, so an invalid one draws nothing.
    * @param {string} id
    * @param {string} color
-   * @returns {void}
    */
-  public highlightNodeWithColor = (
-    id: string,
-    color: string,
-    notifyWithEvent = true
-  ): void => {
-    if (id !== undefined) {
-      if (typeof id !== 'string') {
-        Log.error('The node id must be a string', 'type');
-      }
+  public highlightNodeWithColor = (id: string, color: string): void => {
+    const node = this.store.get(id);
+    if (!node) Log.error('The node id is not correct');
+    if (!v.is(CssColorSchema, color)) return;
 
-      const node = this.nodes.get(id);
-      if (node) {
-        const background = node.getBackgroundDOM();
-
-        if (background.style.stroke !== color) {
-          background.style.stroke = DOMPurify.sanitize(color);
-
-          if (notifyWithEvent)
-            this.map.events.call(
-              Event.nodeUpdate,
-              node.dom,
-              this.getNodeProperties(node)
-            );
-        }
-      } else {
-        Log.error('The node id is not correct');
-      }
-    }
+    node.getBackgroundDOM().style.stroke = color;
   };
 
   /**
@@ -369,7 +344,7 @@ export default class Nodes {
         return false;
       }
 
-      return this.nodes.has(id);
+      return this.store.has(id);
     }
     return false;
   };
@@ -469,79 +444,90 @@ export default class Nodes {
     const node = this.getTargetNode(id);
     if (!node) return;
 
-    if (typeof property !== 'string') {
-      Log.error('The property must be a string', 'type');
+    if (typeof property !== 'string' || !isNodeProperty(property)) {
+      Log.error('The property does not exist');
     }
 
     // Hiding and changing the protection itself stay allowed.
     const guarded = property !== 'protected' && property !== 'hidden';
     if (guarded && this.refusesLocalChange(node, notifyWithEvent)) return;
 
-    let updated: boolean | void = false;
-    const propertyPath =
-      PropertyMapping[property as keyof typeof PropertyMapping];
-    const previousValue: unknown = propertyPath
-      ? Utils.get(node, propertyPath)
-      : undefined;
+    const previousValue = Utils.get(node, PropertyMapping[property]);
+    const nextValue = this.validatedValue(node, property, value);
+    if (Nodes.sameValue(previousValue, nextValue)) return;
 
-    switch (property) {
-      case 'name':
-        updated = this.updateNodeName(node, value as string);
-        break;
-      case 'protected':
-        updated = this.updateNodeProtected(node, value as boolean);
-        break;
-      case 'coordinates':
-        updated = this.updateNodeCoordinatesWithoutDescendants(
-          node,
-          value as MapNodeCoordinates
-        );
-        break;
-      case 'imageSrc':
-        updated = this.updateNodeImageSrc(node, value as string);
-        break;
-      case 'imageSize':
-        updated = this.updateNodeImageSize(node, value as number);
-        break;
-      case 'linkHref':
-        updated = this.updateNodeLinkHref(node, value as string);
-        break;
-      case 'backgroundColor':
-        updated = this.updateNodeBackgroundColor(node, value as string);
-        break;
-      case 'branchColor':
-        updated = this.updateNodeBranchColor(node, value as string);
-        break;
-      case 'fontWeight':
-        updated = this.updateNodeFontWeight(node, value as string);
-        break;
-      case 'fontStyle':
-        updated = this.updateNodeFontStyle(node, value as string);
-        break;
-      case 'fontSize':
-        updated = this.updateNodeFontSize(node, value as number);
-        break;
-      case 'nameColor':
-        updated = this.updateNodeNameColor(node, value as string);
-        break;
-      case 'hidden':
-        updated = this.updateNodeHidden(node, value as boolean);
-        break;
-      default:
-        Log.error('The property does not exist');
-    }
-    if (updated !== false && updateHistory) {
+    this.writeProperty(node, property, nextValue);
+    this.view.renderNodeProperty(node, property);
+
+    if (updateHistory) {
       this.map.history.save();
     }
 
-    if (updated !== false && notifyWithEvent) {
-      this.map.events.call(Event.nodeUpdate, node.dom, {
+    if (notifyWithEvent) {
+      this.map.events.emit('nodeUpdate', {
         nodeProperties: this.getNodeProperties(node),
         changedProperty: property,
         previousValue,
       });
     }
   };
+
+  /**
+   * Check a new value of the property against the shared schema and the
+   * node, and return the value the model takes. An empty value clears a
+   * text property and leaves a number as it is.
+   */
+  private validatedValue(
+    node: Node,
+    property: NodeProperty,
+    value: unknown
+  ): unknown {
+    const result = v.safeParse(NodePropertySchemas[property], value);
+    if (!result.success) {
+      Log.error(`The value of ${property} is not valid`, 'type');
+    }
+
+    if (property === 'imageSize' && node.image.src === '') {
+      Log.error('The node does not have an image');
+    }
+
+    const previousValue = Utils.get(node, PropertyMapping[property]);
+    const nextValue =
+      result.output ?? (typeof previousValue === 'string' ? '' : previousValue);
+
+    // A remote colors sync sends the branch color with the other colors,
+    // unchanged, so a root accepts its own value without an error.
+    if (
+      property === 'branchColor' &&
+      !node.parent &&
+      nextValue !== node.colors.branch
+    ) {
+      Log.error('A root node has no branches');
+    }
+
+    return nextValue;
+  }
+
+  private static sameValue(a: unknown, b: unknown): boolean {
+    if (Utils.isPureObjectType(a) && Utils.isPureObjectType(b)) {
+      return JSON.stringify(a) === JSON.stringify(b);
+    }
+    return a === b;
+  }
+
+  /** Write the value at the property's path in the node model. */
+  private writeProperty(node: Node, property: NodeProperty, value: unknown) {
+    const path = PropertyMapping[property];
+    const key = path[path.length - 1];
+    const owner = path
+      .slice(0, -1)
+      .reduce<Record<string, unknown>>(
+        (target, segment) => target[segment] as Record<string, unknown>,
+        node as unknown as Record<string, unknown>
+      );
+
+    owner[key] = Utils.isPureObjectType(value) ? { ...value } : value;
+  }
 
   /**
    * Remove the selected node.
@@ -554,10 +540,10 @@ export default class Nodes {
     if (this.refusesLocalRemoval(node, notifyWithEvent)) return;
 
     if (!node.isRoot) {
-      this.nodes.delete(node.id);
+      this.store.delete(node.id);
 
       this.getDescendants(node).forEach((node: Node) => {
-        this.nodes.delete(node.id);
+        this.store.delete(node.id);
       });
 
       this.map.draw.clear();
@@ -565,16 +551,13 @@ export default class Nodes {
 
       this.map.history.save();
 
-      if (notifyWithEvent)
-        this.map.events.call(
-          Event.nodeRemove,
-          undefined,
-          this.getNodeProperties(node)
-        );
+      if (notifyWithEvent) {
+        this.map.events.emit('nodeRemove', this.getNodeProperties(node));
+      }
 
       // Deselect only when the removal deleted the selected node or one of
       // its ancestors.
-      if (this.selectedNode && !this.nodes.has(this.selectedNode.id)) {
+      if (this.selectedNode && !this.store.has(this.selectedNode.id)) {
         this.deselectNode();
       } else {
         this.redrawSelectionRing();
@@ -592,15 +575,8 @@ export default class Nodes {
    * @returns {string | null}
    */
   public protectingNode = (id?: string): string | null => {
-    const visited = new Set<Node>();
-    let node = this.getTargetNode(id) ?? null;
-
-    while (node && !visited.has(node)) {
-      if (node.protected) return node.id;
-      visited.add(node);
-      node = node.parent;
-    }
-    return null;
+    const node = this.getTargetNode(id);
+    return node ? (this.store.protectingNode(node)?.id ?? null) : null;
   };
 
   /**
@@ -650,11 +626,7 @@ export default class Nodes {
    * @param {Node} node
    */
   public refuseProtected(node: Node) {
-    this.map.events.call(
-      Event.nodeProtected,
-      node.dom,
-      this.getNodeProperties(node)
-    );
+    this.map.events.emit('nodeProtected', this.getNodeProperties(node));
   }
 
   /**
@@ -801,9 +773,7 @@ export default class Nodes {
    * @returns {Node[]}
    */
   public getChildren(node: Node): Node[] {
-    return Array.from(this.nodes.values()).filter((n: Node) => {
-      return n.parent && n.parent.id === node.id;
-    });
+    return this.store.children(node);
   }
 
   /**
@@ -812,30 +782,15 @@ export default class Nodes {
    * @return {boolean}
    */
   public getOrientation(node: Node): boolean | undefined {
-    if (!node.parent) {
-      return;
-    }
-
-    const root = this.getTreeRoot(node);
-
-    return (node.coordinates?.x ?? 0) < (root.coordinates?.x ?? 0);
+    return this.store.orientation(node);
   }
 
   /**
-   * Return the root of the tree a node belongs to: the ancestor with no
-   * parent. A cycle of ancestors stops at the node that closes it.
+   * Return the root of the tree a node belongs to.
    * @returns {Node} root
    */
   public getTreeRoot(node: Node): Node {
-    const visited = new Set<Node>([node]);
-    let current = node;
-
-    while (current.parent && !visited.has(current.parent)) {
-      current = current.parent;
-      visited.add(current);
-    }
-
-    return current;
+    return this.store.treeRoot(node);
   }
 
   /**
@@ -908,19 +863,14 @@ export default class Nodes {
    * @returns {Node[]} nodes
    */
   public getDescendants(node: Node): Node[] {
-    let nodes: Node[] = [];
-    this.getChildren(node).forEach((node: Node) => {
-      nodes.push(node);
-      nodes = nodes.concat(this.getDescendants(node));
-    });
-    return nodes;
+    return this.store.descendants(node);
   }
 
   /**
    * Return an array of all nodes.
    */
   public getNodes(): Node[] {
-    return Array.from(this.nodes.values());
+    return this.store.all();
   }
 
   /**
@@ -933,8 +883,8 @@ export default class Nodes {
   /**
    * Set a node as a id-value copy.
    */
-  public setNode(key: string, node: Node) {
-    this.nodes.set(key, node);
+  public setNode(node: Node) {
+    this.store.set(node);
   }
 
   /**
@@ -953,7 +903,7 @@ export default class Nodes {
     // longer holds and fire no deselect: its DOM is detached, and a blur there
     // would commit a name edit.
     const selected = this.selectedNode;
-    if (selected && this.nodes.get(selected.id) !== selected) {
+    if (selected && this.store.get(selected.id) !== selected) {
       this.selectedNode = null;
     }
 
@@ -972,7 +922,7 @@ export default class Nodes {
    * Delete all nodes.
    */
   public clear() {
-    this.nodes.clear();
+    this.store.clear();
   }
 
   /**
@@ -980,7 +930,7 @@ export default class Nodes {
    * @returns {Node} rootNode
    */
   public getRoot = (): Node => {
-    const root = this.nodes.get(this.map.rootId);
+    const root = this.store.get(this.map.rootId);
 
     if (root === undefined) {
       Log.error('The map has no root node');
@@ -1000,7 +950,7 @@ export default class Nodes {
         Log.error('The node id must be a string', 'type');
         return undefined;
       }
-      return this.nodes.get(id);
+      return this.store.get(id);
     }
     return undefined;
   };
@@ -1011,18 +961,7 @@ export default class Nodes {
    * @returns {Array<Node>} siblings
    */
   private getSiblings(node: Node): Node[] {
-    if (!node.parent) {
-      return [];
-    }
-
-    const parentChildren: Node[] = this.getChildren(node.parent);
-
-    if (parentChildren.length > 1) {
-      parentChildren.splice(parentChildren.indexOf(node), 1);
-      return parentChildren;
-    }
-
-    return [];
+    return this.store.siblings(node);
   }
 
   /**
@@ -1124,18 +1063,18 @@ export default class Nodes {
 
     // Redrawing the branches costs a full selection pass, so it happens once
     // here rather than once per node as the single-node move path does.
-    this.redrawBranches();
+    this.map.draw.redrawBranches();
     this.map.draw.update();
     this.map.history.save();
 
     if (notifyWithEvent) {
-      this.map.events.call(Event.distribute);
+      this.map.events.emit('distribute', undefined);
     }
   };
 
   /** Move one node, leaving the branch redraw to the caller. */
   private moveNodeTo(id: string, coordinates: MapNodeCoordinates): void {
-    const node = this.nodes.get(id);
+    const node = this.store.get(id);
     if (!node) return;
 
     node.coordinates = { x: coordinates.x, y: coordinates.y };
@@ -1145,21 +1084,8 @@ export default class Nodes {
     );
   }
 
-  private redrawBranches(): void {
-    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
-      'd',
-      (node: Node) => {
-        // A root node has no parent and so no branch to draw. Returning
-        // null makes d3 drop the attribute, as the other redraw paths do.
-        const branch = this.map.draw.drawBranch(node);
-
-        return branch ? branch.toString() : null;
-      }
-    );
-  }
-
   private toLayoutInput(): LayoutInputNode[] {
-    return Array.from(this.nodes.values()).map(node => ({
+    return this.store.all().map(node => ({
       id: node.id,
       parent: node.parent ? node.parent.id : '',
       isRoot: node.isRoot,
@@ -1187,355 +1113,6 @@ export default class Nodes {
       return currentY > lowestY ? current : lowest;
     }, nodes[0]);
   }
-
-  /**
-   * Update the node name with a new value.
-   * @param {Node} node
-   * @param {string} name
-   * @returns {boolean}
-   */
-  private updateNodeName = (node: Node, name: string): boolean => {
-    if (name && typeof name !== 'string') {
-      Log.error('The name must be a string', 'type');
-    }
-
-    if (node.name != name) {
-      node.getNameDOM().innerHTML = DOMPurify.sanitize(name);
-
-      this.map.draw.updateNodeShapes(node);
-
-      node.name = name;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node coordinates with a new value.
-   * The main method for moving nodes is located inside the drag module.
-   * This method acts as a more simpler way of just moving one node.
-   * @param {Node} node
-   * @param {MapNodeCoordinates} coordinates
-   * @returns {boolean}
-   */
-  private updateNodeCoordinatesWithoutDescendants = (
-    initialNode: Node,
-    coordinates: MapNodeCoordinates
-  ): boolean => {
-    // no moving of descendants here
-    const fixedCoordinates = coordinates;
-
-    coordinates = Utils.mergeObjects(
-      initialNode.coordinates,
-      fixedCoordinates,
-      true
-    ) as MapNodeCoordinates;
-
-    if (!(
-      coordinates.x === initialNode.coordinates.x &&
-      coordinates.y === initialNode.coordinates.y
-    )) {
-      initialNode.coordinates = Utils.cloneObject(
-        coordinates
-      ) as MapNodeCoordinates;
-      initialNode.dom.setAttribute(
-        'transform',
-        'translate(' + [coordinates.x, coordinates.y] + ')'
-      );
-
-      d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
-        'd',
-        (node: Node) => {
-          const branch = this.map.draw.drawBranch(node);
-          return branch ? branch.toString() : null;
-        }
-      );
-
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node background color with a new value.
-   * @param {Node} node
-   * @param {string} color
-   * @returns {boolean}
-   */
-  private updateNodeBackgroundColor = (node: Node, color: string): boolean => {
-    if (color && typeof color !== 'string') {
-      Log.error('The background color must be a string', 'type');
-    }
-
-    const sanitizedColor = DOMPurify.sanitize(color);
-
-    if (node.colors.background !== color) {
-      const background = node.getBackgroundDOM();
-
-      background.style.fill = sanitizedColor;
-
-      if (background.style.stroke !== '') {
-        const darker = d3.color(sanitizedColor)?.darker(0.5);
-        if (darker) {
-          background.style.stroke = darker.toString();
-        }
-      }
-
-      node.colors.background = sanitizedColor;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node text color with a new value.
-   * @param {Node} node
-   * @param {string} color
-   * @returns {boolean}
-   */
-  private updateNodeNameColor = (node: Node, color: string): boolean => {
-    if (color && typeof color !== 'string') {
-      Log.error('The text color must be a string', 'type');
-    }
-
-    const sanitizedColor = DOMPurify.sanitize(color);
-
-    if (node.colors.name !== color) {
-      node.getNameDOM().style.color = sanitizedColor;
-
-      node.colors.name = sanitizedColor;
-      this.map.draw.updateProtectionIcon(node);
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node branch color with a new value.
-   * @param {Node} node
-   * @param {string} color
-   * @returns {boolean}
-   */
-  private updateNodeBranchColor = (node: Node, color: string): boolean => {
-    if (color && typeof color !== 'string') {
-      Log.error('The branch color must be a string', 'type');
-    }
-
-    const sanitizedColor = DOMPurify.sanitize(color);
-
-    if (node.parent) {
-      if (node.colors.name !== color) {
-        const branch = document.getElementById(node.id + '_branch');
-
-        if (branch) {
-          branch.style.fill = branch.style.stroke = sanitizedColor;
-        }
-
-        node.colors.branch = sanitizedColor;
-        return true;
-      } else {
-        return false;
-      }
-    } else if (node.colors.branch === sanitizedColor) {
-      // A remote colors sync sends the branch color with the other colors,
-      // unchanged, so a root accepts its own value without an error.
-      return false;
-    } else {
-      Log.error('A root node has no branches');
-    }
-  };
-
-  /**
-   * Update the node font size with a new value.
-   * @param {Node} node
-   * @param {number} size
-   * @returns {boolean}
-   */
-  private updateNodeFontSize = (node: Node, size: number): boolean => {
-    if (size && typeof size !== 'number') {
-      Log.error('The font size must be a number', 'type');
-    }
-
-    if (node.font.size != size) {
-      node.getNameDOM().style.fontSize = size + 'px';
-
-      this.map.draw.updateNodeShapes(node);
-
-      node.font.size = size;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node image size with a new value.
-   * @param {Node} node
-   * @param {number} size
-   * @returns {boolean}
-   */
-  private updateNodeImageSize = (node: Node, size: number): boolean => {
-    if (size && typeof size !== 'number') {
-      Log.error('The image size must be a number', 'type');
-    }
-
-    if (node.image.src !== '') {
-      if (node.image.size !== size) {
-        // An image that failed to load has no element; keep its value and
-        // its new size so the Y.Doc still holds both.
-        const image = node.dom.querySelector('image');
-        if (!image) {
-          node.image.size = size;
-          return true;
-        }
-        const box = image.getBBox(),
-          height = size,
-          width = (box.width * height) / box.height,
-          y = -(height + node.dimensions.height / 2 + 5),
-          x = -width / 2;
-
-        image.setAttribute('height', height.toString());
-        image.setAttribute('width', width.toString());
-        image.setAttribute('y', y.toString());
-        image.setAttribute('x', x.toString());
-
-        node.image.size = height;
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      Log.error('The node does not have an image');
-      return false;
-    }
-  };
-
-  /**
-   * Update the node image src with a new value.
-   * @param {Node} node
-   * @param {string} src
-   * @returns {boolean}
-   */
-  private updateNodeImageSrc = (node: Node, src: string): boolean => {
-    if (src && typeof src !== 'string') {
-      Log.error('The image path must be a string', 'type');
-    }
-
-    if (node.image.src !== src) {
-      node.image.src = src;
-
-      this.map.draw.setImage(node);
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node link href with a new value.
-   * @param {Node} node
-   * @param {string} href
-   * @returns {boolean}
-   */
-  private updateNodeLinkHref = (node: Node, href: string): boolean => {
-    if (href && typeof href !== 'string') {
-      Log.error('The link href must be a string', 'type');
-    }
-
-    if (node.link.href !== href) {
-      node.link.href = href;
-
-      this.map.draw.setLink(node);
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node hidden value
-   * @param {Node} node
-   * @param {boolean} hidden
-   * @returns {boolean}
-   */
-  private updateNodeHidden = (node: Node, hidden: boolean): boolean => {
-    if (hidden && typeof hidden !== 'boolean') {
-      Log.error('The hidden value must be boolean', 'type');
-    }
-
-    if (node.hidden !== hidden) {
-      node.hidden = hidden;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node font style.
-   * @param {Node} node
-   * @param {string} style
-   * @returns {boolean}
-   */
-  private updateNodeFontStyle = (node: Node, style: string): boolean => {
-    if (style && typeof style !== 'string') {
-      Log.error('The font style must be a string', 'type');
-    }
-
-    if (node.font.style !== style) {
-      node.getNameDOM().style.fontStyle = DOMPurify.sanitize(style);
-
-      node.font.style = style;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node font weight.
-   * @param {Node} node
-   * @param {string} weight
-   * @returns {boolean}
-   */
-  private updateNodeFontWeight = (node: Node, weight: string): boolean => {
-    if (weight && typeof weight !== 'string') {
-      Log.error('The font weight must be a string', 'type');
-    }
-
-    if (node.font.weight !== weight) {
-      node.getNameDOM().style.fontWeight = DOMPurify.sanitize(weight);
-
-      this.map.draw.updateNodeShapes(node);
-
-      node.font.weight = weight;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the protection flag of the node and redraw its lock badge.
-   * @param {Node} node
-   * @param {boolean} flag
-   * @returns {boolean}
-   */
-  private updateNodeProtected = (node: Node, flag: boolean): boolean => {
-    if (typeof flag !== 'boolean') {
-      Log.error('The protected value must be a boolean', 'type');
-    }
-
-    if (node.protected === flag) return false;
-
-    node.protected = flag;
-    this.map.draw.updateProtectionIcon(node);
-    return true;
-  };
 
   /**
    * Move the node selection on the level of the selected node (true: up).

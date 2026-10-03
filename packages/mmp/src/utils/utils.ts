@@ -31,21 +31,6 @@ export default class Utils {
   }
 
   /**
-   * Convert an Object to an array.
-   * @param {object} object
-   * @returns {Array}
-   */
-  static fromObjectToArray<T = unknown>(object: Record<string, T>): T[] {
-    const array: T[] = [];
-
-    for (const p in object) {
-      array.push(object[p]);
-    }
-
-    return array;
-  }
-
-  /**
    * Merge two objects.
    * @param {object} object1
    * @param {object} object2

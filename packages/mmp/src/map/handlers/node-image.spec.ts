@@ -48,7 +48,7 @@ function makeMap(resolveImageUrl?: (reference: string) => string | null) {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues, resolveImageUrl },
     draw: { update: jest.fn(), clear: jest.fn() },
-    events: { call: jest.fn() },
+    events: { emit: jest.fn() },
     history: { save: jest.fn() },
   } as unknown as MmpMap;
   const draw = new Draw(map, document.createElement('div'));
@@ -148,7 +148,7 @@ describe('node images', () => {
   it('keeps the reference when the size of an image that failed to load changes', () => {
     const { map, draw } = makeMap(() => '/api/maps/m/images/i');
     const node = makeNode(REFERENCE);
-    map.nodes.setNode(node.id, node);
+    map.nodes.setNode(node);
     draw.setImage(node);
     lastImage().fail();
 

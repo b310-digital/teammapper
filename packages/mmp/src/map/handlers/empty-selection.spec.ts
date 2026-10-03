@@ -3,7 +3,6 @@ import CopyPaste from './copy-paste.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
 import MmpMap from '../map.js';
-import { Event } from './events.js';
 
 /**
  * Deselecting leaves no node selected, the main root included. With nothing
@@ -31,12 +30,16 @@ function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
 }
 
 function makeMap() {
-  const events = { call: jest.fn() };
+  const events = { emit: jest.fn() };
   const history = { save: jest.fn() };
   const map = {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
-    draw: { update: jest.fn(), clear: jest.fn() },
+    draw: {
+      update: jest.fn(),
+      clear: jest.fn(),
+      renderNodeProperty: jest.fn(),
+    },
     events,
     history,
   } as unknown as MmpMap;
@@ -56,14 +59,14 @@ function makeMap() {
     parent: root,
     coordinates: { x: -200, y: 0 },
   });
-  for (const node of [root, branch, other]) handler.setNode(node.id, node);
+  for (const node of [root, branch, other]) handler.setNode(node);
 
   return { map, handler, events, history, nodes: { root, branch, other } };
 }
 
 /** The event names mmp fired, in order. */
-function firedEvents(events: { call: jest.Mock }): string[] {
-  return events.call.mock.calls.map(call => call[0]);
+function firedEvents(events: { emit: jest.Mock }): string[] {
+  return events.emit.mock.calls.map(call => call[0]);
 }
 
 describe('deselectNode', () => {
@@ -80,13 +83,12 @@ describe('deselectNode', () => {
   it('tells listeners which node lost the selection', () => {
     const { handler, events, nodes } = makeMap();
     handler.selectNode(nodes.branch.id);
-    events.call.mockClear();
+    events.emit.mockClear();
 
     handler.deselectNode();
 
-    expect(events.call).toHaveBeenCalledWith(
-      Event.nodeDeselect,
-      nodes.branch.dom,
+    expect(events.emit).toHaveBeenCalledWith(
+      'nodeDeselect',
       expect.objectContaining({ id: nodes.branch.id })
     );
     expect(nodes.branch.getBackgroundDOM().style.stroke).toBe('');
@@ -97,7 +99,7 @@ describe('deselectNode', () => {
 
     handler.deselectNode();
 
-    expect(events.call).not.toHaveBeenCalled();
+    expect(events.emit).not.toHaveBeenCalled();
   });
 });
 
@@ -109,7 +111,7 @@ describe('selectNode with nothing selected', () => {
 
     expect(selected?.id).toBe(nodes.branch.id);
     expect(handler.getSelectedNode()).toBe(nodes.branch);
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
+    expect(firedEvents(events)).toEqual(['nodeSelect']);
   });
 
   it('ignores a direction', () => {
@@ -117,7 +119,7 @@ describe('selectNode with nothing selected', () => {
 
     expect(handler.selectNode('left')).toBeNull();
     expect(handler.selectNode('up')).toBeNull();
-    expect(events.call).not.toHaveBeenCalled();
+    expect(events.emit).not.toHaveBeenCalled();
   });
 });
 
@@ -125,13 +127,13 @@ describe('selectNode from one node to another', () => {
   it('fires the deselect of the old node before the select of the new one', () => {
     const { handler, events, nodes } = makeMap();
     handler.selectNode(nodes.branch.id);
-    events.call.mockClear();
+    events.emit.mockClear();
 
     handler.selectNode(nodes.other.id);
 
-    expect(events.call.mock.calls.map(call => [call[0], call[2].id])).toEqual([
-      [Event.nodeDeselect, nodes.branch.id],
-      [Event.nodeSelect, nodes.other.id],
+    expect(events.emit.mock.calls.map(call => [call[0], call[1].id])).toEqual([
+      ['nodeDeselect', nodes.branch.id],
+      ['nodeSelect', nodes.other.id],
     ]);
   });
 
@@ -139,8 +141,8 @@ describe('selectNode from one node to another', () => {
     const { handler, events, nodes } = makeMap();
     handler.selectNode(nodes.branch.id);
     const selectedDuringDeselect: (Node | null)[] = [];
-    events.call.mockImplementation((event: string) => {
-      if (event === Event.nodeDeselect) {
+    events.emit.mockImplementation((event: string) => {
+      if (event === 'nodeDeselect') {
         selectedDuringDeselect.push(handler.getSelectedNode());
       }
     });
@@ -214,7 +216,7 @@ describe('operations on the selected node with nothing selected', () => {
     map.copyPaste.paste();
 
     expect(handler.getNodes()).toHaveLength(3);
-    expect(events.call).not.toHaveBeenCalled();
+    expect(events.emit).not.toHaveBeenCalled();
   });
 });
 
@@ -232,7 +234,7 @@ describe('removeNode and the selection', () => {
   it('leaves nothing selected after removing an ancestor of the selected node', () => {
     const { handler, nodes } = makeMap();
     const grandchild = makeNode({ id: 'grandchild', parent: nodes.branch });
-    handler.setNode(grandchild.id, grandchild);
+    handler.setNode(grandchild);
     handler.selectNode(grandchild.id);
 
     handler.removeNode(nodes.branch.id, false);

@@ -11,9 +11,11 @@ import {
   MAX_MERMAID_DESCRIPTION_LENGTH,
   SUPPORTED_LANGUAGES,
 } from '../constants';
+import type { NodeProperty } from '../models';
 
+// An empty string means no color, as on the branch of a root node.
 export const CssColorSchema = v.nullable(
-  v.pipe(v.string(), v.regex(/^#[0-9a-fA-F]{3,8}$/))
+  v.union([v.literal(''), v.pipe(v.string(), v.regex(/^#[0-9a-fA-F]{3,8}$/))])
 );
 
 export const ColorSchema = v.partial(
@@ -47,12 +49,16 @@ export const ImageSchema = v.partial(
 
 export const LinkSchema = v.partial(
   v.object({
+    // An empty string means no link.
     href: v.nullable(
-      v.pipe(
-        v.string(),
-        v.regex(/^https?:\/\//i),
-        v.maxLength(MAX_LINK_HREF_LENGTH)
-      )
+      v.union([
+        v.literal(''),
+        v.pipe(
+          v.string(),
+          v.regex(/^https?:\/\//i),
+          v.maxLength(MAX_LINK_HREF_LENGTH)
+        ),
+      ])
     ),
   })
 );
@@ -76,6 +82,23 @@ export const NodeSchema = v.object({
   hidden: v.optional(v.boolean(), false),
   hasHiddenChildNodes: v.optional(v.boolean(), false),
 });
+
+/** The value each node property accepts in a single node update. */
+export const NodePropertySchemas = {
+  name: NodeBasicsSchema.entries.name,
+  protected: v.boolean(),
+  coordinates: CoordinatesSchema,
+  imageSrc: ImageSchema.entries.src,
+  imageSize: ImageSchema.entries.size,
+  linkHref: LinkSchema.entries.href,
+  backgroundColor: CssColorSchema,
+  branchColor: CssColorSchema,
+  fontWeight: FontSchema.entries.weight,
+  fontStyle: FontSchema.entries.style,
+  fontSize: FontSchema.entries.size,
+  nameColor: CssColorSchema,
+  hidden: v.boolean(),
+} satisfies Record<NodeProperty, v.GenericSchema>;
 
 export const MapOptionsSchema = v.partial(
   v.object({
