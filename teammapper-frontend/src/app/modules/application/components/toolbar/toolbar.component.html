@@ -172,7 +172,9 @@
     [disabled]="nodeActionsDisabled || !canHideNodes"
     color="primary"
     mat-icon-button>
-    <mat-icon>{{ hasHiddenNodes ? 'visibility_off' : 'visibility' }}</mat-icon>
+    <mat-icon>{{
+      childNodesHidden ? 'visibility_off' : 'visibility'
+    }}</mat-icon>
   </button>
   <button
     id="distribute-nodes-button"

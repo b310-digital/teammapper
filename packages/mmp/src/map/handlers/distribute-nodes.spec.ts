@@ -25,7 +25,6 @@ function liveNode(
     parent,
     name: id,
     isRoot: false,
-    hidden: false,
     coordinates: { x: 0, y: 0 },
     ...overrides,
   } as unknown as Node;
@@ -69,24 +68,22 @@ describe('distributeNodes', () => {
     expect(moved.length).toBeGreaterThan(0);
   });
 
-  it('hands the hidden nodes to the layout too, so they keep their room', () => {
-    // A collapsed branch is still laid out, so expanding it again does not
-    // leave its children piled up.
+  it('hands every node to the layout, so hidden nodes keep their room', () => {
+    // The layout never reads the view state. Child nodes this person hid are
+    // still laid out, so showing them again does not leave them piled up.
     const root = liveNode('root', null, { isRoot: true });
-    const collapsed = liveNode('collapsed', root);
-    const nodes = [root, collapsed];
+    const parent = liveNode('parent', root);
+    const children: Node[] = [];
     for (let i = 1; i <= 4; i++) {
-      nodes.push(liveNode(`c${i}`, collapsed, { hidden: true }));
+      children.push(liveNode(`c${i}`, parent));
     }
-    const { handler } = handlerWith(nodes);
+    const { handler } = handlerWith([root, parent, ...children]);
 
     handler.distributeNodes();
 
     // Filtered out of the layout input they would all keep y: 0.
-    const hiddenYs = nodes
-      .filter(node => node.hidden)
-      .map(node => node.coordinates.y);
-    expect(new Set(hiddenYs).size).toBe(4);
+    const childYs = children.map(node => node.coordinates.y);
+    expect(new Set(childYs).size).toBe(4);
   });
 
   it('redraws the map once rather than once per node', () => {

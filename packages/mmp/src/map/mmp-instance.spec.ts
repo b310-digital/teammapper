@@ -4,10 +4,31 @@ import MmpMap from './map.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
+  MapViewState,
+  MmpEventType,
   NodeProperty,
   NodeUpdateEvent,
   OldMmpNode,
 } from '@teammapper/shared';
+
+/**
+ * Every event but `viewStateChange`. The `satisfies` clause fails the
+ * typecheck when `MmpEventType` gains an event this record lacks.
+ */
+const OTHER_EVENTS = Object.keys({
+  create: true,
+  nodeSelect: true,
+  nodeDeselect: true,
+  nodeUpdate: true,
+  nodeCreate: true,
+  nodePaste: true,
+  nodeRemove: true,
+  distribute: true,
+  nodeProtected: true,
+} satisfies Record<Exclude<MmpEventType, 'viewStateChange'>, true>) as Exclude<
+  MmpEventType,
+  'viewStateChange'
+>[];
 
 /**
  * The frontend reaches the library through `MmpInstance` alone, so these specs
@@ -143,11 +164,6 @@ const PROPERTY_CASES: PropertyCase[] = [
     rendered: id => nameDom(id).style.fontSize,
   },
   {
-    property: 'hidden',
-    value: true,
-    read: n => n.hidden,
-  },
-  {
     property: 'protected',
     value: true,
     read: n => n.protected,
@@ -280,7 +296,6 @@ describe('updateNode', () => {
     ['fontSize', 'big'],
     ['fontWeight', 'x'.repeat(1000)],
     ['name', 42],
-    ['hidden', 'yes'],
     ['protected', 1],
     ['coordinates', { x: 'left', y: 0 }],
   ])('refuses %s %p and keeps the model', (property, value) => {
@@ -321,11 +336,7 @@ describe('protection', () => {
     return { map, parent: parent.id, child: child.id };
   }
 
-  it.each(
-    PROPERTY_CASES.filter(
-      c => c.property !== 'hidden' && c.property !== 'protected'
-    )
-  )(
+  it.each(PROPERTY_CASES.filter(c => c.property !== 'protected'))(
     'refuses a local $property change below it',
     ({ property, value, read }) => {
       const { map, child } = makeProtectedMap();
@@ -346,14 +357,6 @@ describe('protection', () => {
     map.instance.updateNode('name', 'Remote', false, child);
 
     expect(exported(map, child).name).toBe('Remote');
-  });
-
-  it('still lets a node below it hide', () => {
-    const { map, child } = makeProtectedMap();
-
-    map.instance.updateNode('hidden', true, true, child);
-
-    expect(exported(map, child).hidden).toBe(true);
   });
 
   it('refuses a local child and a local removal', () => {
@@ -425,6 +428,24 @@ describe('events', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('announces the view state alone when it hides child nodes', () => {
+    const { map, child } = makeMapWithChild();
+    const root = map.instance.exportRootProperties().id;
+    map.instance.selectNode(root);
+    const viewStates: MapViewState[] = [];
+    const shared = jest.fn();
+    OTHER_EVENTS.forEach(event => map.instance.on(event, shared));
+    map.instance.on('viewStateChange', state => viewStates.push(state));
+
+    map.instance.toggleBranchVisibility();
+
+    expect(viewStates).toEqual([{ nodesWithHiddenChildren: [root] }]);
+    expect(map.instance.exportViewState()).toEqual(viewStates[0]);
+    expect(map.instance.childNodesHidden()).toBe(true);
+    expect(map.instance.childNodesHidden(child)).toBe(false);
+    expect(shared).not.toHaveBeenCalled();
+  });
+
   it('refuses an event it does not know', () => {
     const map = makeMap();
 
@@ -454,20 +475,32 @@ describe('destroy', () => {
 });
 
 describe('new with nodes', () => {
-  it('leaves the passed nodes unchanged when it re-hides a branch', () => {
+  it('keeps the view state and leaves the passed nodes unchanged', () => {
     const { map, child } = makeMapWithChild();
     const root = map.instance.exportRootProperties().id;
     map.instance.selectNode(root);
     map.instance.toggleBranchVisibility();
-    const nodes = map.instance
-      .exportAsJSON()
-      .map(node => ({ ...node, hidden: false, hasHiddenChildNodes: false }));
+    const nodes = map.instance.exportAsJSON();
     const copy = JSON.parse(JSON.stringify(nodes));
 
     map.instance.new(deepFreeze(nodes));
 
     expect(nodes).toEqual(copy);
-    expect(exported(map, child).hidden).toBe(true);
+    expect(map.instance.exportViewState()).toEqual({
+      nodesWithHiddenChildren: [root],
+    });
+    expect(nodeDom(child).style.visibility).toBe('hidden');
+  });
+
+  it('exports nodes without view state', () => {
+    const { map } = makeMapWithChild();
+    map.instance.selectNode(map.instance.exportRootProperties().id);
+    map.instance.toggleBranchVisibility();
+
+    for (const node of map.instance.exportAsJSON()) {
+      expect(node).not.toHaveProperty('hidden');
+      expect(node).not.toHaveProperty('hasHiddenChildNodes');
+    }
   });
 
   it('leaves a legacy map unchanged', () => {

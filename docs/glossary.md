@@ -122,10 +122,20 @@ Write "protect" and "release". Avoid "lock" for the concept, and "freeze" or
 
 ### Hidden node
 
-A node the app does not draw because an ancestor's children are hidden. The map
-does not store hiding: hiding is how one person is looking at the map right now.
+A node the app does not draw because the view state hides the child nodes of
+one of its ancestors. The app also hides a node a peer adds below such an
+ancestor. A hidden node keeps its room in the layout.
 
 Write "hide" and "show". Avoid "collapse" and "fold".
+
+### View state
+
+How one person looks at a mind map: which nodes have their child nodes hidden,
+which node is selected, and the rings around selected nodes. mmp keeps the view
+state apart from the map data, so the undo stack never records it. The
+frontend sends no hidden child nodes to the server or to a peer, and stores
+them nowhere, so a reload shows them again. Peers see the selection through Yjs
+awareness. The view state starts empty each time the app opens a map.
 
 ### Map settings
 
@@ -293,7 +303,7 @@ Whether this client reaches the server. Losing the connection raises the
 ### Attribute
 
 A value a data object holds, such as a node's `isRoot`, `protected` or
-`hidden`. A boolean attribute is still an attribute: write "the `isRoot`
+`name`. A boolean attribute is still an attribute: write "the `isRoot`
 attribute is true", not "the node carries the root flag".
 
 ### Flag

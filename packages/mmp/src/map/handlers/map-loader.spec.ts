@@ -83,7 +83,6 @@ describe('exportAsJSON', () => {
         id: child,
         parent: root,
         isRoot: false,
-        hidden: false,
         protected: false,
         name: 'child',
         colors: { background: '#ff0000' },
@@ -180,6 +179,25 @@ describe('new', () => {
         font: { size: 16, weight: 'bold', style: 'italic' },
       },
     ]);
+  });
+
+  it('ignores the hidden attributes an older export carries', () => {
+    const { map, child } = makeLoadedMap();
+    const legacy = map.instance
+      .exportAsJSON()
+      .map(node => ({ ...node, hidden: true, hasHiddenChildNodes: true }));
+
+    const target = makeMap();
+    target.instance.new(legacy);
+
+    const loaded = target.instance.exportAsJSON();
+    expect(loaded.every(node => !('hidden' in node))).toBe(true);
+    expect(loaded.every(node => !('hasHiddenChildNodes' in node))).toBe(true);
+    const group = target.dom.g
+      .selectAll<SVGGElement, { id: string }>('g.node')
+      .filter(node => node.id === child)
+      .node();
+    expect(group?.style.visibility).toBe('visible');
   });
 
   it('hands the previous map to create listeners', () => {

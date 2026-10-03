@@ -553,6 +553,14 @@ export class MmpService implements OnDestroy {
   }
 
   /**
+   * Return true when this person hid the child nodes of the selected node,
+   * and false with nothing selected or before `create` builds the map.
+   */
+  public childNodesHidden(): boolean {
+    return this.currentMap?.instance.childNodesHidden() ?? false;
+  }
+
+  /**
    * Recompute every node's position from the tree, discarding manual placement.
    */
   public distributeNodes() {

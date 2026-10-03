@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import Nodes from './nodes.js';
 import { fakeDraw } from '../../test/fake-draw.js';
 import MapLoader from './map-loader.js';
+import ViewState from './view-state.js';
 import MmpMap from '../map.js';
 import Options, {
   DefaultNodeValues,
@@ -27,6 +28,7 @@ function makeMap() {
     export: { asJSON: () => [] },
   } as unknown as MmpMap;
   map.nodes = new Nodes(map);
+  map.viewState = new ViewState(map);
   map.loader = new MapLoader(map);
   return { map, events };
 }

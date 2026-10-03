@@ -58,8 +58,6 @@ export interface UserNodeProperties {
   /** Protects this node and its descendants against local edits. */
   protected?: boolean;
   isRoot?: boolean;
-  hidden?: boolean;
-  hasHiddenChildNodes?: boolean;
 }
 
 export interface MapNode extends UserNodeProperties {
@@ -182,8 +180,7 @@ export type NodeProperty =
   | 'fontWeight'
   | 'fontStyle'
   | 'fontSize'
-  | 'nameColor'
-  | 'hidden';
+  | 'nameColor';
 
 export type NodePropertyValue =
   string | number | boolean | MapNodeCoordinates | null | undefined;
@@ -192,6 +189,14 @@ export interface NodeUpdateEvent {
   nodeProperties: ExportNodeProperties;
   previousValue: unknown;
   changedProperty: NodeProperty;
+}
+
+/**
+ * The view state of one client's map: which nodes hide their child nodes.
+ * It stays local to the client and never reaches the map data.
+ */
+export interface MapViewState {
+  nodesWithHiddenChildren: string[];
 }
 
 export interface MapCreateEvent {
@@ -258,6 +263,7 @@ export interface MmpEventPayloadMap {
   nodeRemove: ExportNodeProperties;
   distribute: void;
   nodeProtected: ExportNodeProperties;
+  viewStateChange: MapViewState;
 }
 
 export type MmpEventType = keyof MmpEventPayloadMap;

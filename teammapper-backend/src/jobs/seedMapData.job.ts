@@ -34,8 +34,6 @@ const createNode = (
     parent: parentId,
     isRoot: isRoot,
     link: {},
-    hidden: false,
-    hasHiddenChildNodes: false,
   }
 }
 

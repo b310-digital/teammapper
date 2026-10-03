@@ -1,164 +1,195 @@
-import Nodes from './nodes.js';
-import Node from '../models/node.js';
-import { DefaultNodeValues } from '../options.js';
+import * as d3 from 'd3';
+import { create } from '../../index.js';
 import MmpMap from '../map.js';
 
 /**
- * Hiding a branch stays local to one person, so a second person keeps adding
- * nodes to a branch this person hid. These tests pin the toggle to one
- * decision per branch, so children that disagree end up in the same state
- * instead of swapping.
+ * Hiding the child nodes of a node changes the view state of one person
+ * alone, so a second person keeps adding nodes below a node whose child
+ * nodes this person hid. These specs drive a real map and read the drawn
+ * visibility.
  */
 
-interface NodesInternals {
-  selectedNode: Node;
+interface Tree {
+  map: MmpMap;
+  root: string;
+  first: string;
+  second: string;
+  grandchild: string;
 }
 
-function makeTree(): {
-  handler: Nodes;
-  internals: NodesInternals;
-  nodes: Record<string, Node>;
-} {
-  const map = {
-    options: { defaultNode: DefaultNodeValues },
-    draw: { update: jest.fn(), renderNodeProperty: jest.fn() },
-  } as unknown as MmpMap;
+/** root -> first -> grandchild, root -> second, with the root selected. */
+function makeTree(): Tree {
+  const ref = document.createElement('div');
+  document.body.appendChild(ref);
+  const map = create('map', ref);
+  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
+  map.dom.svg.attr('viewBox', '0 0 800 600');
+  map.instance.new();
 
-  const handler = new Nodes(map);
-  map.nodes = handler;
-  const internals = handler as unknown as NodesInternals;
+  const root = map.instance.exportRootProperties().id;
+  const first = map.instance.addNode({ name: 'first' }, false, root);
+  const second = map.instance.addNode({ name: 'second' }, false, root);
+  if (!first || !second) throw new Error('addNode added no child');
+  const grandchild = map.instance.addNode(
+    { name: 'grandchild' },
+    false,
+    first.id
+  );
+  if (!grandchild) throw new Error('addNode added no grandchild');
+  map.instance.selectNode(root);
 
-  const root = new Node({
-    id: 'root',
-    parent: null,
-    k: 1,
-    isRoot: true,
-    coordinates: { x: 0, y: 0 },
-  });
-  const first = new Node({
-    id: 'first',
-    parent: root,
-    k: 1,
-    coordinates: { x: 200, y: 0 },
-  });
-  const second = new Node({
-    id: 'second',
-    parent: root,
-    k: 1,
-    coordinates: { x: 200, y: 100 },
-  });
-  const grandchild = new Node({
-    id: 'grandchild',
-    parent: first,
-    k: 1,
-    coordinates: { x: 400, y: 0 },
-  });
-
-  const nodes = { root, first, second, grandchild };
-  for (const node of Object.values(nodes)) handler.store.set(node);
-
-  return { handler, internals, nodes };
+  return {
+    map,
+    root,
+    first: first.id,
+    second: second.id,
+    grandchild: grandchild.id,
+  };
 }
+
+function nodeGroup(id: string): SVGGElement {
+  const group = d3
+    .selectAll<SVGGElement, { id: string }>('g.node')
+    .filter(node => node.id === id)
+    .node();
+  if (!group) throw new Error('no group for ' + id);
+  return group;
+}
+
+function visibility(id: string): string {
+  return nodeGroup(id).style.visibility;
+}
+
+function hasEyeIcon(id: string): boolean {
+  return nodeGroup(id).querySelector('text.hidden-icon') !== null;
+}
+
+/** Select the node and toggle the visibility of its child nodes. */
+function toggle(map: MmpMap, id: string) {
+  map.instance.selectNode(id);
+  map.instance.toggleBranchVisibility();
+}
+
+afterEach(() => {
+  document.body.innerHTML = '';
+});
 
 describe('toggleBranchVisibility', () => {
   it('hides every descendant of the selected node', () => {
-    const { handler, internals, nodes } = makeTree();
-    internals.selectedNode = nodes.root;
+    const { map, root, first, second, grandchild } = makeTree();
 
-    handler.toggleBranchVisibility();
+    toggle(map, root);
 
-    expect(nodes.root.hasHiddenChildNodes).toBe(true);
-    expect(nodes.first.hidden).toBe(true);
-    expect(nodes.second.hidden).toBe(true);
-    expect(nodes.grandchild.hidden).toBe(true);
+    expect(visibility(root)).toBe('visible');
+    expect(visibility(first)).toBe('hidden');
+    expect(visibility(second)).toBe('hidden');
+    expect(visibility(grandchild)).toBe('hidden');
   });
 
   it('shows every descendant again', () => {
-    const { handler, internals, nodes } = makeTree();
-    internals.selectedNode = nodes.root;
+    const { map, root, first, second, grandchild } = makeTree();
 
-    handler.toggleBranchVisibility();
-    handler.toggleBranchVisibility();
+    toggle(map, root);
+    toggle(map, root);
 
-    expect(nodes.root.hasHiddenChildNodes).toBe(false);
-    expect(nodes.first.hidden).toBe(false);
-    expect(nodes.second.hidden).toBe(false);
-    expect(nodes.grandchild.hidden).toBe(false);
+    expect(visibility(first)).toBe('visible');
+    expect(visibility(second)).toBe('visible');
+    expect(visibility(grandchild)).toBe('visible');
   });
 
-  it('shows a branch whose children disagree instead of swapping them', () => {
-    const { handler, internals, nodes } = makeTree();
-    internals.selectedNode = nodes.root;
-    handler.toggleBranchVisibility();
+  it('hides a node a peer adds below a node whose child nodes are hidden', () => {
+    const { map, root } = makeTree();
+    toggle(map, root);
 
-    // A node that reached the map while the branch was already hidden and kept
-    // its visible state.
-    const late = new Node({
-      id: 'late',
-      parent: nodes.root,
-      k: 1,
-      coordinates: { x: 200, y: 200 },
-    });
-    handler.store.set(late);
+    map.instance.addNodes([
+      {
+        id: 'late',
+        parent: root,
+        name: 'late',
+        k: 1,
+        coordinates: { x: 200, y: 200 },
+      },
+    ]);
 
-    handler.toggleBranchVisibility();
-
-    expect(nodes.first.hidden).toBe(false);
-    expect(nodes.second.hidden).toBe(false);
-    expect(late.hidden).toBe(false);
-    expect(nodes.root.hasHiddenChildNodes).toBe(false);
+    expect(visibility('late')).toBe('hidden');
   });
 
-  it('leaves a branch hidden further down hidden', () => {
-    const { handler, internals, nodes } = makeTree();
+  it('keeps the child nodes of an inner node hidden when the outer node shows', () => {
+    const { map, root, first, second, grandchild } = makeTree();
+    toggle(map, first);
 
-    internals.selectedNode = nodes.first;
-    handler.toggleBranchVisibility();
+    toggle(map, root);
+    toggle(map, root);
 
-    internals.selectedNode = nodes.root;
-    handler.toggleBranchVisibility();
-    handler.toggleBranchVisibility();
-
-    expect(nodes.first.hidden).toBe(false);
-    expect(nodes.second.hidden).toBe(false);
-    expect(nodes.first.hasHiddenChildNodes).toBe(true);
-    expect(nodes.grandchild.hidden).toBe(true);
+    expect(visibility(first)).toBe('visible');
+    expect(visibility(second)).toBe('visible');
+    expect(visibility(grandchild)).toBe('hidden');
+    expect(map.instance.childNodesHidden(first)).toBe(true);
   });
 
-  it('does nothing to a node without children', () => {
-    const { handler, internals, nodes } = makeTree();
-    internals.selectedNode = nodes.second;
+  it('does nothing to a node without child nodes', () => {
+    const { map, second } = makeTree();
+    const listener = jest.fn();
+    map.instance.on('viewStateChange', listener);
 
-    handler.toggleBranchVisibility();
+    toggle(map, second);
 
-    expect(nodes.second.hasHiddenChildNodes).toBe(false);
+    expect(map.instance.childNodesHidden(second)).toBe(false);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('reports no hidden child nodes once a peer removes the last child node', () => {
+    const { map, first, grandchild } = makeTree();
+    toggle(map, first);
+
+    map.instance.removeNode(grandchild, false);
+
+    expect(map.instance.childNodesHidden(first)).toBe(false);
+    expect(map.instance.exportViewState().nodesWithHiddenChildren).toEqual([
+      first,
+    ]);
+  });
+
+  it('does nothing while nothing is selected', () => {
+    const { map } = makeTree();
+    const listener = jest.fn();
+    map.instance.on('viewStateChange', listener);
+    map.nodes.deselectNode();
+
+    map.instance.toggleBranchVisibility();
+
+    expect(map.instance.exportViewState().nodesWithHiddenChildren).toEqual([]);
+    expect(listener).not.toHaveBeenCalled();
   });
 });
 
-describe('addNode', () => {
-  it('hides a node added to a branch the person hid', () => {
-    const { handler, internals, nodes } = makeTree();
-    internals.selectedNode = nodes.root;
-    handler.toggleBranchVisibility();
+describe('the hidden eye icon', () => {
+  it('shows on a node whose child nodes are hidden only', () => {
+    const { map, root, first, second } = makeTree();
 
-    const added = handler.addNode(
-      { coordinates: { x: 200, y: 200 } },
-      false,
-      nodes.root.id
-    );
+    toggle(map, root);
 
-    expect(added.hidden).toBe(true);
+    expect(hasEyeIcon(root)).toBe(true);
+    expect(hasEyeIcon(first)).toBe(false);
+    expect(hasEyeIcon(second)).toBe(false);
   });
 
-  it('shows a node added to a branch nobody hid', () => {
-    const { handler, nodes } = makeTree();
+  it('leaves once a peer removes the last child node and returns with a new one', () => {
+    const { map, first, grandchild } = makeTree();
+    toggle(map, first);
 
-    const added = handler.addNode(
-      { coordinates: { x: 200, y: 200 } },
-      false,
-      nodes.root.id
-    );
+    map.instance.removeNode(grandchild, false);
+    expect(hasEyeIcon(first)).toBe(false);
 
-    expect(added.hidden).toBe(false);
+    map.instance.addNodes([
+      {
+        id: 'late',
+        parent: first,
+        name: 'late',
+        k: 1,
+        coordinates: { x: 9, y: 9 },
+      },
+    ]);
+    expect(hasEyeIcon(first)).toBe(true);
   });
 });

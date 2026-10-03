@@ -2,6 +2,7 @@ import CopyPaste from './copy-paste.js';
 import Drag from './drag.js';
 import Draw from './draw.js';
 import Nodes from './nodes.js';
+import ViewState from './view-state.js';
 import { fakeDraw } from '../../test/fake-draw.js';
 import MmpMap from '../map.js';
 import Node, { NodeProperties } from '../models/node.js';
@@ -48,6 +49,7 @@ function makeMap() {
 
   const nodes = new Nodes(map);
   map.nodes = nodes;
+  map.viewState = new ViewState(map);
   nodes.fixCoordinates = (coordinates: MapNodeCoordinates) => coordinates;
   nodes.selectNode = jest.fn();
   nodes.redrawSelectionRing = jest.fn();
@@ -165,12 +167,14 @@ describe('local edits inside a protected branch', () => {
     expect(tree.a.font.weight).toBe('normal');
   });
 
-  it('allows hiding and showing', () => {
-    const { nodes, tree, events } = makeMap();
+  it('lets toggleBranchVisibility hide the child nodes of a protected node', () => {
+    const { map, nodes, tree, events } = makeMap();
+    (nodes as unknown as { selectedNode: Node }).selectedNode = tree.a;
 
-    nodes.updateNode('hidden', true, true, 'b');
+    nodes.toggleBranchVisibility();
 
-    expect(tree.b.hidden).toBe(true);
+    expect(map.viewState.hidesChildren(tree.a)).toBe(true);
+    expect(calls(events, 'viewStateChange')).toHaveLength(1);
     expect(refusals(events)).toEqual([]);
   });
 

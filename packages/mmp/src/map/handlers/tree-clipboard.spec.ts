@@ -1,5 +1,6 @@
 import CopyPaste from './copy-paste.js';
 import Nodes from './nodes.js';
+import ViewState from './view-state.js';
 import { fakeDraw } from '../../test/fake-draw.js';
 import MmpMap from '../map.js';
 import Node, { NodeProperties } from '../models/node.js';
@@ -55,6 +56,7 @@ function makeMap(view: Bounds | null = null) {
 
   const nodes = new Nodes(map);
   map.nodes = nodes;
+  map.viewState = new ViewState(map);
   // No zoom transform applies in these tests, so `fixCoordinates` returns its
   // input.
   nodes.fixCoordinates = (coordinates: MapNodeCoordinates) => coordinates;

@@ -35,8 +35,6 @@ export default class Node implements NodeProperties {
   public link: NodeLink;
   public protected: boolean;
   public isRoot: boolean;
-  public hidden: boolean;
-  public hasHiddenChildNodes: boolean;
 
   /**
    * Initialize the node properties and the k coefficient.
@@ -65,8 +63,6 @@ export default class Node implements NodeProperties {
     this.link = { href: properties.link?.href || '' };
     this.protected = Boolean(properties.protected);
     this.isRoot = Boolean(properties.isRoot);
-    this.hidden = Boolean(properties.hidden);
-    this.hasHiddenChildNodes = Boolean(properties.hasHiddenChildNodes);
 
     this.k = properties.k || d3.randomUniform(-20, 20)();
   }

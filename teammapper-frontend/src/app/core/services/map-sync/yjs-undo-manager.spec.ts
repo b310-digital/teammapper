@@ -19,7 +19,6 @@ describe('YjsUndoManager', () => {
       colors: { branch: '#000000' },
       font: { size: 14, style: 'normal', weight: 'normal' },
       protected: false,
-      hidden: false,
       coordinates: undefined,
       image: undefined,
       link: undefined,

@@ -31,7 +31,6 @@ describe('Shared Validation Schemas', () => {
       ['fontStyle', 'italic'],
       ['fontSize', 16],
       ['nameColor', null],
-      ['hidden', false],
     ])('accepts %s %p', (property, value) => {
       expect(v.safeParse(NodePropertySchemas[property], value).success).toBe(
         true
@@ -47,7 +46,6 @@ describe('Shared Validation Schemas', () => {
       ['backgroundColor', 'red'],
       ['fontWeight', 'x'.repeat(1000)],
       ['fontSize', 'big'],
-      ['hidden', 1],
     ])('refuses %s %p', (property, value) => {
       expect(v.safeParse(NodePropertySchemas[property], value).success).toBe(
         false
@@ -212,29 +210,15 @@ describe('Shared Validation Schemas', () => {
       },
       protected: true,
       k: 1.5,
-      hidden: true,
-      hasHiddenChildNodes: true,
     };
 
-    it('successfully parses a canonical valid node with folding properties', () => {
-      const result = v.safeParse(NodeSchema, validNode);
+    it('accepts and drops the hidden keys of older files', () => {
+      const legacy = { ...validNode, hidden: true, hasHiddenChildNodes: true };
+      const result = v.safeParse(NodeSchema, legacy);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.output.hidden).toBe(true);
-        expect(result.output.hasHiddenChildNodes).toBe(true);
-      }
-    });
-
-    it('defaults hidden and hasHiddenChildNodes to false when omitted', () => {
-      const withoutFolding = { ...validNode };
-      delete (withoutFolding as { hidden?: boolean }).hidden;
-      delete (withoutFolding as { hasHiddenChildNodes?: boolean })
-        .hasHiddenChildNodes;
-      const result = v.safeParse(NodeSchema, withoutFolding);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.output.hidden).toBe(false);
-        expect(result.output.hasHiddenChildNodes).toBe(false);
+        expect(result.output).not.toHaveProperty('hidden');
+        expect(result.output).not.toHaveProperty('hasHiddenChildNodes');
       }
     });
 

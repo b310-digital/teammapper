@@ -1,6 +1,7 @@
 import Nodes from './nodes.js';
 import { fakeDraw } from '../../test/fake-draw.js';
 import CopyPaste from './copy-paste.js';
+import ViewState from './view-state.js';
 import Node, { NodeProperties } from '../models/node.js';
 import { DefaultNodeValues } from '../options.js';
 import MmpMap from '../map.js';
@@ -31,6 +32,7 @@ function makeMap() {
 
   const handler = new Nodes(map);
   map.nodes = handler;
+  map.viewState = new ViewState(map);
   map.copyPaste = new CopyPaste(map);
 
   const root = makeNode({ id: 'root', isRoot: true });

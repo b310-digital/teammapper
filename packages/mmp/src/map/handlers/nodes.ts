@@ -48,7 +48,6 @@ export const PropertyMapping = {
   fontStyle: ['font', 'style'],
   fontSize: ['font', 'size'],
   nameColor: ['colors', 'name'],
-  hidden: ['hidden'],
 } as const satisfies Record<NodeProperty, readonly string[]>;
 
 const isNodeProperty = (property: string): property is NodeProperty =>
@@ -92,7 +91,6 @@ export default class Nodes {
       },
       id: rootId,
       parent: null,
-      hidden: false,
       isRoot: true,
     }) as unknown as NodeProperties;
 
@@ -175,12 +173,6 @@ export default class Nodes {
     // branch colors, as the main root's children do.
     if (!parentNode && userProperties?.colors?.branch === undefined) {
       properties.colors = { ...properties.colors, branch: '' };
-    }
-
-    // A node added to a branch this person hid starts hidden itself, so a node
-    // somebody else creates there does not appear on its own.
-    if (parentNode && this.hidesChildNodes(parentNode)) {
-      properties.hidden = true;
     }
 
     const node: Node = new Node(properties);
@@ -352,47 +344,41 @@ export default class Nodes {
   };
 
   /**
-   * Toggle (hide/show) all child nodes of selected node
+   * Hide the child nodes of the selected node, or show them again, in the
+   * view state and announce the new view state. The toggle skips a node
+   * without child nodes, unless the view state already lists it. A node
+   * further down keeps its own child nodes hidden.
    */
   public toggleBranchVisibility = () => {
-    if (!this.selectedNode) return;
+    const node = this.selectedNode;
+    if (!node) return;
 
-    const children = this.getChildren(this.selectedNode);
+    const viewState = this.map.viewState;
+    if (!viewState.hidesChildren(node) && this.getChildren(node).length === 0) {
+      return;
+    }
 
-    // One hidden child shows the whole branch, and children that all show hide
-    // it. Deciding once for the branch repairs children that disagree, which
-    // happens after somebody else adds a node to a branch hidden here.
-    this.selectedNode.hasHiddenChildNodes =
-      children.length > 0 && !children.some(x => x.hidden);
-
-    this.applyHiddenStateToDescendants(this.selectedNode);
-
+    viewState.toggle(node);
     this.map.draw.update();
+    this.map.events.emit('viewStateChange', viewState.export());
   };
 
   /**
-   * Set the hidden flag of every descendant from its parent, so a descendant
-   * hides whenever its parent hides its children. A branch this person hid
-   * further down stays hidden, because getDescendants returns each parent
-   * before its own children.
-   * @param {Node} node
-   */
-  private applyHiddenStateToDescendants = (node: Node) => {
-    this.getDescendants(node).forEach(descendant => {
-      const parent = descendant.parent;
-      const hidden = parent ? this.hidesChildNodes(parent) : false;
-      this.updateNode('hidden', hidden, false, descendant.id);
-    });
-  };
-
-  /**
-   * Tell whether the children of a node are hidden, which happens when the
-   * node itself is hidden or when this person hid its branch.
-   * @param {Node} node
+   * Tell whether the view state hides the child nodes of the node with `id`.
+   * Without an `id`, the method asks about the selected node and returns
+   * false when nothing is selected. A node without child nodes returns false
+   * and shows no eye mark.
+   * @param {string} id
    * @returns {boolean}
    */
-  private hidesChildNodes = (node: Node): boolean =>
-    node.hidden || node.hasHiddenChildNodes;
+  public childNodesHidden = (id?: string): boolean => {
+    const node = this.getTargetNode(id);
+    if (!node) return false;
+    return (
+      this.map.viewState.hidesChildren(node) &&
+      this.getChildren(node).length > 0
+    );
+  };
 
   /**
    * Deselect the current selected node, the main root included, and leave
@@ -439,8 +425,8 @@ export default class Nodes {
       Log.error('The property does not exist');
     }
 
-    // Hiding and changing the protection itself stay allowed.
-    const guarded = property !== 'protected' && property !== 'hidden';
+    // Changing the protection itself stays allowed.
+    const guarded = property !== 'protected';
     if (guarded && this.refusesLocalChange(node, notifyWithEvent)) return;
 
     const previousValue = Utils.get(node, PropertyMapping[property]);
@@ -527,17 +513,18 @@ export default class Nodes {
     if (this.refusesLocalRemoval(node, notifyWithEvent)) return;
 
     if (!node.isRoot) {
-      this.store.delete(node.id);
-
-      this.getDescendants(node).forEach((node: Node) => {
-        this.store.delete(node.id);
-      });
+      const removed = [node, ...this.getDescendants(node)];
+      removed.forEach(node => this.store.delete(node.id));
+      const forgotten = this.map.viewState.forget(removed.map(node => node.id));
 
       this.map.draw.clear();
       this.map.draw.update();
 
       if (notifyWithEvent) {
         this.map.events.emit('nodeRemove', this.getNodeProperties(node));
+      }
+      if (forgotten) {
+        this.map.events.emit('viewStateChange', this.map.viewState.export());
       }
 
       // Deselect only when the removal deleted the selected node or one of
@@ -681,8 +668,6 @@ export default class Nodes {
       link: Utils.cloneObject(node.link) as MapNodeLink,
       protected: node.protected,
       isRoot: node.isRoot,
-      hidden: node.hidden,
-      hasHiddenChildNodes: node.hasHiddenChildNodes,
       k: node.k,
     };
   }

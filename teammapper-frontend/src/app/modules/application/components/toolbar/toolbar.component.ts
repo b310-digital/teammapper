@@ -62,10 +62,8 @@ export class ToolbarComponent {
       );
   }
 
-  get hasHiddenNodes() {
-    return (
-      this.mmpService.nodeChildren()?.filter(node => node.hidden).length > 0
-    );
+  get childNodesHidden() {
+    return this.mmpService.childNodesHidden();
   }
 
   /**
