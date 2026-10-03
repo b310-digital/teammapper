@@ -120,7 +120,7 @@ export default class Nodes {
   public addNodeUnlessProtected = (
     ...args: Parameters<Nodes['addNode']>
   ): Node | null => {
-    const [, notifyWithEvent = true, , parentId] = args;
+    const [, notifyWithEvent = true, parentId] = args;
     const parentNode = this.resolveParent(parentId);
     if (parentNode && this.refusesLocalChange(parentNode, notifyWithEvent)) {
       return null;
@@ -139,17 +139,12 @@ export default class Nodes {
   public addNode = (
     userProperties?: UserNodeProperties,
     notifyWithEvent = true,
-    updateHistory = true,
     parentId?: string | null,
     overwriteId?: string
   ): Node => {
     const node = this.insertNode(userProperties, parentId, overwriteId);
 
     this.map.draw.update();
-
-    if (updateHistory) {
-      this.map.history.save();
-    }
 
     if (notifyWithEvent) {
       this.map.events.emit('nodeCreate', this.getNodeProperties(node));
@@ -158,8 +153,8 @@ export default class Nodes {
   };
 
   /**
-   * Add a node like addNode, without drawing it, saving history or emitting
-   * an event. A caller that adds several nodes draws once after the last.
+   * Add a node like addNode, without drawing it or emitting an event. A
+   * caller that adds several nodes draws once after the last.
    */
   public insertNode(
     userProperties?: UserNodeProperties,
@@ -218,12 +213,11 @@ export default class Nodes {
   }
 
   /**
-   * Adds multiple nodes at once and saves one snapshot to history. A node
-   * with an empty parent becomes a root, whatever node is selected.
+   * Adds multiple nodes at once and draws once. A node with an empty parent
+   * becomes a root, whatever node is selected.
    * @param {ExportNodeProperties[]} nodes
-   * @param {boolean} updateHistory
    */
-  public addNodes = (nodes: ExportNodeProperties[], updateHistory = true) => {
+  public addNodes = (nodes: ExportNodeProperties[]) => {
     let added = false;
     nodes.forEach(node => {
       if (!this.existNode(node.id)) {
@@ -232,10 +226,6 @@ export default class Nodes {
       }
     });
     if (added) this.map.draw.update();
-
-    if (updateHistory) {
-      this.map.history.save();
-    }
   };
 
   /**
@@ -378,7 +368,6 @@ export default class Nodes {
     this.applyHiddenStateToDescendants(this.selectedNode);
 
     this.map.draw.update();
-    this.map.history.save();
   };
 
   /**
@@ -392,7 +381,7 @@ export default class Nodes {
     this.getDescendants(node).forEach(descendant => {
       const parent = descendant.parent;
       const hidden = parent ? this.hidesChildNodes(parent) : false;
-      this.updateNode('hidden', hidden, false, false, descendant.id);
+      this.updateNode('hidden', hidden, false, descendant.id);
     });
   };
 
@@ -441,7 +430,6 @@ export default class Nodes {
     property: NodeProperty | string,
     value: NodePropertyValue | unknown,
     notifyWithEvent = true,
-    updateHistory = true,
     id?: string
   ) => {
     const node = this.getTargetNode(id);
@@ -461,10 +449,6 @@ export default class Nodes {
 
     this.writeProperty(node, property, nextValue);
     this.view.renderNodeProperty(node, property);
-
-    if (updateHistory) {
-      this.map.history.save();
-    }
 
     if (notifyWithEvent) {
       this.map.events.emit('nodeUpdate', {
@@ -551,8 +535,6 @@ export default class Nodes {
 
       this.map.draw.clear();
       this.map.draw.update();
-
-      this.map.history.save();
 
       if (notifyWithEvent) {
         this.map.events.emit('nodeRemove', this.getNodeProperties(node));
@@ -647,10 +629,9 @@ export default class Nodes {
     this.getDescendants(node)
       .filter(descendant => descendant.protected)
       .forEach(descendant =>
-        this.updateNode('protected', false, true, false, descendant.id)
+        this.updateNode('protected', false, true, descendant.id)
       );
-    this.updateNode('protected', true, true, false, node.id);
-    this.map.history.save();
+    this.updateNode('protected', true, true, node.id);
   };
 
   /**
@@ -662,7 +643,7 @@ export default class Nodes {
     const protecting = this.protectingNode(id);
     if (protecting === null) return;
 
-    this.updateNode('protected', false, true, true, protecting);
+    this.updateNode('protected', false, true, protecting);
   };
 
   /**
@@ -842,7 +823,6 @@ export default class Nodes {
   public addTree = (): Node => {
     const root = this.addNode(
       { name: '', coordinates: this.newTreeCoordinates() },
-      true,
       true,
       null
     );
@@ -1055,9 +1035,9 @@ export default class Nodes {
 
   /**
    * Recompute every node's coordinates from the tree structure and the node
-   * sizes, discarding manual positioning. One mmp history entry covers the
-   * whole rewrite; the undo the user actually sees comes from the Y.Doc
-   * transaction that the distribute event triggers.
+   * sizes, discarding manual positioning. The distribute event makes the
+   * frontend write the result in one Y.Doc transaction, so one undo reverts
+   * the whole rewrite.
    */
   public distributeNodes = (notifyWithEvent = true) => {
     const layout = computeMapLayout(
@@ -1071,7 +1051,6 @@ export default class Nodes {
     }
 
     this.map.draw.update();
-    this.map.history.save();
 
     if (notifyWithEvent) {
       this.map.events.emit('distribute', undefined);

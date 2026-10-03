@@ -17,106 +17,92 @@ import type {
 } from '@teammapper/shared';
 
 /**
- * A node of a snapshot the map accepts. Older maps carry no link and no
- * isRoot attribute.
+ * A node of a map the loader accepts. Older maps carry no link and no isRoot
+ * attribute.
  */
-const SnapshotNodeSchema = v.object({
+const LoadedNodeSchema = v.object({
   ...NodeSchema.entries,
   link: v.optional(LinkSchema),
   isRoot: v.optional(v.boolean()),
 });
 
 /**
- * Hold the snapshot of the current map and rebuild the map from one.
+ * Replace every node of the map with the nodes of an exported map, or with a
+ * new main root. The loader checks the nodes, converts the format mmp 0.1.7
+ * exported, and hides again the branches this client hid.
  */
-export default class History {
+export default class MapLoader {
   private map: Map;
 
-  private snapshot: MapSnapshot;
-
   /**
-   * Get the associated map instance and start with an empty snapshot.
+   * Get the associated map instance.
    * @param {Map} map
    */
   constructor(map: Map) {
     this.map = map;
-
-    this.snapshot = [];
   }
 
   /**
-   * Return the snapshot of the current map.
-   * @return {MapSnapshot} snapshot
+   * Replace the map with `input`, or start a new map holding only a main root
+   * when `input` is undefined. An empty `input` leaves the map as it is and
+   * throws.
+   * @param {MapSnapshot} input
+   * @param {boolean} notifyWithEvent
    */
-  public current = (): MapSnapshot => {
-    return this.snapshot;
-  };
+  public load = (input?: MapSnapshot, notifyWithEvent = true) => {
+    if (input === undefined) {
+      this.loadEmptyMap(notifyWithEvent);
+      return;
+    }
 
-  /**
-   * Replace old map with a new one or create a new empty map.
-   * @param {MapSnapshot} snapshot
-   */
-  public new = (input?: MapSnapshot, notifyWithEvent = true) => {
-    // The conversions below write to the snapshot, and the caller keeps its own.
-    const snapshot = input === undefined ? undefined : Utils.cloneObject(input);
-
-    if (snapshot === undefined) {
-      this.map.nodes.clear();
-
-      this.map.draw.clear();
-      this.map.draw.update();
-
-      this.map.nodes.addRootNode();
-
-      this.map.zoom.center('position', 0);
-
-      this.save();
-
-      if (notifyWithEvent) this.map.events.emit('create', {});
-    } else if (this.checkSnapshotStructure(snapshot)) {
-      const previousData = this.map.export.asJSON();
-
-      this.reapplyHiddenState(previousData, snapshot);
-
-      this.redraw(snapshot);
-
-      this.map.zoom.center('position', 0);
-
-      // If the amount of nodes is == 0, automatically rollback to the last clean snapshot and display a toast
-      if (this.map.nodes.getNodes().length === 0) {
-        if (previousData.length > 0) {
-          this.redraw(previousData);
-        }
-        Log.error(
-          'There was an error importing the map; changes have been rolled back.'
-        );
-      } else {
-        this.save();
-        if (notifyWithEvent) {
-          this.map.events.emit('create', { previousMapData: previousData });
-        }
-      }
-    } else {
+    // The conversions below write to the nodes, and the caller keeps its own.
+    const nodes = Utils.cloneObject(input);
+    if (!this.isValidMap(nodes)) {
       Log.error('The snapshot is not correct');
+    }
+    if (nodes.length === 0) {
+      Log.error(
+        'There was an error importing the map; changes have been rolled back.'
+      );
+    }
+
+    const previousData = this.map.export.asJSON();
+    this.reapplyHiddenState(previousData, nodes);
+    this.replaceNodes(nodes);
+    this.map.zoom.center('position', 0);
+
+    if (notifyWithEvent) {
+      this.map.events.emit('create', { previousMapData: previousData });
     }
   };
 
   /**
-   * Save the current snapshot of the mind map.
+   * Replace the map with a main root alone.
+   * @param {boolean} notifyWithEvent
    */
-  public save() {
-    this.snapshot = this.getSnapshot();
+  private loadEmptyMap(notifyWithEvent: boolean) {
+    this.map.nodes.clear();
+
+    this.map.draw.clear();
+    this.map.draw.update();
+
+    this.map.nodes.addRootNode();
+
+    this.map.zoom.center('position', 0);
+
+    if (notifyWithEvent) this.map.events.emit('create', {});
   }
 
   /**
-   * Redraw the map with a new snapshot.
-   * @param {MapSnapshot} snapshot
+   * Replace every node of the map with `nodes` and draw the map again.
+   * @param {MapSnapshot} nodes
    */
-  private redraw(snapshot: MapSnapshot) {
+  private replaceNodes(nodes: MapSnapshot) {
     this.map.nodes.clear();
 
-    snapshot.forEach((property: ExportNodeProperties) => {
-      // in case the data model changes this makes sure all properties are at least present using defaults
+    nodes.forEach((property: ExportNodeProperties) => {
+      // A map exported by an older release may lack a property; the defaults
+      // fill it in.
       const mergedProperty = {
         ...DefaultNodeValues,
         ...property,
@@ -154,47 +140,35 @@ export default class History {
   }
 
   /**
-   * Return a copy of all fundamental node properties.
-   * @return {MapSnapshot} properties
-   */
-  private getSnapshot(): MapSnapshot {
-    return this.map.nodes
-      .getNodes()
-      .map((node: Node) => {
-        return this.map.nodes.getNodeProperties(node, false);
-      })
-      .slice();
-  }
-
-  /**
-   * Check the snapshot structure and return true if it is authentic.
-   * @param {MapSnapshot} snapshot
+   * Return true when `nodes` is a list of valid nodes. A map in the legacy
+   * format is converted in place first.
+   * @param {MapSnapshot} nodes
    * @return {boolean} result
    */
-  private checkSnapshotStructure(snapshot: MapSnapshot): boolean {
-    if (!Array.isArray(snapshot)) {
+  private isValidMap(nodes: MapSnapshot): boolean {
+    if (!Array.isArray(nodes)) {
       return false;
     }
 
-    const firstNode = snapshot[0] as unknown;
+    const firstNode = nodes[0] as unknown;
     if (
       firstNode &&
       typeof firstNode === 'object' &&
       'key' in firstNode &&
       'value' in firstNode
     ) {
-      this.convertOldMmp(snapshot as unknown as OldMmpNode[]);
+      this.convertOldMmp(nodes as unknown as OldMmpNode[]);
     }
 
-    return snapshot.every(node => v.is(SnapshotNodeSchema, node));
+    return nodes.every(node => v.is(LoadedNodeSchema, node));
   }
 
   /**
-   * Convert the old mmp (version: 0.1.7) snapshot to new.
-   * @param {OldMmpNode[]} snapshot
+   * Convert the nodes of a map that mmp 0.1.7 exported to the current format.
+   * @param {OldMmpNode[]} nodes
    */
-  private convertOldMmp(snapshot: OldMmpNode[]) {
-    for (const node of snapshot) {
+  private convertOldMmp(nodes: OldMmpNode[]) {
+    for (const node of nodes) {
       const oldNode = Utils.cloneObject(node);
       const target = node as unknown as Record<string, unknown>;
       Utils.clearObject(target);
@@ -232,39 +206,41 @@ export default class History {
   }
 
   /**
-   * Find nodes that were previously hidden locally and re-apply attributes
+   * Hide again the branches this client hid in the previous map: set
+   * hasHiddenChildNodes on each such node in `nodes` and hide its
+   * descendants.
    * @param {MapSnapshot} previousData
-   * @param {MapSnapshot} snapshot
+   * @param {MapSnapshot} nodes
    */
   private reapplyHiddenState(
     previousData: MapSnapshot,
-    snapshot: MapSnapshot
+    nodes: MapSnapshot
   ): void {
-    // Find all nodes where we've set hasHiddenChildNodes in the previous map
     const nodesWithHiddenChildren = previousData.filter(
       node => node.hasHiddenChildNodes
     );
 
-    // This method will recursively hide all children of children until none are left
+    // Hide every descendant of the node with `parentId`.
     const hideChildNodes = (parentId: string) =>
-      snapshot
+      nodes
         .filter(node => node.parent === parentId)
         .forEach(node => {
           node.hidden = true;
           hideChildNodes(node.id);
         });
 
-    snapshot.forEach(snapshotNode => {
+    nodes.forEach(loadedNode => {
       const nodeWithHiddenChildren = nodesWithHiddenChildren.find(
-        x => snapshotNode.id === x.id
+        x => loadedNode.id === x.id
       );
 
       if (nodeWithHiddenChildren) {
-        snapshotNode.hasHiddenChildNodes = true;
+        loadedNode.hasHiddenChildNodes = true;
 
-        // We need to iterate through the snapshot instead of using this.map.nodes.nodeChildren() to see if we need to set hidden attributes as the latter will not have new nodes added yet
-        snapshot
-          .filter(node => node.parent === snapshotNode.id)
+        // The children come from `nodes`, because the node store does not
+        // hold the loaded nodes yet.
+        nodes
+          .filter(node => node.parent === loadedNode.id)
           .forEach(node => {
             node.hidden = true;
             hideChildNodes(node.id);

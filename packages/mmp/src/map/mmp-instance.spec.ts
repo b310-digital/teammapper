@@ -174,7 +174,7 @@ describe('updateNode', () => {
     it('writes the value to the model', () => {
       const { map, child } = makeMapWithChild();
 
-      map.instance.updateNode(property, value, true, true, child);
+      map.instance.updateNode(property, value, true, child);
 
       expect(read(exported(map, child))).toEqual(value);
     });
@@ -185,7 +185,7 @@ describe('updateNode', () => {
       const updates: NodeUpdateEvent[] = [];
       map.instance.on('nodeUpdate', event => updates.push(event));
 
-      map.instance.updateNode(property, value, true, true, child);
+      map.instance.updateNode(property, value, true, child);
 
       expect(updates).toHaveLength(1);
       expect(updates[0].changedProperty).toBe(property);
@@ -195,11 +195,11 @@ describe('updateNode', () => {
 
     it('announces nothing when the value stays the same', () => {
       const { map, child } = makeMapWithChild();
-      map.instance.updateNode(property, value, true, true, child);
+      map.instance.updateNode(property, value, true, child);
       const listener = jest.fn();
       map.instance.on('nodeUpdate', listener);
 
-      map.instance.updateNode(property, value, true, true, child);
+      map.instance.updateNode(property, value, true, child);
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -209,7 +209,7 @@ describe('updateNode', () => {
       const listener = jest.fn();
       map.instance.on('nodeUpdate', listener);
 
-      map.instance.updateNode(property, value, false, true, child);
+      map.instance.updateNode(property, value, false, child);
 
       expect(listener).not.toHaveBeenCalled();
       expect(read(exported(map, child))).toEqual(value);
@@ -222,7 +222,7 @@ describe('updateNode', () => {
       it('draws the value', () => {
         const { map, child } = makeMapWithChild();
 
-        map.instance.updateNode(property, value, true, true, child);
+        map.instance.updateNode(property, value, true, child);
 
         expect(rendered?.(child)).toEqual(RENDERED[property]);
       });
@@ -231,9 +231,9 @@ describe('updateNode', () => {
 
   it('sets the image size of a node with an image', () => {
     const { map, child } = makeMapWithChild();
-    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, true, true, child);
+    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, true, child);
 
-    map.instance.updateNode('imageSize', 40, true, true, child);
+    map.instance.updateNode('imageSize', 40, true, child);
 
     expect(exported(map, child).image?.size).toBe(40);
   });
@@ -242,7 +242,7 @@ describe('updateNode', () => {
     const { map, child } = makeMapWithChild();
 
     expect(() =>
-      map.instance.updateNode('imageSize', 40, true, true, child)
+      map.instance.updateNode('imageSize', 40, true, child)
     ).toThrow();
   });
 
@@ -259,7 +259,7 @@ describe('updateNode', () => {
     const root = map.instance.exportRootProperties().id;
 
     expect(() =>
-      map.instance.updateNode('branchColor', '#00ff00', true, true, root)
+      map.instance.updateNode('branchColor', '#00ff00', true, root)
     ).toThrow();
   });
 
@@ -267,7 +267,7 @@ describe('updateNode', () => {
     const { map, child } = makeMapWithChild();
 
     expect(() =>
-      map.instance.updateNode('shadow', '1px', true, true, child)
+      map.instance.updateNode('shadow', '1px', true, child)
     ).toThrow();
   });
 
@@ -288,25 +288,19 @@ describe('updateNode', () => {
     const before = exported(map, child);
 
     expect(() =>
-      map.instance.updateNode(property, value, false, false, child)
+      map.instance.updateNode(property, value, false, child)
     ).toThrow();
     expect(exported(map, child)).toEqual(before);
   });
 
   it('clears a color, a link and an image with an empty value', () => {
     const { map, child } = makeMapWithChild();
-    map.instance.updateNode(
-      'linkHref',
-      'https://example.com',
-      true,
-      true,
-      child
-    );
-    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, true, true, child);
+    map.instance.updateNode('linkHref', 'https://example.com', true, child);
+    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, true, child);
 
-    map.instance.updateNode('backgroundColor', '', true, true, child);
-    map.instance.updateNode('linkHref', '', true, true, child);
-    map.instance.updateNode('imageSrc', '', true, true, child);
+    map.instance.updateNode('backgroundColor', '', true, child);
+    map.instance.updateNode('linkHref', '', true, child);
+    map.instance.updateNode('imageSrc', '', true, child);
 
     const node = exported(map, child);
     expect(node.colors?.background).toBe('');
@@ -321,12 +315,7 @@ describe('protection', () => {
     const map = makeMap();
     const parent = map.instance.addNode({ name: 'parent' });
     if (!parent) throw new Error('addNode added no parent');
-    const child = map.instance.addNode(
-      { name: 'child' },
-      true,
-      true,
-      parent.id
-    );
+    const child = map.instance.addNode({ name: 'child' }, true, parent.id);
     if (!child) throw new Error('addNode added no child');
     map.instance.protectBranch(parent.id);
     return { map, parent: parent.id, child: child.id };
@@ -344,7 +333,7 @@ describe('protection', () => {
       const refused: ExportNodeProperties[] = [];
       map.instance.on('nodeProtected', node => refused.push(node));
 
-      map.instance.updateNode(property, value, true, true, child);
+      map.instance.updateNode(property, value, true, child);
 
       expect(read(exported(map, child))).toEqual(before);
       expect(refused.map(node => node.id)).toEqual([child]);
@@ -354,7 +343,7 @@ describe('protection', () => {
   it('applies a remote change below it', () => {
     const { map, child } = makeProtectedMap();
 
-    map.instance.updateNode('name', 'Remote', false, true, child);
+    map.instance.updateNode('name', 'Remote', false, child);
 
     expect(exported(map, child).name).toBe('Remote');
   });
@@ -362,7 +351,7 @@ describe('protection', () => {
   it('still lets a node below it hide', () => {
     const { map, child } = makeProtectedMap();
 
-    map.instance.updateNode('hidden', true, true, true, child);
+    map.instance.updateNode('hidden', true, true, child);
 
     expect(exported(map, child).hidden).toBe(true);
   });
@@ -372,7 +361,7 @@ describe('protection', () => {
     const refused = jest.fn();
     map.instance.on('nodeProtected', refused);
 
-    expect(map.instance.addNode({ name: 'x' }, true, true, parent)).toBeNull();
+    expect(map.instance.addNode({ name: 'x' }, true, parent)).toBeNull();
     map.instance.removeNode(child);
 
     expect(map.instance.existNode(child)).toBe(true);
@@ -405,13 +394,7 @@ describe('events', () => {
 
     const node = map.instance.addNode({ name: 'a' });
     if (!node) throw new Error('addNode added no node');
-    map.instance.updateNode(
-      'backgroundColor',
-      '#ff0000',
-      false,
-      false,
-      node.id
-    );
+    map.instance.updateNode('backgroundColor', '#ff0000', false, node.id);
     map.instance.selectNode(node.id);
     map.instance.removeNode(node.id);
 
@@ -470,24 +453,24 @@ describe('destroy', () => {
   });
 });
 
-describe('new with a snapshot', () => {
-  it('leaves the passed snapshot unchanged when it re-hides a branch', () => {
+describe('new with nodes', () => {
+  it('leaves the passed nodes unchanged when it re-hides a branch', () => {
     const { map, child } = makeMapWithChild();
     const root = map.instance.exportRootProperties().id;
     map.instance.selectNode(root);
     map.instance.toggleBranchVisibility();
-    const snapshot = map.instance
+    const nodes = map.instance
       .exportAsJSON()
       .map(node => ({ ...node, hidden: false, hasHiddenChildNodes: false }));
-    const copy = JSON.parse(JSON.stringify(snapshot));
+    const copy = JSON.parse(JSON.stringify(nodes));
 
-    map.instance.new(deepFreeze(snapshot));
+    map.instance.new(deepFreeze(nodes));
 
-    expect(snapshot).toEqual(copy);
+    expect(nodes).toEqual(copy);
     expect(exported(map, child).hidden).toBe(true);
   });
 
-  it('leaves a legacy snapshot unchanged', () => {
+  it('leaves a legacy map unchanged', () => {
     const map = makeMap();
     const legacy: OldMmpNode[] = [
       {
@@ -510,13 +493,13 @@ describe('new with a snapshot', () => {
     expect(map.instance.exportAsJSON().map(n => n.name)).toEqual(['Legacy']);
   });
 
-  it('refuses a snapshot whose node carries an invalid color', () => {
+  it('refuses a map whose node carries an invalid color', () => {
     const map = makeMap();
-    const snapshot = map.instance
+    const nodes = map.instance
       .exportAsJSON()
       .map(node => ({ ...node, colors: { ...node.colors, name: 'red' } }));
 
-    expect(() => map.instance.new(snapshot)).toThrow(
+    expect(() => map.instance.new(nodes)).toThrow(
       'The snapshot is not correct'
     );
   });

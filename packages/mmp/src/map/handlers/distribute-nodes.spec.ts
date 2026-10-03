@@ -10,7 +10,6 @@ function stubMap() {
     id: 'test-map',
     // Every node measured at 100 by 30.
     draw: fakeDraw(() => ({ width: 100, height: 30 })),
-    history: { save: jest.fn() },
     events: { emit: jest.fn() },
   };
 }
@@ -90,14 +89,6 @@ describe('distributeNodes', () => {
     expect(new Set(hiddenYs).size).toBe(4);
   });
 
-  it('records the whole redistribution as a single history entry', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
-
-    handler.distributeNodes();
-
-    expect(map.history.save).toHaveBeenCalledTimes(1);
-  });
-
   it('redraws the map once rather than once per node', () => {
     const { handler, map } = handlerWith(aiShapedNodes());
 
@@ -129,6 +120,7 @@ describe('distributeNodes', () => {
 
     handler.distributeNodes();
 
-    expect(map.history.save).not.toHaveBeenCalled();
+    expect(map.draw.update).not.toHaveBeenCalled();
+    expect(map.events.emit).not.toHaveBeenCalled();
   });
 });

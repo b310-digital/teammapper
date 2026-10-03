@@ -53,13 +53,11 @@ function makeMap(view: Bounds | null = null): {
   handler: Nodes;
   internals: NodesInternals;
   nodes: Record<string, Node>;
-  history: { save: jest.Mock };
   zoom: { visibleArea: jest.Mock; panIntoView: jest.Mock };
   sizes: Map<string, MapNodeDimensions>;
   draw: ReturnType<typeof fakeDraw>;
 } {
   const sizes = new Map<string, MapNodeDimensions>();
-  const history = { save: jest.fn() };
   const zoom = { visibleArea: jest.fn(() => view), panIntoView: jest.fn() };
   const draw = fakeDraw(node => sizes.get(node.id) ?? { width: 0, height: 0 });
   const map = {
@@ -67,7 +65,6 @@ function makeMap(view: Bounds | null = null): {
     options: { defaultNode: DefaultNodeValues },
     draw,
     events: { emit: jest.fn() },
-    history,
     zoom,
   } as unknown as MmpMap;
 
@@ -90,14 +87,14 @@ function makeMap(view: Bounds | null = null): {
   for (const node of Object.values(nodes)) handler.store.set(node);
   internals.selectedNode = branch;
 
-  return { handler, internals, nodes, history, zoom, sizes, draw };
+  return { handler, internals, nodes, zoom, sizes, draw };
 }
 
 describe('addNodes', () => {
   it('keeps a root parentless whatever node is selected', () => {
     const { handler, nodes } = makeMap();
 
-    handler.addNodes([exported('third-root', '', { x: 2000, y: 0 })], false);
+    handler.addNodes([exported('third-root', '', { x: 2000, y: 0 })]);
 
     expect(handler.getNode('third-root')?.parent).toBeNull();
     expect(handler.getChildren(nodes.branch)).toEqual([]);
@@ -106,14 +103,11 @@ describe('addNodes', () => {
   it('attaches the nodes of a second tree to their own root', () => {
     const { handler, nodes } = makeMap();
 
-    handler.addNodes(
-      [
-        exported('third-root', '', { x: 2000, y: 0 }),
-        exported('child', 'third-root', { x: 1800, y: -120 }),
-        exported('grandchild', 'child', { x: 1600, y: -240 }),
-      ],
-      false
-    );
+    handler.addNodes([
+      exported('third-root', '', { x: 2000, y: 0 }),
+      exported('child', 'third-root', { x: 1800, y: -120 }),
+      exported('grandchild', 'child', { x: 1600, y: -240 }),
+    ]);
 
     expect(handler.getNode('third-root')?.parent).toBeNull();
     expect(handler.getNode('child')?.parent?.id).toBe('third-root');
@@ -124,13 +118,10 @@ describe('addNodes', () => {
   it('draws the map once for all added nodes', () => {
     const { handler, draw } = makeMap();
 
-    handler.addNodes(
-      [
-        exported('third-root', '', { x: 2000, y: 0 }),
-        exported('child', 'third-root', { x: 1800, y: -120 }),
-      ],
-      false
-    );
+    handler.addNodes([
+      exported('third-root', '', { x: 2000, y: 0 }),
+      exported('child', 'third-root', { x: 1800, y: -120 }),
+    ]);
 
     expect(draw.update).toHaveBeenCalledTimes(1);
   });
@@ -142,7 +133,6 @@ describe('addNode', () => {
 
     const added = handler.addNode(
       { coordinates: { x: 2000, y: 0 } },
-      false,
       false,
       null
     );
@@ -157,7 +147,6 @@ describe('addNode', () => {
     const added = handler.addNode(
       { coordinates: { x: 2000, y: 0 } },
       false,
-      false,
       null
     );
 
@@ -167,7 +156,7 @@ describe('addNode', () => {
   it('attaches a child to a second root', () => {
     const { handler, nodes } = makeMap();
 
-    const added = handler.addNode({}, false, false, nodes.secondRoot.id);
+    const added = handler.addNode({}, false, nodes.secondRoot.id);
 
     expect(added.parent).toBe(nodes.secondRoot);
     expect(added.coordinates).toEqual({ x: 800, y: -120 });
@@ -202,11 +191,10 @@ describe('newTreeCoordinates', () => {
     const root = handler.addNode(
       { coordinates: handler.newTreeCoordinates() },
       false,
-      false,
       null
     );
 
-    const child = handler.addNode({}, false, false, root.id);
+    const child = handler.addNode({}, false, root.id);
     sizes.set(child.id, { width: 120, height: 30 });
 
     expect(child.coordinates.x).toBeLessThan(root.coordinates.x);
@@ -236,7 +224,7 @@ describe('newTreeCoordinates', () => {
     const { handler } = makeMap();
     const coordinates = handler.newTreeCoordinates();
 
-    const added = handler.addNode({ coordinates }, false, false, null);
+    const added = handler.addNode({ coordinates }, false, null);
 
     expect(added.coordinates).toEqual(coordinates);
     expect(added.parent).toBeNull();
@@ -451,30 +439,18 @@ describe('updateNode branchColor', () => {
     const { handler, nodes } = makeMap();
 
     expect(() =>
-      handler.updateNode(
-        'branchColor',
-        '#ff0000',
-        false,
-        false,
-        nodes.secondRoot.id
-      )
+      handler.updateNode('branchColor', '#ff0000', false, nodes.secondRoot.id)
     ).toThrow('A root node has no branches');
     expect(nodes.secondRoot.colors.branch).toBe('');
   });
 
   it('accepts the unchanged branch color of a root, as a colors sync sends it', () => {
-    const { handler, nodes, history } = makeMap();
+    const { handler, nodes, draw } = makeMap();
     nodes.secondRoot.colors.branch = '#577a96';
 
-    handler.updateNode(
-      'branchColor',
-      '#577a96',
-      false,
-      true,
-      nodes.secondRoot.id
-    );
+    handler.updateNode('branchColor', '#577a96', false, nodes.secondRoot.id);
 
     expect(nodes.secondRoot.colors.branch).toBe('#577a96');
-    expect(history.save).not.toHaveBeenCalled();
+    expect(draw.renderNodeProperty).not.toHaveBeenCalled();
   });
 });

@@ -720,7 +720,7 @@ export class YjsSyncService {
     value: unknown
   ): void {
     for (const update of resolveMmpPropertyUpdate(yjsKey, value)) {
-      this.mmpService.updateNode(update.prop, update.val, false, false, nodeId);
+      this.mmpService.updateNode(update.prop, update.val, false, nodeId);
     }
   }
 

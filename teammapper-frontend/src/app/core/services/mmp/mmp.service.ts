@@ -330,7 +330,6 @@ export class MmpService implements OnDestroy {
     this.map.instance.addNode(
       newProps,
       notifyWithEvent,
-      true,
       parent.id,
       properties?.id
     );
@@ -406,17 +405,10 @@ export class MmpService implements OnDestroy {
     property: NodeProperty | string,
     value?: NodePropertyValue | ArrayBuffer | unknown,
     notifyWithEvent?: boolean,
-    updateHistory?: boolean,
     id?: string
   ) {
     try {
-      this.map.instance.updateNode(
-        property,
-        value,
-        notifyWithEvent,
-        updateHistory,
-        id
-      );
+      this.map.instance.updateNode(property, value, notifyWithEvent, id);
     } catch {
       const genericErrorMessage = await this.utilsService.translate(
         'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
@@ -662,7 +654,7 @@ export class MmpService implements OnDestroy {
       // The upload succeeded; a node deleted meanwhile needs no image and no
       // error. The cleanup job deletes the unused image.
       if (!this.existNode(node.id)) return;
-      await this.updateNode('imageSrc', reference, true, true, node.id);
+      await this.updateNode('imageSrc', reference, true, node.id);
     } catch (error) {
       await this.showImageUploadError(error);
     }

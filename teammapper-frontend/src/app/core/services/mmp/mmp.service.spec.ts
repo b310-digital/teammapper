@@ -211,7 +211,6 @@ describe('MmpService', () => {
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
           { name: '' },
           true,
-          true,
           'selected',
           undefined
         );
@@ -222,7 +221,6 @@ describe('MmpService', () => {
         service.addNode(props);
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
           props,
-          true,
           true,
           'selected',
           '123'
@@ -247,7 +245,6 @@ describe('MmpService', () => {
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
           { name: '' },
           true,
-          true,
           'second-root',
           undefined
         );
@@ -262,7 +259,6 @@ describe('MmpService', () => {
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
           { name: '', parent: 'named' },
           true,
-          true,
           'named',
           undefined
         );
@@ -274,7 +270,6 @@ describe('MmpService', () => {
         expect(mockMap.instance.selectNode).toHaveBeenCalledWith(undefined);
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
           { name: '', parent: '' },
-          true,
           true,
           'selected',
           undefined
@@ -639,7 +634,6 @@ describe('MmpService', () => {
         'imageSrc',
         REFERENCE,
         true,
-        true,
         'node-a'
       );
     });
@@ -658,7 +652,7 @@ describe('MmpService', () => {
       await adding;
 
       expect(mockMap.instance.updateNode).toHaveBeenCalledTimes(1);
-      expect(mockMap.instance.updateNode.mock.calls[0][4]).toBe('node-a');
+      expect(mockMap.instance.updateNode.mock.calls[0][3]).toBe('node-a');
     });
 
     it('keeps the image and says the storage is full on a 413', async () => {

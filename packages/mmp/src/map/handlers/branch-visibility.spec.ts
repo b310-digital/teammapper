@@ -22,7 +22,6 @@ function makeTree(): {
   const map = {
     options: { defaultNode: DefaultNodeValues },
     draw: { update: jest.fn(), renderNodeProperty: jest.fn() },
-    history: { save: jest.fn() },
   } as unknown as MmpMap;
 
   const handler = new Nodes(map);
@@ -145,7 +144,6 @@ describe('addNode', () => {
     const added = handler.addNode(
       { coordinates: { x: 200, y: 200 } },
       false,
-      false,
       nodes.root.id
     );
 
@@ -157,7 +155,6 @@ describe('addNode', () => {
 
     const added = handler.addNode(
       { coordinates: { x: 200, y: 200 } },
-      false,
       false,
       nodes.root.id
     );
