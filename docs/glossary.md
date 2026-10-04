@@ -20,6 +20,7 @@ say so.
 | fold, collapse, unfold, expand          | hide, show                                 |
 | clone, fork                             | duplicate                                  |
 | version, revision, snapshot             | (none of these exist; see **Undo / Redo**) |
+| flag, mark (for a stored value)         | attribute                                  |
 
 ### Reserved
 
@@ -57,8 +58,8 @@ branch to it. A map holds at least one root node, the main root.
 ### Main root
 
 The one root node per map that the app creates with the map. No one can delete,
-copy or cut it. The stored flag `isRoot` marks the main root only, so do
-not read `isRoot` to learn whether a node has a parent.
+copy or cut it. The stored attribute `isRoot` is true for the main root only,
+so do not read `isRoot` to learn whether a node has a parent.
 
 ### Orphaned node
 
@@ -104,12 +105,12 @@ insert the symbol as a node image. Not available on every server.
 
 ### Protected branch
 
-A node and every node below it, which a user marks as finished to tell others
-not to change them. The app stores the flag `protected` on the top node of the
-branch only and draws a lock badge on that node. A node counts as protected
-when it or an ancestor carries the flag. Any writable client protects a branch
-or releases it again from the toolbar's lock button, and the flag syncs to
-every client.
+A node and every node below it, which a user declares finished to tell others
+not to change them. The app sets the attribute `protected` on the top node of
+the branch only and draws a lock badge on that node. A node counts as protected
+when its own `protected` attribute or an ancestor's is true. Any writable
+client protects a branch or releases it again from the toolbar's lock button,
+and the attribute syncs to every client.
 
 A protected branch refuses local edits: rename, style, image, link, drag, add
 child, paste, remove and cut. Peer writes, undo, redo, redistribute and import
@@ -146,6 +147,16 @@ map's deletion date and the server's retention period, and gives the map's
 admin the delete action. The map list, which the settings' third tab and the
 start page both show, offers the same delete action for every listed map whose
 admin id the browser holds, open or not.
+
+### Node mark
+
+One visual element of a drawn node: its background, name, image, link, hidden
+eye icon or lock badge. The renderer in `packages/mmp` draws every node from
+the marks in `NODE_MARKS`, so a new visual element is a new mark. The term
+follows the visualization sense of a mark: a visual element bound to one data
+item. A mark can consist of several DOM elements, such as the link's `<a>` and
+`<text>`. Write "DOM element" or the tag name when you mean the browser object,
+and "node group" for the `<g>` that holds all marks of one node.
 
 ## What you can do to a map
 
@@ -231,8 +242,8 @@ or "fork".
 
 ### Writable
 
-Whether a connection may edit. The app stores one flag; read-only is its
-negation. A connection is writable when it presents the map's modification
+Whether a connection may edit. The app stores one boolean attribute, and
+read-only is its negation. A connection is writable when it presents the map's modification
 secret.
 
 ### Viewer link, editor link
@@ -276,3 +287,22 @@ edits.
 
 Whether this client reaches the server. Losing the connection raises the
 "Connection lost" dialog with a reconnect button.
+
+## Words for code
+
+### Attribute
+
+A value a data object holds, such as a node's `isRoot`, `protected` or
+`hidden`. A boolean attribute is still an attribute: write "the `isRoot`
+attribute is true", not "the node carries the root flag".
+
+### Flag
+
+A switch that configures the app from outside its data: an environment
+variable, a feature flag or a command-line option. A value stored on a node or
+a map is an attribute.
+
+### Mark
+
+Reserved for the **node mark**, one visual element of a drawn node. Do not use
+"mark" for a stored value: a node holds an attribute, it does not carry a mark.

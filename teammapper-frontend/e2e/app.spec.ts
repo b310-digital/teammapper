@@ -40,7 +40,7 @@ test('shows the selection ring on the root after a reload', async ({
   await expect(page.locator('#add-tree-button')).toBeEnabled();
 
   const rootBackground = page
-    .locator('g[class$="_node"]')
+    .locator('g.node')
     .filter({ has: page.getByText('Root node', { exact: true }) })
     .locator('path')
     .first();

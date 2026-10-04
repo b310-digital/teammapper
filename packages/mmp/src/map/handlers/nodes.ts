@@ -143,6 +143,29 @@ export default class Nodes {
     parentId?: string | null,
     overwriteId?: string
   ): Node => {
+    const node = this.insertNode(userProperties, parentId, overwriteId);
+
+    this.map.draw.update();
+
+    if (updateHistory) {
+      this.map.history.save();
+    }
+
+    if (notifyWithEvent) {
+      this.map.events.emit('nodeCreate', this.getNodeProperties(node));
+    }
+    return node;
+  };
+
+  /**
+   * Add a node like addNode, without drawing it, saving history or emitting
+   * an event. A caller that adds several nodes draws once after the last.
+   */
+  public insertNode(
+    userProperties?: UserNodeProperties,
+    parentId?: string | null,
+    overwriteId?: string
+  ): Node {
     const parentNode = this.resolveParent(parentId);
     const properties: NodeProperties = Utils.mergeObjects(
       this.map.options.defaultNode,
@@ -177,17 +200,8 @@ export default class Nodes {
       node.coordinates = this.calculateCoordinates(node);
     }
 
-    this.map.draw.update();
-
-    if (updateHistory) {
-      this.map.history.save();
-    }
-
-    if (notifyWithEvent) {
-      this.map.events.emit('nodeCreate', this.getNodeProperties(node));
-    }
     return node;
-  };
+  }
 
   /**
    * The parent a node added through addNode gets: none for an explicit null,
@@ -210,11 +224,14 @@ export default class Nodes {
    * @param {boolean} updateHistory
    */
   public addNodes = (nodes: ExportNodeProperties[], updateHistory = true) => {
+    let added = false;
     nodes.forEach(node => {
       if (!this.existNode(node.id)) {
-        this.addNode(node, false, false, node.parent || null, node.id);
+        this.insertNode(node, node.parent || null, node.id);
+        added = true;
       }
     });
+    if (added) this.map.draw.update();
 
     if (updateHistory) {
       this.map.history.save();
@@ -236,14 +253,12 @@ export default class Nodes {
       if (!this.nodeSelectionTo(id)) {
         const node = this.store.get(id);
         if (node) {
-          const background = node.getBackgroundDOM();
+          const color = this.map.draw.ringColor(node);
 
-          const color = this.ringColor(node);
-
-          if (color && background.style.stroke !== color) {
+          if (color && this.map.draw.ringOf(node) !== color) {
             this.releaseSelection(node);
 
-            background.style.stroke = color;
+            this.map.draw.setRing(node, color);
 
             this.announceSelection(node);
           }
@@ -263,19 +278,8 @@ export default class Nodes {
   public redrawSelectionRing() {
     if (!this.selectedNode) return;
 
-    const color = this.ringColor(this.selectedNode);
-    if (color) this.selectedNode.getBackgroundDOM().style.stroke = color;
-  }
-
-  /**
-   * The ring colour of a node: its background fill, darkened. Null when the
-   * fill holds no colour.
-   * @param {Node} node
-   * @returns {string | null}
-   */
-  private ringColor(node: Node): string | null {
-    const fill = node.getBackgroundDOM().style.fill;
-    return d3.color(fill)?.darker(0.5).toString() ?? null;
+    const color = this.map.draw.ringColor(this.selectedNode);
+    if (color) this.map.draw.setRing(this.selectedNode, color);
   }
 
   /**
@@ -297,19 +301,18 @@ export default class Nodes {
     const previous = this.selectedNode;
     if (!previous) return;
 
-    previous.getBackgroundDOM().style.stroke = '';
+    this.map.draw.setRing(previous, null);
 
     // Keep focus on the node the user is editing (#1249): on mobile,
     // d3-drag's `started` callback fires on the second tap that enters edit
     // mode and calls selectNode for the same node, which used to steal focus
     // from the just-focused contenteditable and stop the soft keyboard from
     // opening.
-    const prevName = previous.getNameDOM();
     const editingSameNode =
-      previous === next && document.activeElement === prevName;
+      previous === next && this.map.draw.isEditing(previous);
     if (!editingSameNode) {
       Utils.removeAllRanges();
-      prevName.blur();
+      this.map.draw.blurName(previous);
     }
 
     // The blur runs first: the name editor's onblur commits the name through
@@ -329,7 +332,7 @@ export default class Nodes {
     if (!node) Log.error('The node id is not correct');
     if (!v.is(CssColorSchema, color)) return;
 
-    node.getBackgroundDOM().style.stroke = color;
+    this.map.draw.setRing(node, color);
   };
 
   /**
@@ -819,7 +822,11 @@ export default class Nodes {
       x: (view.minX + view.maxX) / 2,
       y: (view.minY + view.maxY) / 2,
     };
-    const trees = treeBounds(this.getNodes(), node => this.getTreeRoot(node));
+    const trees = treeBounds(
+      this.getNodes(),
+      node => this.getTreeRoot(node),
+      this.boundsOf
+    );
 
     return findClearSpot(start, footprint, trees, NEW_TREE_GAP);
   };
@@ -827,7 +834,7 @@ export default class Nodes {
   /**
    * Add the root of a new tree at `newTreeCoordinates`, then select it and
    * pan the view the shortest distance that shows it. The root has no parent
-   * and no main-root mark. The frontend's nodeCreate handler may select the
+   * and its isRoot attribute is false. The frontend's nodeCreate handler may select the
    * root already. addTree selects it anyway, so the mmp API does not depend
    * on that handler.
    * @returns {Node} the new root
@@ -840,15 +847,14 @@ export default class Nodes {
       null
     );
     this.selectNode(root.id);
-    this.map.zoom.panIntoView(nodeBounds(root));
+    this.map.zoom.panIntoView(this.boundsOf(root));
 
     return root;
   };
 
   private rightOfEveryTree(): MapNodeCoordinates {
     const rightEdge = this.getNodes().reduce(
-      (edge, node) =>
-        Math.max(edge, node.coordinates.x + node.dimensions.width / 2),
+      (edge, node) => Math.max(edge, this.boundsOf(node).maxX),
       -Infinity
     );
 
@@ -1035,7 +1041,7 @@ export default class Nodes {
   ): MapSnapshot => {
     if (mapSnapshot.every(node => !!node.coordinates)) return mapSnapshot;
 
-    const layout = computeMapLayout(mapSnapshot);
+    const layout = computeMapLayout(mapSnapshot, this.map.draw.estimateExtent);
 
     return mapSnapshot.map(node => {
       const position = layout.get(node.id);
@@ -1054,16 +1060,16 @@ export default class Nodes {
    * transaction that the distribute event triggers.
    */
   public distributeNodes = (notifyWithEvent = true) => {
-    const layout = computeMapLayout(this.toLayoutInput());
+    const layout = computeMapLayout(
+      this.toLayoutInput(),
+      this.map.draw.estimateExtent
+    );
     if (layout.size === 0) return;
 
     for (const [id, coordinates] of layout) {
       this.moveNodeTo(id, coordinates);
     }
 
-    // Redrawing the branches costs a full selection pass, so it happens once
-    // here rather than once per node as the single-node move path does.
-    this.map.draw.redrawBranches();
     this.map.draw.update();
     this.map.history.save();
 
@@ -1072,17 +1078,24 @@ export default class Nodes {
     }
   };
 
-  /** Move one node, leaving the branch redraw to the caller. */
+  /** Move one node, leaving the drawing to the caller. */
   private moveNodeTo(id: string, coordinates: MapNodeCoordinates): void {
     const node = this.store.get(id);
     if (!node) return;
 
     node.coordinates = { x: coordinates.x, y: coordinates.y };
-    node.dom?.setAttribute(
-      'transform',
-      'translate(' + [coordinates.x, coordinates.y] + ')'
-    );
   }
+
+  /**
+   * The bounding box of the node as it is drawn, or as it will be drawn
+   * before the renderer has measured it.
+   * @param {Node} node
+   */
+  public boundsOf = (node: Node): Bounds =>
+    nodeBounds({
+      coordinates: node.coordinates,
+      dimensions: this.map.draw.dimensionsOf(node),
+    });
 
   private toLayoutInput(): LayoutInputNode[] {
     return this.store.all().map(node => ({
@@ -1092,7 +1105,7 @@ export default class Nodes {
       name: node.name,
       font: node.font,
       coordinates: node.coordinates,
-      dimensions: node.dimensions,
+      dimensions: this.map.draw.dimensionsOf(node),
     }));
   }
 

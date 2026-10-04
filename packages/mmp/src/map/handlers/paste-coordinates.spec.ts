@@ -1,6 +1,7 @@
 import CopyPaste from './copy-paste.js';
 import Nodes from './nodes.js';
 import MmpMap from '../map.js';
+import { fakeDraw } from '../../test/fake-draw.js';
 import Node, { NodeProperties } from '../models/node.js';
 import type {
   ExportNodeProperties,
@@ -49,7 +50,7 @@ function makeHandler(liveNodes: Node[]): {
   handler: CopyPasteInternals;
   nodes: Nodes;
 } {
-  const map = { rootId: ROOT.id } as unknown as MmpMap;
+  const map = { rootId: ROOT.id, draw: fakeDraw() } as unknown as MmpMap;
   const nodes = new Nodes(map);
   map.nodes = nodes;
   [ROOT, ...liveNodes].forEach(node => nodes.setNode(node));

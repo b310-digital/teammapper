@@ -38,6 +38,12 @@ import { ExportService } from '../export/export.service';
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+/**
+ * Node names use the font `styles.scss` ships, so a name has the same width
+ * on every system. An exported image cannot load it and falls back to Arial.
+ */
+export const NODE_FONT_FAMILY = "'Fira Sans', Arial, sans-serif";
+
 /** The formats `exportMap` knows how to write. */
 export type ExportFormat = 'json' | 'pdf' | 'mermaid' | 'svg' | 'jpeg' | 'png';
 
@@ -113,6 +119,7 @@ export class MmpService implements OnDestroy {
     options?: OptionParameters
   ) {
     const map: MmpMap = create(id, ref, {
+      fontFamily: NODE_FONT_FAMILY,
       ...options,
       resolveImageUrl: reference =>
         this.imageHandlers?.resolveUrl(reference) ?? null,
@@ -331,7 +338,8 @@ export class MmpService implements OnDestroy {
 
   /**
    * Add the root of a new tree in the viewport, clear of every tree this
-   * client holds, and select it. The root has no parent and no main-root mark.
+   * client holds, and select it. The root has no parent and its isRoot
+   * attribute is false.
    */
   public addTree() {
     this.map.instance.addTree();

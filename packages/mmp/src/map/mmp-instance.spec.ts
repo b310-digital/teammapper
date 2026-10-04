@@ -42,9 +42,17 @@ function exported(map: MmpMap, id: string): ExportNodeProperties {
   return node;
 }
 
+/** The drawn element bound to the node with the id. */
+function drawnElement<E extends Element>(selector: string, id: string) {
+  return d3
+    .selectAll<E, { id: string }>(selector)
+    .filter(datum => datum.id === id)
+    .node();
+}
+
 function nodeDom(id: string): SVGGElement {
-  const dom = document.getElementById(id);
-  if (!(dom instanceof SVGGElement)) throw new Error('no dom for ' + id);
+  const dom = drawnElement<SVGGElement>('g.node', id);
+  if (!dom) throw new Error('no dom for ' + id);
   return dom;
 }
 
@@ -107,7 +115,8 @@ const PROPERTY_CASES: PropertyCase[] = [
     property: 'branchColor',
     value: '#00ff00',
     read: n => n.colors?.branch,
-    rendered: id => document.getElementById(id + '_branch')?.style.stroke,
+    rendered: id =>
+      drawnElement<SVGPathElement>('path.branch', id)?.style.stroke,
   },
   {
     property: 'nameColor',

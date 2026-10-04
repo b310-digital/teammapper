@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MmpService } from './mmp.service';
+import { MmpService, NODE_FONT_FAMILY } from './mmp.service';
 import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
@@ -145,6 +145,14 @@ describe('MmpService', () => {
         element,
         expect.objectContaining(options)
       );
+    });
+
+    it('draws node names in the font the app ships', async () => {
+      await service.create('test-id', document.createElement('div'));
+      const passed: OptionParameters = (mmp.create as jest.Mock).mock
+        .calls[0][2];
+
+      expect(passed.fontFamily).toBe(NODE_FONT_FAMILY);
     });
 
     it('passes a resolver that asks the registered image handlers', async () => {

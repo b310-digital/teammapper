@@ -18,7 +18,7 @@ import type {
 
 /**
  * A node of a snapshot the map accepts. Older maps carry no link and no
- * main-root mark.
+ * isRoot attribute.
  */
 const SnapshotNodeSchema = v.object({
   ...NodeSchema.entries,
