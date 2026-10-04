@@ -314,19 +314,13 @@ a map is an attribute.
 
 ### Map data
 
-The `MapData` interface in `packages/mmp`: the nodes of one mind map, which the
-renderer reads and writes and never copies. The host passes a `MapData` to
-`create`. mmp reads through `node(id)`, `nodes()` and `mainRootId()`, and writes
-through `addNodes`, `updateNode`, `removeNode` and `replaceMap`. `batch` groups
-several writes into one change and one undo step.
+The nodes of one mind map as every client shares them. The map you see is
+drawn from the map data and keeps no copy of its own, so your edits, a peer's
+edits and an undo all change the map data first and then show up on screen.
 
-mmp redraws in one listener on every change the map data reports, whether the
-change comes from a local edit, a peer or an undo, and then emits `mapChange`.
-mmp keeps only render data: measured sizes, rings, image loads, the drag
-preview, the selection and the **view state**.
-
-mmp exports `InMemoryMapData`. The frontend implements `YjsMapData` over the
-Y.Doc and creates the map after the first sync.
+In the app, the map data syncs with the server and the other clients. Tests
+and use without sync work on map data kept in memory. Distinct from the
+**view state**, which stays with one person and never enters the map data.
 
 ### Mark
 
