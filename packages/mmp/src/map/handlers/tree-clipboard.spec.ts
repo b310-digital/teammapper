@@ -49,7 +49,6 @@ function makeMap(view: Bounds | null = null) {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
     draw: fakeDraw(node => sizes.get(node.id) ?? { width: 0, height: 0 }),
-    history: { save: jest.fn() },
     events,
     zoom,
   } as unknown as MmpMap;

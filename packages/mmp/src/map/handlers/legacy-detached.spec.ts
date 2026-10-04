@@ -1,6 +1,6 @@
 import Nodes from './nodes.js';
 import { fakeDraw } from '../../test/fake-draw.js';
-import History from './history.js';
+import MapLoader from './map-loader.js';
 import MmpMap from '../map.js';
 import { DefaultNodeValues, DefaultRootNodeValues } from '../options.js';
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
@@ -28,7 +28,7 @@ function legacyNode(
   } as ExportNodeProperties;
 }
 
-const LEGACY_SNAPSHOT: MapSnapshot = [
+const LEGACY_MAP: MapSnapshot = [
   legacyNode('root', '', {
     ...DefaultRootNodeValues,
     isRoot: true,
@@ -39,7 +39,7 @@ const LEGACY_SNAPSHOT: MapSnapshot = [
   legacyNode('pasted', 'note', { coordinates: { x: 700, y: -400 } }),
 ];
 
-/** A map stub around the real node handler and history. */
+/** A map stub around the real node handler and map loader. */
 function makeMap(): MmpMap {
   const map = {
     rootId: '',
@@ -50,22 +50,22 @@ function makeMap(): MmpMap {
     export: { asJSON: () => [] },
   } as unknown as MmpMap;
   map.nodes = new Nodes(map);
-  map.history = new History(map);
+  map.loader = new MapLoader(map);
   return map;
 }
 
-function loadLegacySnapshot(): MmpMap {
+function loadLegacyMap(): MmpMap {
   const map = makeMap();
-  map.history.new(
-    LEGACY_SNAPSHOT.map(node => ({ ...node })),
+  map.loader.load(
+    LEGACY_MAP.map(node => ({ ...node })),
     false
   );
   return map;
 }
 
-describe('a snapshot that still carries the detached key', () => {
+describe('a map whose nodes still carry the detached key', () => {
   it('loads every node', () => {
-    const map = loadLegacySnapshot();
+    const map = loadLegacyMap();
 
     expect(
       map.nodes
@@ -76,7 +76,7 @@ describe('a snapshot that still carries the detached key', () => {
   });
 
   it('loads a former detached node as a root at its stored position', () => {
-    const note = loadLegacySnapshot().nodes.getNode('note');
+    const note = loadLegacyMap().nodes.getNode('note');
 
     expect({
       parent: note?.parent,
@@ -90,13 +90,13 @@ describe('a snapshot that still carries the detached key', () => {
   });
 
   it('keeps the pasted child under the former detached node', () => {
-    const pasted = loadLegacySnapshot().nodes.getNode('pasted');
+    const pasted = loadLegacyMap().nodes.getNode('pasted');
 
     expect(pasted?.parent?.id).toBe('note');
   });
 
   it('keeps the main root as the only node with isRoot set', () => {
-    const map = loadLegacySnapshot();
+    const map = loadLegacyMap();
 
     expect(
       map.nodes
@@ -107,15 +107,15 @@ describe('a snapshot that still carries the detached key', () => {
   });
 
   it('adds a child to a former detached node', () => {
-    const map = loadLegacySnapshot();
+    const map = loadLegacyMap();
 
-    const added = map.nodes.addNode({ name: 'new' }, false, false, 'note');
+    const added = map.nodes.addNode({ name: 'new' }, false, 'note');
 
     expect(added.parent?.id).toBe('note');
   });
 
   it('exports no detached key', () => {
-    const map = loadLegacySnapshot();
+    const map = loadLegacyMap();
 
     const exported = map.nodes
       .getNodes()
@@ -124,18 +124,15 @@ describe('a snapshot that still carries the detached key', () => {
   });
 
   it('adds a synced former detached node as a root whatever is selected', () => {
-    const map = loadLegacySnapshot();
+    const map = loadLegacyMap();
     map.nodes.selectRootNode();
 
-    map.nodes.addNodes(
-      [
-        legacyNode('synced', '', {
-          detached: true,
-          coordinates: { x: 5, y: 5 },
-        }),
-      ],
-      false
-    );
+    map.nodes.addNodes([
+      legacyNode('synced', '', {
+        detached: true,
+        coordinates: { x: 5, y: 5 },
+      }),
+    ]);
 
     expect(map.nodes.getNode('synced')?.parent).toBeNull();
   });

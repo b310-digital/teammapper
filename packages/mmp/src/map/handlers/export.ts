@@ -20,13 +20,14 @@ export default class Export {
   }
 
   /**
-   * Return the snapshot (json) of the current map.
+   * Return the properties of every node, read from the node store at the
+   * time of the call. Each entry is a copy the caller may change.
    * @returns {MapSnapshot} json
    */
   public asJSON = (): MapSnapshot => {
-    const snapshot = this.map.history.current();
+    const nodes = this.map.nodes;
 
-    return Utils.cloneObject(snapshot);
+    return nodes.getNodes().map(node => nodes.getNodeProperties(node));
   };
 
   /**

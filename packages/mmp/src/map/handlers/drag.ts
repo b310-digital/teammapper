@@ -112,13 +112,13 @@ export default class Drag {
   }
 
   /**
-   * If the node was actually dragged change the state of dragging and save the snapshot.
+   * If the node was actually dragged, end the drag and announce the new
+   * coordinates of every moved node.
    * @param {Node} node
    */
   private ended(_event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
     if (this.dragging) {
       this.dragging = false;
-      this.map.history.save();
 
       // The drag moved each node many times, so no single previous value
       // describes the change.

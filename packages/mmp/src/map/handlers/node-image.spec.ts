@@ -64,7 +64,7 @@ function makeMap(
 }
 
 function setImage(map: MmpMap, src: string) {
-  map.instance.updateNode('imageSrc', src, false, false, 'root');
+  map.instance.updateNode('imageSrc', src, false, 'root');
 }
 
 const drawnImage = (map: MmpMap) =>
@@ -134,7 +134,7 @@ describe('node images', () => {
     const map = makeMap(REFERENCE, () => '/api/maps/m/images/i');
     lastImage().fail();
 
-    map.instance.updateNode('imageSize', 90, false, false, 'root');
+    map.instance.updateNode('imageSize', 90, false, 'root');
 
     expect(map.instance.exportRootProperties().image).toEqual({
       src: REFERENCE,
@@ -147,7 +147,7 @@ describe('node images', () => {
     const map = makeMap(DATA_URL);
     lastImage().fail();
 
-    map.instance.updateNode('nameColor', '#ff0000', false, false, 'root');
+    map.instance.updateNode('nameColor', '#ff0000', false, 'root');
 
     expect(FakeImage.created).toHaveLength(1);
   });

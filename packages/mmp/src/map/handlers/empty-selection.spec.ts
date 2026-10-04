@@ -22,13 +22,11 @@ function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
 
 function makeMap() {
   const events = { emit: jest.fn() };
-  const history = { save: jest.fn() };
   const map = {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
     draw: fakeDraw(),
     events,
-    history,
   } as unknown as MmpMap;
 
   const handler = new Nodes(map);
@@ -48,7 +46,7 @@ function makeMap() {
   });
   for (const node of [root, branch, other]) handler.setNode(node);
 
-  return { map, handler, events, history, nodes: { root, branch, other } };
+  return { map, handler, events, nodes: { root, branch, other } };
 }
 
 /** The event names mmp fired, in order. */
@@ -154,21 +152,21 @@ describe('selectRootNode', () => {
 
 describe('operations on the selected node with nothing selected', () => {
   it('updates no node', () => {
-    const { handler, history, nodes } = makeMap();
+    const { handler, events, nodes } = makeMap();
 
     handler.updateNode('fontWeight', 'bold');
 
     expect(nodes.branch.font.weight).not.toBe('bold');
-    expect(history.save).not.toHaveBeenCalled();
+    expect(events.emit).not.toHaveBeenCalled();
   });
 
   it('removes no node', () => {
-    const { handler, history } = makeMap();
+    const { handler, events } = makeMap();
 
     handler.removeNode();
 
     expect(handler.getNodes()).toHaveLength(3);
-    expect(history.save).not.toHaveBeenCalled();
+    expect(events.emit).not.toHaveBeenCalled();
   });
 
   it('lists no children', () => {
@@ -180,7 +178,7 @@ describe('operations on the selected node with nothing selected', () => {
   it('throws when nothing is selected and no parent is named', () => {
     const { handler } = makeMap();
 
-    expect(() => handler.addNode({}, false, false)).toThrow(
+    expect(() => handler.addNode({}, false)).toThrow(
       'There is no selected node'
     );
     expect(handler.getNodes()).toHaveLength(3);
@@ -189,7 +187,7 @@ describe('operations on the selected node with nothing selected', () => {
   it('adds a child to a named parent', () => {
     const { handler, nodes } = makeMap();
 
-    const added = handler.addNode({}, false, false, nodes.branch.id);
+    const added = handler.addNode({}, false, nodes.branch.id);
 
     expect(added.parent).toBe(nodes.branch);
   });

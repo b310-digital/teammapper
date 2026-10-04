@@ -165,7 +165,6 @@ export default class CopyPaste {
     this.map.draw.clear();
     this.map.draw.update();
     this.map.nodes.redrawSelectionRing();
-    this.map.history.save();
 
     const pasted = newNodes.map(node => this.map.nodes.getNodeProperties(node));
     this.map.events.emit('nodePaste', pasted);

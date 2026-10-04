@@ -3,7 +3,7 @@ import Events, { MmpEventCallback } from './handlers/events.js';
 import Zoom from './handlers/zoom.js';
 import Draw from './handlers/draw.js';
 import Options, { OptionParameters } from './options.js';
-import History from './handlers/history.js';
+import MapLoader from './handlers/map-loader.js';
 import Drag from './handlers/drag.js';
 import Nodes from './handlers/nodes.js';
 import Export from './handlers/export.js';
@@ -27,7 +27,7 @@ export default class MmpMap {
   public rootId: string;
 
   public options: Options;
-  public history: History;
+  public loader: MapLoader;
   public events: Events;
   public zoom: Zoom;
   public draw: Draw;
@@ -50,7 +50,7 @@ export default class MmpMap {
     this.events = new Events();
     this.options = new Options(options, this);
     this.zoom = new Zoom(this);
-    this.history = new History(this);
+    this.loader = new MapLoader(this);
     this.drag = new Drag(this);
     this.draw = new Draw(this, ref);
     this.nodes = new Nodes(this);
@@ -69,8 +69,6 @@ export default class MmpMap {
     if (this.options.zoom === true) {
       this.dom.svg.call(this.zoom.getZoomBehavior());
     }
-
-    this.history.save();
 
     this.createMmpInstance();
   }
@@ -114,7 +112,7 @@ export default class MmpMap {
       exportAsJSON: this.export.asJSON,
       exportRootProperties: this.nodes.exportRootProperties,
       highlightNode: this.nodes.highlightNodeWithColor,
-      new: this.history.new,
+      new: this.loader.load,
       nodeChildren: this.nodes.nodeChildren,
       on: this.events.on,
       pasteNode: this.copyPaste.paste,
@@ -137,11 +135,10 @@ export interface MmpInstance {
   addNode: (
     userProperties?: UserNodeProperties,
     notifyWithEvent?: boolean,
-    updateHistory?: boolean,
     parentId?: string | null,
     overwriteId?: string
   ) => Node | null;
-  addNodes: (nodes: ExportNodeProperties[], updateHistory?: boolean) => void;
+  addNodes: (nodes: ExportNodeProperties[]) => void;
   addTree: () => Node;
   center: (type?: 'zoom' | 'position', duration?: number) => void;
   copyNode: (id?: string) => void;
@@ -172,7 +169,6 @@ export interface MmpInstance {
     property: NodeProperty | string,
     value: NodePropertyValue | unknown,
     notifyWithEvent?: boolean,
-    updateHistory?: boolean,
     id?: string
   ) => void;
   zoomIn: (duration?: number) => void;

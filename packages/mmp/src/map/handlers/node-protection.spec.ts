@@ -43,7 +43,6 @@ function makeMap() {
     rootId: 'root',
     options: { defaultNode: DefaultNodeValues },
     draw: fakeDraw(),
-    history: { save: jest.fn() },
     events,
   } as unknown as MmpMap;
 
@@ -152,7 +151,7 @@ describe('local edits inside a protected branch', () => {
   it('refuses a rename and leaves the name unchanged', () => {
     const { nodes, tree, events } = makeMap();
 
-    nodes.updateNode('name', 'new', true, true, 'b');
+    nodes.updateNode('name', 'new', true, 'b');
 
     expect(tree.b.name).toBe('');
     expect(refusals(events)).toEqual(['b']);
@@ -161,7 +160,7 @@ describe('local edits inside a protected branch', () => {
   it('refuses a style change', () => {
     const { nodes, tree } = makeMap();
 
-    nodes.updateNode('fontWeight', 'bold', true, true, 'a');
+    nodes.updateNode('fontWeight', 'bold', true, 'a');
 
     expect(tree.a.font.weight).toBe('normal');
   });
@@ -169,7 +168,7 @@ describe('local edits inside a protected branch', () => {
   it('allows hiding and showing', () => {
     const { nodes, tree, events } = makeMap();
 
-    nodes.updateNode('hidden', true, true, true, 'b');
+    nodes.updateNode('hidden', true, true, 'b');
 
     expect(tree.b.hidden).toBe(true);
     expect(refusals(events)).toEqual([]);
@@ -191,7 +190,7 @@ describe('local edits inside a protected branch', () => {
   it('refuses adding a child', () => {
     const { nodes, events } = makeMap();
 
-    const added = nodes.addNodeUnlessProtected({}, true, true, 'b');
+    const added = nodes.addNodeUnlessProtected({}, true, 'b');
 
     expect(added).toBeNull();
     expect(nodes.getNodes()).toHaveLength(4);
@@ -203,7 +202,6 @@ describe('local edits inside a protected branch', () => {
 
     const added = nodes.addNodeUnlessProtected(
       { coordinates: { x: -400, y: 0 } },
-      true,
       true,
       'c'
     );
@@ -244,7 +242,7 @@ describe('changes that stay allowed', () => {
   it('applies a remote rename inside a protected branch', () => {
     const { nodes, tree, events } = makeMap();
 
-    nodes.updateNode('name', 'remote', false, false, 'b');
+    nodes.updateNode('name', 'remote', false, 'b');
 
     expect(tree.b.name).toBe('remote');
     expect(refusals(events)).toEqual([]);

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import Nodes from './nodes.js';
 import { fakeDraw } from '../../test/fake-draw.js';
-import History from './history.js';
+import MapLoader from './map-loader.js';
 import MmpMap from '../map.js';
 import Options, {
   DefaultNodeValues,
@@ -10,7 +10,7 @@ import Options, {
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 
 /**
- * A map stub around the real node handler and history, with a renderer that
+ * A map stub around the real node handler and map loader, with a renderer that
  * keeps the rings.
  */
 function makeMap() {
@@ -27,7 +27,7 @@ function makeMap() {
     export: { asJSON: () => [] },
   } as unknown as MmpMap;
   map.nodes = new Nodes(map);
-  map.history = new History(map);
+  map.loader = new MapLoader(map);
   return { map, events };
 }
 
@@ -46,7 +46,7 @@ function node(
   } as ExportNodeProperties;
 }
 
-function snapshot(rootId: string, background = '#f0f6f5'): MapSnapshot {
+function mapNodes(rootId: string, background = '#f0f6f5'): MapSnapshot {
   return [
     node(rootId, '', {
       ...DefaultRootNodeValues,
@@ -74,7 +74,7 @@ describe('a map load', () => {
   it('draws the ring on the root and selects it', () => {
     const { map } = makeMap();
 
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'), false);
 
     const root = map.nodes.getRoot();
     expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
@@ -84,7 +84,7 @@ describe('a map load', () => {
   it('fires nodeSelect for the root although it fires no create event', () => {
     const { map, events } = makeMap();
 
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'), false);
 
     expect(events.emit).toHaveBeenCalledWith(
       'nodeSelect',
@@ -95,10 +95,10 @@ describe('a map load', () => {
 
   it('rings the new root DOM when the same map loads twice', () => {
     const { map, events } = makeMap();
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'), false);
     events.emit.mockClear();
 
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'), false);
 
     const root = map.nodes.getRoot();
     expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
@@ -107,10 +107,10 @@ describe('a map load', () => {
 
   it('selects the new root when a map with another root loads', () => {
     const { map, events } = makeMap();
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'), false);
     events.emit.mockClear();
 
-    map.history.new(snapshot('other-root'), false);
+    map.loader.load(mapNodes('other-root'), false);
 
     const root = map.nodes.getRoot();
     expect(root.id).toBe('other-root');
@@ -119,10 +119,10 @@ describe('a map load', () => {
     expect(events.emit.mock.calls[0][1].id).toBe('other-root');
   });
 
-  it('rings the root it creates when no snapshot is given', () => {
+  it('rings the root it creates when no nodes are given', () => {
     const { map, events } = makeMap();
 
-    map.history.new(undefined, false);
+    map.loader.load(undefined, false);
 
     const root = map.nodes.getRoot();
     expect(map.draw.ringOf(root)).toBe(
@@ -137,7 +137,7 @@ describe('a map load', () => {
   it('selects a root without a background colour', () => {
     const { map, events } = makeMap();
 
-    map.history.new(snapshot('root', ''), false);
+    map.loader.load(mapNodes('root', ''), false);
 
     expect(map.nodes.getSelectedNode()?.id).toBe('root');
     expect(firedEvents(events)).toEqual(['nodeSelect']);
@@ -147,7 +147,7 @@ describe('a map load', () => {
 describe('an edit mode change after a map load', () => {
   it('draws the ring on the selected root again', () => {
     const { map } = makeMap();
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'), false);
 
     new Options({}, map).update('edit', false);
 
@@ -160,7 +160,7 @@ describe('an edit mode change after a map load', () => {
 describe('removing a node after a map load', () => {
   it('draws the ring on the selected root again', () => {
     const { map } = makeMap();
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'), false);
 
     map.nodes.removeNode('child', false);
 
@@ -173,7 +173,7 @@ describe('removing a node after a map load', () => {
 describe('selectRootNode', () => {
   it('fires nodeSelect once when called twice', () => {
     const { map, events } = makeMap();
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'), false);
     map.nodes.deselectNode();
     events.emit.mockClear();
 
