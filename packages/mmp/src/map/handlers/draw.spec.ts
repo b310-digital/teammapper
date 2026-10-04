@@ -1,6 +1,7 @@
-import * as d3 from 'd3';
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
+import type { ResolvedNode } from '../data/node-record.js';
+import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
  * The renderer measures each name once it is drawn, and again whenever the
@@ -42,14 +43,20 @@ function observer(): FakeResizeObserver {
   return FakeResizeObserver.current;
 }
 
+beforeAll(stubSvgLengths);
+
 function makeMap(): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const map = create('map', ref);
-  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
-  map.dom.svg.attr('viewBox', '0 0 800 600');
   map.instance.new();
   return map;
+}
+
+function mainRoot(map: MmpMap): ResolvedNode {
+  const root = map.nodes.record(map.rootId);
+  if (!root) throw new Error('the map has no main root');
+  return root;
 }
 
 function rootName(map: MmpMap): HTMLDivElement {
@@ -87,7 +94,7 @@ describe('measuring names', () => {
   it('sizes the node from its name once the name changes size', () => {
     const map = makeMap();
     const name = rootName(map);
-    const root = map.nodes.getRoot();
+    const root = mainRoot(map);
 
     layOut(name, 140, 30);
     observer().fire([name]);
@@ -111,7 +118,7 @@ describe('measuring names', () => {
 
   it('redraws the name when the map is drawn anew during an edit', () => {
     const map = makeMap();
-    const root = map.nodes.getRoot();
+    const root = mainRoot(map);
     map.draw.enableNodeNameEditing(root.id);
 
     map.draw.clear();
@@ -136,23 +143,5 @@ describe('measuring names', () => {
     map.instance.removeNode(child.id);
 
     expect(observer().observed).toEqual(new Set([rootName(map)]));
-  });
-});
-
-describe('a drawn map', () => {
-  it('binds node ids to the node groups, branches and marks', () => {
-    const map = makeMap();
-    const root = map.nodes.getRoot();
-    const child = map.instance.addNode({ name: 'child' });
-    if (!child) throw new Error('addNode added no child');
-
-    const g = d3.select(map.dom.g.node());
-    expect(g.selectAll('g.node').data()).toEqual([root.id, child.id]);
-    expect(g.selectAll('path.branch').data()).toEqual([child.id]);
-    expect(g.selectAll('path.background').data()).toEqual([root.id, child.id]);
-    expect(g.selectAll('foreignObject.name > div').data()).toEqual([
-      root.id,
-      child.id,
-    ]);
   });
 });

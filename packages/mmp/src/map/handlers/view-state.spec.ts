@@ -1,27 +1,29 @@
 import * as d3 from 'd3';
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
+import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
  * The view state holds the nodes whose child nodes this person hid, apart
  * from the map data. These specs drive a real map through `MmpInstance`.
  */
 
+beforeAll(stubSvgLengths);
+
 /** root -> a -> b -> c, with the root selected. */
 function makeChain() {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const map: MmpMap = create('map', ref);
-  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
-  map.dom.svg.attr('viewBox', '0 0 800 600');
   map.instance.new();
 
-  const root = map.instance.exportRootProperties().id;
-  const a = map.instance.addNode({ name: 'a' }, false, root);
+  const root = map.instance.exportRootProperties()?.id;
+  if (!root) throw new Error('the map has no main root');
+  const a = map.instance.addNode({ name: 'a' }, true, root);
   if (!a) throw new Error('addNode added no node');
-  const b = map.instance.addNode({ name: 'b' }, false, a.id);
+  const b = map.instance.addNode({ name: 'b' }, true, a.id);
   if (!b) throw new Error('addNode added no node');
-  const c = map.instance.addNode({ name: 'c' }, false, b.id);
+  const c = map.instance.addNode({ name: 'c' }, true, b.id);
   if (!c) throw new Error('addNode added no node');
 
   return { map, root, a, b, c };

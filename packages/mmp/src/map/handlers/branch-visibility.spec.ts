@@ -1,6 +1,8 @@
 import * as d3 from 'd3';
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
+import { nodeRecord } from '../../test/stub-map.js';
+import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
  * Hiding the child nodes of a node changes the view state of one person
@@ -8,6 +10,8 @@ import MmpMap from '../map.js';
  * nodes this person hid. These specs drive a real map and read the drawn
  * visibility.
  */
+
+beforeAll(stubSvgLengths);
 
 interface Tree {
   map: MmpMap;
@@ -22,17 +26,16 @@ function makeTree(): Tree {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const map = create('map', ref);
-  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
-  map.dom.svg.attr('viewBox', '0 0 800 600');
   map.instance.new();
 
-  const root = map.instance.exportRootProperties().id;
-  const first = map.instance.addNode({ name: 'first' }, false, root);
-  const second = map.instance.addNode({ name: 'second' }, false, root);
+  const root = map.instance.exportRootProperties()?.id;
+  if (!root) throw new Error('the map has no main root');
+  const first = map.instance.addNode({ name: 'first' }, true, root);
+  const second = map.instance.addNode({ name: 'second' }, true, root);
   if (!first || !second) throw new Error('addNode added no child');
   const grandchild = map.instance.addNode(
     { name: 'grandchild' },
-    false,
+    true,
     first.id
   );
   if (!grandchild) throw new Error('addNode added no grandchild');
@@ -102,13 +105,12 @@ describe('toggleBranchVisibility', () => {
     toggle(map, root);
 
     map.instance.addNodes([
-      {
+      nodeRecord({
         id: 'late',
         parent: root,
         name: 'late',
-        k: 1,
         coordinates: { x: 200, y: 200 },
-      },
+      }),
     ]);
 
     expect(visibility('late')).toBe('hidden');
@@ -150,6 +152,18 @@ describe('toggleBranchVisibility', () => {
     ]);
   });
 
+  it('forgets a removed node whose child nodes were hidden', () => {
+    const { map, root, first } = makeTree();
+    toggle(map, first);
+    map.instance.selectNode(root);
+    const listener = jest.fn();
+    map.instance.on('viewStateChange', listener);
+
+    map.instance.removeNode(first, false);
+
+    expect(listener).toHaveBeenCalledWith({ nodesWithHiddenChildren: [] });
+  });
+
   it('does nothing while nothing is selected', () => {
     const { map } = makeTree();
     const listener = jest.fn();
@@ -182,13 +196,12 @@ describe('the hidden eye icon', () => {
     expect(hasEyeIcon(first)).toBe(false);
 
     map.instance.addNodes([
-      {
+      nodeRecord({
         id: 'late',
         parent: first,
         name: 'late',
-        k: 1,
         coordinates: { x: 9, y: 9 },
-      },
+      }),
     ]);
     expect(hasEyeIcon(first)).toBe(true);
   });

@@ -1,15 +1,9 @@
-import * as d3 from 'd3';
 import { create } from '../../index.js';
-import { nodeRecord } from '../../test/stub-map.js';
+import { nodeRecord, ring } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /** The color a client draws around the node it selected itself. */
 const HIGHLIGHT = '#c0c0c0';
-
-/** The ring selection draws on a background filled with `fill`. */
-function ring(fill: string): string | undefined {
-  return d3.color(fill)?.darker(0.5).toString();
-}
 
 beforeAll(stubSvgLengths);
 

@@ -1,6 +1,5 @@
-import Nodes from './nodes.js';
-import Node, { NodeProperties } from '../models/node.js';
-import MmpMap from '../map.js';
+import type Node from '../models/node.js';
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
 
 /**
  * The left and right arrow keys walk a branch. A node left of the root moves
@@ -9,67 +8,55 @@ import MmpMap from '../map.js';
  * it to the lowest child on the side that key names.
  */
 
-const ROOT = new Node({
-  id: 'root',
-  parent: null,
-  k: 1,
-  isRoot: true,
-  coordinates: { x: 0, y: 0 },
-});
-
-function makeNode(
-  id: string,
-  parent: Node,
-  coordinates: NodeProperties['coordinates']
-): Node {
-  return new Node({ id, parent, k: 1, coordinates });
-}
-
-const LEFT_CHILD = makeNode('left', ROOT, { x: -200, y: 0 });
-const LEFT_GRANDCHILD = makeNode('left-low', LEFT_CHILD, { x: -400, y: 100 });
-const RIGHT_CHILD = makeNode('right', ROOT, { x: 200, y: 0 });
+const SNAPSHOT = [
+  nodeRecord({ id: 'root', isRoot: true }),
+  nodeRecord({ id: 'left', parent: 'root', coordinates: { x: -200, y: 0 } }),
+  nodeRecord({
+    id: 'left-low',
+    parent: 'left',
+    coordinates: { x: -400, y: 100 },
+  }),
+  nodeRecord({ id: 'right', parent: 'root', coordinates: { x: 200, y: 0 } }),
+];
 
 function selectionAfterBranchMove(
-  selected: Node,
+  selected: string,
   direction: boolean
-): string[] {
-  const handler = new Nodes({ rootId: ROOT.id } as unknown as MmpMap);
-  const internals = handler as unknown as {
+): unknown[] {
+  const { nodes } = stubMap(SNAPSHOT);
+  const internals = nodes as unknown as {
     moveSelectionOnBranch(selected: Node, direction: boolean): void;
   };
+  const record = nodes.getNode(selected);
+  if (!record) throw new Error('no node ' + selected);
+  // A node id 'left' reads as a direction, so the spy selects nothing.
+  const selectNode = jest
+    .spyOn(nodes, 'selectNode')
+    .mockImplementation(() => null);
 
-  for (const node of [ROOT, LEFT_CHILD, LEFT_GRANDCHILD, RIGHT_CHILD]) {
-    handler.store.set(node);
-  }
-
-  const selectNode = jest.fn();
-  handler.selectNode = selectNode;
-
-  internals.moveSelectionOnBranch(selected, direction);
+  internals.moveSelectionOnBranch(record, direction);
 
   return selectNode.mock.calls.map(call => call[0]);
 }
 
 describe('moveSelectionOnBranch', () => {
   it('moves the root to a left-hand child on Left', () => {
-    expect(selectionAfterBranchMove(ROOT, true)).toEqual([LEFT_CHILD.id]);
+    expect(selectionAfterBranchMove('root', true)).toEqual(['left']);
   });
 
   it('moves the root to a right-hand child on Right', () => {
-    expect(selectionAfterBranchMove(ROOT, false)).toEqual([RIGHT_CHILD.id]);
+    expect(selectionAfterBranchMove('root', false)).toEqual(['right']);
   });
 
   it('moves a left-hand node outward on Left', () => {
-    expect(selectionAfterBranchMove(LEFT_CHILD, true)).toEqual([
-      LEFT_GRANDCHILD.id,
-    ]);
+    expect(selectionAfterBranchMove('left', true)).toEqual(['left-low']);
   });
 
   it('moves a left-hand node back to its parent on Right', () => {
-    expect(selectionAfterBranchMove(LEFT_CHILD, false)).toEqual([ROOT.id]);
+    expect(selectionAfterBranchMove('left', false)).toEqual(['root']);
   });
 
   it('moves a right-hand node back to its parent on Left', () => {
-    expect(selectionAfterBranchMove(RIGHT_CHILD, true)).toEqual([ROOT.id]);
+    expect(selectionAfterBranchMove('right', true)).toEqual(['root']);
   });
 });

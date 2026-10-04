@@ -1,6 +1,7 @@
 import { create } from '../../index.js';
 import { DefaultRootNodeValues } from '../options.js';
 import MmpMap from '../map.js';
+import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
  * A node image is a base64 raster data URL, drawn as is, or an
@@ -48,8 +49,6 @@ function makeMap(
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const map = create('map', ref, { resolveImageUrl });
-  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
-  map.dom.svg.attr('viewBox', '0 0 800 600');
   map.instance.new([
     {
       ...DefaultRootNodeValues,
@@ -64,7 +63,7 @@ function makeMap(
 }
 
 function setImage(map: MmpMap, src: string) {
-  map.instance.updateNode('imageSrc', src, false, 'root');
+  map.instance.updateNode('imageSrc', src, true, 'root');
 }
 
 const drawnImage = (map: MmpMap) =>
@@ -72,6 +71,8 @@ const drawnImage = (map: MmpMap) =>
 
 describe('node images', () => {
   const originalImage = globalThis.Image;
+
+  beforeAll(stubSvgLengths);
 
   beforeEach(() => {
     FakeImage.created = [];
@@ -127,16 +128,16 @@ describe('node images', () => {
     lastImage().fail();
 
     expect(drawnImage(map)).toBeNull();
-    expect(map.instance.exportRootProperties().image?.src).toBe(REFERENCE);
+    expect(map.instance.exportRootProperties()?.image?.src).toBe(REFERENCE);
   });
 
   it('keeps the reference when the size of an image that failed to load changes', () => {
     const map = makeMap(REFERENCE, () => '/api/maps/m/images/i');
     lastImage().fail();
 
-    map.instance.updateNode('imageSize', 90, false, 'root');
+    map.instance.updateNode('imageSize', 90, true, 'root');
 
-    expect(map.instance.exportRootProperties().image).toEqual({
+    expect(map.instance.exportRootProperties()?.image).toEqual({
       src: REFERENCE,
       size: 90,
     });
@@ -147,7 +148,7 @@ describe('node images', () => {
     const map = makeMap(DATA_URL);
     lastImage().fail();
 
-    map.instance.updateNode('nameColor', '#ff0000', false, 'root');
+    map.instance.updateNode('nameColor', '#ff0000', true, 'root');
 
     expect(FakeImage.created).toHaveLength(1);
   });

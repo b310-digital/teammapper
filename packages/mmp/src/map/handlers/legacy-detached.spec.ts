@@ -1,14 +1,17 @@
-import Nodes from './nodes.js';
-import { fakeDraw } from '../../test/fake-draw.js';
-import MapLoader from './map-loader.js';
-import MmpMap from '../map.js';
+import * as d3 from 'd3';
+import { create } from '../../index.js';
+import type Nodes from './nodes.js';
+import type Node from '../models/node.js';
 import { DefaultNodeValues, DefaultRootNodeValues } from '../options.js';
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
+import { stubSvgLengths } from '../../test/svg-lengths.js';
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 
 /**
  * A JSON export or a peer running an older release still carries the
  * `detached` key. mmp reads no such key, so a former detached node loads as a
- * root at its stored position and takes children like any other root.
+ * root at its stored position and takes children like any other root. A node
+ * whose parent the map lacks counts as a root too.
  */
 
 /** A node the way an older release exported it, `detached` key included. */
@@ -39,47 +42,36 @@ const LEGACY_MAP: MapSnapshot = [
   legacyNode('pasted', 'note', { coordinates: { x: 700, y: -400 } }),
 ];
 
-/** A map stub around the real node handler and map loader. */
-function makeMap(): MmpMap {
-  const map = {
-    rootId: '',
-    options: { defaultNode: DefaultNodeValues },
-    draw: fakeDraw(),
-    zoom: { center: jest.fn() },
-    events: { emit: jest.fn() },
-    export: { asJSON: () => [] },
-  } as unknown as MmpMap;
-  map.nodes = new Nodes(map);
-  map.loader = new MapLoader(map);
-  return map;
+function loadLegacyMap() {
+  const stub = stubMap();
+  stub.map.loader.load(LEGACY_MAP.map(node => ({ ...node })));
+  return stub;
 }
 
-function loadLegacyMap(): MmpMap {
-  const map = makeMap();
-  map.loader.load(
-    LEGACY_MAP.map(node => ({ ...node })),
-    false
-  );
-  return map;
+function nodeOf(nodes: Nodes, id: string): Node {
+  const node = nodes.getNode(id);
+  if (!node) throw new Error('no node ' + id);
+  return node;
 }
 
 describe('a map whose nodes still carry the detached key', () => {
   it('loads every node', () => {
-    const map = loadLegacyMap();
+    const { map } = loadLegacyMap();
 
     expect(
-      map.nodes
-        .getNodes()
+      map.export
+        .asJSON()
         .map(node => node.id)
         .sort()
     ).toEqual(['child', 'note', 'pasted', 'root']);
   });
 
   it('loads a former detached node as a root at its stored position', () => {
-    const note = loadLegacyMap().nodes.getNode('note');
+    const { nodes } = loadLegacyMap();
+    const note = nodes.record('note');
 
     expect({
-      parent: note?.parent,
+      parent: nodes.parentOf('note'),
       isRoot: note?.isRoot,
       coordinates: note?.coordinates,
     }).toEqual({
@@ -90,50 +82,86 @@ describe('a map whose nodes still carry the detached key', () => {
   });
 
   it('keeps the pasted child under the former detached node', () => {
-    const pasted = loadLegacyMap().nodes.getNode('pasted');
+    const { nodes } = loadLegacyMap();
 
-    expect(pasted?.parent?.id).toBe('note');
+    expect(nodes.parentOf('pasted')).toBe('note');
   });
 
   it('keeps the main root as the only node with isRoot set', () => {
-    const map = loadLegacyMap();
+    const { map } = loadLegacyMap();
 
     expect(
-      map.nodes
-        .getNodes()
+      map.export
+        .asJSON()
         .filter(node => node.isRoot)
         .map(node => node.id)
     ).toEqual(['root']);
   });
 
   it('adds a child to a former detached node', () => {
-    const map = loadLegacyMap();
+    const { nodes } = loadLegacyMap();
 
-    const added = map.nodes.addNode({ name: 'new' }, false, 'note');
+    const added = nodes.addNode({ name: 'new' }, false, 'note');
 
-    expect(added.parent?.id).toBe('note');
+    expect(nodes.parentOf(added.id)).toBe('note');
   });
 
-  it('exports no detached key', () => {
-    const map = loadLegacyMap();
+  it('keeps no detached key', () => {
+    const { map } = loadLegacyMap();
 
-    const exported = map.nodes
-      .getNodes()
-      .map(node => map.nodes.getNodeProperties(node));
-    expect(exported.some(node => 'detached' in node)).toBe(false);
+    expect(map.export.asJSON().some(node => 'detached' in node)).toBe(false);
   });
 
   it('adds a synced former detached node as a root whatever is selected', () => {
-    const map = loadLegacyMap();
-    map.nodes.selectRootNode();
+    const { nodes } = loadLegacyMap();
 
-    map.nodes.addNodes([
+    nodes.addNodes([
       legacyNode('synced', '', {
         detached: true,
         coordinates: { x: 5, y: 5 },
       }),
     ]);
 
-    expect(map.nodes.getNode('synced')?.parent).toBeNull();
+    expect(nodes.parentOf('synced')).toBeNull();
+  });
+});
+
+describe('a node whose parent the map lacks', () => {
+  const ORPHANED: MapSnapshot = [
+    nodeRecord({ id: 'root', isRoot: true }),
+    nodeRecord({ id: 'child', parent: 'root', coordinates: { x: 200, y: 0 } }),
+    nodeRecord({
+      id: 'orphan',
+      parent: 'missing',
+      coordinates: { x: 600, y: 0 },
+    }),
+    nodeRecord({ id: 'leaf', parent: 'orphan', coordinates: { x: 800, y: 0 } }),
+  ];
+
+  beforeAll(stubSvgLengths);
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('answers the tree queries as a root', () => {
+    const { nodes } = stubMap(ORPHANED);
+
+    expect(nodes.parentOf('orphan')).toBeNull();
+    expect(nodes.getTreeRoot(nodeOf(nodes, 'leaf')).id).toBe('orphan');
+    expect(nodes.level('leaf')).toBe(2);
+    expect(nodes.getOrientation(nodeOf(nodes, 'orphan'))).toBeUndefined();
+  });
+
+  it('draws as a root: a node without a branch', () => {
+    const ref = document.createElement('div');
+    document.body.appendChild(ref);
+    create('map', ref).instance.new(ORPHANED, false);
+
+    const branches = d3.selectAll<SVGPathElement, string>('path.branch');
+    expect(branches.data().sort()).toEqual(['child', 'leaf']);
+    expect(d3.selectAll<SVGGElement, string>('g.node').data()).toContain(
+      'orphan'
+    );
   });
 });
