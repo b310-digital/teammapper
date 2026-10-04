@@ -5,7 +5,7 @@ import type {
 } from '@teammapper/shared';
 import Draw from '../map/handlers/draw.js';
 import { estimateNodeExtent } from '../map/handlers/node-geometry.js';
-import type Node from '../map/models/node.js';
+import type { ResolvedNode } from '../map/data/node-record.js';
 
 /**
  * Stands in for the renderer in specs that drive the node handler without a
@@ -14,7 +14,10 @@ import type Node from '../map/models/node.js';
  * default.
  */
 export function fakeDraw(
-  sizeOf: (node: Node) => MapNodeDimensions = () => ({ width: 0, height: 0 })
+  sizeOf: (node: ResolvedNode) => MapNodeDimensions = () => ({
+    width: 0,
+    height: 0,
+  })
 ) {
   const rings = new Map<string, string>();
   const preview = new Map<string, MapNodeCoordinates>();
@@ -26,7 +29,7 @@ export function fakeDraw(
     enableNodeNameEditing: jest.fn(),
     blurName: jest.fn(),
     isEditing: () => false,
-    ringColor: (node: Node) => Draw.prototype.ringColor(node),
+    ringColor: (node: ResolvedNode) => Draw.prototype.ringColor(node),
     ringOf: (id: string) => rings.get(id) ?? null,
     setRing: (id: string, color: string | null) => {
       if (color) rings.set(id, color);

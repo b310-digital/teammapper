@@ -30,13 +30,13 @@ function aiShapedNodes(): MapSnapshot {
 }
 
 describe('distributeNodes', () => {
-  it('writes new coordinates to the nodes', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
+  it('writes new coordinates to the map data', () => {
+    const { handler, data } = handlerWith(aiShapedNodes());
 
     handler.distributeNodes();
 
-    const moved = map.export
-      .asJSON()
+    const moved = data
+      .nodes()
       .filter(n => n.coordinates?.x !== 0 || n.coordinates?.y !== 0);
     expect(moved.length).toBeGreaterThan(0);
   });
@@ -45,7 +45,7 @@ describe('distributeNodes', () => {
     // The layout never reads the view state. Child nodes this person hid are
     // still laid out, so showing them again does not leave them piled up.
     const children = [1, 2, 3, 4].map(i => node(`c${i}`, 'parent'));
-    const { handler, map } = handlerWith([
+    const { handler, data, map } = handlerWith([
       node('root', '', true),
       node('parent', 'root'),
       ...children,
@@ -55,9 +55,7 @@ describe('distributeNodes', () => {
     handler.distributeNodes();
 
     // Filtered out of the layout input they would all keep y: 0.
-    const childYs = children.map(
-      child => handler.record(child.id)?.coordinates.y
-    );
+    const childYs = children.map(child => data.node(child.id)?.coordinates?.y);
     expect(new Set(childYs).size).toBe(4);
   });
 

@@ -454,16 +454,16 @@ describe('moveSelectionOnBranch', () => {
 
 describe('updateNode branchColor', () => {
   it('refuses a branch color on a second root', () => {
-    const { handler } = makeMap();
+    const { handler, data } = makeMap();
 
     expect(() =>
       handler.updateNode('branchColor', '#ff0000', 'second-root')
     ).toThrow('A root node has no branches');
-    expect(handler.record('second-root')?.colors.branch).toBe('');
+    expect(data.node('second-root')?.colors?.branch).toBe('');
   });
 
   it('accepts the unchanged branch color of a root, as a colors sync sends it', () => {
-    const { handler, draw } = makeMap(null, [
+    const { handler, data, draw } = makeMap(null, [
       nodeRecord({
         id: 'third-root',
         colors: { ...DefaultNodeValues.colors, branch: '#577a96' },
@@ -475,7 +475,7 @@ describe('updateNode branchColor', () => {
       handler.updateNode('branchColor', '#577a96', 'third-root')
     );
 
-    expect(handler.record('third-root')?.colors.branch).toBe('#577a96');
+    expect(data.node('third-root')?.colors?.branch).toBe('#577a96');
     expect(draw.update).not.toHaveBeenCalled();
   });
 });

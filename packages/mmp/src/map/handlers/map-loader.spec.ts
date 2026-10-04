@@ -123,7 +123,7 @@ describe('exportAsJSON', () => {
     exported.pop();
 
     expect(JSON.stringify(map.instance.exportAsJSON())).toBe(before);
-    expect(map.nodes.record(child)?.name).toBe('child');
+    expect(map.data.node(child)?.name).toBe('child');
   });
 
   it('includes a change applied without an event', () => {

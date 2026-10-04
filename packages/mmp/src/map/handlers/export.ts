@@ -2,6 +2,7 @@ import Map from '../map.js';
 import Log from '../../utils/log.js';
 import type { MapSnapshot } from '@teammapper/shared';
 import Utils from '../../utils/utils.js';
+import { resolveNode } from '../data/node-record.js';
 import * as d3 from 'd3';
 import DOMPurify from 'dompurify';
 
@@ -20,14 +21,12 @@ export default class Export {
   }
 
   /**
-   * Return the properties of every node, read from the node store at the
-   * time of the call. Each entry is a copy the caller may change.
+   * Return the properties of every node, read from the map data at the time
+   * of the call. Each entry is a copy the caller may change.
    * @returns {MapSnapshot} json
    */
   public asJSON = (): MapSnapshot => {
-    const nodes = this.map.nodes;
-
-    return [...nodes.scan().keys()].flatMap(id => nodes.exportNode(id) ?? []);
+    return this.map.data.nodes().map(resolveNode);
   };
 
   /**

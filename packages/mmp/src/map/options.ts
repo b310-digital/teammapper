@@ -1,4 +1,9 @@
-import { NodeColors, NodeFont, NodeImage, NodeLink } from './models/node.js';
+import type {
+  NodeColors,
+  NodeFont,
+  NodeImage,
+  NodeLink,
+} from './data/node-record.js';
 import type {
   ImageReference,
   MapNodeCoordinates,

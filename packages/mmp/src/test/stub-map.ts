@@ -3,7 +3,6 @@ import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 import InMemoryMapData from '../map/data/in-memory-map-data.js';
 import CopyPaste from '../map/handlers/copy-paste.js';
 import Drag from '../map/handlers/drag.js';
-import Export from '../map/handlers/export.js';
 import MapLoader from '../map/handlers/map-loader.js';
 import Nodes from '../map/handlers/nodes.js';
 import ViewState from '../map/handlers/view-state.js';
@@ -35,9 +34,9 @@ export function nodeRecord(
 
 /**
  * A map without a DOM around the real node handler, view state, loader,
- * drag, clipboard and export, over an `InMemoryMapData` holding `snapshot`.
- * The renderer is `fakeDraw`, the zoom pans and centers nothing, and every
- * event goes to the `events.emit` mock. `overrides` replaces any of these
+ * drag and clipboard, over an `InMemoryMapData` holding `snapshot`. The
+ * renderer is `fakeDraw`, the zoom pans and centers nothing, and every event
+ * goes to the `events.emit` mock. `overrides` replaces any of these
  * stand-ins. The map draws the snapshot as a replaced map, which selects the
  * main root when the snapshot holds one, and then clears the `events.emit`
  * mock.
@@ -71,7 +70,6 @@ export function stubMap(
   map.loader = new MapLoader(map);
   map.copyPaste = new CopyPaste(map);
   map.drag = new Drag(map);
-  map.export = new Export(map);
 
   map.data.subscribe(map.nodes.onChange);
   map.nodes.drawReplaced();
