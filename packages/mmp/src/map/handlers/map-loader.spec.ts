@@ -194,8 +194,8 @@ describe('new', () => {
     expect(loaded.every(node => !('hidden' in node))).toBe(true);
     expect(loaded.every(node => !('hasHiddenChildNodes' in node))).toBe(true);
     const group = target.dom.g
-      .selectAll<SVGGElement, { id: string }>('g.node')
-      .filter(node => node.id === child)
+      .selectAll<SVGGElement, string>('g.node')
+      .filter(datum => datum === child)
       .node();
     expect(group?.style.visibility).toBe('visible');
   });

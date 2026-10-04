@@ -78,7 +78,7 @@ describe('deselectNode', () => {
       'nodeDeselect',
       expect.objectContaining({ id: nodes.branch.id })
     );
-    expect(map.draw.ringOf(nodes.branch)).toBeNull();
+    expect(map.draw.ringOf(nodes.branch.id)).toBeNull();
   });
 
   it('fires nothing when nothing is selected', () => {

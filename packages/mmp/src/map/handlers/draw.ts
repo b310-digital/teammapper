@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import {
   isImageDataUrl,
   isImageReference,
+  type MapNodeCoordinates,
   type MapNodeDimensions,
   type MapNodeFont,
   type NodeProperty,
@@ -10,7 +11,8 @@ import {
 import type { NodeView } from './node-view.js';
 import MmpMap, { DomElements } from '../map.js';
 import Utils from '../../utils/utils.js';
-import Node from '../models/node.js';
+import { resolveNode, type ResolvedNode } from '../data/node-record.js';
+import type { RecordLookup } from './nodes.js';
 import {
   MIN_TEXT_EXTENT,
   measureNodeExtent,
@@ -25,7 +27,7 @@ import {
   type NodeGroups,
 } from './node-marks.js';
 
-type BranchPaths = d3.Selection<SVGPathElement, Node, d3.BaseType, unknown>;
+type BranchPaths = d3.Selection<SVGPathElement, string, d3.BaseType, unknown>;
 
 interface Layers {
   branches: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -40,9 +42,14 @@ interface ImageLoad {
 }
 
 /**
- * Draws the mind map and redraws a node when it changes. A node gets as big
- * as its name, so the renderer measures each name after drawing it. Sizes and
- * the selection ring belong to the screen only and never reach the saved map.
+ * Draws the mind map and redraws a node when it changes. d3 binds node ids
+ * to the DOM. Each draw pass reads the record of each node it draws once,
+ * through `recordOf`, and drops the records when it ends.
+ *
+ * The renderer keeps render data only: measured name sizes, rings, image
+ * loads and the drag preview. A node gets as big as its name, so the
+ * renderer measures each name after drawing it. Sizes and the selection ring
+ * belong to the screen only and never reach the saved map.
  */
 export default class Draw implements NodeView {
   private map: MmpMap;
@@ -56,6 +63,8 @@ export default class Draw implements NodeView {
   /** The selection ring color, by node id. */
   private readonly rings = new Map<string, string>();
   private readonly images = new Map<string, ImageLoad>();
+  /** Where a drag shows each node it moves, by node id. */
+  private readonly preview = new Map<string, MapNodeCoordinates>();
   private readonly resizeObserver: ResizeObserver | null;
   private readonly observed = new WeakSet<Element>();
 
@@ -73,7 +82,7 @@ export default class Draw implements NodeView {
         : new ResizeObserver(entries =>
             this.resize(
               entries.map(entry =>
-                d3.select<Element, Node>(entry.target).datum()
+                d3.select<Element, string>(entry.target).datum()
               )
             )
           );
@@ -125,10 +134,11 @@ export default class Draw implements NodeView {
    * rest. A node the view state hides stays drawn but invisible.
    */
   public update() {
-    const nodes = this.map.nodes.getNodes();
+    const lookup = this.pass();
+    const ids = this.map.nodes.getNodes().map(node => node.id);
 
     const groups = this.nodeGroups()
-      .data(nodes, node => node.id)
+      .data(ids, id => id)
       .join(
         enter => this.enterNodes(enter),
         update => update,
@@ -136,43 +146,84 @@ export default class Draw implements NodeView {
       );
     const branches = this.branchPaths()
       .data(
-        nodes.filter(node => node.parent !== null),
-        node => node.id
+        ids.filter(id => this.map.nodes.parentOf(id, lookup) !== null),
+        id => id
       )
       .join(enter =>
         enter.append<SVGPathElement>('path').attr('class', 'branch')
       );
 
-    // Forget the sizes, rings and images of deleted nodes.
-    const ids = new Set(nodes.map(node => node.id));
-    for (const state of [this.textExtents, this.rings, this.images]) {
-      for (const id of state.keys()) if (!ids.has(id)) state.delete(id);
+    // Forget the sizes, rings, images and previews of deleted nodes.
+    const present = new Set(ids);
+    for (const state of [
+      this.textExtents,
+      this.rings,
+      this.images,
+      this.preview,
+    ]) {
+      for (const id of state.keys()) if (!present.has(id)) state.delete(id);
     }
 
-    this.render(groups, branches);
+    this.render(groups, branches, lookup);
   }
 
   /**
-   * Draw the property of the node as its model holds it.
-   * @param {Node} node
+   * Draw the property of the node with `id` as its model holds it.
+   * @param {string} id
    * @param {NodeProperty} property
    */
-  public renderNodeProperty(node: Node, property: NodeProperty) {
+  public renderNodeProperty(id: string, property: NodeProperty) {
+    const lookup = this.pass();
+    const node = lookup(id);
     // The selection ring darkens along with the background.
-    if (property === 'backgroundColor' && this.rings.has(node.id)) {
-      this.setRing(node, this.ringColor(node));
+    if (property === 'backgroundColor' && node && this.rings.has(id)) {
+      this.setRing(id, this.ringColor(node));
     }
-    this.render(this.nodeGroupsOf([node]), this.branchPathsOf([node]));
+    this.render(
+      this.nodeGroupsOf([id]),
+      this.branchPathsOf([id], lookup),
+      lookup
+    );
   }
 
   /**
-   * Move the drawn nodes to their coordinates, along with their branches and
+   * Move the drawn nodes to their positions, along with their branches and
    * those of their children.
-   * @param {Node[]} nodes
+   * @param {string[]} ids
    */
-  public renderPositions(nodes: Node[]) {
-    this.nodeGroupsOf(nodes).attr('transform', translate);
-    this.branchPathsOf(nodes).attr('d', node => this.branchShape(node));
+  public renderPositions(ids: string[]) {
+    const lookup = this.pass();
+
+    this.nodeGroupsOf(ids).attr('transform', id =>
+      translate(this.map.nodes.positionOf(id, lookup))
+    );
+    this.branchPathsOf(ids, lookup).attr('d', id =>
+      this.branchShape(id, lookup)
+    );
+  }
+
+  /**
+   * The position the drag preview shows the node at, or undefined.
+   * @param {string} id
+   */
+  public previewOf(id: string): MapNodeCoordinates | undefined {
+    return this.preview.get(id);
+  }
+
+  /**
+   * Show the node at `position` until the preview is taken.
+   * @param {string} id
+   * @param {MapNodeCoordinates} position
+   */
+  public setPreview(id: string, position: MapNodeCoordinates) {
+    this.preview.set(id, { x: position.x, y: position.y });
+  }
+
+  /** Return the preview positions and clear the preview. */
+  public takePreview(): Map<string, MapNodeCoordinates> {
+    const positions = new Map(this.preview);
+    this.preview.clear();
+    return positions;
   }
 
   /**
@@ -194,10 +245,11 @@ export default class Draw implements NodeView {
   /**
    * The size of the node's box: its name plus padding. Before the name is
    * drawn, a canvas estimates its size.
-   * @param {Node} node
+   * @param {ResolvedNode} node
    */
-  public dimensionsOf = (node: Node): MapNodeDimensions =>
-    withPadding(this.textExtentOf(node));
+  public dimensionsOf = (
+    node: Pick<ResolvedNode, 'id' | 'name' | 'font'>
+  ): MapNodeDimensions => withPadding(this.textExtentOf(node));
 
   /**
    * The box size a name will get, estimated before the node is drawn. The
@@ -211,63 +263,64 @@ export default class Draw implements NodeView {
 
   /**
    * The color of the ring around the node, null for none.
-   * @param {Node} node
+   * @param {string} id
    */
-  public ringOf(node: Node): string | null {
-    return this.rings.get(node.id) ?? null;
+  public ringOf(id: string): string | null {
+    return this.rings.get(id) ?? null;
   }
 
   /**
    * Draw a ring in `color` around the node, or none for null or ''.
-   * @param {Node} node
+   * @param {string} id
    * @param {string | null} color
    */
-  public setRing(node: Node, color: string | null) {
-    if (color) this.rings.set(node.id, color);
-    else this.rings.delete(node.id);
+  public setRing(id: string, color: string | null) {
+    if (color) this.rings.set(id, color);
+    else this.rings.delete(id);
 
-    this.nodeGroupsOf([node])
-      .selectChildren<SVGPathElement, Node>('path.background')
+    this.nodeGroupsOf([id])
+      .selectChildren<SVGPathElement, string>('path.background')
       .style('stroke', () => color || null);
   }
 
   /**
    * The ring color of a node: its background color, darkened. Null when the
    * background holds no color.
-   * @param {Node} node
+   * @param {ResolvedNode} node
    */
-  public ringColor(node: Node): string | null {
+  public ringColor(node: Pick<ResolvedNode, 'colors'>): string | null {
     return d3.color(node.colors.background)?.darker(0.5).toString() ?? null;
   }
 
   /**
    * True while the person edits the name of the node.
-   * @param {Node} node
+   * @param {string} id
    */
-  public isEditing(node: Node): boolean {
-    const name = this.nameOf(node);
+  public isEditing(id: string): boolean {
+    const name = this.nameOf(id);
     return name !== null && name.ownerDocument.activeElement === name;
   }
 
   /**
    * Take the focus from the name of the node, which ends its editing.
-   * @param {Node} node
+   * @param {string} id
    */
-  public blurName(node: Node) {
-    this.nameOf(node)?.blur();
+  public blurName(id: string) {
+    this.nameOf(id)?.blur();
   }
 
   /**
    * Enable and manage all events for the name editing.
-   * @param {Node} node
+   * @param {string} id
    */
-  public enableNodeNameEditing(node: Node) {
-    if (this.map.nodes.refusesLocalChange(node)) return;
+  public enableNodeNameEditing(id: string) {
+    const node = this.map.nodes.getNode(id);
+    if (!node || this.map.nodes.refusesLocalChange(node)) return;
 
-    const name = this.nameOf(node);
+    const name = this.nameOf(id);
     if (!name) return;
 
-    this.editingId = node.id;
+    this.editingId = id;
     name.setAttribute('contenteditable', 'true');
     name.innerHTML = DOMPurify.sanitize(node.name);
 
@@ -337,12 +390,35 @@ export default class Draw implements NodeView {
       name.setAttribute('contenteditable', 'false');
       name.style.setProperty('cursor', 'pointer');
 
-      if (name.innerHTML !== node.name) {
+      // The blur reads the name the node store holds now.
+      const current = this.map.nodes.getNode(id);
+      if (current && name.innerHTML !== current.name) {
         this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML));
       }
-      // Draw node.name back, so the DOM drops the typed text when a peer
-      // protected the branch during the edit and updateNode refused it.
-      this.render(this.nodeGroupsOf([node]), this.branchPathsOf([node]));
+      // Draw the stored name back, so the DOM drops the typed text when a
+      // peer protected the branch during the edit and updateNode refused it.
+      const lookup = this.pass();
+      this.render(
+        this.nodeGroupsOf([id]),
+        this.branchPathsOf([id], lookup),
+        lookup
+      );
+    };
+  }
+
+  /**
+   * One draw pass: a lookup that reads each record from the node store at
+   * most once.
+   */
+  private pass(): RecordLookup {
+    const read = new Map<string, ResolvedNode | null>();
+    return id => {
+      let known = read.get(id);
+      if (known === undefined) {
+        known = this.map.nodes.record(id) ?? null;
+        read.set(id, known);
+      }
+      return known ?? undefined;
     };
   }
 
@@ -351,48 +427,56 @@ export default class Draw implements NodeView {
    * once between drawing and sizing, so the browser lays out the page once
    * instead of once per node.
    */
-  private render(groups: NodeGroups, branches: BranchPaths) {
-    const context = this.markContext();
+  private render(
+    groups: NodeGroups,
+    branches: BranchPaths,
+    lookup: RecordLookup
+  ) {
+    const context = this.markContext(lookup);
     const hidden = this.map.viewState.hiddenNodeIds();
-    const visibilityOf = (node: Node) =>
-      hidden.has(node.id) ? 'hidden' : 'visible';
+    const visibilityOf = (id: string) =>
+      hidden.has(id) ? 'hidden' : 'visible';
 
-    groups.attr('transform', translate).style('visibility', visibilityOf);
+    groups
+      .attr('transform', id => translate(this.map.nodes.positionOf(id, lookup)))
+      .style('visibility', visibilityOf);
     NODE_MARKS.forEach(mark => mark.draw(groups, context));
     this.observe(groups);
     branches
-      .style('fill', node => node.colors.branch)
-      .style('stroke', node => node.colors.branch)
+      .style('fill', id => context.recordOf(id).colors.branch)
+      .style('stroke', id => context.recordOf(id).colors.branch)
       .style('visibility', visibilityOf);
 
     this.measure(groups);
 
-    this.finish(groups, branches, context);
+    this.finish(groups, branches, context, lookup);
   }
 
   /**
    * Resize the nodes whose names changed size.
-   * @param {Node[]} nodes
+   * @param {string[]} ids
    */
-  private resize(nodes: Node[]) {
-    const changed = this.measure(this.nodeGroupsOf(nodes));
+  private resize(ids: string[]) {
+    const changed = this.measure(this.nodeGroupsOf(ids));
     if (changed.length === 0) return;
 
+    const lookup = this.pass();
     this.finish(
       this.nodeGroupsOf(changed),
-      this.branchPathsOf(changed),
-      this.markContext()
+      this.branchPathsOf(changed, lookup),
+      this.markContext(lookup),
+      lookup
     );
   }
 
   /**
    * Read and store the size of each drawn name.
-   * @returns {Node[]} the nodes whose size changed
+   * @returns {string[]} the ids of the nodes whose size changed
    */
-  private measure(groups: NodeGroups): Node[] {
-    const changed: Node[] = [];
+  private measure(groups: NodeGroups): string[] {
+    const changed: string[] = [];
 
-    nameElements(groups).each((node, i, names) => {
+    nameElements(groups).each((id, i, names) => {
       const width = names[i].offsetWidth,
         height = names[i].offsetHeight;
       // The browser reports 0 for a name it has not laid out yet, such as
@@ -403,12 +487,12 @@ export default class Draw implements NodeView {
         width: Math.max(width, MIN_TEXT_EXTENT),
         height: Math.max(height, MIN_TEXT_EXTENT),
       };
-      const known = this.textExtents.get(node.id);
+      const known = this.textExtents.get(id);
       if (known?.width === extent.width && known.height === extent.height) {
         return;
       }
-      this.textExtents.set(node.id, extent);
-      changed.push(node);
+      this.textExtents.set(id, extent);
+      changed.push(id);
     });
 
     return changed;
@@ -418,26 +502,32 @@ export default class Draw implements NodeView {
   private finish(
     groups: NodeGroups,
     branches: BranchPaths,
-    context: MarkContext
+    context: MarkContext,
+    lookup: RecordLookup
   ) {
     NODE_MARKS.forEach(mark => mark.finish(groups, context));
-    branches.attr('d', node => this.branchShape(node));
+    branches.attr('d', id => this.branchShape(id, lookup));
   }
 
-  private markContext(): MarkContext {
+  private markContext(lookup: RecordLookup): MarkContext {
+    const recordOf = (id: string) => lookup(id) ?? resolveNode({ id });
+
     return {
-      textExtentOf: node => this.textExtentOf(node),
-      dimensionsOf: this.dimensionsOf,
-      ringOf: node => this.ringOf(node),
-      imageOf: node => this.imageOf(node),
-      isEditing: node => this.editingId === node.id,
-      hidesChildren: node => this.map.nodes.childNodesHidden(node.id),
+      recordOf,
+      textExtentOf: id => this.textExtentOf(recordOf(id)),
+      dimensionsOf: id => this.dimensionsOf(recordOf(id)),
+      ringOf: id => this.ringOf(id),
+      imageOf: id => this.imageOf(recordOf(id)),
+      isEditing: id => this.editingId === id,
+      hidesChildren: id => this.map.nodes.childNodesHidden(id),
       fontFamily: this.map.options.fontFamily,
       showLinktext: this.map.options.showLinktext,
     };
   }
 
-  private textExtentOf(node: Node): MapNodeDimensions {
+  private textExtentOf(
+    node: Pick<ResolvedNode, 'id' | 'name' | 'font'>
+  ): MapNodeDimensions {
     return (
       this.textExtents.get(node.id) ??
       measureTextExtent(node.name, {
@@ -450,33 +540,39 @@ export default class Draw implements NodeView {
   /**
    * The node's image once it has loaded, else null. A new image starts
    * loading here, and the node is redrawn when the load ends.
-   * @param {Node} node
+   * @param {ResolvedNode} node
    */
-  private imageOf(node: Node): LoadedImage | null {
+  private imageOf(node: ResolvedNode): LoadedImage | null {
+    const id = node.id;
     const src = node.image.src;
-    const known = this.images.get(node.id);
+    const known = this.images.get(id);
     if (known?.src === src) {
       return known.ratio === null
         ? null
         : { url: known.url, ratio: known.ratio };
     }
 
-    this.images.delete(node.id);
+    this.images.delete(id);
     const url = this.imageUrlOf(src);
     if (url === null) return null;
 
     const load: ImageLoad = { src, url, ratio: null };
-    this.images.set(node.id, load);
+    this.images.set(id, load);
 
     const image = new Image();
     image.src = url;
     const settle = (ratio: number | null) => {
       // A newer image replaced this one while it loaded.
-      if (this.images.get(node.id) !== load) return;
+      if (this.images.get(id) !== load) return;
       // A failed image stays hidden and keeps its value: clearing it would
       // erase the image in the Y.Doc for every client on a network error.
       load.ratio = ratio;
-      this.render(this.nodeGroupsOf([node]), this.branchPathsOf([]));
+      const lookup = this.pass();
+      this.render(
+        this.nodeGroupsOf([id]),
+        this.branchPathsOf([], lookup),
+        lookup
+      );
     };
     image.onload = () => settle(image.width / image.height);
     image.onerror = () => settle(null);
@@ -498,37 +594,42 @@ export default class Draw implements NodeView {
   /**
    * The shape of the branch from the node's parent to the node, null for a
    * node without a parent.
-   * @param {Node} node
+   * @param {string} id
+   * @param {RecordLookup} lookup
    */
-  private branchShape(node: Node): string | null {
-    if (node.parent === null) return null;
+  private branchShape(id: string, lookup: RecordLookup): string | null {
+    const nodes = this.map.nodes;
+    const parentId = nodes.parentOf(id, lookup);
+    const record = lookup(id);
+    if (parentId === null || !record) return null;
 
-    const parent = node.parent,
-      { width: nodeWidth, height: nodeHeight } = this.dimensionsOf(node),
+    const parent = nodes.positionOf(parentId, lookup),
+      node = nodes.positionOf(id, lookup),
+      { width: nodeWidth, height: nodeHeight } = this.dimensionsOf(record),
       path = d3.path(),
-      level = node.getLevel(),
+      level = nodes.level(id, lookup),
       width = 22 - (level < 6 ? level : 6) * 3,
-      mx = (parent.coordinates.x + node.coordinates.x) / 2,
-      ory = parent.coordinates.y < node.coordinates.y + nodeHeight / 2 ? -1 : 1,
-      orx = parent.coordinates.x > node.coordinates.x ? -1 : 1,
+      mx = (parent.x + node.x) / 2,
+      ory = parent.y < node.y + nodeHeight / 2 ? -1 : 1,
+      orx = parent.x > node.x ? -1 : 1,
       inv = orx * ory;
 
-    path.moveTo(parent.coordinates.x, parent.coordinates.y - width * 0.8);
+    path.moveTo(parent.x, parent.y - width * 0.8);
     path.bezierCurveTo(
       mx - width * inv,
-      parent.coordinates.y - width / 2,
-      parent.coordinates.x - (width / 2) * inv,
-      node.coordinates.y + nodeHeight / 2 - width / 3,
-      node.coordinates.x - (nodeWidth / 3) * orx,
-      node.coordinates.y + nodeHeight / 2 + 3
+      parent.y - width / 2,
+      parent.x - (width / 2) * inv,
+      node.y + nodeHeight / 2 - width / 3,
+      node.x - (nodeWidth / 3) * orx,
+      node.y + nodeHeight / 2 + 3
     );
     path.bezierCurveTo(
-      parent.coordinates.x + (width / 2) * inv,
-      node.coordinates.y + nodeHeight / 2 + width / 3,
+      parent.x + (width / 2) * inv,
+      node.y + nodeHeight / 2 + width / 3,
       mx + width * inv,
-      parent.coordinates.y + width / 2,
-      parent.coordinates.x,
-      parent.coordinates.y + width * 0.8
+      parent.y + width / 2,
+      parent.x,
+      parent.y + width * 0.8
     );
     path.closePath();
 
@@ -536,50 +637,52 @@ export default class Draw implements NodeView {
   }
 
   private nodeGroups(): NodeGroups {
-    return this.layers.nodes.selectChildren<SVGGElement, Node>('g.node');
+    return this.layers.nodes.selectChildren<SVGGElement, string>('g.node');
   }
 
   private branchPaths(): BranchPaths {
-    return this.layers.branches.selectChildren<SVGPathElement, Node>(
+    return this.layers.branches.selectChildren<SVGPathElement, string>(
       'path.branch'
     );
   }
 
-  private nodeGroupsOf(nodes: Node[]): NodeGroups {
-    const ids = new Set(nodes.map(node => node.id));
-    return this.nodeGroups().filter(node => ids.has(node.id));
+  /** The drawn nodes with the ids. */
+  private nodeGroupsOf(ids: string[]): NodeGroups {
+    const wanted = new Set(ids);
+    return this.nodeGroups().filter(id => wanted.has(id));
   }
 
-  /** The branches of the nodes and of their children. */
-  private branchPathsOf(nodes: Node[]): BranchPaths {
-    const ids = new Set(nodes.map(node => node.id));
-    return this.branchPaths().filter(
-      node =>
-        ids.has(node.id) || (node.parent !== null && ids.has(node.parent.id))
-    );
+  /** The drawn branches to the nodes with the ids and to their children. */
+  private branchPathsOf(ids: string[], lookup: RecordLookup): BranchPaths {
+    const wanted = new Set(ids);
+    return this.branchPaths().filter(id => {
+      if (wanted.has(id)) return true;
+      const parent = this.map.nodes.parentOf(id, lookup);
+      return parent !== null && wanted.has(parent);
+    });
   }
 
-  private nameOf(node: Node): HTMLDivElement | null {
-    return nameElements(this.nodeGroupsOf([node])).node();
+  private nameOf(id: string): HTMLDivElement | null {
+    return nameElements(this.nodeGroupsOf([id])).node();
   }
 
   private enterNodes(
-    enter: d3.Selection<d3.EnterElement, Node, d3.BaseType, unknown>
+    enter: d3.Selection<d3.EnterElement, string, d3.BaseType, unknown>
   ): NodeGroups {
     const groups = enter
       .append('g')
       .attr('class', 'node')
       .style('cursor', 'pointer')
       .style('touch-action', 'none')
-      .on('dblclick', (event: MouseEvent, node: Node) => {
+      .on('dblclick', (event: MouseEvent, id: string) => {
         if (!this.map.options.edit) return;
 
         event.stopPropagation();
-        this.enableNodeNameEditing(node);
+        this.enableNodeNameEditing(id);
       })
       .on(
         'touchstart',
-        (event: TouchEvent, node: Node) => {
+        (event: TouchEvent, id: string) => {
           if (!this.map.options.edit) return false;
           // A single tap moves the node, so the handler cancels the native
           // touch behavior unless the person taps a link or edits a name.
@@ -599,7 +702,7 @@ export default class Draw implements NodeView {
             return false;
           }
 
-          this.enableNodeNameEditing(node);
+          this.enableNodeNameEditing(id);
         },
         { passive: false }
       );
@@ -607,8 +710,8 @@ export default class Draw implements NodeView {
     if (this.map.options.drag === true) {
       groups.call(this.map.drag.getDragBehavior());
     } else {
-      groups.on('mousedown', (_event: MouseEvent, node: Node) => {
-        this.map.nodes.selectNode(node.id);
+      groups.on('mousedown', (_event: MouseEvent, id: string) => {
+        this.map.nodes.selectNode(id);
       });
     }
 
@@ -619,7 +722,7 @@ export default class Draw implements NodeView {
   private observe(groups: NodeGroups) {
     if (!this.resizeObserver) return;
 
-    nameElements(groups).each((_node, i, names) => {
+    nameElements(groups).each((_id, i, names) => {
       if (this.observed.has(names[i])) return;
       this.observed.add(names[i]);
       this.resizeObserver?.observe(names[i]);
@@ -627,11 +730,11 @@ export default class Draw implements NodeView {
   }
 
   private exitNodes(exit: NodeGroups) {
-    nameElements(exit).each((node, i, names) => {
+    nameElements(exit).each((id, i, names) => {
       this.resizeObserver?.unobserve(names[i]);
       // Removing a focused name fires no blur in Firefox and WebKit, so the
       // edit ends here.
-      if (node.id === this.editingId) this.editingId = null;
+      if (id === this.editingId) this.editingId = null;
     });
     exit.remove();
   }
@@ -646,6 +749,6 @@ export default class Draw implements NodeView {
   }
 }
 
-function translate(node: Node): string {
-  return 'translate(' + node.coordinates.x + ',' + node.coordinates.y + ')';
+function translate(position: MapNodeCoordinates): string {
+  return 'translate(' + position.x + ',' + position.y + ')';
 }

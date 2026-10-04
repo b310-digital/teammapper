@@ -49,8 +49,8 @@ function makeTree(): Tree {
 
 function nodeGroup(id: string): SVGGElement {
   const group = d3
-    .selectAll<SVGGElement, { id: string }>('g.node')
-    .filter(node => node.id === id)
+    .selectAll<SVGGElement, string>('g.node')
+    .filter(datum => datum === id)
     .node();
   if (!group) throw new Error('no group for ' + id);
   return group;

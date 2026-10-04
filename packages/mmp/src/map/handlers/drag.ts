@@ -1,21 +1,31 @@
 import * as d3 from 'd3';
 import { DragBehavior, D3DragEvent } from 'd3';
 import Map from '../map.js';
-import Node from '../models/node.js';
+
+type DragEvent = D3DragEvent<SVGGElement, string, unknown>;
+
+/** The drag in progress: the dragged node and the nodes it moves along. */
+interface DragSession {
+  id: string;
+  descendants: string[];
+  /** The root of the dragged node's tree, read once at the start. */
+  treeRoot: string;
+  orientation: boolean | undefined;
+  // 'refused' when the drag started on a protected node, 'announced' once
+  // the first move showed the notice. Both states keep the node in place.
+  refusal: 'none' | 'refused' | 'announced';
+  moved: boolean;
+}
 
 /**
- * Manage the drag events of the nodes.
+ * Manage the drag events of the nodes. A drag moves a preview the renderer
+ * draws and writes nothing to the nodes until it ends.
  */
 export default class Drag {
   private map: Map;
 
-  private dragBehavior: DragBehavior<SVGGElement, Node, unknown>;
-  private dragging = false;
-  private orientation: boolean | undefined;
-  private descendants: Node[] = [];
-  // 'refused' when the drag started on a protected node, 'announced' once the
-  // first move showed the notice. Both states keep the node in place.
-  private refusal: 'none' | 'refused' | 'announced' = 'none';
+  private dragBehavior: DragBehavior<SVGGElement, string, unknown>;
+  private session: DragSession | null = null;
 
   /**
    * Get the associated map instance and initialize the d3 drag behavior.
@@ -25,110 +35,136 @@ export default class Drag {
     this.map = map;
 
     this.dragBehavior = d3
-      .drag<SVGGElement, Node>()
-      .on(
-        'start',
-        (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
-          this.started(event, node)
-      )
-      .on(
-        'drag',
-        (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
-          this.dragged(event, node)
-      )
-      .on('end', (event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) =>
-        this.ended(event, node)
-      );
+      .drag<SVGGElement, string>()
+      .on('start', (event: DragEvent, id: string) => this.started(event, id))
+      .on('drag', (event: DragEvent, id: string) => this.dragged(event, id))
+      .on('end', (event: DragEvent, id: string) => this.ended(event, id));
   }
 
   /**
    * Return the d3 drag behavior
    * @returns {DragBehavior} dragBehavior
    */
-  public getDragBehavior(): DragBehavior<SVGGElement, Node, unknown> {
+  public getDragBehavior(): DragBehavior<SVGGElement, string, unknown> {
     return this.dragBehavior;
   }
 
   /**
-   * Select the node and calculate node position data for dragging.
-   * @param {Node} node
+   * Select the node and read, once, the nodes the drag moves along with it.
+   * @param {string} id
    */
-  private started(_: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
-    this.refusal = this.map.nodes.isProtected(node) ? 'refused' : 'none';
-    this.orientation = this.map.nodes.getOrientation(node);
-    this.descendants = this.map.nodes.getDescendants(node);
+  private started(_: DragEvent, id: string) {
+    const nodes = this.map.nodes;
+    const node = nodes.getNode(id);
+    if (!node) return;
 
-    this.map.nodes.selectNode(node.id);
+    this.session = {
+      id,
+      descendants: nodes.getDescendants(node).map(descendant => descendant.id),
+      treeRoot: nodes.getTreeRoot(node).id,
+      orientation: nodes.getOrientation(node),
+      refusal: nodes.isProtected(node) ? 'refused' : 'none',
+      moved: false,
+    };
+
+    nodes.selectNode(id);
   }
 
   /**
-   * Move the dragged node and all its descendants. A protected node stays
-   * where it is, and the first move announces the refusal.
-   * @param {Node} node
+   * Move the preview of the dragged node and all its descendants. A
+   * protected node stays where it is, and the first move announces the
+   * refusal.
+   * @param {string} id
    */
-  private dragged(event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
-    if (this.refusal === 'refused') this.map.nodes.refuseProtected(node);
-    if (this.refusal !== 'none') {
-      this.refusal = 'announced';
+  private dragged(event: DragEvent, id: string) {
+    const session = this.session;
+    if (session?.id !== id) return;
+
+    const nodes = this.map.nodes;
+    if (session.refusal === 'refused') {
+      const node = nodes.getNode(id);
+      if (node) nodes.refuseProtected(node);
+    }
+    if (session.refusal !== 'none') {
+      session.refusal = 'announced';
       return;
     }
 
-    const dy = event.dy,
-      dx = event.dx;
+    const draw = this.map.draw;
+    const moved = [id, ...session.descendants];
+    const { dx, dy } = event;
+    for (const node of moved) {
+      const position = nodes.positionOf(node);
+      draw.setPreview(node, { x: position.x + dx, y: position.y + dy });
+    }
 
-    node.coordinates.x += dx;
-    node.coordinates.y += dy;
+    this.mirrorDescendants(session);
 
-    this.moveDescendants(node, dx, dy);
-
-    this.map.draw.renderPositions([node, ...this.descendants]);
+    draw.renderPositions(moved);
 
     // This is here and not in the started function because started function
     // is also executed when there is no drag events
-    this.dragging = true;
+    session.moved = true;
   }
 
   /**
-   * Move the descendants along with the dragged node, mirrored when the node
-   * crosses to the other side of its tree root.
-   * @param {Node} root the dragged node
+   * Mirror the descendants around the dragged node when it crosses to the
+   * other side of its tree root. Reads only the tree root's position.
    */
-  private moveDescendants(root: Node, dx: number, dy: number) {
-    const newOrientation = this.map.nodes.getOrientation(root),
-      orientationIsChanged = newOrientation !== this.orientation;
+  private mirrorDescendants(session: DragSession) {
+    const nodes = this.map.nodes;
+    const dragged = nodes.positionOf(session.id);
+    const orientation =
+      nodes.parentOf(session.id) === null
+        ? undefined
+        : dragged.x < nodes.positionOf(session.treeRoot).x;
+    if (orientation === session.orientation) return;
 
-    for (const node of this.descendants) {
-      node.coordinates.x += dx;
-      node.coordinates.y += dy;
-
-      if (orientationIsChanged) {
-        node.coordinates.x += (root.coordinates.x - node.coordinates.x) * 2;
-      }
-    }
-
-    if (orientationIsChanged) {
-      this.orientation = newOrientation;
+    session.orientation = orientation;
+    for (const node of session.descendants) {
+      const position = nodes.positionOf(node);
+      this.map.draw.setPreview(node, {
+        x: position.x + (dragged.x - position.x) * 2,
+        y: position.y,
+      });
     }
   }
 
   /**
-   * If the node was actually dragged, end the drag and announce the new
-   * coordinates of every moved node.
-   * @param {Node} node
+   * After a drag that moved the node, write the preview positions to the
+   * nodes, clear the preview and announce the new coordinates of every
+   * moved node.
+   * @param {string} id
    */
-  private ended(_event: D3DragEvent<SVGGElement, Node, unknown>, node: Node) {
-    if (this.dragging) {
-      this.dragging = false;
+  private ended(_event: DragEvent, id: string) {
+    const session = this.session;
+    if (session?.id !== id) return;
+    this.session = null;
+    if (!session.moved) return;
 
-      // The drag moved each node many times, so no single previous value
-      // describes the change.
-      for (const moved of [...this.descendants, node]) {
-        this.map.events.emit('nodeUpdate', {
-          nodeProperties: this.map.nodes.getNodeProperties(moved),
-          changedProperty: 'coordinates',
-          previousValue: undefined,
-        });
-      }
+    const nodes = this.map.nodes;
+    const draw = this.map.draw;
+    const moved = [...session.descendants, id].filter(node =>
+      nodes.existNode(node)
+    );
+    for (const node of moved) {
+      const position = draw.previewOf(node);
+      if (position) nodes.updateNode('coordinates', position, false, node);
+    }
+    draw.takePreview();
+    draw.renderPositions(moved);
+
+    // The drag moved each node many times, so no single previous value
+    // describes the change.
+    for (const node of moved) {
+      const model = nodes.getNode(node);
+      if (!model) continue;
+
+      this.map.events.emit('nodeUpdate', {
+        nodeProperties: nodes.getNodeProperties(model),
+        changedProperty: 'coordinates',
+        previousValue: undefined,
+      });
     }
   }
 }

@@ -29,8 +29,8 @@ function makeChain() {
 
 function visibility(id: string): string | undefined {
   return d3
-    .selectAll<SVGGElement, { id: string }>('g.node')
-    .filter(node => node.id === id)
+    .selectAll<SVGGElement, string>('g.node')
+    .filter(datum => datum === id)
     .node()?.style.visibility;
 }
 
