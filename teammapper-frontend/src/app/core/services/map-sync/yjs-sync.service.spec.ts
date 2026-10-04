@@ -184,6 +184,15 @@ describe('YjsSyncService', () => {
         expect(context.setAttachedNode).toHaveBeenLastCalledWith(root);
       });
 
+      it('writes a created node to the doc and leaves its selection to MmpService', () => {
+        const selects = mmpService.selectNode.mock.calls.length;
+
+        handlers['nodeCreate']({ id: 'child', parent: 'root', name: '' });
+
+        expect(internals(service).yDoc.getMap('nodes').has('child')).toBe(true);
+        expect(mmpService.selectNode).toHaveBeenCalledTimes(selects);
+      });
+
       it('creates the undo manager', () => {
         expect(internals(service).yUndoManager).not.toBeNull();
       });

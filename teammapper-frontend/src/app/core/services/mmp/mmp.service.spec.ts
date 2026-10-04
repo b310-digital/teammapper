@@ -347,6 +347,23 @@ describe('MmpService', () => {
         );
       });
 
+      it('selects the new node and edits its name', () => {
+        mockMap.instance.addNode.mockReturnValue({ id: 'new' });
+
+        service.addNode();
+
+        expect(mockMap.instance.selectNode).toHaveBeenLastCalledWith('new');
+        expect(mockMap.instance.editNode).toHaveBeenCalled();
+      });
+
+      it('edits nothing when mmp refuses the node', () => {
+        mockMap.instance.addNode.mockReturnValue(null);
+
+        service.addNode();
+
+        expect(mockMap.instance.editNode).not.toHaveBeenCalled();
+      });
+
       it('adds no child with nothing selected', () => {
         mockMap.instance.selectNode.mockReturnValue(null);
 
@@ -398,10 +415,21 @@ describe('MmpService', () => {
     });
 
     describe('addTree', () => {
-      it('lets mmp add the tree', () => {
+      it('lets mmp add the tree and edits the name of its root', () => {
+        mockMap.instance.addTree.mockReturnValue({ id: 'tree' });
+
         service.addTree();
 
         expect(mockMap.instance.addTree).toHaveBeenCalled();
+        expect(mockMap.instance.editNode).toHaveBeenCalled();
+      });
+
+      it('edits nothing when mmp adds no tree', () => {
+        mockMap.instance.addTree.mockReturnValue(null);
+
+        service.addTree();
+
+        expect(mockMap.instance.editNode).not.toHaveBeenCalled();
       });
     });
 

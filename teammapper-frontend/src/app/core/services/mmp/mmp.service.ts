@@ -342,7 +342,8 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Add a node in the mind mmp triggered by the user.
+   * Add a node in the mind mmp triggered by the user, then select it and
+   * start editing its name.
    *
    * addNode puts a child under `properties.parent`, or under the selected
    * node when no parent is named, and adds no child when nothing is selected.
@@ -352,47 +353,60 @@ export class MmpService implements OnDestroy {
     properties?: Partial<ExportNodeProperties>,
     notifyWithEvent = true
   ) {
-    const newProps: UserNodeProperties = properties || { name: '' };
     const parent = this.selectNode(properties?.parent || undefined);
     if (!parent) return;
 
-    const settings = this.settingsService.getCachedUserSettings();
-
-    if (properties?.colors?.branch) {
-      newProps.colors = {
-        branch: properties.colors.branch,
-      };
-    } else if (parent.colors?.branch) {
-      newProps.colors = {
-        branch: parent.colors.branch,
-      };
-    } else if (
-      settings !== null &&
-      settings.mapOptions !== null &&
-      settings.mapOptions.autoBranchColors === true
-    ) {
-      const children = this.nodeChildren().length;
-
-      newProps.colors = {
-        branch: this.branchColors[children % this.branchColors.length],
-      };
-    }
-
-    this.map.instance.addNode(
-      newProps,
+    const node = this.map.instance.addNode(
+      this.newNodeProperties(parent, properties),
       notifyWithEvent,
       parent.id,
       properties?.id
     );
+    if (!node) return;
+
+    this.selectNode(node.id);
+    this.editNode();
+  }
+
+  /**
+   * The properties of a new child of `parent`. The branch color comes from
+   * the given properties, then from the parent, then from the automatic
+   * branch colors setting.
+   */
+  private newNodeProperties(
+    parent: ExportNodeProperties,
+    properties?: Partial<ExportNodeProperties>
+  ): UserNodeProperties {
+    const newProps: UserNodeProperties = properties || { name: '' };
+    const branch =
+      properties?.colors?.branch ||
+      parent.colors?.branch ||
+      this.autoBranchColor();
+    if (branch) newProps.colors = { branch };
+    return newProps;
+  }
+
+  /**
+   * The automatic branch color for the next child of the selected node, or
+   * null when the user settings turn automatic branch colors off.
+   */
+  private autoBranchColor(): string | null {
+    const settings = this.settingsService.getCachedUserSettings();
+    if (settings?.mapOptions?.autoBranchColors !== true) return null;
+
+    const children = this.nodeChildren().length;
+    return this.branchColors[children % this.branchColors.length];
   }
 
   /**
    * Add the root of a new tree in the viewport, clear of every tree this
-   * client holds, and select it. The root has no parent and its isRoot
-   * attribute is false.
+   * client holds, select it and start editing its name. The root has no
+   * parent and its isRoot attribute is false.
    */
   public addTree() {
-    this.currentMap?.instance.addTree();
+    const instance = this.currentMap?.instance;
+    if (!instance?.addTree()) return;
+    instance.editNode();
   }
 
   /**
