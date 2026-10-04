@@ -113,8 +113,9 @@ export class MmpService implements OnDestroy {
    * The map this service is attached to. The commands below need one, and
    * the UI calls them only once `mapCreated$` reports true, so a call before
    * `create` is a programming error and this throws instead of returning
-   * null. The queries that templates and presence updates call before
-   * `create` read `currentMap` directly and return a default.
+   * null. The queries that templates call before `create`, and presence
+   * updates call after `remove`, read `currentMap` directly and return a
+   * default.
    */
   private get map(): MmpMap {
     if (!this.currentMap) {
@@ -400,8 +401,8 @@ export class MmpService implements OnDestroy {
   /**
    * Select the node with the id or in the direction passed as parameter.
    * If the node id is not defined return the current selected node, or null
-   * when nothing is selected or no map exists. YjsSyncService selects a node
-   * when it attaches to a map, which can run before `create`.
+   * when nothing is selected or no map exists. Templates, `addNode` and
+   * `moveNodeTo` call it while no map exists.
    */
   public selectNode(
     nodeId?: string | 'left' | 'right' | 'up' | 'down'
@@ -426,7 +427,7 @@ export class MmpService implements OnDestroy {
 
   /**
    * Return true when the map holds the node, and false while no map exists:
-   * a peer's presence update can arrive before `create`.
+   * a peer's presence update can arrive after `remove`.
    */
   public existNode(nodeId: string): boolean {
     return this.currentMap?.instance.existNode(nodeId) ?? false;
@@ -434,7 +435,7 @@ export class MmpService implements OnDestroy {
 
   /**
    * Draw a ring in the color around the node. A peer's presence update can
-   * arrive before `create`, and then this draws nothing.
+   * arrive after `remove`, and then this draws nothing.
    */
   public highlightNode(nodeId: string, color: string): void {
     this.currentMap?.instance.highlightNode(nodeId, color);
@@ -462,8 +463,9 @@ export class MmpService implements OnDestroy {
     value?: NodePropertyValue | ArrayBuffer | unknown,
     id?: string
   ) {
+    const instance = this.map.instance;
     try {
-      this.map.instance.updateNode(property, value, id);
+      instance.updateNode(property, value, id);
     } catch {
       const genericErrorMessage = await this.utilsService.translate(
         'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
@@ -497,8 +499,9 @@ export class MmpService implements OnDestroy {
    * not defined, the current selected node.
    */
   public async removeNode(nodeId?: string) {
+    const instance = this.map.instance;
     try {
-      this.map.instance.removeNode(nodeId);
+      instance.removeNode(nodeId);
     } catch (e) {
       if (errorMessage(e) == 'The root node can not be deleted') {
         const rootNodeFailureMessage = await this.utilsService.translate(
@@ -519,10 +522,11 @@ export class MmpService implements OnDestroy {
    * If id is not specified, copy the selected node.
    */
   public async copyNode(nodeId?: string) {
+    const instance = this.map.instance;
     if (!nodeId && !this.hasSelectedNode()) return;
 
     try {
-      this.map.instance.copyNode(nodeId);
+      instance.copyNode(nodeId);
 
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_COPIED');
@@ -547,10 +551,11 @@ export class MmpService implements OnDestroy {
    * If id is not specified, copy the selected node.
    */
   public async cutNode(nodeId?: string) {
+    const instance = this.map.instance;
     if (!nodeId && !this.hasSelectedNode()) return;
 
     try {
-      if (!this.map.instance.cutNode(nodeId)) return;
+      if (!instance.cutNode(nodeId)) return;
 
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_CUT');
@@ -575,8 +580,9 @@ export class MmpService implements OnDestroy {
    * paste the nodes of the mmp clipboard in the selected node.
    */
   public async pasteNode(nodeId?: string) {
+    const instance = this.map.instance;
     try {
-      this.pasteFromClipboard(nodeId);
+      this.pasteFromClipboard(instance, nodeId);
     } catch (e) {
       if (errorMessage(e) == 'There are not nodes in the mmp clipboard') {
         const rootNodeFailureMessage = await this.utilsService.translate(
@@ -596,11 +602,11 @@ export class MmpService implements OnDestroy {
    * Paste as an independent tree when the caller names no node and nothing is
    * selected. Paste under the named or the selected node otherwise.
    */
-  private pasteFromClipboard(nodeId?: string) {
+  private pasteFromClipboard(instance: MmpMap['instance'], nodeId?: string) {
     const asTree = !nodeId && !this.hasSelectedNode();
 
-    if (asTree) this.map.instance.pasteTree();
-    else this.map.instance.pasteNode(nodeId);
+    if (asTree) instance.pasteTree();
+    else instance.pasteNode(nodeId);
   }
 
   /**

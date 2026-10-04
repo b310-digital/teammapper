@@ -142,7 +142,7 @@ export class YjsMapData implements MapData {
   }
 
   public removeNode(id: string): void {
-    if (!this.nodesMap.has(id)) return;
+    if (!nodeAt(this.nodesMap, id)) return;
 
     const ids = [id, ...collectDescendantIds(this.nodesMap, id)];
     this.transact(() => ids.forEach(nodeId => this.nodesMap.delete(nodeId)));
@@ -220,7 +220,8 @@ export class YjsMapData implements MapData {
   /**
    * Sum the events of one transaction up by node id. A key change on the
    * nodes map adds, removes or rewrites a node; a change inside a node's own
-   * map, such as its `colors`, updates that node.
+   * map, such as its `colors`, updates that node. A change inside an entry
+   * that is no Y.Map, such as a peer's Y.Array, updates no node.
    */
   private changeOf(events: Y.YEvent<Y.AbstractType<unknown>>[]) {
     const change: MapDataChange = {
@@ -232,9 +233,10 @@ export class YjsMapData implements MapData {
     for (const event of events) {
       if ((event.target as unknown) === this.nodesMap) {
         this.collectKeyChanges(event.changes.keys, change);
-      } else {
-        change.updated.push(String(event.path[0]));
+        continue;
       }
+      const id = String(event.path[0]);
+      if (nodeAt(this.nodesMap, id)) change.updated.push(id);
     }
     return this.withDistinctUpdates(change);
   }

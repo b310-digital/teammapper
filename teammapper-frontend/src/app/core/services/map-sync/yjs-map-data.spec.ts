@@ -234,6 +234,47 @@ describe('YjsMapData', () => {
       });
     });
 
+    it('reports no change for an edit inside an entry that is no Y.Map', () => {
+      const list = new Y.Array<number>();
+      peer.getMap('nodes').set('list', list);
+      sync(peer, doc);
+      changes = [];
+
+      list.push([1]);
+      sync(peer, doc);
+
+      expect(changes).toEqual([]);
+    });
+
+    it('removes no entry that is no Y.Map', () => {
+      peer.getMap('nodes').set('text', 'no node');
+      sync(peer, doc);
+
+      data.removeNode('text');
+
+      expect({
+        kept: doc.getMap('nodes').get('text'),
+        undoSteps: undoManager.undoStack.length,
+      }).toEqual({ kept: 'no node', undoSteps: 0 });
+    });
+
+    it('reports an entry the peer turns into a node as added', () => {
+      peer.getMap('nodes').set('late', 'no node');
+      sync(peer, doc);
+
+      const peerData = new YjsMapData(peer, () => null);
+      peerData.addNodes([node('late', 'root')]);
+      sync(peer, doc);
+
+      expect(lastChange()).toEqual({
+        replaced: false,
+        added: ['late'],
+        updated: [],
+        removed: [],
+      });
+      peerData.destroy();
+    });
+
     it('reports a node the peer overwrites with another value as removed', () => {
       peer.getMap('nodes').set('root', 'no node');
 

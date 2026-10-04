@@ -21,7 +21,7 @@ The three sections shipped together in one pull request. Section 1 removes the o
 
 ## 3. Protect, release and refuse
 
-- [x] 3.1 Add `protectBranch` and `releaseBranch` to `packages/mmp`, writing the flag and clearing descendant flags, and export them from the entry point. `MapSyncService.toggleBranchProtection` wraps the toggle in one Y.Doc transaction
+- [x] 3.1 Add `protectBranch` and `releaseBranch` to `packages/mmp`, writing the flag and clearing descendant flags, and export them from the entry point. `MmpService.toggleBranchProtection` calls mmp, which writes the toggle as one map data batch and so one Y.Doc transaction
 - [x] 3.2 Refuse local rename, style, image, link, font, drag, add child, paste, remove and cut inside a protected branch, emitting `nodeProtected`, and skip the check when `notifyWithEvent` is false
 - [x] 3.3 Draw the lock badge on the node carrying the flag and redraw it on local and remote changes
 - [x] 3.4 Replace the toolbar slot with the lock and unlock button, disabled with no selection and on read-only clients

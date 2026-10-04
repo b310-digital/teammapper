@@ -1,8 +1,7 @@
+import * as d3 from 'd3';
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 import InMemoryMapData from '../map/data/in-memory-map-data.js';
-import { resolveNode } from '../map/data/node-record.js';
 import CopyPaste from '../map/handlers/copy-paste.js';
-import Draw from '../map/handlers/draw.js';
 import Drag from '../map/handlers/drag.js';
 import MapLoader from '../map/handlers/map-loader.js';
 import Nodes from '../map/handlers/nodes.js';
@@ -90,10 +89,11 @@ export function firedEvents(events: { emit: jest.Mock }): string[] {
   return events.emit.mock.calls.map(call => call[0]);
 }
 
-/** The ring selection draws on a background filled with `fill`. */
-export function ring(fill: string): string | null {
-  const colors = { ...DefaultNodeValues.colors, background: fill };
-  return Draw.prototype.ringColor(
-    resolveNode(nodeRecord({ id: 'ring', colors }))
-  );
+/**
+ * The ring selection draws on a background filled with `fill`: the fill
+ * darkened by 0.5. Computed here apart from `Draw.ringColor`, so a change
+ * there fails the ring specs.
+ */
+export function ring(fill: string): string | undefined {
+  return d3.color(fill)?.darker(0.5).toString();
 }

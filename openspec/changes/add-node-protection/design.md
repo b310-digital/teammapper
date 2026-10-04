@@ -39,7 +39,7 @@ A node gains `protected: boolean`. The schema declares it `v.optional(v.boolean(
 At most one flag lies on any path from a root to a leaf:
 
 - Protecting a node that is already protected is not offered: the button shows "release".
-- Protecting a node clears the flag on every descendant. `MapSyncService.toggleBranchProtection` runs the toggle inside one local Y.Doc transaction, so peers receive every flag write as one update and one undo reverts them together.
+- Protecting a node clears the flag on every descendant. `MmpService.toggleBranchProtection` calls mmp, which writes the toggle as one map data batch and so one local Y.Doc transaction, so peers receive every flag write as one update and one undo reverts them together.
 
 Releasing from any node of a protected branch clears the flag on `protectingNode`, which releases the whole branch in one write.
 

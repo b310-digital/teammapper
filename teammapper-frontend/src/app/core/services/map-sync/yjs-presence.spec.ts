@@ -194,7 +194,8 @@ describe('YjsSyncService presence', () => {
           [PEER_ID]: { color: '#000000', nodeId: '' },
         })
       );
-      expect(mmpService.existNode).not.toHaveBeenCalledWith(123);
+      expect(mmpService.existNode).not.toHaveBeenCalled();
+      expect(mmpService.highlightNode).not.toHaveBeenCalled();
       expect(context.emitClientList).toHaveBeenCalled();
     });
   });

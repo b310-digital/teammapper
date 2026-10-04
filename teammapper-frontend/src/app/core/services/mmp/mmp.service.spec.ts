@@ -185,6 +185,19 @@ describe('MmpService', () => {
       }
     );
 
+    it.each([
+      ['updateNode', () => service.updateNode('fontSize', 14)],
+      ['removeNode', () => service.removeNode('node')],
+      ['copyNode', () => service.copyNode('node')],
+      ['cutNode', () => service.cutNode('node')],
+      ['pasteNode', () => service.pasteNode()],
+    ])('rejects the command %s without a toast', async (_, command) => {
+      await expect(command()).rejects.toThrow(
+        'No mind map has been created yet'
+      );
+      expect(toastrService.error).not.toHaveBeenCalled();
+    });
+
     it('rejects an import and an export', async () => {
       await expect(service.new([])).rejects.toThrow(
         'No mind map has been created yet'
