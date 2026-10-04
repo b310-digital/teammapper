@@ -16,7 +16,12 @@ import {
   parseImageUploadResponse,
 } from '@teammapper/shared';
 import { ImageUploadError } from '../mmp/node-images';
-import type { MapProperties, MmpMap, OptionParameters } from '@teammapper/mmp';
+import type {
+  MapData,
+  MapProperties,
+  MmpMap,
+  OptionParameters,
+} from '@teammapper/mmp';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
@@ -218,13 +223,12 @@ export class MapSyncService implements OnDestroy {
   }
 
   /**
-   * Protect or release the branch of the selected node in one transaction,
-   * so peers never see a child released before its parent is protected.
+   * Protect or release the branch of the selected node. mmp writes the whole
+   * toggle as one batch, so peers never see a child released before its
+   * parent is protected.
    */
   public toggleBranchProtection(): void {
-    this.syncService.transactLocally(() =>
-      this.mmpService.toggleBranchProtection()
-    );
+    this.mmpService.toggleBranchProtection();
   }
 
   public updateMapOptions(options?: CachedMapOptions) {
@@ -286,8 +290,8 @@ export class MapSyncService implements OnDestroy {
       setCanRedo: (v: boolean) => this.canRedoSubject.next(v),
       updateAttachedMap: () => this.updateAttachedMap(),
       emitClientList: () => this.extractClientListForSubscriber(),
-      createMap: () =>
-        void this.createMap().catch((error: unknown) => {
+      createMap: (data: MapData) =>
+        void this.createMap(data).catch((error: unknown) => {
           console.error('Failed to create the map:', error);
           this.removeSyncingToast();
         }),
@@ -298,12 +302,12 @@ export class MapSyncService implements OnDestroy {
   // ─── Map creation ────────────────────────────────────────────
 
   /**
-   * Create the map once the connection synced. The sync service wires it up
+   * Create the map over the synced map data. The sync service wires it up
    * and sets edit mode last, so the map exists when edit mode reaches it.
    * A reset while mmp builds the map leaves nothing to wire up, so the call
    * removes the map it built and keeps a map that a newer `openMap` built.
    */
-  private async createMap(): Promise<void> {
+  private async createMap(data: MapData): Promise<void> {
     const target = this.mapTarget;
     if (!target) return;
     this.removeSyncingToast();
@@ -311,7 +315,8 @@ export class MapSyncService implements OnDestroy {
     const map = await this.mmpService.create(
       'map_1',
       target.ref,
-      target.options
+      target.options,
+      data
     );
     if (map) this.adoptMap(map, target);
   }

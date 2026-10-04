@@ -5,7 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
 import { jsPDF } from 'jspdf';
 import { filter } from 'rxjs/operators';
-import { create, MmpMap, OptionParameters } from '@teammapper/mmp';
+import { create, MapData, MmpMap, OptionParameters } from '@teammapper/mmp';
 import DOMPurify from 'dompurify';
 import {
   CachedMapOptions,
@@ -127,16 +127,18 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Create a mind map with mmp, keep the instance and return it. The map
-   * takes the current edit mode and stays read-only while the edit mode is
-   * unknown, so a read-only client never gets an editable map. Returns null
-   * without creating a map when a later `create` or a `remove` ran while the
-   * options loaded, so a late create never replaces a newer map.
+   * Create a mind map with mmp over the map data, keep the instance and
+   * return it. mmp draws the nodes the data holds at once. The map takes the
+   * current edit mode and stays read-only while the edit mode is unknown, so
+   * a read-only client never gets an editable map. Returns null without
+   * creating a map when a later `create` or a `remove` ran while the options
+   * loaded, so a late create never replaces a newer map.
    */
   public async create(
     id: string,
     ref: HTMLElement,
-    options?: OptionParameters
+    options: OptionParameters | undefined,
+    data: MapData
   ): Promise<MmpMap | null> {
     const creation = ++this.creations;
     // additional options do not include the standard mmp map options
@@ -144,7 +146,7 @@ export class MmpService implements OnDestroy {
     if (creation !== this.creations) return null;
     this.additionalOptions = additionalOptions;
 
-    const map: MmpMap = create(id, ref, this.mapOptions(options));
+    const map: MmpMap = create(id, ref, this.mapOptions(options), data);
     this.currentMap = map;
     map.instance.on('nodeProtected', () => void this.showProtectedNotice());
     return map;
@@ -205,9 +207,9 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Clear or load an existing mind mmp.
+   * Replace the mind map with the given nodes: an import.
    */
-  public async new(map: MapSnapshot, notifyWithEvent = true) {
+  public async new(map: MapSnapshot) {
     const instance = this.currentMap?.instance;
     if (!instance) return;
 
@@ -221,8 +223,7 @@ export class MmpService implements OnDestroy {
       return;
     }
 
-    const mapWithCoordinates = instance.applyCoordinatesToMapSnapshot(map);
-    instance.new(mapWithCoordinates, notifyWithEvent);
+    instance.new(instance.applyCoordinatesToMapSnapshot(map));
   }
 
   /**
@@ -333,15 +334,6 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Adds already created nodes from the server to the local map
-   *
-   * @param nodes Given nodes from the server
-   */
-  public addNodesFromServer(nodes: ExportNodeProperties[]) {
-    this.map.instance.addNodes(nodes);
-  }
-
-  /**
    * Add a node in the mind mmp triggered by the user, then select it and
    * start editing its name.
    *
@@ -349,16 +341,13 @@ export class MmpService implements OnDestroy {
    * node when no parent is named, and adds no child when nothing is selected.
    * Call `addTree` to add a root node.
    */
-  public addNode(
-    properties?: Partial<ExportNodeProperties>,
-    notifyWithEvent = true
-  ) {
+  public addNode(properties?: Partial<ExportNodeProperties>) {
     const parent = this.selectNode(properties?.parent || undefined);
     if (!parent) return;
 
     const node = this.map.instance.addNode(
       this.newNodeProperties(parent, properties),
-      notifyWithEvent,
+      true,
       parent.id,
       properties?.id
     );
@@ -429,7 +418,8 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Export the properties of the main root, or null while no map exists.
+   * Export the properties of the main root, or null for a map without one
+   * and while no map exists.
    */
   public getRootNode(): ExportNodeProperties | null {
     return this.currentMap?.instance.exportRootProperties() ?? null;
@@ -469,16 +459,10 @@ export class MmpService implements OnDestroy {
   public async updateNode(
     property: NodeProperty | string,
     value?: NodePropertyValue | ArrayBuffer | unknown,
-    notifyWithEvent?: boolean,
     id?: string
   ) {
     try {
-      this.currentMap?.instance.updateNode(
-        property,
-        value,
-        notifyWithEvent,
-        id
-      );
+      this.currentMap?.instance.updateNode(property, value, true, id);
     } catch {
       const genericErrorMessage = await this.utilsService.translate(
         'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
@@ -511,9 +495,9 @@ export class MmpService implements OnDestroy {
    * Remove the node with the id passed as parameter or, if the id is
    * not defined, the current selected node.
    */
-  public async removeNode(nodeId?: string, notifyWithEvent = true) {
+  public async removeNode(nodeId?: string) {
     try {
-      this.currentMap?.instance.removeNode(nodeId, notifyWithEvent);
+      this.currentMap?.instance.removeNode(nodeId, true);
     } catch (e) {
       if (errorMessage(e) == 'The root node can not be deleted') {
         const rootNodeFailureMessage = await this.utilsService.translate(
@@ -741,7 +725,7 @@ export class MmpService implements OnDestroy {
       // The upload succeeded; a node deleted meanwhile needs no image and no
       // error. The cleanup job deletes the unused image.
       if (!this.existNode(node.id)) return;
-      await this.updateNode('imageSrc', reference, true, node.id);
+      await this.updateNode('imageSrc', reference, node.id);
     } catch (error) {
       await this.showImageUploadError(error);
     }

@@ -41,13 +41,13 @@ export class SliderPanelsComponent implements OnChanges {
     const target = event.target as HTMLInputElement;
     const value = parseInt(target.value, 10);
 
-    this.mmpService.updateNode('fontSize', value, true);
+    this.mmpService.updateNode('fontSize', value);
   }
 
   public updateNodeImageSize(event: Event) {
     const target = event.target as HTMLInputElement;
     const value = parseInt(target.value, 10);
 
-    this.mmpService.updateNode('imageSize', value, true);
+    this.mmpService.updateNode('imageSize', value);
   }
 }

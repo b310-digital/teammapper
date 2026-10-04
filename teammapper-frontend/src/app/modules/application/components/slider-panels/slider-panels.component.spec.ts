@@ -75,7 +75,7 @@ describe('SliderPanelsComponent', () => {
     input.value = '35';
     input.dispatchEvent(new Event('input'));
 
-    expect(mmpService.updateNode).toHaveBeenCalledWith('fontSize', 35, true);
+    expect(mmpService.updateNode).toHaveBeenCalledWith('fontSize', 35);
   });
 
   it('hides the font slider while no map has been created', () => {
@@ -91,6 +91,6 @@ describe('SliderPanelsComponent', () => {
     input.value = '200';
     input.dispatchEvent(new Event('input'));
 
-    expect(mmpService.updateNode).toHaveBeenCalledWith('imageSize', 200, true);
+    expect(mmpService.updateNode).toHaveBeenCalledWith('imageSize', 200);
   });
 });
