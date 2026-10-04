@@ -46,6 +46,16 @@ interface MapTarget {
   options?: OptionParameters;
 }
 
+/**
+ * Loads the attached map from the server and opens it, with `YjsSyncService`
+ * keeping it in sync. Opening a map runs in this order:
+ * 1. `openMap` calls `YjsSyncService.initMap`, which creates the Y.Doc and
+ *    its `YjsMapData` and connects. No map exists yet.
+ * 2. On the first sync, `YjsSyncService` hands the `YjsMapData` back
+ *    through the context's `createMap`, and this service creates mmp over it.
+ * 3. This service then calls `YjsSyncService.attachMap`, which wires
+ *    listeners, presence and undo, and sets edit mode last.
+ */
 @Injectable({
   providedIn: 'root',
 })

@@ -38,17 +38,10 @@ export const ATTACHED_MAP_AUDIT_MS = 250;
 type NodesMap = Y.Map<Y.Map<unknown>>;
 
 /**
- * Keeps one open map in sync with the other clients over a Yjs websocket. It
- * mirrors mmp's node events into the Y.Doc and peer changes back into mmp,
- * and owns presence and the undo manager.
- *
- * `MapSyncService` is responsible for the startup:
- * 1. `MapSyncService.openMap` calls `initMap` on this service, which creates the Y.Doc and
- *    connects. No map exists yet.
- * 2. On the first sync, this service asks `MapSyncService` (through the
- *    context's `createMap`) to create mmp.
- * 3. `MapSyncService` then calls `attachMap`, which loads the Y.Doc into
- *    mmp, wires listeners, presence and undo, and sets edit mode last.
+ * Keeps one open map in sync with the other clients over a Yjs websocket.
+ * The Y.Doc holds the only copy of the map, and mmp reads and writes it
+ * through `YjsMapData`. The service owns the connection, presence, the undo
+ * manager and the import notice. `MapSyncService` drives its startup.
  */
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
