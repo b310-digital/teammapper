@@ -16,7 +16,8 @@ export type {
 
 /**
  * Return a mmp object with all mmp functions. The map reads and writes its
- * nodes through `data` for its whole life and draws them at once.
+ * nodes through `data` for its whole life, and draws every node `data` holds
+ * before `create` returns.
  */
 export function create(
   id: string,

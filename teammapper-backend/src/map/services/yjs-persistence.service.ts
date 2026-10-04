@@ -47,7 +47,7 @@ export class YjsPersistenceService implements OnModuleDestroy {
     try {
       await queryRunner.startTransaction()
 
-      const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
+      const nodesMap = doc.getMap('nodes')
       const optionsMap = doc.getMap('mapOptions') as Y.Map<unknown>
       const now = new Date()
 
@@ -166,15 +166,17 @@ export class YjsPersistenceService implements OnModuleDestroy {
   }
 
   // Extracts nodes from Y.Doc, ensuring root is first with stable orderNumbers.
-  // Throws when no root reaches any node, because deleteRemovedNodes would
-  // otherwise delete every node row of the map.
+  // Skips every entry that is no Y.Map, since any client with write access can
+  // store one. Throws when no root reaches any node, because deleteRemovedNodes
+  // would otherwise delete every node row of the map.
   private extractNodesFromYDoc(
-    nodesMap: Y.Map<Y.Map<unknown>>,
+    nodesMap: Y.Map<unknown>,
     mapId: string,
     now: Date
   ): Partial<MmpNode>[] {
     const nodes: Partial<MmpNode>[] = []
     nodesMap.forEach((yNode) => {
+      if (!(yNode instanceof Y.Map)) return
       nodes.push({ ...yMapToMmpNode(yNode, mapId), lastModified: now })
     })
     const ordered = orderNodesFromRoot(nodes)

@@ -13,7 +13,6 @@ import type { MapData } from './data/map-data.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
-  MapViewState,
   MmpEventType,
   NodeProperty,
   NodePropertyValue,
@@ -65,7 +64,7 @@ export default class MmpMap {
     this.events = new Events();
     this.options = new Options(options, this);
     this.zoom = new Zoom(this);
-    this.viewState = new ViewState(this);
+    this.viewState = new ViewState();
     this.loader = new MapLoader(this);
     this.drag = new Drag(this);
     this.draw = new Draw(this, ref);
@@ -129,9 +128,7 @@ export default class MmpMap {
       existNode: this.nodes.existNode,
       exportAsImage: this.export.asImage,
       exportAsJSON: this.export.asJSON,
-      exportRootProperties: this.nodes.exportRootProperties,
-      exportViewState: () => this.viewState.export(),
-      restoreViewState: state => this.viewState.restore(state),
+      exportRootProperties: () => this.nodes.mainRoot(),
       highlightNode: this.nodes.highlightNodeWithColor,
       new: this.loader.load,
       nodeChildren: this.nodes.nodeChildren,
@@ -144,7 +141,6 @@ export default class MmpMap {
       destroy: this.destroy,
       removeNode: this.nodes.removeNode,
       selectNode: this.nodes.selectNode,
-      unsubscribeAll: this.events.unsubscribeAll,
       updateNode: this.nodes.updateNode,
       zoomIn: this.zoom.zoomIn,
       zoomOut: this.zoom.zoomOut,
@@ -176,10 +172,8 @@ export interface MmpInstance {
   exportAsImage: (callback: (url: string) => void, type?: string) => void;
   exportAsJSON: () => MapSnapshot;
   exportRootProperties: () => ExportNodeProperties | null;
-  exportViewState: () => MapViewState;
-  restoreViewState: (state: MapViewState) => void;
   highlightNode: (id: string, color: string) => void;
-  new: (snapshot?: MapSnapshot) => void;
+  new: (nodes?: MapSnapshot) => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];
   on: <K extends MmpEventType>(event: K, callback: MmpEventCallback<K>) => void;
   pasteNode: (id?: string) => void;
@@ -190,7 +184,6 @@ export interface MmpInstance {
   destroy: () => void;
   removeNode: (id?: string) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;
-  unsubscribeAll: () => void;
   updateNode: (
     property: NodeProperty | string,
     value: NodePropertyValue | unknown,

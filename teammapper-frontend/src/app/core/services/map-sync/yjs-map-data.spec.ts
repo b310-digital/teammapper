@@ -214,6 +214,36 @@ describe('YjsMapData', () => {
         removed: [],
       });
     });
+
+    it('reads past an entry the peer writes that is no Y.Map', () => {
+      peer.getMap('nodes').set('text', 'no node');
+      peer.getMap('nodes').set('object', { isRoot: true });
+
+      sync(peer, doc);
+
+      expect({
+        text: data.node('text'),
+        ids: data.nodes().map(record => record.id),
+        mainRoot: data.mainRootId(),
+        changes,
+      }).toEqual({
+        text: undefined,
+        ids: ['root'],
+        mainRoot: 'root',
+        changes: [],
+      });
+    });
+
+    it('reports a node the peer overwrites with another value as removed', () => {
+      peer.getMap('nodes').set('root', 'no node');
+
+      sync(peer, doc);
+
+      expect({ nodes: data.nodes(), change: lastChange() }).toEqual({
+        nodes: [],
+        change: { replaced: false, added: [], updated: [], removed: ['root'] },
+      });
+    });
   });
 
   describe('undo', () => {
@@ -244,6 +274,25 @@ describe('YjsMapData', () => {
         root: stored('root')?.protected,
         a: stored('a')?.protected,
       }).toEqual({ root: false, a: false });
+    });
+
+    it('keeps the edit after a batch that throws out of its undo step', () => {
+      data.addNodes([node('a', 'root')]);
+      undoManager.stopCapturing();
+      expect(() =>
+        data.batch(() => {
+          data.updateNode('root', 'name', 'Batched');
+          throw new Error('batch failed');
+        })
+      ).toThrow('batch failed');
+      data.updateNode('a', 'name', 'Edited');
+
+      undoManager.undo();
+
+      expect({
+        root: stored('root')?.name,
+        a: stored('a')?.name,
+      }).toEqual({ root: 'Batched', a: 'a' });
     });
 
     it('reverts a batch without the edit before it', () => {

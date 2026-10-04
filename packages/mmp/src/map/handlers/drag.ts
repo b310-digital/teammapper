@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import { DragBehavior, D3DragEvent } from 'd3';
 import { collectSubtreeIds } from '@teammapper/shared';
 import Map from '../map.js';
+import { lookupIn } from './nodes.js';
 
 type DragEvent = D3DragEvent<SVGGElement, string, unknown>;
 
@@ -67,7 +68,7 @@ export default class Drag {
   private started(_: DragEvent, id: string) {
     const nodes = this.map.nodes;
     const records = nodes.scan();
-    const lookup = (node: string) => records.get(node);
+    const lookup = lookupIn(records);
 
     this.session = {
       id,

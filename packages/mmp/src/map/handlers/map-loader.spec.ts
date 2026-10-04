@@ -267,7 +267,7 @@ describe('new', () => {
 
     expect(() =>
       map.instance.new({ id: 'x' } as unknown as MapSnapshot)
-    ).toThrow('The snapshot is not correct');
+    ).toThrow('The exported map is not correct');
     expect(map.instance.exportAsJSON()).toStrictEqual(before);
     expect(listener).not.toHaveBeenCalled();
   });
@@ -280,7 +280,7 @@ describe('new', () => {
       data.subscribe(listener);
 
       expect(() => map.instance.new([])).toThrow(
-        'There was an error importing the map; changes have been rolled back.'
+        'The map holds no nodes; the import changed nothing.'
       );
       expect(map.instance.exportAsJSON()).toStrictEqual(before);
       expect(map.instance.getSelectedNode()?.id).toBe(before[0].id);

@@ -50,7 +50,6 @@ describe('MmpService', () => {
 
   const mockMap = {
     instance: {
-      unsubscribeAll: jest.fn(),
       destroy: jest.fn(),
       new: jest.fn(),
       zoomIn: jest.fn(),
@@ -150,35 +149,50 @@ describe('MmpService', () => {
   });
 
   describe('before create', () => {
-    it('does nothing for the toolbar, floating button and shortcut actions', async () => {
-      const actions = async () => {
-        service.zoomIn();
-        service.zoomOut();
-        service.center();
-        service.selectNode('left');
-        service.addNode();
-        service.addTree();
-        service.editNode();
-        service.moveNodeTo('left');
-        service.toggleBranchVisibility();
-        service.toggleBranchProtection();
-        service.distributeNodes();
-        await service.updateNode('fontSize', 14);
-        await service.removeNode();
-        await service.copyNode('node');
-        await service.cutNode('node');
-        await service.pasteNode();
-        await service.new([]);
-        return service.exportMap('json');
-      };
+    it('answers the template and presence queries with defaults', () => {
+      service.highlightNode('node', '#ff0000');
+      service.addNode();
+      service.moveNodeTo('left');
 
-      await expect(actions()).resolves.toEqual({ success: false });
-      expect(toastrService.error).not.toHaveBeenCalled();
-      expect(downloadFileSpy).not.toHaveBeenCalled();
+      expect({
+        selected: service.selectNode('left'),
+        hasSelected: service.hasSelectedNode(),
+        exists: service.existNode('node'),
+        protecting: service.protectingNode(),
+        hidden: service.childNodesHidden(),
+      }).toEqual({
+        selected: null,
+        hasSelected: false,
+        exists: false,
+        protecting: null,
+        hidden: false,
+      });
     });
 
-    it('reports no main root', () => {
-      expect(service.getRootNode()).toBeNull();
+    it.each([
+      ['zoomIn', () => service.zoomIn()],
+      ['center', () => service.center()],
+      ['addTree', () => service.addTree()],
+      ['editNode', () => service.editNode()],
+      ['toggleBranchVisibility', () => service.toggleBranchVisibility()],
+      ['toggleBranchProtection', () => service.toggleBranchProtection()],
+      ['distributeNodes', () => service.distributeNodes()],
+      ['getRootNode', () => service.getRootNode()],
+    ])(
+      'throws for the command %s, which waits for mapCreated$',
+      (_, command) => {
+        expect(command).toThrow('No mind map has been created yet');
+      }
+    );
+
+    it('rejects an import and an export', async () => {
+      await expect(service.new([])).rejects.toThrow(
+        'No mind map has been created yet'
+      );
+      await expect(service.exportMap('json')).rejects.toThrow(
+        'No mind map has been created yet'
+      );
+      expect(downloadFileSpy).not.toHaveBeenCalled();
     });
   });
 

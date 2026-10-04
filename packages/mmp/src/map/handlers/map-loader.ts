@@ -24,8 +24,9 @@ const LoadedNodeSchema = v.object({
 
 /**
  * The nodes with a main root. A map that names none makes the first node
- * without a parent, in snapshot order, its main root, so the load centers
- * and selects it and peers see a replacement. Changes the nodes in place.
+ * without a parent, in the order of the exported map, its main root, so the
+ * load centers and selects it and peers see a replacement. Changes the nodes
+ * in place.
  */
 function withMainRoot(nodes: ExportNodeProperties[]): ExportNodeProperties[] {
   if (nodes.some(node => node.isRoot)) return nodes;
@@ -40,8 +41,8 @@ function withMainRoot(nodes: ExportNodeProperties[]): ExportNodeProperties[] {
  * new main root. The loader checks the nodes, converts the format mmp 0.1.7
  * exported and writes the result to the map data as one replacement. The
  * change listener then draws the map, selects the main root and centers the
- * view. ViewState keeps its set apart from the map data, so a load keeps
- * hidden child nodes hidden.
+ * view. ViewState keeps the ids of the nodes whose child nodes are hidden
+ * apart from the map data, so a load keeps those child nodes hidden.
  */
 export default class MapLoader {
   private map: MmpMap;
@@ -69,12 +70,10 @@ export default class MapLoader {
     // The conversions below write to the nodes, and the caller keeps its own.
     const nodes = Utils.cloneObject(input);
     if (!this.isValidMap(nodes)) {
-      Log.error('The snapshot is not correct');
+      Log.error('The exported map is not correct');
     }
     if (nodes.length === 0) {
-      Log.error(
-        'There was an error importing the map; changes have been rolled back.'
-      );
+      Log.error('The map holds no nodes; the import changed nothing.');
     }
 
     this.map.data.replaceMap(withMainRoot(nodes.map(this.completed)));
@@ -105,12 +104,10 @@ export default class MapLoader {
    * The node as the map data stores it, with only the fields a node has. A
    * map exported by an older release may lack a property, and the defaults
    * fill it in. A node without a k, or with 0, gets a random one.
-   * @param {ExportNodeProperties} property
+   * @param {ExportNodeProperties} node
    */
-  private completed = (
-    property: ExportNodeProperties
-  ): ExportNodeProperties => {
-    const merged = Utils.cloneObject({ ...DefaultNodeValues, ...property });
+  private completed = (node: ExportNodeProperties): ExportNodeProperties => {
+    const merged = Utils.cloneObject({ ...DefaultNodeValues, ...node });
 
     return {
       id: merged.id,

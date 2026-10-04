@@ -185,14 +185,6 @@ export type NodeProperty =
 export type NodePropertyValue =
   string | number | boolean | MapNodeCoordinates | null | undefined;
 
-/**
- * The view state of one client's map: which nodes hide their child nodes.
- * It stays local to the client and never reaches the map data.
- */
-export interface MapViewState {
-  nodesWithHiddenChildren: string[];
-}
-
 export interface CachedMap {
   lastModified: number;
   createdAt: number;
@@ -247,7 +239,6 @@ export interface MmpEventPayloadMap {
   nodeSelect: ExportNodeProperties;
   nodeDeselect: ExportNodeProperties;
   nodeProtected: ExportNodeProperties;
-  viewStateChange: MapViewState;
   /** The map data changed, by a local, a peer's or an undo write. */
   mapChange: void;
 }

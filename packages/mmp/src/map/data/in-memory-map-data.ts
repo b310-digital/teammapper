@@ -56,7 +56,7 @@ export default class InMemoryMapData implements MapData {
       for (const node of nodes) {
         // The flush reports the id as updated only when it existed before
         // the change, so a remove and re-add in one batch counts as an update.
-        const change = this.touch(node.id);
+        const change = this.recordInChange(node.id);
         change.updated.add(node.id);
         if (node.isRoot) change.replaced = true;
         this.entries.set(node.id, Utils.cloneObject(node));
@@ -73,7 +73,7 @@ export default class InMemoryMapData implements MapData {
     const next = Utils.cloneObject(entry);
     writePath(next, PropertyMapping[property], value);
     this.batch(() => {
-      this.touch(id).updated.add(id);
+      this.recordInChange(id).updated.add(id);
       this.entries.set(id, next);
     });
   }
@@ -84,7 +84,7 @@ export default class InMemoryMapData implements MapData {
     this.batch(() => {
       const ids = [id, ...collectSubtreeIds(this.nodes(), id)];
       for (const removed of ids) {
-        this.touch(removed);
+        this.recordInChange(removed);
         this.entries.delete(removed);
       }
     });
@@ -92,7 +92,7 @@ export default class InMemoryMapData implements MapData {
 
   public replaceMap(nodes: MapSnapshot): void {
     this.batch(() => {
-      for (const id of this.entries.keys()) this.touch(id);
+      for (const id of this.entries.keys()) this.recordInChange(id);
       this.entries.clear();
       this.addNodes(nodes);
     });
@@ -116,7 +116,7 @@ export default class InMemoryMapData implements MapData {
   }
 
   /** Record `id` in the running change, and return the change. */
-  private touch(id: string): PendingChange {
+  private recordInChange(id: string): PendingChange {
     this.pending ??= {
       existed: new Map(),
       updated: new Set(),

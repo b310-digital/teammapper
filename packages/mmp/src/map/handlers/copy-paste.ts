@@ -8,7 +8,7 @@ import type {
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import type { ResolvedNode } from '../data/node-record.js';
-import type { RecordLookup } from './nodes.js';
+import { lookupIn, type RecordLookup } from './nodes.js';
 import type { Bounds } from './node-geometry.js';
 import { moveBounds, unionBounds } from './tree-placement.js';
 
@@ -88,13 +88,13 @@ export default class CopyPaste {
   private copyToClipboard(node: ResolvedNode) {
     const nodes = this.map.nodes;
     const records = nodes.scan();
-    const lookup: RecordLookup = id => records.get(id);
+    const lookup = lookupIn(records);
     const copied = [
-      node.id,
-      ...collectSubtreeIds([...records.values()], node.id),
-    ]
-      .map(id => records.get(id))
-      .filter((record): record is ResolvedNode => record !== undefined);
+      node,
+      ...collectSubtreeIds([...records.values()], node.id).flatMap(
+        id => records.get(id) ?? []
+      ),
+    ];
 
     this.copiedNodes = copied.map(record => Utils.cloneObject(record));
     this.copiedTreeRootX = nodes.positionOf(

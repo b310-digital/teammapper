@@ -204,10 +204,6 @@ export class MapSyncService implements OnDestroy {
     return attachedMap;
   }
 
-  public getConnectionStatus(): ConnectionStatus {
-    return this.connectionStatusSubject.getValue();
-  }
-
   public async updateAttachedMap(): Promise<void> {
     const cachedMapEntry: CachedMapEntry = this.getAttachedMap();
 
@@ -230,15 +226,6 @@ export class MapSyncService implements OnDestroy {
 
   public redo(): void {
     this.syncService.redo();
-  }
-
-  /**
-   * Protect or release the branch of the selected node. mmp writes the whole
-   * toggle as one batch, so peers never see a child released before its
-   * parent is protected.
-   */
-  public toggleBranchProtection(): void {
-    this.mmpService.toggleBranchProtection();
   }
 
   public updateMapOptions(options?: CachedMapOptions) {
@@ -281,7 +268,6 @@ export class MapSyncService implements OnDestroy {
 
   private createContext(): MapSyncContext {
     return {
-      getAttachedMap: () => this.getAttachedMap(),
       getModificationSecret: () => this.modificationSecret,
       getColorMapping: () => this.colorMapping,
       getClientColor: () => this.clientColor,
@@ -331,7 +317,10 @@ export class MapSyncService implements OnDestroy {
     if (map) this.adoptMap(map, target);
   }
 
-  /** Wire up the map, or remove it when a reset or a newer openMap ran meanwhile. */
+  /**
+   * Wire up the map, or remove it when a reset or a newer openMap ran while
+   * mmp built it.
+   */
   private adoptMap(map: MmpMap, target: MapTarget): void {
     if (this.mapTarget !== target) return this.mmpService.remove(map);
     this.syncService.attachMap();

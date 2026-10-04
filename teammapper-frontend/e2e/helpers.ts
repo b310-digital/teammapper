@@ -12,6 +12,18 @@ export async function createMap(page: Page) {
 }
 
 /**
+ * Adds a child to the node named `parent` through the floating add button
+ * and names it `name`.
+ */
+export async function addChild(page: Page, parent: string, name: string) {
+  await page.getByText(parent, { exact: true }).click();
+  await page.locator('#floating-add-node').click();
+  await page.keyboard.type(name);
+  await page.locator('.map').click();
+  await expect(page.getByText(name, { exact: true })).toBeVisible();
+}
+
+/**
  * Adds a tree through the toolbar and names its root `name`. Adding a tree
  * pans the view to the new root with a transition, and a click on the map
  * stops that transition wherever it is, so the click waits until the root is

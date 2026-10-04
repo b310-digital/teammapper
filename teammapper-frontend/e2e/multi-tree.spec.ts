@@ -1,16 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 import type { ExportNodeProperties } from '@teammapper/shared';
 import type { Readable } from 'stream';
-import { addTree, createMap } from './helpers';
-
-/** Adds a child to the node named `parent` and names it `name`. */
-async function addChild(page: Page, parent: string, name: string) {
-  await page.getByText(parent, { exact: true }).click();
-  await page.locator('#floating-add-node').click();
-  await page.keyboard.type(name);
-  await page.locator('.map').click();
-  await expect(page.getByText(name, { exact: true })).toBeVisible();
-}
+import { addChild, addTree, createMap } from './helpers';
 
 async function readStream(stream: Readable): Promise<string> {
   const chunks: Buffer[] = [];

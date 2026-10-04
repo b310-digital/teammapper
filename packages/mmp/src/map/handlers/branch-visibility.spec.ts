@@ -131,13 +131,10 @@ describe('toggleBranchVisibility', () => {
 
   it('does nothing to a node without child nodes', () => {
     const { map, second } = makeTree();
-    const listener = jest.fn();
-    map.instance.on('viewStateChange', listener);
 
     toggle(map, second);
 
-    expect(map.instance.childNodesHidden(second)).toBe(false);
-    expect(listener).not.toHaveBeenCalled();
+    expect(map.viewState.hidesChildren(second)).toBe(false);
   });
 
   it('reports no hidden child nodes once a peer removes the last child node', () => {
@@ -147,32 +144,37 @@ describe('toggleBranchVisibility', () => {
     data.removeNode(grandchild);
 
     expect(map.instance.childNodesHidden(first)).toBe(false);
-    expect(map.instance.exportViewState().nodesWithHiddenChildren).toEqual([
-      first,
-    ]);
+    expect(map.viewState.hidesChildren(first)).toBe(true);
   });
 
   it('forgets a removed node whose child nodes were hidden', () => {
     const { map, data, root, first } = makeTree();
     toggle(map, first);
     map.instance.selectNode(root);
-    const listener = jest.fn();
-    map.instance.on('viewStateChange', listener);
 
     data.removeNode(first);
 
-    expect(listener).toHaveBeenCalledWith({ nodesWithHiddenChildren: [] });
+    expect(map.viewState.isEmpty()).toBe(true);
   });
 
   it('does nothing while nothing is selected', () => {
     const { map } = makeTree();
-    const listener = jest.fn();
-    map.instance.on('viewStateChange', listener);
     map.nodes.deselectNode();
 
     map.instance.toggleBranchVisibility();
 
-    expect(map.instance.exportViewState().nodesWithHiddenChildren).toEqual([]);
+    expect(map.viewState.isEmpty()).toBe(true);
+  });
+
+  it('fires no event', () => {
+    const { map, root } = makeTree();
+    const listener = jest.fn();
+    map.instance.on('mapChange', listener);
+    map.instance.on('nodeSelect', listener);
+
+    map.instance.toggleBranchVisibility();
+
+    expect(map.instance.childNodesHidden(root)).toBe(true);
     expect(listener).not.toHaveBeenCalled();
   });
 });

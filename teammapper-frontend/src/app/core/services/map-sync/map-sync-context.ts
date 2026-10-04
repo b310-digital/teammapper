@@ -1,4 +1,4 @@
-import { CachedMapEntry, ExportNodeProperties } from '@teammapper/shared';
+import { ExportNodeProperties } from '@teammapper/shared';
 import type { MapData } from '@teammapper/mmp';
 import { ClientColorMapping } from './yjs-utils';
 
@@ -8,7 +8,6 @@ export const DEFAULT_SELF_COLOR = '#c0c0c0';
 export type ConnectionStatus = 'connected' | 'disconnected' | null;
 
 export interface MapSyncContext {
-  getAttachedMap(): CachedMapEntry;
   getModificationSecret(): string;
   getColorMapping(): ClientColorMapping;
   getClientColor(): string;

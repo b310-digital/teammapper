@@ -31,6 +31,12 @@ function makeChain() {
   return { map, data, root, a, b, c };
 }
 
+/** Select the node and hide its child nodes. */
+function hideChildrenOf(map: MmpMap, id: string) {
+  map.instance.selectNode(id);
+  map.instance.toggleBranchVisibility();
+}
+
 function visibility(id: string): string | undefined {
   return d3
     .selectAll<SVGGElement, string>('g.node')
@@ -46,7 +52,7 @@ describe('ViewState', () => {
   it('hides every node below a node whose child nodes it hides', () => {
     const { map, root, a, b, c } = makeChain();
 
-    map.instance.restoreViewState({ nodesWithHiddenChildren: [a.id] });
+    hideChildrenOf(map, a.id);
 
     expect([root, a.id, b.id, c.id].map(id => map.nodes.isHidden(id))).toEqual([
       false,
@@ -60,7 +66,7 @@ describe('ViewState', () => {
 
   it('terminates on an ancestor cycle', () => {
     const { map, data, a, b, c } = makeChain();
-    map.instance.restoreViewState({ nodesWithHiddenChildren: [b.id] });
+    hideChildrenOf(map, b.id);
 
     data.addNodes([{ ...a, parent: b.id }]);
 
@@ -70,88 +76,25 @@ describe('ViewState', () => {
     expect(map.nodes.isHidden(b.id)).toBe(false);
   });
 
-  it('forgets the removed nodes and announces the new view state', () => {
-    const { map, data, a, b } = makeChain();
-    map.instance.restoreViewState({ nodesWithHiddenChildren: [a.id, b.id] });
-    const listener = jest.fn();
-    map.instance.on('viewStateChange', listener);
+  it('forgets a removed node, so the node shows its child nodes on its return', () => {
+    const { map, data, a, b, c } = makeChain();
+    hideChildrenOf(map, b.id);
 
     data.removeNode(b.id);
+    data.addNodes([b, c]);
 
-    expect(map.instance.exportViewState()).toEqual({
-      nodesWithHiddenChildren: [a.id],
-    });
-    expect(listener).toHaveBeenCalledWith({ nodesWithHiddenChildren: [a.id] });
-  });
-
-  it('announces nothing when a removal leaves the view state as it was', () => {
-    const { map, data, a, c } = makeChain();
-    map.instance.restoreViewState({ nodesWithHiddenChildren: [a.id] });
-    const listener = jest.fn();
-    map.instance.on('viewStateChange', listener);
-
-    data.removeNode(c.id);
-
-    expect(listener).not.toHaveBeenCalled();
-  });
-
-  it('exports the ids of nodes the map lacks too', () => {
-    const { map, a } = makeChain();
-
-    map.instance.restoreViewState({
-      nodesWithHiddenChildren: [a.id, 'not-arrived'],
-    });
-
-    expect(map.instance.exportViewState()).toEqual({
-      nodesWithHiddenChildren: [a.id, 'not-arrived'],
-    });
-  });
-
-  it('keeps the ids of nodes yet to arrive across a toggle', () => {
-    const { map, b } = makeChain();
-    map.instance.restoreViewState({
-      nodesWithHiddenChildren: ['not-arrived'],
-    });
-
-    map.instance.selectNode(b.id);
-    map.instance.toggleBranchVisibility();
-
-    expect(map.instance.exportViewState()).toEqual({
-      nodesWithHiddenChildren: ['not-arrived', b.id],
-    });
-  });
-
-  it('exports what it restored', () => {
-    const { map, a, b } = makeChain();
-    const state = { nodesWithHiddenChildren: [a.id, b.id] };
-
-    map.instance.restoreViewState(state);
-
-    expect(map.instance.exportViewState()).toEqual(state);
-  });
-
-  it('redraws on restore and announces nothing', () => {
-    const { map, b, c } = makeChain();
-    const listener = jest.fn();
-    map.instance.on('viewStateChange', listener);
-    map.instance.on('mapChange', listener);
-
-    map.instance.restoreViewState({ nodesWithHiddenChildren: [b.id] });
-
-    expect(visibility(b.id)).toBe('visible');
-    expect(visibility(c.id)).toBe('hidden');
-    expect(listener).not.toHaveBeenCalled();
+    expect(map.instance.childNodesHidden(b.id)).toBe(false);
+    expect(visibility(c.id)).toBe('visible');
+    expect(map.nodes.isHidden(a.id)).toBe(false);
   });
 
   it('keeps the view state across a load of the same nodes', () => {
     const { map, a, c } = makeChain();
-    map.instance.restoreViewState({ nodesWithHiddenChildren: [a.id] });
+    hideChildrenOf(map, a.id);
 
     map.instance.new(map.instance.exportAsJSON());
 
-    expect(map.instance.exportViewState()).toEqual({
-      nodesWithHiddenChildren: [a.id],
-    });
+    expect(map.instance.childNodesHidden(a.id)).toBe(true);
     expect(visibility(c.id)).toBe('hidden');
   });
 });

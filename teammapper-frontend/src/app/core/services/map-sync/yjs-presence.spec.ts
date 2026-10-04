@@ -180,5 +180,22 @@ describe('YjsSyncService presence', () => {
       );
       expect(mmpService.highlightNode).toHaveBeenCalledWith('branch', '');
     });
+
+    it('falls back to the defaults for a peer state that holds no strings', () => {
+      const hostile = { color: { r: 1 }, selectedNodeId: 123 };
+      provider().states.set(PEER_ID, {
+        user: hostile as unknown as AwarenessUser,
+      });
+
+      (service as unknown as PresenceInternals).updateFromAwareness();
+
+      expect(context.setColorMapping).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          [PEER_ID]: { color: '#000000', nodeId: '' },
+        })
+      );
+      expect(mmpService.existNode).not.toHaveBeenCalledWith(123);
+      expect(context.emitClientList).toHaveBeenCalled();
+    });
   });
 });

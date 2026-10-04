@@ -8,25 +8,21 @@ import { stubSvgLengths } from '../test/svg-lengths.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
-  MapViewState,
   MmpEventType,
   NodeProperty,
   OldMmpNode,
 } from '@teammapper/shared';
 
 /**
- * Every event but `viewStateChange`. The `satisfies` clause fails the
- * typecheck when `MmpEventType` gains an event this record lacks.
+ * Every event. The `satisfies` clause fails the typecheck when
+ * `MmpEventType` gains an event this record lacks.
  */
-const OTHER_EVENTS = Object.keys({
+const ALL_EVENTS = Object.keys({
   nodeSelect: true,
   nodeDeselect: true,
   nodeProtected: true,
   mapChange: true,
-} satisfies Record<Exclude<MmpEventType, 'viewStateChange'>, true>) as Exclude<
-  MmpEventType,
-  'viewStateChange'
->[];
+} satisfies Record<MmpEventType, true>) as MmpEventType[];
 
 /**
  * The frontend reaches the library through `MmpInstance` alone, so these specs
@@ -401,19 +397,15 @@ describe('events', () => {
     expect(changes).toHaveBeenCalledTimes(3);
   });
 
-  it('announces the view state alone when it hides child nodes', () => {
+  it('fires no event when it hides child nodes', () => {
     const { map, child } = makeMapWithChild();
     const root = rootOf(map);
     map.instance.selectNode(root);
-    const viewStates: MapViewState[] = [];
     const shared = jest.fn();
-    OTHER_EVENTS.forEach(event => map.instance.on(event, shared));
-    map.instance.on('viewStateChange', state => viewStates.push(state));
+    ALL_EVENTS.forEach(event => map.instance.on(event, shared));
 
     map.instance.toggleBranchVisibility();
 
-    expect(viewStates).toEqual([{ nodesWithHiddenChildren: [root] }]);
-    expect(map.instance.exportViewState()).toEqual(viewStates[0]);
     expect(map.instance.childNodesHidden()).toBe(true);
     expect(map.instance.childNodesHidden(child)).toBe(false);
     expect(nodeDom(child).style.visibility).toBe('hidden');
@@ -679,9 +671,7 @@ describe('new with nodes', () => {
     map.instance.new(deepFreeze(nodes));
 
     expect(nodes).toEqual(copy);
-    expect(map.instance.exportViewState()).toEqual({
-      nodesWithHiddenChildren: [root],
-    });
+    expect(map.instance.childNodesHidden(root)).toBe(true);
     expect(nodeDom(child).style.visibility).toBe('hidden');
   });
 
@@ -726,7 +716,7 @@ describe('new with nodes', () => {
       .map(node => ({ ...node, colors: { ...node.colors, name: 'red' } }));
 
     expect(() => map.instance.new(nodes)).toThrow(
-      'The snapshot is not correct'
+      'The exported map is not correct'
     );
   });
 });

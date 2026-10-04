@@ -1,6 +1,6 @@
 import { test, expect, Locator, Page } from '@playwright/test';
 import path from 'path';
-import { createMap } from './helpers';
+import { addChild, createMap } from './helpers';
 
 const IMPORT_FIXTURE = path.join(__dirname, 'fake-data', 'test-map.json');
 
@@ -33,15 +33,6 @@ async function openSecondClient(
   await expect(secondClient.getByText('Root node')).toBeVisible();
   await expect(secondClient.locator('#add-tree-button')).toBeEnabled();
   return secondClient;
-}
-
-/** Adds a child to the root and names it. */
-async function addChild(page: Page, name: string) {
-  await page.getByText('Root node').click();
-  await page.locator('#floating-add-node').click();
-  await page.keyboard.type(name);
-  await page.locator('.map').click();
-  await expect(nodeOf(page, name)).toBeVisible();
 }
 
 /** Renames a node through its inline name editor. */
@@ -106,7 +97,7 @@ test('two clients on one map see each other edit, move, color, undo, remove and 
     const clientB = await openSecondClient(clientA, () => contextB.newPage());
 
     // 1. A adds a child node and names it.
-    await addChild(clientA, 'Child from A');
+    await addChild(clientA, 'Root node', 'Child from A');
     await expect(nodeOf(clientB, 'Child from A')).toBeVisible();
 
     // 2. B renames the node.

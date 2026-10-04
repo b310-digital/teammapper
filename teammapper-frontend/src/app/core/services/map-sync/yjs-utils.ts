@@ -6,6 +6,35 @@ import {
   YJS_SUBPROTOCOL,
 } from '@teammapper/shared';
 
+/**
+ * The Y.Doc's `nodes` map. Any peer with write access can store any value
+ * under a key, so the type promises no Y.Map: read entries through `nodeAt`
+ * and `nodeEntries`, which skip every other value.
+ */
+export type NodesMap = Y.Map<unknown>;
+
+export function nodesMapOf(doc: Y.Doc): NodesMap {
+  return doc.getMap('nodes');
+}
+
+/** The node stored under `id`, or undefined when the entry is no Y.Map. */
+export function nodeAt<T>(
+  nodesMap: Y.Map<T>,
+  id: string
+): Y.Map<unknown> | undefined {
+  const entry = nodesMap.get(id);
+  return entry instanceof Y.Map ? entry : undefined;
+}
+
+/** Every node of the map with its key, without the entries that are no Y.Map. */
+export function nodeEntries<T>(nodesMap: Y.Map<T>): [string, Y.Map<unknown>][] {
+  const entries: [string, Y.Map<unknown>][] = [];
+  nodesMap.forEach((entry, id) => {
+    if (entry instanceof Y.Map) entries.push([id, entry]);
+  });
+  return entries;
+}
+
 export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 
 export interface ClientColorMappingValue {
@@ -127,17 +156,14 @@ export function findAffectedNodes(
 }
 
 // Collects all descendant node IDs using the shared cycle-safe BFS algorithm.
-export function collectDescendantIds(
-  nodesMap: Y.Map<Y.Map<unknown>>,
+export function collectDescendantIds<T>(
+  nodesMap: Y.Map<T>,
   nodeId: string
 ): string[] {
-  const nodes: { id: string; parent: string | null }[] = [];
-  nodesMap.forEach((yNode: Y.Map<unknown>, key: string) => {
-    nodes.push({
-      id: key,
-      parent: (yNode.get('parent') as string | null) ?? null,
-    });
-  });
+  const nodes = nodeEntries(nodesMap).map(([id, yNode]) => ({
+    id,
+    parent: (yNode.get('parent') as string | null) ?? null,
+  }));
 
   return collectSubtreeIds(nodes, nodeId);
 }
