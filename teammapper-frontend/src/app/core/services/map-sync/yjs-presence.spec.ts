@@ -3,8 +3,10 @@ import { MmpService } from '../mmp/mmp.service';
 import { MapSyncContext } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
 import {
+  capturingMmpService,
   createMockContext,
   createYjsSyncService,
+  MmpHandlers,
 } from '../../../../test/mocks/yjs-sync.mock';
 
 /**
@@ -54,6 +56,7 @@ jest.mock('y-websocket', () => ({
 }));
 
 interface PresenceInternals {
+  createListeners: () => void;
   setupAwareness: () => void;
   updateFromAwareness: () => void;
 }
@@ -61,27 +64,10 @@ interface PresenceInternals {
 const PEER_ID = 7;
 
 describe('YjsSyncService presence', () => {
-  type Handlers = Record<string, (payload?: unknown) => void>;
-
-  let handlers: Handlers;
+  let handlers: MmpHandlers;
   let context: MapSyncContext;
   let mmpService: jest.Mocked<MmpService>;
   let service: YjsSyncService;
-
-  function capturingMmpService(): jest.Mocked<MmpService> {
-    return {
-      on: jest.fn((event: string) => ({
-        subscribe: (callback: (payload?: unknown) => void) => {
-          handlers[event] = callback;
-          return { unsubscribe: jest.fn() };
-        },
-      })),
-      selectNode: jest.fn(),
-      existNode: jest.fn().mockReturnValue(true),
-      highlightNode: jest.fn(),
-      exportAsJSON: jest.fn().mockReturnValue([]),
-    } as unknown as jest.Mocked<MmpService>;
-  }
 
   function provider(): FakeWebsocketProvider {
     if (!FakeWebsocketProvider.latest) throw new Error('No provider created');
@@ -95,9 +81,12 @@ describe('YjsSyncService presence', () => {
   beforeEach(() => {
     handlers = {};
     context = createMockContext();
-    mmpService = capturingMmpService();
+    mmpService = capturingMmpService(handlers);
     service = createYjsSyncService(mmpService, context);
     service.initMap('test-uuid');
+    // attachMap subscribes once the map exists; these tests set awareness up
+    // on their own.
+    (service as unknown as PresenceInternals).createListeners();
   });
 
   afterEach(() => {
@@ -112,7 +101,7 @@ describe('YjsSyncService presence', () => {
       expect(context.setAttachedNode).toHaveBeenLastCalledWith({ id: 'root' });
     });
 
-    it('keeps the client colour when setup follows a select', () => {
+    it('keeps the client colour and publishes the selection on setup', () => {
       handlers['nodeSelect']({ id: 'root' } as ExportNodeProperties);
 
       (service as unknown as PresenceInternals).setupAwareness();
@@ -120,7 +109,25 @@ describe('YjsSyncService presence', () => {
       expect(context.setClientColor).toHaveBeenLastCalledWith('#ff0000');
       expect(lastBroadcast()).toEqual([
         'user',
-        { color: '#ff0000', selectedNodeId: null },
+        { color: '#ff0000', selectedNodeId: 'root' },
+      ]);
+    });
+  });
+
+  describe('attachMap', () => {
+    it('publishes the node the map selected when it was created', () => {
+      mmpService.selectNode.mockReturnValue({
+        id: 'main-root',
+      } as ExportNodeProperties);
+
+      service.attachMap();
+
+      expect(context.setAttachedNode).toHaveBeenLastCalledWith({
+        id: 'main-root',
+      });
+      expect(lastBroadcast()).toEqual([
+        'user',
+        { color: '#ff0000', selectedNodeId: 'main-root' },
       ]);
     });
   });

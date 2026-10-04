@@ -27,21 +27,20 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   private mapSyncServiceSubscription: Subscription | null = null;
 
-  public async ngAfterViewInit() {
+  public ngAfterViewInit() {
     const settings = this.settingsService.getCachedUserSettings();
 
     this.mapSyncServiceSubscription = this.mapSyncService
       .getAttachedMapObservable()
       .pipe(first((val: CachedMapEntry | null) => val !== null))
-      .subscribe(async (_result: CachedMapEntry | null) => {
+      .subscribe(() => {
         // With no cached settings mmp falls back to its own defaults rather
-        // than refusing to draw the map.
-        await this.mmpService.create(
-          'map_1',
+        // than refusing to draw the map. MapSyncService creates the map once
+        // the connection syncs.
+        this.mapSyncService.openMap(
           this.mapWrapper().nativeElement,
           settings?.mapOptions
         );
-        this.mapSyncService.initMap();
       });
   }
 

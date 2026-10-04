@@ -16,7 +16,10 @@ describe('ShortcutsService', () => {
   let dialogService: { openAboutDialog: jest.Mock };
   let editMode: BehaviorSubject<boolean | null>;
   let hotkeysService: { add: jest.Mock; remove: jest.Mock };
+  let mapCreated: BehaviorSubject<boolean>;
   let mmpService: {
+    mapCreated$: BehaviorSubject<boolean>;
+    center: jest.Mock;
     selectNode: jest.Mock;
     updateNode: jest.Mock;
     getAdditionalMapOptions: jest.Mock;
@@ -33,7 +36,10 @@ describe('ShortcutsService', () => {
   }
 
   beforeEach(() => {
+    mapCreated = new BehaviorSubject<boolean>(true);
     mmpService = {
+      mapCreated$: mapCreated,
+      center: jest.fn(),
       selectNode: jest.fn().mockReturnValue(null),
       updateNode: jest.fn(),
       // Limits that would allow either change, so only the selection blocks it.
@@ -90,6 +96,39 @@ describe('ShortcutsService', () => {
     press('?');
 
     expect(dialogService.openAboutDialog).toHaveBeenCalledTimes(1);
+  });
+
+  describe('before the map exists', () => {
+    beforeEach(() => {
+      mapCreated.next(false);
+      mmpService.selectNode.mockReturnValue({ font: { size: 12 } });
+    });
+
+    it('acts on no map key', () => {
+      press('c');
+      press('alt+.');
+      press('left');
+
+      expect({
+        center: mmpService.center.mock.calls.length,
+        select: mmpService.selectNode.mock.calls.length,
+        update: mmpService.updateNode.mock.calls.length,
+      }).toEqual({ center: 0, select: 0, update: 0 });
+    });
+
+    it('still opens the info dialog on ?', () => {
+      press('?');
+
+      expect(dialogService.openAboutDialog).toHaveBeenCalledTimes(1);
+    });
+
+    it('acts once the map exists', () => {
+      mapCreated.next(true);
+
+      press('c');
+
+      expect(mmpService.center).toHaveBeenCalled();
+    });
   });
 
   describe('before the map connection reports edit mode', () => {

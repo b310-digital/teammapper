@@ -20,4 +20,8 @@ export interface MapSyncContext {
   setCanRedo(v: boolean): void;
   updateAttachedMap(): Promise<void>;
   emitClientList(): void;
+  /** The connection synced: create the map. */
+  createMap(): void;
+  /** The server deleted the map; the page reloads right after. */
+  mapDeleted(): void;
 }

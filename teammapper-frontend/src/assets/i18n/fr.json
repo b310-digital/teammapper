@@ -215,6 +215,7 @@
     "NODE_COPIED": "Nœud copié avec succès !",
     "NODE_CUT": "Nœud coupé avec succès !",
     "MAP_IMPORT_SUCCESS": "Mindmap importée avec succès !",
+    "MAP_SYNCING": "Chargement de la mindmap…",
     "INVALID_MODIFICATION_SECRET": "Le lien de modification est invalide. La mindmap s'ouvre en lecture seule.",
     "MAP_UPDATE_SUCCESS": "Mise à jour réussie de la carte heuristique !",
     "WARNINGS": {

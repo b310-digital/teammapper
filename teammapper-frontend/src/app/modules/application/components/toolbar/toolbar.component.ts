@@ -47,6 +47,9 @@ export class ToolbarComponent {
 
   public canUndo$ = this.mapSyncService.canUndo$;
   public canRedo$ = this.mapSyncService.canRedo$;
+  // Import and export need a map, read-only or not. The edit buttons get
+  // the same gate through `editDisabled`.
+  public mapCreated$ = this.mmpService.mapCreated$;
 
   constructor() {
     const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;

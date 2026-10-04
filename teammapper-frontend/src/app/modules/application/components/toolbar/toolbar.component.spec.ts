@@ -24,6 +24,7 @@ class FakeTranslateLoader implements TranslateLoader {
 }
 
 class MmpServiceStub {
+  mapCreated$ = new BehaviorSubject<boolean>(true);
   exportMap = jest.fn();
   getSelectedNode = jest.fn();
   hasSelectedNode = jest.fn().mockReturnValue(true);
@@ -434,6 +435,42 @@ describe('ToolbarComponent', () => {
       ctx.fixture.nativeElement.querySelector('#protect-branch-button').click();
 
       expect(ctx.mapSyncService.toggleBranchProtection).toHaveBeenCalled();
+    });
+  });
+
+  describe('before the map exists', () => {
+    const disabled = (selector: string): boolean | undefined =>
+      ctx.fixture.nativeElement.querySelector(selector)?.disabled;
+
+    it('disables import and export', () => {
+      ctx.mmpService.mapCreated$.next(false);
+      ctx.fixture.detectChanges();
+
+      expect({
+        importMenu: disabled('#menu-import'),
+        exportMenu: disabled('#menu-export'),
+      }).toEqual({ importMenu: true, exportMenu: true });
+    });
+
+    it('enables import and export once the map exists', () => {
+      expect({
+        importMenu: disabled('#menu-import'),
+        exportMenu: disabled('#menu-export'),
+      }).toEqual({ importMenu: false, exportMenu: false });
+    });
+
+    it('disables the edit buttons the application gates through editDisabled', () => {
+      ctx.fixture.componentRef.setInput('editDisabled', true);
+      ctx.fixture.detectChanges();
+
+      for (const selector of [
+        '#add-tree-button',
+        '#paste-node-button',
+        '#distribute-nodes-button',
+        '#copy-node-button',
+      ]) {
+        expect(disabled(selector)).toBe(true);
+      }
     });
   });
 
