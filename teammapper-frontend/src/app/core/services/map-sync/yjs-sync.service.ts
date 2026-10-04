@@ -86,6 +86,19 @@ function batchParentFirst(
   return [...ordered, ...unreached].map(key => key.node);
 }
 
+/**
+ * Keeps one open map in sync with the other clients over a Yjs websocket. It
+ * mirrors mmp's node events into the Y.Doc and peer changes back into mmp,
+ * and owns presence and the undo manager.
+ *
+ * `MapSyncService` is responsible for the startup:
+ * 1. `MapSyncService.openMap` calls `initMap` on this service, which creates the Y.Doc and
+ *    connects. No map exists yet.
+ * 2. On the first sync, this service asks `MapSyncService` (through the
+ *    context's `createMap`) to create mmp.
+ * 3. `MapSyncService` then calls `attachMap`, which loads the Y.Doc into
+ *    mmp, wires listeners, presence and undo, and sets edit mode last.
+ */
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
   private wsProvider: WebsocketProvider | null = null;
