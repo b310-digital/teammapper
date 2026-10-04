@@ -17,7 +17,9 @@ function mapNodes(rootId: string, background = '#f0f6f5'): MapSnapshot {
 }
 
 function rootId(map: MmpMap): string {
-  return map.nodes.exportRootProperties().id;
+  const root = map.nodes.mainRoot();
+  if (!root) throw new Error('the map has no main root');
+  return root.id;
 }
 
 // A map load selects the main root: it draws the ring on the root and tells
@@ -32,7 +34,7 @@ describe('a map load', () => {
     expect(map.nodes.getSelectedNode()?.id).toBe('root');
   });
 
-  it('fires nodeSelect for the root, then create', () => {
+  it('fires nodeSelect for the root, then mapChange', () => {
     const { map, events } = stubMap();
 
     map.loader.load(mapNodes('root'));
@@ -41,7 +43,7 @@ describe('a map load', () => {
       'nodeSelect',
       expect.objectContaining({ id: 'root' })
     );
-    expect(firedEvents(events)).toEqual(['nodeSelect', 'create']);
+    expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
   });
 
   it('rings the new root DOM when the same map loads twice', () => {
@@ -52,7 +54,7 @@ describe('a map load', () => {
     map.loader.load(mapNodes('root'));
 
     expect(map.draw.ringOf('root')).toBe(ring('#f0f6f5'));
-    expect(firedEvents(events)).toEqual(['nodeSelect', 'create']);
+    expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
   });
 
   it('selects the new root when a map with another root loads', () => {
@@ -64,7 +66,7 @@ describe('a map load', () => {
 
     expect(rootId(map)).toBe('other-root');
     expect(map.draw.ringOf('other-root')).toBe(ring('#f0f6f5'));
-    expect(firedEvents(events)).toEqual(['nodeSelect', 'create']);
+    expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
     expect(events.emit.mock.calls[0][1].id).toBe('other-root');
   });
 
@@ -89,7 +91,7 @@ describe('a map load', () => {
     map.loader.load(mapNodes('root', ''));
 
     expect(map.nodes.getSelectedNode()?.id).toBe('root');
-    expect(firedEvents(events)).toEqual(['nodeSelect', 'create']);
+    expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
   });
 });
 

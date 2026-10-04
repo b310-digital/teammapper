@@ -59,7 +59,7 @@ describe('ViewState', () => {
   it('terminates on an ancestor cycle', () => {
     const { map, a, b, c } = makeChain();
     map.instance.restoreViewState({ nodesWithHiddenChildren: [b.id] });
-    a.parent = b;
+    map.data.addNodes([{ ...a, parent: b.id }]);
 
     // The walk up from a reaches b, whose parent a closes the cycle.
     expect(map.nodes.isHidden(a.id)).toBe(true);

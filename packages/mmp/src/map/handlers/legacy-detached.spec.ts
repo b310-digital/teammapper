@@ -93,9 +93,9 @@ describe('a map whose nodes still carry the detached key', () => {
   it('adds a child to a former detached node', () => {
     const { nodes } = loadLegacyMap();
 
-    const added = nodes.addNode({ name: 'new' }, false, 'note');
+    const added = nodes.addNode({ name: 'new' }, 'note');
 
-    expect(nodes.parentOf(added.id)).toBe('note');
+    expect(added?.parent).toBe('note');
   });
 
   it('keeps no detached key', () => {

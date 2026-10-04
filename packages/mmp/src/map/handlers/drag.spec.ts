@@ -81,8 +81,8 @@ describe('drag', () => {
       [
         {
           nodeProperties: expect.objectContaining({
-            id: 'b',
-            coordinates: { x: 460, y: 10 },
+            id: 'a',
+            coordinates: { x: 260, y: 10 },
           }),
           changedProperty: 'coordinates',
           previousValue: undefined,
@@ -91,8 +91,8 @@ describe('drag', () => {
       [
         {
           nodeProperties: expect.objectContaining({
-            id: 'a',
-            coordinates: { x: 260, y: 10 },
+            id: 'b',
+            coordinates: { x: 460, y: 10 },
           }),
           changedProperty: 'coordinates',
           previousValue: undefined,

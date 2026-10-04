@@ -164,9 +164,9 @@ describe('operations on the selected node with nothing selected', () => {
   it('adds a child to a named parent', () => {
     const { handler } = makeMap();
 
-    const added = handler.addNode({}, false, 'branch');
+    const added = handler.addNode({}, 'branch');
 
-    expect(handler.record(added.id)?.parent).toBe('branch');
+    expect(added?.parent).toBe('branch');
   });
 
   it('copies, cuts and pastes nothing', () => {

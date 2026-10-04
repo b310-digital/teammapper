@@ -80,7 +80,7 @@ describe('distributeNodes', () => {
   it('does not emit the distribute event when notification is suppressed', () => {
     const { handler, events } = handlerWith(aiShapedNodes());
 
-    handler.distributeNodes(false);
+    handler.withNotify(false, handler.distributeNodes);
 
     expect(firedEvents(events)).not.toContain('distribute');
   });

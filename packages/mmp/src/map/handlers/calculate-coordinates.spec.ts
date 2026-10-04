@@ -1,9 +1,10 @@
+import type { RecordLookup } from './nodes.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import type { MapNodeCoordinates, MapSnapshot } from '@teammapper/shared';
 
 /**
- * Where a new node under `parent` goes, on a map holding `existing`.
- * `insertNode` places a node without coordinates as `addNode` does.
+ * Where a new node under `parent` goes, on a map holding `existing`. The new
+ * node is not in the map data yet, as when `addNode` calls this.
  */
 function placementOf(
   parent: string,
@@ -11,7 +12,14 @@ function placementOf(
 ): MapNodeCoordinates {
   const { nodes } = stubMap(existing);
 
-  return nodes.insertNode({}, parent).coordinates;
+  return (
+    nodes as unknown as {
+      calculateCoordinates(
+        parent: string,
+        lookup: RecordLookup
+      ): MapNodeCoordinates;
+    }
+  ).calculateCoordinates(parent, nodes.record);
 }
 
 describe('calculateCoordinates', () => {

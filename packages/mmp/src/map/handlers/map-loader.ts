@@ -1,17 +1,13 @@
-import Map from '../map.js';
-import Node, { NodeProperties } from '../models/node.js';
+import MmpMap from '../map.js';
 import * as v from 'valibot';
+import { v4 as uuidv4 } from 'uuid';
 import { LinkSchema, NodeSchema } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { DefaultNodeValues } from '../options.js';
+import { randomK } from '../data/node-record.js';
 import type {
   ExportNodeProperties,
-  MapNodeColors,
-  MapNodeCoordinates,
-  MapNodeFont,
-  MapNodeImage,
-  MapNodeLink,
   MapSnapshot,
   OldMmpNode,
 } from '@teammapper/shared';
@@ -28,18 +24,20 @@ const LoadedNodeSchema = v.object({
 
 /**
  * Replace every node of the map with the nodes of an exported map, or with a
- * new main root. The loader checks the nodes and converts the format mmp
- * 0.1.7 exported. ViewState keeps its set apart from the node store, so a
- * load keeps hidden child nodes hidden.
+ * new main root. The loader checks the nodes, converts the format mmp 0.1.7
+ * exported and writes the result to the map data as one replacement. The
+ * change listener then draws the map, selects the main root and centers the
+ * view. ViewState keeps its set apart from the map data, so a load keeps
+ * hidden child nodes hidden.
  */
 export default class MapLoader {
-  private map: Map;
+  private map: MmpMap;
 
   /**
    * Get the associated map instance.
-   * @param {Map} map
+   * @param {MmpMap} map
    */
-  constructor(map: Map) {
+  constructor(map: MmpMap) {
     this.map = map;
   }
 
@@ -48,11 +46,10 @@ export default class MapLoader {
    * when `input` is undefined. An empty `input` leaves the map as it is and
    * throws.
    * @param {MapSnapshot} input
-   * @param {boolean} notifyWithEvent
    */
-  public load = (input?: MapSnapshot, notifyWithEvent = true) => {
+  public load = (input?: MapSnapshot) => {
     if (input === undefined) {
-      this.loadEmptyMap(notifyWithEvent);
+      this.map.data.replaceMap([this.newMainRoot()]);
       return;
     }
 
@@ -67,75 +64,55 @@ export default class MapLoader {
       );
     }
 
-    const previousData = this.map.export.asJSON();
-    this.replaceNodes(nodes);
-    this.map.zoom.center('position', 0);
-
-    if (notifyWithEvent) {
-      this.map.events.emit('create', { previousMapData: previousData });
-    }
+    this.map.data.replaceMap(nodes.map(this.completed));
   };
 
-  /**
-   * Replace the map with a main root alone.
-   * @param {boolean} notifyWithEvent
-   */
-  private loadEmptyMap(notifyWithEvent: boolean) {
-    this.map.nodes.clear();
+  /** A main root with the map's root node defaults, at the origin. */
+  private newMainRoot(): ExportNodeProperties {
+    const { name, image, link, colors, font } = Utils.cloneObject(
+      this.map.options.rootNode
+    );
 
-    this.map.draw.clear();
-    this.map.draw.update();
-
-    this.map.nodes.addRootNode();
-
-    this.map.zoom.center('position', 0);
-
-    if (notifyWithEvent) this.map.events.emit('create', {});
+    return {
+      id: uuidv4(),
+      parent: '',
+      k: randomK(),
+      name,
+      coordinates: { x: 0, y: 0 },
+      image,
+      colors,
+      font,
+      link,
+      protected: false,
+      isRoot: true,
+    };
   }
 
   /**
-   * Replace every node of the map with `nodes` and draw the map again.
-   * @param {MapSnapshot} nodes
+   * The node as the map data stores it, with only the fields a node has. A
+   * map exported by an older release may lack a property, and the defaults
+   * fill it in. A node without a k, or with 0, gets a random one.
+   * @param {ExportNodeProperties} property
    */
-  private replaceNodes(nodes: MapSnapshot) {
-    this.map.nodes.clear();
+  private completed = (
+    property: ExportNodeProperties
+  ): ExportNodeProperties => {
+    const merged = Utils.cloneObject({ ...DefaultNodeValues, ...property });
 
-    nodes.forEach((property: ExportNodeProperties) => {
-      // A map exported by an older release may lack a property; the defaults
-      // fill it in.
-      const mergedProperty = {
-        ...DefaultNodeValues,
-        ...property,
-      } as ExportNodeProperties;
-      const properties: NodeProperties = {
-        id: mergedProperty.id,
-        parent: mergedProperty.parent
-          ? (this.map.nodes.getNode(mergedProperty.parent) ?? null)
-          : null,
-        k: mergedProperty.k,
-        name: mergedProperty.name,
-        coordinates: Utils.cloneObject(
-          mergedProperty.coordinates
-        ) as MapNodeCoordinates,
-        image: Utils.cloneObject(mergedProperty.image) as MapNodeImage,
-        colors: Utils.cloneObject(mergedProperty.colors) as MapNodeColors,
-        font: Utils.cloneObject(mergedProperty.font) as MapNodeFont,
-        link: Utils.cloneObject(mergedProperty.link) as MapNodeLink,
-        protected: mergedProperty.protected,
-        isRoot: mergedProperty.isRoot,
-      };
-
-      const node: Node = new Node(properties);
-      this.map.nodes.setNode(node);
-
-      if (mergedProperty.isRoot) this.map.rootId = mergedProperty.id;
-    });
-
-    this.map.draw.clear();
-    this.map.draw.update();
-
-    this.map.nodes.selectRootNode();
-  }
+    return {
+      id: merged.id,
+      parent: merged.parent || '',
+      k: merged.k || randomK(),
+      name: merged.name,
+      coordinates: merged.coordinates,
+      image: merged.image,
+      colors: merged.colors,
+      font: merged.font,
+      link: merged.link,
+      protected: merged.protected ?? false,
+      isRoot: merged.isRoot,
+    };
+  };
 
   /**
    * Return true when `nodes` is a list of valid nodes. A map in the legacy
