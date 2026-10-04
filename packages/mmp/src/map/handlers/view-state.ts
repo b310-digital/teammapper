@@ -1,5 +1,4 @@
 import type { MapViewState } from '@teammapper/shared';
-import type Node from '../models/node.js';
 import type MmpMap from '../map.js';
 
 /**
@@ -22,46 +21,24 @@ export default class ViewState {
 
   /**
    * True when this person hid the child nodes of the node.
-   * @param {Node} node
+   * @param {string} id
    */
-  public hidesChildren(node: Node): boolean {
-    return this.nodesWithHiddenChildren.has(node.id);
+  public hidesChildren(id: string): boolean {
+    return this.nodesWithHiddenChildren.has(id);
   }
 
-  /**
-   * The ids of the nodes below a node whose child nodes this person hid. A
-   * walk down an ancestor cycle stops at the node it started from.
-   */
-  public hiddenNodeIds(): Set<string> {
-    const childrenOf = new Map<string, Node[]>();
-    for (const node of this.map.nodes.getNodes()) {
-      if (!node.parent) continue;
-      const children = childrenOf.get(node.parent.id) ?? [];
-      children.push(node);
-      childrenOf.set(node.parent.id, children);
-    }
-
-    const hidden = new Set<string>();
-    for (const id of this.nodesWithHiddenChildren) {
-      const visited = new Set<string>([id]);
-      const pending = [...(childrenOf.get(id) ?? [])];
-      for (let node = pending.pop(); node; node = pending.pop()) {
-        if (visited.has(node.id)) continue;
-        visited.add(node.id);
-        hidden.add(node.id);
-        pending.push(...(childrenOf.get(node.id) ?? []));
-      }
-    }
-    return hidden;
+  /** True when this person hid no child nodes. */
+  public isEmpty(): boolean {
+    return this.nodesWithHiddenChildren.size === 0;
   }
 
   /**
    * Hide the child nodes of the node, or show them when they are hidden.
-   * @param {Node} node
+   * @param {string} id
    */
-  public toggle(node: Node) {
-    if (!this.nodesWithHiddenChildren.delete(node.id)) {
-      this.nodesWithHiddenChildren.add(node.id);
+  public toggle(id: string) {
+    if (!this.nodesWithHiddenChildren.delete(id)) {
+      this.nodesWithHiddenChildren.add(id);
     }
   }
 
@@ -85,6 +62,6 @@ export default class ViewState {
    */
   public restore(state: MapViewState) {
     this.nodesWithHiddenChildren = new Set(state.nodesWithHiddenChildren);
-    if (this.map.nodes.getNodes().length > 0) this.map.draw.update();
+    if (this.map.nodes.scan().size > 0) this.map.draw.update();
   }
 }

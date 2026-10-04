@@ -1,6 +1,6 @@
 import type { Bounds } from './node-geometry.js';
 import { NEW_TREE_GAP, treeBounds } from './tree-placement.js';
-import type Node from '../models/node.js';
+import type { ResolvedNode } from '../data/node-record.js';
 import { fakeDraw } from '../../test/fake-draw.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import type {
@@ -73,9 +73,9 @@ function ids(snapshot: readonly { id: string }[]): string[] {
 }
 
 /** The nodes the last paste created, in the order the paste built them. */
-function pastedNodes(context: ReturnType<typeof makeMap>): Node[] {
+function pastedNodes(context: ReturnType<typeof makeMap>): ResolvedNode[] {
   const last = context.pastes[context.pastes.length - 1] ?? [];
-  return last.flatMap(id => context.nodes.getNode(id) ?? []);
+  return last.flatMap(id => context.nodes.record(id) ?? []);
 }
 
 describe('removeNode', () => {
@@ -158,7 +158,7 @@ describe('paste', () => {
     const [pastedRoot, ...rest] = pastedNodes(context);
     expect(context.nodes.parentOf(pastedRoot.id)).toBe('root');
     expect(rest).toHaveLength(3);
-    expect(context.nodes.getDescendants(pastedRoot)).toHaveLength(3);
+    expect(context.nodes.descendants(pastedRoot.id)).toHaveLength(3);
   });
 
   it('writes isRoot false on every pasted node', () => {
@@ -206,7 +206,7 @@ describe('pasteTree', () => {
 
     expect(pasted).toHaveLength(4);
     expect(nodes.parentOf(pastedRoot.id)).toBeNull();
-    expect(nodes.getDescendants(pastedRoot)).toHaveLength(3);
+    expect(nodes.descendants(pastedRoot.id)).toHaveLength(3);
   });
 
   it("writes isRoot false on every pasted node and branch color '' on the pasted root", () => {
@@ -278,7 +278,7 @@ describe('pasteTree', () => {
 
     const [pastedRoot] = pastedNodes(context);
     expect(context.nodes.parentOf(pastedRoot.id)).toBeNull();
-    expect(context.nodes.nodeChildren('branch')).toEqual([]);
+    expect(context.nodes.children('branch')).toEqual([]);
   });
 
   it('refuses to paste an empty clipboard', () => {
@@ -334,9 +334,10 @@ describe('pasteTree', () => {
       () => pasted[0],
       context.nodes.boundsOf
     );
+    const records = context.nodes.scan();
     const others = treeBounds(
-      context.nodes.getNodes().filter(node => !pastedIds.has(node.id)),
-      node => context.nodes.getTreeRoot(node),
+      [...records.values()].filter(node => !pastedIds.has(node.id)),
+      node => records.get(context.nodes.treeRoot(node.id)) ?? node,
       context.nodes.boundsOf
     );
     expect(others).toHaveLength(2);

@@ -135,7 +135,7 @@ export default class Draw implements NodeView {
    */
   public update() {
     const lookup = this.pass();
-    const ids = this.map.nodes.getNodes().map(node => node.id);
+    const ids = [...this.map.nodes.scan().keys()];
 
     const groups = this.nodeGroups()
       .data(ids, id => id)
@@ -314,8 +314,8 @@ export default class Draw implements NodeView {
    * @param {string} id
    */
   public enableNodeNameEditing(id: string) {
-    const node = this.map.nodes.getNode(id);
-    if (!node || this.map.nodes.refusesLocalChange(node)) return;
+    const node = this.map.nodes.record(id);
+    if (!node || this.map.nodes.refusesLocalChange(id)) return;
 
     const name = this.nameOf(id);
     if (!name) return;
@@ -391,7 +391,7 @@ export default class Draw implements NodeView {
       name.style.setProperty('cursor', 'pointer');
 
       // The blur reads the name the node store holds now.
-      const current = this.map.nodes.getNode(id);
+      const current = this.map.nodes.record(id);
       if (current && name.innerHTML !== current.name) {
         this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML));
       }
@@ -433,9 +433,8 @@ export default class Draw implements NodeView {
     lookup: RecordLookup
   ) {
     const context = this.markContext(lookup);
-    const hidden = this.map.viewState.hiddenNodeIds();
     const visibilityOf = (id: string) =>
-      hidden.has(id) ? 'hidden' : 'visible';
+      this.map.nodes.isHidden(id, lookup) ? 'hidden' : 'visible';
 
     groups
       .attr('transform', id => translate(this.map.nodes.positionOf(id, lookup)))

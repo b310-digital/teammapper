@@ -1,4 +1,4 @@
-import type Node from '../models/node.js';
+import type { ResolvedNode } from '../data/node-record.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 
 /**
@@ -25,9 +25,9 @@ function selectionAfterBranchMove(
 ): unknown[] {
   const { nodes } = stubMap(SNAPSHOT);
   const internals = nodes as unknown as {
-    moveSelectionOnBranch(selected: Node, direction: boolean): void;
+    moveSelectionOnBranch(selected: ResolvedNode, direction: boolean): void;
   };
-  const record = nodes.getNode(selected);
+  const record = nodes.record(selected);
   if (!record) throw new Error('no node ' + selected);
   // A node id 'left' reads as a direction, so the spy selects nothing.
   const selectNode = jest

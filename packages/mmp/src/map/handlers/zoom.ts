@@ -90,9 +90,9 @@ export default class Zoom {
       Log.error('The duration must be a number', 'type');
     }
 
-    const root = this.map.nodes.getRoot(),
-      x = root.coordinates.x,
-      y = root.coordinates.y;
+    const root = this.map.nodes.mainRoot();
+    if (!root) return;
+    const { x, y } = root.coordinates;
 
     // A transition applies on a later animation frame, and an interrupt, such
     // as the one d3-zoom sends on mousedown, cancels it. A zero duration

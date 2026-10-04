@@ -1,5 +1,6 @@
 import Map from '../map.js';
 import Node from '../models/node.js';
+import { collectSubtreeIds } from '@teammapper/shared';
 import type {
   ExportNodeProperties,
   MapNodeCoordinates,
@@ -7,6 +8,8 @@ import type {
 } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
+import type { ResolvedNode } from '../data/node-record.js';
+import type { RecordLookup } from './nodes.js';
 import type { Bounds } from './node-geometry.js';
 import { moveBounds, unionBounds } from './tree-placement.js';
 
@@ -69,7 +72,7 @@ export default class CopyPaste {
     if (!node) return false;
 
     if (node.isRoot) return Log.error('The root node can not be cut');
-    if (this.map.nodes.refusesLocalRemoval(node)) return false;
+    if (this.map.nodes.refusesLocalRemoval(node.id)) return false;
 
     this.copyToClipboard(node);
     this.map.nodes.removeNode(node.id);
@@ -77,21 +80,31 @@ export default class CopyPaste {
   };
 
   /**
-   * Write a node and its descendants to the mmp clipboard, together with the
-   * x of the root of its tree.
+   * Write copies of a node and its descendants to the mmp clipboard,
+   * together with the x of the root of its tree.
    * @param {Node} node
    */
   private copyToClipboard(node: Node) {
-    const copied = [node, ...this.map.nodes.getDescendants(node)];
-    this.copiedNodes = copied.map(copiedNode =>
-      this.map.nodes.getNodeProperties(copiedNode, false)
-    );
-    this.copiedTreeRootX = this.map.nodes.getTreeRoot(node).coordinates.x;
+    const nodes = this.map.nodes;
+    const records = nodes.scan();
+    const lookup: RecordLookup = id => records.get(id);
+    const copied = [
+      node.id,
+      ...collectSubtreeIds([...records.values()], node.id),
+    ]
+      .map(id => records.get(id))
+      .filter((record): record is ResolvedNode => record !== undefined);
+
+    this.copiedNodes = copied.map(record => Utils.cloneObject(record));
+    this.copiedTreeRootX = nodes.positionOf(
+      nodes.treeRoot(node.id, lookup),
+      lookup
+    ).x;
     this.copiedFootprint = this.footprintOf(copied, node.coordinates);
   }
 
   /** The bounding box of `nodes` relative to `origin`. */
-  private footprintOf(nodes: Node[], origin: MapNodeCoordinates): Bounds {
+  private footprintOf(nodes: ResolvedNode[], origin: MapNodeCoordinates) {
     return nodes
       .map(node =>
         moveBounds(this.map.nodes.boundsOf(node), {
@@ -113,7 +126,7 @@ export default class CopyPaste {
     const node = this.map.nodes.getTargetNode(id);
     if (!node) return;
 
-    if (this.map.nodes.refusesLocalChange(node)) return;
+    if (this.map.nodes.refusesLocalChange(node.id)) return;
 
     this.pasteInto(node);
   };
@@ -270,7 +283,7 @@ export default class CopyPaste {
     const oldTreeRootX = this.pastingTree
       ? (this.copiedNodes[0].coordinates?.x ?? 0)
       : this.copiedTreeRootX;
-    const newSide = this.map.nodes.getOrientation(newParentNode);
+    const newSide = this.map.nodes.orientation(newParentNode.id);
     const mirrored =
       newSide !== undefined && oldParent.x < oldTreeRootX !== newSide;
     const dx = mirrored ? node.x - oldParent.x : oldParent.x - node.x;

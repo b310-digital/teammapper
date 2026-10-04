@@ -1,7 +1,5 @@
 import * as d3 from 'd3';
 import { create } from '../../index.js';
-import type Nodes from './nodes.js';
-import type Node from '../models/node.js';
 import { DefaultNodeValues, DefaultRootNodeValues } from '../options.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
@@ -46,12 +44,6 @@ function loadLegacyMap() {
   const stub = stubMap();
   stub.map.loader.load(LEGACY_MAP.map(node => ({ ...node })));
   return stub;
-}
-
-function nodeOf(nodes: Nodes, id: string): Node {
-  const node = nodes.getNode(id);
-  if (!node) throw new Error('no node ' + id);
-  return node;
 }
 
 describe('a map whose nodes still carry the detached key', () => {
@@ -148,9 +140,9 @@ describe('a node whose parent the map lacks', () => {
     const { nodes } = stubMap(ORPHANED);
 
     expect(nodes.parentOf('orphan')).toBeNull();
-    expect(nodes.getTreeRoot(nodeOf(nodes, 'leaf')).id).toBe('orphan');
+    expect(nodes.treeRoot('leaf')).toBe('orphan');
     expect(nodes.level('leaf')).toBe(2);
-    expect(nodes.getOrientation(nodeOf(nodes, 'orphan'))).toBeUndefined();
+    expect(nodes.orientation('orphan')).toBeUndefined();
   });
 
   it('draws as a root: a node without a branch', () => {
