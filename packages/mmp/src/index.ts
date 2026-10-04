@@ -16,15 +16,13 @@ export type {
 
 /**
  * Return a mmp object with all mmp functions. The map reads and writes its
- * nodes through `data` for its whole life and draws them at once. Without
- * `data` the map keeps its nodes in an `InMemoryMapData` of its own; PR 7
- * makes `data` required.
+ * nodes through `data` for its whole life and draws them at once.
  */
 export function create(
   id: string,
   ref: HTMLElement,
-  options?: OptionParameters,
-  data?: MapData
+  options: OptionParameters | undefined,
+  data: MapData
 ) {
   return new MmpMap(id, ref, options, data);
 }

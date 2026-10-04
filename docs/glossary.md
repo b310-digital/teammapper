@@ -312,6 +312,22 @@ A switch that configures the app from outside its data: an environment
 variable, a feature flag or a command-line option. A value stored on a node or
 a map is an attribute.
 
+### Map data
+
+The `MapData` interface in `packages/mmp`: the nodes of one mind map, which the
+renderer reads and writes and never copies. The host passes a `MapData` to
+`create`. mmp reads through `node(id)`, `nodes()` and `mainRootId()`, and writes
+through `addNodes`, `updateNode`, `removeNode` and `replaceMap`. `batch` groups
+several writes into one change and one undo step.
+
+mmp redraws in one listener on every change the map data reports, whether the
+change comes from a local edit, a peer or an undo, and then emits `mapChange`.
+mmp keeps only render data: measured sizes, rings, image loads, the drag
+preview, the selection and the **view state**.
+
+mmp exports `InMemoryMapData`. The frontend implements `YjsMapData` over the
+Y.Doc and creates the map after the first sync.
+
 ### Mark
 
 Reserved for the **node mark**, one visual element of a drawn node. Do not use

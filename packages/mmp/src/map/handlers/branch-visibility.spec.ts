@@ -33,14 +33,10 @@ function makeTree(): Tree {
 
   const root = map.instance.exportRootProperties()?.id;
   if (!root) throw new Error('the map has no main root');
-  const first = map.instance.addNode({ name: 'first' }, true, root);
-  const second = map.instance.addNode({ name: 'second' }, true, root);
+  const first = map.instance.addNode({ name: 'first' }, root);
+  const second = map.instance.addNode({ name: 'second' }, root);
   if (!first || !second) throw new Error('addNode added no child');
-  const grandchild = map.instance.addNode(
-    { name: 'grandchild' },
-    true,
-    first.id
-  );
+  const grandchild = map.instance.addNode({ name: 'grandchild' }, first.id);
   if (!grandchild) throw new Error('addNode added no grandchild');
   map.instance.selectNode(root);
 

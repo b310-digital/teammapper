@@ -79,27 +79,6 @@ describe('drag', () => {
     expect(data.node('b')?.coordinates).toEqual({ x: 460, y: 10 });
   });
 
-  // Mirror compatibility, removed in PR 7.
-  it('announces the new coordinates of every moved node', () => {
-    const { drag, map } = makeMap();
-    const updates: [string, unknown][] = [];
-    map.instance.on('nodeUpdate', event =>
-      updates.push([event.nodeProperties.id, event.nodeProperties.coordinates])
-    );
-
-    drag.started({} as DragEvent, 'a');
-    move(drag, 'a', 50, 10);
-    drag.ended({} as DragEvent, 'a');
-
-    expect(updates).toEqual(
-      expect.arrayContaining([
-        ['a', { x: 250, y: 10 }],
-        ['b', { x: 450, y: 10 }],
-      ])
-    );
-    expect(updates).toHaveLength(2);
-  });
-
   it('mirrors the descendants when the node crosses its tree root', () => {
     const { data, drag } = makeMap();
 

@@ -185,12 +185,6 @@ export default class CopyPaste {
     const data = this.map.data;
     data.batch(() => data.addNodes([...pasted.values()]));
 
-    // Mirror compatibility, removed in PR 7.
-    this.map.nodes.emitMirrorEvent(
-      'nodePaste',
-      [...pasted.keys()].flatMap(id => this.map.nodes.exportNode(id) ?? [])
-    );
-
     return pastedNode;
   }
 

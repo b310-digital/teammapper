@@ -39,12 +39,11 @@ function makeLoadedMap(): {
       colors: { background: '#ff0000' },
       font: { size: 18, weight: 'bold' },
     },
-    true,
     rootOf(map)
   );
   if (!child) throw new Error('addNode added no child');
-  map.instance.addNode({ name: 'grandchild' }, true, child.id);
-  map.instance.updateNode('linkHref', 'https://example.com/', true, child.id);
+  map.instance.addNode({ name: 'grandchild' }, child.id);
+  map.instance.updateNode('linkHref', 'https://example.com/', child.id);
   return { map, data, child: child.id };
 }
 
@@ -144,7 +143,7 @@ describe('exportAsJSON', () => {
 
   it('includes nodes added and leaves out nodes removed', () => {
     const { map, child } = makeLoadedMap();
-    const added = map.instance.addNode({ name: 'added' }, true, rootOf(map));
+    const added = map.instance.addNode({ name: 'added' }, rootOf(map));
     if (!added) throw new Error('addNode added no node');
 
     map.instance.removeNode(child);

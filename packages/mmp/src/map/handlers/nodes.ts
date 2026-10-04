@@ -33,8 +33,6 @@ import type {
   ExportNodeProperties,
   MapNodeCoordinates,
   MapSnapshot,
-  MmpEventPayloadMap,
-  MmpEventType,
   NodeProperty,
   NodePropertyValue,
   UserNodeProperties,
@@ -316,9 +314,7 @@ export default class Nodes {
     const record = this.newRecord(userProperties, parent, overwriteId);
     this.data.addNodes([record]);
 
-    const added = this.exportNode(record.id);
-    if (added) this.emitMirrorEvent('nodeCreate', added);
-    return added;
+    return this.exportNode(record.id);
   };
 
   /**
@@ -596,15 +592,6 @@ export default class Nodes {
       property,
       Utils.isPureObjectType(nextValue) ? { ...nextValue } : nextValue
     );
-
-    const nodeProperties = this.exportNode(node.id);
-    if (nodeProperties) {
-      this.emitMirrorEvent('nodeUpdate', {
-        nodeProperties,
-        changedProperty: property,
-        previousValue,
-      });
-    }
   };
 
   /**
@@ -663,7 +650,6 @@ export default class Nodes {
     if (node.isRoot) Log.error('The root node can not be deleted');
 
     this.data.removeNode(node.id);
-    this.emitMirrorEvent('nodeRemove', node);
   };
 
   /**
@@ -700,7 +686,7 @@ export default class Nodes {
    * @returns {boolean}
    */
   public refusesChange(id: string): boolean {
-    if (!this.notifyWithEvent || !this.isProtected(id)) return false;
+    if (!this.isProtected(id)) return false;
 
     this.refuseProtected(id);
     return true;
@@ -713,7 +699,6 @@ export default class Nodes {
    * @returns {boolean}
    */
   public refusesRemoval(id: string): boolean {
-    if (!this.notifyWithEvent) return false;
     if (this.refusesChange(id)) return true;
 
     const records = this.scan();
@@ -1065,7 +1050,6 @@ export default class Nodes {
     if (layout.size === 0) return;
 
     this.writePositions(layout);
-    this.emitMirrorEvent('distribute', undefined);
   };
 
   /**
@@ -1190,71 +1174,4 @@ export default class Nodes {
       this.selectNode(lowerNode.id);
     }
   }
-
-  // Mirror compatibility, removed in PR 7. The frontend writes local edits
-  // to the Y.Doc from the events `create`, `nodeUpdate`, `nodeCreate`,
-  // `nodePaste`, `nodeRemove` and `distribute`, and applies a peer's edit
-  // with notifyWithEvent false. Such a write emits none of these events and
-  // passes a protected branch, since the peer's client checked it.
-  private notifyWithEvent = true;
-
-  /**
-   * Run `write` with notifyWithEvent set, then restore the previous value.
-   * @param {boolean} notifyWithEvent
-   * @param {() => T} write
-   */
-  public withNotify<T>(notifyWithEvent: boolean, write: () => T): T {
-    const previous = this.notifyWithEvent;
-    this.notifyWithEvent = notifyWithEvent;
-    try {
-      return write();
-    } finally {
-      this.notifyWithEvent = previous;
-    }
-  }
-
-  /**
-   * Emit a mirror event, unless the running write has notifyWithEvent false.
-   */
-  public emitMirrorEvent<K extends MmpEventType>(
-    event: K,
-    payload: MmpEventPayloadMap[K]
-  ) {
-    if (this.notifyWithEvent) this.map.events.emit(event, payload);
-  }
-
-  /**
-   * Announce the new coordinates of every node a drag moved. The drag moved
-   * each node many times, so no single previous value describes the change.
-   * @param {string[]} ids
-   */
-  public announceMoved(ids: string[]) {
-    for (const id of ids) {
-      const nodeProperties = this.exportNode(id);
-      if (!nodeProperties) continue;
-
-      this.emitMirrorEvent('nodeUpdate', {
-        nodeProperties,
-        changedProperty: 'coordinates',
-        previousValue: undefined,
-      });
-    }
-  }
-
-  /**
-   * Add the nodes of a peer the map data lacks, in one write and without an
-   * event. A node keeps its k and its protection, and a node with an empty
-   * parent becomes a root, whatever node is selected.
-   * @param {ExportNodeProperties[]} nodes
-   */
-  public addNodes = (nodes: ExportNodeProperties[]) => {
-    const records = nodes
-      .filter(node => !this.data.node(node.id))
-      .map(node => ({
-        ...this.newRecord(node, node.parent || null, node.id),
-        k: node.k || randomK(),
-        protected: Boolean(node.protected),
-      }));
-    if (records.length > 0) this.data.addNodes(records);
-  };
 }
