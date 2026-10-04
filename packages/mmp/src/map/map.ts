@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import Events, { MapEventType, MmpEventCallback } from './handlers/events.js';
+import Events, { MmpEventCallback } from './handlers/events.js';
 import Zoom from './handlers/zoom.js';
 import Draw from './handlers/draw.js';
 import Options, { OptionParameters } from './options.js';
@@ -15,6 +15,7 @@ import type {
   ExportNodeProperties,
   MapSnapshot,
   MapViewState,
+  MmpEventType,
   NodeProperty,
   NodePropertyValue,
   UserNodeProperties,
@@ -231,7 +232,7 @@ export interface MmpInstance extends MirrorFunctions {
   restoreViewState: (state: MapViewState) => void;
   highlightNode: (id: string, color: string) => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];
-  on: <K extends MapEventType>(event: K, callback: MmpEventCallback<K>) => void;
+  on: <K extends MmpEventType>(event: K, callback: MmpEventCallback<K>) => void;
   pasteNode: (id?: string) => void;
   pasteTree: () => void;
   protectBranch: (id?: string) => void;

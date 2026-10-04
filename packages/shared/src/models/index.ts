@@ -264,6 +264,8 @@ export interface MmpEventPayloadMap {
   distribute: void;
   nodeProtected: ExportNodeProperties;
   viewStateChange: MapViewState;
+  /** The map data changed, by a local, a peer's or an undo write. */
+  mapChange: void;
 }
 
 export type MmpEventType = keyof MmpEventPayloadMap;

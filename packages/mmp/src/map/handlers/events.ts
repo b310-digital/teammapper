@@ -1,25 +1,15 @@
 import Log from '../../utils/log.js';
-import type { MmpEventPayloadMap } from '@teammapper/shared';
+import type { MmpEventPayloadMap, MmpEventType } from '@teammapper/shared';
 
-/**
- * The payload of each event mmp emits: the events `@teammapper/shared`
- * types, plus `mapChange`, which fires after every change of the map data.
- */
-export interface MapEventPayloadMap extends MmpEventPayloadMap {
-  mapChange: void;
-}
-
-export type MapEventType = keyof MapEventPayloadMap;
-
-export type MmpEventCallback<K extends MapEventType> = (
-  payload: MapEventPayloadMap[K]
+export type MmpEventCallback<K extends MmpEventType> = (
+  payload: MmpEventPayloadMap[K]
 ) => void;
 
-type EventCallbacks<K extends MapEventType> = {
+type EventCallbacks<K extends MmpEventType> = {
   [P in K]?: MmpEventCallback<P>;
 };
 
-const EVENT_TYPES: readonly MapEventType[] = [
+const EVENT_TYPES: readonly MmpEventType[] = [
   'nodeSelect',
   'nodeDeselect',
   'nodeProtected',
@@ -40,14 +30,14 @@ const EVENT_TYPES: readonly MapEventType[] = [
  * each event holds at most one callback.
  */
 export default class Events {
-  private callbacks: EventCallbacks<MapEventType> = {};
+  private callbacks: EventCallbacks<MmpEventType> = {};
 
   /**
    * Call the callback registered for the event with its payload.
    */
-  public emit<K extends MapEventType>(
+  public emit<K extends MmpEventType>(
     event: K,
-    payload: MapEventPayloadMap[K]
+    payload: MmpEventPayloadMap[K]
   ) {
     this.callbacks[event]?.(payload);
   }
@@ -55,7 +45,7 @@ export default class Events {
   /**
    * Register the callback for the event, replacing an earlier one.
    */
-  public on = <K extends MapEventType>(
+  public on = <K extends MmpEventType>(
     event: K,
     callback: MmpEventCallback<K>
   ) => {
