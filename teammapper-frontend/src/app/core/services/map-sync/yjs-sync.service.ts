@@ -30,6 +30,7 @@ import {
   DEFAULT_COLOR,
   DEFAULT_SELF_COLOR,
 } from './map-sync-context';
+import { LAST_MAP_ANNOUNCEMENT, LOCAL_ORIGIN, META } from './yjs-map-data';
 
 const WS_CLOSE_MAP_DELETED = 4001;
 
@@ -38,23 +39,6 @@ const WS_CLOSE_MAP_DELETED = 4001;
  * Yjs transaction origins are local and never reach the other clients.
  */
 type FullMapOperation = 'import' | 'distribute';
-
-/** Doc-level metadata, shared with peers alongside the nodes themselves. */
-const META = 'meta';
-
-/**
- * The most recent full-map announcement broadcast to peers. Only meaningful
- * read inside the transaction that wrote it - the value it leaves behind
- * describes a past operation, not the one being applied.
- */
-const LAST_MAP_ANNOUNCEMENT = 'lastMapAnnouncement';
-
-/**
- * The origin every write of ours carries, and the only one the undo manager
- * tracks. A peer's change arrives with the WebsocketProvider as its origin,
- * so it is never ours to undo.
- */
-const LOCAL_ORIGIN = 'local';
 
 /**
  * Orders the nodes of a whole map parent-first across every root, then
