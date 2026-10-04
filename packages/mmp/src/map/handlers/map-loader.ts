@@ -23,6 +23,19 @@ const LoadedNodeSchema = v.object({
 });
 
 /**
+ * The nodes with a main root. A map that names none makes the first node
+ * without a parent, in snapshot order, its main root, so the load centers
+ * and selects it and peers see a replacement. Changes the nodes in place.
+ */
+function withMainRoot(nodes: ExportNodeProperties[]): ExportNodeProperties[] {
+  if (nodes.some(node => node.isRoot)) return nodes;
+
+  const root = nodes.find(node => !node.parent);
+  if (root) root.isRoot = true;
+  return nodes;
+}
+
+/**
  * Replace every node of the map with the nodes of an exported map, or with a
  * new main root. The loader checks the nodes, converts the format mmp 0.1.7
  * exported and writes the result to the map data as one replacement. The
@@ -64,7 +77,7 @@ export default class MapLoader {
       );
     }
 
-    this.map.data.replaceMap(nodes.map(this.completed));
+    this.map.data.replaceMap(withMainRoot(nodes.map(this.completed)));
   };
 
   /** A main root with the map's root node defaults, at the origin. */

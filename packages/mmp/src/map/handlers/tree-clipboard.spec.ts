@@ -60,9 +60,8 @@ function makeMap(view: Bounds | null = null, extra: MapSnapshot = []) {
     zoom,
   });
   const pastes: string[][] = [];
-  stub.events.emit.mockImplementation((event: string, payload: unknown) => {
-    if (event !== 'nodePaste') return;
-    pastes.push((payload as ExportNodeProperties[]).map(node => node.id));
+  stub.data.subscribe(change => {
+    if (change.added.length > 0) pastes.push(change.added);
   });
 
   return { ...stub, clipboard: stub.map.copyPaste, zoom, sizes, pastes };
@@ -173,6 +172,33 @@ describe('paste', () => {
     const pasted = pastedNodes(context);
     expect(pasted).toHaveLength(2);
     expect(pasted.every(node => node.isRoot === false)).toBe(true);
+  });
+
+  it('writes the paste in a batch, so it takes an undo step of its own', () => {
+    const context = makeMap();
+    context.clipboard.copy('left');
+    const batch = jest.spyOn(context.data, 'batch');
+    const addNodes = jest.spyOn(context.data, 'addNodes');
+
+    context.clipboard.paste('branch');
+
+    expect(addNodes).toHaveBeenCalledTimes(1);
+    expect(batch.mock.invocationCallOrder[0]).toBeLessThan(
+      addNodes.mock.invocationCallOrder[0]
+    );
+    expect(context.pastes).toHaveLength(1);
+  });
+
+  it('pastes each copied node once when the copied nodes form a cycle', () => {
+    const context = makeMap();
+    context.clipboard.copy('left');
+    const copied = (context.clipboard as unknown as CopyPasteInternals)
+      .copiedNodes;
+    copied[0].parent = 'grandchild';
+
+    context.clipboard.paste('branch');
+
+    expect(pastedNodes(context)).toHaveLength(2);
   });
 
   it('pastes nothing with nothing selected', () => {

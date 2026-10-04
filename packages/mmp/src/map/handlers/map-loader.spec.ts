@@ -178,6 +178,27 @@ describe('new', () => {
     expect(listener.mock.calls[0][0].replaced).toBe(true);
   });
 
+  it('makes the first node without a parent the main root of a map naming none', () => {
+    const { map, child } = makeLoadedMap();
+    const root = rootOf(map);
+    const [rootNode, ...rest] = map.instance.exportAsJSON();
+    const withoutRoot = [...rest, rootNode].map(node => ({
+      ...node,
+      isRoot: false,
+    }));
+    const data = new InMemoryMapData();
+    const target = makeMap(data);
+    const listener = jest.fn();
+    data.subscribe(listener);
+
+    target.instance.new(withoutRoot);
+
+    expect(data.mainRootId()).toBe(root);
+    expect(data.node(child)?.isRoot).toBe(false);
+    expect(listener.mock.calls[0][0].replaced).toBe(true);
+    expect(target.instance.getSelectedNode()?.id).toBe(root);
+  });
+
   it('converts a map in the legacy format', () => {
     const map = makeMap();
 
