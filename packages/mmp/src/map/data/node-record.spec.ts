@@ -71,4 +71,12 @@ describe('resolveNode', () => {
   ])('falls back to the default for %s', (_, fields) => {
     expect(resolveNode(peerRecord(fields))).toEqual(defaults);
   });
+
+  it.each([
+    ['an empty string', ''],
+    ['null', null],
+    ['undefined', undefined],
+  ])('reads %s as parent as null', (_, parent) => {
+    expect(resolveNode({ id: 'node', parent }).parent).toBeNull();
+  });
 });

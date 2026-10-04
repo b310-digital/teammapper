@@ -3,13 +3,15 @@ import type {
   MapSnapshot,
   NodeProperty,
 } from '@teammapper/shared';
+import type { PartialNodeRecord } from './node-record.js';
 
 /**
- * One node as the map data holds it. An implementation may return the object
- * it stores, so mmp never writes to a record and clones one before it keeps
- * a value or hands it to a caller.
+ * One node as the map data holds it, with any attribute a peer left out
+ * missing. An implementation may return the object it stores, so mmp never
+ * writes to a record and clones one before it keeps a value or hands it to a
+ * caller.
  */
-export type MapNodeRecord = Readonly<ExportNodeProperties>;
+export type MapNodeRecord = Readonly<PartialNodeRecord>;
 
 /**
  * The node ids one write or one batch added, updated or removed.

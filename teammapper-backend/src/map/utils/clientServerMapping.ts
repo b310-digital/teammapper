@@ -79,7 +79,9 @@ const mapClientNodeToMmpNode = (
     linkHref: clientNode.link?.href,
     protected: clientNode.protected,
     name: clientNode.name,
-    nodeParentId: clientNode.parent || undefined, // This is needed because a client root node defines its parent as an empty string, which is an invalid UUID format
+    // An older client or an old export may still send '' for a root, which is
+    // no valid UUID.
+    nodeParentId: clientNode.parent || undefined,
     root: clientNode.isRoot,
     nodeMapId: mapId,
   })

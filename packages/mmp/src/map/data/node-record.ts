@@ -23,11 +23,11 @@ export type NodeLink = Resolved<MapNodeLink>;
 
 /**
  * A node record with every attribute filled, read once per draw pass or per
- * call and dropped after. `parent` holds '' for a node without a parent.
+ * call and dropped after. `parent` holds null for a node without a parent.
  */
 export interface ResolvedNode {
   id: string;
-  parent: string;
+  parent: string | null;
   k: number;
   name: string;
   coordinates: MapNodeCoordinates;
@@ -71,7 +71,7 @@ export function resolveNode(record: PartialNodeRecord): ResolvedNode {
   const color = (value: unknown) => valid(CssColorSchema, value) || '';
   return {
     id: record.id,
-    parent: valid(ParentSchema, record.parent) || '',
+    parent: valid(ParentSchema, record.parent) || null,
     k: valid(FiniteSchema, record.k) || 0,
     name: valid(NodePropertySchemas.name, record.name) || '',
     coordinates: {

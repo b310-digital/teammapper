@@ -87,37 +87,34 @@ describe('Y.Doc conversion utilities', () => {
     );
   });
 
-  it('applies defaults for missing optional properties', () => {
-    const input: ExportNodeProperties = {
-      id: 'n2',
-      parent: undefined,
-      k: undefined,
-      name: undefined,
-      isRoot: undefined,
-      protected: undefined,
-      coordinates: undefined,
-      colors: undefined,
-      font: undefined,
-      image: undefined,
-      link: undefined,
-    } as unknown as ExportNodeProperties;
-
+  it('reads back a key the Y.Map lacks as absent', () => {
     const yNode = new Y.Map<unknown>();
-    populateYMapFromNodeProps(yNode, input);
+    nodesMap.set('n2', yNode);
+    yNode.set('id', 'n2');
+    yNode.set('parent', 'root');
+
+    expect(yMapToNodeProps(yNode)).toStrictEqual({ id: 'n2', parent: 'root' });
+  });
+
+  it('writes no key for an attribute that is undefined', () => {
+    const yNode = new Y.Map<unknown>();
+    populateYMapFromNodeProps(yNode, createMockNode({ id: 'n2' }));
     nodesMap.set('n2', yNode);
 
-    const result = yMapToNodeProps(nodesMap.get('n2')!);
-
-    expect(result).toEqual(
-      expect.objectContaining({
-        parent: null,
-        k: 1,
-        name: '',
-        isRoot: false,
-        protected: false,
-        coordinates: { x: 0, y: 0 },
-      })
+    expect(['coordinates', 'image', 'link'].map(key => yNode.has(key))).toEqual(
+      [false, false, false]
     );
+  });
+
+  it.each([
+    ['null', null],
+    ['an empty string', ''],
+  ])('stores null as the parent of a root given %s', (_label, parent) => {
+    const yNode = new Y.Map<unknown>();
+    populateYMapFromNodeProps(yNode, createMockNode({ id: 'r', parent }));
+    nodesMap.set('r', yNode);
+
+    expect(yNode.get('parent')).toBeNull();
   });
 
   it('writes no detached entry', () => {

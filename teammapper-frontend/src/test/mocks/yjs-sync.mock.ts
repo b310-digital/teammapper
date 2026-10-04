@@ -41,17 +41,23 @@ function createMockMmpService(): jest.Mocked<MmpService> {
 export type MmpHandlers = Record<string, (payload?: unknown) => void>;
 
 /**
- * An MmpService whose `on` puts the callback of each event in `handlers`.
- * Like mmp, it keeps one callback per event.
+ * An MmpService whose `on` registers every subscriber of an event, as mmp
+ * does. `handlers[event]` calls all live subscribers of that event, and an
+ * unsubscribe drops its subscriber.
  */
 export function capturingMmpService(
   handlers: MmpHandlers
 ): jest.Mocked<MmpService> {
+  const observers: Record<string, Set<(payload?: unknown) => void>> = {};
   return {
     on: jest.fn(
       (event: string) =>
         new Observable<unknown>(observer => {
-          handlers[event] = payload => observer.next(payload);
+          const set = (observers[event] ??= new Set());
+          const next = (payload?: unknown) => observer.next(payload);
+          set.add(next);
+          handlers[event] = payload => [...set].forEach(fn => fn(payload));
+          return () => set.delete(next);
         })
     ),
     selectNode: jest.fn().mockReturnValue(null),

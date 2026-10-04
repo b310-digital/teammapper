@@ -1,4 +1,5 @@
 import type Nodes from './nodes.js';
+import Export from './export.js';
 import { fakeDraw } from '../../test/fake-draw.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import { DefaultNodeValues } from '../options.js';
@@ -123,8 +124,19 @@ describe('addNode', () => {
 
     const added = handler.addNode({ coordinates: { x: 2000, y: 0 } }, null);
 
-    expect(added?.parent).toBe('');
+    expect(added?.parent).toBeNull();
     expect(added?.isRoot).toBe(false);
+  });
+
+  it('stores null as the parent of a new root and exports it', () => {
+    const { handler, data, map } = makeMap();
+
+    const added = handler.addNode({}, null);
+    if (!added) throw new Error('addNode added no root');
+
+    expect(data.node(added.id)?.parent).toBeNull();
+    const exported = new Export(map).asJSON();
+    expect(exported.find(node => node.id === added.id)?.parent).toBeNull();
   });
 
   it('gives a root branch color empty by default', () => {
@@ -215,7 +227,7 @@ describe('newTreeCoordinates', () => {
     const added = handler.addNode({ coordinates }, null);
 
     expect(added?.coordinates).toEqual(coordinates);
-    expect(added?.parent).toBe('');
+    expect(added?.parent).toBeNull();
   });
 });
 
@@ -300,7 +312,7 @@ describe('addTree', () => {
 
     const root = handler.addTree();
 
-    expect(root?.parent).toBe('');
+    expect(root?.parent).toBeNull();
     expect(root?.isRoot).toBe(false);
     expect(root?.coordinates).toEqual({
       x: 1000 + 2 * NODE_HORIZONTAL_SPACING,

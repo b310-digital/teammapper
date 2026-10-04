@@ -42,56 +42,52 @@ export interface ClientColorMappingValue {
   color: string;
 }
 
+/** The keys a node's Y.Map holds, one per node attribute. */
+const NODE_KEYS = [
+  'id',
+  'parent',
+  'k',
+  'name',
+  'isRoot',
+  'protected',
+  'coordinates',
+  'colors',
+  'font',
+  'image',
+  'link',
+] as const satisfies readonly (keyof ExportNodeProperties)[];
+
+/**
+ * A node's attributes as its Y.Map stores them. A peer may write a value of
+ * any type under any key, so every value is unknown until mmp's
+ * `resolveNode` checks it.
+ */
+export type StoredNode = Partial<Record<(typeof NODE_KEYS)[number], unknown>>;
+
+/**
+ * Write every attribute of the node that is not undefined to its Y.Map. A
+ * root's parent goes in as null, also when the caller passes ''.
+ */
 export function populateYMapFromNodeProps(
   yNode: Y.Map<unknown>,
   nodeProps: ExportNodeProperties
 ): void {
-  yNode.set('id', nodeProps.id);
-  yNode.set('parent', nodeProps.parent ?? null);
-  yNode.set('name', nodeProps.name ?? '');
-  yNode.set('isRoot', nodeProps.isRoot ?? false);
-  yNode.set('protected', nodeProps.protected ?? false);
-  yNode.set('k', nodeProps.k ?? 1);
-  yNode.set('coordinates', nodeProps.coordinates ?? { x: 0, y: 0 });
-  yNode.set(
-    'colors',
-    nodeProps.colors ?? { name: '', background: '', branch: '' }
-  );
-  yNode.set('font', nodeProps.font ?? { size: 12, style: '', weight: '' });
-  yNode.set('image', nodeProps.image ?? { src: '', size: 0 });
-  yNode.set('link', nodeProps.link ?? { href: '' });
+  for (const key of NODE_KEYS) {
+    const value = key === 'parent' ? nodeProps.parent || null : nodeProps[key];
+    if (value !== undefined) yNode.set(key, value);
+  }
 }
 
-export function yMapToNodeProps(yNode: Y.Map<unknown>): ExportNodeProperties {
-  return {
-    id: yNode.get('id') as string,
-    parent: (yNode.get('parent') as string) ?? null,
-    k: (yNode.get('k') as number) ?? 1,
-    name: (yNode.get('name') as string) ?? '',
-    isRoot: (yNode.get('isRoot') as boolean) ?? false,
-    protected: (yNode.get('protected') as boolean) ?? false,
-    coordinates: (yNode.get('coordinates') as { x: number; y: number }) ?? {
-      x: 0,
-      y: 0,
-    },
-    colors: (yNode.get('colors') as ExportNodeProperties['colors']) ?? {
-      name: '',
-      background: '',
-      branch: '',
-    },
-    font: (yNode.get('font') as ExportNodeProperties['font']) ?? {
-      size: 12,
-      style: '',
-      weight: '',
-    },
-    image: (yNode.get('image') as ExportNodeProperties['image']) ?? {
-      src: '',
-      size: 0,
-    },
-    link: (yNode.get('link') as ExportNodeProperties['link']) ?? {
-      href: '',
-    },
-  };
+/**
+ * The node as its Y.Map stores it. A key the Y.Map lacks stays absent, and
+ * mmp's `resolveNode` fills it on read.
+ */
+export function yMapToNodeProps(yNode: Y.Map<unknown>): StoredNode {
+  const record: StoredNode = {};
+  for (const key of NODE_KEYS) {
+    if (yNode.has(key)) record[key] = yNode.get(key);
+  }
+  return record;
 }
 
 export function buildYjsWsUrl(): string {

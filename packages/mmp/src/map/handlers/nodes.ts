@@ -464,7 +464,7 @@ export default class Nodes {
     // For a node the map data no longer holds, the event carries its id alone.
     this.map.events.emit(
       'nodeDeselect',
-      this.exportNode(previous) ?? { id: previous, parent: '', k: 0 }
+      this.exportNode(previous) ?? { id: previous, parent: null, k: 0 }
     );
   }
 

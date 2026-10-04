@@ -94,7 +94,7 @@ describe('exportAsJSON', () => {
     const root = rootOf(map);
 
     expect(map.instance.exportAsJSON()).toMatchObject([
-      { id: root, parent: '', isRoot: true, name: 'Root node' },
+      { id: root, parent: null, isRoot: true, name: 'Root node' },
       {
         id: child,
         parent: root,
@@ -206,7 +206,7 @@ describe('new', () => {
     expect(map.instance.exportAsJSON()).toMatchObject([
       {
         id: 'map_node_0',
-        parent: '',
+        parent: null,
         isRoot: true,
         k: 1,
         name: 'Legacy root',
@@ -227,6 +227,35 @@ describe('new', () => {
         font: { size: 16, weight: 'bold', style: 'italic' },
       },
     ]);
+  });
+
+  it('stores null as the parent of the main root of a new map', () => {
+    const data = new InMemoryMapData();
+    const map = makeMap(data);
+
+    map.instance.new();
+
+    expect(data.node(rootOf(map))?.parent).toBeNull();
+  });
+
+  it('stores null as the parent of an imported root that holds an empty string', () => {
+    const { map } = makeLoadedMap();
+    const exported = map.instance
+      .exportAsJSON()
+      .map(node => (node.parent ? node : { ...node, parent: '' }));
+    const data = new InMemoryMapData();
+
+    makeMap(data).instance.new(exported);
+
+    expect(data.node(exported[0].id)?.parent).toBeNull();
+  });
+
+  it('stores null as the parent of a root in the legacy format', () => {
+    const data = new InMemoryMapData();
+
+    makeMap(data).instance.new(LEGACY_MAP as unknown as MapSnapshot);
+
+    expect(data.node('map_node_0')?.parent).toBeNull();
   });
 
   it('gives a node without a k a random one', () => {

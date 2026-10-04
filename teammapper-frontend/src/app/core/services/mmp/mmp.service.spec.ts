@@ -817,6 +817,60 @@ describe('MmpService', () => {
     });
   });
 
+  describe('on', () => {
+    const removeCallback = jest.fn();
+    const changeCallbacks = new Set<(payload: string) => void>();
+
+    beforeEach(async () => {
+      await createMap();
+      changeCallbacks.clear();
+      removeCallback.mockClear();
+      mockMap.instance.on.mockImplementation(
+        (event: string, callback: (payload: string) => void) => {
+          if (event !== 'mapChange') return undefined;
+          changeCallbacks.add(callback);
+          return () => {
+            removeCallback();
+            changeCallbacks.delete(callback);
+          };
+        }
+      );
+    });
+
+    afterEach(() => {
+      mockMap.instance.on.mockReset();
+    });
+
+    const emitChange = (payload: string) =>
+      changeCallbacks.forEach(callback => callback(payload));
+
+    it('gives every subscriber of an event the payload', () => {
+      const first = jest.fn();
+      const second = jest.fn();
+      service.on('mapChange').subscribe(first);
+      service.on('mapChange').subscribe(second);
+
+      emitChange('change');
+
+      expect(first).toHaveBeenCalledWith('change');
+      expect(second).toHaveBeenCalledWith('change');
+    });
+
+    it('removes the mmp callback of an unsubscribed subscriber only', () => {
+      const first = jest.fn();
+      const second = jest.fn();
+      const subscription = service.on('mapChange').subscribe(first);
+      service.on('mapChange').subscribe(second);
+
+      subscription.unsubscribe();
+      emitChange('change');
+
+      expect(removeCallback).toHaveBeenCalledTimes(1);
+      expect(first).not.toHaveBeenCalled();
+      expect(second).toHaveBeenCalledWith('change');
+    });
+  });
+
   describe('distributeNodes', () => {
     beforeEach(async () => {
       await createMap();
