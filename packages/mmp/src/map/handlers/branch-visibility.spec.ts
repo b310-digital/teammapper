@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
+import InMemoryMapData from '../data/in-memory-map-data.js';
 import { nodeRecord } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
@@ -8,13 +9,14 @@ import { stubSvgLengths } from '../../test/svg-lengths.js';
  * Hiding the child nodes of a node changes the view state of one person
  * alone, so a second person keeps adding nodes below a node whose child
  * nodes this person hid. These specs drive a real map and read the drawn
- * visibility.
+ * visibility. A peer's write goes straight to the map data.
  */
 
 beforeAll(stubSvgLengths);
 
 interface Tree {
   map: MmpMap;
+  data: InMemoryMapData;
   root: string;
   first: string;
   second: string;
@@ -25,7 +27,8 @@ interface Tree {
 function makeTree(): Tree {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref);
+  const data = new InMemoryMapData();
+  const map = create('map', ref, undefined, data);
   map.instance.new();
 
   const root = map.instance.exportRootProperties()?.id;
@@ -43,6 +46,7 @@ function makeTree(): Tree {
 
   return {
     map,
+    data,
     root,
     first: first.id,
     second: second.id,
@@ -101,10 +105,10 @@ describe('toggleBranchVisibility', () => {
   });
 
   it('hides a node a peer adds below a node whose child nodes are hidden', () => {
-    const { map, root } = makeTree();
+    const { map, data, root } = makeTree();
     toggle(map, root);
 
-    map.instance.addNodes([
+    data.addNodes([
       nodeRecord({
         id: 'late',
         parent: root,
@@ -141,10 +145,10 @@ describe('toggleBranchVisibility', () => {
   });
 
   it('reports no hidden child nodes once a peer removes the last child node', () => {
-    const { map, first, grandchild } = makeTree();
+    const { map, data, first, grandchild } = makeTree();
     toggle(map, first);
 
-    map.instance.removeNode(grandchild, false);
+    data.removeNode(grandchild);
 
     expect(map.instance.childNodesHidden(first)).toBe(false);
     expect(map.instance.exportViewState().nodesWithHiddenChildren).toEqual([
@@ -153,13 +157,13 @@ describe('toggleBranchVisibility', () => {
   });
 
   it('forgets a removed node whose child nodes were hidden', () => {
-    const { map, root, first } = makeTree();
+    const { map, data, root, first } = makeTree();
     toggle(map, first);
     map.instance.selectNode(root);
     const listener = jest.fn();
     map.instance.on('viewStateChange', listener);
 
-    map.instance.removeNode(first, false);
+    data.removeNode(first);
 
     expect(listener).toHaveBeenCalledWith({ nodesWithHiddenChildren: [] });
   });
@@ -189,13 +193,13 @@ describe('the hidden eye icon', () => {
   });
 
   it('leaves once a peer removes the last child node and returns with a new one', () => {
-    const { map, first, grandchild } = makeTree();
+    const { map, data, first, grandchild } = makeTree();
     toggle(map, first);
 
-    map.instance.removeNode(grandchild, false);
+    data.removeNode(grandchild);
     expect(hasEyeIcon(first)).toBe(false);
 
-    map.instance.addNodes([
+    data.addNodes([
       nodeRecord({
         id: 'late',
         parent: first,

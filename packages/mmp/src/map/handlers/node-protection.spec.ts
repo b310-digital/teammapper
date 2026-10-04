@@ -6,8 +6,7 @@ import type MmpMap from '../map.js';
 
 /**
  * A protected branch refuses local edits and announces the refusal with
- * `nodeProtected`. Remote writes, which arrive with notifyWithEvent false,
- * still apply.
+ * `nodeProtected`. A peer's write straight to the map data still applies.
  */
 
 type DragEvent = D3DragEvent<SVGGElement, string, unknown>;
@@ -81,16 +80,15 @@ describe('protectBranch', () => {
     expect(nodes.protectingNode('b')).toBe('root');
   });
 
-  it('announces every protected attribute it writes', () => {
-    const { nodes, events } = makeMap();
+  it('writes every protected attribute in one change', () => {
+    const { nodes, data } = makeMap();
+    const listener = jest.fn();
+    data.subscribe(listener);
 
     nodes.protectBranch('root');
 
-    const changed = emitted(events.emit, 'nodeUpdate').map(
-      update =>
-        (update as { nodeProperties: ExportNodeProperties }).nodeProperties.id
-    );
-    expect(changed).toEqual(['a', 'root']);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0][0].updated.sort()).toEqual(['a', 'root']);
   });
 
   it('does nothing for a node already protected by an ancestor', () => {
@@ -114,7 +112,7 @@ describe('releaseBranch', () => {
   });
 });
 
-describe('local edits inside a protected branch', () => {
+describe('edits inside a protected branch', () => {
   it('refuses a rename and leaves the name unchanged', () => {
     const { nodes, data, events } = makeMap();
 
@@ -206,38 +204,35 @@ describe('local edits inside a protected branch', () => {
 });
 
 describe('changes that stay allowed', () => {
-  it('applies a remote rename inside a protected branch', () => {
-    const { nodes, data, events } = makeMap();
+  it('applies a peer rename inside a protected branch', () => {
+    const { data, events } = makeMap();
 
-    nodes.withNotify(false, () => nodes.updateNode('name', 'remote', 'b'));
+    data.updateNode('b', 'name', 'peer');
 
-    expect(data.node('b')?.name).toBe('remote');
+    expect(data.node('b')?.name).toBe('peer');
     expect(refusals(events.emit)).toEqual([]);
   });
 
-  it('applies a remote removal of a protected node', () => {
-    const { nodes } = makeMap();
+  it('applies a peer removal of a protected node', () => {
+    const { nodes, data } = makeMap();
 
-    nodes.withNotify(false, () => nodes.removeNode('a'));
+    data.removeNode('a');
 
     expect(nodes.existNode('a')).toBe(false);
     expect(nodes.existNode('b')).toBe(false);
   });
 
   it('pastes a copy of a protected branch unprotected', () => {
-    const { data, clipboard, events } = makeMap();
+    const { data, clipboard } = makeMap();
+    const listener = jest.fn();
+    data.subscribe(listener);
     clipboard.copy('a');
 
     clipboard.paste('c');
 
-    const [pasted] = emitted(
-      events.emit,
-      'nodePaste'
-    ) as ExportNodeProperties[][];
-    expect(pasted).toHaveLength(2);
-    expect(pasted.every(node => data.node(node.id)?.protected === false)).toBe(
-      true
-    );
+    const added: string[] = listener.mock.calls[0][0].added;
+    expect(added).toHaveLength(2);
+    expect(added.every(id => data.node(id)?.protected === false)).toBe(true);
     expect(data.nodes()).toHaveLength(6);
   });
 });
@@ -245,18 +240,20 @@ describe('changes that stay allowed', () => {
 describe('drag', () => {
   it('leaves a protected node at its position', () => {
     const { map, data, events } = makeMap();
+    const listener = jest.fn();
+    data.subscribe(listener);
 
     drag(map, 'b', 50, 50);
 
     expect(data.node('b')?.coordinates).toEqual({ x: 400, y: 0 });
-    expect(emitted(events.emit, 'nodeUpdate')).toHaveLength(0);
+    expect(listener).not.toHaveBeenCalled();
     expect(refusals(events.emit)).toEqual(['b']);
   });
 
   it('moves a protected child along with its unprotected parent', () => {
     const { map, nodes, data } = makeMap();
     nodes.releaseBranch('a');
-    nodes.withNotify(false, () => nodes.updateNode('protected', true, 'b'));
+    data.updateNode('b', 'protected', true);
 
     drag(map, 'a', 50, 10);
 

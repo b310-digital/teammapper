@@ -1,36 +1,22 @@
-import { create } from '../../index.js';
-import { nodeRecord, ring } from '../../test/stub-map.js';
-import { stubSvgLengths } from '../../test/svg-lengths.js';
+import { nodeRecord, ring, stubMap } from '../../test/stub-map.js';
 
 /** The color a client draws around the node it selected itself. */
 const HIGHLIGHT = '#c0c0c0';
-
-beforeAll(stubSvgLengths);
-
-afterEach(() => {
-  document.body.innerHTML = '';
-});
 
 /**
  * A map with a selected child that a highlight rings, as the frontend's
  * awareness does right after the selection.
  */
 function highlightedChild() {
-  const ref = document.createElement('div');
-  document.body.appendChild(ref);
-  const map = create('map', ref);
-  map.instance.new(
-    [
-      nodeRecord({ id: 'root', isRoot: true }),
-      nodeRecord({
-        id: 'child',
-        parent: 'root',
-        coordinates: { x: 200, y: 0 },
-        colors: { name: '#666666', background: '#f5f5f5', branch: '#ffc107' },
-      }),
-    ],
-    false
-  );
+  const { map } = stubMap([
+    nodeRecord({ id: 'root', isRoot: true }),
+    nodeRecord({
+      id: 'child',
+      parent: 'root',
+      coordinates: { x: 200, y: 0 },
+      colors: { name: '#666666', background: '#f5f5f5', branch: '#ffc107' },
+    }),
+  ]);
   map.nodes.selectNode('child');
   map.nodes.highlightNodeWithColor('child', HIGHLIGHT);
   return map;

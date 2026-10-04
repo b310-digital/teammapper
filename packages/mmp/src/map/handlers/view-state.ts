@@ -56,12 +56,11 @@ export default class ViewState {
   }
 
   /**
-   * Replace the view state and redraw the map when it holds nodes. Emits no
-   * event.
+   * Replace the view state and redraw the map. Emits no event.
    * @param {MapViewState} state
    */
   public restore(state: MapViewState) {
     this.nodesWithHiddenChildren = new Set(state.nodesWithHiddenChildren);
-    if (this.map.nodes.scan().size > 0) this.map.draw.update();
+    this.map.draw.redrawAll();
   }
 }

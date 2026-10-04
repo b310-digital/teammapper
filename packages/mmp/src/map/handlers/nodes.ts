@@ -53,6 +53,11 @@ export type RecordLookup = (id: string) => ResolvedNode | undefined;
  * selected node's id and nothing else of the map. The change listener
  * `onChange` draws every change: a local write, a peer's write and an undo
  * take this one path.
+ *
+ * A change costs work in proportion to the nodes it adds, updates or removes.
+ * The tree queries that walk up along the parents run per drawn node; the
+ * ones that scan every node (children, siblings, descendants) run once per
+ * user action and never per change, per draw or per drag frame.
  */
 export default class Nodes {
   /**
@@ -98,20 +103,24 @@ export default class Nodes {
    */
   public drawReplaced() {
     this.map.drag.cancel();
-    this.map.draw.clear();
-    this.map.draw.update();
+    this.map.draw.drawAll();
     this.selectedId = null;
     this.selectRootNode();
     this.map.zoom.center('position', 0);
   }
 
   /**
-   * Draw the whole map again after a change. A selected node the change
-   * removed loses the selection, and a selected node whose background
-   * changed gets a new ring color.
+   * Draw the nodes a change added or updated, and drop the removed ones. An
+   * added or removed node also redraws its parent, whose hidden child nodes
+   * mark depends on its children.
    */
-  private drawChange({ updated }: MapDataChange) {
-    this.map.draw.update();
+  private drawChange({ added, updated, removed }: MapDataChange) {
+    const redraw = this.map.draw.removeNodes(removed);
+    for (const id of added) {
+      const parent = this.parentOf(id);
+      if (parent) redraw.push(parent);
+    }
+    this.map.draw.drawNodes([...added, ...updated, ...redraw]);
 
     const selected = this.selectedId;
     if (selected === null) return;
@@ -506,7 +515,7 @@ export default class Nodes {
     }
 
     viewState.toggle(id);
-    this.map.draw.update();
+    this.map.draw.drawNodes([id, ...this.descendants(id)]);
     this.map.events.emit('viewStateChange', viewState.export());
   };
 

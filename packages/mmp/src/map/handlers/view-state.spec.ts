@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
+import InMemoryMapData from '../data/in-memory-map-data.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
@@ -14,7 +15,8 @@ beforeAll(stubSvgLengths);
 function makeChain() {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map: MmpMap = create('map', ref);
+  const data = new InMemoryMapData();
+  const map: MmpMap = create('map', ref, undefined, data);
   map.instance.new();
 
   const root = map.instance.exportRootProperties()?.id;
@@ -26,7 +28,7 @@ function makeChain() {
   const c = map.instance.addNode({ name: 'c' }, true, b.id);
   if (!c) throw new Error('addNode added no node');
 
-  return { map, root, a, b, c };
+  return { map, data, root, a, b, c };
 }
 
 function visibility(id: string): string | undefined {
@@ -57,9 +59,10 @@ describe('ViewState', () => {
   });
 
   it('terminates on an ancestor cycle', () => {
-    const { map, a, b, c } = makeChain();
+    const { map, data, a, b, c } = makeChain();
     map.instance.restoreViewState({ nodesWithHiddenChildren: [b.id] });
-    map.data.addNodes([{ ...a, parent: b.id }]);
+
+    data.addNodes([{ ...a, parent: b.id }]);
 
     // The walk up from a reaches b, whose parent a closes the cycle.
     expect(map.nodes.isHidden(a.id)).toBe(true);
@@ -68,12 +71,12 @@ describe('ViewState', () => {
   });
 
   it('forgets the removed nodes and announces the new view state', () => {
-    const { map, a, b } = makeChain();
+    const { map, data, a, b } = makeChain();
     map.instance.restoreViewState({ nodesWithHiddenChildren: [a.id, b.id] });
     const listener = jest.fn();
     map.instance.on('viewStateChange', listener);
 
-    map.instance.removeNode(b.id, false);
+    data.removeNode(b.id);
 
     expect(map.instance.exportViewState()).toEqual({
       nodesWithHiddenChildren: [a.id],
@@ -82,12 +85,12 @@ describe('ViewState', () => {
   });
 
   it('announces nothing when a removal leaves the view state as it was', () => {
-    const { map, a, c } = makeChain();
+    const { map, data, a, c } = makeChain();
     map.instance.restoreViewState({ nodesWithHiddenChildren: [a.id] });
     const listener = jest.fn();
     map.instance.on('viewStateChange', listener);
 
-    map.instance.removeNode(c.id, false);
+    data.removeNode(c.id);
 
     expect(listener).not.toHaveBeenCalled();
   });
@@ -131,7 +134,7 @@ describe('ViewState', () => {
     const { map, b, c } = makeChain();
     const listener = jest.fn();
     map.instance.on('viewStateChange', listener);
-    map.instance.on('nodeUpdate', listener);
+    map.instance.on('mapChange', listener);
 
     map.instance.restoreViewState({ nodesWithHiddenChildren: [b.id] });
 
@@ -144,7 +147,7 @@ describe('ViewState', () => {
     const { map, a, c } = makeChain();
     map.instance.restoreViewState({ nodesWithHiddenChildren: [a.id] });
 
-    map.instance.new(map.instance.exportAsJSON(), false);
+    map.instance.new(map.instance.exportAsJSON());
 
     expect(map.instance.exportViewState()).toEqual({
       nodesWithHiddenChildren: [a.id],

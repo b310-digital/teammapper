@@ -1,6 +1,7 @@
 import { create } from '../../index.js';
 import { DefaultRootNodeValues } from '../options.js';
 import MmpMap from '../map.js';
+import InMemoryMapData from '../data/in-memory-map-data.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
@@ -48,8 +49,7 @@ function makeMap(
 ) {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref, { resolveImageUrl });
-  map.instance.new([
+  const data = new InMemoryMapData([
     {
       ...DefaultRootNodeValues,
       id: 'root',
@@ -59,7 +59,7 @@ function makeMap(
       image: { src, size: 60 },
     },
   ]);
-  return map;
+  return create('map', ref, { resolveImageUrl }, data);
 }
 
 function setImage(map: MmpMap, src: string) {

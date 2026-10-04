@@ -1,19 +1,21 @@
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
+import InMemoryMapData from '../data/in-memory-map-data.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 import type { MapSnapshot, OldMmpNode } from '@teammapper/shared';
 
 /**
- * A map load replaces every node of the map, and `exportAsJSON` reads them
- * back. These specs drive both through `MmpInstance`, as the frontend does.
+ * A map load replaces every node of the map data, and `exportAsJSON` reads
+ * them back. These specs drive both through `MmpInstance`, as the frontend
+ * does.
  */
 
 beforeAll(stubSvgLengths);
 
-function makeMap(): MmpMap {
+function makeMap(data = new InMemoryMapData()): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  return create('map', ref);
+  return create('map', ref, undefined, data);
 }
 
 function rootOf(map: MmpMap): string {
@@ -23,8 +25,13 @@ function rootOf(map: MmpMap): string {
 }
 
 /** A loaded map: the main root with a styled child and a grandchild. */
-function makeLoadedMap(): { map: MmpMap; child: string } {
-  const map = makeMap();
+function makeLoadedMap(): {
+  map: MmpMap;
+  data: InMemoryMapData;
+  child: string;
+} {
+  const data = new InMemoryMapData();
+  const map = makeMap(data);
   map.instance.new();
   const child = map.instance.addNode(
     {
@@ -38,7 +45,7 @@ function makeLoadedMap(): { map: MmpMap; child: string } {
   if (!child) throw new Error('addNode added no child');
   map.instance.addNode({ name: 'grandchild' }, true, child.id);
   map.instance.updateNode('linkHref', 'https://example.com/', true, child.id);
-  return { map, child: child.id };
+  return { map, data, child: child.id };
 }
 
 /** Two nodes in the format mmp 0.1.7 exported. */
@@ -79,7 +86,7 @@ afterEach(() => {
 });
 
 describe('exportAsJSON', () => {
-  it('returns no node before the first map load', () => {
+  it('returns no node for an empty map data', () => {
     expect(makeMap().instance.exportAsJSON()).toEqual([]);
   });
 
@@ -111,7 +118,7 @@ describe('exportAsJSON', () => {
   });
 
   it('returns a copy the caller may change', () => {
-    const { map, child } = makeLoadedMap();
+    const { map, data, child } = makeLoadedMap();
     const before = JSON.stringify(map.instance.exportAsJSON());
 
     const exported = map.instance.exportAsJSON();
@@ -123,13 +130,13 @@ describe('exportAsJSON', () => {
     exported.pop();
 
     expect(JSON.stringify(map.instance.exportAsJSON())).toBe(before);
-    expect(map.data.node(child)?.name).toBe('child');
+    expect(data.node(child)?.name).toBe('child');
   });
 
-  it('includes a change applied without an event', () => {
-    const { map, child } = makeLoadedMap();
+  it('includes a peer write to the map data', () => {
+    const { map, data, child } = makeLoadedMap();
 
-    map.instance.updateNode('name', 'Remote', false, child);
+    data.updateNode(child, 'name', 'Remote');
 
     const node = map.instance.exportAsJSON().find(n => n.id === child);
     expect(node?.name).toBe('Remote');
@@ -158,6 +165,17 @@ describe('new', () => {
     target.instance.new(exported);
 
     expect(target.instance.exportAsJSON()).toStrictEqual(exported);
+  });
+
+  it('writes one replacement to the map data', () => {
+    const { map, data } = makeLoadedMap();
+    const listener = jest.fn();
+    data.subscribe(listener);
+
+    map.instance.new(LEGACY_MAP as unknown as MapSnapshot);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0][0].replaced).toBe(true);
   });
 
   it('converts a map in the legacy format', () => {
@@ -201,18 +219,19 @@ describe('new', () => {
     expect(map.instance.exportAsJSON()[0].k).not.toBe(0);
   });
 
-  it('ignores the hidden attributes an older export carries', () => {
+  it('keeps only the fields a node has', () => {
     const { map, child } = makeLoadedMap();
     const legacy = map.instance
       .exportAsJSON()
       .map(node => ({ ...node, hidden: true, hasHiddenChildNodes: true }));
+    const data = new InMemoryMapData();
 
-    const target = makeMap();
+    const target = makeMap(data);
     target.instance.new(legacy);
 
-    const loaded = target.instance.exportAsJSON();
-    expect(loaded.every(node => !('hidden' in node))).toBe(true);
-    expect(loaded.every(node => !('hasHiddenChildNodes' in node))).toBe(true);
+    const stored = data.nodes();
+    expect(stored.every(node => !('hidden' in node))).toBe(true);
+    expect(stored.every(node => !('hasHiddenChildNodes' in node))).toBe(true);
     const group = target.dom.g
       .selectAll<SVGGElement, string>('g.node')
       .filter(id => id === child)
@@ -220,43 +239,32 @@ describe('new', () => {
     expect(group?.style.visibility).toBe('visible');
   });
 
-  it('hands the previous map to create listeners', () => {
-    const { map } = makeLoadedMap();
-    const previous = map.instance.exportAsJSON();
-    const payloads: (MapSnapshot | undefined)[] = [];
-    map.instance.on('create', event => payloads.push(event.previousMapData));
-
-    map.instance.new(LEGACY_MAP as unknown as MapSnapshot);
-
-    expect(payloads).toEqual([previous]);
-  });
-
   it('refuses a map that is not a list of nodes and keeps the current map', () => {
-    const { map } = makeLoadedMap();
+    const { map, data } = makeLoadedMap();
     const before = map.instance.exportAsJSON();
-    const created = jest.fn();
-    map.instance.on('create', created);
+    const listener = jest.fn();
+    data.subscribe(listener);
 
     expect(() =>
       map.instance.new({ id: 'x' } as unknown as MapSnapshot)
     ).toThrow('The snapshot is not correct');
     expect(map.instance.exportAsJSON()).toStrictEqual(before);
-    expect(created).not.toHaveBeenCalled();
+    expect(listener).not.toHaveBeenCalled();
   });
 
   describe('with an empty node list', () => {
-    it('keeps the current map and fires no create event', () => {
-      const { map } = makeLoadedMap();
+    it('keeps the current map and writes nothing', () => {
+      const { map, data } = makeLoadedMap();
       const before = map.instance.exportAsJSON();
-      const created = jest.fn();
-      map.instance.on('create', created);
+      const listener = jest.fn();
+      data.subscribe(listener);
 
       expect(() => map.instance.new([])).toThrow(
         'There was an error importing the map; changes have been rolled back.'
       );
       expect(map.instance.exportAsJSON()).toStrictEqual(before);
       expect(map.instance.getSelectedNode()?.id).toBe(before[0].id);
-      expect(created).not.toHaveBeenCalled();
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 });

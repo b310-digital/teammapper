@@ -2,13 +2,14 @@ import * as d3 from 'd3';
 import { create } from '../index.js';
 import MmpMap from './map.js';
 import InMemoryMapData from './data/in-memory-map-data.js';
+import type { MapDataChange } from './data/map-data.js';
 import { nodeRecord } from '../test/stub-map.js';
 import { stubSvgLengths } from '../test/svg-lengths.js';
+import type { MapEventType } from './handlers/events.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
   MapViewState,
-  MmpEventType,
   NodeProperty,
   NodeUpdateEvent,
   OldMmpNode,
@@ -16,9 +17,10 @@ import type {
 
 /**
  * Every event but `viewStateChange`. The `satisfies` clause fails the
- * typecheck when `MmpEventType` gains an event this record lacks.
+ * typecheck when `MapEventType` gains an event this record lacks.
  */
 const OTHER_EVENTS = Object.keys({
+  // Mirror compatibility, removed in PR 7: create to distribute.
   create: true,
   nodeSelect: true,
   nodeDeselect: true,
@@ -28,25 +30,30 @@ const OTHER_EVENTS = Object.keys({
   nodeRemove: true,
   distribute: true,
   nodeProtected: true,
-} satisfies Record<Exclude<MmpEventType, 'viewStateChange'>, true>) as Exclude<
-  MmpEventType,
+  mapChange: true,
+} satisfies Record<Exclude<MapEventType, 'viewStateChange'>, true>) as Exclude<
+  MapEventType,
   'viewStateChange'
 >[];
 
 /**
  * The frontend reaches the library through `MmpInstance` alone, so these specs
  * drive a real map through it: every node property, the protection and the
- * events.
+ * events. Each map reads and writes an `InMemoryMapData`.
  */
 
 const IMAGE_REFERENCE = 'image:5f0c4b1e-3a8d-4c6e-9f2a-7b1d2e3f4a5b';
 
 beforeAll(stubSvgLengths);
 
-function makeMap(): MmpMap {
+function makeMapOver(data: InMemoryMapData): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref);
+  return create('map', ref, undefined, data);
+}
+
+function makeMap(): MmpMap {
+  const map = makeMapOver(new InMemoryMapData());
   map.instance.new();
   return map;
 }
@@ -200,7 +207,7 @@ const RENDERED: Partial<Record<NodeProperty, unknown>> = {
 
 describe('updateNode', () => {
   describe.each(PROPERTY_CASES)('$property', ({ property, value, read }) => {
-    it('writes the value to the model', () => {
+    it('writes the value to the map data', () => {
       const { map, child } = makeMapWithChild();
 
       map.instance.updateNode(property, value, true, child);
@@ -208,7 +215,33 @@ describe('updateNode', () => {
       expect(read(exported(map, child))).toEqual(value);
     });
 
-    it('announces the change with the previous value', () => {
+    it('announces the change with mapChange', () => {
+      const { map, child } = makeMapWithChild();
+      const listener = jest.fn();
+      map.instance.on('mapChange', listener);
+
+      map.instance.updateNode(property, value, true, child);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('writes nothing when the value stays the same', () => {
+      const { map, child } = makeMapWithChild();
+      map.instance.updateNode(property, value, true, child);
+      const listener = jest.fn();
+      map.instance.on('mapChange', listener);
+      map.instance.on('nodeUpdate', listener);
+
+      map.instance.updateNode(property, value, true, child);
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    // Mirror compatibility, removed in PR 7, as are the specs below that
+    // name `notifyWithEvent`, `addNodes` or an event other than
+    // `nodeSelect`, `nodeDeselect`, `nodeProtected`, `viewStateChange` and
+    // `mapChange`.
+    it('announces a local change with the previous value', () => {
       const { map, child } = makeMapWithChild();
       const previousValue = read(exported(map, child));
       const updates: NodeUpdateEvent[] = [];
@@ -222,25 +255,17 @@ describe('updateNode', () => {
       expect(read(updates[0].nodeProperties)).toEqual(value);
     });
 
-    it('announces nothing when the value stays the same', () => {
+    it('announces nothing but mapChange without notifyWithEvent', () => {
       const { map, child } = makeMapWithChild();
-      map.instance.updateNode(property, value, true, child);
-      const listener = jest.fn();
-      map.instance.on('nodeUpdate', listener);
-
-      map.instance.updateNode(property, value, true, child);
-
-      expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('announces nothing without notifyWithEvent', () => {
-      const { map, child } = makeMapWithChild();
-      const listener = jest.fn();
-      map.instance.on('nodeUpdate', listener);
+      const update = jest.fn();
+      const change = jest.fn();
+      map.instance.on('nodeUpdate', update);
+      map.instance.on('mapChange', change);
 
       map.instance.updateNode(property, value, false, child);
 
-      expect(listener).not.toHaveBeenCalled();
+      expect(update).not.toHaveBeenCalled();
+      expect(change).toHaveBeenCalledTimes(1);
       expect(read(exported(map, child))).toEqual(value);
     });
   });
@@ -310,7 +335,7 @@ describe('updateNode', () => {
     ['name', 42],
     ['protected', 1],
     ['coordinates', { x: 'left', y: 0 }],
-  ])('refuses %s %p and keeps the model', (property, value) => {
+  ])('refuses %s %p and keeps the map data', (property, value) => {
     const { map, child } = makeMapWithChild();
     const before = exported(map, child);
 
@@ -333,6 +358,21 @@ describe('updateNode', () => {
     expect(node.colors?.background).toBe('');
     expect(node.link?.href).toBe('');
     expect(node.image?.src).toBe('');
+  });
+
+  it('writes a recolor and the recolor back', () => {
+    const data = new InMemoryMapData();
+    const map = makeMapOver(data);
+    map.instance.new();
+    const child = map.instance.addNode({ name: 'child' }, true, rootOf(map));
+    if (!child) throw new Error('addNode added no child');
+    const original = data.node(child.id)?.colors?.background;
+
+    map.instance.updateNode('backgroundColor', '#ff0000', true, child.id);
+    expect(data.node(child.id)?.colors?.background).toBe('#ff0000');
+
+    map.instance.updateNode('backgroundColor', original, true, child.id);
+    expect(data.node(child.id)?.colors?.background).toBe(original);
   });
 });
 
@@ -408,8 +448,10 @@ describe('events', () => {
     const map = makeMap();
     const selected: string[] = [];
     const deselected: string[] = [];
+    const changes = jest.fn();
     map.instance.on('nodeSelect', node => selected.push(node.id));
     map.instance.on('nodeDeselect', node => deselected.push(node.id));
+    map.instance.on('mapChange', changes);
     const root = rootOf(map);
 
     const node = map.instance.addNode({ name: 'a' });
@@ -420,6 +462,7 @@ describe('events', () => {
 
     expect(selected).toEqual([node.id]);
     expect(deselected).toEqual([root, node.id]);
+    expect(changes).toHaveBeenCalledTimes(3);
   });
 
   it('announces a new node and its removal', () => {
@@ -471,6 +514,7 @@ describe('events', () => {
     ]);
 
     expect(drawnIds()).toEqual([root, 'peer']);
+    expect(exported(map, 'peer')).toMatchObject({ k: 3, protected: true });
     expect(announced).not.toHaveBeenCalled();
   });
 
@@ -502,31 +546,42 @@ describe('events', () => {
   });
 });
 
+describe('create', () => {
+  /** root -> a -> b, root -> c. */
+  const SNAPSHOT: MapSnapshot = [
+    nodeRecord({ id: 'root', isRoot: true, name: 'Root' }),
+    nodeRecord({ id: 'a', parent: 'root', coordinates: { x: 200, y: 0 } }),
+    nodeRecord({ id: 'b', parent: 'a', coordinates: { x: 400, y: 0 } }),
+    nodeRecord({ id: 'c', parent: 'root', coordinates: { x: -200, y: 0 } }),
+  ];
+
+  it('draws every node of a filled map data and selects the main root', () => {
+    const map = makeMapOver(new InMemoryMapData(SNAPSHOT));
+
+    expect(drawnIds()).toEqual(['root', 'a', 'b', 'c']);
+    expect(d3.selectAll('path.branch').size()).toBe(3);
+    expect(map.instance.getSelectedNode()?.id).toBe('root');
+  });
+
+  it('draws nothing and selects nothing for an empty map data', () => {
+    const map = makeMapOver(new InMemoryMapData());
+
+    expect(drawnIds()).toEqual([]);
+    expect(map.instance.getSelectedNode()).toBeNull();
+    expect(map.instance.exportRootProperties()).toBeNull();
+  });
+});
+
 describe('changes written to the map data', () => {
-  /** root -> a -> b, drawn from map data the spec also writes to. */
   function makePeerMap() {
     const data = new InMemoryMapData([
       nodeRecord({ id: 'root', isRoot: true, name: 'Root' }),
       nodeRecord({ id: 'a', parent: 'root', coordinates: { x: 200, y: 0 } }),
       nodeRecord({ id: 'b', parent: 'a', coordinates: { x: 400, y: 0 } }),
     ]);
-    const ref = document.createElement('div');
-    document.body.appendChild(ref);
-    return { data, map: create('map', ref, undefined, data) };
+    const map = makeMapOver(data);
+    return { data, map };
   }
-
-  it('writes a local edit to the map data and draws it', () => {
-    const { data, map } = makePeerMap();
-
-    const added = map.instance.addNode({ name: 'Local' }, true, 'a');
-    map.instance.updateNode('name', 'Edited', true, 'b');
-
-    if (!added) throw new Error('addNode added no node');
-    expect(data.node(added.id)?.name).toBe('Local');
-    expect(drawnIds()).toContain(added.id);
-    expect(data.node('b')?.name).toBe('Edited');
-    expect(nameDom('b').innerHTML).toBe('Edited');
-  });
 
   it('draws a peer write and keeps the selection', () => {
     const { data, map } = makePeerMap();
@@ -556,6 +611,63 @@ describe('changes written to the map data', () => {
     expect(deselected).toEqual(['b']);
     expect(map.instance.getSelectedNode()).toBeNull();
     expect(drawnIds()).toEqual(['root']);
+    expect(d3.selectAll('path.branch').size()).toBe(0);
+  });
+
+  it('selects the main root of a replaced map', () => {
+    const { data, map } = makePeerMap();
+    map.instance.selectNode('b');
+    const deselect = jest.fn();
+    map.instance.on('nodeDeselect', deselect);
+
+    data.replaceMap([
+      nodeRecord({ id: 'other', isRoot: true, name: 'Other' }),
+      nodeRecord({ id: 'x', parent: 'other' }),
+    ]);
+
+    expect(drawnIds()).toEqual(['other', 'x']);
+    expect(map.instance.getSelectedNode()?.id).toBe('other');
+    expect(deselect).not.toHaveBeenCalled();
+  });
+
+  it('keeps the selection and the view when a peer renames the main root', () => {
+    const { data, map } = makePeerMap();
+    map.instance.selectNode('a');
+    const svg = map.dom.svg.node();
+    if (!svg) throw new Error('no svg');
+    map.dom.svg.call(map.zoom.getZoomBehavior().translateTo, 300, 200);
+    const transform = d3.zoomTransform(svg).toString();
+    const changes: MapDataChange[] = [];
+    data.subscribe(change => changes.push(change));
+
+    data.updateNode('root', 'name', 'Renamed');
+
+    expect(changes[0].replaced).toBe(false);
+    expect(nameDom('root').innerHTML).toBe('Renamed');
+    expect(map.instance.getSelectedNode()?.id).toBe('a');
+    expect(d3.zoomTransform(svg).toString()).toBe(transform);
+  });
+
+  it('draws a recolor reading the records of that node and its ancestors only', () => {
+    const siblings = Array.from({ length: 20 }, (_, i) =>
+      nodeRecord({ id: 's' + i, parent: 'root', coordinates: { x: 200, y: i } })
+    );
+    const data = new InMemoryMapData([
+      nodeRecord({ id: 'root', isRoot: true }),
+      nodeRecord({ id: 'a', parent: 'root', coordinates: { x: 200, y: 0 } }),
+      ...siblings,
+    ]);
+    makeMapOver(data);
+    const read = jest.spyOn(data, 'node');
+    const scan = jest.spyOn(data, 'nodes');
+
+    data.updateNode('a', 'backgroundColor', '#ff0000');
+
+    expect(scan).not.toHaveBeenCalled();
+    expect(new Set(read.mock.calls.map(([id]) => id))).toEqual(
+      new Set(['a', 'root'])
+    );
+    expect(read.mock.calls.length).toBeLessThanOrEqual(4);
   });
 });
 
@@ -597,16 +709,90 @@ describe('editing a name', () => {
   });
 });
 
+describe('batched writes', () => {
+  function countChanges(data: InMemoryMapData) {
+    const listener = jest.fn();
+    data.subscribe(listener);
+    return listener;
+  }
+
+  function makeTree() {
+    const data = new InMemoryMapData([
+      nodeRecord({ id: 'root', isRoot: true }),
+      nodeRecord({
+        id: 'a',
+        parent: 'root',
+        coordinates: { x: 200, y: 0 },
+        protected: true,
+      }),
+      // Off the layout, so distribute moves it.
+      nodeRecord({ id: 'b', parent: 'a', coordinates: { x: 999, y: 999 } }),
+      nodeRecord({ id: 'c', parent: 'root', coordinates: { x: -200, y: 0 } }),
+    ]);
+    return { data, map: makeMapOver(data) };
+  }
+
+  it('protects a branch in one change', () => {
+    const { data, map } = makeTree();
+    const listener = countChanges(data);
+
+    map.instance.protectBranch('root');
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(data.node('root')?.protected).toBe(true);
+    expect(data.node('a')?.protected).toBe(false);
+  });
+
+  it('distributes the nodes in one change', () => {
+    const { data, map } = makeTree();
+    const listener = countChanges(data);
+
+    map.instance.distributeNodes();
+
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('pastes a branch in one change', () => {
+    const { data, map } = makeTree();
+    map.instance.copyNode('a');
+    const listener = countChanges(data);
+
+    map.instance.pasteNode('c');
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(data.nodes()).toHaveLength(6);
+  });
+
+  it('announces the pasted nodes in one nodePaste event', () => {
+    const { data, map } = makeTree();
+    map.instance.copyNode('a');
+    const pastes: ExportNodeProperties[][] = [];
+    map.instance.on('nodePaste', nodes => pastes.push(nodes));
+
+    map.instance.pasteNode('c');
+
+    const pastedIds = data
+      .nodes()
+      .slice(4)
+      .map(node => node.id);
+    expect(pastes.map(nodes => nodes.map(node => node.id))).toEqual([
+      pastedIds,
+    ]);
+  });
+});
+
 describe('destroy', () => {
   it('removes the svg, every subscription and the resize listener', () => {
-    const map = makeMap();
+    const data = new InMemoryMapData();
+    const map = makeMapOver(data);
+    map.instance.new();
     const ref = map.dom.container.node();
     const listener = jest.fn();
     map.instance.on('nodeSelect', listener);
     const onChange = jest.spyOn(map.nodes, 'drawReplaced');
 
     map.instance.destroy();
-    map.data.replaceMap([nodeRecord({ id: 'root', isRoot: true })]);
+    data.replaceMap([nodeRecord({ id: 'root', isRoot: true })]);
 
     expect(ref?.querySelector('svg')).toBeNull();
     expect(d3.select(window).on('resize.map')).toBeUndefined();
