@@ -26,6 +26,7 @@ function drawMarks(
     ringOf: () => null,
     imageOf: () => null,
     isEditing: () => false,
+    hidesChildren: () => false,
     fontFamily: 'sans-serif',
     showLinktext: false,
   };

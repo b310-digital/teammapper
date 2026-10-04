@@ -24,6 +24,8 @@ export interface MarkContext {
   imageOf(node: Node): LoadedImage | null;
   /** True while the person edits the node's name. */
   isEditing(node: Node): boolean;
+  /** True when the view state hides the child nodes the node has. */
+  hidesChildren(node: Node): boolean;
   fontFamily: string;
   showLinktext: boolean;
 }
@@ -209,12 +211,17 @@ const link: NodeMark = {
 function icon(
   className: string,
   glyph: string,
-  shown: (node: Node) => boolean,
+  shown: (node: Node, context: MarkContext) => boolean,
   x: (width: number) => number
 ): NodeMark {
   return {
-    draw(groups) {
-      join<SVGTextElement>(groups, 'text', `${className} material-icons`, shown)
+    draw(groups, context) {
+      join<SVGTextElement>(
+        groups,
+        'text',
+        `${className} material-icons`,
+        node => shown(node, context)
+      )
         .text(glyph)
         .style('fill', node => node.colors.name);
     },
@@ -235,7 +242,7 @@ function icon(
 const hiddenChildren = icon(
   'hidden-icon',
   'visibility_off',
-  node => node.hasHiddenChildNodes,
+  (node, context) => context.hidesChildren(node),
   () => -60
 );
 

@@ -79,8 +79,6 @@ export const NodeSchema = v.object({
   parent: v.nullable(v.string()),
   isRoot: v.boolean(),
   protected: v.optional(v.boolean(), false),
-  hidden: v.optional(v.boolean(), false),
-  hasHiddenChildNodes: v.optional(v.boolean(), false),
 });
 
 /** The value each node property accepts in a single node update. */
@@ -97,7 +95,6 @@ export const NodePropertySchemas = {
   fontStyle: FontSchema.entries.style,
   fontSize: FontSchema.entries.size,
   nameColor: CssColorSchema,
-  hidden: v.boolean(),
 } satisfies Record<NodeProperty, v.GenericSchema>;
 
 export const MapOptionsSchema = v.partial(

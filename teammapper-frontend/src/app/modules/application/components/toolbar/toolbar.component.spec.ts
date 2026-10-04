@@ -25,7 +25,6 @@ class FakeTranslateLoader implements TranslateLoader {
 
 class MmpServiceStub {
   exportMap = jest.fn();
-  nodeChildren = jest.fn().mockReturnValue([]);
   getSelectedNode = jest.fn();
   hasSelectedNode = jest.fn().mockReturnValue(true);
   selectNode = jest.fn();
@@ -35,6 +34,7 @@ class MmpServiceStub {
   addTree = jest.fn();
   removeNodeLink = jest.fn();
   toggleBranchVisibility = jest.fn();
+  childNodesHidden = jest.fn().mockReturnValue(false);
   distributeNodes = jest.fn();
   addNodeImage = jest.fn();
   importMap = jest.fn();
@@ -175,21 +175,16 @@ describe('ToolbarComponent', () => {
     expect(alertSpy).toHaveBeenCalledWith('Large file warning');
   });
 
-  it('should detect hidden nodes', () => {
-    ctx.mmpService.nodeChildren.mockReturnValue([
-      { id: '1', hidden: true } as ExportNodeProperties,
-      { id: '2', hidden: false } as ExportNodeProperties,
-    ]);
+  it('reports hidden child nodes of the selected node', () => {
+    ctx.mmpService.childNodesHidden.mockReturnValue(true);
 
-    expect(ctx.component.hasHiddenNodes).toBe(true);
+    expect(ctx.component.childNodesHidden).toBe(true);
   });
 
-  it('should detect no hidden nodes', () => {
-    ctx.mmpService.nodeChildren.mockReturnValue([
-      { id: '1', hidden: false } as ExportNodeProperties,
-    ]);
+  it('reports no hidden child nodes when the view state shows them', () => {
+    ctx.mmpService.childNodesHidden.mockReturnValue(false);
 
-    expect(ctx.component.hasHiddenNodes).toBe(false);
+    expect(ctx.component.childNodesHidden).toBe(false);
   });
 
   it('should not allow hiding root node', () => {

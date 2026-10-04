@@ -28,8 +28,9 @@ const LoadedNodeSchema = v.object({
 
 /**
  * Replace every node of the map with the nodes of an exported map, or with a
- * new main root. The loader checks the nodes, converts the format mmp 0.1.7
- * exported, and hides again the branches this client hid.
+ * new main root. The loader checks the nodes and converts the format mmp
+ * 0.1.7 exported. ViewState keeps its set apart from the node store, so a
+ * load keeps hidden child nodes hidden.
  */
 export default class MapLoader {
   private map: Map;
@@ -67,7 +68,6 @@ export default class MapLoader {
     }
 
     const previousData = this.map.export.asJSON();
-    this.reapplyHiddenState(previousData, nodes);
     this.replaceNodes(nodes);
     this.map.zoom.center('position', 0);
 
@@ -122,8 +122,6 @@ export default class MapLoader {
         font: Utils.cloneObject(mergedProperty.font) as MapNodeFont,
         link: Utils.cloneObject(mergedProperty.link) as MapNodeLink,
         protected: mergedProperty.protected,
-        hidden: mergedProperty.hidden,
-        hasHiddenChildNodes: mergedProperty.hasHiddenChildNodes,
         isRoot: mergedProperty.isRoot,
       };
 
@@ -203,49 +201,5 @@ export default class MapLoader {
         style: oldNode.value.italic ? 'italic' : 'normal',
       };
     }
-  }
-
-  /**
-   * Hide again the branches this client hid in the previous map: set
-   * hasHiddenChildNodes on each such node in `nodes` and hide its
-   * descendants.
-   * @param {MapSnapshot} previousData
-   * @param {MapSnapshot} nodes
-   */
-  private reapplyHiddenState(
-    previousData: MapSnapshot,
-    nodes: MapSnapshot
-  ): void {
-    const nodesWithHiddenChildren = previousData.filter(
-      node => node.hasHiddenChildNodes
-    );
-
-    // Hide every descendant of the node with `parentId`.
-    const hideChildNodes = (parentId: string) =>
-      nodes
-        .filter(node => node.parent === parentId)
-        .forEach(node => {
-          node.hidden = true;
-          hideChildNodes(node.id);
-        });
-
-    nodes.forEach(loadedNode => {
-      const nodeWithHiddenChildren = nodesWithHiddenChildren.find(
-        x => loadedNode.id === x.id
-      );
-
-      if (nodeWithHiddenChildren) {
-        loadedNode.hasHiddenChildNodes = true;
-
-        // The children come from `nodes`, because the node store does not
-        // hold the loaded nodes yet.
-        nodes
-          .filter(node => node.parent === loadedNode.id)
-          .forEach(node => {
-            node.hidden = true;
-            hideChildNodes(node.id);
-          });
-      }
-    });
   }
 }

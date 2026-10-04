@@ -20,5 +20,4 @@ export const NodePropertyMapping = {
   fontStyle: ['font', 'style'],
   fontSize: ['font', 'size'],
   nameColor: ['colors', 'name'],
-  hidden: ['hidden'],
 } as const;

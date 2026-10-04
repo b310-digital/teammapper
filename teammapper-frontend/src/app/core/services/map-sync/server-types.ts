@@ -49,7 +49,6 @@ const ReversePropertyMapping = {
     style: 'fontStyle',
     size: 'fontSize',
   },
-  hidden: 'hidden',
 } as const;
 
 export { ServerMap, ServerMapInfo, PrivateServerMap, ReversePropertyMapping };

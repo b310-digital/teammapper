@@ -8,7 +8,7 @@ describe('normalizeMapData', () => {
     expect(normalized.options).toEqual({});
   });
 
-  it('normalizes legacy node missing folding properties to default false', () => {
+  it('normalizes a legacy node and gives it no hidden keys', () => {
     const legacyNode = {
       id: 'n1',
       parent: null,
@@ -18,24 +18,30 @@ describe('normalizeMapData', () => {
     };
 
     const node = normalizeMapNode(legacyNode);
-    expect(node.hidden).toBe(false);
-    expect(node.hasHiddenChildNodes).toBe(false);
+    expect(node).not.toHaveProperty('hidden');
+    expect(node).not.toHaveProperty('hasHiddenChildNodes');
     expect(node.name).toBe('Legacy Node');
     expect(node.coordinates).toEqual({ x: 50, y: 50 });
   });
 
-  it('preserves branch folding flags if present in cached data', () => {
-    const foldedNode = {
+  it('drops the hidden keys of cached data', () => {
+    const cachedNode = {
       id: 'n2',
       parent: 'n1',
-      name: 'Folded Node',
+      name: 'Cached Node',
       hidden: true,
       hasHiddenChildNodes: true,
     };
 
-    const node = normalizeMapNode(foldedNode);
-    expect(node.hidden).toBe(true);
-    expect(node.hasHiddenChildNodes).toBe(true);
+    const node = normalizeMapNode(cachedNode);
+    expect(node).not.toHaveProperty('hidden');
+    expect(node).not.toHaveProperty('hasHiddenChildNodes');
+  });
+
+  it('gives the default node no hidden keys', () => {
+    const node = normalizeMapNode(null);
+    expect(node).not.toHaveProperty('hidden');
+    expect(node).not.toHaveProperty('hasHiddenChildNodes');
   });
 
   it('neutralizes prototype pollution properties', () => {
@@ -54,7 +60,7 @@ describe('normalizeMapData', () => {
       uuid: 'map-uuid-1',
       data: [
         { id: 'root', parent: null, name: 'Root' },
-        { id: 'child-1', parent: 'root', name: 'Child 1', hidden: true },
+        { id: 'child-1', parent: 'root', name: 'Child 1' },
       ],
       options: {
         fontMaxSize: 24,
@@ -66,7 +72,7 @@ describe('normalizeMapData', () => {
     expect(map.uuid).toBe('map-uuid-1');
     expect(map.data.length).toBe(2);
     expect(map.data[0].isRoot).toBe(true);
-    expect(map.data[1].hidden).toBe(true);
+    expect(map.data[1].name).toBe('Child 1');
     expect(map.options.fontMaxSize).toBe(24);
     expect(map.deleteAfterDays).toBe(30);
   });

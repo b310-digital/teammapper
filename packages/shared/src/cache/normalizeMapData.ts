@@ -27,8 +27,6 @@ export const normalizeMapNode = (raw: unknown): MapNode => {
       link: { href: '' },
       protected: false,
       k: 0,
-      hidden: false,
-      hasHiddenChildNodes: false,
     };
   }
 
@@ -121,8 +119,6 @@ export const normalizeMapNode = (raw: unknown): MapNode => {
     link,
     protected: Boolean(r.protected),
     k: typeof r.k === 'number' && !isNaN(r.k) ? r.k : 0,
-    hidden: Boolean(r.hidden),
-    hasHiddenChildNodes: Boolean(r.hasHiddenChildNodes),
   };
 };
 

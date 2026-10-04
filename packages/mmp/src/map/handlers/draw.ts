@@ -122,7 +122,7 @@ export default class Draw implements NodeView {
 
   /**
    * Redraw the whole map: draw new nodes, remove deleted ones and redraw the
-   * rest. A hidden node stays drawn but invisible.
+   * rest. A node the view state hides stays drawn but invisible.
    */
   public update() {
     const nodes = this.map.nodes.getNodes();
@@ -158,9 +158,6 @@ export default class Draw implements NodeView {
    * @param {NodeProperty} property
    */
   public renderNodeProperty(node: Node, property: NodeProperty) {
-    // The caller hides and shows nodes with a full update.
-    if (property === 'hidden') return;
-
     // The selection ring darkens along with the background.
     if (property === 'backgroundColor' && this.rings.has(node.id)) {
       this.setRing(node, this.ringColor(node));
@@ -356,16 +353,17 @@ export default class Draw implements NodeView {
    */
   private render(groups: NodeGroups, branches: BranchPaths) {
     const context = this.markContext();
+    const hidden = this.map.viewState.hiddenNodeIds();
+    const visibilityOf = (node: Node) =>
+      hidden.has(node.id) ? 'hidden' : 'visible';
 
-    groups
-      .attr('transform', translate)
-      .style('visibility', node => (node.hidden ? 'hidden' : 'visible'));
+    groups.attr('transform', translate).style('visibility', visibilityOf);
     NODE_MARKS.forEach(mark => mark.draw(groups, context));
     this.observe(groups);
     branches
       .style('fill', node => node.colors.branch)
       .style('stroke', node => node.colors.branch)
-      .style('visibility', node => (node.hidden ? 'hidden' : 'visible'));
+      .style('visibility', visibilityOf);
 
     this.measure(groups);
 
@@ -433,6 +431,7 @@ export default class Draw implements NodeView {
       ringOf: node => this.ringOf(node),
       imageOf: node => this.imageOf(node),
       isEditing: node => this.editingId === node.id,
+      hidesChildren: node => this.map.nodes.childNodesHidden(node.id),
       fontFamily: this.map.options.fontFamily,
       showLinktext: this.map.options.showLinktext,
     };

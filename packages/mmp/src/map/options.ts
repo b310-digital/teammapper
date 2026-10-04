@@ -136,7 +136,6 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     style: 'normal',
     weight: 'normal',
   },
-  hidden: false,
   isRoot: false,
 };
 
@@ -165,7 +164,6 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     weight: 'normal',
   },
   isRoot: true,
-  hidden: false,
 };
 
 export interface DefaultNodeProperties {
@@ -176,7 +174,6 @@ export interface DefaultNodeProperties {
   colors: NodeColors;
   font: NodeFont;
   isRoot: boolean;
-  hidden: boolean;
 }
 
 /**

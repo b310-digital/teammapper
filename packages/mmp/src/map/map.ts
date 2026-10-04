@@ -8,10 +8,12 @@ import Drag from './handlers/drag.js';
 import Nodes from './handlers/nodes.js';
 import Export from './handlers/export.js';
 import CopyPaste from './handlers/copy-paste.js';
+import ViewState from './handlers/view-state.js';
 import Node from './models/node.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
+  MapViewState,
   MmpEventType,
   NodeProperty,
   NodePropertyValue,
@@ -35,6 +37,7 @@ export default class MmpMap {
   public nodes: Nodes;
   public export: Export;
   public copyPaste: CopyPaste;
+  public viewState: ViewState;
 
   public instance!: MmpInstance;
 
@@ -50,6 +53,7 @@ export default class MmpMap {
     this.events = new Events();
     this.options = new Options(options, this);
     this.zoom = new Zoom(this);
+    this.viewState = new ViewState(this);
     this.loader = new MapLoader(this);
     this.drag = new Drag(this);
     this.draw = new Draw(this, ref);
@@ -107,10 +111,13 @@ export default class MmpMap {
       getSelectedNode: this.nodes.getSelectedNode,
       editNode: this.nodes.editNode,
       toggleBranchVisibility: this.nodes.toggleBranchVisibility,
+      childNodesHidden: this.nodes.childNodesHidden,
       existNode: this.nodes.existNode,
       exportAsImage: this.export.asImage,
       exportAsJSON: this.export.asJSON,
       exportRootProperties: this.nodes.exportRootProperties,
+      exportViewState: () => this.viewState.export(),
+      restoreViewState: state => this.viewState.restore(state),
       highlightNode: this.nodes.highlightNodeWithColor,
       new: this.loader.load,
       nodeChildren: this.nodes.nodeChildren,
@@ -148,10 +155,13 @@ export interface MmpInstance {
   getSelectedNode: () => Node | null;
   editNode: () => void;
   toggleBranchVisibility: () => void;
+  childNodesHidden: (id?: string) => boolean;
   existNode: (id?: string) => boolean;
   exportAsImage: (callback: (url: string) => void, type?: string) => void;
   exportAsJSON: () => MapSnapshot;
   exportRootProperties: () => ExportNodeProperties;
+  exportViewState: () => MapViewState;
+  restoreViewState: (state: MapViewState) => void;
   highlightNode: (id: string, color: string) => void;
   new: (snapshot?: MapSnapshot, notifyWithEvent?: boolean) => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];

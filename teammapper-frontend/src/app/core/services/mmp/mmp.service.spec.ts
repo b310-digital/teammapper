@@ -61,6 +61,7 @@ describe('MmpService', () => {
       pasteNode: jest.fn(),
       pasteTree: jest.fn(),
       toggleBranchVisibility: jest.fn(),
+      childNodesHidden: jest.fn(),
       distributeNodes: jest.fn(),
       nodeChildren: jest.fn(),
       addTree: jest.fn(),
@@ -601,6 +602,25 @@ describe('MmpService', () => {
       service.distributeNodes();
 
       expect(mockMap.instance.distributeNodes).toHaveBeenCalled();
+    });
+  });
+
+  describe('view state', () => {
+    it('reports no hidden child nodes before create', () => {
+      expect(service.childNodesHidden()).toBe(false);
+    });
+
+    describe('after create', () => {
+      beforeEach(async () => {
+        await service.create('test-id', document.createElement('div'));
+      });
+
+      it('asks the mmp instance whether the selected node hides its child nodes', () => {
+        mockMap.instance.childNodesHidden.mockReturnValue(true);
+
+        expect(service.childNodesHidden()).toBe(true);
+        expect(mockMap.instance.childNodesHidden).toHaveBeenCalledWith();
+      });
     });
   });
 

@@ -18,8 +18,6 @@ const buildClientNode = (
   protected: false,
   isRoot: false,
   parent: 'parent-uuid',
-  hidden: false,
-  hasHiddenChildNodes: false,
   ...overrides,
 })
 

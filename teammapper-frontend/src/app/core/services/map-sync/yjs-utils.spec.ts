@@ -28,7 +28,6 @@ jest.mock('@teammapper/mmp', () => ({
     fontStyle: ['font', 'style'],
     fontSize: ['font', 'size'],
     nameColor: ['colors', 'name'],
-    hidden: ['hidden'],
   },
 }));
 
@@ -47,7 +46,6 @@ function createMockNode(
     colors: { branch: '#000000' },
     font: { size: 14, style: 'normal', weight: 'normal' },
     protected: false,
-    hidden: false,
     coordinates: undefined,
     image: undefined,
     link: undefined,
