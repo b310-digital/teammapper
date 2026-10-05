@@ -1,7 +1,7 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { MmpService } from 'src/app/core/services/mmp/mmp.service';
 import { FloatingButtonsComponent } from './floating-buttons.component';
 
@@ -17,7 +17,10 @@ class FakeTranslateLoader implements TranslateLoader {
  */
 describe('FloatingButtonsComponent', () => {
   let fixture: ComponentFixture<FloatingButtonsComponent>;
-  let mmpService: { hasSelectedNode: jest.Mock };
+  let mmpService: {
+    hasSelectedNode: jest.Mock;
+    mapCreated$: BehaviorSubject<boolean>;
+  };
 
   const disabled = (selector: string): boolean | undefined =>
     fixture.nativeElement.querySelector(selector)?.disabled;
@@ -29,7 +32,10 @@ describe('FloatingButtonsComponent', () => {
   }
 
   beforeEach(async () => {
-    mmpService = { hasSelectedNode: jest.fn().mockReturnValue(true) };
+    mmpService = {
+      hasSelectedNode: jest.fn().mockReturnValue(true),
+      mapCreated$: new BehaviorSubject<boolean>(true),
+    };
 
     await TestBed.configureTestingModule({
       imports: [
@@ -64,5 +70,20 @@ describe('FloatingButtonsComponent', () => {
 
     expect(disabled('#floating-add-node')).toBe(true);
     expect(disabled('#floating-remove-node')).toBe(true);
+  });
+
+  it('enables center and zoom once the map exists', () => {
+    expect(disabled('#center-map-button')).toBe(false);
+    expect(disabled('#zoom-in-button')).toBe(false);
+    expect(disabled('#zoom-out-button')).toBe(false);
+  });
+
+  it('disables center and zoom before the map exists', () => {
+    mmpService.mapCreated$.next(false);
+    fixture.detectChanges();
+
+    expect(disabled('#center-map-button')).toBe(true);
+    expect(disabled('#zoom-in-button')).toBe(true);
+    expect(disabled('#zoom-out-button')).toBe(true);
   });
 });

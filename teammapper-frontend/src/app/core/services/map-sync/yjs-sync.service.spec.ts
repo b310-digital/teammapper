@@ -6,8 +6,10 @@ import { SettingsService } from '../settings/settings.service';
 import { MapSyncContext } from './map-sync-context';
 import { populateYMapFromNodeProps } from './yjs-utils';
 import {
+  capturingMmpService,
   createMockContext,
   createYjsSyncService as createService,
+  MmpHandlers,
 } from '../../../../test/mocks/yjs-sync.mock';
 
 interface YjsSyncInternals {
@@ -20,6 +22,8 @@ interface YjsSyncInternals {
   ) => void;
   showImportToast: () => Promise<void>;
   loadMapFromYDoc: () => void;
+  handleFirstSync: () => void;
+  createListeners: () => void;
   initUndoManager: () => void;
   setupNodesObserver: () => void;
   yUndoManager: Y.UndoManager | null;
@@ -66,6 +70,134 @@ describe('YjsSyncService', () => {
 
       expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
     });
+
+    // The settings page reads edit mode to decide whether the map settings
+    // of the map the user left stay editable.
+    it('keeps edit mode on destroy', () => {
+      service.destroy();
+
+      expect(settingsService.setEditMode).not.toHaveBeenCalled();
+    });
+
+    it('keeps edit mode when it opens a new connection', () => {
+      service.initMap('test-uuid');
+
+      expect(settingsService.setEditMode).not.toHaveBeenCalled();
+      service.destroy();
+    });
+  });
+
+  describe('with an open connection', () => {
+    let handlers: MmpHandlers;
+    let mmpService: jest.Mocked<MmpService>;
+    let context: MapSyncContext;
+    let settingsService: jest.Mocked<SettingsService>;
+    let service: YjsSyncService;
+
+    beforeEach(() => {
+      handlers = {};
+      mmpService = {
+        ...capturingMmpService(handlers),
+        new: jest.fn(),
+      } as unknown as jest.Mocked<MmpService>;
+      context = createMockContext();
+      settingsService = {
+        setEditMode: jest.fn(),
+      } as unknown as jest.Mocked<SettingsService>;
+      service = createService(mmpService, context, settingsService);
+      service.initMap('test-uuid');
+    });
+
+    afterEach(() => {
+      service.destroy();
+    });
+
+    it('defines the meta map before the first sync', () => {
+      expect(internals(service).yDoc.share.get('meta')).toBeInstanceOf(Y.Map);
+    });
+
+    it('asks for the map on the first sync, an empty doc included', () => {
+      internals(service).handleFirstSync();
+
+      expect(context.setConnectionStatus).toHaveBeenLastCalledWith('connected');
+      expect(context.createMap).toHaveBeenCalledTimes(1);
+    });
+
+    it('subscribes to no mmp event before the map exists', () => {
+      internals(service).handleFirstSync();
+
+      expect(mmpService.on).not.toHaveBeenCalled();
+    });
+
+    it('asks for the map again when a map component reattaches', () => {
+      internals(service).yjsSynced = true;
+
+      service.initMap('test-uuid');
+
+      expect(context.createMap).toHaveBeenCalledTimes(1);
+    });
+
+    it('asks for no map on a reattach before the first sync', () => {
+      service.initMap('test-uuid');
+
+      expect(context.createMap).not.toHaveBeenCalled();
+    });
+
+    describe('attachMap', () => {
+      const root = { id: 'root', parent: null, isRoot: true, name: 'Root' };
+
+      beforeEach(() => {
+        const doc = internals(service).yDoc;
+        const yNode = new Y.Map<unknown>();
+        doc.getMap('nodes').set('root', yNode);
+        populateYMapFromNodeProps(yNode, root as ExportNodeProperties);
+        mmpService.selectNode.mockReturnValue(root as ExportNodeProperties);
+        service.setWritable(true);
+        internals(service).handleFirstSync();
+        service.attachMap();
+      });
+
+      it('loads the Y.Doc into the map without events before it subscribes', () => {
+        expect(mmpService.new).toHaveBeenCalledWith(
+          [expect.objectContaining({ id: 'root', isRoot: true })],
+          false
+        );
+        expect(mmpService.new.mock.invocationCallOrder[0]).toBeLessThan(
+          mmpService.on.mock.invocationCallOrder[0]
+        );
+      });
+
+      it('subscribes to the mmp events', () => {
+        expect(Object.keys(handlers).sort()).toEqual([
+          'create',
+          'distribute',
+          'nodeCreate',
+          'nodeDeselect',
+          'nodePaste',
+          'nodeRemove',
+          'nodeSelect',
+          'nodeUpdate',
+        ]);
+      });
+
+      it('attaches the node the map selected when it was created', () => {
+        expect(context.setAttachedNode).toHaveBeenLastCalledWith(root);
+      });
+
+      it('creates the undo manager', () => {
+        expect(internals(service).yUndoManager).not.toBeNull();
+      });
+
+      it('sets edit mode after awareness is up', () => {
+        const awarenessOrder = (context.setClientColor as jest.Mock).mock
+          .invocationCallOrder[0];
+        const editModeOrder =
+          settingsService.setEditMode.mock.invocationCallOrder[0];
+
+        expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
+        expect(editModeOrder).toBeGreaterThan(awarenessOrder);
+      });
+    });
   });
 
   describe('initMap does not alter writable state', () => {
@@ -102,36 +234,27 @@ describe('YjsSyncService', () => {
   });
 
   describe('distributing nodes', () => {
-    type Handlers = Record<string, (payload?: unknown) => void>;
-
     const snapshot = [
       { id: 'root', parent: '', isRoot: true },
       { id: 'child', parent: 'root', isRoot: false },
     ] as ExportNodeProperties[];
 
-    let handlers: Handlers;
+    let handlers: MmpHandlers;
     let service: YjsSyncService;
     let context: MapSyncContext;
-
-    function capturingMmpService(): jest.Mocked<MmpService> {
-      return {
-        on: jest.fn((event: string) => ({
-          subscribe: (callback: (payload?: unknown) => void) => {
-            handlers[event] = callback;
-            return { unsubscribe: jest.fn() };
-          },
-        })),
-        selectNode: jest.fn(),
-        existNode: jest.fn().mockReturnValue(true),
-        exportAsJSON: jest.fn().mockReturnValue(snapshot),
-      } as unknown as jest.Mocked<MmpService>;
-    }
 
     beforeEach(() => {
       handlers = {};
       context = createMockContext();
-      service = createService(capturingMmpService(), context);
+      const mmpService = {
+        ...capturingMmpService(handlers),
+        exportAsJSON: jest.fn().mockReturnValue(snapshot),
+      } as unknown as jest.Mocked<MmpService>;
+      service = createService(mmpService, context);
       service.initMap('test-uuid');
+      // attachMap subscribes once the map exists; these tests need only the
+      // listeners.
+      internals(service).createListeners();
       internals(service).yjsSynced = true;
       // Normally created by handleFirstSync, which needs a live websocket.
       internals(service).initUndoManager();

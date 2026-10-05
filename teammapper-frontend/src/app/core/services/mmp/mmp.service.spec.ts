@@ -5,7 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
 import * as mmp from '@teammapper/mmp';
 import { Subject } from 'rxjs';
-import { OptionParameters } from '@teammapper/mmp';
+import type { MmpMap, OptionParameters } from '@teammapper/mmp';
 import { ImageUploadError } from './node-images';
 
 jest.mock('dompurify', () => {
@@ -133,19 +133,138 @@ describe('MmpService', () => {
     expect(service.hasSelectedNode()).toBe(false);
   });
 
+  describe('before create', () => {
+    it('does nothing for the toolbar, floating button and shortcut actions', async () => {
+      const actions = async () => {
+        service.zoomIn();
+        service.zoomOut();
+        service.center();
+        service.selectNode('left');
+        service.addNode();
+        service.addTree();
+        service.editNode();
+        service.moveNodeTo('left');
+        service.toggleBranchVisibility();
+        service.toggleBranchProtection();
+        service.distributeNodes();
+        await service.updateNode('fontSize', 14);
+        await service.removeNode();
+        await service.copyNode('node');
+        await service.cutNode('node');
+        await service.pasteNode();
+        await service.new([]);
+        return service.exportMap('json');
+      };
+
+      await expect(actions()).resolves.toEqual({ success: false });
+      expect(toastrService.error).not.toHaveBeenCalled();
+      expect(downloadFileSpy).not.toHaveBeenCalled();
+    });
+
+    it('reports no main root', () => {
+      expect(service.getRootNode()).toBeNull();
+    });
+  });
+
   describe('create', () => {
     it('should create a new mind map', async () => {
       const id = 'test-id';
       const element = document.createElement('div');
-      const options: OptionParameters = { drag: true };
+      const options: OptionParameters = { zoom: true };
+      editModeSubject.next(true);
 
-      await service.create(id, element, options);
+      const created = await service.create(id, element, options);
 
+      expect(created).toBe(mockMap);
       expect(mmp.create).toHaveBeenCalledWith(
         id,
         element,
-        expect.objectContaining(options)
+        expect.objectContaining({ ...options, edit: true, drag: true })
       );
+    });
+
+    it('creates the map with an edit mode reported before it existed', async () => {
+      editModeSubject.next(false);
+
+      await service.create('test-id', document.createElement('div'), {
+        drag: true,
+        edit: true,
+      });
+
+      expect(mmp.create).toHaveBeenCalledWith(
+        'test-id',
+        expect.anything(),
+        expect.objectContaining({ edit: false, drag: false })
+      );
+    });
+
+    it('creates a read-only map while the edit mode is unknown', async () => {
+      await service.create('test-id', document.createElement('div'), {});
+
+      expect(mmp.create).toHaveBeenCalledWith(
+        'test-id',
+        expect.anything(),
+        expect.objectContaining({ edit: false, drag: false })
+      );
+    });
+
+    it('applies an edit mode reported after the map existed', async () => {
+      await service.create('test-id', document.createElement('div'), {});
+
+      editModeSubject.next(true);
+
+      expect(mockMap.options.update).toHaveBeenCalledWith('drag', true);
+      expect(mockMap.options.update).toHaveBeenCalledWith('edit', true);
+    });
+
+    it('creates no map for a create a newer create overtook', async () => {
+      const newerMap = {
+        ...mockMap,
+        instance: { ...mockMap.instance, destroy: jest.fn() },
+      };
+      (mmp.create as jest.Mock).mockReturnValueOnce(newerMap);
+
+      const late = service.create('a', document.createElement('div'), {});
+      const newer = service.create('b', document.createElement('div'), {});
+
+      await expect(late).resolves.toBeNull();
+      await expect(newer).resolves.toBe(newerMap);
+      expect(mmp.create).toHaveBeenCalledTimes(1);
+      service.remove();
+      expect(newerMap.instance.destroy).toHaveBeenCalled();
+    });
+
+    it('creates no map once remove ran during the create', async () => {
+      const pending = service.create('a', document.createElement('div'), {});
+      service.remove();
+
+      await expect(pending).resolves.toBeNull();
+      expect(mmp.create).not.toHaveBeenCalled();
+    });
+
+    it('removes a map that is not the current one and keeps the current one', async () => {
+      const stale = { instance: { destroy: jest.fn() } };
+      await service.create('a', document.createElement('div'), {});
+      service.markMapCreated();
+      const reported: boolean[] = [];
+      service.mapCreated$.subscribe(created => reported.push(created));
+
+      service.remove(stale as unknown as MmpMap);
+
+      expect(stale.instance.destroy).toHaveBeenCalled();
+      expect(mockMap.instance.destroy).not.toHaveBeenCalled();
+      expect(reported).toEqual([true]);
+    });
+
+    it('reports the map created once marked, and no longer after remove', async () => {
+      const reported: boolean[] = [];
+      service.mapCreated$.subscribe(created => reported.push(created));
+
+      await service.create('test-id', document.createElement('div'), {});
+      service.markMapCreated();
+      service.remove();
+
+      expect(reported).toEqual([false, true, false]);
     });
 
     it('draws node names in the font the app ships', async () => {

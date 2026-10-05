@@ -1,3 +1,4 @@
+import { NEVER, Observable } from 'rxjs';
 import { MmpService } from '../../app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../app/core/services/settings/settings.service';
 import { UtilsService } from '../../app/core/services/utils/utils.service';
@@ -7,7 +8,7 @@ import { YjsSyncService } from '../../app/core/services/map-sync/yjs-sync.servic
 
 /**
  * The collaborators YjsSyncService is constructed with. Every suite around the
- * service needs the same three, so they live here instead of in one spec.
+ * service needs the same ones, so they live here instead of in one spec.
  */
 export function createMockContext(): MapSyncContext {
   return {
@@ -27,24 +28,50 @@ export function createMockContext(): MapSyncContext {
     setCanRedo: jest.fn(),
     updateAttachedMap: jest.fn(),
     emitClientList: jest.fn(),
+    createMap: jest.fn(),
+    mapDeleted: jest.fn(),
   };
 }
 
 function createMockMmpService(): jest.Mocked<MmpService> {
   return {
-    on: jest.fn().mockReturnValue({
-      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
-    }),
-    selectNode: jest.fn(),
+    on: jest.fn().mockReturnValue(NEVER),
+    selectNode: jest.fn().mockReturnValue(null),
     existNode: jest.fn().mockReturnValue(true),
-    exportAsJSON: jest.fn().mockReturnValue([]),
   } as unknown as jest.Mocked<MmpService>;
+}
+
+/** The mmp callback of each event, by event name. */
+export type MmpHandlers = Record<string, (payload?: unknown) => void>;
+
+/**
+ * An MmpService whose `on` puts the callback of each event in `handlers`.
+ * Like mmp, it keeps one callback per event.
+ */
+export function capturingMmpService(
+  handlers: MmpHandlers
+): jest.Mocked<MmpService> {
+  return {
+    on: jest.fn(
+      (event: string) =>
+        new Observable<unknown>(observer => {
+          handlers[event] = payload => observer.next(payload);
+        })
+    ),
+    selectNode: jest.fn().mockReturnValue(null),
+    existNode: jest.fn().mockReturnValue(true),
+    highlightNode: jest.fn(),
+  } as unknown as jest.Mocked<MmpService>;
+}
+
+function createMockSettingsService(): SettingsService {
+  return { setEditMode: jest.fn() } as unknown as SettingsService;
 }
 
 export function createYjsSyncService(
   mmpService: jest.Mocked<MmpService> = createMockMmpService(),
   context: MapSyncContext = createMockContext(),
-  settingsService: SettingsService = {} as SettingsService
+  settingsService: SettingsService = createMockSettingsService()
 ): YjsSyncService {
   return new YjsSyncService(
     context,

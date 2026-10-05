@@ -16,14 +16,14 @@ import {
   parseImageUploadResponse,
 } from '@teammapper/shared';
 import { ImageUploadError } from '../mmp/node-images';
-import { MapProperties } from '@teammapper/mmp';
+import type { MapProperties, MmpMap, OptionParameters } from '@teammapper/mmp';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
 import { UtilsService } from '../utils/utils.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
-import { ToastrService } from 'ngx-toastr';
+import { ActiveToast, ToastrService } from 'ngx-toastr';
 import {
   ClientColorMapping,
   ClientColorMappingValue,
@@ -31,6 +31,15 @@ import {
 } from './yjs-utils';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
 import { YjsSyncService } from './yjs-sync.service';
+
+/** How long the connection may take to sync before the toast says so. */
+export const SYNCING_TOAST_DELAY_MS = 500;
+
+/** The element and the options openMap creates the map with. */
+interface MapTarget {
+  ref: HTMLElement;
+  options?: OptionParameters;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -60,6 +69,11 @@ export class MapSyncService implements OnDestroy {
     this.canRedoSubject.asObservable();
 
   private readonly syncService: YjsSyncService;
+
+  // Where openMap creates the map once the connection syncs.
+  private mapTarget: MapTarget | null = null;
+  private syncingToastTimer: ReturnType<typeof setTimeout> | null = null;
+  private syncingToast: ActiveToast<unknown> | null = null;
 
   // Common fields
   private colorMapping: ClientColorMapping;
@@ -128,15 +142,20 @@ export class MapSyncService implements OnDestroy {
   }
 
   public reset() {
+    this.mapTarget = null;
+    this.removeSyncingToast();
     this.syncService.destroy();
     this.colorMapping = {};
   }
 
-  public initMap() {
-    const rawData = this.getAttachedMap().cachedMap.data;
-    const normalized = normalizeMapData({ data: rawData });
-    this.mmpService.new(normalized.data as unknown as ExportNodeProperties[]);
-    this.attachedNodeSubject.next(this.mmpService.selectNode());
+  /**
+   * Open the connection to the attached map. The map appears in `ref` once
+   * the connection syncs; until then the map area stays empty, and a toast
+   * tells the user after a short delay that the map is loading.
+   */
+  public openMap(ref: HTMLElement, options?: OptionParameters) {
+    this.mapTarget = { ref, options };
+    this.scheduleSyncingToast();
     this.syncService.initMap(this.getAttachedMap().cachedMap.uuid);
   }
 
@@ -267,7 +286,74 @@ export class MapSyncService implements OnDestroy {
       setCanRedo: (v: boolean) => this.canRedoSubject.next(v),
       updateAttachedMap: () => this.updateAttachedMap(),
       emitClientList: () => this.extractClientListForSubscriber(),
+      createMap: () =>
+        void this.createMap().catch((error: unknown) => {
+          console.error('Failed to create the map:', error);
+          this.removeSyncingToast();
+        }),
+      mapDeleted: () => this.removeSyncingToast(),
     };
+  }
+
+  // ─── Map creation ────────────────────────────────────────────
+
+  /**
+   * Create the map once the connection synced. The sync service wires it up
+   * and sets edit mode last, so the map exists when edit mode reaches it.
+   * A reset while mmp builds the map leaves nothing to wire up, so the call
+   * removes the map it built and keeps a map that a newer `openMap` built.
+   */
+  private async createMap(): Promise<void> {
+    const target = this.mapTarget;
+    if (!target) return;
+    this.removeSyncingToast();
+
+    const map = await this.mmpService.create(
+      'map_1',
+      target.ref,
+      target.options
+    );
+    if (map) this.adoptMap(map, target);
+  }
+
+  /** Wire up the map, or remove it when a reset or a newer openMap ran meanwhile. */
+  private adoptMap(map: MmpMap, target: MapTarget): void {
+    if (this.mapTarget !== target) return this.mmpService.remove(map);
+    this.syncService.attachMap();
+    this.mmpService.markMapCreated();
+  }
+
+  /**
+   * Show the syncing toast when the connection has not synced after the
+   * delay. The delay keeps the toast from flashing on a fast connection.
+   */
+  private scheduleSyncingToast(): void {
+    this.removeSyncingToast();
+    const timer = setTimeout(
+      () => void this.showSyncingToast(timer),
+      SYNCING_TOAST_DELAY_MS
+    );
+    this.syncingToastTimer = timer;
+  }
+
+  /** The toast stays until the sync, a reset or a map deletion removes it. */
+  private async showSyncingToast(
+    timer: ReturnType<typeof setTimeout>
+  ): Promise<void> {
+    const message = await this.utilsService.translate('TOASTS.MAP_SYNCING');
+    // The sync or a reset may have come while the translation loaded.
+    if (this.syncingToastTimer !== timer) return;
+    this.syncingToast = this.toastrService.info(message, '', {
+      disableTimeOut: true,
+      tapToDismiss: false,
+    });
+  }
+
+  private removeSyncingToast(): void {
+    if (this.syncingToastTimer !== null) clearTimeout(this.syncingToastTimer);
+    this.syncingToastTimer = null;
+    if (this.syncingToast) this.toastrService.remove(this.syncingToast.toastId);
+    this.syncingToast = null;
   }
 
   // ─── Node images ─────────────────────────────────────────────

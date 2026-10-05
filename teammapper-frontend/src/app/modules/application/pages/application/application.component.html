@@ -1,19 +1,19 @@
 <div class="teammapper-application">
   <teammapper-colors-panel
     [node]="node | async"
-    [editDisabled]="editMode | async | inverseBool"></teammapper-colors-panel>
+    [editDisabled]="(editDisabled | async) ?? true"></teammapper-colors-panel>
   <teammapper-client-colors-panel></teammapper-client-colors-panel>
   <teammapper-sliders-panel
     [node]="node | async"
-    [editDisabled]="editMode | async | inverseBool"></teammapper-sliders-panel>
+    [editDisabled]="(editDisabled | async) ?? true"></teammapper-sliders-panel>
   <teammapper-floating-buttons
     [editDisabled]="
-      editMode | async | inverseBool
+      (editDisabled | async) ?? true
     "></teammapper-floating-buttons>
 
   <teammapper-toolbar
     [node]="node | async"
-    [editDisabled]="editMode | async | inverseBool"></teammapper-toolbar>
+    [editDisabled]="(editDisabled | async) ?? true"></teammapper-toolbar>
 
   <teammapper-map></teammapper-map>
 </div>

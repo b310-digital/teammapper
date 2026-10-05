@@ -86,6 +86,19 @@ function batchParentFirst(
   return [...ordered, ...unreached].map(key => key.node);
 }
 
+/**
+ * Keeps one open map in sync with the other clients over a Yjs websocket. It
+ * mirrors mmp's node events into the Y.Doc and peer changes back into mmp,
+ * and owns presence and the undo manager.
+ *
+ * `MapSyncService` is responsible for the startup:
+ * 1. `MapSyncService.openMap` calls `initMap` on this service, which creates the Y.Doc and
+ *    connects. No map exists yet.
+ * 2. On the first sync, this service asks `MapSyncService` (through the
+ *    context's `createMap`) to create mmp.
+ * 3. `MapSyncService` then calls `attachMap`, which loads the Y.Doc into
+ *    mmp, wires listeners, presence and undo, and sets edit mode last.
+ */
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
   private wsProvider: WebsocketProvider | null = null;
@@ -99,6 +112,9 @@ export class YjsSyncService {
     null;
   private yjsAwarenessHandler: (() => void) | null = null;
   private yUndoManager: Y.UndoManager | null = null;
+  // The node this client has selected, which setupAwareness publishes once
+  // awareness is up.
+  private selectedNodeId: string | null = null;
 
   constructor(
     private ctx: MapSyncContext,
@@ -176,18 +192,42 @@ export class YjsSyncService {
 
   // ─── Connection lifecycle ───────────────────────────────────
 
+  /**
+   * Open the connection to a map, or reattach to the open one. The first
+   * sync asks the context to create the map, which then calls `attachMap`.
+   */
   initMap(uuid: string): void {
     if (this.hasActiveConnection(uuid)) {
-      this.reattachListeners();
+      this.reattach();
       return;
     }
 
     this.yjsMapId = uuid;
     this.yDoc = new Y.Doc();
+    // Define `meta` as a map before the first sync. A peer's write would
+    // otherwise create it as a bare type, and the first getMap call would
+    // swap in a new object that no transaction's `changed` list contains.
+    this.yDoc.getMap(META);
     const provider = this.setupConnection(uuid);
     this.setupConnectionStatus(provider);
     this.setupMapDeletionHandler(provider);
+  }
+
+  /**
+   * Wire the map the context created: load the Y.Doc into it, then the mmp
+   * listeners, the selection, the observers, awareness and the undo
+   * manager, and last edit mode, so the map exists when edit mode reaches it.
+   */
+  attachMap(): void {
+    this.detachObservers();
+    this.loadMapFromYDoc();
     this.createListeners();
+    this.attachSelection();
+    this.setupNodesObserver();
+    this.setupMapOptionsObserver();
+    if (!this.yUndoManager) this.initUndoManager();
+    this.setupAwareness();
+    this.settingsService.setEditMode(this.yjsWritable);
   }
 
   private hasActiveConnection(mapId: string): boolean {
@@ -196,16 +236,10 @@ export class YjsSyncService {
     );
   }
 
-  private reattachListeners(): void {
-    this.createListeners();
-    if (this.yjsSynced) {
-      this.loadMapFromYDoc();
-      this.setupNodesObserver();
-      this.setupMapOptionsObserver();
-      this.setupAwareness();
-      this.settingsService.setEditMode(this.yjsWritable);
-      this.ctx.setConnectionStatus('connected');
-    }
+  /** A synced connection asks for the map at once. */
+  private reattach(): void {
+    if (!this.yjsSynced) return;
+    this.requestMap();
   }
 
   private setupConnection(mapId: string): WebsocketProvider {
@@ -238,15 +272,19 @@ export class YjsSyncService {
     return this.wsProvider === provider;
   }
 
+  /**
+   * The map exists from the first sync on, an empty doc included: the
+   * context creates it and loads the doc into it.
+   */
   private handleFirstSync(): void {
     this.yjsSynced = true;
-    this.loadMapFromYDoc();
-    this.setupNodesObserver();
-    this.setupMapOptionsObserver();
-    this.initUndoManager();
-    this.setupAwareness();
-    this.settingsService.setEditMode(this.yjsWritable);
+    this.requestMap();
+  }
+
+  /** Report the connection as connected and let the context create the map. */
+  private requestMap(): void {
     this.ctx.setConnectionStatus('connected');
+    this.ctx.createMap();
   }
 
   private initUndoManager(): void {
@@ -289,6 +327,7 @@ export class YjsSyncService {
     provider.on('connection-close', (event: CloseEvent | null) => {
       if (!this.isCurrentProvider(provider)) return;
       if (event?.code === WS_CLOSE_MAP_DELETED) {
+        this.ctx.mapDeleted();
         window.location.reload();
       }
     });
@@ -296,6 +335,11 @@ export class YjsSyncService {
 
   // ─── Cleanup ────────────────────────────────────────────────
 
+  /**
+   * Close the connection. Edit mode keeps its value, because the settings
+   * page reads it to decide whether the map settings of the map the user
+   * left stay editable.
+   */
   destroy(): void {
     this.unsubscribeListeners();
     this.detachObservers();
@@ -318,6 +362,7 @@ export class YjsSyncService {
     this.yjsSynced = false;
     this.yjsWritable = false;
     this.yjsMapId = null;
+    this.selectedNodeId = null;
     // Reset to the pre-connection state. A leftover 'disconnected' would
     // reopen the connection-lost dialog over the next map.
     this.ctx.setConnectionStatus(null);
@@ -379,9 +424,9 @@ export class YjsSyncService {
 
   /**
    * An import replaces the whole map, so it goes out as a full-map
-   * replacement. Opening a map emits `create` too, but never reaches the undo
-   * stack: MapSyncService.initMap emits it before subscribing here, and
-   * loadMapFromYDoc replays the map with notifyWithEvent = false.
+   * replacement. Opening a map never reaches the undo stack: attachMap loads
+   * the doc before subscribing here, and loadMapFromYDoc replays the map with
+   * notifyWithEvent = false.
    */
   private setupCreateHandler(): void {
     this.yjsSubscriptions.push(
@@ -431,6 +476,16 @@ export class YjsSyncService {
         this.ctx.setAttachedNode(null);
       })
     );
+  }
+
+  /**
+   * Take over the selection the map made when it was created. Its
+   * `nodeSelect` fired before the listeners above existed.
+   */
+  private attachSelection(): void {
+    const selected = this.mmpService.selectNode();
+    this.ctx.setAttachedNode(selected);
+    this.updateAwarenessSelection(selected?.id ?? null);
   }
 
   private setupNodeUpdateHandler(): void {
@@ -753,7 +808,7 @@ export class YjsSyncService {
 
     awareness.setLocalStateField('user', {
       color,
-      selectedNodeId: null,
+      selectedNodeId: this.selectedNodeId,
     });
 
     this.yjsAwarenessHandler = () => {
@@ -774,9 +829,10 @@ export class YjsSyncService {
   }
 
   private updateAwarenessSelection(nodeId: string | null): void {
-    // The map load on first sync selects the root before setupAwareness runs.
-    // A write then would make pickClientColor count this client's own colour
-    // as taken.
+    this.selectedNodeId = nodeId;
+    // Until setupAwareness runs, the method only records the selection, and
+    // setupAwareness publishes it. A write before then would make
+    // pickClientColor count this client's own colour as taken.
     if (!this.wsProvider || this.yjsAwarenessHandler === null) return;
     this.wsProvider.awareness.setLocalStateField('user', {
       color: this.ctx.getClientColor(),

@@ -215,6 +215,7 @@
     "NODE_COPIED": "Nodo copiato con successo!",
     "NODE_CUT": "Nodo tagliato con successo!",
     "MAP_IMPORT_SUCCESS": "Mappa mentale importata con successo",
+    "MAP_SYNCING": "Caricamento della mappa mentale…",
     "INVALID_MODIFICATION_SECRET": "Il link di modifica non è valido. La mappa mentale si apre in sola lettura.",
     "MAP_UPDATE_SUCCESS": "Mappa mentale aggiornata con successo!",
     "WARNINGS": {
