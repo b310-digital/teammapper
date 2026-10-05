@@ -131,20 +131,20 @@ describe('selectRootNode', () => {
 
 describe('operations on the selected node with nothing selected', () => {
   it('updates no node', () => {
-    const { handler, events } = makeMap();
+    const { handler, data, events } = makeMap();
 
     handler.updateNode('fontWeight', 'bold');
 
-    expect(handler.record('branch')?.font.weight).not.toBe('bold');
+    expect(data.node('branch')?.font?.weight).not.toBe('bold');
     expect(events.emit).not.toHaveBeenCalled();
   });
 
   it('removes no node', () => {
-    const { handler, map, events } = makeMap();
+    const { handler, data, events } = makeMap();
 
     handler.removeNode();
 
-    expect(map.export.asJSON()).toHaveLength(3);
+    expect(data.nodes()).toHaveLength(3);
     expect(events.emit).not.toHaveBeenCalled();
   });
 
@@ -155,10 +155,10 @@ describe('operations on the selected node with nothing selected', () => {
   });
 
   it('throws when nothing is selected and no parent is named', () => {
-    const { handler, map } = makeMap();
+    const { handler, data } = makeMap();
 
     expect(() => handler.addNode({})).toThrow('There is no selected node');
-    expect(map.export.asJSON()).toHaveLength(3);
+    expect(data.nodes()).toHaveLength(3);
   });
 
   it('adds a child to a named parent', () => {
@@ -170,14 +170,14 @@ describe('operations on the selected node with nothing selected', () => {
   });
 
   it('copies, cuts and pastes nothing', () => {
-    const { map, events } = makeMap();
+    const { map, data, events } = makeMap();
     map.copyPaste.copy('branch');
 
     map.copyPaste.copy();
     map.copyPaste.cut();
     map.copyPaste.paste();
 
-    expect(map.export.asJSON()).toHaveLength(3);
+    expect(data.nodes()).toHaveLength(3);
     expect(events.emit).not.toHaveBeenCalled();
   });
 });

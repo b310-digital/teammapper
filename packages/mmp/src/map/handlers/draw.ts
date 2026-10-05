@@ -226,9 +226,8 @@ export default class Draw {
    * drawn, a canvas estimates its size.
    * @param {ResolvedNode} node
    */
-  public dimensionsOf = (
-    node: Pick<ResolvedNode, 'id' | 'name' | 'font'>
-  ): MapNodeDimensions => withPadding(this.textExtentOf(node));
+  public dimensionsOf = (node: ResolvedNode): MapNodeDimensions =>
+    withPadding(this.textExtentOf(node));
 
   /**
    * The box size a name will get, estimated before the node is drawn. The
@@ -267,7 +266,7 @@ export default class Draw {
    * background holds no color.
    * @param {ResolvedNode} node
    */
-  public ringColor(node: Pick<ResolvedNode, 'colors'>): string | null {
+  public ringColor(node: ResolvedNode): string | null {
     return d3.color(node.colors.background)?.darker(0.5).toString() ?? null;
   }
 
@@ -370,7 +369,7 @@ export default class Draw {
       name.style.setProperty('cursor', 'pointer');
 
       // The blur commits to the node it edited, whatever node the selection
-      // moves to, and reads the name the node store holds now.
+      // moves to, and reads the name the map data holds now.
       const current = this.map.nodes.record(id);
       if (current && name.innerHTML !== current.name) {
         this.map.nodes.updateNode(
@@ -391,7 +390,7 @@ export default class Draw {
   }
 
   /**
-   * One draw pass: a lookup that reads each record from the node store at
+   * One draw pass: a lookup that reads each record from the map data at
    * most once.
    */
   private pass(): RecordLookup {
@@ -399,7 +398,8 @@ export default class Draw {
     return id => {
       let known = read.get(id);
       if (known === undefined) {
-        known = this.map.nodes.record(id) ?? null;
+        const record = this.map.data.node(id);
+        known = record ? resolveNode(record) : null;
         read.set(id, known);
       }
       return known ?? undefined;
@@ -508,9 +508,7 @@ export default class Draw {
     };
   }
 
-  private textExtentOf(
-    node: Pick<ResolvedNode, 'id' | 'name' | 'font'>
-  ): MapNodeDimensions {
+  private textExtentOf(node: ResolvedNode): MapNodeDimensions {
     return (
       this.textExtents.get(node.id) ??
       measureTextExtent(node.name, {
@@ -548,7 +546,7 @@ export default class Draw {
       // A newer image replaced this one while it loaded.
       if (this.images.get(id) !== load) return;
       // A failed image stays hidden and keeps its value: clearing it would
-      // erase the image in the Y.Doc for every client on a network error.
+      // erase the image in the map data for every client on a network error.
       load.ratio = ratio;
       const lookup = this.pass();
       this.render(

@@ -1,5 +1,8 @@
+import * as d3 from 'd3';
+import type { ExportNodeProperties } from '@teammapper/shared';
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
+import InMemoryMapData from '../data/in-memory-map-data.js';
 import type { ResolvedNode } from '../data/node-record.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
@@ -133,6 +136,41 @@ describe('measuring names', () => {
     map.instance.destroy();
 
     expect(observer().observed.size).toBe(0);
+  });
+
+  it('draws the defaults in place of values the schemas reject', () => {
+    const data = new InMemoryMapData();
+    const ref = document.createElement('div');
+    document.body.appendChild(ref);
+    const map = create('map', ref, undefined, data);
+    map.instance.new();
+    const root = mainRoot(map);
+    const peerNode = {
+      id: 'peer',
+      parent: root.id,
+      k: Infinity,
+      name: 42,
+      coordinates: { x: NaN, y: Infinity },
+      image: { src: 7, size: -Infinity },
+      colors: { name: 'url(https://x)', background: 'red', branch: {} },
+      font: { size: '12px', style: 3, weight: null },
+      link: { href: 'javascript:alert(1)' },
+      protected: 'yes',
+      isRoot: false,
+    } as unknown as ExportNodeProperties;
+
+    expect(() => data.addNodes([peerNode])).not.toThrow();
+
+    const group = d3
+      .selectAll<SVGGElement, string>('g.node')
+      .filter(id => id === 'peer')
+      .node();
+    if (!group) throw new Error('The peer node was not drawn');
+    const html = group.outerHTML;
+    expect(html).not.toContain('url(');
+    expect(html).not.toContain('javascript:');
+    expect(html).not.toContain('NaN');
+    expect(html).not.toContain('Infinity');
   });
 
   it('stops observing the name of a removed node', () => {

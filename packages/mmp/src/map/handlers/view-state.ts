@@ -9,7 +9,7 @@ import type MmpMap from '../map.js';
  *
  * The set may hold the id of a node that has not arrived yet, such as a node
  * a peer added before the first sync. Such an id hides nothing until its node
- * exists. `Nodes.removeNode` deletes the ids of the nodes it removes.
+ * exists. `Nodes.onChange` deletes the ids of the nodes a change removes.
  */
 export default class ViewState {
   private map: MmpMap;
@@ -50,7 +50,7 @@ export default class ViewState {
     return ids.filter(id => this.nodesWithHiddenChildren.delete(id)).length > 0;
   }
 
-  /** Return every id in the set, the ids of nodes the store lacks included. */
+  /** Return every id in the set, the ids of nodes the map lacks included. */
   public export(): MapViewState {
     return { nodesWithHiddenChildren: [...this.nodesWithHiddenChildren] };
   }

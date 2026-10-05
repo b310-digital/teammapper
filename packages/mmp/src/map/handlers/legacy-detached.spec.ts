@@ -48,19 +48,19 @@ function loadLegacyMap() {
 
 describe('a map whose nodes still carry the detached key', () => {
   it('loads every node', () => {
-    const { map } = loadLegacyMap();
+    const { data } = loadLegacyMap();
 
     expect(
-      map.export
-        .asJSON()
+      data
+        .nodes()
         .map(node => node.id)
         .sort()
     ).toEqual(['child', 'note', 'pasted', 'root']);
   });
 
   it('loads a former detached node as a root at its stored position', () => {
-    const { nodes } = loadLegacyMap();
-    const note = nodes.record('note');
+    const { data, nodes } = loadLegacyMap();
+    const note = data.node('note');
 
     expect({
       parent: nodes.parentOf('note'),
@@ -80,11 +80,11 @@ describe('a map whose nodes still carry the detached key', () => {
   });
 
   it('keeps the main root as the only node with isRoot set', () => {
-    const { map } = loadLegacyMap();
+    const { data } = loadLegacyMap();
 
     expect(
-      map.export
-        .asJSON()
+      data
+        .nodes()
         .filter(node => node.isRoot)
         .map(node => node.id)
     ).toEqual(['root']);
@@ -99,9 +99,10 @@ describe('a map whose nodes still carry the detached key', () => {
   });
 
   it('keeps no detached key', () => {
-    const { map } = loadLegacyMap();
+    const { data, map } = loadLegacyMap();
 
-    expect(map.export.asJSON().some(node => 'detached' in node)).toBe(false);
+    expect(data.nodes().some(node => 'detached' in node)).toBe(false);
+    expect(map.nodes.exportNode('note')).not.toHaveProperty('detached');
   });
 
   it('adds a synced former detached node as a root whatever is selected', () => {

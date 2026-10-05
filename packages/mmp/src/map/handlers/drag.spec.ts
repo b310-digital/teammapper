@@ -64,7 +64,7 @@ describe('drag', () => {
 
     expect(transformOf('a')).toBe('translate(250,10)');
     expect(transformOf('b')).toBe('translate(450,10)');
-    expect(map.nodes.record('a')?.coordinates).toEqual({ x: 200, y: 0 });
+    expect(map.data.node('a')?.coordinates).toEqual({ x: 200, y: 0 });
     expect(map.draw.previewOf('a')).toEqual({ x: 250, y: 10 });
     expect(updates).not.toHaveBeenCalled();
   });
@@ -99,8 +99,8 @@ describe('drag', () => {
         },
       ],
     ]);
-    expect(map.nodes.record('a')?.coordinates).toEqual({ x: 260, y: 10 });
-    expect(map.nodes.record('b')?.coordinates).toEqual({ x: 460, y: 10 });
+    expect(map.data.node('a')?.coordinates).toEqual({ x: 260, y: 10 });
+    expect(map.data.node('b')?.coordinates).toEqual({ x: 460, y: 10 });
     expect(map.draw.previewOf('a')).toBeUndefined();
     expect(transformOf('a')).toBe('translate(260,10)');
   });
@@ -121,8 +121,8 @@ describe('drag', () => {
     move(drag, 'a', -300, 0);
     drag.ended({} as DragEvent, 'a');
 
-    expect(map.nodes.record('a')?.coordinates).toEqual({ x: -100, y: 0 });
-    expect(map.nodes.record('b')?.coordinates).toEqual({ x: -300, y: 0 });
+    expect(map.data.node('a')?.coordinates).toEqual({ x: -100, y: 0 });
+    expect(map.data.node('b')?.coordinates).toEqual({ x: -300, y: 0 });
   });
 
   it('selects the dragged node', () => {

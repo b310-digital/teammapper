@@ -1,5 +1,3 @@
-import Node from '../models/node.js';
-import NodeStore from '../models/node-store.js';
 import MmpMap from '../map.js';
 import * as d3 from 'd3';
 import * as v from 'valibot';
@@ -44,17 +42,17 @@ import type {
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
 
 /**
- * Reads the record of a node: straight from the node store, or from the
+ * Reads the record of a node: straight from the map data, or from the
  * records one draw pass or one scan already read.
  */
 export type RecordLookup = (id: string) => ResolvedNode | undefined;
 
 /**
- * Read, change and select the nodes of the map. Nodes writes through the
- * typed methods of the map data and reads from a node store it fills anew
- * from the data on every change. Nodes keeps the selected node's id. The
- * change listener `onChange` draws every change: a local write, a peer's
- * write and an undo take this one path.
+ * Read, change and select the nodes of the map. Nodes reads every attribute
+ * through the map data and writes through its typed methods. Nodes keeps the
+ * selected node's id and nothing else of the map. The change listener
+ * `onChange` draws every change: a local write, a peer's write and an undo
+ * take this one path.
  */
 export default class Nodes {
   /**
@@ -66,8 +64,6 @@ export default class Nodes {
   }
 
   private map: MmpMap;
-
-  private readonly store = new NodeStore();
 
   // deselectNode sets this to null. A replaced map selects the main root.
   private selectedId: string | null = null;
@@ -101,7 +97,6 @@ export default class Nodes {
    * gone, and a blur there would commit a name edit.
    */
   public drawReplaced() {
-    this.fillStore();
     this.map.drag.cancel();
     this.map.draw.clear();
     this.map.draw.update();
@@ -116,7 +111,6 @@ export default class Nodes {
    * changed gets a new ring color.
    */
   private drawChange({ updated }: MapDataChange) {
-    this.fillStore();
     this.map.draw.update();
 
     const selected = this.selectedId;
@@ -145,49 +139,27 @@ export default class Nodes {
   }
 
   /**
-   * Put a node for each record of the map data in the node store, in any
-   * order: the parents link once every node exists. A record whose parent
-   * the data lacks becomes a root.
-   */
-  private fillStore() {
-    const records = this.data.nodes().map(resolveNode);
-    this.store.clear();
-    records.forEach(record =>
-      this.store.set(new Node({ ...record, parent: null }))
-    );
-    records.forEach(record => {
-      const node = this.store.get(record.id);
-      if (node) node.parent = this.store.get(record.parent) ?? null;
-    });
-  }
-
-  /**
-   * A copy of the node with `id`, every attribute filled, read from the node
-   * store.
+   * The node with `id`, every attribute filled, read from the map data.
    * @param {string} id
    */
   public record = (id: string): ResolvedNode | undefined => {
-    const node = this.store.get(id);
-    return node ? Nodes.recordOf(node) : undefined;
+    const record = this.data.node(id);
+    return record ? resolveNode(record) : undefined;
   };
 
   /**
-   * Every node, read in one scan of the node store, by id. For a user
-   * action only.
+   * Every node, read in one scan of the map data, by id. For a user action
+   * only.
    */
   public scan(): Map<string, ResolvedNode> {
     return new Map(
-      this.store.all().map(node => [node.id, Nodes.recordOf(node)])
+      this.data.nodes().map(record => [record.id, resolveNode(record)])
     );
-  }
-
-  private static recordOf(node: Node): ResolvedNode {
-    return resolveNode({ ...node, parent: node.parent?.id ?? '' });
   }
 
   /**
    * The id of the node's parent, or null for a root. A node whose parent
-   * the node store lacks counts as a root.
+   * the map data lacks counts as a root.
    * @param {string} id
    * @param {RecordLookup} lookup
    */
@@ -281,14 +253,15 @@ export default class Nodes {
   }
 
   /**
-   * The children of the node, in the order of the node store. Scans every
+   * The children of the node, in the order of the map data. Scans every
    * node once.
    * @param {string} id
    */
   public children(id: string): ResolvedNode[] {
-    return [...this.scan().values()].filter(
-      node => node.parent === id && node.id !== id
-    );
+    return this.data
+      .nodes()
+      .filter(node => node.parent === id && node.id !== id)
+      .map(resolveNode);
   }
 
   /**
@@ -308,7 +281,7 @@ export default class Nodes {
    * @param {string} id
    */
   public descendants(id: string): string[] {
-    return collectSubtreeIds([...this.scan().values()], id);
+    return collectSubtreeIds(this.data.nodes(), id);
   }
 
   /**

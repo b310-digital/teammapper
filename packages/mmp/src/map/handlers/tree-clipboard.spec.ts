@@ -80,20 +80,20 @@ function pastedNodes(context: ReturnType<typeof makeMap>): ResolvedNode[] {
 
 describe('removeNode', () => {
   it('removes a second root together with every descendant', () => {
-    const { nodes, map } = makeMap();
+    const { nodes, data } = makeMap();
 
     nodes.removeNode('second');
 
-    expect(ids(map.export.asJSON())).toEqual(['branch', 'root']);
+    expect(ids(data.nodes())).toEqual(['branch', 'root']);
   });
 
   it('refuses to remove the main root while other trees exist', () => {
-    const { nodes, map } = makeMap();
+    const { nodes, data } = makeMap();
 
     expect(() => nodes.removeNode('root')).toThrow(
       'The root node can not be deleted'
     );
-    expect(map.export.asJSON()).toHaveLength(6);
+    expect(data.nodes()).toHaveLength(6);
   });
 });
 
@@ -139,11 +139,11 @@ describe('copy and cut', () => {
   });
 
   it('cuts a second root with its tree', () => {
-    const { clipboard, map } = makeMap();
+    const { clipboard, data } = makeMap();
 
     clipboard.cut('second');
 
-    expect(ids(map.export.asJSON())).toEqual(['branch', 'root']);
+    expect(ids(data.nodes())).toEqual(['branch', 'root']);
   });
 });
 
@@ -156,7 +156,7 @@ describe('paste', () => {
     context.clipboard.paste();
 
     const [pastedRoot, ...rest] = pastedNodes(context);
-    expect(context.nodes.parentOf(pastedRoot.id)).toBe('root');
+    expect(pastedRoot.parent).toBe('root');
     expect(rest).toHaveLength(3);
     expect(context.nodes.descendants(pastedRoot.id)).toHaveLength(3);
   });
@@ -176,13 +176,13 @@ describe('paste', () => {
   });
 
   it('pastes nothing with nothing selected', () => {
-    const { clipboard, nodes, map } = makeMap();
+    const { clipboard, nodes, data } = makeMap();
     clipboard.copy('second');
     nodes.deselectNode();
 
     clipboard.paste();
 
-    expect(map.export.asJSON()).toHaveLength(6);
+    expect(data.nodes()).toHaveLength(6);
   });
 });
 
@@ -312,15 +312,15 @@ describe('pasteTree', () => {
     expect(roots).toHaveLength(2);
     expect(roots[0]).not.toBe(roots[1]);
     roots.forEach(root => expect(context.nodes.parentOf(root)).toBeNull());
-    expect(context.map.export.asJSON()).toHaveLength(14);
+    expect(context.data.nodes()).toHaveLength(14);
   });
 
   it('keeps the whole pasted tree clear of the other trees', () => {
     // The middle of the viewport, (1000, -100), lies on the second tree.
     const context = makeMap({ minX: 600, maxX: 1400, minY: -400, maxY: 200 });
     const size = { width: 120, height: 40 };
-    context.map.export
-      .asJSON()
+    context.data
+      .nodes()
       .forEach(node => context.sizes.set(node.id, { ...size }));
     context.clipboard.copy('second');
 

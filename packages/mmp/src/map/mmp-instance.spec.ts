@@ -559,6 +559,30 @@ describe('changes written to the map data', () => {
   });
 });
 
+describe('returned nodes', () => {
+  it('leaves the map data unchanged when the caller changes a copy', () => {
+    const { map, child } = makeMapWithChild();
+    const before = exported(map, child);
+
+    const copies = [
+      map.instance.selectNode(),
+      map.instance.getSelectedNode(),
+      map.instance.exportRootProperties(),
+      ...map.instance.nodeChildren(rootOf(map)),
+      ...map.instance.exportAsJSON(),
+    ];
+    for (const copy of copies) {
+      if (!copy) continue;
+      copy.name = 'changed';
+      if (copy.coordinates) copy.coordinates.x = 999;
+      if (copy.colors) copy.colors.background = '#000000';
+    }
+
+    expect(exported(map, child)).toEqual(before);
+    expect(exported(map, rootOf(map)).name).not.toBe('changed');
+  });
+});
+
 describe('editing a name', () => {
   it('commits the name of A when B takes the selection', () => {
     const { map, child } = makeMapWithChild();

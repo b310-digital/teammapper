@@ -72,12 +72,12 @@ describe('protectingNode', () => {
 
 describe('protectBranch', () => {
   it('moves the `protected` attribute of a protected child to the protected parent', () => {
-    const { nodes } = makeMap();
+    const { nodes, data } = makeMap();
 
     nodes.protectBranch('root');
 
-    expect(nodes.record('root')?.protected).toBe(true);
-    expect(nodes.record('a')?.protected).toBe(false);
+    expect(data.node('root')?.protected).toBe(true);
+    expect(data.node('a')?.protected).toBe(false);
     expect(nodes.protectingNode('b')).toBe('root');
   });
 
@@ -94,52 +94,52 @@ describe('protectBranch', () => {
   });
 
   it('does nothing for a node already protected by an ancestor', () => {
-    const { nodes } = makeMap();
+    const { nodes, data } = makeMap();
 
     nodes.protectBranch('b');
 
-    expect(nodes.record('b')?.protected).toBe(false);
-    expect(nodes.record('a')?.protected).toBe(true);
+    expect(data.node('b')?.protected).toBe(false);
+    expect(data.node('a')?.protected).toBe(true);
   });
 });
 
 describe('releaseBranch', () => {
   it('releases the whole branch from a descendant', () => {
-    const { nodes } = makeMap();
+    const { nodes, data } = makeMap();
 
     nodes.releaseBranch('b');
 
-    expect(nodes.record('a')?.protected).toBe(false);
+    expect(data.node('a')?.protected).toBe(false);
     expect(nodes.protectingNode('b')).toBeNull();
   });
 });
 
 describe('local edits inside a protected branch', () => {
   it('refuses a rename and leaves the name unchanged', () => {
-    const { nodes, events } = makeMap();
+    const { nodes, data, events } = makeMap();
 
     nodes.updateNode('name', 'new', 'b');
 
-    expect(nodes.record('b')?.name).toBe('');
+    expect(data.node('b')?.name).toBe('');
     expect(refusals(events.emit)).toEqual(['b']);
   });
 
   it('refuses a style change', () => {
-    const { nodes } = makeMap();
+    const { nodes, data } = makeMap();
 
     nodes.updateNode('fontWeight', 'bold', 'a');
 
-    expect(nodes.record('a')?.font.weight).toBe('normal');
+    expect(data.node('a')?.font?.weight).toBe('normal');
   });
 
   it('lets toggleBranchVisibility hide the child nodes of a protected node', () => {
-    const { nodes, events } = makeMap();
+    const { map, nodes, events } = makeMap();
     nodes.selectNode('a');
     events.emit.mockClear();
 
     nodes.toggleBranchVisibility();
 
-    expect(nodes.childNodesHidden('a')).toBe(true);
+    expect(map.viewState.hidesChildren('a')).toBe(true);
     expect(emitted(events.emit, 'viewStateChange')).toHaveLength(1);
     expect(refusals(events.emit)).toEqual([]);
   });
@@ -159,12 +159,12 @@ describe('local edits inside a protected branch', () => {
   });
 
   it('refuses adding a child', () => {
-    const { map, nodes, events } = makeMap();
+    const { nodes, data, events } = makeMap();
 
     const added = nodes.addNode({}, 'b');
 
     expect(added).toBeNull();
-    expect(map.export.asJSON()).toHaveLength(4);
+    expect(data.nodes()).toHaveLength(4);
     expect(refusals(events.emit)).toEqual(['b']);
   });
 
@@ -185,12 +185,12 @@ describe('local edits inside a protected branch', () => {
   });
 
   it('refuses pasting onto a protected node', () => {
-    const { map, clipboard, events } = makeMap();
+    const { data, clipboard, events } = makeMap();
     clipboard.copy('c');
 
     clipboard.paste('b');
 
-    expect(map.export.asJSON()).toHaveLength(4);
+    expect(data.nodes()).toHaveLength(4);
     expect(refusals(events.emit)).toEqual(['b']);
   });
 
@@ -207,11 +207,11 @@ describe('local edits inside a protected branch', () => {
 
 describe('changes that stay allowed', () => {
   it('applies a remote rename inside a protected branch', () => {
-    const { nodes, events } = makeMap();
+    const { nodes, data, events } = makeMap();
 
     nodes.withNotify(false, () => nodes.updateNode('name', 'remote', 'b'));
 
-    expect(nodes.record('b')?.name).toBe('remote');
+    expect(data.node('b')?.name).toBe('remote');
     expect(refusals(events.emit)).toEqual([]);
   });
 
@@ -225,7 +225,7 @@ describe('changes that stay allowed', () => {
   });
 
   it('pastes a copy of a protected branch unprotected', () => {
-    const { map, clipboard, events } = makeMap();
+    const { data, clipboard, events } = makeMap();
     clipboard.copy('a');
 
     clipboard.paste('c');
@@ -235,30 +235,32 @@ describe('changes that stay allowed', () => {
       'nodePaste'
     ) as ExportNodeProperties[][];
     expect(pasted).toHaveLength(2);
-    expect(pasted.every(node => node.protected === false)).toBe(true);
-    expect(map.export.asJSON()).toHaveLength(6);
+    expect(pasted.every(node => data.node(node.id)?.protected === false)).toBe(
+      true
+    );
+    expect(data.nodes()).toHaveLength(6);
   });
 });
 
 describe('drag', () => {
   it('leaves a protected node at its position', () => {
-    const { map, nodes, events } = makeMap();
+    const { map, data, events } = makeMap();
 
     drag(map, 'b', 50, 50);
 
-    expect(nodes.record('b')?.coordinates).toEqual({ x: 400, y: 0 });
+    expect(data.node('b')?.coordinates).toEqual({ x: 400, y: 0 });
     expect(emitted(events.emit, 'nodeUpdate')).toHaveLength(0);
     expect(refusals(events.emit)).toEqual(['b']);
   });
 
   it('moves a protected child along with its unprotected parent', () => {
-    const { map, nodes } = makeMap();
+    const { map, nodes, data } = makeMap();
     nodes.releaseBranch('a');
     nodes.withNotify(false, () => nodes.updateNode('protected', true, 'b'));
 
     drag(map, 'a', 50, 10);
 
-    expect(nodes.record('a')?.coordinates).toEqual({ x: 250, y: 10 });
-    expect(nodes.record('b')?.coordinates).toEqual({ x: 450, y: 10 });
+    expect(data.node('a')?.coordinates).toEqual({ x: 250, y: 10 });
+    expect(data.node('b')?.coordinates).toEqual({ x: 450, y: 10 });
   });
 });
