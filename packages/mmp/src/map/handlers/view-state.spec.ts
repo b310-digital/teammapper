@@ -46,9 +46,12 @@ describe('ViewState', () => {
 
     map.instance.restoreViewState({ nodesWithHiddenChildren: [a.id] });
 
-    expect([...map.viewState.hiddenNodeIds()].sort()).toEqual(
-      [b.id, c.id].sort()
-    );
+    expect([root, a.id, b.id, c.id].map(id => map.nodes.isHidden(id))).toEqual([
+      false,
+      false,
+      true,
+      true,
+    ]);
     expect(visibility(root)).toBe('visible');
     expect(visibility(c.id)).toBe('hidden');
   });
@@ -58,10 +61,10 @@ describe('ViewState', () => {
     map.instance.restoreViewState({ nodesWithHiddenChildren: [b.id] });
     a.parent = b;
 
-    // The walk from b reaches a, whose child b closes the cycle.
-    expect([...map.viewState.hiddenNodeIds()].sort()).toEqual(
-      [a.id, c.id].sort()
-    );
+    // The walk up from a reaches b, whose parent a closes the cycle.
+    expect(map.nodes.isHidden(a.id)).toBe(true);
+    expect(map.nodes.isHidden(c.id)).toBe(true);
+    expect(map.nodes.isHidden(b.id)).toBe(false);
   });
 
   it('forgets the removed nodes and announces the new view state', () => {

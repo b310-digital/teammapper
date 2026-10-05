@@ -2,7 +2,7 @@ import type Nodes from './nodes.js';
 import { fakeDraw } from '../../test/fake-draw.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import { DefaultNodeValues } from '../options.js';
-import type Node from '../models/node.js';
+import type { ResolvedNode } from '../data/node-record.js';
 import { NODE_HORIZONTAL_SPACING, type Bounds } from './node-geometry.js';
 import {
   NEW_TREE_FOOTPRINT,
@@ -18,8 +18,8 @@ import type { MapNodeDimensions, MapSnapshot } from '@teammapper/shared';
  */
 
 interface NodesInternals {
-  moveSelectionOnLevel(selected: Node, direction: boolean): void;
-  moveSelectionOnBranch(selected: Node, direction: boolean): void;
+  moveSelectionOnLevel(selected: ResolvedNode, direction: boolean): void;
+  moveSelectionOnBranch(selected: ResolvedNode, direction: boolean): void;
 }
 
 const ROOT = nodeRecord({ id: 'root', isRoot: true });
@@ -56,8 +56,8 @@ function makeMap(view: Bounds | null = null, extra: MapSnapshot = []) {
   return { ...stub, handler: stub.nodes, internals, zoom, sizes };
 }
 
-function record(handler: Nodes, id: string): Node {
-  const node = handler.getNode(id);
+function record(handler: Nodes, id: string): ResolvedNode {
+  const node = handler.record(id);
   if (!node) throw new Error('no node ' + id);
   return node;
 }
@@ -65,14 +65,6 @@ function record(handler: Nodes, id: string): Node {
 /** Add a node and return its export properties. */
 function addNode(handler: Nodes, ...args: Parameters<Nodes['addNode']>) {
   return handler.getNodeProperties(handler.addNode(...args));
-}
-
-function orientation(handler: Nodes, id: string): boolean | undefined {
-  return handler.getOrientation(record(handler, id));
-}
-
-function treeRoot(handler: Nodes, id: string): string {
-  return handler.getTreeRoot(record(handler, id)).id;
 }
 
 describe('addNodes', () => {
@@ -84,7 +76,7 @@ describe('addNodes', () => {
     ]);
 
     expect(handler.parentOf('third-root')).toBeNull();
-    expect(handler.nodeChildren('branch')).toEqual([]);
+    expect(handler.children('branch')).toEqual([]);
   });
 
   it('attaches the nodes of a second tree to their own root', () => {
@@ -107,7 +99,7 @@ describe('addNodes', () => {
     expect(handler.parentOf('third-root')).toBeNull();
     expect(handler.parentOf('child')).toBe('third-root');
     expect(handler.parentOf('grandchild')).toBe('child');
-    expect(handler.nodeChildren('branch')).toEqual([]);
+    expect(handler.children('branch')).toEqual([]);
   });
 
   it('draws the map once for all added nodes', () => {
@@ -255,9 +247,10 @@ describe('newTreeCoordinates with a viewport', () => {
       minY: point.y + NEW_TREE_FOOTPRINT.minY,
       maxY: point.y + NEW_TREE_FOOTPRINT.maxY,
     };
+    const records = handler.scan();
     const trees = treeBounds(
-      handler.getNodes(),
-      node => handler.getTreeRoot(node),
+      [...records.values()],
+      node => records.get(handler.treeRoot(node.id)) ?? node,
       handler.boundsOf
     );
 
@@ -357,15 +350,15 @@ describe('orientation', () => {
       }),
     ]);
 
-    expect(orientation(handler, 'left-of-second')).toBe(true);
-    expect(orientation(handler, 'branch')).toBe(false);
+    expect(handler.orientation('left-of-second')).toBe(true);
+    expect(handler.orientation('branch')).toBe(false);
   });
 
   it('gives every root no side', () => {
     const { handler } = makeMap();
 
-    expect(orientation(handler, 'root')).toBeUndefined();
-    expect(orientation(handler, 'second-root')).toBeUndefined();
+    expect(handler.orientation('root')).toBeUndefined();
+    expect(handler.orientation('second-root')).toBeUndefined();
   });
 });
 
@@ -376,8 +369,8 @@ describe('treeRoot', () => {
       nodeRecord({ id: 'grandchild', parent: 'child' }),
     ]);
 
-    expect(treeRoot(handler, 'grandchild')).toBe('second-root');
-    expect(treeRoot(handler, 'second-root')).toBe('second-root');
+    expect(handler.treeRoot('grandchild')).toBe('second-root');
+    expect(handler.treeRoot('second-root')).toBe('second-root');
   });
 
   it('stops at a cycle of ancestors', () => {
@@ -386,7 +379,7 @@ describe('treeRoot', () => {
       nodeRecord({ id: 'second', parent: 'first' }),
     ]);
 
-    expect(treeRoot(handler, 'first')).toBe('second');
+    expect(handler.treeRoot('first')).toBe('second');
   });
 });
 

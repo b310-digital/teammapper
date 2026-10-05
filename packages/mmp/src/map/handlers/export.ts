@@ -27,7 +27,7 @@ export default class Export {
   public asJSON = (): MapSnapshot => {
     const nodes = this.map.nodes;
 
-    return nodes.getNodes().map(node => nodes.getNodeProperties(node));
+    return [...nodes.scan().keys()].flatMap(id => nodes.exportNode(id) ?? []);
   };
 
   /**

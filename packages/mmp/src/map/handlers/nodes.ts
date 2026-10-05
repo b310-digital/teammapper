@@ -5,7 +5,11 @@ import MmpMap from '../map.js';
 import * as d3 from 'd3';
 import * as v from 'valibot';
 import { v4 as uuidv4 } from 'uuid';
-import { CssColorSchema, NodePropertySchemas } from '@teammapper/shared';
+import {
+  collectSubtreeIds,
+  CssColorSchema,
+  NodePropertySchemas,
+} from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { isNodeProperty, PropertyMapping } from '../data/property-mapping.js';
@@ -40,13 +44,14 @@ const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling n
 
 /**
  * Reads the record of a node: straight from the node store, or from the
- * records one draw pass already read.
+ * records one draw pass or one scan already read.
  */
 export type RecordLookup = (id: string) => ResolvedNode | undefined;
 
 /**
  * Manage the nodes of the map. Nodes keeps the selected node's id and
- * resolves the node on each use.
+ * resolves the node on each use. The tree queries take node ids and return
+ * ids or records.
  */
 export default class Nodes {
   /**
@@ -76,8 +81,20 @@ export default class Nodes {
    */
   public record = (id: string): ResolvedNode | undefined => {
     const node = this.store.get(id);
-    if (!node) return undefined;
+    return node ? Nodes.recordOf(node) : undefined;
+  };
 
+  /**
+   * Every node, read in one scan of the node store, by id. For a user
+   * action only.
+   */
+  public scan(): Map<string, ResolvedNode> {
+    return new Map(
+      this.store.all().map(node => [node.id, Nodes.recordOf(node)])
+    );
+  }
+
+  private static recordOf(node: Node): ResolvedNode {
     return {
       id: node.id,
       parent: node.parent?.id ?? '',
@@ -91,7 +108,7 @@ export default class Nodes {
       protected: node.protected,
       isRoot: node.isRoot,
     };
-  };
+  }
 
   /**
    * The id of the node's parent, or null for a root. A node whose parent
@@ -105,21 +122,55 @@ export default class Nodes {
   }
 
   /**
-   * The depth of the node in its tree: 1 for a root. A parent cycle stops
-   * at the node that closes it.
-   * @param {string} id
-   * @param {RecordLookup} lookup
+   * The ids along the parents of the node, nearest first. A parent cycle
+   * stops at the node that closes it.
    */
-  public level(id: string, lookup: RecordLookup = this.record): number {
+  private ancestors(id: string, lookup: RecordLookup): string[] {
     const visited = new Set<string>([id]);
+    const ancestors: string[] = [];
+
     for (
       let parent = this.parentOf(id, lookup);
       parent !== null && !visited.has(parent);
       parent = this.parentOf(parent, lookup)
     ) {
       visited.add(parent);
+      ancestors.push(parent);
     }
-    return visited.size;
+    return ancestors;
+  }
+
+  /**
+   * The id of the root of the tree the node belongs to.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public treeRoot(id: string, lookup: RecordLookup = this.record): string {
+    return this.ancestors(id, lookup).pop() ?? id;
+  }
+
+  /**
+   * The depth of the node in its tree: 1 for a root.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public level(id: string, lookup: RecordLookup = this.record): number {
+    return this.ancestors(id, lookup).length + 1;
+  }
+
+  /**
+   * Tell whether the view state hides the node: one of its ancestors hides
+   * its child nodes. Without hidden child nodes no walk runs.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public isHidden(id: string, lookup: RecordLookup = this.record): boolean {
+    const viewState = this.map.viewState;
+    if (viewState.isEmpty()) return false;
+
+    return this.ancestors(id, lookup).some(ancestor =>
+      viewState.hidesChildren(ancestor)
+    );
   }
 
   /**
@@ -135,6 +186,54 @@ export default class Nodes {
     const position = this.map.draw.previewOf(id) ??
       lookup(id)?.coordinates ?? { x: 0, y: 0 };
     return { x: position.x, y: position.y };
+  }
+
+  /**
+   * Whether the node is drawn left of the root of its own tree. A root has
+   * no side and returns undefined. The drag preview counts, so a dragged
+   * node mirrors its descendants as it crosses its tree root.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public orientation(
+    id: string,
+    lookup: RecordLookup = this.record
+  ): boolean | undefined {
+    if (this.parentOf(id, lookup) === null) return undefined;
+
+    const root = this.treeRoot(id, lookup);
+    return this.positionOf(id, lookup).x < this.positionOf(root, lookup).x;
+  }
+
+  /**
+   * The children of the node, in the order of the node store. Scans every
+   * node once.
+   * @param {string} id
+   */
+  public children(id: string): ResolvedNode[] {
+    return [...this.scan().values()].filter(
+      node => node.parent === id && node.id !== id
+    );
+  }
+
+  /**
+   * The other children of the node's parent, none for a root. Scans every
+   * node once.
+   * @param {string} id
+   */
+  private siblings(id: string): ResolvedNode[] {
+    const parent = this.parentOf(id);
+    if (parent === null) return [];
+
+    return this.children(parent).filter(node => node.id !== id);
+  }
+
+  /**
+   * The ids of every node below the node. Scans every node once.
+   * @param {string} id
+   */
+  public descendants(id: string): string[] {
+    return collectSubtreeIds([...this.scan().values()], id);
   }
 
   /**
@@ -180,7 +279,7 @@ export default class Nodes {
   ): Node | null => {
     const [, notifyWithEvent = true, parentId] = args;
     const parentNode = this.resolveParent(parentId);
-    if (parentNode && this.refusesLocalChange(parentNode, notifyWithEvent)) {
+    if (parentNode && this.refusesLocalChange(parentNode.id, notifyWithEvent)) {
       return null;
     }
 
@@ -237,15 +336,15 @@ export default class Nodes {
 
     const node: Node = new Node(properties);
 
-    this.store.set(node);
-
     if (
       !properties.coordinates?.x &&
       !properties.coordinates?.y &&
-      node.parent
+      parentNode
     ) {
-      node.coordinates = this.calculateCoordinates(node);
+      node.coordinates = this.calculateCoordinates(parentNode.id, this.record);
     }
+
+    this.store.set(node);
 
     return node;
   }
@@ -419,15 +518,15 @@ export default class Nodes {
    * further down keeps its own child nodes hidden.
    */
   public toggleBranchVisibility = () => {
-    const node = this.getSelectedNode();
-    if (!node) return;
+    const id = this.getSelectedNode()?.id;
+    if (!id) return;
 
     const viewState = this.map.viewState;
-    if (!viewState.hidesChildren(node) && this.getChildren(node).length === 0) {
+    if (!viewState.hidesChildren(id) && this.children(id).length === 0) {
       return;
     }
 
-    viewState.toggle(node);
+    viewState.toggle(id);
     this.map.draw.update();
     this.map.events.emit('viewStateChange', viewState.export());
   };
@@ -444,8 +543,8 @@ export default class Nodes {
     const node = this.getTargetNode(id);
     if (!node) return false;
     return (
-      this.map.viewState.hidesChildren(node) &&
-      this.getChildren(node).length > 0
+      this.map.viewState.hidesChildren(node.id) &&
+      this.children(node.id).length > 0
     );
   };
 
@@ -496,7 +595,7 @@ export default class Nodes {
 
     // Changing the protection itself stays allowed.
     const guarded = property !== 'protected';
-    if (guarded && this.refusesLocalChange(node, notifyWithEvent)) return;
+    if (guarded && this.refusesLocalChange(node.id, notifyWithEvent)) return;
 
     const previousValue = Utils.get(node, PropertyMapping[property]);
     const nextValue = this.validatedValue(node, property, value);
@@ -579,10 +678,12 @@ export default class Nodes {
     const node = this.getTargetNode(id);
     if (!node) return;
 
-    if (this.refusesLocalRemoval(node, notifyWithEvent)) return;
+    if (this.refusesLocalRemoval(node.id, notifyWithEvent)) return;
 
     if (!node.isRoot) {
-      const removed = [node, ...this.getDescendants(node)];
+      const removed = [node.id, ...this.descendants(node.id)].flatMap(
+        removedId => this.store.get(removedId) ?? []
+      );
       removed.forEach(node => this.store.delete(node.id));
       const forgotten = this.map.viewState.forget(removed.map(node => node.id));
 
@@ -620,57 +721,67 @@ export default class Nodes {
    */
   public protectingNode = (id?: string): string | null => {
     const node = this.getTargetNode(id);
-    return node ? (this.store.protectingNode(node)?.id ?? null) : null;
+    if (!node) return null;
+
+    return (
+      [node.id, ...this.ancestors(node.id, this.record)].find(
+        candidate => this.record(candidate)?.protected
+      ) ?? null
+    );
   };
 
   /**
    * Tell whether the node or one of its ancestors carries the protection.
-   * @param {Node} node
+   * @param {string} id
    * @returns {boolean}
    */
-  public isProtected(node: Node): boolean {
-    return this.protectingNode(node.id) !== null;
+  public isProtected(id: string): boolean {
+    return this.protectingNode(id) !== null;
   }
 
   /**
    * Refuse a local change of the node when its branch is protected: announce
    * the refusal and return true. A remote write arrives with notifyWithEvent
    * false, and the method lets it through.
-   * @param {Node} node
+   * @param {string} id
    * @param {boolean} notifyWithEvent
    * @returns {boolean}
    */
-  public refusesLocalChange(node: Node, notifyWithEvent = true): boolean {
-    if (!notifyWithEvent || !this.isProtected(node)) return false;
+  public refusesLocalChange(id: string, notifyWithEvent = true): boolean {
+    if (!notifyWithEvent || !this.isProtected(id)) return false;
 
-    this.refuseProtected(node);
+    this.refuseProtected(id);
     return true;
   }
 
   /**
    * Refuse a local removal of the node when the node is protected or holds a
    * protected descendant, since the removal would delete a protected node.
-   * @param {Node} node
+   * @param {string} id
    * @param {boolean} notifyWithEvent
    * @returns {boolean}
    */
-  public refusesLocalRemoval(node: Node, notifyWithEvent = true): boolean {
+  public refusesLocalRemoval(id: string, notifyWithEvent = true): boolean {
     if (!notifyWithEvent) return false;
-    if (this.refusesLocalChange(node)) return true;
-    if (!this.getDescendants(node).some(descendant => descendant.protected)) {
-      return false;
-    }
+    if (this.refusesLocalChange(id)) return true;
 
-    this.refuseProtected(node);
+    const records = this.scan();
+    const holdsProtected = collectSubtreeIds([...records.values()], id).some(
+      descendant => records.get(descendant)?.protected
+    );
+    if (!holdsProtected) return false;
+
+    this.refuseProtected(id);
     return true;
   }
 
   /**
    * Announce that a protected branch refused a local edit of the node.
-   * @param {Node} node
+   * @param {string} id
    */
-  public refuseProtected(node: Node) {
-    this.map.events.emit('nodeProtected', this.getNodeProperties(node));
+  public refuseProtected(id: string) {
+    const node = this.exportNode(id);
+    if (node) this.map.events.emit('nodeProtected', node);
   }
 
   /**
@@ -683,12 +794,13 @@ export default class Nodes {
    */
   public protectBranch = (id?: string) => {
     const node = this.getTargetNode(id);
-    if (!node || this.isProtected(node)) return;
+    if (!node || this.isProtected(node.id)) return;
 
-    this.getDescendants(node)
-      .filter(descendant => descendant.protected)
+    const records = this.scan();
+    collectSubtreeIds([...records.values()], node.id)
+      .filter(descendant => records.get(descendant)?.protected)
       .forEach(descendant =>
-        this.updateNode('protected', false, true, descendant.id)
+        this.updateNode('protected', false, true, descendant)
       );
     this.updateNode('protected', true, true, node.id);
   };
@@ -714,8 +826,21 @@ export default class Nodes {
     const node = this.getTargetNode(id);
     if (!node) return [];
 
-    return this.getChildren(node).map((n: Node) => this.getNodeProperties(n));
+    return this.children(node.id).flatMap(
+      child => this.exportNode(child.id) ?? []
+    );
   };
+
+  /**
+   * Return a copy of the node, which the caller may change, or null when the
+   * node store lacks the node.
+   * @param {string} id
+   * @returns {ExportNodeProperties | null}
+   */
+  public exportNode(id: string): ExportNodeProperties | null {
+    const node = this.store.get(id);
+    return node ? this.getNodeProperties(node) : null;
+  }
 
   /**
    * Return the export properties of the node.
@@ -790,7 +915,7 @@ export default class Nodes {
    */
   private nodeSelectionTo(direction: string): boolean {
     // Arrow keys move no selection while nothing is selected.
-    const selected = this.getSelectedNode();
+    const selected = this.selectedId ? this.record(this.selectedId) : null;
 
     switch (direction) {
       case 'up':
@@ -806,32 +931,6 @@ export default class Nodes {
       default:
         return false;
     }
-  }
-
-  /**
-   * Return the children of a node.
-   * @param {Node} node
-   * @returns {Node[]}
-   */
-  public getChildren(node: Node): Node[] {
-    return this.store.children(node);
-  }
-
-  /**
-   * Return whether a node is left of the root of its own tree (true if left).
-   * A root has no side and returns undefined.
-   * @return {boolean}
-   */
-  public getOrientation(node: Node): boolean | undefined {
-    return this.store.orientation(node);
-  }
-
-  /**
-   * Return the root of the tree a node belongs to.
-   * @returns {Node} root
-   */
-  public getTreeRoot(node: Node): Node {
-    return this.store.treeRoot(node);
   }
 
   /**
@@ -860,9 +959,11 @@ export default class Nodes {
       x: (view.minX + view.maxX) / 2,
       y: (view.minY + view.maxY) / 2,
     };
+    const records = this.scan();
+    const lookup: RecordLookup = id => records.get(id);
     const trees = treeBounds(
-      this.getNodes(),
-      node => this.getTreeRoot(node),
+      [...records.values()],
+      node => records.get(this.treeRoot(node.id, lookup)) ?? node,
       this.boundsOf
     );
 
@@ -890,7 +991,7 @@ export default class Nodes {
   };
 
   private rightOfEveryTree(): MapNodeCoordinates {
-    const rightEdge = this.getNodes().reduce(
+    const rightEdge = [...this.scan().values()].reduce(
       (edge, node) => Math.max(edge, this.boundsOf(node).maxX),
       -Infinity
     );
@@ -899,21 +1000,6 @@ export default class Nodes {
       x: rightEdge + 2 * NODE_HORIZONTAL_SPACING,
       y: this.getRoot().coordinates.y,
     };
-  }
-
-  /**
-   * Return all descendants of a node.
-   * @returns {Node[]} nodes
-   */
-  public getDescendants(node: Node): Node[] {
-    return this.store.descendants(node);
-  }
-
-  /**
-   * Return an array of all nodes.
-   */
-  public getNodes(): Node[] {
-    return this.store.all();
   }
 
   /**
@@ -978,6 +1064,14 @@ export default class Nodes {
   };
 
   /**
+   * Return the main root, or null for a map without one.
+   * @returns {ResolvedNode | null}
+   */
+  public mainRoot(): ResolvedNode | null {
+    return this.record(this.map.rootId) ?? null;
+  }
+
+  /**
    * Return the node with the id equal to id passed as parameter.
    * @param {string} id
    * @returns {Node | undefined}
@@ -994,44 +1088,38 @@ export default class Nodes {
   };
 
   /**
-   * Return the siblings of a node.
-   * @param {Node} node
-   * @returns {Array<Node>} siblings
+   * Where a node added interactively under `parent` goes: one column out
+   * from its parent and below its lowest sibling.
    */
-  private getSiblings(node: Node): Node[] {
-    return this.store.siblings(node);
+  private calculateCoordinates(
+    parent: string,
+    lookup: RecordLookup
+  ): MapNodeCoordinates {
+    const anchor = lookup(parent)?.coordinates ?? { x: 0, y: 0 };
+    const { column, siblings } = this.pickColumn(parent, lookup);
+
+    return { x: anchor.x + column, y: this.stackBelow(anchor.y, siblings) };
   }
 
   /**
-   * Where a node added interactively goes: one column out from its parent and
-   * below its lowest sibling.
+   * The column mmp places a new node under `parent` in, as an offset from
+   * the parent, plus the siblings sharing that column. A child of a root takes
+   * the side of its tree that currently holds fewer siblings.
    */
-  private calculateCoordinates(node: Node): MapNodeCoordinates {
-    const parent = node.parent;
-    const anchorX = parent?.coordinates?.x ?? node.coordinates?.x ?? 0;
-    const anchorY = parent?.coordinates?.y ?? node.coordinates?.y ?? 0;
-    const { column, siblings } = this.pickColumn(node);
+  private pickColumn(
+    parent: string,
+    lookup: RecordLookup
+  ): { column: number; siblings: ResolvedNode[] } {
+    const siblings = this.children(parent);
 
-    return { x: anchorX + column, y: this.stackBelow(anchorY, siblings) };
-  }
-
-  /**
-   * The column a new node lands in, as an offset from its parent, plus the
-   * siblings sharing that column. A child of a root takes the side of its
-   * tree that currently holds fewer siblings.
-   */
-  private pickColumn(node: Node): { column: number; siblings: Node[] } {
-    const siblings = this.getSiblings(node);
-    const parent = node.parent;
-
-    if (parent && !parent.parent) {
+    if (this.parentOf(parent, lookup) === null) {
       const [left, right] = this.splitByOrientation(siblings);
       return left.length <= right.length
         ? { column: -NODE_HORIZONTAL_SPACING, siblings: left }
         : { column: NODE_HORIZONTAL_SPACING, siblings: right };
     }
 
-    const goesLeft = !!parent && this.getOrientation(parent);
+    const goesLeft = !!this.orientation(parent, lookup);
     const column = goesLeft
       ? -NODE_HORIZONTAL_SPACING
       : NODE_HORIZONTAL_SPACING;
@@ -1039,22 +1127,24 @@ export default class Nodes {
     return { column, siblings };
   }
 
-  private splitByOrientation(siblings: Node[]): [Node[], Node[]] {
-    const left: Node[] = [];
-    const right: Node[] = [];
+  private splitByOrientation(
+    siblings: ResolvedNode[]
+  ): [ResolvedNode[], ResolvedNode[]] {
+    const left: ResolvedNode[] = [];
+    const right: ResolvedNode[] = [];
 
     for (const sibling of siblings) {
-      (this.getOrientation(sibling) ? left : right).push(sibling);
+      (this.orientation(sibling.id) ? left : right).push(sibling);
     }
 
     return [left, right];
   }
 
   /** Below the lowest sibling, or just above the parent when there is none. */
-  private stackBelow(anchorY: number, siblings: Node[]): number {
-    if (siblings.length > 0) {
-      const lowerNode = this.getLowerNode(siblings);
-      return (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
+  private stackBelow(anchorY: number, siblings: ResolvedNode[]): number {
+    const lowerNode = Nodes.lowerNode(siblings);
+    if (lowerNode) {
+      return lowerNode.coordinates.y + NODE_VERTICAL_SIBLING_OFFSET;
     }
 
     return anchorY - NODE_VERTICAL_SPACING;
@@ -1092,8 +1182,9 @@ export default class Nodes {
    * the whole rewrite.
    */
   public distributeNodes = (notifyWithEvent = true) => {
+    const records = this.scan();
     const layout = computeMapLayout(
-      this.toLayoutInput(),
+      [...records.values()].map(node => this.toLayoutInput(node)),
       this.map.draw.estimateExtent
     );
     if (layout.size === 0) return;
@@ -1120,113 +1211,108 @@ export default class Nodes {
   /**
    * The bounding box of the node as it is drawn, or as it will be drawn
    * before the renderer has measured it.
-   * @param {Node} node
+   * @param {ResolvedNode} node
    */
-  public boundsOf = (node: Node): Bounds =>
+  public boundsOf = (
+    node: Pick<ResolvedNode, 'id' | 'name' | 'font' | 'coordinates'>
+  ): Bounds =>
     nodeBounds({
       coordinates: node.coordinates,
       dimensions: this.map.draw.dimensionsOf(node),
     });
 
-  private toLayoutInput(): LayoutInputNode[] {
-    return this.store.all().map(node => ({
+  private toLayoutInput(node: ResolvedNode): LayoutInputNode {
+    return {
       id: node.id,
-      parent: node.parent ? node.parent.id : '',
+      parent: node.parent,
       isRoot: node.isRoot,
       name: node.name,
       font: node.font,
       coordinates: node.coordinates,
       dimensions: this.map.draw.dimensionsOf(node),
-    }));
+    };
   }
 
   /**
-   * Return the lower node of a list of nodes.
-   * @param {Node[]} nodes
-   * @returns {Node} lowerNode
+   * Return the lowest node of a list of nodes.
+   * @param {ResolvedNode[]} nodes
+   * @returns {ResolvedNode | undefined} lowerNode
    */
-  private getLowerNode(nodes: Node[]): Node | undefined {
-    if (nodes.length === 0) {
-      return;
-    }
+  private static lowerNode(nodes: ResolvedNode[]): ResolvedNode | undefined {
+    if (nodes.length === 0) return;
 
-    return nodes.reduce((lowest, current) => {
-      const lowestY = lowest.coordinates?.y ?? 0;
-      const currentY = current.coordinates?.y ?? 0;
-
-      return currentY > lowestY ? current : lowest;
-    }, nodes[0]);
+    return nodes.reduce(
+      (lowest, current) =>
+        current.coordinates.y > lowest.coordinates.y ? current : lowest,
+      nodes[0]
+    );
   }
 
   /**
    * Move the node selection on the level of the selected node (true: up).
-   * @param {Node} selected
+   * @param {ResolvedNode} selected
    * @param {boolean} direction
    */
-  private moveSelectionOnLevel(selected: Node, direction: boolean) {
-    const parent = selected.parent;
+  private moveSelectionOnLevel(selected: ResolvedNode, direction: boolean) {
+    const parent = this.parentOf(selected.id);
+    if (parent === null) return;
 
-    if (parent) {
-      let siblings = this.getSiblings(selected).filter((node: Node) => {
-        return direction === node.coordinates.y < selected.coordinates.y;
-      });
+    let siblings = this.siblings(selected.id).filter(node => {
+      return direction === node.coordinates.y < selected.coordinates.y;
+    });
 
-      if (!parent.parent) {
-        siblings = siblings.filter((node: Node) => {
-          return this.getOrientation(node) === this.getOrientation(selected);
-        });
-      }
+    if (this.parentOf(parent) === null) {
+      const side = this.orientation(selected.id);
+      siblings = siblings.filter(node => this.orientation(node.id) === side);
+    }
 
-      if (siblings.length > 0) {
-        let closerNode: Node = siblings[0],
-          tmp = Math.abs(siblings[0].coordinates.y - selected.coordinates.y);
+    if (siblings.length === 0) return;
 
-        for (const node of siblings) {
-          const distance = Math.abs(
-            node.coordinates.y - selected.coordinates.y
-          );
+    let closerNode = siblings[0],
+      tmp = Math.abs(siblings[0].coordinates.y - selected.coordinates.y);
 
-          if (distance < tmp) {
-            tmp = distance;
-            closerNode = node;
-          }
-        }
+    for (const node of siblings) {
+      const distance = Math.abs(node.coordinates.y - selected.coordinates.y);
 
-        this.selectNode(closerNode.id);
+      if (distance < tmp) {
+        tmp = distance;
+        closerNode = node;
       }
     }
+
+    this.selectNode(closerNode.id);
   }
 
   /**
    * Move the node selection in a child node or in the parent node (true: left)
-   * @param {Node} selected
+   * @param {ResolvedNode} selected
    * @param {boolean} direction
    */
-  private moveSelectionOnBranch(selected: Node, direction: boolean) {
-    const orientation = this.getOrientation(selected);
-    const parent = selected.parent;
+  private moveSelectionOnBranch(selected: ResolvedNode, direction: boolean) {
+    const orientation = this.orientation(selected.id);
+    const parent = this.parentOf(selected.id);
     const movesToParent =
       (!orientation && direction) || (orientation && !direction);
 
     // A root has no parent and no orientation, so it always moves to a child
     // on the requested side.
     if (movesToParent && parent) {
-      this.selectNode(parent.id);
+      this.selectNode(parent);
       return;
     }
 
-    let children = this.getChildren(selected);
+    let children = this.children(selected.id);
 
     if (orientation === undefined) {
       // The selected node is a root
-      children = children.filter((node: Node) => {
-        return this.getOrientation(node) === direction;
+      children = children.filter(node => {
+        return this.orientation(node.id) === direction;
       });
     }
 
-    const lowerNode = this.getLowerNode(children);
+    const lowerNode = Nodes.lowerNode(children);
 
-    if (children.length > 0 && lowerNode) {
+    if (lowerNode) {
       this.selectNode(lowerNode.id);
     }
   }

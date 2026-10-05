@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import { DragBehavior, D3DragEvent } from 'd3';
+import { collectSubtreeIds } from '@teammapper/shared';
 import Map from '../map.js';
 
 type DragEvent = D3DragEvent<SVGGElement, string, unknown>;
@@ -55,15 +56,16 @@ export default class Drag {
    */
   private started(_: DragEvent, id: string) {
     const nodes = this.map.nodes;
-    const node = nodes.getNode(id);
-    if (!node) return;
+    const records = nodes.scan();
+    const lookup = (node: string) => records.get(node);
+    if (!records.has(id)) return;
 
     this.session = {
       id,
-      descendants: nodes.getDescendants(node).map(descendant => descendant.id),
-      treeRoot: nodes.getTreeRoot(node).id,
-      orientation: nodes.getOrientation(node),
-      refusal: nodes.isProtected(node) ? 'refused' : 'none',
+      descendants: collectSubtreeIds([...records.values()], id),
+      treeRoot: nodes.treeRoot(id, lookup),
+      orientation: nodes.orientation(id, lookup),
+      refusal: nodes.isProtected(id) ? 'refused' : 'none',
       moved: false,
     };
 
@@ -80,16 +82,13 @@ export default class Drag {
     const session = this.session;
     if (session?.id !== id) return;
 
-    const nodes = this.map.nodes;
-    if (session.refusal === 'refused') {
-      const node = nodes.getNode(id);
-      if (node) nodes.refuseProtected(node);
-    }
+    if (session.refusal === 'refused') this.map.nodes.refuseProtected(id);
     if (session.refusal !== 'none') {
       session.refusal = 'announced';
       return;
     }
 
+    const nodes = this.map.nodes;
     const draw = this.map.draw;
     const moved = [id, ...session.descendants];
     const { dx, dy } = event;
@@ -157,11 +156,11 @@ export default class Drag {
     // The drag moved each node many times, so no single previous value
     // describes the change.
     for (const node of moved) {
-      const model = nodes.getNode(node);
-      if (!model) continue;
+      const nodeProperties = nodes.exportNode(node);
+      if (!nodeProperties) continue;
 
       this.map.events.emit('nodeUpdate', {
-        nodeProperties: nodes.getNodeProperties(model),
+        nodeProperties,
         changedProperty: 'coordinates',
         previousValue: undefined,
       });
