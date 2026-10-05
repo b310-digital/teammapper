@@ -7,9 +7,9 @@ import type {
 } from '@teammapper/shared';
 
 /**
- * Snapshots here are shaped the way an import delivers them: the root has
- * `parent: ''` and `isRoot: true`, and a node without a saved position has no
- * `coordinates` key at all.
+ * Snapshots here are shaped the way an import of an older export delivers
+ * them: the root has `parent: ''` and `isRoot: true`, and a node without a
+ * saved position has no `coordinates` key at all.
  */
 
 function createHandler(): Nodes {

@@ -322,16 +322,15 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Return the subscribe of the mind mmp event with the node or nothing.
+   * Return an Observable of the mmp event. Each subscriber adds its own
+   * callback to mmp, and unsubscribing removes it again.
    */
   public on<K extends MmpEventType>(
     event: K
   ): Observable<MmpEventPayloadMap[K]> {
-    return new Observable(observer => {
-      this.map.instance.on(event, payload => {
-        observer.next(payload);
-      });
-    });
+    return new Observable(observer =>
+      this.map.instance.on(event, payload => observer.next(payload))
+    );
   }
 
   /**

@@ -130,6 +130,58 @@ describe('YjsMapData', () => {
     expect(changes).toEqual([]);
   });
 
+  it("reads back a record shaped like mmp's new node as it was written", () => {
+    const added: ExportNodeProperties = {
+      ...node('a'),
+      k: -7.25,
+      font: { size: 14, style: 'italic', weight: 'bold' },
+    };
+
+    data.addNodes([added]);
+
+    expect(data.node('a')).toStrictEqual(added);
+  });
+
+  it('reads back an entry without k and font without them', () => {
+    const yNode = new Y.Map<unknown>();
+    nodesMap().set('bare', yNode);
+    yNode.set('parent', 'root');
+    yNode.set('name', 'Bare');
+
+    expect(data.node('bare')).toStrictEqual({
+      id: 'bare',
+      parent: 'root',
+      name: 'Bare',
+    });
+  });
+
+  describe('every writer of a root', () => {
+    it.each([
+      ["mmp's new node", 'mmp', () => data.addNodes([node('mmp')])],
+      [
+        'a node given an empty string',
+        'empty',
+        () => data.addNodes([{ ...node('empty'), parent: '' }]),
+      ],
+    ])('stores null as the parent for %s', (_label, id, write) => {
+      write();
+
+      expect(nodesMap().get(id)?.get('parent')).toBeNull();
+      expect(data.node(id)?.parent).toBeNull();
+    });
+
+    it('reads the null parent of a root the backend hydrated', () => {
+      // The shape `populateYMapFromNode` in the backend writes for a root.
+      const yNode = new Y.Map<unknown>();
+      nodesMap().set('backend', yNode);
+      yNode.set('id', 'backend');
+      yNode.set('parent', null);
+      yNode.set('orderNumber', 0);
+
+      expect(data.node('backend')?.parent).toBeNull();
+    });
+  });
+
   it('keeps no reference to the nodes it was given', () => {
     const added = node('a', 'root');
     data.addNodes([added]);

@@ -140,7 +140,7 @@ describe('measuring names', () => {
     const name = rootName(map);
     name.innerHTML = 'Typed';
 
-    data.replaceMap(data.nodes().map(node => ({ ...node })));
+    data.replaceMap(map.instance.exportAsJSON());
     name.dispatchEvent(new FocusEvent('blur'));
 
     expect(data.node(root.id)?.name).toBe(root.name);

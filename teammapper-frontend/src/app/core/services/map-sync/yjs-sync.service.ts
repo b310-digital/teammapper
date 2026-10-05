@@ -1,4 +1,4 @@
-import { auditTime, share, Subscription } from 'rxjs';
+import { auditTime, Subscription } from 'rxjs';
 import {
   CachedMapOptions,
   DEFAULT_FONT_MAX_SIZE,
@@ -352,13 +352,14 @@ export class YjsSyncService {
    * drag then exports once instead of per write.
    */
   private setupMapChangeHandler(): void {
-    // mmp keeps one callback per event, so both subscribers share it.
-    const mapChange = this.mmpService.on('mapChange').pipe(share());
     this.yjsSubscriptions.push(
-      mapChange.subscribe(() =>
-        this.ctx.setAttachedNode(this.mmpService.selectNode())
-      ),
-      mapChange
+      this.mmpService
+        .on('mapChange')
+        .subscribe(() =>
+          this.ctx.setAttachedNode(this.mmpService.selectNode())
+        ),
+      this.mmpService
+        .on('mapChange')
         .pipe(auditTime(ATTACHED_MAP_AUDIT_MS))
         .subscribe(() => void this.ctx.updateAttachedMap())
     );

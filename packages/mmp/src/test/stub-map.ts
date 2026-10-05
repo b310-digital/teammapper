@@ -18,7 +18,7 @@ export function nodeRecord(
   overrides: Partial<ExportNodeProperties> & { id: string }
 ): ExportNodeProperties {
   return {
-    parent: '',
+    parent: null,
     k: 1,
     name: '',
     coordinates: { x: 0, y: 0 },

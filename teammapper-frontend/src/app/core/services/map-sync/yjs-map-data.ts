@@ -62,10 +62,13 @@ export function replacesMainRoot(
 
 /**
  * The record of the node stored under `id`. The id comes from the key, since
- * a peer may write a node whose own `id` field names a different node.
+ * a peer may write a node whose own `id` field names a different node. The
+ * other values stay unchecked: mmp passes every record through `resolveNode`,
+ * which validates each value against the shared schemas before use.
  */
 function recordOf(id: string, yNode: Y.Map<unknown>): MapNodeRecord {
-  return { ...yMapToNodeProps(yNode), id };
+  const stored = yMapToNodeProps(yNode) as Omit<MapNodeRecord, 'id'>;
+  return { ...stored, id };
 }
 
 /** Copy the value into `current` at the path, leaving `current` untouched. */

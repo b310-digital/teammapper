@@ -67,7 +67,7 @@ describe('ImportService', () => {
       'mindmap\n  Main\n    A\n\nmindmap\n  Second\n    B'
     );
 
-    expect(byName(nodes, 'Second')?.parent).toBe('');
+    expect(byName(nodes, 'Second')?.parent).toBeNull();
     expect(byName(nodes, 'A')?.parent).toBe(byName(nodes, 'Main')?.id);
     expect(byName(nodes, 'B')?.parent).toBe(byName(nodes, 'Second')?.id);
   });
@@ -76,8 +76,8 @@ describe('ImportService', () => {
     const nodes = await importedNodes('Mindmap\n  Main\n\nMINDMAP\n  Second');
 
     expect(nodes.map(n => [n.name, n.parent])).toEqual([
-      ['Main', ''],
-      ['Second', ''],
+      ['Main', null],
+      ['Second', null],
     ]);
   });
 

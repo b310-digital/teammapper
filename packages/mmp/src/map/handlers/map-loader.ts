@@ -87,7 +87,7 @@ export default class MapLoader {
 
     return {
       id: uuidv4(),
-      parent: '',
+      parent: null,
       k: randomK(),
       name,
       coordinates: { x: 0, y: 0 },
@@ -111,7 +111,7 @@ export default class MapLoader {
 
     return {
       id: merged.id,
-      parent: merged.parent || '',
+      parent: merged.parent || null,
       k: merged.k || randomK(),
       name: merged.name,
       coordinates: merged.coordinates,
@@ -161,7 +161,7 @@ export default class MapLoader {
       target.id = 'map_node_' + oldNode.key.substr(4);
       target.parent = oldNode.value.parent
         ? 'map_node_' + oldNode.value.parent.substr(4)
-        : '';
+        : null;
       target.k = oldNode.value.k;
       target.isRoot = !oldNode.value.parent;
       target.name = oldNode.value.name;

@@ -178,6 +178,17 @@ describe('yDocConversion', () => {
       doc.destroy()
     })
 
+    it('sets nodeParentId to undefined for an empty string parent, as an older client writes it', () => {
+      const { yNode, doc } = populateAndGet(
+        createTestNode({ nodeParentId: null })
+      )
+      yNode.set('parent', '')
+
+      expect(yMapToMmpNode(yNode, 'map-1').nodeParentId).toBeUndefined()
+
+      doc.destroy()
+    })
+
     it('preserves non-null nodeParentId', () => {
       const { yNode, doc } = populateAndGet(
         createTestNode({ nodeParentId: 'parent-id', root: false })

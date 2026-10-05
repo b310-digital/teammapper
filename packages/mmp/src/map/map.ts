@@ -175,7 +175,10 @@ export interface MmpInstance {
   highlightNode: (id: string, color: string) => void;
   new: (nodes?: MapSnapshot) => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];
-  on: <K extends MmpEventType>(event: K, callback: MmpEventCallback<K>) => void;
+  on: <K extends MmpEventType>(
+    event: K,
+    callback: MmpEventCallback<K>
+  ) => () => void;
   pasteNode: (id?: string) => void;
   pasteTree: () => void;
   protectBranch: (id?: string) => void;

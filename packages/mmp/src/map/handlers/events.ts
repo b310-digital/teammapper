@@ -6,7 +6,7 @@ export type MmpEventCallback<K extends MmpEventType> = (
 ) => void;
 
 type EventCallbacks<K extends MmpEventType> = {
-  [P in K]?: MmpEventCallback<P>;
+  [P in K]?: Set<MmpEventCallback<P>>;
 };
 
 const EVENT_TYPES: readonly MmpEventType[] = [
@@ -18,32 +18,39 @@ const EVENT_TYPES: readonly MmpEventType[] = [
 
 /**
  * Manage the events of the map. `@teammapper/shared` types each payload, and
- * each event holds at most one callback.
+ * each event holds any number of callbacks.
  */
 export default class Events {
   private callbacks: EventCallbacks<MmpEventType> = {};
 
   /**
-   * Call the callback registered for the event with its payload.
+   * Call every callback registered for the event with its payload. The loop
+   * runs over a copy, so a callback may remove itself without skipping the next.
    */
   public emit<K extends MmpEventType>(
     event: K,
     payload: MmpEventPayloadMap[K]
   ) {
-    this.callbacks[event]?.(payload);
+    const callbacks = this.callbacks[event];
+    if (callbacks) [...callbacks].forEach(callback => callback(payload));
   }
 
   /**
-   * Register the callback for the event, replacing an earlier one.
+   * Add the callback to the event and return a function that removes it again.
    */
   public on = <K extends MmpEventType>(
     event: K,
     callback: MmpEventCallback<K>
-  ) => {
+  ): (() => void) => {
     if (!EVENT_TYPES.includes(event)) Log.error('The event does not exist');
 
     const callbacks: EventCallbacks<K> = this.callbacks;
-    callbacks[event] = callback;
+    const set = callbacks[event] ?? new Set<MmpEventCallback<K>>();
+    callbacks[event] = set;
+    set.add(callback);
+    return () => {
+      set.delete(callback);
+    };
   };
 
   /**
