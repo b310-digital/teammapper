@@ -177,9 +177,13 @@ export default class CopyPaste {
       this.copiedNodes[0],
       parent,
       pasted,
-      lookup
+      lookup,
+      new Set()
     );
-    this.map.data.addNodes([...pasted.values()]);
+    // The batch makes the paste one undo step of its own, apart from an
+    // edit right before or after it.
+    const data = this.map.data;
+    data.batch(() => data.addNodes([...pasted.values()]));
 
     // Mirror compatibility, removed in PR 7.
     this.map.nodes.emitMirrorEvent(
@@ -193,13 +197,17 @@ export default class CopyPaste {
   /**
    * Build the record of a copied node under `newParent`, then those of its
    * copied children under the record just built. Returns that record.
+   * `visited` holds the copied ids built so far, so a parent cycle among the
+   * copied nodes ends at the node that closes it.
    */
   private addCopiedNode(
     nodeProperties: ExportNodeProperties,
     newParent: string | null,
     pasted: Map<string, ResolvedNode>,
-    lookup: RecordLookup
+    lookup: RecordLookup,
+    visited: Set<string>
   ): ResolvedNode {
+    visited.add(nodeProperties.id);
     const record = this.map.nodes.newRecord(
       this.pastedProperties(nodeProperties, newParent, lookup),
       newParent,
@@ -208,9 +216,11 @@ export default class CopyPaste {
     );
     pasted.set(record.id, record);
 
-    this.getChildrenInCopiedNodes(nodeProperties.id).forEach(child =>
-      this.addCopiedNode(child, record.id, pasted, lookup)
-    );
+    this.getChildrenInCopiedNodes(nodeProperties.id)
+      .filter(child => !visited.has(child.id))
+      .forEach(child =>
+        this.addCopiedNode(child, record.id, pasted, lookup, visited)
+      );
 
     return record;
   }
