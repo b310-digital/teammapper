@@ -1,4 +1,4 @@
-import { Subscription } from 'rxjs';
+import { auditTime, share, Subscription } from 'rxjs';
 import { NodePropertyMapping } from '@teammapper/mmp';
 import {
   CachedMapOptions,
@@ -33,6 +33,9 @@ import {
 import { LAST_MAP_ANNOUNCEMENT, LOCAL_ORIGIN, META } from './yjs-map-data';
 
 const WS_CLOSE_MAP_DELETED = 4001;
+
+/** The longest the cached map lags behind a change of the map data. */
+export const ATTACHED_MAP_AUDIT_MS = 250;
 
 /**
  * Which operation caused a full-map replacement. Recorded in the doc because
@@ -397,6 +400,7 @@ export class YjsSyncService {
 
   private createListeners(): void {
     this.unsubscribeListeners();
+    this.setupMapChangeHandler();
     this.setupCreateHandler();
     this.setupDistributeHandler();
     this.setupSelectionHandlers();
@@ -404,6 +408,27 @@ export class YjsSyncService {
     this.setupNodeCreateHandler();
     this.setupPasteHandler();
     this.setupNodeRemoveHandler();
+  }
+
+  /**
+   * mmp draws every change of the map data, local or remote, and then emits
+   * `mapChange`. The attached node follows each change at once, so the panels
+   * never show the values from before it. The cached map exports the whole
+   * map, so it follows at most once per `ATTACHED_MAP_AUDIT_MS`, with the
+   * state after the last change; a peer's burst of writes or a color picker
+   * drag then exports once instead of per write.
+   */
+  private setupMapChangeHandler(): void {
+    // mmp keeps one callback per event, so both subscribers share it.
+    const mapChange = this.mmpService.on('mapChange').pipe(share());
+    this.yjsSubscriptions.push(
+      mapChange.subscribe(() =>
+        this.ctx.setAttachedNode(this.mmpService.selectNode())
+      ),
+      mapChange
+        .pipe(auditTime(ATTACHED_MAP_AUDIT_MS))
+        .subscribe(() => void this.ctx.updateAttachedMap())
+    );
   }
 
   /**
@@ -415,8 +440,6 @@ export class YjsSyncService {
   private setupCreateHandler(): void {
     this.yjsSubscriptions.push(
       this.mmpService.on('create').subscribe((_result: MapCreateEvent) => {
-        this.ctx.setAttachedNode(this.mmpService.selectNode());
-        this.ctx.updateAttachedMap();
         if (this.yjsSynced) {
           this.writeFullMapToYDoc('import');
         }
@@ -435,7 +458,6 @@ export class YjsSyncService {
         if (this.yjsSynced) {
           this.writeFullMapToYDoc('distribute');
         }
-        this.ctx.updateAttachedMap();
       })
     );
   }
@@ -476,9 +498,7 @@ export class YjsSyncService {
     this.yjsSubscriptions.push(
       this.mmpService.on('nodeUpdate').subscribe((result: NodeUpdateEvent) => {
         if (!this.yDoc) return;
-        this.ctx.setAttachedNode(result.nodeProperties);
         this.writeNodeUpdateToYDoc(result);
-        this.ctx.updateAttachedMap();
       })
     );
   }
@@ -490,7 +510,6 @@ export class YjsSyncService {
         .subscribe((newNode: ExportNodeProperties) => {
           if (!this.yDoc) return;
           this.writeNodeCreateToYDoc(newNode);
-          this.ctx.updateAttachedMap();
         })
     );
   }
@@ -502,7 +521,6 @@ export class YjsSyncService {
         .subscribe((newNodes: ExportNodeProperties[]) => {
           if (!this.yDoc) return;
           this.writeNodesPasteToYDoc(newNodes);
-          this.ctx.updateAttachedMap();
         })
     );
   }
@@ -514,7 +532,6 @@ export class YjsSyncService {
         .subscribe((removedNode: ExportNodeProperties) => {
           if (!this.yDoc) return;
           this.writeNodeRemoveFromYDoc(removedNode.id);
-          this.ctx.updateAttachedMap();
         })
     );
   }

@@ -5,11 +5,11 @@ import InMemoryMapData from './data/in-memory-map-data.js';
 import type { MapDataChange } from './data/map-data.js';
 import { nodeRecord } from '../test/stub-map.js';
 import { stubSvgLengths } from '../test/svg-lengths.js';
-import type { MapEventType } from './handlers/events.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
   MapViewState,
+  MmpEventType,
   NodeProperty,
   NodeUpdateEvent,
   OldMmpNode,
@@ -17,7 +17,7 @@ import type {
 
 /**
  * Every event but `viewStateChange`. The `satisfies` clause fails the
- * typecheck when `MapEventType` gains an event this record lacks.
+ * typecheck when `MmpEventType` gains an event this record lacks.
  */
 const OTHER_EVENTS = Object.keys({
   // Mirror compatibility, removed in PR 7: create to distribute.
@@ -31,8 +31,8 @@ const OTHER_EVENTS = Object.keys({
   distribute: true,
   nodeProtected: true,
   mapChange: true,
-} satisfies Record<Exclude<MapEventType, 'viewStateChange'>, true>) as Exclude<
-  MapEventType,
+} satisfies Record<Exclude<MmpEventType, 'viewStateChange'>, true>) as Exclude<
+  MmpEventType,
   'viewStateChange'
 >[];
 

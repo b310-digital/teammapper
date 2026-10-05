@@ -1,4 +1,4 @@
-import { YjsSyncService } from './yjs-sync.service';
+import { ATTACHED_MAP_AUDIT_MS, YjsSyncService } from './yjs-sync.service';
 import * as Y from 'yjs';
 import { ExportNodeProperties } from '@teammapper/shared';
 import { MmpService } from '../mmp/mmp.service';
@@ -171,6 +171,7 @@ describe('YjsSyncService', () => {
         expect(Object.keys(handlers).sort()).toEqual([
           'create',
           'distribute',
+          'mapChange',
           'nodeCreate',
           'nodeDeselect',
           'nodePaste',
@@ -205,6 +206,41 @@ describe('YjsSyncService', () => {
 
         expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
         expect(editModeOrder).toBeGreaterThan(awarenessOrder);
+      });
+
+      it('refreshes the cached map and the attached node on a map change', () => {
+        jest.useFakeTimers();
+        const selected = {
+          id: 'child',
+          parent: 'root',
+        } as ExportNodeProperties;
+        mmpService.selectNode.mockReturnValue(selected);
+
+        handlers['mapChange']();
+        jest.advanceTimersByTime(ATTACHED_MAP_AUDIT_MS);
+
+        expect(context.updateAttachedMap).toHaveBeenCalled();
+        expect(context.setAttachedNode).toHaveBeenLastCalledWith(selected);
+        jest.useRealTimers();
+      });
+
+      it('refreshes the attached node at once and the cached map once per burst', () => {
+        jest.useFakeTimers();
+        const selected = {
+          id: 'child',
+          parent: 'root',
+        } as ExportNodeProperties;
+        mmpService.selectNode.mockReturnValue(selected);
+
+        handlers['mapChange']();
+        handlers['mapChange']();
+        handlers['mapChange']();
+
+        expect(context.setAttachedNode).toHaveBeenLastCalledWith(selected);
+        expect(context.updateAttachedMap).not.toHaveBeenCalled();
+        jest.advanceTimersByTime(ATTACHED_MAP_AUDIT_MS);
+        expect(context.updateAttachedMap).toHaveBeenCalledTimes(1);
+        jest.useRealTimers();
       });
     });
   });
@@ -282,12 +318,6 @@ describe('YjsSyncService', () => {
 
       const nodesMap = internals(service).yDoc.getMap('nodes');
       expect(Array.from(nodesMap.keys()).sort()).toEqual(['child', 'root']);
-    });
-
-    it('refreshes the cached map so it does not keep the old coordinates', () => {
-      handlers['distribute']();
-
-      expect(context.updateAttachedMap).toHaveBeenCalled();
     });
 
     it('records the replacement as a distribute so peers can identify it', () => {

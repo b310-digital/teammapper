@@ -17,7 +17,6 @@ import {
   type ResolvedNode,
 } from '../data/node-record.js';
 import { computeMapLayout, LayoutInputNode } from './layout.js';
-import type { MapEventPayloadMap, MapEventType } from './events.js';
 import {
   NODE_HORIZONTAL_SPACING,
   NODE_VERTICAL_SPACING,
@@ -34,6 +33,8 @@ import type {
   ExportNodeProperties,
   MapNodeCoordinates,
   MapSnapshot,
+  MmpEventPayloadMap,
+  MmpEventType,
   NodeProperty,
   NodePropertyValue,
   UserNodeProperties,
@@ -1215,9 +1216,9 @@ export default class Nodes {
   /**
    * Emit a mirror event, unless the running write has notifyWithEvent false.
    */
-  public emitMirrorEvent<K extends MapEventType>(
+  public emitMirrorEvent<K extends MmpEventType>(
     event: K,
-    payload: MapEventPayloadMap[K]
+    payload: MmpEventPayloadMap[K]
   ) {
     if (this.notifyWithEvent) this.map.events.emit(event, payload);
   }
