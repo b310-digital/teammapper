@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CssColorSchema, NodePropertySchemas } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
+import { isNodeProperty, PropertyMapping } from '../data/property-mapping.js';
 import { computeMapLayout, LayoutInputNode } from './layout.js';
 import {
   NODE_HORIZONTAL_SPACING,
@@ -35,23 +36,6 @@ import type {
 } from '@teammapper/shared';
 
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
-export const PropertyMapping = {
-  name: ['name'],
-  protected: ['protected'],
-  coordinates: ['coordinates'],
-  imageSrc: ['image', 'src'],
-  imageSize: ['image', 'size'],
-  linkHref: ['link', 'href'],
-  backgroundColor: ['colors', 'background'],
-  branchColor: ['colors', 'branch'],
-  fontWeight: ['font', 'weight'],
-  fontStyle: ['font', 'style'],
-  fontSize: ['font', 'size'],
-  nameColor: ['colors', 'name'],
-} as const satisfies Record<NodeProperty, readonly string[]>;
-
-const isNodeProperty = (property: string): property is NodeProperty =>
-  Object.keys(PropertyMapping).includes(property);
 
 /**
  * Manage the nodes of the map.
