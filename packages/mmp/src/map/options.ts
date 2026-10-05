@@ -95,8 +95,8 @@ export default class Options implements OptionParameters {
 
     this.drag = flag;
 
-    this.map.draw.clear();
-    this.map.draw.update();
+    // The drag behavior attaches when a node's DOM is created.
+    this.map.draw.drawAll();
     this.map.nodes.redrawSelectionRing();
   }
 
@@ -111,8 +111,7 @@ export default class Options implements OptionParameters {
 
     this.edit = flag;
 
-    this.map.draw.clear();
-    this.map.draw.update();
+    this.map.draw.drawAll();
     this.map.nodes.redrawSelectionRing();
   }
 }

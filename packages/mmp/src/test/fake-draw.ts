@@ -23,8 +23,10 @@ export function fakeDraw(
   const preview = new Map<string, MapNodeCoordinates>();
 
   return {
-    update: jest.fn(),
-    clear: jest.fn(() => rings.clear()),
+    drawAll: jest.fn(() => rings.clear()),
+    redrawAll: jest.fn(),
+    drawNodes: jest.fn(),
+    removeNodes: jest.fn((): string[] => []),
     renderPositions: jest.fn(),
     enableNodeNameEditing: jest.fn(),
     blurName: jest.fn(),

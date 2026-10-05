@@ -1,5 +1,5 @@
 import { firedEvents, nodeRecord, stubMap } from '../../test/stub-map.js';
-import type { MapSnapshot } from '@teammapper/shared';
+import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 
 /**
  * Deselecting leaves no node selected, the main root included. With nothing
@@ -104,7 +104,7 @@ describe('selectNode from one node to another', () => {
   it('leaves nothing selected while the deselect listeners run', () => {
     const { handler, events } = makeMap();
     handler.selectNode('branch');
-    const selectedDuringDeselect: unknown[] = [];
+    const selectedDuringDeselect: (ExportNodeProperties | null)[] = [];
     events.emit.mockImplementation((event: string) => {
       if (event === 'nodeDeselect') {
         selectedDuringDeselect.push(handler.getSelectedNode());

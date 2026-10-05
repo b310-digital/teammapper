@@ -38,8 +38,7 @@ export function nodeRecord(
  * renderer is `fakeDraw`, the zoom pans and centers nothing, and every event
  * goes to the `events.emit` mock. `overrides` replaces any of these
  * stand-ins. The map draws the snapshot as a replaced map, which selects the
- * main root when the snapshot holds one, and then clears the `events.emit`
- * mock.
+ * main root, and then clears the `events.emit` mock.
  */
 export function stubMap(
   snapshot: MapSnapshot = [],

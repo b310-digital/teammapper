@@ -1,13 +1,14 @@
 import * as d3 from 'd3';
 import type { D3DragEvent } from 'd3';
 import { create } from '../../index.js';
+import InMemoryMapData from '../data/in-memory-map-data.js';
 import { nodeRecord } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
- * A drag moves a preview the renderer draws and leaves the nodes alone until
- * it ends. Then it writes the preview positions to the nodes and announces
- * each moved node with `nodeUpdate`.
+ * A drag moves a preview and writes the positions to the map data in one
+ * batch when it ends. A change of the map data during the drag draws from
+ * the data and keeps the preview.
  */
 
 type DragEvent = D3DragEvent<SVGGElement, string, unknown>;
@@ -26,21 +27,18 @@ afterEach(() => {
 
 /** root -> a -> b, root -> c, drawn by a real map. */
 function makeMap() {
+  const data = new InMemoryMapData([
+    nodeRecord({ id: 'root', isRoot: true }),
+    nodeRecord({ id: 'a', parent: 'root', coordinates: { x: 200, y: 0 } }),
+    nodeRecord({ id: 'b', parent: 'a', coordinates: { x: 400, y: 0 } }),
+    nodeRecord({ id: 'c', parent: 'root', coordinates: { x: -200, y: 0 } }),
+  ]);
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref);
-  map.instance.new(
-    [
-      nodeRecord({ id: 'root', isRoot: true }),
-      nodeRecord({ id: 'a', parent: 'root', coordinates: { x: 200, y: 0 } }),
-      nodeRecord({ id: 'b', parent: 'a', coordinates: { x: 400, y: 0 } }),
-      nodeRecord({ id: 'c', parent: 'root', coordinates: { x: -200, y: 0 } }),
-    ],
-    false
-  );
-  const updates = jest.fn();
-  map.instance.on('nodeUpdate', updates);
-  return { map, updates, drag: map.drag as unknown as DragInternals };
+  const map = create('map', ref, undefined, data);
+  const changes = jest.fn();
+  data.subscribe(changes);
+  return { data, map, changes, drag: map.drag as unknown as DragInternals };
 }
 
 function transformOf(id: string): string | null {
@@ -56,73 +54,124 @@ function move(drag: DragInternals, id: string, dx: number, dy: number) {
 }
 
 describe('drag', () => {
-  it('moves a preview and leaves the nodes alone until it ends', () => {
-    const { map, drag, updates } = makeMap();
+  it('moves a preview and writes nothing until it ends', () => {
+    const { data, drag, changes } = makeMap();
 
     drag.started({} as DragEvent, 'a');
     move(drag, 'a', 50, 10);
 
     expect(transformOf('a')).toBe('translate(250,10)');
     expect(transformOf('b')).toBe('translate(450,10)');
-    expect(map.data.node('a')?.coordinates).toEqual({ x: 200, y: 0 });
-    expect(map.draw.previewOf('a')).toEqual({ x: 250, y: 10 });
-    expect(updates).not.toHaveBeenCalled();
+    expect(data.node('a')?.coordinates).toEqual({ x: 200, y: 0 });
+    expect(changes).not.toHaveBeenCalled();
   });
 
-  it('announces every moved node with nodeUpdate when it ends', () => {
-    const { map, drag, updates } = makeMap();
+  it('writes the moved positions in one change when it ends', () => {
+    const { data, drag, changes } = makeMap();
 
     drag.started({} as DragEvent, 'a');
     move(drag, 'a', 50, 10);
     move(drag, 'a', 10, 0);
     drag.ended({} as DragEvent, 'a');
 
-    expect(updates.mock.calls).toEqual([
-      [
-        {
-          nodeProperties: expect.objectContaining({
-            id: 'a',
-            coordinates: { x: 260, y: 10 },
-          }),
-          changedProperty: 'coordinates',
-          previousValue: undefined,
-        },
-      ],
-      [
-        {
-          nodeProperties: expect.objectContaining({
-            id: 'b',
-            coordinates: { x: 460, y: 10 },
-          }),
-          changedProperty: 'coordinates',
-          previousValue: undefined,
-        },
-      ],
-    ]);
-    expect(map.data.node('a')?.coordinates).toEqual({ x: 260, y: 10 });
-    expect(map.data.node('b')?.coordinates).toEqual({ x: 460, y: 10 });
-    expect(map.draw.previewOf('a')).toBeUndefined();
-    expect(transformOf('a')).toBe('translate(260,10)');
+    expect(changes).toHaveBeenCalledTimes(1);
+    expect(data.node('a')?.coordinates).toEqual({ x: 260, y: 10 });
+    expect(data.node('b')?.coordinates).toEqual({ x: 460, y: 10 });
   });
 
-  it('announces nothing for a drag without a move', () => {
-    const { drag, updates } = makeMap();
+  // Mirror compatibility, removed in PR 7.
+  it('announces the new coordinates of every moved node', () => {
+    const { drag, map } = makeMap();
+    const updates: [string, unknown][] = [];
+    map.instance.on('nodeUpdate', event =>
+      updates.push([event.nodeProperties.id, event.nodeProperties.coordinates])
+    );
 
     drag.started({} as DragEvent, 'a');
+    move(drag, 'a', 50, 10);
     drag.ended({} as DragEvent, 'a');
 
-    expect(updates).not.toHaveBeenCalled();
+    expect(updates).toEqual(
+      expect.arrayContaining([
+        ['a', { x: 250, y: 10 }],
+        ['b', { x: 450, y: 10 }],
+      ])
+    );
+    expect(updates).toHaveLength(2);
   });
 
   it('mirrors the descendants when the node crosses its tree root', () => {
-    const { map, drag } = makeMap();
+    const { data, drag } = makeMap();
 
     drag.started({} as DragEvent, 'a');
     move(drag, 'a', -300, 0);
     drag.ended({} as DragEvent, 'a');
 
-    expect(map.data.node('a')?.coordinates).toEqual({ x: -100, y: 0 });
-    expect(map.data.node('b')?.coordinates).toEqual({ x: -300, y: 0 });
+    expect(data.node('a')?.coordinates).toEqual({ x: -100, y: 0 });
+    expect(data.node('b')?.coordinates).toEqual({ x: -300, y: 0 });
+  });
+
+  it('scans the map data once at the start and never per move', () => {
+    const { data, drag } = makeMap();
+    const scan = jest.spyOn(data, 'nodes');
+
+    drag.started({} as DragEvent, 'a');
+    move(drag, 'a', 5, 5);
+    move(drag, 'a', 5, 5);
+    move(drag, 'a', 5, 5);
+
+    expect(scan).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the preview through a peer write and writes the preview at the end', () => {
+    const { data, drag } = makeMap();
+    drag.started({} as DragEvent, 'a');
+    move(drag, 'a', 50, 10);
+
+    data.updateNode('a', 'coordinates', { x: 0, y: 300 });
+    data.updateNode('b', 'name', 'peer');
+
+    expect(transformOf('a')).toBe('translate(250,10)');
+    expect(transformOf('b')).toBe('translate(450,10)');
+
+    drag.ended({} as DragEvent, 'a');
+
+    expect(data.node('a')?.coordinates).toEqual({ x: 250, y: 10 });
+    expect(data.node('b')?.coordinates).toEqual({ x: 450, y: 10 });
+  });
+
+  it('puts the nodes back at their data positions when a peer protects the branch', () => {
+    const { data, drag, map } = makeMap();
+    const refused = jest.fn();
+    map.instance.on('nodeProtected', refused);
+    drag.started({} as DragEvent, 'a');
+    move(drag, 'a', 50, 10);
+
+    data.updateNode('root', 'protected', true);
+    drag.ended({} as DragEvent, 'a');
+
+    expect(data.node('a')?.coordinates).toEqual({ x: 200, y: 0 });
+    expect(transformOf('a')).toBe('translate(200,0)');
+    expect(transformOf('b')).toBe('translate(400,0)');
+    expect(refused).toHaveBeenCalledTimes(1);
+  });
+
+  it('ends without a write when a peer replaces the map', () => {
+    const { data, drag, changes } = makeMap();
+    drag.started({} as DragEvent, 'a');
+    move(drag, 'a', 50, 10);
+
+    data.replaceMap([
+      nodeRecord({ id: 'root', isRoot: true }),
+      nodeRecord({ id: 'a', parent: 'root', coordinates: { x: 600, y: 0 } }),
+    ]);
+    changes.mockClear();
+    move(drag, 'a', 50, 10);
+    drag.ended({} as DragEvent, 'a');
+
+    expect(changes).not.toHaveBeenCalled();
+    expect(data.node('a')?.coordinates).toEqual({ x: 600, y: 0 });
+    expect(transformOf('a')).toBe('translate(600,0)');
   });
 
   it('selects the dragged node', () => {

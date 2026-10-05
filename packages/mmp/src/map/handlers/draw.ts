@@ -9,6 +9,7 @@ import {
 } from '@teammapper/shared';
 import MmpMap, { DomElements } from '../map.js';
 import Utils from '../../utils/utils.js';
+import type { MapNodeRecord } from '../data/map-data.js';
 import { resolveNode, type ResolvedNode } from '../data/node-record.js';
 import type { RecordLookup } from './nodes.js';
 import {
@@ -39,15 +40,21 @@ interface ImageLoad {
   ratio: number | null;
 }
 
+/** The branch drawn to a node, and the parent it leaves from. */
+interface DrawnBranch {
+  path: SVGPathElement;
+  parent: string;
+}
+
 /**
- * Draws the mind map and redraws a node when it changes. d3 binds node ids
- * to the DOM. Each draw pass reads the record of each node it draws once,
- * through `recordOf`, and drops the records when it ends.
+ * Draws the mind map and redraws the nodes a change adds or updates. d3 binds
+ * node ids to the DOM. Each draw pass reads the record of each node it draws
+ * once, through `recordOf`, and drops the records when it ends.
  *
- * The renderer keeps render data only: measured name sizes, rings, image
- * loads and the drag preview. A node gets as big as its name, so the
- * renderer measures each name after drawing it. Sizes and the selection ring
- * belong to the screen only and never reach the saved map.
+ * The renderer keeps render data only: the DOM element of each drawn node
+ * and branch, the parent each drawn branch leaves from, measured name sizes,
+ * rings, image loads and the drag preview. A node gets as big as its name,
+ * so the renderer measures each name after drawing it.
  */
 export default class Draw {
   private map: MmpMap;
@@ -61,6 +68,24 @@ export default class Draw {
   /** The selection ring color, by node id. */
   private readonly rings = new Map<string, string>();
   private readonly images = new Map<string, ImageLoad>();
+  /** The DOM element of each drawn node, by node id. */
+  private readonly groups = new Map<string, SVGGElement>();
+  /** The drawn branch of each node that has a parent, by node id. */
+  private readonly branches = new Map<string, DrawnBranch>();
+  /**
+   * The ids of the nodes whose drawn branch leaves from a node, by the
+   * node's id. A change of a node redraws these branches, and the hidden
+   * child nodes mark reads whether a node has any.
+   */
+  private readonly branchesFrom = new Map<string, Set<string>>();
+  /**
+   * The ids of the drawn nodes whose parent the map data lacks, by the
+   * parent's id. Such a node draws as a root until a later change adds the
+   * parent, and a draw of the parent then draws these nodes too.
+   */
+  private readonly orphans = new Map<string, Set<string>>();
+  /** The parent id each node in `orphans` waits for, by node id. */
+  private readonly missingParents = new Map<string, string>();
   /** Where a drag shows each node it moves, by node id. */
   private readonly preview = new Map<string, MapNodeCoordinates>();
   private readonly resizeObserver: ResizeObserver | null;
@@ -128,41 +153,83 @@ export default class Draw {
   }
 
   /**
-   * Redraw the whole map: draw new nodes, remove deleted ones and redraw the
-   * rest. A node the view state hides stays drawn but invisible.
+   * Remove every drawn node and draw the map again from one scan of the map
+   * data. The rings go; measured sizes and image loads of the nodes that
+   * stay are kept.
    */
-  public update() {
-    const lookup = this.pass();
-    const ids = [...this.map.nodes.scan().keys()];
+  public drawAll() {
+    const records = this.map.data.nodes();
+    const ids = records.map(record => record.id);
 
-    const groups = this.nodeGroups()
-      .data(ids, id => id)
-      .join(
-        enter => this.enterNodes(enter),
-        update => update,
-        exit => this.exitNodes(exit)
-      );
-    const branches = this.branchPaths()
-      .data(
-        ids.filter(id => this.map.nodes.parentOf(id, lookup) !== null),
-        id => id
-      )
-      .join(enter =>
-        enter.append<SVGPathElement>('path').attr('class', 'branch')
-      );
+    [...this.groups.keys()].forEach(id => this.dropGroup(id));
+    [...this.branches.keys()].forEach(id => this.dropBranch(id));
+    this.rings.clear();
+    this.orphans.clear();
+    this.missingParents.clear();
 
-    // Forget the sizes, rings, images and previews of deleted nodes.
     const present = new Set(ids);
-    for (const state of [
-      this.textExtents,
-      this.rings,
-      this.images,
-      this.preview,
-    ]) {
+    for (const state of [this.textExtents, this.images]) {
       for (const id of state.keys()) if (!present.has(id)) state.delete(id);
     }
 
-    this.render(groups, branches, lookup);
+    this.drawNodes(ids, records);
+  }
+
+  /**
+   * Draw the nodes again from one scan of the map data, keeping their DOM.
+   */
+  public redrawAll() {
+    const records = this.map.data.nodes();
+    this.drawNodes(
+      records.map(record => record.id),
+      records
+    );
+  }
+
+  /**
+   * Draw the nodes with the ids, their branches and the branches of their
+   * children. A node without a DOM gets one. Ids the map data lacks are
+   * skipped. `records` may hold the records a caller already read.
+   * @param {Iterable<string>} ids
+   * @param {MapNodeRecord[]} records
+   */
+  public drawNodes(ids: Iterable<string>, records?: MapNodeRecord[]) {
+    const lookup = this.pass(records);
+    const requested = new Set(ids);
+    for (const id of [...requested]) {
+      this.orphans.get(id)?.forEach(orphan => requested.add(orphan));
+    }
+    const present = [...requested].filter(id => lookup(id) !== undefined);
+    if (present.length === 0) return;
+
+    this.place(present, lookup);
+    this.render(present, this.branchIdsOf(present), lookup);
+  }
+
+  /**
+   * Remove the DOM and the render data of the nodes. Returns the ids to draw
+   * again: the parents the removed branches left from, whose hidden child
+   * nodes mark depends on their children, and nodes left without a parent.
+   * @param {string[]} ids
+   */
+  public removeNodes(ids: string[]): string[] {
+    const redraw: string[] = [];
+
+    for (const id of ids) {
+      const parent = this.branches.get(id)?.parent;
+      if (parent !== undefined) redraw.push(parent);
+      redraw.push(...(this.branchesFrom.get(id) ?? []));
+
+      this.dropBranch(id);
+      this.dropGroup(id);
+      this.waitForParent(id, null);
+      this.textExtents.delete(id);
+      this.rings.delete(id);
+      this.images.delete(id);
+      this.preview.delete(id);
+    }
+
+    return redraw;
   }
 
   /**
@@ -172,11 +239,12 @@ export default class Draw {
    */
   public renderPositions(ids: string[]) {
     const lookup = this.pass();
+    const present = ids.filter(id => this.groups.has(id));
 
-    this.nodeGroupsOf(ids).attr('transform', id =>
+    this.groupsOf(present).attr('transform', id =>
       translate(this.map.nodes.positionOf(id, lookup))
     );
-    this.branchPathsOf(ids, lookup).attr('d', id =>
+    this.branchesOf(this.branchIdsOf(present)).attr('d', id =>
       this.branchShape(id, lookup)
     );
   }
@@ -203,15 +271,6 @@ export default class Draw {
     const positions = new Map(this.preview);
     this.preview.clear();
     return positions;
-  }
-
-  /**
-   * Remove all nodes and branches of the map.
-   */
-  public clear() {
-    this.nodeGroups().call(groups => this.exitNodes(groups));
-    this.branchPaths().remove();
-    this.rings.clear();
   }
 
   /**
@@ -256,7 +315,7 @@ export default class Draw {
     if (color) this.rings.set(id, color);
     else this.rings.delete(id);
 
-    this.nodeGroupsOf([id])
+    this.groupsOf([id])
       .selectChildren<SVGPathElement, string>('path.background')
       .style('stroke', () => color || null);
   }
@@ -380,20 +439,22 @@ export default class Draw {
       }
       // Draw the stored name back, so the DOM drops the typed text when a
       // peer protected the branch during the edit and updateNode refused it.
-      const lookup = this.pass();
-      this.render(
-        this.nodeGroupsOf([id]),
-        this.branchPathsOf([id], lookup),
-        lookup
-      );
+      this.drawNodes([id]);
     };
   }
 
   /**
    * One draw pass: a lookup that reads each record from the map data at
-   * most once.
+   * most once, or from `records` when the caller already read them.
    */
-  private pass(): RecordLookup {
+  private pass(records?: MapNodeRecord[]): RecordLookup {
+    if (records) {
+      const resolved = new Map(
+        records.map(record => [record.id, resolveNode(record)])
+      );
+      return id => resolved.get(id);
+    }
+
     const read = new Map<string, ResolvedNode | null>();
     return id => {
       let known = read.get(id);
@@ -407,16 +468,56 @@ export default class Draw {
   }
 
   /**
+   * Give each node a DOM element when it has none, and its branch the
+   * parent the record names now.
+   */
+  private place(ids: string[], lookup: RecordLookup) {
+    const entering = ids.filter(id => !this.groups.has(id));
+    this.enterNodes(
+      this.layers.nodes
+        .selectAll<SVGGElement, string>(() => [])
+        .data(entering)
+        .enter()
+    ).each((id, i, groups) => this.groups.set(id, groups[i]));
+
+    const branching: string[] = [];
+    for (const id of ids) {
+      const parent = this.map.nodes.parentOf(id, lookup);
+      const named = lookup(id)?.parent || null;
+      this.waitForParent(id, parent === null ? named : null);
+      const drawn = this.branches.get(id);
+      if (drawn?.parent === parent) continue;
+
+      if (drawn) this.dropBranch(id);
+      if (parent !== null) branching.push(id);
+    }
+
+    this.layers.branches
+      .selectAll<SVGPathElement, string>(() => [])
+      .data(branching)
+      .enter()
+      .append<SVGPathElement>('path')
+      .attr('class', 'branch')
+      .each((id, i, paths) => {
+        const parent = this.map.nodes.parentOf(id, lookup);
+        if (parent === null) return;
+
+        this.branches.set(id, { path: paths[i], parent });
+        const from = this.branchesFrom.get(parent) ?? new Set<string>();
+        from.add(id);
+        this.branchesFrom.set(parent, from);
+      });
+  }
+
+  /**
    * Draw the given nodes and branches. The renderer measures all names at
    * once between drawing and sizing, so the browser lays out the page once
    * instead of once per node.
    */
-  private render(
-    groups: NodeGroups,
-    branches: BranchPaths,
-    lookup: RecordLookup
-  ) {
+  private render(ids: string[], branchIds: string[], lookup: RecordLookup) {
     const context = this.markContext(lookup);
+    const groups = this.groupsOf(ids);
+    const branches = this.branchesOf(branchIds);
     const visibilityOf = (id: string) =>
       this.map.nodes.isHidden(id, lookup) ? 'hidden' : 'visible';
 
@@ -440,13 +541,15 @@ export default class Draw {
    * @param {string[]} ids
    */
   private resize(ids: string[]) {
-    const changed = this.measure(this.nodeGroupsOf(ids));
+    const lookup = this.pass();
+    const changed = this.measure(
+      this.groupsOf(ids.filter(id => lookup(id) !== undefined))
+    );
     if (changed.length === 0) return;
 
-    const lookup = this.pass();
     this.finish(
-      this.nodeGroupsOf(changed),
-      this.branchPathsOf(changed, lookup),
+      this.groupsOf(changed),
+      this.branchesOf(this.branchIdsOf(changed)),
       this.markContext(lookup),
       lookup
     );
@@ -502,7 +605,9 @@ export default class Draw {
       ringOf: id => this.ringOf(id),
       imageOf: id => this.imageOf(recordOf(id)),
       isEditing: id => this.editingId === id,
-      hidesChildren: id => this.map.nodes.childNodesHidden(id),
+      hidesChildren: id =>
+        this.map.viewState.hidesChildren(id) &&
+        (this.branchesFrom.get(id)?.size ?? 0) > 0,
       fontFamily: this.map.options.fontFamily,
       showLinktext: this.map.options.showLinktext,
     };
@@ -549,11 +654,7 @@ export default class Draw {
       // erase the image in the map data for every client on a network error.
       load.ratio = ratio;
       const lookup = this.pass();
-      this.render(
-        this.nodeGroupsOf([id]),
-        this.branchPathsOf([], lookup),
-        lookup
-      );
+      if (lookup(id)) this.render([id], [], lookup);
     };
     image.onload = () => settle(image.width / image.height);
     image.onerror = () => settle(null);
@@ -617,38 +718,33 @@ export default class Draw {
     return path.toString();
   }
 
-  private nodeGroups(): NodeGroups {
-    return this.layers.nodes.selectChildren<SVGGElement, string>('g.node');
-  }
-
-  private branchPaths(): BranchPaths {
-    return this.layers.branches.selectChildren<SVGPathElement, string>(
-      'path.branch'
-    );
-  }
-
   /** The drawn nodes with the ids. */
-  private nodeGroupsOf(ids: string[]): NodeGroups {
-    const wanted = new Set(ids);
-    return this.nodeGroups().filter(id => wanted.has(id));
+  private groupsOf(ids: string[]): NodeGroups {
+    const elements = ids.flatMap(id => this.groups.get(id) ?? []);
+    return d3.selectAll<SVGGElement, string>(elements);
   }
 
-  /** The drawn branches to the nodes with the ids and to their children. */
-  private branchPathsOf(ids: string[], lookup: RecordLookup): BranchPaths {
-    const wanted = new Set(ids);
-    return this.branchPaths().filter(id => {
-      if (wanted.has(id)) return true;
-      const parent = this.map.nodes.parentOf(id, lookup);
-      return parent !== null && wanted.has(parent);
-    });
+  /** The drawn branches to the nodes with the ids. */
+  private branchesOf(ids: string[]): BranchPaths {
+    const elements = ids.flatMap(id => this.branches.get(id)?.path ?? []);
+    return d3.selectAll<SVGPathElement, string>(elements);
+  }
+
+  /** The ids of the nodes, followed by those of their drawn children. */
+  private branchIdsOf(ids: string[]): string[] {
+    const branchIds = new Set(ids);
+    for (const id of ids) {
+      this.branchesFrom.get(id)?.forEach(child => branchIds.add(child));
+    }
+    return [...branchIds];
   }
 
   private nameOf(id: string): HTMLDivElement | null {
-    return nameElements(this.nodeGroupsOf([id])).node();
+    return nameElements(this.groupsOf([id])).node();
   }
 
   private enterNodes(
-    enter: d3.Selection<d3.EnterElement, string, d3.BaseType, unknown>
+    enter: d3.Selection<d3.EnterElement, string, SVGGElement, unknown>
   ): NodeGroups {
     const groups = enter
       .append('g')
@@ -710,17 +806,56 @@ export default class Draw {
     });
   }
 
-  private exitNodes(exit: NodeGroups) {
-    nameElements(exit).each((id, i, names) => {
+  /** Remove the DOM element of the node. */
+  private dropGroup(id: string) {
+    const group = this.groups.get(id);
+    if (!group) return;
+
+    nameElements(this.groupsOf([id])).each((_id, i, names) => {
       this.resizeObserver?.unobserve(names[i]);
       // A blur fired by the removal would commit the typed name over the
       // change that removed the node.
       names[i].onblur = null;
-      // Removing a focused name fires no blur in Firefox and WebKit, so the
-      // edit ends here.
-      if (id === this.editingId) this.editingId = null;
     });
-    exit.remove();
+    // Removing a focused name fires no blur in Firefox and WebKit, so the
+    // edit ends here.
+    if (id === this.editingId) this.editingId = null;
+    group.remove();
+    this.groups.delete(id);
+  }
+
+  /**
+   * Note that the node waits for the parent with the id `parent` to appear
+   * in the map data, or for none when `parent` is null.
+   */
+  private waitForParent(id: string, parent: string | null) {
+    const waiting = this.missingParents.get(id);
+    if (waiting === parent) return;
+
+    if (waiting !== undefined) {
+      const orphans = this.orphans.get(waiting);
+      orphans?.delete(id);
+      if (orphans?.size === 0) this.orphans.delete(waiting);
+      this.missingParents.delete(id);
+    }
+    if (parent === null) return;
+
+    this.missingParents.set(id, parent);
+    const orphans = this.orphans.get(parent) ?? new Set<string>();
+    orphans.add(id);
+    this.orphans.set(parent, orphans);
+  }
+
+  /** Remove the drawn branch to the node. */
+  private dropBranch(id: string) {
+    const branch = this.branches.get(id);
+    if (!branch) return;
+
+    branch.path.remove();
+    this.branches.delete(id);
+    const from = this.branchesFrom.get(branch.parent);
+    from?.delete(id);
+    if (from?.size === 0) this.branchesFrom.delete(branch.parent);
   }
 
   /**

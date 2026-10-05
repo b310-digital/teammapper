@@ -51,7 +51,7 @@ beforeAll(stubSvgLengths);
 function makeMap(): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref);
+  const map = create('map', ref, undefined, new InMemoryMapData());
   map.instance.new();
   return map;
 }
@@ -124,10 +124,26 @@ describe('measuring names', () => {
     const root = mainRoot(map);
     map.draw.enableNodeNameEditing(root.id);
 
-    map.draw.clear();
-    map.draw.update();
+    map.draw.drawAll();
 
     expect(rootName(map).innerHTML).toBe(root.name);
+  });
+
+  it('commits no typed name when a replaced map removes the edited node', () => {
+    const data = new InMemoryMapData();
+    const ref = document.createElement('div');
+    document.body.appendChild(ref);
+    const map = create('map', ref, undefined, data);
+    map.instance.new();
+    const root = mainRoot(map);
+    map.draw.enableNodeNameEditing(root.id);
+    const name = rootName(map);
+    name.innerHTML = 'Typed';
+
+    data.replaceMap(data.nodes().map(node => ({ ...node })));
+    name.dispatchEvent(new FocusEvent('blur'));
+
+    expect(data.node(root.id)?.name).toBe(root.name);
   });
 
   it('disconnects the observer when the map is removed', () => {

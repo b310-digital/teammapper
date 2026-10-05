@@ -1,5 +1,6 @@
 import { fakeDraw } from '../../test/fake-draw.js';
-import { firedEvents, nodeRecord, stubMap } from '../../test/stub-map.js';
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
+import type { MapDataChange } from '../data/map-data.js';
 import type { MapSnapshot } from '@teammapper/shared';
 
 function handlerWith(snapshot: MapSnapshot) {
@@ -7,9 +8,10 @@ function handlerWith(snapshot: MapSnapshot) {
     // Every node measured at 100 by 30.
     draw: fakeDraw(() => ({ width: 100, height: 30 })),
   });
-  stub.draw.update.mockClear();
+  const changes: MapDataChange[] = [];
+  stub.data.subscribe(change => changes.push(change));
 
-  return { ...stub, handler: stub.nodes };
+  return { ...stub, handler: stub.nodes, changes };
 }
 
 function node(id: string, parent: string, isRoot = false) {
@@ -50,7 +52,7 @@ describe('distributeNodes', () => {
       node('parent', 'root'),
       ...children,
     ]);
-    map.viewState.restore({ nodesWithHiddenChildren: ['parent'] });
+    map.viewState.toggle('parent');
 
     handler.distributeNodes();
 
@@ -59,36 +61,30 @@ describe('distributeNodes', () => {
     expect(new Set(childYs).size).toBe(4);
   });
 
-  it('redraws the map once rather than once per node', () => {
-    const { handler, draw } = handlerWith(aiShapedNodes());
+  it('writes every coordinate in one change', () => {
+    const { handler, changes } = handlerWith(aiShapedNodes());
 
     handler.distributeNodes();
 
-    expect(draw.update).toHaveBeenCalledTimes(1);
+    expect(changes).toHaveLength(1);
+    expect(changes[0].updated.length).toBeGreaterThan(1);
   });
 
-  it('emits a distribute event so the sync layer can propagate the rewrite', () => {
-    const { handler, events } = handlerWith(aiShapedNodes());
+  it('writes only the coordinates that change', () => {
+    const { handler, changes } = handlerWith(aiShapedNodes());
+    handler.distributeNodes();
 
     handler.distributeNodes();
 
-    expect(firedEvents(events)).toContain('distribute');
-  });
-
-  it('does not emit the distribute event when notification is suppressed', () => {
-    const { handler, events } = handlerWith(aiShapedNodes());
-
-    handler.withNotify(false, handler.distributeNodes);
-
-    expect(firedEvents(events)).not.toContain('distribute');
+    expect(changes).toHaveLength(1);
   });
 
   it('leaves an empty map alone', () => {
-    const { handler, draw, events } = handlerWith([]);
+    const { handler, events, changes } = handlerWith([]);
 
     handler.distributeNodes();
 
-    expect(draw.update).not.toHaveBeenCalled();
+    expect(changes).toEqual([]);
     expect(events.emit).not.toHaveBeenCalled();
   });
 });
