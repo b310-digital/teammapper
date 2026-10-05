@@ -1,123 +1,102 @@
-import Nodes from './nodes.js';
-import Node, { NodeProperties } from '../models/node.js';
-import type { MapNodeCoordinates } from '@teammapper/shared';
-import MmpMap from '../map.js';
-
-function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
-  return new Node({ k: 1, parent: null, ...properties });
-}
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
+import type { MapNodeCoordinates, MapSnapshot } from '@teammapper/shared';
 
 /**
- * The node under test is seeded alongside the existing ones because that is the
- * state `addNode` calls this in - `getSiblings` splices the node itself back
- * out, so it never counts as its own sibling.
+ * Where a new node under `parent` goes, on a map holding `existing`.
+ * `insertNode` places a node without coordinates as `addNode` does.
  */
-function placementOf(node: Node, existing: Node[]): MapNodeCoordinates {
-  const handler = new Nodes({ rootId: 'root' } as unknown as MmpMap);
-  [...existing, node].forEach(each => handler.setNode(each));
+function placementOf(
+  parent: string,
+  existing: MapSnapshot
+): MapNodeCoordinates {
+  const { nodes } = stubMap(existing);
 
-  return (
-    handler as unknown as {
-      calculateCoordinates(node: Node): MapNodeCoordinates;
-    }
-  ).calculateCoordinates(node);
+  return nodes.insertNode({}, parent).coordinates;
 }
 
 describe('calculateCoordinates', () => {
-  const root = makeNode({
+  const root = nodeRecord({
     id: 'root',
     isRoot: true,
     coordinates: { x: 0, y: 0 },
   });
-  const leftBranch = makeNode({
+  const leftBranch = nodeRecord({
     id: 'left',
-    parent: root,
+    parent: 'root',
     coordinates: { x: -200, y: -120 },
   });
-  const rightBranch = makeNode({
+  const rightBranch = nodeRecord({
     id: 'right',
-    parent: root,
+    parent: 'root',
     coordinates: { x: 200, y: -120 },
   });
 
   it('puts the first child of the root one column to the left and above it', () => {
-    const child = makeNode({ id: 'first', parent: root });
-
-    expect(placementOf(child, [root])).toEqual({ x: -200, y: -120 });
+    expect(placementOf('root', [root])).toEqual({ x: -200, y: -120 });
   });
 
   it('puts the second child of the root on the empty right side', () => {
-    const child = makeNode({ id: 'second', parent: root });
-
-    expect(placementOf(child, [root, leftBranch])).toEqual({
+    expect(placementOf('root', [root, leftBranch])).toEqual({
       x: 200,
       y: -120,
     });
   });
 
   it('stacks a third child below the lowest sibling on the emptier side', () => {
-    const child = makeNode({ id: 'third', parent: root });
-
-    expect(placementOf(child, [root, leftBranch, rightBranch])).toEqual({
+    expect(placementOf('root', [root, leftBranch, rightBranch])).toEqual({
       x: -200,
       y: -60,
     });
   });
 
   it('keeps a grandchild on the side of its branch', () => {
-    const child = makeNode({ id: 'grandchild', parent: leftBranch });
-
-    expect(placementOf(child, [root, leftBranch])).toEqual({
+    expect(placementOf('left', [root, leftBranch])).toEqual({
       x: -400,
       y: -240,
     });
   });
 
   it('stacks a second grandchild below its sibling', () => {
-    const firstGrandchild = makeNode({
+    const firstGrandchild = nodeRecord({
       id: 'grandchild',
-      parent: leftBranch,
+      parent: 'left',
       coordinates: { x: -400, y: -240 },
     });
-    const child = makeNode({ id: 'second-grandchild', parent: leftBranch });
 
-    expect(placementOf(child, [root, leftBranch, firstGrandchild])).toEqual({
+    expect(placementOf('left', [root, leftBranch, firstGrandchild])).toEqual({
       x: -400,
       y: -180,
     });
   });
 
   describe('in a second tree right of the main tree', () => {
-    const secondRoot = makeNode({
+    const secondRoot = nodeRecord({
       id: 'second-root',
       coordinates: { x: 1000, y: 0 },
     });
-    const secondLeft = makeNode({
+    const secondLeft = nodeRecord({
       id: 'second-left',
-      parent: secondRoot,
+      parent: 'second-root',
       coordinates: { x: 800, y: -120 },
     });
     const existing = [root, leftBranch, rightBranch, secondRoot];
 
     it('puts the first child of the second root on its left', () => {
-      const child = makeNode({ id: 'first', parent: secondRoot });
-
-      expect(placementOf(child, existing)).toEqual({ x: 800, y: -120 });
+      expect(placementOf('second-root', existing)).toEqual({
+        x: 800,
+        y: -120,
+      });
     });
 
     it('puts the second child of the second root on its empty right', () => {
-      const child = makeNode({ id: 'second', parent: secondRoot });
-
-      expect(placementOf(child, [...existing, secondLeft])).toEqual({
+      expect(placementOf('second-root', [...existing, secondLeft])).toEqual({
         x: 1200,
         y: -120,
       });
     });
 
     it('keeps a grandchild on the left of its own tree root', () => {
-      const child = makeNode({ id: 'grandchild', parent: secondLeft });
-
-      expect(placementOf(child, [...existing, secondLeft])).toEqual({
+      expect(placementOf('second-left', [...existing, secondLeft])).toEqual({
         x: 600,
         y: -240,
       });

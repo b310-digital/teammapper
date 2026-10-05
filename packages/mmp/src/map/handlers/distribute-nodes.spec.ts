@@ -1,123 +1,96 @@
-import Nodes from './nodes.js';
 import { fakeDraw } from '../../test/fake-draw.js';
-import Node from '../models/node.js';
-import MmpMap from '../map.js';
+import { firedEvents, nodeRecord, stubMap } from '../../test/stub-map.js';
+import type { MapSnapshot } from '@teammapper/shared';
 
-type StubMap = ReturnType<typeof stubMap>;
-
-function stubMap() {
-  return {
-    id: 'test-map',
+function handlerWith(snapshot: MapSnapshot) {
+  const stub = stubMap(snapshot, {
     // Every node measured at 100 by 30.
     draw: fakeDraw(() => ({ width: 100, height: 30 })),
-    events: { emit: jest.fn() },
-  };
+  });
+  stub.draw.update.mockClear();
+
+  return { ...stub, handler: stub.nodes };
 }
 
-/** Only the fields distribution reads, hence the cast. */
-function liveNode(
-  id: string,
-  parent: Node | null,
-  overrides: Partial<Node> = {}
-): Node {
-  return {
-    id,
-    parent,
-    name: id,
-    isRoot: false,
-    coordinates: { x: 0, y: 0 },
-    ...overrides,
-  } as unknown as Node;
-}
-
-function handlerWith(nodes: Node[]): { handler: Nodes; map: StubMap } {
-  const map = stubMap();
-  const handler = new Nodes(map as unknown as MmpMap);
-  nodes.forEach(node => handler.setNode(node));
-
-  return { handler, map };
+function node(id: string, parent: string, isRoot = false) {
+  return nodeRecord({ id, parent, name: id, isRoot });
 }
 
 /** Root with four branches of three children: the shape an AI import makes. */
-function aiShapedNodes(): Node[] {
-  const root = liveNode('root', null, { isRoot: true });
-  const nodes: Node[] = [root];
+function aiShapedNodes(): MapSnapshot {
+  const nodes: MapSnapshot = [node('root', '', true)];
 
   for (const branch of ['A', 'B', 'C', 'D']) {
-    const branchNode = liveNode(branch, root);
-    nodes.push(branchNode);
+    nodes.push(node(branch, 'root'));
     for (let i = 1; i <= 3; i++) {
-      nodes.push(liveNode(`${branch}${i}`, branchNode));
+      nodes.push(node(`${branch}${i}`, branch));
     }
   }
   return nodes;
 }
 
 describe('distributeNodes', () => {
-  it('writes new coordinates onto the live nodes', () => {
-    const nodes = aiShapedNodes();
-    const { handler } = handlerWith(nodes);
-    const before = nodes.map(node => ({ ...node.coordinates }));
+  it('writes new coordinates to the nodes', () => {
+    const { handler, map } = handlerWith(aiShapedNodes());
 
     handler.distributeNodes();
 
-    const moved = nodes.filter(
-      (node, i) =>
-        node.coordinates.x !== before[i].x || node.coordinates.y !== before[i].y
-    );
+    const moved = map.export
+      .asJSON()
+      .filter(n => n.coordinates?.x !== 0 || n.coordinates?.y !== 0);
     expect(moved.length).toBeGreaterThan(0);
   });
 
   it('hands every node to the layout, so hidden nodes keep their room', () => {
     // The layout never reads the view state. Child nodes this person hid are
     // still laid out, so showing them again does not leave them piled up.
-    const root = liveNode('root', null, { isRoot: true });
-    const parent = liveNode('parent', root);
-    const children: Node[] = [];
-    for (let i = 1; i <= 4; i++) {
-      children.push(liveNode(`c${i}`, parent));
-    }
-    const { handler } = handlerWith([root, parent, ...children]);
+    const children = [1, 2, 3, 4].map(i => node(`c${i}`, 'parent'));
+    const { handler, map } = handlerWith([
+      node('root', '', true),
+      node('parent', 'root'),
+      ...children,
+    ]);
+    map.viewState.restore({ nodesWithHiddenChildren: ['parent'] });
 
     handler.distributeNodes();
 
     // Filtered out of the layout input they would all keep y: 0.
-    const childYs = children.map(node => node.coordinates.y);
+    const childYs = children.map(
+      child => handler.record(child.id)?.coordinates.y
+    );
     expect(new Set(childYs).size).toBe(4);
   });
 
   it('redraws the map once rather than once per node', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
+    const { handler, draw } = handlerWith(aiShapedNodes());
 
     handler.distributeNodes();
 
-    expect(map.draw.update).toHaveBeenCalledTimes(1);
+    expect(draw.update).toHaveBeenCalledTimes(1);
   });
 
   it('emits a distribute event so the sync layer can propagate the rewrite', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
+    const { handler, events } = handlerWith(aiShapedNodes());
 
     handler.distributeNodes();
 
-    const events = map.events.emit.mock.calls.map(call => call[0]);
-    expect(events).toContain('distribute');
+    expect(firedEvents(events)).toContain('distribute');
   });
 
   it('does not emit the distribute event when notification is suppressed', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
+    const { handler, events } = handlerWith(aiShapedNodes());
 
     handler.distributeNodes(false);
 
-    const events = map.events.emit.mock.calls.map(call => call[0]);
-    expect(events).not.toContain('distribute');
+    expect(firedEvents(events)).not.toContain('distribute');
   });
 
   it('leaves an empty map alone', () => {
-    const { handler, map } = handlerWith([]);
+    const { handler, draw, events } = handlerWith([]);
 
     handler.distributeNodes();
 
-    expect(map.draw.update).not.toHaveBeenCalled();
-    expect(map.events.emit).not.toHaveBeenCalled();
+    expect(draw.update).not.toHaveBeenCalled();
+    expect(events.emit).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
+import { stubSvgLengths } from '../../test/svg-lengths.js';
 import type { MapSnapshot, OldMmpNode } from '@teammapper/shared';
 
 /**
@@ -7,24 +8,33 @@ import type { MapSnapshot, OldMmpNode } from '@teammapper/shared';
  * back. These specs drive both through `MmpInstance`, as the frontend does.
  */
 
+beforeAll(stubSvgLengths);
+
 function makeMap(): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref);
-  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
-  map.dom.svg.attr('viewBox', '0 0 800 600');
-  return map;
+  return create('map', ref);
+}
+
+function rootOf(map: MmpMap): string {
+  const root = map.instance.exportRootProperties();
+  if (!root) throw new Error('the map has no main root');
+  return root.id;
 }
 
 /** A loaded map: the main root with a styled child and a grandchild. */
 function makeLoadedMap(): { map: MmpMap; child: string } {
   const map = makeMap();
   map.instance.new();
-  const child = map.instance.addNode({
-    name: 'child',
-    colors: { background: '#ff0000' },
-    font: { size: 18, weight: 'bold' },
-  });
+  const child = map.instance.addNode(
+    {
+      name: 'child',
+      colors: { background: '#ff0000' },
+      font: { size: 18, weight: 'bold' },
+    },
+    true,
+    rootOf(map)
+  );
   if (!child) throw new Error('addNode added no child');
   map.instance.addNode({ name: 'grandchild' }, true, child.id);
   map.instance.updateNode('linkHref', 'https://example.com/', true, child.id);
@@ -75,7 +85,7 @@ describe('exportAsJSON', () => {
 
   it('returns the properties of every node in the order they were added', () => {
     const { map, child } = makeLoadedMap();
-    const root = map.instance.exportRootProperties().id;
+    const root = rootOf(map);
 
     expect(map.instance.exportAsJSON()).toMatchObject([
       { id: root, parent: '', isRoot: true, name: 'Root node' },
@@ -113,7 +123,7 @@ describe('exportAsJSON', () => {
     exported.pop();
 
     expect(JSON.stringify(map.instance.exportAsJSON())).toBe(before);
-    expect(map.nodes.getNode(child)?.name).toBe('child');
+    expect(map.nodes.record(child)?.name).toBe('child');
   });
 
   it('includes a change applied without an event', () => {
@@ -127,10 +137,10 @@ describe('exportAsJSON', () => {
 
   it('includes nodes added and leaves out nodes removed', () => {
     const { map, child } = makeLoadedMap();
-    const added = map.instance.addNode({ name: 'added' }, false);
+    const added = map.instance.addNode({ name: 'added' }, true, rootOf(map));
     if (!added) throw new Error('addNode added no node');
 
-    map.instance.removeNode(child, false);
+    map.instance.removeNode(child);
 
     expect(map.instance.exportAsJSON().map(n => n.name)).toEqual([
       'Root node',
@@ -181,6 +191,16 @@ describe('new', () => {
     ]);
   });
 
+  it('gives a node without a k a random one', () => {
+    const map = makeMap();
+    const nodes: OldMmpNode[] = JSON.parse(JSON.stringify(LEGACY_MAP));
+    nodes[0].value.k = 0;
+
+    map.instance.new(nodes as unknown as MapSnapshot);
+
+    expect(map.instance.exportAsJSON()[0].k).not.toBe(0);
+  });
+
   it('ignores the hidden attributes an older export carries', () => {
     const { map, child } = makeLoadedMap();
     const legacy = map.instance
@@ -195,7 +215,7 @@ describe('new', () => {
     expect(loaded.every(node => !('hasHiddenChildNodes' in node))).toBe(true);
     const group = target.dom.g
       .selectAll<SVGGElement, string>('g.node')
-      .filter(datum => datum === child)
+      .filter(id => id === child)
       .node();
     expect(group?.style.visibility).toBe('visible');
   });
@@ -235,7 +255,7 @@ describe('new', () => {
         'There was an error importing the map; changes have been rolled back.'
       );
       expect(map.instance.exportAsJSON()).toStrictEqual(before);
-      expect(map.nodes.getSelectedNode()?.id).toBe(before[0].id);
+      expect(map.instance.getSelectedNode()?.id).toBe(before[0].id);
       expect(created).not.toHaveBeenCalled();
     });
   });

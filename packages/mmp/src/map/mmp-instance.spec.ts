@@ -1,6 +1,8 @@
 import * as d3 from 'd3';
 import { create } from '../index.js';
 import MmpMap from './map.js';
+import { nodeRecord } from '../test/stub-map.js';
+import { stubSvgLengths } from '../test/svg-lengths.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
@@ -38,12 +40,12 @@ const OTHER_EVENTS = Object.keys({
 
 const IMAGE_REFERENCE = 'image:5f0c4b1e-3a8d-4c6e-9f2a-7b1d2e3f4a5b';
 
+beforeAll(stubSvgLengths);
+
 function makeMap(): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const map = create('map', ref);
-  // jsdom lays nothing out; d3-zoom reads the extent from the view box.
-  map.dom.svg.attr('viewBox', '0 0 800 600');
   map.instance.new();
   return map;
 }
@@ -55,6 +57,12 @@ function makeMapWithChild() {
   if (!child) throw new Error('addNode added no child');
   map.instance.selectNode(child.id);
   return { map, child: child.id };
+}
+
+function rootOf(map: MmpMap): string {
+  const root = map.instance.exportRootProperties();
+  if (!root) throw new Error('the map has no main root');
+  return root.id;
 }
 
 function exported(map: MmpMap, id: string): ExportNodeProperties {
@@ -81,6 +89,10 @@ function nameDom(id: string): HTMLDivElement {
   const div = nodeDom(id).querySelector('foreignObject > div');
   if (!(div instanceof HTMLDivElement)) throw new Error('no name for ' + id);
   return div;
+}
+
+function drawnIds(): string[] {
+  return d3.selectAll<SVGGElement, string>('g.node').data();
 }
 
 function deepFreeze<T>(value: T): T {
@@ -272,10 +284,9 @@ describe('updateNode', () => {
 
   it('refuses a branch color on a root node', () => {
     const map = makeMap();
-    const root = map.instance.exportRootProperties().id;
 
     expect(() =>
-      map.instance.updateNode('branchColor', '#00ff00', true, root)
+      map.instance.updateNode('branchColor', '#00ff00', true, rootOf(map))
     ).toThrow();
   });
 
@@ -351,12 +362,21 @@ describe('protection', () => {
     }
   );
 
-  it('applies a remote change below it', () => {
-    const { map, child } = makeProtectedMap();
+  it('applies a remote change and a remote removal below it', () => {
+    const { map, parent, child } = makeProtectedMap();
+    const refused = jest.fn();
+    const announced = jest.fn();
+    map.instance.on('nodeProtected', refused);
+    map.instance.on('nodeUpdate', announced);
+    map.instance.on('nodeRemove', announced);
 
     map.instance.updateNode('name', 'Remote', false, child);
-
     expect(exported(map, child).name).toBe('Remote');
+    map.instance.removeNode(parent, false);
+
+    expect(map.instance.existNode(parent)).toBe(false);
+    expect(refused).not.toHaveBeenCalled();
+    expect(announced).not.toHaveBeenCalled();
   });
 
   it('refuses a local child and a local removal', () => {
@@ -383,27 +403,36 @@ describe('protection', () => {
 });
 
 describe('events', () => {
-  it('announces a new node, its selection and its removal', () => {
+  it('announces a selection and the deselect a removal causes', () => {
     const map = makeMap();
-    const created: string[] = [];
     const selected: string[] = [];
     const deselected: string[] = [];
-    const removed: string[] = [];
-    map.instance.on('nodeCreate', node => created.push(node.id));
     map.instance.on('nodeSelect', node => selected.push(node.id));
     map.instance.on('nodeDeselect', node => deselected.push(node.id));
-    map.instance.on('nodeRemove', node => removed.push(node.id));
-    const root = map.instance.exportRootProperties().id;
+    const root = rootOf(map);
 
     const node = map.instance.addNode({ name: 'a' });
     if (!node) throw new Error('addNode added no node');
-    map.instance.updateNode('backgroundColor', '#ff0000', false, node.id);
+    map.instance.updateNode('backgroundColor', '#ff0000', true, node.id);
     map.instance.selectNode(node.id);
     map.instance.removeNode(node.id);
 
-    expect(created).toEqual([node.id]);
     expect(selected).toEqual([node.id]);
     expect(deselected).toEqual([root, node.id]);
+  });
+
+  it('announces a new node and its removal', () => {
+    const map = makeMap();
+    const created: string[] = [];
+    const removed: string[] = [];
+    map.instance.on('nodeCreate', node => created.push(node.id));
+    map.instance.on('nodeRemove', node => removed.push(node.id));
+
+    const node = map.instance.addNode({ name: 'a' });
+    if (!node) throw new Error('addNode added no node');
+    map.instance.removeNode(node.id);
+
+    expect(created).toEqual([node.id]);
     expect(removed).toEqual([node.id]);
   });
 
@@ -414,6 +443,7 @@ describe('events', () => {
     map.instance.on('create', event => payloads.push(event.previousMapData));
 
     map.instance.new(map.instance.exportAsJSON());
+    map.instance.new(map.instance.exportAsJSON(), false);
 
     expect(payloads).toEqual([previous]);
   });
@@ -424,13 +454,28 @@ describe('events', () => {
     map.instance.on('distribute', listener);
 
     map.instance.distributeNodes();
+    map.instance.distributeNodes(false);
 
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('draws the nodes addNodes writes, without an event', () => {
+    const map = makeMap();
+    const root = rootOf(map);
+    const announced = jest.fn();
+    map.instance.on('nodeCreate', announced);
+
+    map.instance.addNodes([
+      nodeRecord({ id: 'peer', parent: root, k: 3, protected: true }),
+    ]);
+
+    expect(drawnIds()).toEqual([root, 'peer']);
+    expect(announced).not.toHaveBeenCalled();
+  });
+
   it('announces the view state alone when it hides child nodes', () => {
     const { map, child } = makeMapWithChild();
-    const root = map.instance.exportRootProperties().id;
+    const root = rootOf(map);
     map.instance.selectNode(root);
     const viewStates: MapViewState[] = [];
     const shared = jest.fn();
@@ -443,6 +488,7 @@ describe('events', () => {
     expect(map.instance.exportViewState()).toEqual(viewStates[0]);
     expect(map.instance.childNodesHidden()).toBe(true);
     expect(map.instance.childNodesHidden(child)).toBe(false);
+    expect(nodeDom(child).style.visibility).toBe('hidden');
     expect(shared).not.toHaveBeenCalled();
   });
 
@@ -452,6 +498,20 @@ describe('events', () => {
     expect(() =>
       map.instance.on('nodeHover' as 'nodeSelect', jest.fn())
     ).toThrow();
+  });
+});
+
+describe('editing a name', () => {
+  it('commits the name of A when B takes the selection', () => {
+    const { map, child } = makeMapWithChild();
+    const root = rootOf(map);
+    map.instance.editNode();
+    nameDom(child).innerHTML = 'Typed';
+
+    map.instance.selectNode(root);
+
+    expect(exported(map, child).name).toBe('Typed');
+    expect(map.instance.getSelectedNode()?.id).toBe(root);
   });
 });
 
@@ -477,7 +537,7 @@ describe('destroy', () => {
 describe('new with nodes', () => {
   it('keeps the view state and leaves the passed nodes unchanged', () => {
     const { map, child } = makeMapWithChild();
-    const root = map.instance.exportRootProperties().id;
+    const root = rootOf(map);
     map.instance.selectNode(root);
     map.instance.toggleBranchVisibility();
     const nodes = map.instance.exportAsJSON();
@@ -494,7 +554,7 @@ describe('new with nodes', () => {
 
   it('exports nodes without view state', () => {
     const { map } = makeMapWithChild();
-    map.instance.selectNode(map.instance.exportRootProperties().id);
+    map.instance.selectNode(rootOf(map));
     map.instance.toggleBranchVisibility();
 
     for (const node of map.instance.exportAsJSON()) {
