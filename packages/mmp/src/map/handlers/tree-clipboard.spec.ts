@@ -24,7 +24,7 @@ interface CopyPasteInternals {
 }
 
 interface NodesInternals {
-  selectedNode: Node | null;
+  selectedId: string | null;
 }
 
 function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
@@ -177,7 +177,7 @@ describe('paste', () => {
   it('attaches a copied tree under the selected main root', () => {
     const { clipboard, nodes, tree, events } = makeMap();
     clipboard.copy('second');
-    (nodes as unknown as NodesInternals).selectedNode = tree.root;
+    (nodes as unknown as NodesInternals).selectedId = tree.root.id;
 
     clipboard.paste();
 
@@ -295,8 +295,8 @@ describe('pasteTree', () => {
   it('pastes a tree whatever node is selected', () => {
     const context = makeMap();
     context.clipboard.copy('second');
-    (context.nodes as unknown as NodesInternals).selectedNode =
-      context.tree.branch;
+    (context.nodes as unknown as NodesInternals).selectedId =
+      context.tree.branch.id;
 
     context.clipboard.pasteTree();
 

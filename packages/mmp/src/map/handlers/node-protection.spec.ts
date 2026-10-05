@@ -19,12 +19,12 @@ import type { D3DragEvent } from 'd3';
  * still apply.
  */
 
-type DragEvent = D3DragEvent<SVGGElement, Node, unknown>;
+type DragEvent = D3DragEvent<SVGGElement, string, unknown>;
 
 interface DragInternals {
-  started(event: DragEvent, node: Node): void;
-  dragged(event: DragEvent, node: Node): void;
-  ended(event: DragEvent, node: Node): void;
+  started(event: DragEvent, id: string): void;
+  dragged(event: DragEvent, id: string): void;
+  ended(event: DragEvent, id: string): void;
 }
 
 function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
@@ -82,9 +82,9 @@ function refusals(events: { emit: jest.Mock }): string[] {
 function drag(map: MmpMap, node: Node, dx: number, dy: number) {
   const handler = new Drag(map) as unknown as DragInternals;
   const event = { dx, dy } as DragEvent;
-  handler.started(event, node);
-  handler.dragged(event, node);
-  handler.ended(event, node);
+  handler.started(event, node.id);
+  handler.dragged(event, node.id);
+  handler.ended(event, node.id);
 }
 
 describe('protectingNode', () => {
@@ -169,7 +169,7 @@ describe('local edits inside a protected branch', () => {
 
   it('lets toggleBranchVisibility hide the child nodes of a protected node', () => {
     const { map, nodes, tree, events } = makeMap();
-    (nodes as unknown as { selectedNode: Node }).selectedNode = tree.a;
+    (nodes as unknown as { selectedId: string }).selectedId = tree.a.id;
 
     nodes.toggleBranchVisibility();
 
@@ -236,7 +236,7 @@ describe('local edits inside a protected branch', () => {
     // The map was never drawn, so an editor that opened would throw.
     const draw = new Draw(map, document.createElement('div'));
 
-    draw.enableNodeNameEditing(tree.b);
+    draw.enableNodeNameEditing(tree.b.id);
 
     expect(refusals(events)).toEqual(['b']);
   });

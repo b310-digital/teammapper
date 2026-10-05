@@ -21,7 +21,7 @@ import type {
  */
 
 interface NodesInternals {
-  selectedNode: Node | null;
+  selectedId: string | null;
   moveSelectionOnLevel(selected: Node, direction: boolean): void;
   moveSelectionOnBranch(selected: Node, direction: boolean): void;
 }
@@ -85,7 +85,7 @@ function makeMap(view: Bounds | null = null): {
 
   const nodes = { root, branch, secondRoot };
   for (const node of Object.values(nodes)) handler.store.set(node);
-  internals.selectedNode = branch;
+  internals.selectedId = branch.id;
 
   return { handler, internals, nodes, zoom, sizes, draw };
 }

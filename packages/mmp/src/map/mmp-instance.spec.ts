@@ -66,8 +66,8 @@ function exported(map: MmpMap, id: string): ExportNodeProperties {
 /** The drawn element bound to the node with the id. */
 function drawnElement<E extends Element>(selector: string, id: string) {
   return d3
-    .selectAll<E, { id: string }>(selector)
-    .filter(datum => datum.id === id)
+    .selectAll<E, string>(selector)
+    .filter(datum => datum === id)
     .node();
 }
 

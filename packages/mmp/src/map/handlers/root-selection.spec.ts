@@ -79,7 +79,7 @@ describe('a map load', () => {
     map.loader.load(mapNodes('root'), false);
 
     const root = map.nodes.getRoot();
-    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root.id)).toBe(ring('#f0f6f5'));
     expect(map.nodes.getSelectedNode()).toBe(root);
   });
 
@@ -103,7 +103,7 @@ describe('a map load', () => {
     map.loader.load(mapNodes('root'), false);
 
     const root = map.nodes.getRoot();
-    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root.id)).toBe(ring('#f0f6f5'));
     expect(firedEvents(events)).toEqual(['nodeSelect']);
   });
 
@@ -116,7 +116,7 @@ describe('a map load', () => {
 
     const root = map.nodes.getRoot();
     expect(root.id).toBe('other-root');
-    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root.id)).toBe(ring('#f0f6f5'));
     expect(firedEvents(events)).toEqual(['nodeSelect']);
     expect(events.emit.mock.calls[0][1].id).toBe('other-root');
   });
@@ -127,7 +127,7 @@ describe('a map load', () => {
     map.loader.load(undefined, false);
 
     const root = map.nodes.getRoot();
-    expect(map.draw.ringOf(root)).toBe(
+    expect(map.draw.ringOf(root.id)).toBe(
       ring(DefaultRootNodeValues.colors.background)
     );
     expect(events.emit).toHaveBeenCalledWith(
@@ -155,7 +155,7 @@ describe('an edit mode change after a map load', () => {
 
     const root = map.nodes.getRoot();
     expect(map.nodes.getSelectedNode()).toBe(root);
-    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root.id)).toBe(ring('#f0f6f5'));
   });
 });
 
@@ -168,7 +168,7 @@ describe('removing a node after a map load', () => {
 
     const root = map.nodes.getRoot();
     expect(map.nodes.getSelectedNode()).toBe(root);
-    expect(map.draw.ringOf(root)).toBe(ring('#f0f6f5'));
+    expect(map.draw.ringOf(root.id)).toBe(ring('#f0f6f5'));
   });
 });
 

@@ -9,6 +9,7 @@ import { CssColorSchema, NodePropertySchemas } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { isNodeProperty, PropertyMapping } from '../data/property-mapping.js';
+import type { ResolvedNode } from '../data/node-record.js';
 import { computeMapLayout, LayoutInputNode } from './layout.js';
 import {
   NODE_HORIZONTAL_SPACING,
@@ -38,7 +39,14 @@ import type {
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
 
 /**
- * Manage the nodes of the map.
+ * Reads the record of a node: straight from the node store, or from the
+ * records one draw pass already read.
+ */
+export type RecordLookup = (id: string) => ResolvedNode | undefined;
+
+/**
+ * Manage the nodes of the map. Nodes keeps the selected node's id and
+ * resolves the node on each use.
  */
 export default class Nodes {
   /**
@@ -58,8 +66,76 @@ export default class Nodes {
   private get view(): NodeView {
     return this.map.draw;
   }
-  // deselectNode sets this to null. A map load selects the main root.
-  private selectedNode: Node | null = null;
+  // deselectNode and clear set this to null. A map load selects the main root.
+  private selectedId: string | null = null;
+
+  /**
+   * The node with `id` as a record, read from the node store. The record
+   * shares the style objects of the node, so a caller only reads it.
+   * @param {string} id
+   */
+  public record = (id: string): ResolvedNode | undefined => {
+    const node = this.store.get(id);
+    if (!node) return undefined;
+
+    return {
+      id: node.id,
+      parent: node.parent?.id ?? '',
+      k: node.k,
+      name: node.name,
+      coordinates: node.coordinates,
+      image: node.image,
+      colors: node.colors,
+      font: node.font,
+      link: node.link,
+      protected: node.protected,
+      isRoot: node.isRoot,
+    };
+  };
+
+  /**
+   * The id of the node's parent, or null for a root. A node whose parent
+   * the node store lacks counts as a root.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public parentOf(id: string, lookup: RecordLookup = this.record) {
+    const parent = lookup(id)?.parent;
+    return parent && lookup(parent) ? parent : null;
+  }
+
+  /**
+   * The depth of the node in its tree: 1 for a root. A parent cycle stops
+   * at the node that closes it.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public level(id: string, lookup: RecordLookup = this.record): number {
+    const visited = new Set<string>([id]);
+    for (
+      let parent = this.parentOf(id, lookup);
+      parent !== null && !visited.has(parent);
+      parent = this.parentOf(parent, lookup)
+    ) {
+      visited.add(parent);
+    }
+    return visited.size;
+  }
+
+  /**
+   * Where the node is drawn: its drag preview, or the coordinates of its
+   * record.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public positionOf(
+    id: string,
+    lookup: RecordLookup = this.record
+  ): MapNodeCoordinates {
+    const position = this.map.draw.previewOf(id) ??
+      lookup(id)?.coordinates ?? { x: 0, y: 0 };
+    return { x: position.x, y: position.y };
+  }
 
   /**
    * Add the root node to the map.
@@ -183,9 +259,9 @@ export default class Nodes {
   private resolveParent(parentId: string | null | undefined): Node | null {
     if (parentId === null) return null;
     if (parentId) return this.getNode(parentId) ?? null;
-    if (!this.selectedNode) Log.error('There is no selected node');
+    if (!this.selectedId) Log.error('There is no selected node');
 
-    return this.selectedNode;
+    return this.getSelectedNode();
   }
 
   /**
@@ -221,10 +297,10 @@ export default class Nodes {
         if (node) {
           const color = this.map.draw.ringColor(node);
 
-          if (color && this.map.draw.ringOf(node) !== color) {
-            this.releaseSelection(node);
+          if (color && this.map.draw.ringOf(id) !== color) {
+            this.releaseSelection(id);
 
-            this.map.draw.setRing(node, color);
+            this.map.draw.setRing(id, color);
 
             this.announceSelection(node);
           }
@@ -234,7 +310,8 @@ export default class Nodes {
       }
     }
 
-    return this.selectedNode ? this.getNodeProperties(this.selectedNode) : null;
+    const selected = this.getSelectedNode();
+    return selected ? this.getNodeProperties(selected) : null;
   };
 
   /**
@@ -242,10 +319,11 @@ export default class Nodes {
    * every node a new DOM without the ring.
    */
   public redrawSelectionRing() {
-    if (!this.selectedNode) return;
+    const selected = this.getSelectedNode();
+    if (!selected) return;
 
-    const color = this.map.draw.ringColor(this.selectedNode);
-    if (color) this.map.draw.setRing(this.selectedNode, color);
+    const color = this.map.draw.ringColor(selected);
+    if (color) this.map.draw.setRing(selected.id, color);
   }
 
   /**
@@ -253,19 +331,23 @@ export default class Nodes {
    * @param {Node} node
    */
   private announceSelection(node: Node) {
-    this.selectedNode = node;
+    this.selectedId = node.id;
     this.map.events.emit('nodeSelect', this.getNodeProperties(node));
   }
 
   /**
    * Clear the ring and the focus of the selected node, leave nothing
    * selected, and tell listeners the node lost the selection. `next` names
-   * the node about to take the selection, or null for a deselect.
-   * @param {Node | null} next
+   * the node about to take the selection, or null for a deselect. A removal
+   * passes the selected node it took from the store as `removed`, so the
+   * event still carries the node.
+   * @param {string | null} next
+   * @param {Node} removed
    */
-  private releaseSelection(next: Node | null) {
-    const previous = this.selectedNode;
-    if (!previous) return;
+  private releaseSelection(next: string | null, removed?: Node) {
+    const previous = this.selectedId;
+    if (previous === null) return;
+    const node = removed ?? this.store.get(previous);
 
     this.map.draw.setRing(previous, null);
 
@@ -283,8 +365,12 @@ export default class Nodes {
 
     // The blur runs first: the name editor's onblur commits the name through
     // updateNode without an id, which targets the selected node.
-    this.selectedNode = null;
-    this.map.events.emit('nodeDeselect', this.getNodeProperties(previous));
+    this.selectedId = null;
+    // For a node the store no longer holds, the event carries its id alone.
+    this.map.events.emit(
+      'nodeDeselect',
+      node ? this.getNodeProperties(node) : { id: previous, parent: '', k: 0 }
+    );
   }
 
   /**
@@ -294,11 +380,10 @@ export default class Nodes {
    * @param {string} color
    */
   public highlightNodeWithColor = (id: string, color: string): void => {
-    const node = this.store.get(id);
-    if (!node) Log.error('The node id is not correct');
+    if (!this.store.has(id)) Log.error('The node id is not correct');
     if (!v.is(CssColorSchema, color)) return;
 
-    this.map.draw.setRing(node, color);
+    this.map.draw.setRing(id, color);
   };
 
   /**
@@ -322,8 +407,8 @@ export default class Nodes {
    * Enable the node name editing of the selected node.
    */
   public editNode = () => {
-    if (this.selectedNode) {
-      this.map.draw.enableNodeNameEditing(this.selectedNode);
+    if (this.selectedId) {
+      this.map.draw.enableNodeNameEditing(this.selectedId);
     }
   };
 
@@ -334,7 +419,7 @@ export default class Nodes {
    * further down keeps its own child nodes hidden.
    */
   public toggleBranchVisibility = () => {
-    const node = this.selectedNode;
+    const node = this.getSelectedNode();
     if (!node) return;
 
     const viewState = this.map.viewState;
@@ -383,7 +468,7 @@ export default class Nodes {
     if (id && typeof id !== 'string') {
       Log.error('The node id must be a string', 'type');
     }
-    if (!id) return this.selectedNode;
+    if (!id) return this.getSelectedNode();
 
     const node = this.getNode(id);
     if (node === undefined) {
@@ -418,7 +503,7 @@ export default class Nodes {
     if (Nodes.sameValue(previousValue, nextValue)) return;
 
     this.writeProperty(node, property, nextValue);
-    this.view.renderNodeProperty(node, property);
+    this.view.renderNodeProperty(node.id, property);
 
     if (notifyWithEvent) {
       this.map.events.emit('nodeUpdate', {
@@ -513,8 +598,11 @@ export default class Nodes {
 
       // Deselect only when the removal deleted the selected node or one of
       // its ancestors.
-      if (this.selectedNode && !this.store.has(this.selectedNode.id)) {
-        this.deselectNode();
+      const selected = removed.find(
+        removedNode => removedNode.id === this.selectedId
+      );
+      if (selected) {
+        this.releaseSelection(null, selected);
       } else {
         this.redrawSelectionRing();
       }
@@ -702,7 +790,7 @@ export default class Nodes {
    */
   private nodeSelectionTo(direction: string): boolean {
     // Arrow keys move no selection while nothing is selected.
-    const selected = this.selectedNode;
+    const selected = this.getSelectedNode();
 
     switch (direction) {
       case 'up':
@@ -847,37 +935,32 @@ export default class Nodes {
    * @returns {Node | null}
    */
   public getSelectedNode = (): Node | null => {
-    return this.selectedNode;
+    return this.selectedId ? (this.store.get(this.selectedId) ?? null) : null;
   };
 
   /**
    * Select the main root: draw its ring and fire `nodeSelect`.
    */
   public selectRootNode() {
-    // A full draw replaces every node object. Drop a selected node the map no
-    // longer holds and fire no deselect: its DOM is detached, and a blur there
-    // would commit a name edit.
-    const selected = this.selectedNode;
-    if (selected && this.store.get(selected.id) !== selected) {
-      this.selectedNode = null;
-    }
-
     const root = this.getRoot();
     this.selectNode(root.id);
 
     // selectNode draws no ring on a main root without a background colour,
     // and the main root still takes the selection.
-    if (this.selectedNode !== root) {
-      this.releaseSelection(root);
+    if (this.selectedId !== root.id) {
+      this.releaseSelection(root.id);
       this.announceSelection(root);
     }
   }
 
   /**
-   * Delete all nodes.
+   * Delete all nodes. The selection drops without `nodeDeselect`: a map
+   * load clears the nodes before it draws them anew, the old DOM goes, and
+   * a blur there would commit a name edit.
    */
   public clear() {
     this.store.clear();
+    this.selectedId = null;
   }
 
   /**

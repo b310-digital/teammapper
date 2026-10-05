@@ -1,3 +1,4 @@
+import * as d3 from 'd3';
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
 
@@ -111,7 +112,7 @@ describe('measuring names', () => {
   it('redraws the name when the map is drawn anew during an edit', () => {
     const map = makeMap();
     const root = map.nodes.getRoot();
-    map.draw.enableNodeNameEditing(root);
+    map.draw.enableNodeNameEditing(root.id);
 
     map.draw.clear();
     map.draw.update();
@@ -135,5 +136,23 @@ describe('measuring names', () => {
     map.instance.removeNode(child.id);
 
     expect(observer().observed).toEqual(new Set([rootName(map)]));
+  });
+});
+
+describe('a drawn map', () => {
+  it('binds node ids to the node groups, branches and marks', () => {
+    const map = makeMap();
+    const root = map.nodes.getRoot();
+    const child = map.instance.addNode({ name: 'child' });
+    if (!child) throw new Error('addNode added no child');
+
+    const g = d3.select(map.dom.g.node());
+    expect(g.selectAll('g.node').data()).toEqual([root.id, child.id]);
+    expect(g.selectAll('path.branch').data()).toEqual([child.id]);
+    expect(g.selectAll('path.background').data()).toEqual([root.id, child.id]);
+    expect(g.selectAll('foreignObject.name > div').data()).toEqual([
+      root.id,
+      child.id,
+    ]);
   });
 });
