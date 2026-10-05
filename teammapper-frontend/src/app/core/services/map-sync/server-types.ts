@@ -28,27 +28,4 @@ interface ServerMapInfo extends Omit<ClientMapInfo, 'ttl'> {
   ttl: string | null;
 }
 
-const ReversePropertyMapping = {
-  name: 'name',
-  protected: 'protected',
-  coordinates: 'coordinates',
-  image: {
-    src: 'imageSrc',
-    size: 'imageSize',
-  },
-  link: {
-    href: 'linkHref',
-  },
-  colors: {
-    background: 'backgroundColor',
-    branch: 'branchColor',
-    name: 'nameColor',
-  },
-  font: {
-    weight: 'fontWeight',
-    style: 'fontStyle',
-    size: 'fontSize',
-  },
-} as const;
-
-export { ServerMap, ServerMapInfo, PrivateServerMap, ReversePropertyMapping };
+export { ServerMap, ServerMapInfo, PrivateServerMap };

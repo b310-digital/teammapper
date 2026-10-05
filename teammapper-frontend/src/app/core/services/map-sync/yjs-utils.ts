@@ -1,5 +1,4 @@
 import * as Y from 'yjs';
-import { ReversePropertyMapping } from './server-types';
 import {
   collectSubtreeIds,
   ExportNodeProperties,
@@ -127,29 +126,6 @@ export function findAffectedNodes(
   return nodes;
 }
 
-export interface MmpPropertyUpdate {
-  prop: string;
-  val: unknown;
-}
-
-export function resolveMmpPropertyUpdate(
-  yjsKey: string,
-  value: unknown
-): MmpPropertyUpdate[] {
-  const mapping =
-    ReversePropertyMapping[yjsKey as keyof typeof ReversePropertyMapping];
-  if (!mapping) return [];
-
-  if (typeof mapping === 'string') {
-    return [{ prop: mapping, val: value }];
-  }
-
-  return resolveCompoundMmpUpdates(
-    mapping as Record<string, string>,
-    value as Record<string, unknown>
-  );
-}
-
 // Collects all descendant node IDs using the shared cycle-safe BFS algorithm.
 export function collectDescendantIds(
   nodesMap: Y.Map<Y.Map<unknown>>,
@@ -164,18 +140,4 @@ export function collectDescendantIds(
   });
 
   return collectSubtreeIds(nodes, nodeId);
-}
-
-export function resolveCompoundMmpUpdates(
-  mapping: Record<string, string>,
-  value: Record<string, unknown>
-): MmpPropertyUpdate[] {
-  if (!value) return [];
-  const updates: MmpPropertyUpdate[] = [];
-  for (const [subKey, mmpProp] of Object.entries(mapping)) {
-    if (subKey in value) {
-      updates.push({ prop: mmpProp, val: value[subKey] });
-    }
-  }
-  return updates;
 }
