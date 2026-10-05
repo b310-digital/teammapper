@@ -54,7 +54,7 @@ function makeMap(): MmpMap {
 }
 
 function mainRoot(map: MmpMap): ResolvedNode {
-  const root = map.nodes.record(map.rootId);
+  const root = map.nodes.mainRoot();
   if (!root) throw new Error('the map has no main root');
   return root;
 }

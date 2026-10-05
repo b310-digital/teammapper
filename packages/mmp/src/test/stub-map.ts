@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
+import InMemoryMapData from '../map/data/in-memory-map-data.js';
 import CopyPaste from '../map/handlers/copy-paste.js';
 import Drag from '../map/handlers/drag.js';
 import Export from '../map/handlers/export.js';
@@ -7,7 +8,6 @@ import MapLoader from '../map/handlers/map-loader.js';
 import Nodes from '../map/handlers/nodes.js';
 import ViewState from '../map/handlers/view-state.js';
 import MmpMap from '../map/map.js';
-import Node from '../map/models/node.js';
 import { DefaultNodeValues, DefaultRootNodeValues } from '../map/options.js';
 import { fakeDraw } from './fake-draw.js';
 
@@ -35,19 +35,21 @@ export function nodeRecord(
 
 /**
  * A map without a DOM around the real node handler, view state, loader,
- * drag, clipboard and export, holding the nodes of `snapshot`. The renderer
- * is `fakeDraw`, the zoom pans and centers nothing, and every event goes to
- * the `events.emit` mock. `overrides` replaces any of these stand-ins. The
- * map draws the snapshot as a replaced map, which selects the main root when
- * the snapshot holds one, and then clears the `events.emit` mock.
+ * drag, clipboard and export, over an `InMemoryMapData` holding `snapshot`.
+ * The renderer is `fakeDraw`, the zoom pans and centers nothing, and every
+ * event goes to the `events.emit` mock. `overrides` replaces any of these
+ * stand-ins. The map draws the snapshot as a replaced map, which selects the
+ * main root when the snapshot holds one, and then clears the `events.emit`
+ * mock.
  */
 export function stubMap(
   snapshot: MapSnapshot = [],
   overrides: Record<string, unknown> = {}
 ) {
+  const data = new InMemoryMapData(snapshot);
   const parts = {
     id: 'test-map',
-    rootId: '',
+    data,
     options: {
       defaultNode: DefaultNodeValues,
       rootNode: DefaultRootNodeValues,
@@ -71,34 +73,11 @@ export function stubMap(
   map.drag = new Drag(map);
   map.export = new Export(map);
 
-  storeSnapshot(map, snapshot);
-  map.draw.clear();
-  map.draw.update();
-  if (map.rootId) map.nodes.selectRootNode();
+  map.data.subscribe(map.nodes.onChange);
+  map.nodes.drawReplaced();
   parts.events.emit.mockClear();
 
   return { map, nodes: map.nodes, ...parts };
-}
-
-/**
- * Put a node for each record of `snapshot` in the node store, in any order:
- * the parents link once every node exists. A record whose parent the
- * snapshot lacks becomes a root.
- */
-function storeSnapshot(map: MmpMap, snapshot: MapSnapshot) {
-  const created = snapshot.map(
-    record =>
-      new Node({
-        ...record,
-        coordinates: { x: 0, y: 0, ...record.coordinates },
-        parent: null,
-      })
-  );
-  created.forEach(node => map.nodes.setNode(node));
-  snapshot.forEach((record, index) => {
-    created[index].parent = map.nodes.getNode(record.parent ?? '') ?? null;
-    if (record.isRoot) map.rootId = record.id;
-  });
 }
 
 /** The calls of the `events.emit` mock for `event`. */

@@ -1,25 +1,38 @@
 import Log from '../../utils/log.js';
-import type { MmpEventPayloadMap, MmpEventType } from '@teammapper/shared';
+import type { MmpEventPayloadMap } from '@teammapper/shared';
 
-export type MmpEventCallback<K extends MmpEventType> = (
-  payload: MmpEventPayloadMap[K]
+/**
+ * The payload of each event mmp emits: the events `@teammapper/shared`
+ * types, plus `mapChange`, which fires after every change of the map data.
+ */
+export interface MapEventPayloadMap extends MmpEventPayloadMap {
+  mapChange: void;
+}
+
+export type MapEventType = keyof MapEventPayloadMap;
+
+export type MmpEventCallback<K extends MapEventType> = (
+  payload: MapEventPayloadMap[K]
 ) => void;
 
-type EventCallbacks<K extends MmpEventType> = {
+type EventCallbacks<K extends MapEventType> = {
   [P in K]?: MmpEventCallback<P>;
 };
 
-const EVENT_TYPES: readonly MmpEventType[] = [
-  'create',
+const EVENT_TYPES: readonly MapEventType[] = [
   'nodeSelect',
   'nodeDeselect',
+  'nodeProtected',
+  'viewStateChange',
+  'mapChange',
+  // Mirror compatibility, removed in PR 7: the frontend writes local edits
+  // to the Y.Doc from these events.
+  'create',
   'nodeUpdate',
   'nodeCreate',
   'nodePaste',
   'nodeRemove',
   'distribute',
-  'nodeProtected',
-  'viewStateChange',
 ];
 
 /**
@@ -27,14 +40,14 @@ const EVENT_TYPES: readonly MmpEventType[] = [
  * each event holds at most one callback.
  */
 export default class Events {
-  private callbacks: EventCallbacks<MmpEventType> = {};
+  private callbacks: EventCallbacks<MapEventType> = {};
 
   /**
    * Call the callback registered for the event with its payload.
    */
-  public emit<K extends MmpEventType>(
+  public emit<K extends MapEventType>(
     event: K,
-    payload: MmpEventPayloadMap[K]
+    payload: MapEventPayloadMap[K]
   ) {
     this.callbacks[event]?.(payload);
   }
@@ -42,7 +55,7 @@ export default class Events {
   /**
    * Register the callback for the event, replacing an earlier one.
    */
-  public on = <K extends MmpEventType>(
+  public on = <K extends MapEventType>(
     event: K,
     callback: MmpEventCallback<K>
   ) => {

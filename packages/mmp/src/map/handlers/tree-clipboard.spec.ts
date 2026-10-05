@@ -118,11 +118,11 @@ describe('copy and cut', () => {
     expect(copied[0].id).toBe('second');
   });
 
-  it('keeps copies the nodes do not share', () => {
-    const { clipboard, nodes } = makeMap();
+  it('keeps copies the map data does not share', () => {
+    const { clipboard, data } = makeMap();
     clipboard.copy('second');
 
-    nodes.updateNode('name', 'changed', false, 'second');
+    data.updateNode('second', 'name', 'changed');
 
     const copied = (clipboard as unknown as CopyPasteInternals).copiedNodes;
     expect(copied[0].name).toBe('');

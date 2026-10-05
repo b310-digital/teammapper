@@ -118,7 +118,7 @@ describe('local edits inside a protected branch', () => {
   it('refuses a rename and leaves the name unchanged', () => {
     const { nodes, events } = makeMap();
 
-    nodes.updateNode('name', 'new', true, 'b');
+    nodes.updateNode('name', 'new', 'b');
 
     expect(nodes.record('b')?.name).toBe('');
     expect(refusals(events.emit)).toEqual(['b']);
@@ -127,7 +127,7 @@ describe('local edits inside a protected branch', () => {
   it('refuses a style change', () => {
     const { nodes } = makeMap();
 
-    nodes.updateNode('fontWeight', 'bold', true, 'a');
+    nodes.updateNode('fontWeight', 'bold', 'a');
 
     expect(nodes.record('a')?.font.weight).toBe('normal');
   });
@@ -161,7 +161,7 @@ describe('local edits inside a protected branch', () => {
   it('refuses adding a child', () => {
     const { map, nodes, events } = makeMap();
 
-    const added = nodes.addNodeUnlessProtected({}, true, 'b');
+    const added = nodes.addNode({}, 'b');
 
     expect(added).toBeNull();
     expect(map.export.asJSON()).toHaveLength(4);
@@ -171,13 +171,9 @@ describe('local edits inside a protected branch', () => {
   it('adds a child to an unprotected node', () => {
     const { nodes } = makeMap();
 
-    const added = nodes.addNodeUnlessProtected(
-      { coordinates: { x: -400, y: 0 } },
-      true,
-      'c'
-    );
+    const added = nodes.addNode({ coordinates: { x: -400, y: 0 } }, 'c');
 
-    expect(added && nodes.record(added.id)?.parent).toBe('c');
+    expect(added?.parent).toBe('c');
   });
 
   it('refuses a cut and keeps the clipboard empty', () => {
@@ -213,7 +209,7 @@ describe('changes that stay allowed', () => {
   it('applies a remote rename inside a protected branch', () => {
     const { nodes, events } = makeMap();
 
-    nodes.updateNode('name', 'remote', false, 'b');
+    nodes.withNotify(false, () => nodes.updateNode('name', 'remote', 'b'));
 
     expect(nodes.record('b')?.name).toBe('remote');
     expect(refusals(events.emit)).toEqual([]);
@@ -222,7 +218,7 @@ describe('changes that stay allowed', () => {
   it('applies a remote removal of a protected node', () => {
     const { nodes } = makeMap();
 
-    nodes.removeNode('a', false);
+    nodes.withNotify(false, () => nodes.removeNode('a'));
 
     expect(nodes.existNode('a')).toBe(false);
     expect(nodes.existNode('b')).toBe(false);
@@ -258,7 +254,7 @@ describe('drag', () => {
   it('moves a protected child along with its unprotected parent', () => {
     const { map, nodes } = makeMap();
     nodes.releaseBranch('a');
-    nodes.updateNode('protected', true, false, 'b');
+    nodes.withNotify(false, () => nodes.updateNode('protected', true, 'b'));
 
     drag(map, 'a', 50, 10);
 

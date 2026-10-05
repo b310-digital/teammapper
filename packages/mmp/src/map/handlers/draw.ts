@@ -6,9 +6,7 @@ import {
   type MapNodeCoordinates,
   type MapNodeDimensions,
   type MapNodeFont,
-  type NodeProperty,
 } from '@teammapper/shared';
-import type { NodeView } from './node-view.js';
 import MmpMap, { DomElements } from '../map.js';
 import Utils from '../../utils/utils.js';
 import { resolveNode, type ResolvedNode } from '../data/node-record.js';
@@ -51,7 +49,7 @@ interface ImageLoad {
  * renderer measures each name after drawing it. Sizes and the selection ring
  * belong to the screen only and never reach the saved map.
  */
-export default class Draw implements NodeView {
+export default class Draw {
   private map: MmpMap;
   private mapRef: HTMLElement;
   private layerSelections: Layers | null = null;
@@ -165,25 +163,6 @@ export default class Draw implements NodeView {
     }
 
     this.render(groups, branches, lookup);
-  }
-
-  /**
-   * Draw the property of the node with `id` as its model holds it.
-   * @param {string} id
-   * @param {NodeProperty} property
-   */
-  public renderNodeProperty(id: string, property: NodeProperty) {
-    const lookup = this.pass();
-    const node = lookup(id);
-    // The selection ring darkens along with the background.
-    if (property === 'backgroundColor' && node && this.rings.has(id)) {
-      this.setRing(id, this.ringColor(node));
-    }
-    this.render(
-      this.nodeGroupsOf([id]),
-      this.branchPathsOf([id], lookup),
-      lookup
-    );
   }
 
   /**
@@ -315,7 +294,7 @@ export default class Draw implements NodeView {
    */
   public enableNodeNameEditing(id: string) {
     const node = this.map.nodes.record(id);
-    if (!node || this.map.nodes.refusesLocalChange(id)) return;
+    if (!node || this.map.nodes.refusesChange(id)) return;
 
     const name = this.nameOf(id);
     if (!name) return;
@@ -390,10 +369,15 @@ export default class Draw implements NodeView {
       name.setAttribute('contenteditable', 'false');
       name.style.setProperty('cursor', 'pointer');
 
-      // The blur reads the name the node store holds now.
+      // The blur commits to the node it edited, whatever node the selection
+      // moves to, and reads the name the node store holds now.
       const current = this.map.nodes.record(id);
       if (current && name.innerHTML !== current.name) {
-        this.map.nodes.updateNode('name', DOMPurify.sanitize(name.innerHTML));
+        this.map.nodes.updateNode(
+          'name',
+          DOMPurify.sanitize(name.innerHTML),
+          id
+        );
       }
       // Draw the stored name back, so the DOM drops the typed text when a
       // peer protected the branch during the edit and updateNode refused it.
@@ -731,6 +715,9 @@ export default class Draw implements NodeView {
   private exitNodes(exit: NodeGroups) {
     nameElements(exit).each((id, i, names) => {
       this.resizeObserver?.unobserve(names[i]);
+      // A blur fired by the removal would commit the typed name over the
+      // change that removed the node.
+      names[i].onblur = null;
       // Removing a focused name fires no blur in Firefox and WebKit, so the
       // edit ends here.
       if (id === this.editingId) this.editingId = null;

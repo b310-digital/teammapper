@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import Events, { MmpEventCallback } from './handlers/events.js';
+import Events, { MapEventType, MmpEventCallback } from './handlers/events.js';
 import Zoom from './handlers/zoom.js';
 import Draw from './handlers/draw.js';
 import Options, { OptionParameters } from './options.js';
@@ -9,12 +9,12 @@ import Nodes from './handlers/nodes.js';
 import Export from './handlers/export.js';
 import CopyPaste from './handlers/copy-paste.js';
 import ViewState from './handlers/view-state.js';
-import Node from './models/node.js';
+import type { MapData } from './data/map-data.js';
+import InMemoryMapData from './data/in-memory-map-data.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
   MapViewState,
-  MmpEventType,
   NodeProperty,
   NodePropertyValue,
   UserNodeProperties,
@@ -26,7 +26,8 @@ import type {
 export default class MmpMap {
   public id: string;
   public dom: DomElements;
-  public rootId: string;
+  /** The nodes of the map. mmp reads and writes them here and keeps none. */
+  public readonly data: MapData;
 
   public options: Options;
   public loader: MapLoader;
@@ -41,14 +42,26 @@ export default class MmpMap {
 
   public instance!: MmpInstance;
 
+  private readonly unsubscribeData: () => void;
+
   /**
-   * Create all handler instances, set some map behaviors and return a mmp instance.
+   * Create all handler instances, set some map behaviors, draw the nodes the
+   * map data holds and return a mmp instance. The map selects the main root
+   * and fires `nodeSelect`, and emits no `mapChange` for this first draw.
    * @param {string} id
+   * @param {HTMLElement} ref
    * @param {OptionParameters} options
-   * @returns {MmpInstance} mmpInstance
+   * @param {MapData} data the map data; mmp keeps its own in memory without
+   * one, which the mirror compatibility needs until PR 7
    */
-  constructor(id: string, ref: HTMLElement, options?: OptionParameters) {
+  constructor(
+    id: string,
+    ref: HTMLElement,
+    options?: OptionParameters,
+    data: MapData = new InMemoryMapData()
+  ) {
     this.id = id;
+    this.data = data;
 
     this.events = new Events();
     this.options = new Options(options, this);
@@ -60,7 +73,6 @@ export default class MmpMap {
     this.nodes = new Nodes(this);
     this.export = new Export(this);
     this.copyPaste = new CopyPaste(this);
-    this.rootId = '';
 
     this.dom = this.draw.create();
 
@@ -75,6 +87,9 @@ export default class MmpMap {
     }
 
     this.createMmpInstance();
+
+    this.unsubscribeData = data.subscribe(this.nodes.onChange);
+    this.nodes.drawReplaced();
   }
 
   /**
@@ -83,6 +98,7 @@ export default class MmpMap {
    */
   private destroy = () => {
     d3.select(window).on('resize.' + this.id, null);
+    this.unsubscribeData();
     this.events.unsubscribeAll();
     this.draw.destroy();
     this.dom.svg.remove();
@@ -100,14 +116,12 @@ export default class MmpMap {
    */
   private createMmpInstance(): MmpInstance {
     return (this.instance = {
-      addNode: this.nodes.addNodeUnlessProtected,
-      addNodes: this.nodes.addNodes,
+      ...this.mirrorFunctions(),
       addTree: this.nodes.addTree,
       center: this.zoom.center,
       copyNode: this.copyPaste.copy,
       cutNode: this.copyPaste.cut,
       applyCoordinatesToMapSnapshot: this.nodes.applyCoordinatesToMapSnapshot,
-      distributeNodes: this.nodes.distributeNodes,
       getSelectedNode: this.nodes.getSelectedNode,
       editNode: this.nodes.editNode,
       toggleBranchVisibility: this.nodes.toggleBranchVisibility,
@@ -119,7 +133,6 @@ export default class MmpMap {
       exportViewState: () => this.viewState.export(),
       restoreViewState: state => this.viewState.restore(state),
       highlightNode: this.nodes.highlightNodeWithColor,
-      new: this.loader.load,
       nodeChildren: this.nodes.nodeChildren,
       on: this.events.on,
       pasteNode: this.copyPaste.paste,
@@ -128,59 +141,105 @@ export default class MmpMap {
       protectingNode: this.nodes.protectingNode,
       releaseBranch: this.nodes.releaseBranch,
       destroy: this.destroy,
-      removeNode: this.nodes.removeNode,
       selectNode: this.nodes.selectNode,
       unsubscribeAll: this.events.unsubscribeAll,
-      updateNode: this.nodes.updateNode,
       zoomIn: this.zoom.zoomIn,
       zoomOut: this.zoom.zoomOut,
     });
   }
+
+  /**
+   * Mirror compatibility, removed in PR 7: the functions that take
+   * notifyWithEvent, plus `addNodes`. With notifyWithEvent false a write
+   * emits no mirror event and passes a protected branch, as a peer's write
+   * the frontend applies does.
+   */
+  private mirrorFunctions(): MirrorFunctions {
+    const nodes = this.nodes;
+    return {
+      addNode: (
+        userProperties,
+        notifyWithEvent = true,
+        parentId,
+        overwriteId
+      ) =>
+        nodes.withNotify(notifyWithEvent, () =>
+          nodes.addNode(userProperties, parentId, overwriteId)
+        ),
+      addNodes: nodes.addNodes,
+      distributeNodes: (notifyWithEvent = true) =>
+        nodes.withNotify(notifyWithEvent, nodes.distributeNodes),
+      new: (snapshot, notifyWithEvent = true) => {
+        const previousMapData = snapshot && this.export.asJSON();
+        this.loader.load(snapshot);
+        if (notifyWithEvent) {
+          this.events.emit(
+            'create',
+            previousMapData ? { previousMapData } : {}
+          );
+        }
+      },
+      removeNode: (id, notifyWithEvent = true) =>
+        nodes.withNotify(notifyWithEvent, () => nodes.removeNode(id)),
+      updateNode: (property, value, notifyWithEvent = true, id) =>
+        nodes.withNotify(notifyWithEvent, () =>
+          nodes.updateNode(property, value, id)
+        ),
+    };
+  }
 }
 
-export interface MmpInstance {
+/** Mirror compatibility, removed in PR 7; see `mirrorFunctions`. */
+interface MirrorFunctions {
   addNode: (
     userProperties?: UserNodeProperties,
     notifyWithEvent?: boolean,
     parentId?: string | null,
     overwriteId?: string
-  ) => Node | null;
+  ) => ExportNodeProperties | null;
   addNodes: (nodes: ExportNodeProperties[]) => void;
-  addTree: () => Node;
-  center: (type?: 'zoom' | 'position', duration?: number) => void;
-  copyNode: (id?: string) => void;
-  cutNode: (id?: string) => boolean;
-  applyCoordinatesToMapSnapshot: (mapSnapshot: MapSnapshot) => MapSnapshot;
   distributeNodes: (notifyWithEvent?: boolean) => void;
-  getSelectedNode: () => Node | null;
-  editNode: () => void;
-  toggleBranchVisibility: () => void;
-  childNodesHidden: (id?: string) => boolean;
-  existNode: (id?: string) => boolean;
-  exportAsImage: (callback: (url: string) => void, type?: string) => void;
-  exportAsJSON: () => MapSnapshot;
-  exportRootProperties: () => ExportNodeProperties;
-  exportViewState: () => MapViewState;
-  restoreViewState: (state: MapViewState) => void;
-  highlightNode: (id: string, color: string) => void;
   new: (snapshot?: MapSnapshot, notifyWithEvent?: boolean) => void;
-  nodeChildren: (id?: string) => ExportNodeProperties[];
-  on: <K extends MmpEventType>(event: K, callback: MmpEventCallback<K>) => void;
-  pasteNode: (id?: string) => void;
-  pasteTree: () => void;
-  protectBranch: (id?: string) => void;
-  protectingNode: (id?: string) => string | null;
-  releaseBranch: (id?: string) => void;
-  destroy: () => void;
   removeNode: (id?: string, notifyWithEvent?: boolean) => void;
-  selectNode: (id?: string) => ExportNodeProperties | null;
-  unsubscribeAll: () => void;
   updateNode: (
     property: NodeProperty | string,
     value: NodePropertyValue | unknown,
     notifyWithEvent?: boolean,
     id?: string
   ) => void;
+}
+
+/**
+ * The functions the mmp library offers. Every node it returns is a copy the
+ * caller may change; the map data keeps its own.
+ */
+export interface MmpInstance extends MirrorFunctions {
+  addTree: () => ExportNodeProperties | null;
+  center: (type?: 'zoom' | 'position', duration?: number) => void;
+  copyNode: (id?: string) => void;
+  cutNode: (id?: string) => boolean;
+  applyCoordinatesToMapSnapshot: (mapSnapshot: MapSnapshot) => MapSnapshot;
+  getSelectedNode: () => ExportNodeProperties | null;
+  editNode: () => void;
+  toggleBranchVisibility: () => void;
+  childNodesHidden: (id?: string) => boolean;
+  existNode: (id?: string) => boolean;
+  exportAsImage: (callback: (url: string) => void, type?: string) => void;
+  exportAsJSON: () => MapSnapshot;
+  exportRootProperties: () => ExportNodeProperties | null;
+  exportViewState: () => MapViewState;
+  restoreViewState: (state: MapViewState) => void;
+  highlightNode: (id: string, color: string) => void;
+  nodeChildren: (id?: string) => ExportNodeProperties[];
+  on: <K extends MapEventType>(event: K, callback: MmpEventCallback<K>) => void;
+  pasteNode: (id?: string) => void;
+  pasteTree: () => void;
+  protectBranch: (id?: string) => void;
+  protectingNode: (id?: string) => string | null;
+  releaseBranch: (id?: string) => void;
+  destroy: () => void;
+  selectNode: (id?: string) => ExportNodeProperties | null;
+  unsubscribeAll: () => void;
   zoomIn: (duration?: number) => void;
   zoomOut: (duration?: number) => void;
 }

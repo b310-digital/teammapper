@@ -9,7 +9,11 @@ import {
   NEW_TREE_GAP,
   treeBounds,
 } from './tree-placement.js';
-import type { MapNodeDimensions, MapSnapshot } from '@teammapper/shared';
+import type {
+  MapNodeDimensions,
+  MapSnapshot,
+  UserNodeProperties,
+} from '@teammapper/shared';
 
 /**
  * A map may hold several trees. A node with no parent is a root, whatever its
@@ -62,9 +66,16 @@ function record(handler: Nodes, id: string): ResolvedNode {
   return node;
 }
 
-/** Add a node and return its export properties. */
-function addNode(handler: Nodes, ...args: Parameters<Nodes['addNode']>) {
-  return handler.getNodeProperties(handler.addNode(...args));
+/** Add a node and return a copy of it. */
+function addNode(
+  handler: Nodes,
+  userProperties: UserNodeProperties,
+  notifyWithEvent: boolean,
+  parentId: string | null
+) {
+  return handler.withNotify(notifyWithEvent, () =>
+    handler.addNode(userProperties, parentId)
+  );
 }
 
 describe('addNodes', () => {
@@ -159,7 +170,7 @@ describe('addNode', () => {
   it('leaves the selection where it was', () => {
     const { handler } = makeMap();
 
-    handler.addNode({}, false, 'second-root');
+    addNode(handler, {}, false, 'second-root');
 
     expect(handler.getSelectedNode()?.id).toBe('branch');
   });
@@ -206,7 +217,7 @@ describe('newTreeCoordinates', () => {
   it("measures the right edge from each node's width", () => {
     const { handler, sizes } = makeMap(null);
     sizeNodes(sizes, 100);
-    handler.updateNode('coordinates', { x: 950, y: 0 }, true, 'branch');
+    handler.updateNode('coordinates', { x: 950, y: 0 }, 'branch');
     sizes.set('branch', { width: 400, height: 30 });
 
     expect(handler.newTreeCoordinates().x).toBe(
@@ -216,13 +227,8 @@ describe('newTreeCoordinates', () => {
 
   it('keeps the new root level with the main root', () => {
     const { handler } = makeMap();
-    handler.updateNode('coordinates', { x: 0, y: 340 }, true, 'root');
-    handler.updateNode(
-      'coordinates',
-      { x: 1000, y: -500 },
-      true,
-      'second-root'
-    );
+    handler.updateNode('coordinates', { x: 0, y: 340 }, 'root');
+    handler.updateNode('coordinates', { x: 1000, y: -500 }, 'second-root');
 
     expect(handler.newTreeCoordinates().y).toBe(340);
   });
@@ -317,7 +323,7 @@ describe('addTree', () => {
   it('adds a root with no parent and isRoot unset', () => {
     const { handler } = makeMap();
 
-    const root = handler.getNodeProperties(handler.addTree());
+    const root = handler.addTree();
 
     expect(root?.parent).toBe('');
     expect(root?.isRoot).toBe(false);
@@ -451,7 +457,7 @@ describe('updateNode branchColor', () => {
     const { handler } = makeMap();
 
     expect(() =>
-      handler.updateNode('branchColor', '#ff0000', true, 'second-root')
+      handler.updateNode('branchColor', '#ff0000', 'second-root')
     ).toThrow('A root node has no branches');
     expect(handler.record('second-root')?.colors.branch).toBe('');
   });
@@ -463,10 +469,13 @@ describe('updateNode branchColor', () => {
         colors: { ...DefaultNodeValues.colors, branch: '#577a96' },
       }),
     ]);
+    draw.update.mockClear();
 
-    handler.updateNode('branchColor', '#577a96', false, 'third-root');
+    handler.withNotify(false, () =>
+      handler.updateNode('branchColor', '#577a96', 'third-root')
+    );
 
     expect(handler.record('third-root')?.colors.branch).toBe('#577a96');
-    expect(draw.renderNodeProperty).not.toHaveBeenCalled();
+    expect(draw.update).not.toHaveBeenCalled();
   });
 });

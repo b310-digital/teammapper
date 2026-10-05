@@ -40,7 +40,7 @@ describe('the ring of the selected node', () => {
   it('keeps a highlight when the node moves', () => {
     const map = highlightedChild();
 
-    map.nodes.updateNode('coordinates', { x: 100, y: -50 }, true, 'child');
+    map.nodes.updateNode('coordinates', { x: 100, y: -50 }, 'child');
 
     expect(map.draw.ringOf('child')).toBe(HIGHLIGHT);
   });
@@ -48,7 +48,7 @@ describe('the ring of the selected node', () => {
   it('keeps a highlight when the node gets a new name', () => {
     const map = highlightedChild();
 
-    map.nodes.updateNode('name', 'Draggable Node', true, 'child');
+    map.nodes.updateNode('name', 'Draggable Node', 'child');
 
     expect(map.draw.ringOf('child')).toBe(HIGHLIGHT);
   });
@@ -56,7 +56,7 @@ describe('the ring of the selected node', () => {
   it('darkens along with a new background', () => {
     const map = highlightedChild();
 
-    map.nodes.updateNode('backgroundColor', '#ff0000', true, 'child');
+    map.nodes.updateNode('backgroundColor', '#ff0000', 'child');
 
     expect(map.draw.ringOf('child')).toBe(ring('#ff0000'));
   });

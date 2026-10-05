@@ -20,7 +20,8 @@ interface DragSession {
 
 /**
  * Manage the drag events of the nodes. A drag moves a preview the renderer
- * draws and writes nothing to the nodes until it ends.
+ * draws and writes nothing to the map data until it ends. A change of the
+ * map data during the drag draws from the data and keeps the preview.
  */
 export default class Drag {
   private map: Map;
@@ -51,6 +52,15 @@ export default class Drag {
   }
 
   /**
+   * End the running drag without a write and drop its preview. A replaced
+   * map calls this, so a peer's import is never overwritten.
+   */
+  public cancel() {
+    this.session = null;
+    this.map.draw.takePreview();
+  }
+
+  /**
    * Select the node and read, once, the nodes the drag moves along with it.
    * @param {string} id
    */
@@ -58,7 +68,6 @@ export default class Drag {
     const nodes = this.map.nodes;
     const records = nodes.scan();
     const lookup = (node: string) => records.get(node);
-    if (!records.has(id)) return;
 
     this.session = {
       id,
@@ -130,40 +139,28 @@ export default class Drag {
   }
 
   /**
-   * After a drag that moved the node, write the preview positions to the
-   * nodes, clear the preview and announce the new coordinates of every
-   * moved node.
+   * After a drag that moved the node, write the preview positions in one
+   * batch and draw the moved nodes from the map data. A write the data
+   * skips, or a branch a peer protected during the drag, notifies nothing,
+   * so the redraw puts those nodes back at their stored positions.
    * @param {string} id
    */
   private ended(_event: DragEvent, id: string) {
     const session = this.session;
     if (session?.id !== id) return;
     this.session = null;
+
+    const positions = this.map.draw.takePreview();
     if (!session.moved) return;
 
+    // The descendants move along whatever protection they carry themselves,
+    // so the writes skip the per-node check updateNode makes.
     const nodes = this.map.nodes;
-    const draw = this.map.draw;
-    const moved = [...session.descendants, id].filter(node =>
-      nodes.existNode(node)
-    );
-    for (const node of moved) {
-      const position = draw.previewOf(node);
-      if (position) nodes.updateNode('coordinates', position, false, node);
-    }
-    draw.takePreview();
-    draw.renderPositions(moved);
+    if (!nodes.refusesChange(id)) nodes.writePositions(positions);
 
-    // The drag moved each node many times, so no single previous value
-    // describes the change.
-    for (const node of moved) {
-      const nodeProperties = nodes.exportNode(node);
-      if (!nodeProperties) continue;
+    this.map.draw.renderPositions([...positions.keys()]);
 
-      this.map.events.emit('nodeUpdate', {
-        nodeProperties,
-        changedProperty: 'coordinates',
-        previousValue: undefined,
-      });
-    }
+    // Mirror compatibility, removed in PR 7.
+    if (!nodes.isProtected(id)) nodes.announceMoved([...positions.keys()]);
   }
 }

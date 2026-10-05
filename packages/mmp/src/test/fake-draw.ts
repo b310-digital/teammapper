@@ -22,7 +22,6 @@ export function fakeDraw(
   return {
     update: jest.fn(),
     clear: jest.fn(() => rings.clear()),
-    renderNodeProperty: jest.fn(),
     renderPositions: jest.fn(),
     enableNodeNameEditing: jest.fn(),
     blurName: jest.fn(),

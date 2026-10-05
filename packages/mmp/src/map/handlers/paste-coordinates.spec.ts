@@ -1,5 +1,4 @@
-import type Nodes from './nodes.js';
-import type Node from '../models/node.js';
+import type { RecordLookup } from './nodes.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import type {
   ExportNodeProperties,
@@ -36,7 +35,8 @@ interface CopyPasteInternals {
   copiedTreeRootX: number;
   calculatePastedCoordinates(
     nodeProperties: ExportNodeProperties,
-    newParentNode: Node
+    newParent: string,
+    lookup: RecordLookup
   ): MapNodeCoordinates;
 }
 
@@ -46,12 +46,6 @@ function makeHandler(liveNodes: MapSnapshot) {
   const handler = stub.map.copyPaste as unknown as CopyPasteInternals;
 
   return { handler, ...stub };
-}
-
-function nodeOf(nodes: Nodes, id: string): Node {
-  const node = nodes.getNode(id);
-  if (!node) throw new Error('no node ' + id);
-  return node;
 }
 
 function placementOf(
@@ -67,10 +61,7 @@ function placementOf(
   handler.copiedNodes = [oldParent, pasted];
   handler.copiedTreeRootX = oldTreeRootX;
 
-  return handler.calculatePastedCoordinates(
-    pasted,
-    nodeOf(nodes, newParent.id)
-  );
+  return handler.calculatePastedCoordinates(pasted, newParent.id, nodes.record);
 }
 
 describe('calculatePastedCoordinates', () => {
@@ -172,7 +163,7 @@ describe('calculatePastedCoordinates', () => {
         id: 'new',
         coordinates: { x: -400, y: 100 },
       });
-      const { handler, nodes } = makeHandler([
+      const { handler, data, nodes } = makeHandler([
         newParent,
         secondRoot,
         oldParentNode,
@@ -180,11 +171,11 @@ describe('calculatePastedCoordinates', () => {
       ]);
 
       handler.copy('old');
-      nodes.removeNode('second', false);
+      data.removeNode('second');
 
       expect(handler.copiedTreeRootX).toBe(secondTreeRootX);
       expect(
-        handler.calculatePastedCoordinates(pasted, nodeOf(nodes, 'new'))
+        handler.calculatePastedCoordinates(pasted, 'new', nodes.record)
       ).toEqual({
         x: -500,
         y: 150,

@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { create } from '../index.js';
 import MmpMap from './map.js';
+import InMemoryMapData from './data/in-memory-map-data.js';
 import { nodeRecord } from '../test/stub-map.js';
 import { stubSvgLengths } from '../test/svg-lengths.js';
 import type {
@@ -501,6 +502,63 @@ describe('events', () => {
   });
 });
 
+describe('changes written to the map data', () => {
+  /** root -> a -> b, drawn from map data the spec also writes to. */
+  function makePeerMap() {
+    const data = new InMemoryMapData([
+      nodeRecord({ id: 'root', isRoot: true, name: 'Root' }),
+      nodeRecord({ id: 'a', parent: 'root', coordinates: { x: 200, y: 0 } }),
+      nodeRecord({ id: 'b', parent: 'a', coordinates: { x: 400, y: 0 } }),
+    ]);
+    const ref = document.createElement('div');
+    document.body.appendChild(ref);
+    return { data, map: create('map', ref, undefined, data) };
+  }
+
+  it('writes a local edit to the map data and draws it', () => {
+    const { data, map } = makePeerMap();
+
+    const added = map.instance.addNode({ name: 'Local' }, true, 'a');
+    map.instance.updateNode('name', 'Edited', true, 'b');
+
+    if (!added) throw new Error('addNode added no node');
+    expect(data.node(added.id)?.name).toBe('Local');
+    expect(drawnIds()).toContain(added.id);
+    expect(data.node('b')?.name).toBe('Edited');
+    expect(nameDom('b').innerHTML).toBe('Edited');
+  });
+
+  it('draws a peer write and keeps the selection', () => {
+    const { data, map } = makePeerMap();
+    map.instance.selectNode('a');
+    const deselect = jest.fn();
+    map.instance.on('nodeDeselect', deselect);
+
+    data.addNodes([
+      nodeRecord({ id: 'd', parent: 'a', coordinates: { x: 400, y: 80 } }),
+    ]);
+    data.updateNode('b', 'name', 'Peer');
+
+    expect(drawnIds()).toContain('d');
+    expect(nameDom('b').innerHTML).toBe('Peer');
+    expect(map.instance.getSelectedNode()?.id).toBe('a');
+    expect(deselect).not.toHaveBeenCalled();
+  });
+
+  it('deselects a selected node a peer removes', () => {
+    const { data, map } = makePeerMap();
+    map.instance.selectNode('b');
+    const deselected: string[] = [];
+    map.instance.on('nodeDeselect', node => deselected.push(node.id));
+
+    data.removeNode('a');
+
+    expect(deselected).toEqual(['b']);
+    expect(map.instance.getSelectedNode()).toBeNull();
+    expect(drawnIds()).toEqual(['root']);
+  });
+});
+
 describe('editing a name', () => {
   it('commits the name of A when B takes the selection', () => {
     const { map, child } = makeMapWithChild();
@@ -521,15 +579,14 @@ describe('destroy', () => {
     const ref = map.dom.container.node();
     const listener = jest.fn();
     map.instance.on('nodeSelect', listener);
+    const onChange = jest.spyOn(map.nodes, 'drawReplaced');
 
     map.instance.destroy();
+    map.data.replaceMap([nodeRecord({ id: 'root', isRoot: true })]);
 
     expect(ref?.querySelector('svg')).toBeNull();
     expect(d3.select(window).on('resize.map')).toBeUndefined();
-    map.events.emit(
-      'nodeSelect',
-      map.nodes.getNodeProperties(map.nodes.getRoot())
-    );
+    expect(onChange).not.toHaveBeenCalled();
     expect(listener).not.toHaveBeenCalled();
   });
 });
