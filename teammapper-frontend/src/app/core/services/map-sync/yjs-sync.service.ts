@@ -491,8 +491,6 @@ export class YjsSyncService {
           if (!this.yDoc) return;
           this.writeNodeCreateToYDoc(newNode);
           this.ctx.updateAttachedMap();
-          this.mmpService.selectNode(newNode.id);
-          this.mmpService.editNode();
         })
     );
   }
