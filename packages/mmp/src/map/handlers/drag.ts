@@ -159,8 +159,5 @@ export default class Drag {
     if (!nodes.refusesChange(id)) nodes.writePositions(positions);
 
     this.map.draw.renderPositions([...positions.keys()]);
-
-    // Mirror compatibility, removed in PR 7.
-    if (!nodes.isProtected(id)) nodes.announceMoved([...positions.keys()]);
   }
 }

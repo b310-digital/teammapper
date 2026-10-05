@@ -11,7 +11,6 @@ import type {
   MapViewState,
   MmpEventType,
   NodeProperty,
-  NodeUpdateEvent,
   OldMmpNode,
 } from '@teammapper/shared';
 
@@ -20,15 +19,8 @@ import type {
  * typecheck when `MmpEventType` gains an event this record lacks.
  */
 const OTHER_EVENTS = Object.keys({
-  // Mirror compatibility, removed in PR 7: create to distribute.
-  create: true,
   nodeSelect: true,
   nodeDeselect: true,
-  nodeUpdate: true,
-  nodeCreate: true,
-  nodePaste: true,
-  nodeRemove: true,
-  distribute: true,
   nodeProtected: true,
   mapChange: true,
 } satisfies Record<Exclude<MmpEventType, 'viewStateChange'>, true>) as Exclude<
@@ -210,7 +202,7 @@ describe('updateNode', () => {
     it('writes the value to the map data', () => {
       const { map, child } = makeMapWithChild();
 
-      map.instance.updateNode(property, value, true, child);
+      map.instance.updateNode(property, value, child);
 
       expect(read(exported(map, child))).toEqual(value);
     });
@@ -220,53 +212,20 @@ describe('updateNode', () => {
       const listener = jest.fn();
       map.instance.on('mapChange', listener);
 
-      map.instance.updateNode(property, value, true, child);
+      map.instance.updateNode(property, value, child);
 
       expect(listener).toHaveBeenCalledTimes(1);
     });
 
     it('writes nothing when the value stays the same', () => {
       const { map, child } = makeMapWithChild();
-      map.instance.updateNode(property, value, true, child);
+      map.instance.updateNode(property, value, child);
       const listener = jest.fn();
       map.instance.on('mapChange', listener);
-      map.instance.on('nodeUpdate', listener);
 
-      map.instance.updateNode(property, value, true, child);
+      map.instance.updateNode(property, value, child);
 
       expect(listener).not.toHaveBeenCalled();
-    });
-
-    // Mirror compatibility, removed in PR 7, as are the specs below that
-    // name `notifyWithEvent`, `addNodes` or an event other than
-    // `nodeSelect`, `nodeDeselect`, `nodeProtected`, `viewStateChange` and
-    // `mapChange`.
-    it('announces a local change with the previous value', () => {
-      const { map, child } = makeMapWithChild();
-      const previousValue = read(exported(map, child));
-      const updates: NodeUpdateEvent[] = [];
-      map.instance.on('nodeUpdate', event => updates.push(event));
-
-      map.instance.updateNode(property, value, true, child);
-
-      expect(updates).toHaveLength(1);
-      expect(updates[0].changedProperty).toBe(property);
-      expect(updates[0].previousValue).toEqual(previousValue);
-      expect(read(updates[0].nodeProperties)).toEqual(value);
-    });
-
-    it('announces nothing but mapChange without notifyWithEvent', () => {
-      const { map, child } = makeMapWithChild();
-      const update = jest.fn();
-      const change = jest.fn();
-      map.instance.on('nodeUpdate', update);
-      map.instance.on('mapChange', change);
-
-      map.instance.updateNode(property, value, false, child);
-
-      expect(update).not.toHaveBeenCalled();
-      expect(change).toHaveBeenCalledTimes(1);
-      expect(read(exported(map, child))).toEqual(value);
     });
   });
 
@@ -276,7 +235,7 @@ describe('updateNode', () => {
       it('draws the value', () => {
         const { map, child } = makeMapWithChild();
 
-        map.instance.updateNode(property, value, true, child);
+        map.instance.updateNode(property, value, child);
 
         expect(rendered?.(child)).toEqual(RENDERED[property]);
       });
@@ -285,9 +244,9 @@ describe('updateNode', () => {
 
   it('sets the image size of a node with an image', () => {
     const { map, child } = makeMapWithChild();
-    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, true, child);
+    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, child);
 
-    map.instance.updateNode('imageSize', 40, true, child);
+    map.instance.updateNode('imageSize', 40, child);
 
     expect(exported(map, child).image?.size).toBe(40);
   });
@@ -295,9 +254,7 @@ describe('updateNode', () => {
   it('refuses an image size on a node without an image', () => {
     const { map, child } = makeMapWithChild();
 
-    expect(() =>
-      map.instance.updateNode('imageSize', 40, true, child)
-    ).toThrow();
+    expect(() => map.instance.updateNode('imageSize', 40, child)).toThrow();
   });
 
   it('targets the selected node without an id', () => {
@@ -312,16 +269,14 @@ describe('updateNode', () => {
     const map = makeMap();
 
     expect(() =>
-      map.instance.updateNode('branchColor', '#00ff00', true, rootOf(map))
+      map.instance.updateNode('branchColor', '#00ff00', rootOf(map))
     ).toThrow();
   });
 
   it('refuses a property it does not know', () => {
     const { map, child } = makeMapWithChild();
 
-    expect(() =>
-      map.instance.updateNode('shadow', '1px', true, child)
-    ).toThrow();
+    expect(() => map.instance.updateNode('shadow', '1px', child)).toThrow();
   });
 
   it.each<[NodeProperty, unknown]>([
@@ -339,20 +294,18 @@ describe('updateNode', () => {
     const { map, child } = makeMapWithChild();
     const before = exported(map, child);
 
-    expect(() =>
-      map.instance.updateNode(property, value, false, child)
-    ).toThrow();
+    expect(() => map.instance.updateNode(property, value, child)).toThrow();
     expect(exported(map, child)).toEqual(before);
   });
 
   it('clears a color, a link and an image with an empty value', () => {
     const { map, child } = makeMapWithChild();
-    map.instance.updateNode('linkHref', 'https://example.com', true, child);
-    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, true, child);
+    map.instance.updateNode('linkHref', 'https://example.com', child);
+    map.instance.updateNode('imageSrc', IMAGE_REFERENCE, child);
 
-    map.instance.updateNode('backgroundColor', '', true, child);
-    map.instance.updateNode('linkHref', '', true, child);
-    map.instance.updateNode('imageSrc', '', true, child);
+    map.instance.updateNode('backgroundColor', '', child);
+    map.instance.updateNode('linkHref', '', child);
+    map.instance.updateNode('imageSrc', '', child);
 
     const node = exported(map, child);
     expect(node.colors?.background).toBe('');
@@ -364,14 +317,14 @@ describe('updateNode', () => {
     const data = new InMemoryMapData();
     const map = makeMapOver(data);
     map.instance.new();
-    const child = map.instance.addNode({ name: 'child' }, true, rootOf(map));
+    const child = map.instance.addNode({ name: 'child' }, rootOf(map));
     if (!child) throw new Error('addNode added no child');
     const original = data.node(child.id)?.colors?.background;
 
-    map.instance.updateNode('backgroundColor', '#ff0000', true, child.id);
+    map.instance.updateNode('backgroundColor', '#ff0000', child.id);
     expect(data.node(child.id)?.colors?.background).toBe('#ff0000');
 
-    map.instance.updateNode('backgroundColor', original, true, child.id);
+    map.instance.updateNode('backgroundColor', original, child.id);
     expect(data.node(child.id)?.colors?.background).toBe(original);
   });
 });
@@ -382,50 +335,33 @@ describe('protection', () => {
     const map = makeMap();
     const parent = map.instance.addNode({ name: 'parent' });
     if (!parent) throw new Error('addNode added no parent');
-    const child = map.instance.addNode({ name: 'child' }, true, parent.id);
+    const child = map.instance.addNode({ name: 'child' }, parent.id);
     if (!child) throw new Error('addNode added no child');
     map.instance.protectBranch(parent.id);
     return { map, parent: parent.id, child: child.id };
   }
 
   it.each(PROPERTY_CASES.filter(c => c.property !== 'protected'))(
-    'refuses a local $property change below it',
+    'refuses a $property change below it',
     ({ property, value, read }) => {
       const { map, child } = makeProtectedMap();
       const before = read(exported(map, child));
       const refused: ExportNodeProperties[] = [];
       map.instance.on('nodeProtected', node => refused.push(node));
 
-      map.instance.updateNode(property, value, true, child);
+      map.instance.updateNode(property, value, child);
 
       expect(read(exported(map, child))).toEqual(before);
       expect(refused.map(node => node.id)).toEqual([child]);
     }
   );
 
-  it('applies a remote change and a remote removal below it', () => {
-    const { map, parent, child } = makeProtectedMap();
-    const refused = jest.fn();
-    const announced = jest.fn();
-    map.instance.on('nodeProtected', refused);
-    map.instance.on('nodeUpdate', announced);
-    map.instance.on('nodeRemove', announced);
-
-    map.instance.updateNode('name', 'Remote', false, child);
-    expect(exported(map, child).name).toBe('Remote');
-    map.instance.removeNode(parent, false);
-
-    expect(map.instance.existNode(parent)).toBe(false);
-    expect(refused).not.toHaveBeenCalled();
-    expect(announced).not.toHaveBeenCalled();
-  });
-
-  it('refuses a local child and a local removal', () => {
+  it('refuses a child and a removal', () => {
     const { map, parent, child } = makeProtectedMap();
     const refused = jest.fn();
     map.instance.on('nodeProtected', refused);
 
-    expect(map.instance.addNode({ name: 'x' }, true, parent)).toBeNull();
+    expect(map.instance.addNode({ name: 'x' }, parent)).toBeNull();
     map.instance.removeNode(child);
 
     expect(map.instance.existNode(child)).toBe(true);
@@ -456,66 +392,13 @@ describe('events', () => {
 
     const node = map.instance.addNode({ name: 'a' });
     if (!node) throw new Error('addNode added no node');
-    map.instance.updateNode('backgroundColor', '#ff0000', true, node.id);
+    map.instance.updateNode('backgroundColor', '#ff0000', node.id);
     map.instance.selectNode(node.id);
     map.instance.removeNode(node.id);
 
     expect(selected).toEqual([node.id]);
     expect(deselected).toEqual([root, node.id]);
     expect(changes).toHaveBeenCalledTimes(3);
-  });
-
-  it('announces a new node and its removal', () => {
-    const map = makeMap();
-    const created: string[] = [];
-    const removed: string[] = [];
-    map.instance.on('nodeCreate', node => created.push(node.id));
-    map.instance.on('nodeRemove', node => removed.push(node.id));
-
-    const node = map.instance.addNode({ name: 'a' });
-    if (!node) throw new Error('addNode added no node');
-    map.instance.removeNode(node.id);
-
-    expect(created).toEqual([node.id]);
-    expect(removed).toEqual([node.id]);
-  });
-
-  it('hands the previous map to create listeners', () => {
-    const map = makeMap();
-    const previous = map.instance.exportAsJSON();
-    const payloads: (MapSnapshot | undefined)[] = [];
-    map.instance.on('create', event => payloads.push(event.previousMapData));
-
-    map.instance.new(map.instance.exportAsJSON());
-    map.instance.new(map.instance.exportAsJSON(), false);
-
-    expect(payloads).toEqual([previous]);
-  });
-
-  it('announces a distribute without a payload', () => {
-    const { map } = makeMapWithChild();
-    const listener = jest.fn();
-    map.instance.on('distribute', listener);
-
-    map.instance.distributeNodes();
-    map.instance.distributeNodes(false);
-
-    expect(listener).toHaveBeenCalledTimes(1);
-  });
-
-  it('draws the nodes addNodes writes, without an event', () => {
-    const map = makeMap();
-    const root = rootOf(map);
-    const announced = jest.fn();
-    map.instance.on('nodeCreate', announced);
-
-    map.instance.addNodes([
-      nodeRecord({ id: 'peer', parent: root, k: 3, protected: true }),
-    ]);
-
-    expect(drawnIds()).toEqual([root, 'peer']);
-    expect(exported(map, 'peer')).toMatchObject({ k: 3, protected: true });
-    expect(announced).not.toHaveBeenCalled();
   });
 
   it('announces the view state alone when it hides child nodes', () => {
@@ -761,23 +644,6 @@ describe('batched writes', () => {
 
     expect(listener).toHaveBeenCalledTimes(1);
     expect(data.nodes()).toHaveLength(6);
-  });
-
-  it('announces the pasted nodes in one nodePaste event', () => {
-    const { data, map } = makeTree();
-    map.instance.copyNode('a');
-    const pastes: ExportNodeProperties[][] = [];
-    map.instance.on('nodePaste', nodes => pastes.push(nodes));
-
-    map.instance.pasteNode('c');
-
-    const pastedIds = data
-      .nodes()
-      .slice(4)
-      .map(node => node.id);
-    expect(pastes.map(nodes => nodes.map(node => node.id))).toEqual([
-      pastedIds,
-    ]);
   });
 });
 

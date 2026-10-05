@@ -15,14 +15,6 @@ const EVENT_TYPES: readonly MmpEventType[] = [
   'nodeProtected',
   'viewStateChange',
   'mapChange',
-  // Mirror compatibility, removed in PR 7: the frontend writes local edits
-  // to the Y.Doc from these events.
-  'create',
-  'nodeUpdate',
-  'nodeCreate',
-  'nodePaste',
-  'nodeRemove',
-  'distribute',
 ];
 
 /**

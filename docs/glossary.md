@@ -312,6 +312,16 @@ A switch that configures the app from outside its data: an environment
 variable, a feature flag or a command-line option. A value stored on a node or
 a map is an attribute.
 
+### Map data
+
+The nodes of one mind map as every client shares them. The map you see is
+drawn from the map data and keeps no copy of its own, so your edits, a peer's
+edits and an undo all change the map data first and then show up on screen.
+
+In the app, the map data syncs with the server and the other clients. Tests
+and use without sync work on map data kept in memory. Distinct from the
+**view state**, which stays with one person and never enters the map data.
+
 ### Mark
 
 Reserved for the **node mark**, one visual element of a drawn node. Do not use

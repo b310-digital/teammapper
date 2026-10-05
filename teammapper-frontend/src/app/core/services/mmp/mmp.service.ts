@@ -347,7 +347,6 @@ export class MmpService implements OnDestroy {
 
     const node = this.map.instance.addNode(
       this.newNodeProperties(parent, properties),
-      true,
       parent.id,
       properties?.id
     );
@@ -462,7 +461,7 @@ export class MmpService implements OnDestroy {
     id?: string
   ) {
     try {
-      this.currentMap?.instance.updateNode(property, value, true, id);
+      this.currentMap?.instance.updateNode(property, value, id);
     } catch {
       const genericErrorMessage = await this.utilsService.translate(
         'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
@@ -497,7 +496,7 @@ export class MmpService implements OnDestroy {
    */
   public async removeNode(nodeId?: string) {
     try {
-      this.currentMap?.instance.removeNode(nodeId, true);
+      this.currentMap?.instance.removeNode(nodeId);
     } catch (e) {
       if (errorMessage(e) == 'The root node can not be deleted') {
         const rootNodeFailureMessage = await this.utilsService.translate(

@@ -21,11 +21,11 @@ function makeChain() {
 
   const root = map.instance.exportRootProperties()?.id;
   if (!root) throw new Error('the map has no main root');
-  const a = map.instance.addNode({ name: 'a' }, true, root);
+  const a = map.instance.addNode({ name: 'a' }, root);
   if (!a) throw new Error('addNode added no node');
-  const b = map.instance.addNode({ name: 'b' }, true, a.id);
+  const b = map.instance.addNode({ name: 'b' }, a.id);
   if (!b) throw new Error('addNode added no node');
-  const c = map.instance.addNode({ name: 'c' }, true, b.id);
+  const c = map.instance.addNode({ name: 'c' }, b.id);
   if (!c) throw new Error('addNode added no node');
 
   return { map, data, root, a, b, c };

@@ -185,22 +185,12 @@ export type NodeProperty =
 export type NodePropertyValue =
   string | number | boolean | MapNodeCoordinates | null | undefined;
 
-export interface NodeUpdateEvent {
-  nodeProperties: ExportNodeProperties;
-  previousValue: unknown;
-  changedProperty: NodeProperty;
-}
-
 /**
  * The view state of one client's map: which nodes hide their child nodes.
  * It stays local to the client and never reaches the map data.
  */
 export interface MapViewState {
   nodesWithHiddenChildren: string[];
-}
-
-export interface MapCreateEvent {
-  previousMapData?: MapSnapshot;
 }
 
 export interface CachedMap {
@@ -254,14 +244,8 @@ export interface OldMmpNode {
 }
 
 export interface MmpEventPayloadMap {
-  create: MapCreateEvent;
   nodeSelect: ExportNodeProperties;
   nodeDeselect: ExportNodeProperties;
-  nodeUpdate: NodeUpdateEvent;
-  nodeCreate: ExportNodeProperties;
-  nodePaste: ExportNodeProperties[];
-  nodeRemove: ExportNodeProperties;
-  distribute: void;
   nodeProtected: ExportNodeProperties;
   viewStateChange: MapViewState;
   /** The map data changed, by a local, a peer's or an undo write. */
