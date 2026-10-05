@@ -77,7 +77,7 @@ export class ColorPanelsComponent implements OnChanges {
   }
 
   public colorPickerChange(property: NodeProperty, value: string) {
-    this.mmpService.updateNode(property, value, true);
+    this.mmpService.updateNode(property, value);
   }
 
   public colorPickerToggleChange(

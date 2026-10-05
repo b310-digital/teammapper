@@ -89,7 +89,7 @@ describe('ShortcutsService', () => {
 
     press('alt+.');
 
-    expect(mmpService.updateNode).toHaveBeenCalledWith('fontSize', 14, false);
+    expect(mmpService.updateNode).toHaveBeenCalledWith('fontSize', 14);
   });
 
   it('opens the info dialog on ?', () => {

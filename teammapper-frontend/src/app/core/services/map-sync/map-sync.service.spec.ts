@@ -13,7 +13,7 @@ import {
   ExportNodeProperties,
   UserSettings,
 } from '@teammapper/shared';
-import type { MmpMap } from '@teammapper/mmp';
+import type { MapData, MmpMap } from '@teammapper/mmp';
 import { YjsSyncService } from './yjs-sync.service';
 import { MapSyncContext } from './map-sync-context';
 import { ImageHandlers, ImageUploadError } from '../mmp/node-images';
@@ -67,6 +67,7 @@ describe('MapSyncService', () => {
       create: jest.fn().mockResolvedValue(CREATED_MAP),
       remove: jest.fn(),
       markMapCreated: jest.fn(),
+      toggleBranchProtection: jest.fn(),
       selectNode: jest.fn(),
       getRootNode: jest.fn(),
       on: jest.fn(),
@@ -137,6 +138,7 @@ describe('MapSyncService', () => {
   describe('opening a map', () => {
     const ref = document.createElement('div');
     const options = { drag: true };
+    const data = {} as MapData;
 
     beforeEach(() => {
       jest.spyOn(service, 'getAttachedMap').mockReturnValue({
@@ -183,23 +185,28 @@ describe('MapSyncService', () => {
       });
 
       const sync = async () => {
-        getSyncContext(service).createMap();
+        getSyncContext(service).createMap(data);
         await new Promise(resolve => setTimeout(resolve));
       };
 
-      it('creates the map, wires it up, then marks it created', async () => {
+      it('creates the map over the map data, wires it up, then marks it created', async () => {
         await sync();
 
         const created = mmpService.create.mock.invocationCallOrder[0];
         const attached = (getSync(service).attachMap as jest.Mock).mock
           .invocationCallOrder[0];
         const marked = mmpService.markMapCreated.mock.invocationCallOrder[0];
-        expect(mmpService.create).toHaveBeenCalledWith('map_1', ref, options);
+        expect(mmpService.create).toHaveBeenCalledWith(
+          'map_1',
+          ref,
+          options,
+          data
+        );
         expect(created < attached && attached < marked).toBe(true);
       });
 
       it('removes the map a reset left behind while mmp built it', async () => {
-        getSyncContext(service).createMap();
+        getSyncContext(service).createMap(data);
         service.reset();
         await new Promise(resolve => setTimeout(resolve));
 
@@ -214,7 +221,7 @@ describe('MapSyncService', () => {
         mmpService.create.mockReturnValueOnce(
           new Promise<MmpMap>(resolve => (finishLate = resolve))
         );
-        getSyncContext(service).createMap();
+        getSyncContext(service).createMap(data);
         service.reset();
         service.openMap(ref, options);
         await sync();
@@ -267,7 +274,7 @@ describe('MapSyncService', () => {
         .subscribe(node => attached.push(node));
       service.openMap(ref, options);
 
-      getSyncContext(service).createMap();
+      getSyncContext(service).createMap(data);
       await new Promise(resolve => setTimeout(resolve));
 
       const sync = getSync(service) as unknown as { selectedNodeId: string };
@@ -321,7 +328,7 @@ describe('MapSyncService', () => {
     });
 
     it('shows no toast when the connection synced in time', async () => {
-      getSyncContext(service).createMap();
+      getSyncContext(service).createMap({} as MapData);
       await jest.advanceTimersByTimeAsync(SYNCING_TOAST_DELAY_MS);
 
       expect(toastr().info).not.toHaveBeenCalled();
@@ -330,7 +337,7 @@ describe('MapSyncService', () => {
     it('removes the toast on the first sync', async () => {
       await jest.advanceTimersByTimeAsync(SYNCING_TOAST_DELAY_MS);
 
-      getSyncContext(service).createMap();
+      getSyncContext(service).createMap({} as MapData);
 
       expect(toastr().remove).toHaveBeenCalledWith(SYNCING_TOAST_ID);
     });
@@ -350,6 +357,12 @@ describe('MapSyncService', () => {
 
       expect(toastr().remove).toHaveBeenCalledWith(SYNCING_TOAST_ID);
     });
+  });
+
+  it('lets mmp toggle the branch protection', () => {
+    service.toggleBranchProtection();
+
+    expect(mmpService.toggleBranchProtection).toHaveBeenCalled();
   });
 
   describe('undo and redo', () => {

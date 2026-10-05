@@ -1,12 +1,8 @@
 import { auditTime, share, Subscription } from 'rxjs';
-import { NodePropertyMapping } from '@teammapper/mmp';
 import {
   CachedMapOptions,
   DEFAULT_FONT_MAX_SIZE,
   ExportNodeProperties,
-  MapCreateEvent,
-  NodeUpdateEvent,
-  sortNodesParentFirst,
 } from '@teammapper/shared';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -16,85 +12,46 @@ import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import {
   ClientColorMapping,
-  populateYMapFromNodeProps,
-  yMapToNodeProps,
   buildYjsWsUrl,
   buildYjsProtocols,
   resolveClientColor,
   findAffectedNodes,
-  resolveMmpPropertyUpdate,
-  collectDescendantIds,
 } from './yjs-utils';
 import {
   MapSyncContext,
   DEFAULT_COLOR,
   DEFAULT_SELF_COLOR,
 } from './map-sync-context';
-import { LAST_MAP_ANNOUNCEMENT, LOCAL_ORIGIN, META } from './yjs-map-data';
+import {
+  LAST_MAP_ANNOUNCEMENT,
+  LOCAL_ORIGIN,
+  META,
+  YjsMapData,
+  replacesMainRoot,
+} from './yjs-map-data';
 
 const WS_CLOSE_MAP_DELETED = 4001;
 
 /** The longest the cached map lags behind a change of the map data. */
 export const ATTACHED_MAP_AUDIT_MS = 250;
 
-/**
- * Which operation caused a full-map replacement. Recorded in the doc because
- * Yjs transaction origins are local and never reach the other clients.
- */
-type FullMapOperation = 'import' | 'distribute';
+type NodesMap = Y.Map<Y.Map<unknown>>;
 
 /**
- * Orders the nodes of a whole map parent-first across every root, then
- * appends the orphans no root reaches, in input order.
- */
-function parentFirstWithOrphans(
-  nodes: ExportNodeProperties[]
-): ExportNodeProperties[] {
-  const { ordered, unreached } = sortNodesParentFirst(nodes);
-  return [...ordered, ...unreached];
-}
-
-/**
- * Orders a batch of added nodes parent-first. A node whose parent is outside
- * the batch, such as the top of a subtree pasted under a node this client
- * already holds, starts a walk as if it were a root.
- */
-function batchParentFirst(
-  nodes: ExportNodeProperties[]
-): ExportNodeProperties[] {
-  const batchIds = new Set(nodes.map(n => n.id));
-  const keys = nodes.map(node => ({
-    node,
-    id: node.id,
-    parent: node.parent && batchIds.has(node.parent) ? node.parent : null,
-    isRoot: node.isRoot,
-  }));
-  const { ordered, unreached } = sortNodesParentFirst(keys);
-  return [...ordered, ...unreached].map(key => key.node);
-}
-
-/**
- * Keeps one open map in sync with the other clients over a Yjs websocket. It
- * mirrors mmp's node events into the Y.Doc and peer changes back into mmp,
- * and owns presence and the undo manager.
- *
- * `MapSyncService` is responsible for the startup:
- * 1. `MapSyncService.openMap` calls `initMap` on this service, which creates the Y.Doc and
- *    connects. No map exists yet.
- * 2. On the first sync, this service asks `MapSyncService` (through the
- *    context's `createMap`) to create mmp.
- * 3. `MapSyncService` then calls `attachMap`, which loads the Y.Doc into
- *    mmp, wires listeners, presence and undo, and sets edit mode last.
+ * Keeps one open map in sync with the other clients over a Yjs websocket.
+ * The Y.Doc holds the only copy of the map, and mmp reads and writes it
+ * through `YjsMapData`. The service owns the connection, presence, the undo
+ * manager and the import notice. `MapSyncService` drives its startup.
  */
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
+  private yjsMapData: YjsMapData | null = null;
   private wsProvider: WebsocketProvider | null = null;
   private yjsSynced = false;
   private yjsWritable = false;
   private yjsSubscriptions: Subscription[] = [];
   private yjsMapId: string | null = null;
-  private yjsNodesObserver:
-    Parameters<Y.Map<unknown>['observeDeep']>[0] | null = null;
+  private yjsNodesObserver: Parameters<NodesMap['observe']>[0] | null = null;
   private yjsOptionsObserver: Parameters<Y.Map<unknown>['observe']>[0] | null =
     null;
   private yjsAwarenessHandler: (() => void) | null = null;
@@ -125,8 +82,19 @@ export class YjsSyncService {
   /**
    * The nodes of the open connection, typed once instead of at every read.
    */
-  private get nodesMap(): Y.Map<Y.Map<unknown>> {
-    return this.doc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+  private get nodesMap(): NodesMap {
+    return this.doc.getMap('nodes') as NodesMap;
+  }
+
+  /**
+   * The map data over the Y.Doc of the open connection. initMap creates it
+   * together with the doc.
+   */
+  private get mapData(): YjsMapData {
+    if (!this.yjsMapData) {
+      throw new Error('The map connection has no map data');
+    }
+    return this.yjsMapData;
   }
 
   /**
@@ -142,7 +110,7 @@ export class YjsSyncService {
   // ─── Public API ─────────────────────────────────────────────
 
   /**
-   * Sets whether this client may edit the map. Edit mode follows the flag from
+   * Sets whether this client may edit the map. Edit mode follows this value from
    * the first sync on, whichever of the sync and this call comes first.
    */
   setWritable(writable: boolean): void {
@@ -158,21 +126,6 @@ export class YjsSyncService {
     this.yUndoManager?.redo();
   }
 
-  /**
-   * Run a local change that writes several nodes as one transaction. Yjs
-   * joins the transactions of the node writes into this one, so peers receive
-   * a single update and one undo reverts the whole change.
-   */
-  transactLocally(change: () => void): void {
-    if (!this.yDoc) {
-      change();
-      return;
-    }
-    this.yUndoManager?.stopCapturing();
-    this.doc.transact(change, LOCAL_ORIGIN);
-    this.yUndoManager?.stopCapturing();
-  }
-
   updateMapOptions(options?: CachedMapOptions): void {
     this.writeMapOptionsToYDoc(options);
   }
@@ -181,7 +134,8 @@ export class YjsSyncService {
 
   /**
    * Open the connection to a map, or reattach to the open one. The first
-   * sync asks the context to create the map, which then calls `attachMap`.
+   * sync hands the map data to the context, which creates the map over it
+   * and then calls `attachMap`.
    */
   initMap(uuid: string): void {
     if (this.hasActiveConnection(uuid)) {
@@ -195,19 +149,19 @@ export class YjsSyncService {
     // otherwise create it as a bare type, and the first getMap call would
     // swap in a new object that no transaction's `changed` list contains.
     this.yDoc.getMap(META);
+    this.yjsMapData = new YjsMapData(this.yDoc, () => this.yUndoManager);
     const provider = this.setupConnection(uuid);
     this.setupConnectionStatus(provider);
     this.setupMapDeletionHandler(provider);
   }
 
   /**
-   * Wire the map the context created: load the Y.Doc into it, then the mmp
-   * listeners, the selection, the observers, awareness and the undo
-   * manager, and last edit mode, so the map exists when edit mode reaches it.
+   * Wire the map the context created over the map data: the mmp listeners,
+   * the selection, the observers, awareness and the undo manager, and last
+   * edit mode, so the map exists when edit mode reaches it.
    */
   attachMap(): void {
     this.detachObservers();
-    this.loadMapFromYDoc();
     this.createListeners();
     this.attachSelection();
     this.setupNodesObserver();
@@ -223,10 +177,10 @@ export class YjsSyncService {
     );
   }
 
-  /** A synced connection asks for the map at once. */
+  /** A synced connection hands its map data over at once. */
   private reattach(): void {
     if (!this.yjsSynced) return;
-    this.requestMap();
+    this.handOverMapData();
   }
 
   private setupConnection(mapId: string): WebsocketProvider {
@@ -261,24 +215,24 @@ export class YjsSyncService {
 
   /**
    * The map exists from the first sync on, an empty doc included: the
-   * context creates it and loads the doc into it.
+   * context creates it over the map data.
    */
   private handleFirstSync(): void {
     this.yjsSynced = true;
-    this.requestMap();
+    this.handOverMapData();
   }
 
   /** Report the connection as connected and let the context create the map. */
-  private requestMap(): void {
+  private handOverMapData(): void {
     this.ctx.setConnectionStatus('connected');
-    this.ctx.createMap();
+    this.ctx.createMap(this.mapData);
   }
 
   private initUndoManager(): void {
     const undoManager = new Y.UndoManager(this.nodesMap, {
-      // Everything we write is undoable, full-map replacements included: a
-      // distribute reverts the layout, an import restores the map it replaced.
-      // Merely opening a map is not a write - see setupCreateHandler.
+      // Everything we write is undoable, an import included: its undo
+      // restores the map it replaced. Opening a map writes nothing, since
+      // mmp reads the doc through the map data.
       trackedOrigins: new Set([LOCAL_ORIGIN]),
     });
     this.yUndoManager = undoManager;
@@ -330,22 +284,8 @@ export class YjsSyncService {
   destroy(): void {
     this.unsubscribeListeners();
     this.detachObservers();
-    if (this.yUndoManager) {
-      this.yUndoManager.destroy();
-      this.yUndoManager = null;
-      this.ctx.setCanUndo(false);
-      this.ctx.setCanRedo(false);
-    }
-    const provider = this.wsProvider;
-    this.wsProvider = null;
-    if (provider) {
-      provider.disconnect();
-      provider.destroy();
-    }
-    if (this.yDoc) {
-      this.yDoc.destroy();
-      this.yDoc = null;
-    }
+    this.destroyUndoManager();
+    this.destroyConnection();
     this.yjsSynced = false;
     this.yjsWritable = false;
     this.yjsMapId = null;
@@ -355,10 +295,30 @@ export class YjsSyncService {
     this.ctx.setConnectionStatus(null);
   }
 
+  private destroyUndoManager(): void {
+    if (!this.yUndoManager) return;
+    this.yUndoManager.destroy();
+    this.yUndoManager = null;
+    this.ctx.setCanUndo(false);
+    this.ctx.setCanRedo(false);
+  }
+
+  private destroyConnection(): void {
+    const provider = this.wsProvider;
+    this.wsProvider = null;
+    if (provider) {
+      provider.disconnect();
+      provider.destroy();
+    }
+    this.yjsMapData?.destroy();
+    this.yjsMapData = null;
+    this.yDoc?.destroy();
+    this.yDoc = null;
+  }
+
   private detachObservers(): void {
     if (this.yDoc && this.yjsNodesObserver) {
-      const nodesMap = this.yDoc.getMap('nodes');
-      nodesMap.unobserveDeep(this.yjsNodesObserver);
+      this.nodesMap.unobserve(this.yjsNodesObserver);
       this.yjsNodesObserver = null;
     }
     if (this.yDoc && this.yjsOptionsObserver) {
@@ -377,37 +337,12 @@ export class YjsSyncService {
     this.yjsSubscriptions = [];
   }
 
-  // ─── Initial map load ───────────────────────────────────────
-
-  private loadMapFromYDoc(): void {
-    const snapshot = this.extractSnapshotFromYDoc(this.nodesMap);
-    if (snapshot.length > 0) {
-      this.mmpService.new(snapshot, false);
-    }
-  }
-
-  private extractSnapshotFromYDoc(
-    nodesMap: Y.Map<Y.Map<unknown>>
-  ): ExportNodeProperties[] {
-    const nodes: ExportNodeProperties[] = [];
-    nodesMap.forEach((yNode: Y.Map<unknown>) => {
-      nodes.push(yMapToNodeProps(yNode));
-    });
-    return parentFirstWithOrphans(nodes);
-  }
-
-  // ─── MMP event listeners (MMP → Y.Doc) ─────────────────────
+  // ─── mmp event listeners ────────────────────────────────────
 
   private createListeners(): void {
     this.unsubscribeListeners();
     this.setupMapChangeHandler();
-    this.setupCreateHandler();
-    this.setupDistributeHandler();
     this.setupSelectionHandlers();
-    this.setupNodeUpdateHandler();
-    this.setupNodeCreateHandler();
-    this.setupPasteHandler();
-    this.setupNodeRemoveHandler();
   }
 
   /**
@@ -428,37 +363,6 @@ export class YjsSyncService {
       mapChange
         .pipe(auditTime(ATTACHED_MAP_AUDIT_MS))
         .subscribe(() => void this.ctx.updateAttachedMap())
-    );
-  }
-
-  /**
-   * An import replaces the whole map, so it goes out as a full-map
-   * replacement. Opening a map never reaches the undo stack: attachMap loads
-   * the doc before subscribing here, and loadMapFromYDoc replays the map with
-   * notifyWithEvent = false.
-   */
-  private setupCreateHandler(): void {
-    this.yjsSubscriptions.push(
-      this.mmpService.on('create').subscribe((_result: MapCreateEvent) => {
-        if (this.yjsSynced) {
-          this.writeFullMapToYDoc('import');
-        }
-      })
-    );
-  }
-
-  /**
-   * A redistribution rewrites every node's coordinates at once, so it goes out
-   * as a full-map replacement rather than as one update per node.
-   */
-  private setupDistributeHandler(): void {
-    this.yjsSubscriptions.push(
-      this.mmpService.on('distribute').subscribe(() => {
-        if (!this.yDoc) return;
-        if (this.yjsSynced) {
-          this.writeFullMapToYDoc('distribute');
-        }
-      })
     );
   }
 
@@ -494,143 +398,7 @@ export class YjsSyncService {
     this.updateAwarenessSelection(selected?.id ?? null);
   }
 
-  private setupNodeUpdateHandler(): void {
-    this.yjsSubscriptions.push(
-      this.mmpService.on('nodeUpdate').subscribe((result: NodeUpdateEvent) => {
-        if (!this.yDoc) return;
-        this.writeNodeUpdateToYDoc(result);
-      })
-    );
-  }
-
-  private setupNodeCreateHandler(): void {
-    this.yjsSubscriptions.push(
-      this.mmpService
-        .on('nodeCreate')
-        .subscribe((newNode: ExportNodeProperties) => {
-          if (!this.yDoc) return;
-          this.writeNodeCreateToYDoc(newNode);
-        })
-    );
-  }
-
-  private setupPasteHandler(): void {
-    this.yjsSubscriptions.push(
-      this.mmpService
-        .on('nodePaste')
-        .subscribe((newNodes: ExportNodeProperties[]) => {
-          if (!this.yDoc) return;
-          this.writeNodesPasteToYDoc(newNodes);
-        })
-    );
-  }
-
-  private setupNodeRemoveHandler(): void {
-    this.yjsSubscriptions.push(
-      this.mmpService
-        .on('nodeRemove')
-        .subscribe((removedNode: ExportNodeProperties) => {
-          if (!this.yDoc) return;
-          this.writeNodeRemoveFromYDoc(removedNode.id);
-        })
-    );
-  }
-
-  // ─── Write operations (MMP → Y.Doc) ────────────────────────
-
-  private writeNodeCreateToYDoc(nodeProps: ExportNodeProperties): void {
-    const nodesMap = this.nodesMap;
-    this.doc.transact(() => {
-      const yNode = new Y.Map<unknown>();
-      populateYMapFromNodeProps(yNode, nodeProps);
-      nodesMap.set(nodeProps.id, yNode);
-    }, LOCAL_ORIGIN);
-  }
-
-  private writeNodeUpdateToYDoc(event: NodeUpdateEvent): void {
-    const nodesMap = this.nodesMap;
-    const yNode = nodesMap.get(event.nodeProperties.id);
-    if (!yNode) return;
-
-    this.doc.transact(() => {
-      const topLevelKey = NodePropertyMapping[event.changedProperty][0];
-      const value =
-        event.nodeProperties[topLevelKey as keyof ExportNodeProperties];
-      yNode.set(topLevelKey, value);
-    }, LOCAL_ORIGIN);
-  }
-
-  private writeNodeRemoveFromYDoc(nodeId: string): void {
-    const nodesMap = this.nodesMap;
-    if (!nodesMap.has(nodeId)) return;
-
-    const descendantIds = collectDescendantIds(nodesMap, nodeId);
-
-    this.doc.transact(() => {
-      nodesMap.delete(nodeId);
-      for (const id of descendantIds) {
-        nodesMap.delete(id);
-      }
-    }, LOCAL_ORIGIN);
-  }
-
-  private writeNodesPasteToYDoc(nodes: ExportNodeProperties[]): void {
-    const nodesMap = this.nodesMap;
-    this.doc.transact(() => {
-      for (const node of nodes) {
-        const yNode = new Y.Map<unknown>();
-        populateYMapFromNodeProps(yNode, node);
-        nodesMap.set(node.id, yNode);
-      }
-    }, LOCAL_ORIGIN);
-  }
-
-  private writeFullMapToYDoc(operation: FullMapOperation): void {
-    const snapshot = this.mmpService.exportAsJSON();
-    const nodesMap = this.nodesMap;
-    const sorted = parentFirstWithOrphans(snapshot);
-
-    // Without this, Yjs merges the replacement with whatever the user did in
-    // the preceding half second and one undo would revert both.
-    this.yUndoManager?.stopCapturing();
-
-    this.doc.transact(() => {
-      this.doc.getMap(META).set(LAST_MAP_ANNOUNCEMENT, operation);
-      this.clearAndRepopulateNodes(nodesMap, sorted);
-    }, LOCAL_ORIGIN);
-  }
-
-  /**
-   * A redistribution replaces the map the way an import does, and an undo
-   * replays the nodes without recording an operation at all. Only a deliberate
-   * replacement announces itself in the same transaction as the nodes, so the
-   * announcement is read per key: an unrelated write to `meta` is not one.
-   */
-  private shouldAnnounceImport(mapEvent: Y.YMapEvent<Y.Map<unknown>>): boolean {
-    const meta = this.doc.getMap(META);
-    // Yjs keys `transaction.changed` by an erased `AbstractType`, which no
-    // concrete `Y.Map` satisfies. The lookup compares object identity.
-    const announced = mapEvent.transaction.changed.get(
-      meta as unknown as Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>
-    );
-    if (!announced?.has(LAST_MAP_ANNOUNCEMENT)) return false;
-
-    return meta.get(LAST_MAP_ANNOUNCEMENT) !== 'distribute';
-  }
-
-  private clearAndRepopulateNodes(
-    nodesMap: Y.Map<Y.Map<unknown>>,
-    snapshot: ExportNodeProperties[]
-  ): void {
-    for (const key of Array.from(nodesMap.keys())) {
-      nodesMap.delete(key);
-    }
-    for (const node of snapshot) {
-      const yNode = new Y.Map<unknown>();
-      populateYMapFromNodeProps(yNode, node);
-      nodesMap.set(node.id, yNode);
-    }
-  }
+  // ─── Map options (Y.Doc ↔ MMP) ──────────────────────────────
 
   private writeMapOptionsToYDoc(options?: CachedMapOptions): void {
     // The settings page can change these with no map open, so this is the one
@@ -644,138 +412,6 @@ export class YjsSyncService {
       optionsMap.set('fontMinSize', options.fontMinSize);
       optionsMap.set('fontIncrement', options.fontIncrement);
     }, LOCAL_ORIGIN);
-  }
-
-  // ─── Y.Doc observers (Y.Doc → MMP) ─────────────────────────
-
-  private setupNodesObserver(): void {
-    const nodesMap = this.nodesMap;
-    this.yjsNodesObserver = (
-      events: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>[],
-      transaction: Y.Transaction
-    ) => {
-      if (transaction.local && transaction.origin !== this.yUndoManager) return;
-      for (const event of events) {
-        this.handleNodeEvent(event, nodesMap);
-      }
-    };
-    nodesMap.observeDeep(this.yjsNodesObserver);
-  }
-
-  private handleNodeEvent(
-    event: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>,
-    nodesMap: Y.Map<Y.Map<unknown>>
-  ): void {
-    // `event.target` carries the same erased `AbstractType`.
-    if ((event.target as unknown) === nodesMap) {
-      this.handleTopLevelNodeChanges(event, nodesMap);
-    } else {
-      this.handleNodePropertyChanges(event);
-    }
-  }
-
-  private handleTopLevelNodeChanges(
-    event: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>,
-    nodesMap: Y.Map<Y.Map<unknown>>
-  ): void {
-    const mapEvent = event as unknown as Y.YMapEvent<Y.Map<unknown>>;
-
-    if (this.isFullMapReplacement(mapEvent, nodesMap)) {
-      this.loadMapFromYDoc();
-      // A peer replaced the whole map, so our history describes a map that no
-      // longer exists. A replacement is a delete-and-reinsert that no CRDT can
-      // merge back, so undoing into it would leave the map with two roots.
-      if (!mapEvent.transaction.local) this.yUndoManager?.clear();
-      if (this.shouldAnnounceImport(mapEvent)) {
-        this.showImportToast();
-      }
-      return;
-    }
-
-    const adds: string[] = [];
-
-    mapEvent.keysChanged.forEach(key => {
-      const change = mapEvent.changes.keys.get(key);
-      if (!change) return;
-
-      if (change.action === 'add') {
-        adds.push(key);
-      } else if (change.action === 'update') {
-        this.applyRemoteNodeDelete(key);
-        this.applyRemoteNodeAdd(nodesMap.get(key));
-      } else if (change.action === 'delete') {
-        this.applyRemoteNodeDelete(key);
-      }
-    });
-
-    if (adds.length > 0) {
-      const nodeProps = adds
-        .map(key => nodesMap.get(key))
-        .filter((yNode): yNode is Y.Map<unknown> => !!yNode)
-        .map(yNode => yMapToNodeProps(yNode));
-      const sorted = batchParentFirst(nodeProps);
-      sorted.forEach(props => this.mmpService.addNodesFromServer([props]));
-    }
-  }
-
-  private async showImportToast(): Promise<void> {
-    const msg = await this.utilsService.translate('TOASTS.MAP_IMPORT_SUCCESS');
-    if (msg) this.toastrService.success(msg);
-  }
-
-  /**
-   * Reads `isRoot`, which marks the main root only. Adding a tree or pasting
-   * one writes roots without the mark, so the check fires only when a
-   * transaction rewrites the main root's entry: an import, a redistribution,
-   * or an undo of either. Yjs reports a delete and re-set of one key as
-   * `update`, so the check reads `add` and `update`.
-   */
-  private isFullMapReplacement(
-    mapEvent: Y.YMapEvent<Y.Map<unknown>>,
-    nodesMap: Y.Map<Y.Map<unknown>>
-  ): boolean {
-    for (const [key, change] of mapEvent.changes.keys) {
-      if (change.action === 'add' || change.action === 'update') {
-        const yNode = nodesMap.get(key);
-        if (yNode?.get('isRoot')) return true;
-      }
-    }
-    return false;
-  }
-
-  private handleNodePropertyChanges(
-    event: Y.YEvent<Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>>
-  ): void {
-    const yNode = event.target as unknown as Y.Map<unknown>;
-    const nodeId = yNode.get('id') as string;
-    if (!nodeId || !this.mmpService.existNode(nodeId)) return;
-
-    const mapEvent = event as unknown as Y.YMapEvent<unknown>;
-    mapEvent.keysChanged.forEach(key => {
-      this.applyYDocPropertyToMmp(nodeId, key, yNode.get(key));
-    });
-  }
-
-  private applyRemoteNodeAdd(yNode: Y.Map<unknown> | undefined): void {
-    if (!yNode) return;
-    const nodeProps = yMapToNodeProps(yNode);
-    this.mmpService.addNodesFromServer([nodeProps]);
-  }
-
-  private applyRemoteNodeDelete(nodeId: string): void {
-    if (this.mmpService.existNode(nodeId)) {
-      this.mmpService.removeNode(nodeId, false);
-    }
-  }
-
-  private applyYDocPropertyToMmp(
-    nodeId: string,
-    yjsKey: string,
-    value: unknown
-  ): void {
-    for (const update of resolveMmpPropertyUpdate(yjsKey, value)) {
-      this.mmpService.updateNode(update.prop, update.val, false, nodeId);
-    }
   }
 
   private setupMapOptionsObserver(): void {
@@ -796,6 +432,51 @@ export class YjsSyncService {
       fontIncrement: (optionsMap.get('fontIncrement') as number) ?? 2,
     };
     this.mmpService.updateAdditionalMapOptions(options);
+  }
+
+  // ─── A peer's map replacement ───────────────────────────────
+
+  /**
+   * Watch for a peer replacing the whole map. mmp learns of the new nodes
+   * through the map data, so this observer only clears the undo stack and
+   * announces an import. Our own transactions, an undo included, need
+   * neither: ImportService shows its own toast for a local import.
+   */
+  private setupNodesObserver(): void {
+    const nodesMap = this.nodesMap;
+    this.yjsNodesObserver = (event, transaction) => {
+      if (transaction.local) return;
+      if (!replacesMainRoot(event.changes.keys, nodesMap)) return;
+      // A peer replaced the whole map, so our history describes a map that no
+      // longer exists. A replacement is a delete-and-reinsert that no CRDT can
+      // merge back, so undoing into it would leave the map with two roots.
+      this.yUndoManager?.clear();
+      if (this.announcesImport(transaction)) void this.showImportToast();
+    };
+    nodesMap.observe(this.yjsNodesObserver);
+  }
+
+  /**
+   * An undo replays the nodes and writes no announcement. An import writes
+   * `LAST_MAP_ANNOUNCEMENT` in the same transaction as the nodes, so the
+   * method checks that this transaction changed that key: a write to another
+   * key of `meta` announces nothing.
+   */
+  private announcesImport(transaction: Y.Transaction): boolean {
+    const meta = this.doc.getMap(META);
+    // Yjs keys `transaction.changed` by an erased `AbstractType`, which no
+    // concrete `Y.Map` satisfies. The lookup compares object identity.
+    const announced = transaction.changed.get(
+      meta as unknown as Y.AbstractType<Y.YEvent<Y.AbstractType<unknown>>>
+    );
+    if (!announced?.has(LAST_MAP_ANNOUNCEMENT)) return false;
+
+    return meta.get(LAST_MAP_ANNOUNCEMENT) === 'import';
+  }
+
+  private async showImportToast(): Promise<void> {
+    const msg = await this.utilsService.translate('TOASTS.MAP_IMPORT_SUCCESS');
+    if (msg) this.toastrService.success(msg);
   }
 
   // ─── Awareness (presence, selection, client list) ───────────

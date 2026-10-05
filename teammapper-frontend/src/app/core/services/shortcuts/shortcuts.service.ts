@@ -219,11 +219,7 @@ export class ShortcutsService implements OnDestroy {
           const options = this.mmpService.getAdditionalMapOptions();
           if (size == null || !options || size >= options.fontMaxSize) return;
 
-          this.mmpService.updateNode(
-            'fontSize',
-            size + options.fontIncrement,
-            false
-          );
+          this.mmpService.updateNode('fontSize', size + options.fontIncrement);
         },
       },
       {
@@ -234,11 +230,7 @@ export class ShortcutsService implements OnDestroy {
           const options = this.mmpService.getAdditionalMapOptions();
           if (size == null || !options || size <= options.fontMinSize) return;
 
-          this.mmpService.updateNode(
-            'fontSize',
-            size - options.fontIncrement,
-            false
-          );
+          this.mmpService.updateNode('fontSize', size - options.fontIncrement);
         },
       },
     ];
