@@ -4,9 +4,8 @@
  *
  * Only the property table is stubbed. `MmpMap`, `MapData`, `MapDataChange`,
  * `MapNodeRecord` and `OptionParameters` appear in the frontend in type
- * position alone, and `MmpService.create` is
- * reached by one spec, which mocks the module itself with `jest.mock`. The
- * table mirrors `PropertyMapping` in
+ * position alone, and the one spec that calls `MmpService.create` mocks the
+ * module itself with `jest.mock`. The table mirrors `PropertyMapping` in
  * `packages/mmp/src/map/data/property-mapping.ts`, so `YjsMapData` can index
  * it.
  */

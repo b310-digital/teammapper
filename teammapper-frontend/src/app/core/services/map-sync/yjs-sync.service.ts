@@ -16,6 +16,8 @@ import {
   buildYjsProtocols,
   resolveClientColor,
   findAffectedNodes,
+  NodesMap,
+  nodesMapOf,
 } from './yjs-utils';
 import {
   MapSyncContext,
@@ -32,16 +34,19 @@ import {
 
 const WS_CLOSE_MAP_DELETED = 4001;
 
+/** The value when it is a non-empty string, and the fallback otherwise. */
+const stringOr = (value: unknown, fallback: string): string =>
+  typeof value === 'string' && value !== '' ? value : fallback;
+
 /** The longest the cached map lags behind a change of the map data. */
 export const ATTACHED_MAP_AUDIT_MS = 250;
-
-type NodesMap = Y.Map<Y.Map<unknown>>;
 
 /**
  * Keeps one open map in sync with the other clients over a Yjs websocket.
  * The Y.Doc holds the only copy of the map, and mmp reads and writes it
  * through `YjsMapData`. The service owns the connection, presence, the undo
- * manager and the import notice. `MapSyncService` drives its startup.
+ * manager and the import notice. `MapSyncService` calls `initMap` and then
+ * `attachMap`.
  */
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
@@ -79,11 +84,9 @@ export class YjsSyncService {
     return this.yDoc;
   }
 
-  /**
-   * The nodes of the open connection, typed once instead of at every read.
-   */
+  /** The nodes of the open connection. */
   private get nodesMap(): NodesMap {
-    return this.doc.getMap('nodes') as NodesMap;
+    return nodesMapOf(this.doc);
   }
 
   /**
@@ -135,11 +138,12 @@ export class YjsSyncService {
   /**
    * Open the connection to a map, or reattach to the open one. The first
    * sync hands the map data to the context, which creates the map over it
-   * and then calls `attachMap`.
+   * and then calls `attachMap`. An open connection that has synced hands its
+   * map data over before `initMap` returns.
    */
   initMap(uuid: string): void {
     if (this.hasActiveConnection(uuid)) {
-      this.reattach();
+      if (this.yjsSynced) this.handOverMapData();
       return;
     }
 
@@ -175,12 +179,6 @@ export class YjsSyncService {
     return (
       this.yDoc !== null && this.wsProvider !== null && this.yjsMapId === mapId
     );
-  }
-
-  /** A synced connection hands its map data over at once. */
-  private reattach(): void {
-    if (!this.yjsSynced) return;
-    this.handOverMapData();
   }
 
   private setupConnection(mapId: string): WebsocketProvider {
@@ -347,7 +345,7 @@ export class YjsSyncService {
 
   /**
    * mmp draws every change of the map data, local or remote, and then emits
-   * `mapChange`. The attached node follows each change at once, so the panels
+   * `mapChange`. The attached node follows every change, so the panels
    * never show the values from before it. The cached map exports the whole
    * map, so it follows at most once per `ATTACHED_MAP_AUDIT_MS`, with the
    * state after the last change; a peer's burst of writes or a color picker
@@ -531,6 +529,11 @@ export class YjsSyncService {
     this.ctx.emitClientList();
   }
 
+  /**
+   * The color and selected node of every client. Any peer, a read-only one
+   * included, writes its own awareness state, so a value that is no string
+   * falls back to the default instead of reaching mmp.
+   */
   private buildColorMappingFromAwareness(): ClientColorMapping {
     const awareness = this.provider.awareness;
     const localClientId = this.doc.clientID;
@@ -540,8 +543,10 @@ export class YjsSyncService {
       if (!state?.user) continue;
       const isSelf = clientId === localClientId;
       mapping[String(clientId)] = {
-        color: isSelf ? DEFAULT_SELF_COLOR : state.user.color || DEFAULT_COLOR,
-        nodeId: state.user.selectedNodeId || '',
+        color: isSelf
+          ? DEFAULT_SELF_COLOR
+          : stringOr(state.user.color, DEFAULT_COLOR),
+        nodeId: stringOr(state.user.selectedNodeId, ''),
       };
     }
     return mapping;

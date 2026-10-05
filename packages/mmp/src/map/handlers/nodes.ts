@@ -46,6 +46,12 @@ const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling n
  */
 export type RecordLookup = (id: string) => ResolvedNode | undefined;
 
+/** The lookup over the records of one `Nodes.scan`. */
+export const lookupIn =
+  (records: ReadonlyMap<string, ResolvedNode>): RecordLookup =>
+  id =>
+    records.get(id);
+
 /**
  * Read, change and select the nodes of the map. Nodes reads every attribute
  * through the map data and writes through its typed methods. Nodes keeps the
@@ -88,9 +94,7 @@ export default class Nodes {
     if (change.replaced) this.drawReplaced();
     else this.drawChange(change);
 
-    if (this.map.viewState.forget(change.removed)) {
-      this.map.events.emit('viewStateChange', this.map.viewState.export());
-    }
+    this.map.viewState.forget(change.removed);
     this.map.events.emit('mapChange', undefined);
   };
 
@@ -229,8 +233,8 @@ export default class Nodes {
   }
 
   /**
-   * Where the node is drawn: its drag preview, or the coordinates of its
-   * record.
+   * The position mmp draws the node at: its drag preview, or the coordinates
+   * of its record.
    * @param {string} id
    * @param {RecordLookup} lookup
    */
@@ -357,12 +361,18 @@ export default class Nodes {
   /**
    * The parent a node added through addNode gets: none for an explicit null,
    * the named node for an id, the selected node otherwise. Throws when the
+   * named parent is missing, such as one a peer just removed, and when the
    * caller names no parent and nothing is selected, because a new root node
    * would hide the caller's mistake.
    */
   private resolveParent(parentId: string | null | undefined): string | null {
     if (parentId === null) return null;
-    if (parentId) return this.data.node(parentId) ? parentId : null;
+    if (parentId) {
+      if (!this.data.node(parentId)) {
+        Log.error('There are no nodes with id "' + parentId + '"');
+      }
+      return parentId;
+    }
     if (!this.selectedId) Log.error('There is no selected node');
 
     return this.selectedId;
@@ -498,9 +508,9 @@ export default class Nodes {
 
   /**
    * Hide the child nodes of the selected node, or show them again, in the
-   * view state and announce the new view state. The toggle skips a node
-   * without child nodes, unless the view state already lists it. A node
-   * further down keeps its own child nodes hidden.
+   * view state, and redraw the branch. The toggle skips a node without child
+   * nodes, unless the view state already lists it. A node further down keeps
+   * its own child nodes hidden. Fires no event.
    */
   public toggleBranchVisibility = () => {
     const id = this.selectedId;
@@ -513,24 +523,19 @@ export default class Nodes {
 
     viewState.toggle(id);
     this.map.draw.drawNodes([id, ...this.descendants(id)]);
-    this.map.events.emit('viewStateChange', viewState.export());
   };
 
   /**
    * Tell whether the view state hides the child nodes of the node with `id`.
    * Without an `id`, the method asks about the selected node and returns
    * false when nothing is selected. A node without child nodes returns false
-   * and shows no eye mark.
+   * and shows no hidden child nodes mark.
    * @param {string} id
    * @returns {boolean}
    */
   public childNodesHidden = (id?: string): boolean => {
     const node = this.getTargetNode(id);
-    if (!node) return false;
-    return (
-      this.map.viewState.hidesChildren(node.id) &&
-      this.children(node.id).length > 0
-    );
+    return node ? this.map.draw.hidesDrawnChildren(node.id) : false;
   };
 
   /**
@@ -587,11 +592,7 @@ export default class Nodes {
     const nextValue = this.validatedValue(node, property, value);
     if (Nodes.sameValue(previousValue, nextValue)) return;
 
-    this.data.updateNode(
-      node.id,
-      property,
-      Utils.isPureObjectType(nextValue) ? { ...nextValue } : nextValue
-    );
+    this.data.updateNode(node.id, property, nextValue);
   };
 
   /**
@@ -723,8 +724,8 @@ export default class Nodes {
   /**
    * Protect the node with `id`, or the selected node, and every node below
    * it. The method sets `protected` to false on every protected descendant,
-   * so each path from a root to a leaf holds at most one protected node. A node that is
-   * already protected stays as it is. The writes form one batch.
+   * so each path from a root to a leaf holds at most one protected node. A
+   * node that is already protected stays as it is. The writes form one batch.
    * @param {string} id
    */
   public protectBranch = (id?: string) => {
@@ -865,7 +866,7 @@ export default class Nodes {
       y: (view.minY + view.maxY) / 2,
     };
     const records = this.scan();
-    const lookup: RecordLookup = id => records.get(id);
+    const lookup = lookupIn(records);
     const trees = treeBounds(
       [...records.values()],
       node => records.get(this.treeRoot(node.id, lookup)) ?? node,
@@ -905,13 +906,6 @@ export default class Nodes {
       y: this.mainRoot()?.coordinates.y ?? 0,
     };
   }
-
-  /**
-   * Return a copy of the main root, or null for a map without one.
-   */
-  public exportRootProperties = (): ExportNodeProperties | null => {
-    return this.mainRoot();
-  };
 
   /**
    * Return a copy of the selected node, or null when nothing is selected.
@@ -965,7 +959,7 @@ export default class Nodes {
   /**
    * The column mmp places a new node under `parent` in, as an offset from
    * the parent, plus the siblings sharing that column. A child of a root takes
-   * the side of its tree that currently holds fewer siblings.
+   * the side of its tree that holds fewer siblings.
    */
   private pickColumn(
     parent: string,

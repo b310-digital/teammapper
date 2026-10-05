@@ -161,6 +161,15 @@ describe('operations on the selected node with nothing selected', () => {
     expect(data.nodes()).toHaveLength(3);
   });
 
+  it('throws and adds no root when the named parent is missing', () => {
+    const { handler, data } = makeMap();
+
+    expect(() => handler.addNode({}, 'removed-by-peer')).toThrow(
+      'There are no nodes with id "removed-by-peer"'
+    );
+    expect(data.nodes()).toHaveLength(3);
+  });
+
   it('adds a child to a named parent', () => {
     const { handler } = makeMap();
 

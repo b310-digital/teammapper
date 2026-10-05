@@ -214,6 +214,77 @@ describe('YjsMapData', () => {
         removed: [],
       });
     });
+
+    it('reads past an entry the peer writes that is no Y.Map', () => {
+      peer.getMap('nodes').set('text', 'no node');
+      peer.getMap('nodes').set('object', { isRoot: true });
+
+      sync(peer, doc);
+
+      expect({
+        text: data.node('text'),
+        ids: data.nodes().map(record => record.id),
+        mainRoot: data.mainRootId(),
+        changes,
+      }).toEqual({
+        text: undefined,
+        ids: ['root'],
+        mainRoot: 'root',
+        changes: [],
+      });
+    });
+
+    it('reports no change for an edit inside an entry that is no Y.Map', () => {
+      const list = new Y.Array<number>();
+      peer.getMap('nodes').set('list', list);
+      sync(peer, doc);
+      changes = [];
+
+      list.push([1]);
+      sync(peer, doc);
+
+      expect(changes).toEqual([]);
+    });
+
+    it('removes no entry that is no Y.Map', () => {
+      peer.getMap('nodes').set('text', 'no node');
+      sync(peer, doc);
+
+      data.removeNode('text');
+
+      expect({
+        kept: doc.getMap('nodes').get('text'),
+        undoSteps: undoManager.undoStack.length,
+      }).toEqual({ kept: 'no node', undoSteps: 0 });
+    });
+
+    it('reports an entry the peer turns into a node as added', () => {
+      peer.getMap('nodes').set('late', 'no node');
+      sync(peer, doc);
+
+      const peerData = new YjsMapData(peer, () => null);
+      peerData.addNodes([node('late', 'root')]);
+      sync(peer, doc);
+
+      expect(lastChange()).toEqual({
+        replaced: false,
+        added: ['late'],
+        updated: [],
+        removed: [],
+      });
+      peerData.destroy();
+    });
+
+    it('reports a node the peer overwrites with another value as removed', () => {
+      peer.getMap('nodes').set('root', 'no node');
+
+      sync(peer, doc);
+
+      expect({ nodes: data.nodes(), change: lastChange() }).toEqual({
+        nodes: [],
+        change: { replaced: false, added: [], updated: [], removed: ['root'] },
+      });
+    });
   });
 
   describe('undo', () => {
@@ -244,6 +315,25 @@ describe('YjsMapData', () => {
         root: stored('root')?.protected,
         a: stored('a')?.protected,
       }).toEqual({ root: false, a: false });
+    });
+
+    it('keeps the edit after a batch that throws out of its undo step', () => {
+      data.addNodes([node('a', 'root')]);
+      undoManager.stopCapturing();
+      expect(() =>
+        data.batch(() => {
+          data.updateNode('root', 'name', 'Batched');
+          throw new Error('batch failed');
+        })
+      ).toThrow('batch failed');
+      data.updateNode('a', 'name', 'Edited');
+
+      undoManager.undo();
+
+      expect({
+        root: stored('root')?.name,
+        a: stored('a')?.name,
+      }).toEqual({ root: 'Batched', a: 'a' });
     });
 
     it('reverts a batch without the edit before it', () => {

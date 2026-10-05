@@ -138,7 +138,6 @@ describe('edits inside a protected branch', () => {
     nodes.toggleBranchVisibility();
 
     expect(map.viewState.hidesChildren('a')).toBe(true);
-    expect(emitted(events.emit, 'viewStateChange')).toHaveLength(1);
     expect(refusals(events.emit)).toEqual([]);
   });
 

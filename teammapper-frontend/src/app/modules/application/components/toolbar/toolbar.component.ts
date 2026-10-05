@@ -102,10 +102,6 @@ export class ToolbarComponent {
     this.mapSyncService.redo();
   }
 
-  public toggleBranchProtection(): void {
-    this.mapSyncService.toggleBranchProtection();
-  }
-
   public async share() {
     this.dialogService.openShareDialog();
   }

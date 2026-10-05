@@ -64,7 +64,7 @@ export function stubMap(
     ...overrides,
   };
   const map = parts as unknown as MmpMap;
-  map.viewState = new ViewState(map);
+  map.viewState = new ViewState();
   map.nodes = new Nodes(map);
   map.loader = new MapLoader(map);
   map.copyPaste = new CopyPaste(map);
@@ -89,7 +89,11 @@ export function firedEvents(events: { emit: jest.Mock }): string[] {
   return events.emit.mock.calls.map(call => call[0]);
 }
 
-/** The ring selection draws on a background filled with `fill`. */
+/**
+ * The ring selection draws on a background filled with `fill`: the fill
+ * darkened by 0.5. Computed here apart from `Draw.ringColor`, so a change
+ * there fails the ring specs.
+ */
 export function ring(fill: string): string | undefined {
   return d3.color(fill)?.darker(0.5).toString();
 }

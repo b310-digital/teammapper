@@ -8,6 +8,10 @@ import {
 } from '@teammapper/shared';
 import {
   collectDescendantIds,
+  nodeAt,
+  nodeEntries,
+  NodesMap,
+  nodesMapOf,
   populateYMapFromNodeProps,
   yMapToNodeProps,
 } from './yjs-utils';
@@ -29,7 +33,6 @@ export const META = 'meta';
  */
 export const LAST_MAP_ANNOUNCEMENT = 'lastMapAnnouncement';
 
-type NodesMap = Y.Map<Y.Map<unknown>>;
 type Listener = (change: MapDataChange) => void;
 type KeyChanges = Y.YEvent<Y.AbstractType<unknown>>['changes']['keys'];
 
@@ -52,7 +55,7 @@ export function replacesMainRoot(
 ): boolean {
   for (const [key, change] of keys) {
     if (change.action === 'delete') continue;
-    if (nodesMap.get(key)?.get('isRoot')) return true;
+    if (nodeAt(nodesMap, key)?.get('isRoot')) return true;
   }
   return false;
 }
@@ -101,25 +104,23 @@ export class YjsMapData implements MapData {
   }
 
   private get nodesMap(): NodesMap {
-    return this.doc.getMap('nodes') as NodesMap;
+    return nodesMapOf(this.doc);
   }
 
   public node(id: string): MapNodeRecord | undefined {
-    const yNode = this.nodesMap.get(id);
+    const yNode = nodeAt(this.nodesMap, id);
     return yNode ? recordOf(id, yNode) : undefined;
   }
 
   public nodes(): MapNodeRecord[] {
-    return Array.from(this.nodesMap.entries(), ([id, yNode]) =>
-      recordOf(id, yNode)
-    );
+    return nodeEntries(this.nodesMap).map(([id, yNode]) => recordOf(id, yNode));
   }
 
   public mainRootId(): string | null {
-    for (const [id, yNode] of this.nodesMap) {
-      if (yNode.get('isRoot')) return id;
-    }
-    return null;
+    const root = nodeEntries(this.nodesMap).find(([, yNode]) =>
+      yNode.get('isRoot')
+    );
+    return root ? root[0] : null;
   }
 
   public addNodes(nodes: ExportNodeProperties[]): void {
@@ -131,7 +132,7 @@ export class YjsMapData implements MapData {
    * for `backgroundColor`, so a peer receives the object in one piece.
    */
   public updateNode(id: string, property: NodeProperty, value: unknown): void {
-    const yNode = this.nodesMap.get(id);
+    const yNode = nodeAt(this.nodesMap, id);
     if (!yNode) return;
 
     const [key, ...path]: readonly string[] = NodePropertyMapping[property];
@@ -141,7 +142,7 @@ export class YjsMapData implements MapData {
   }
 
   public removeNode(id: string): void {
-    if (!this.nodesMap.has(id)) return;
+    if (!nodeAt(this.nodesMap, id)) return;
 
     const ids = [id, ...collectDescendantIds(this.nodesMap, id)];
     this.transact(() => ids.forEach(nodeId => this.nodesMap.delete(nodeId)));
@@ -154,13 +155,11 @@ export class YjsMapData implements MapData {
    * an undo step of its own, apart from the edits before and after it.
    */
   public replaceMap(nodes: MapSnapshot): void {
-    this.undoManager()?.stopCapturing();
-    this.transact(() => {
+    this.inOwnUndoStep(() => {
       this.doc.getMap(META).set(LAST_MAP_ANNOUNCEMENT, 'import');
       Array.from(this.nodesMap.keys()).forEach(id => this.nodesMap.delete(id));
       nodes.forEach(node => this.writeNode(node));
     });
-    this.undoManager()?.stopCapturing();
   }
 
   /**
@@ -170,9 +169,7 @@ export class YjsMapData implements MapData {
    * transaction of the outer one.
    */
   public batch(change: () => void): void {
-    this.undoManager()?.stopCapturing();
-    this.transact(change);
-    this.undoManager()?.stopCapturing();
+    this.inOwnUndoStep(change);
   }
 
   public subscribe(listener: Listener): () => void {
@@ -192,6 +189,20 @@ export class YjsMapData implements MapData {
     this.doc.transact(change, LOCAL_ORIGIN);
   }
 
+  /**
+   * Run the writes in one transaction that takes an undo step of its own.
+   * The closing stop runs even when `change` throws, so the next edit never
+   * joins the step of a failed batch.
+   */
+  private inOwnUndoStep(change: () => void): void {
+    this.undoManager()?.stopCapturing();
+    try {
+      this.transact(change);
+    } finally {
+      this.undoManager()?.stopCapturing();
+    }
+  }
+
   private writeNode(node: ExportNodeProperties): void {
     const yNode = new Y.Map<unknown>();
     populateYMapFromNodeProps(yNode, clone(node));
@@ -209,7 +220,8 @@ export class YjsMapData implements MapData {
   /**
    * Sum the events of one transaction up by node id. A key change on the
    * nodes map adds, removes or rewrites a node; a change inside a node's own
-   * map, such as its `colors`, updates that node.
+   * map, such as its `colors`, updates that node. A change inside an entry
+   * that is no Y.Map, such as a peer's Y.Array, updates no node.
    */
   private changeOf(events: Y.YEvent<Y.AbstractType<unknown>>[]) {
     const change: MapDataChange = {
@@ -221,18 +233,27 @@ export class YjsMapData implements MapData {
     for (const event of events) {
       if ((event.target as unknown) === this.nodesMap) {
         this.collectKeyChanges(event.changes.keys, change);
-      } else {
-        change.updated.push(String(event.path[0]));
+        continue;
       }
+      const id = String(event.path[0]);
+      if (nodeAt(this.nodesMap, id)) change.updated.push(id);
     }
     return this.withDistinctUpdates(change);
   }
 
+  /**
+   * Sort each key by whether it held a node before and after the change. A
+   * value that is no Y.Map holds no node, so a peer that overwrites a node
+   * with another value removes it, and one that writes such a value under a
+   * new key changes nothing.
+   */
   private collectKeyChanges(keys: KeyChanges, change: MapDataChange): void {
-    keys.forEach(({ action }, id) => {
-      if (action === 'add') change.added.push(id);
-      else if (action === 'delete') change.removed.push(id);
-      else change.updated.push(id);
+    keys.forEach(({ action, oldValue }, id) => {
+      const before = action !== 'add' && oldValue instanceof Y.Map;
+      const after = action !== 'delete' && !!nodeAt(this.nodesMap, id);
+      if (before && after) change.updated.push(id);
+      else if (after) change.added.push(id);
+      else if (before) change.removed.push(id);
     });
     change.replaced ||= replacesMainRoot(keys, this.nodesMap);
   }

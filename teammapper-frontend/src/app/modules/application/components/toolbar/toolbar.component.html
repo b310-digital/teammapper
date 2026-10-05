@@ -218,7 +218,7 @@
 
   <button
     id="protect-branch-button"
-    (click)="toggleBranchProtection()"
+    (click)="mmpService.toggleBranchProtection()"
     [title]="
       (branchProtected
         ? 'TOOLTIPS.RELEASE_PROTECTION'

@@ -67,7 +67,6 @@ describe('MapSyncService', () => {
       create: jest.fn().mockResolvedValue(CREATED_MAP),
       remove: jest.fn(),
       markMapCreated: jest.fn(),
-      toggleBranchProtection: jest.fn(),
       selectNode: jest.fn(),
       getRootNode: jest.fn(),
       on: jest.fn(),
@@ -357,12 +356,6 @@ describe('MapSyncService', () => {
 
       expect(toastr().remove).toHaveBeenCalledWith(SYNCING_TOAST_ID);
     });
-  });
-
-  it('lets mmp toggle the branch protection', () => {
-    service.toggleBranchProtection();
-
-    expect(mmpService.toggleBranchProtection).toHaveBeenCalled();
   });
 
   describe('undo and redo', () => {

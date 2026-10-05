@@ -130,12 +130,18 @@ Write "hide" and "show". Avoid "collapse" and "fold".
 
 ### View state
 
-How one person looks at a mind map: which nodes have their child nodes hidden,
-which node is selected, and the rings around selected nodes. mmp keeps the view
+The set of nodes whose child nodes one person has hidden. mmp keeps the view
 state apart from the map data, so the undo stack never records it. The
-frontend sends no hidden child nodes to the server or to a peer, and stores
-them nowhere, so a reload shows them again. Peers see the selection through Yjs
-awareness. The view state starts empty each time the app opens a map.
+frontend sends no record of which child nodes are hidden to the server or to a
+peer, and stores none, so a reload shows them again. The view state starts
+empty each time the app opens a map.
+
+### Selection, ring
+
+The **selection** is the one node a client has selected. mmp draws a **ring**
+around it, and around each node a peer has selected, in that peer's client
+color. Each client keeps its own selection apart from the map data and from
+the view state. Peers see it through Yjs awareness (see **Presence**).
 
 ### Map settings
 
@@ -314,13 +320,13 @@ a map is an attribute.
 
 ### Map data
 
-The nodes of one mind map as every client shares them. The map you see is
-drawn from the map data and keeps no copy of its own, so your edits, a peer's
-edits and an undo all change the map data first and then show up on screen.
+The nodes of one mind map as every client shares them. The app draws the map
+from the map data and keeps no copy of its own, so your edits, a peer's edits
+and an undo all change the map data first, and the app then redraws.
 
-In the app, the map data syncs with the server and the other clients. Tests
-and use without sync work on map data kept in memory. Distinct from the
-**view state**, which stays with one person and never enters the map data.
+In the app, the map data syncs with the server and the other clients. Tests,
+and a host without sync, use `InMemoryMapData`. The **view state** and the
+**selection** stay with one person and never enter the map data.
 
 ### Mark
 

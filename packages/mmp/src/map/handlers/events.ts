@@ -13,7 +13,6 @@ const EVENT_TYPES: readonly MmpEventType[] = [
   'nodeSelect',
   'nodeDeselect',
   'nodeProtected',
-  'viewStateChange',
   'mapChange',
 ];
 

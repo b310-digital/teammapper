@@ -154,8 +154,8 @@ export default class Draw {
 
   /**
    * Remove every drawn node and draw the map again from one scan of the map
-   * data. The rings go; measured sizes and image loads of the nodes that
-   * stay are kept.
+   * data. `drawAll` clears the rings and keeps the measured sizes and image
+   * loads of the nodes that stay.
    */
   public drawAll() {
     const records = this.map.data.nodes();
@@ -194,7 +194,7 @@ export default class Draw {
    * @param {MapNodeRecord[]} records
    */
   public drawNodes(ids: Iterable<string>, records?: MapNodeRecord[]) {
-    const lookup = this.pass(records);
+    const lookup = this.drawPassLookup(records);
     const requested = new Set(ids);
     for (const id of [...requested]) {
       this.orphans.get(id)?.forEach(orphan => requested.add(orphan));
@@ -238,7 +238,7 @@ export default class Draw {
    * @param {string[]} ids
    */
   public renderPositions(ids: string[]) {
-    const lookup = this.pass();
+    const lookup = this.drawPassLookup();
     const present = ids.filter(id => this.groups.has(id));
 
     this.groupsOf(present).attr('transform', id =>
@@ -281,15 +281,15 @@ export default class Draw {
   }
 
   /**
-   * The size of the node's box: its name plus padding. Before the name is
-   * drawn, a canvas estimates its size.
+   * The size of the node: its name plus padding. Before the name is drawn,
+   * a canvas element estimates its size.
    * @param {ResolvedNode} node
    */
   public dimensionsOf = (node: ResolvedNode): MapNodeDimensions =>
     withPadding(this.textExtentOf(node));
 
   /**
-   * The box size a name will get, estimated before the node is drawn. The
+   * The node size a name will get, estimated before the node is drawn. The
    * layout uses it to place the nodes of an imported map.
    */
   public estimateExtent = (
@@ -447,7 +447,7 @@ export default class Draw {
    * One draw pass: a lookup that reads each record from the map data at
    * most once, or from `records` when the caller already read them.
    */
-  private pass(records?: MapNodeRecord[]): RecordLookup {
+  private drawPassLookup(records?: MapNodeRecord[]): RecordLookup {
     if (records) {
       const resolved = new Map(
         records.map(record => [record.id, resolveNode(record)])
@@ -541,7 +541,7 @@ export default class Draw {
    * @param {string[]} ids
    */
   private resize(ids: string[]) {
-    const lookup = this.pass();
+    const lookup = this.drawPassLookup();
     const changed = this.measure(
       this.groupsOf(ids.filter(id => lookup(id) !== undefined))
     );
@@ -595,6 +595,19 @@ export default class Draw {
     branches.attr('d', id => this.branchShape(id, lookup));
   }
 
+  /**
+   * True when the view state hides the child nodes of the node and at least
+   * one branch leaves from it. Reads the drawn branches instead of scanning
+   * the map data, so a template may call it on every change detection.
+   * @param {string} id
+   */
+  public hidesDrawnChildren(id: string): boolean {
+    return (
+      this.map.viewState.hidesChildren(id) &&
+      (this.branchesFrom.get(id)?.size ?? 0) > 0
+    );
+  }
+
   private markContext(lookup: RecordLookup): MarkContext {
     const recordOf = (id: string) => lookup(id) ?? resolveNode({ id });
 
@@ -605,9 +618,7 @@ export default class Draw {
       ringOf: id => this.ringOf(id),
       imageOf: id => this.imageOf(recordOf(id)),
       isEditing: id => this.editingId === id,
-      hidesChildren: id =>
-        this.map.viewState.hidesChildren(id) &&
-        (this.branchesFrom.get(id)?.size ?? 0) > 0,
+      hidesChildren: id => this.hidesDrawnChildren(id),
       fontFamily: this.map.options.fontFamily,
       showLinktext: this.map.options.showLinktext,
     };
@@ -653,7 +664,7 @@ export default class Draw {
       // A failed image stays hidden and keeps its value: clearing it would
       // erase the image in the map data for every client on a network error.
       load.ratio = ratio;
-      const lookup = this.pass();
+      const lookup = this.drawPassLookup();
       if (lookup(id)) this.render([id], [], lookup);
     };
     image.onload = () => settle(image.width / image.height);
@@ -825,7 +836,7 @@ export default class Draw {
   }
 
   /**
-   * Note that the node waits for the parent with the id `parent` to appear
+   * Record that the node waits for the parent with the id `parent` to appear
    * in the map data, or for none when `parent` is null.
    */
   private waitForParent(id: string, parent: string | null) {

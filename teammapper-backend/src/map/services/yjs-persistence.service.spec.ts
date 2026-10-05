@@ -154,6 +154,22 @@ describe('YjsPersistenceService', () => {
       doc.destroy()
     })
 
+    it('persists the nodes and skips an entry that is no Y.Map', async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const childId = addChildToDoc(doc, rootNode.id)
+      doc.getMap('nodes').set('text', 'no node')
+
+      await service.persistDoc(map.id, doc)
+
+      const dbNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
+      expect(dbNodes.map((n) => n.id).sort()).toEqual(
+        [rootNode.id, childId].sort()
+      )
+
+      doc.destroy()
+    })
+
     it('keeps every node row when no root reaches a node of the Y.Doc', async () => {
       const { map, rootNode } = await createMapWithRootNode()
       const doc = await hydrateFromDb(map)

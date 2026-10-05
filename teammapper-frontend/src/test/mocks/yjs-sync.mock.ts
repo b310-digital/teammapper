@@ -8,14 +8,10 @@ import { YjsSyncService } from '../../app/core/services/map-sync/yjs-sync.servic
 
 /**
  * The collaborators YjsSyncService is constructed with. Every suite around the
- * service needs the same ones, so they live here instead of in one spec.
+ * service needs the same ones, so this file defines them for all of them.
  */
 export function createMockContext(): MapSyncContext {
   return {
-    getAttachedMap: jest.fn().mockReturnValue({
-      key: 'map-test',
-      cachedMap: { uuid: 'test-uuid', data: [] },
-    }),
     getModificationSecret: jest.fn().mockReturnValue('secret'),
     getColorMapping: jest.fn().mockReturnValue({}),
     getClientColor: jest.fn().mockReturnValue('#ff0000'),

@@ -12,7 +12,7 @@ import type {
 export type MapNodeRecord = Readonly<ExportNodeProperties>;
 
 /**
- * What one write or one batch changed, by node id.
+ * The node ids one write or one batch added, updated or removed.
  */
 export interface MapDataChange {
   /** The change added or rewrote the main root's entry: a load or an import. */
@@ -39,7 +39,7 @@ export interface MapDataChange {
  * - `updateNode` takes the mmp property name, such as `backgroundColor`.
  *   Each implementation finds the storage path in `PropertyMapping`.
  * - A `replaceMap` reports the ids that survive it as `updated`, so the view
- *   state keeps their hidden child nodes.
+ *   state keeps the child nodes of those nodes hidden.
  */
 export interface MapData {
   /** The node with `id`, or undefined when the data holds none. */

@@ -40,6 +40,7 @@ class MmpServiceStub {
   addNodeImage = jest.fn();
   importMap = jest.fn();
   protectingNode = jest.fn().mockReturnValue(null);
+  toggleBranchProtection = jest.fn();
 }
 
 interface TestContext {
@@ -49,7 +50,6 @@ interface TestContext {
   mapSyncService: {
     undo: jest.Mock;
     redo: jest.Mock;
-    toggleBranchProtection: jest.Mock;
     canUndo$: Observable<boolean>;
     canRedo$: Observable<boolean>;
   };
@@ -66,7 +66,6 @@ async function setupTestBed(): Promise<TestContext> {
   const mapSyncService = {
     undo: jest.fn(),
     redo: jest.fn(),
-    toggleBranchProtection: jest.fn(),
     canUndo$: canUndoSubject.asObservable(),
     canRedo$: canRedoSubject.asObservable(),
   };
@@ -434,7 +433,7 @@ describe('ToolbarComponent', () => {
     it('toggles the protection when clicked', () => {
       ctx.fixture.nativeElement.querySelector('#protect-branch-button').click();
 
-      expect(ctx.mapSyncService.toggleBranchProtection).toHaveBeenCalled();
+      expect(ctx.mmpService.toggleBranchProtection).toHaveBeenCalled();
     });
   });
 
@@ -458,20 +457,22 @@ describe('ToolbarComponent', () => {
         exportMenu: disabled('#menu-export'),
       }).toEqual({ importMenu: false, exportMenu: false });
     });
+  });
 
-    it('disables the edit buttons the application gates through editDisabled', () => {
-      ctx.fixture.componentRef.setInput('editDisabled', true);
-      ctx.fixture.detectChanges();
+  it('disables the edit buttons while editDisabled is true', () => {
+    ctx.fixture.componentRef.setInput('editDisabled', true);
+    ctx.fixture.detectChanges();
 
-      for (const selector of [
-        '#add-tree-button',
-        '#paste-node-button',
-        '#distribute-nodes-button',
-        '#copy-node-button',
-      ]) {
-        expect(disabled(selector)).toBe(true);
-      }
-    });
+    for (const selector of [
+      '#add-tree-button',
+      '#paste-node-button',
+      '#distribute-nodes-button',
+      '#copy-node-button',
+    ]) {
+      expect(ctx.fixture.nativeElement.querySelector(selector)?.disabled).toBe(
+        true
+      );
+    }
   });
 
   describe('add tree', () => {

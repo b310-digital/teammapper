@@ -1,17 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
-import { createMap } from './helpers';
-
-/**
- * Adds a child below the node labelled `parent` through the floating add
- * button and names it `name`.
- */
-async function addChild(page: Page, parent: string, name: string) {
-  await page.getByText(parent, { exact: true }).click();
-  await page.locator('#floating-add-node').click();
-  await page.keyboard.type(name);
-  await page.locator('.map').click();
-  await expect(page.getByText(name, { exact: true })).toBeVisible();
-}
+import { test, expect } from '@playwright/test';
+import { addChild, createMap } from './helpers';
 
 // The toolbar refuses to hide the child nodes of a root, so the test hides the
 // child nodes of a node below the main root.

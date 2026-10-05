@@ -1,23 +1,12 @@
-import type { MapViewState } from '@teammapper/shared';
-import type MmpMap from '../map.js';
-
 /**
  * Hold the ids of the nodes whose child nodes this person hid. `Nodes` owns
  * the selection and `Draw` owns the rings around selected nodes. ViewState
- * writes nothing into the map data, so mmp sends no hidden child nodes to a
- * peer, the server or the undo stack.
- *
- * The set may hold the id of a node that has not arrived yet, such as a node
- * a peer added before the first sync. Such an id hides nothing until its node
- * exists. `Nodes.onChange` deletes the ids of the nodes a change removes.
+ * writes nothing into the map data, so no peer, no server and no undo step
+ * learns which child nodes are hidden, and a reload shows them again.
+ * `Nodes.onChange` deletes the ids of the nodes a change removes.
  */
 export default class ViewState {
-  private map: MmpMap;
   private nodesWithHiddenChildren = new Set<string>();
-
-  constructor(map: MmpMap) {
-    this.map = map;
-  }
 
   /**
    * True when this person hid the child nodes of the node.
@@ -43,24 +32,10 @@ export default class ViewState {
   }
 
   /**
-   * Delete the ids of removed nodes. Return true when the set held one.
+   * Delete the ids of removed nodes.
    * @param {string[]} ids
    */
-  public forget(ids: string[]): boolean {
-    return ids.filter(id => this.nodesWithHiddenChildren.delete(id)).length > 0;
-  }
-
-  /** Return every id in the set, the ids of nodes the map lacks included. */
-  public export(): MapViewState {
-    return { nodesWithHiddenChildren: [...this.nodesWithHiddenChildren] };
-  }
-
-  /**
-   * Replace the view state and redraw the map. Emits no event.
-   * @param {MapViewState} state
-   */
-  public restore(state: MapViewState) {
-    this.nodesWithHiddenChildren = new Set(state.nodesWithHiddenChildren);
-    this.map.draw.redrawAll();
+  public forget(ids: string[]) {
+    ids.forEach(id => this.nodesWithHiddenChildren.delete(id));
   }
 }
