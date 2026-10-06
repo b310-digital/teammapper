@@ -26,6 +26,7 @@ export function fakeDraw(
     drawAll: jest.fn(() => rings.clear()),
     redrawAll: jest.fn(),
     drawNodes: jest.fn(),
+    drawSubtree: jest.fn(),
     removeNodes: jest.fn((): string[] => []),
     renderPositions: jest.fn(),
     enableNodeNameEditing: jest.fn(),
