@@ -5,7 +5,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { MapNodeSettings, UserSettings } from '@teammapper/shared';
-import { MmpService } from 'src/app/core/services/mmp/mmp.service';
+import {
+  AdditionalMapOptions,
+  MmpService,
+} from 'src/app/core/services/mmp/mmp.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { SettingsComponent } from './settings.component';
@@ -15,7 +18,8 @@ import { SettingsComponent } from './settings.component';
 // leave that tab out rather than show made-up numbers.
 describe('SettingsComponent', () => {
   let fixture: ComponentFixture<SettingsComponent>;
-  let mmpService: { getAdditionalMapOptions: jest.Mock };
+  let mapOptions$: BehaviorSubject<AdditionalMapOptions | null>;
+  let updateMapOptions: jest.Mock;
 
   const node = (): MapNodeSettings => ({
     name: '',
@@ -39,8 +43,9 @@ describe('SettingsComponent', () => {
     },
   });
 
-  async function render(mapOptions: unknown) {
-    mmpService = { getAdditionalMapOptions: jest.fn(() => mapOptions) };
+  async function render(mapOptions: AdditionalMapOptions | null) {
+    mapOptions$ = new BehaviorSubject(mapOptions);
+    updateMapOptions = jest.fn();
 
     await TestBed.configureTestingModule({
       imports: [
@@ -50,11 +55,14 @@ describe('SettingsComponent', () => {
       ],
       providers: [
         provideRouter([]),
-        { provide: MmpService, useValue: mmpService },
+        {
+          provide: MmpService,
+          useValue: { additionalMapOptions$: mapOptions$ },
+        },
         {
           provide: MapSyncService,
           useValue: {
-            updateMapOptions: jest.fn(),
+            updateMapOptions,
             fetchUserMapsFromServer: async () => [],
             getAttachedMapObservable: () => new BehaviorSubject(null),
           },
@@ -99,5 +107,55 @@ describe('SettingsComponent', () => {
 
     expect(tabLabels()).not.toContain('PAGES.SETTINGS.MAP_OPTIONS');
     expect(tabLabels()).toContain('PAGES.SETTINGS.GENERAL');
+  });
+
+  it('shows the map settings a peer changes while the page is open', async () => {
+    await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
+
+    mapOptions$.next({ fontMaxSize: 90, fontMinSize: 20, fontIncrement: 10 });
+
+    expect(fixture.componentInstance.mapOptions()).toEqual({
+      fontMaxSize: 90,
+      fontMinSize: 20,
+      fontIncrement: 10,
+    });
+  });
+
+  it('edits a copy and hands it to MapSyncService', async () => {
+    const options = { fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 };
+    await render(options);
+    const component = fixture.componentInstance;
+    const edited = component.mapOptions();
+    if (!edited) throw new Error('No map settings to edit');
+
+    edited.fontMaxSize = 80;
+    component.updateMapOptions();
+
+    expect(options.fontMaxSize).toBe(70);
+    expect(updateMapOptions).toHaveBeenCalledWith({
+      fontMaxSize: 80,
+      fontMinSize: 15,
+      fontIncrement: 5,
+    });
+  });
+
+  it('drops the values out of range, so MmpService fills the defaults', async () => {
+    await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
+    const component = fixture.componentInstance;
+    const edited = component.mapOptions();
+    if (!edited) throw new Error('No map settings to edit');
+
+    Object.assign(edited, {
+      fontMaxSize: 120,
+      fontMinSize: 10,
+      fontIncrement: 0,
+    });
+    component.updateMapOptions();
+
+    expect(updateMapOptions).toHaveBeenCalledWith({
+      fontMaxSize: undefined,
+      fontMinSize: undefined,
+      fontIncrement: undefined,
+    });
   });
 });

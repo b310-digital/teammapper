@@ -228,8 +228,15 @@ export class MapSyncService implements OnDestroy {
     this.syncService.redo();
   }
 
-  public updateMapOptions(options?: CachedMapOptions) {
-    this.syncService.updateMapOptions(options);
+  /**
+   * Apply the map settings to the open map and write the result, with the
+   * defaults MmpService filled in, to the Y.Doc for the peers. The Y.Doc
+   * observer skips local writes, so MmpService learns of the change here.
+   */
+  public updateMapOptions(options: CachedMapOptions) {
+    this.mmpService.updateAdditionalMapOptions(options);
+    const applied = this.mmpService.getAdditionalMapOptions();
+    if (applied) this.syncService.updateMapOptions(applied);
   }
 
   // Deletes any map the admin id belongs to, not only the attached one, so
@@ -515,7 +522,6 @@ export class MapSyncService implements OnDestroy {
         data: normalized.data as unknown as ExportNodeProperties[],
       },
     });
-    this.mmpService.updateAdditionalMapOptions(serverMap.options);
   }
 
   private async updateCachedMapForAdmin(serverMap: ServerMap) {

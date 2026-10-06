@@ -1,7 +1,6 @@
 import { auditTime, Subscription } from 'rxjs';
 import {
   CachedMapOptions,
-  DEFAULT_FONT_MAX_SIZE,
   ExportNodeProperties,
   WS_CLOSE_MAP_SYNC_RESET,
 } from '@teammapper/shared';
@@ -168,6 +167,7 @@ export class YjsSyncService {
   attachMap(): void {
     this.detachObservers();
     this.createListeners();
+    this.applyMapOptions();
     this.attachSelection();
     this.setupNodesObserver();
     this.setupMapOptionsObserver();
@@ -426,20 +426,27 @@ export class YjsSyncService {
     const optionsMap = this.doc.getMap('mapOptions');
     this.yjsOptionsObserver = (_: unknown, transaction: Y.Transaction) => {
       if (transaction.local && transaction.origin !== this.yUndoManager) return;
-      this.applyRemoteMapOptions();
+      this.applyMapOptions();
     };
     optionsMap.observe(this.yjsOptionsObserver);
   }
 
-  private applyRemoteMapOptions(): void {
+  /**
+   * Hand the map settings the doc holds to MmpService. `read` drops a value
+   * that is no number, and MmpService fills each missing setting with the
+   * configured default.
+   */
+  private applyMapOptions(): void {
     const optionsMap = this.doc.getMap('mapOptions');
-    const options: CachedMapOptions = {
-      fontMaxSize:
-        (optionsMap.get('fontMaxSize') as number) ?? DEFAULT_FONT_MAX_SIZE,
-      fontMinSize: (optionsMap.get('fontMinSize') as number) ?? 6,
-      fontIncrement: (optionsMap.get('fontIncrement') as number) ?? 2,
+    const read = (key: keyof CachedMapOptions): number | undefined => {
+      const value = optionsMap.get(key);
+      return typeof value === 'number' ? value : undefined;
     };
-    this.mmpService.updateAdditionalMapOptions(options);
+    this.mmpService.updateAdditionalMapOptions({
+      fontMaxSize: read('fontMaxSize'),
+      fontMinSize: read('fontMinSize'),
+      fontIncrement: read('fontIncrement'),
+    });
   }
 
   // ─── A peer's map replacement ───────────────────────────────

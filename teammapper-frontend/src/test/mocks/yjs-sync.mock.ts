@@ -34,6 +34,7 @@ function createMockMmpService(): jest.Mocked<MmpService> {
     on: jest.fn().mockReturnValue(NEVER),
     selectNode: jest.fn().mockReturnValue(null),
     existNode: jest.fn().mockReturnValue(true),
+    updateAdditionalMapOptions: jest.fn(),
   } as unknown as jest.Mocked<MmpService>;
 }
 
@@ -63,6 +64,7 @@ export function capturingMmpService(
     selectNode: jest.fn().mockReturnValue(null),
     existNode: jest.fn().mockReturnValue(true),
     highlightNode: jest.fn(),
+    updateAdditionalMapOptions: jest.fn(),
   } as unknown as jest.Mocked<MmpService>;
 }
 

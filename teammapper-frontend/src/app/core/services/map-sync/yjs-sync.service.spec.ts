@@ -176,8 +176,25 @@ describe('YjsSyncService', () => {
       beforeEach(() => {
         mmpService.selectNode.mockReturnValue(root);
         service.setWritable(true);
+        const options = internals(service).yDoc.getMap('mapOptions');
+        options.set('fontMaxSize', 70);
+        options.set('fontIncrement', 5);
         internals(service).handleFirstSync();
         service.attachMap();
+      });
+
+      it('applies the synced map settings before edit mode', () => {
+        const optionsOrder =
+          mmpService.updateAdditionalMapOptions.mock.invocationCallOrder[0];
+        const editModeOrder =
+          settingsService.setEditMode.mock.invocationCallOrder[0];
+
+        expect(mmpService.updateAdditionalMapOptions).toHaveBeenCalledWith({
+          fontMaxSize: 70,
+          fontMinSize: undefined,
+          fontIncrement: 5,
+        });
+        expect(optionsOrder).toBeLessThan(editModeOrder);
       });
 
       it('subscribes to the map change and the selection events', () => {

@@ -1,5 +1,6 @@
-import { Component, inject } from '@angular/core';
-import { UserSettings } from '@teammapper/shared';
+import { Component, Signal, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { CachedMapOptions, UserSettings } from '@teammapper/shared';
 import { AdditionalMapOptions } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
@@ -64,13 +65,24 @@ export class SettingsComponent {
 
   public readonly languages: string[];
   public settings: UserSettings | null;
-  public mapOptions: AdditionalMapOptions | null;
+  private readonly appliedMapOptions = toSignal(
+    this.mmpService.additionalMapOptions$,
+    { initialValue: null }
+  );
+  /**
+   * The copy of the map settings the form edits. A peer's change replaces it.
+   */
+  public readonly mapOptions: Signal<AdditionalMapOptions | null> = computed(
+    () => {
+      const options = this.appliedMapOptions();
+      return options && { ...options };
+    }
+  );
   public editMode: Observable<boolean | null>;
 
   constructor() {
     this.languages = SettingsService.LANGUAGES;
     this.settings = this.settingsService.getCachedUserSettings();
-    this.mapOptions = this.mmpService.getAdditionalMapOptions();
     this.editMode = this.settingsService.getEditModeObservable();
   }
 
@@ -80,11 +92,15 @@ export class SettingsComponent {
     await this.settingsService.updateCachedSettings(this.settings);
   }
 
-  public async updateMapOptions() {
-    if (!this.mapOptions) return;
+  /**
+   * Apply the edited map settings. The call runs synchronously, so the new
+   * values reach MmpService before the user types into the next field.
+   */
+  public updateMapOptions() {
+    const options = this.mapOptions();
+    if (!options) return;
 
-    await this.validateMapOptionsInput(this.mapOptions);
-    this.mapSyncService.updateMapOptions(this.mapOptions);
+    this.mapSyncService.updateMapOptions(validMapOptions(options));
   }
 
   public async updateLanguage() {
@@ -104,19 +120,22 @@ export class SettingsComponent {
   public back() {
     this.location.back();
   }
+}
 
-  private async validateMapOptionsInput(mapOptions: AdditionalMapOptions) {
-    const defaultSettings: UserSettings = (
-      await this.settingsService.getDefaultSettings()
-    ).userSettings;
-    if (
-      mapOptions.fontIncrement > mapOptions.fontMaxSize ||
-      mapOptions.fontIncrement < 1
-    )
-      mapOptions.fontIncrement = defaultSettings.mapOptions.fontIncrement;
-    if (mapOptions.fontMaxSize > 99 || mapOptions.fontMaxSize < 15)
-      mapOptions.fontMaxSize = defaultSettings.mapOptions.fontMaxSize;
-    if (mapOptions.fontMinSize > 99 || mapOptions.fontMinSize < 15)
-      mapOptions.fontMinSize = defaultSettings.mapOptions.fontMinSize;
-  }
+/**
+ * The map settings without the values out of range. MmpService puts the
+ * configured default in place of each value this drops.
+ */
+function validMapOptions(options: AdditionalMapOptions): CachedMapOptions {
+  const fontSize = (size: number) =>
+    size >= 15 && size <= 99 ? size : undefined;
+  const { fontIncrement, fontMaxSize } = options;
+  return {
+    fontMinSize: fontSize(options.fontMinSize),
+    fontMaxSize: fontSize(fontMaxSize),
+    fontIncrement:
+      fontIncrement >= 1 && fontIncrement <= fontMaxSize
+        ? fontIncrement
+        : undefined,
+  };
 }
