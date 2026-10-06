@@ -170,6 +170,18 @@ describe('YjsSyncService', () => {
       );
     });
 
+    it('closes the previous connection before opening a different map', () => {
+      const previousDoc = internals(service).yDoc;
+      const destroySpy = jest.spyOn(previousDoc, 'destroy');
+      service.setWritable(true);
+
+      service.initMap('another-map');
+
+      expect(destroySpy).toHaveBeenCalled();
+      expect(internals(service).yDoc).not.toBe(previousDoc);
+      expect(internals(service).yjsWritable).toBe(true);
+    });
+
     describe('attachMap', () => {
       const root = node('root', null, true);
 
@@ -195,6 +207,36 @@ describe('YjsSyncService', () => {
           fontIncrement: 5,
         });
         expect(optionsOrder).toBeLessThan(editModeOrder);
+      });
+
+      it('keeps settings edits in the same doc while the renderer is detached', () => {
+        const doc = internals(service).yDoc;
+        const options = { fontMaxSize: 80, fontMinSize: 20, fontIncrement: 7 };
+
+        service.detachMap();
+        service.updateMapOptions(options);
+        service.initMap('test-uuid');
+        service.attachMap();
+
+        expect(internals(service).yDoc).toBe(doc);
+        expect(doc.getMap('mapOptions').toJSON()).toEqual(options);
+        expect(mmpService.updateAdditionalMapOptions).toHaveBeenLastCalledWith(
+          options
+        );
+      });
+
+      it('stops updating the removed renderer when it is detached', () => {
+        jest.useFakeTimers();
+        service.detachMap();
+        (context.setAttachedNode as jest.Mock).mockClear();
+
+        handlers['mapChange']();
+        handlers['nodeSelect'](root);
+        jest.advanceTimersByTime(ATTACHED_MAP_AUDIT_MS);
+
+        expect(context.setAttachedNode).not.toHaveBeenCalled();
+        expect(context.updateAttachedMap).not.toHaveBeenCalled();
+        jest.useRealTimers();
       });
 
       it('subscribes to the map change and the selection events', () => {
@@ -309,6 +351,18 @@ describe('YjsSyncService', () => {
         options
       );
       expect(editorMmp.updateAdditionalMapOptions).not.toHaveBeenCalled();
+    });
+
+    it('receives peer settings while the renderer is detached', () => {
+      viewer.detachMap();
+      const options = { fontMaxSize: 80, fontMinSize: 20, fontIncrement: 7 };
+
+      editor.updateMapOptions(options);
+      sync(editor, viewer);
+
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith(
+        options
+      );
     });
 
     it('applies updates in both directions when both clients can edit', () => {

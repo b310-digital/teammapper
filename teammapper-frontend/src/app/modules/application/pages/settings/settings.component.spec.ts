@@ -121,15 +121,59 @@ describe('SettingsComponent', () => {
     });
   });
 
-  it('edits a copy and hands it to MapSyncService', async () => {
+  it('keeps consecutive edits from the rendered form', async () => {
+    await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
+    updateMapOptions.mockImplementation((options: AdditionalMapOptions) => {
+      mapOptions$.next({ ...options });
+    });
+    const root = fixture.nativeElement as HTMLElement;
+    const tab = root.querySelectorAll<HTMLElement>('.mat-mdc-tab')[1];
+    if (!tab) throw new Error('No map settings tab');
+    tab.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    for (const [name, value] of [
+      ['fontMinSize', '20'],
+      ['fontMaxSize', '80'],
+      ['fontIncrement', '7'],
+    ]) {
+      const input = root.querySelector<HTMLInputElement>(
+        `input[name="${name}"]`
+      );
+      if (!input) throw new Error(`No ${name} input`);
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(updateMapOptions).toHaveBeenLastCalledWith({
+      fontMinSize: 20,
+      fontMaxSize: 80,
+      fontIncrement: 7,
+    });
+  });
+
+  function changeMapOption(key: keyof AdditionalMapOptions, value: string) {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = value;
+    input.addEventListener('change', event =>
+      fixture.componentInstance.updateMapOptions(key, event)
+    );
+    input.dispatchEvent(new Event('change'));
+  }
+
+  it('hands an edited copy to MapSyncService', async () => {
     const options = { fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 };
     await render(options);
-    const component = fixture.componentInstance;
-    const edited = component.mapOptions();
-    if (!edited) throw new Error('No map settings to edit');
 
-    edited.fontMaxSize = 80;
-    component.updateMapOptions();
+    changeMapOption('fontMaxSize', '80');
 
     expect(options.fontMaxSize).toBe(70);
     expect(updateMapOptions).toHaveBeenCalledWith({
@@ -143,12 +187,8 @@ describe('SettingsComponent', () => {
     'preserves a stored minimum font size of %s when another field changes',
     async fontMinSize => {
       await render({ fontMaxSize: 70, fontMinSize, fontIncrement: 5 });
-      const component = fixture.componentInstance;
-      const edited = component.mapOptions();
-      if (!edited) throw new Error('No map settings to edit');
 
-      edited.fontMaxSize = 80;
-      component.updateMapOptions();
+      changeMapOption('fontMaxSize', '80');
 
       expect(updateMapOptions).toHaveBeenCalledWith({
         fontMaxSize: 80,
@@ -160,12 +200,8 @@ describe('SettingsComponent', () => {
 
   it('preserves a stored maximum below the form range when the increment changes', async () => {
     await render({ fontMaxSize: 10, fontMinSize: 6, fontIncrement: 2 });
-    const component = fixture.componentInstance;
-    const edited = component.mapOptions();
-    if (!edited) throw new Error('No map settings to edit');
 
-    edited.fontIncrement = 3;
-    component.updateMapOptions();
+    changeMapOption('fontIncrement', '3');
 
     expect(updateMapOptions).toHaveBeenCalledWith({
       fontMaxSize: 10,
@@ -174,23 +210,23 @@ describe('SettingsComponent', () => {
     });
   });
 
-  it('drops edited values out of range, so MmpService fills the defaults', async () => {
-    await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
-    const component = fixture.componentInstance;
-    const edited = component.mapOptions();
-    if (!edited) throw new Error('No map settings to edit');
+  it.each<[keyof AdditionalMapOptions, string]>([
+    ['fontMaxSize', '120'],
+    ['fontMinSize', '10'],
+    ['fontIncrement', '0'],
+    ['fontMinSize', ''],
+  ])(
+    'drops an invalid edit to %s, so MmpService fills the default',
+    async (key, value) => {
+      const options = { fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 };
+      await render(options);
 
-    Object.assign(edited, {
-      fontMaxSize: 120,
-      fontMinSize: 10,
-      fontIncrement: 0,
-    });
-    component.updateMapOptions();
+      changeMapOption(key, value);
 
-    expect(updateMapOptions).toHaveBeenCalledWith({
-      fontMaxSize: undefined,
-      fontMinSize: undefined,
-      fontIncrement: undefined,
-    });
-  });
+      expect(updateMapOptions).toHaveBeenCalledWith({
+        ...options,
+        [key]: undefined,
+      });
+    }
+  );
 });

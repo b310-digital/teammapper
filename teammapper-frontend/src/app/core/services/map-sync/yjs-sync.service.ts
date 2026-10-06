@@ -64,6 +64,7 @@ export class YjsSyncService {
   // The node this client has selected, which setupAwareness publishes once
   // awareness is up.
   private selectedNodeId: string | null = null;
+  private mapAttached = false;
 
   constructor(
     private ctx: MapSyncContext,
@@ -147,6 +148,12 @@ export class YjsSyncService {
       return;
     }
 
+    if (this.yDoc) {
+      const writable = this.yjsWritable;
+      this.destroy();
+      this.yjsWritable = writable;
+    }
+
     this.yjsMapId = uuid;
     this.yDoc = new Y.Doc();
     // Define `meta` as a map before the first sync. A peer's write would
@@ -172,8 +179,18 @@ export class YjsSyncService {
     this.setupNodesObserver();
     this.setupMapOptionsObserver();
     if (!this.yUndoManager) this.initUndoManager();
+    // The new renderer has no peer rings yet, even when awareness is unchanged.
+    this.ctx.setColorMapping({});
     this.setupAwareness();
     this.settingsService.setEditMode(this.yjsWritable);
+  }
+
+  /** Keep syncing map settings while the settings page replaces the renderer. */
+  detachMap(): void {
+    this.mapAttached = false;
+    this.unsubscribeListeners();
+    this.updateAwarenessSelection(null);
+    this.ctx.setAttachedNode(null);
   }
 
   private hasActiveConnection(mapId: string): boolean {
@@ -289,6 +306,7 @@ export class YjsSyncService {
    * left stay editable.
    */
   destroy(): void {
+    this.mapAttached = false;
     this.unsubscribeListeners();
     this.detachObservers();
     this.destroyUndoManager();
@@ -347,6 +365,7 @@ export class YjsSyncService {
   // ─── mmp event listeners ────────────────────────────────────
 
   private createListeners(): void {
+    this.mapAttached = true;
     this.unsubscribeListeners();
     this.setupMapChangeHandler();
     this.setupSelectionHandlers();
@@ -517,7 +536,8 @@ export class YjsSyncService {
 
   private pickClientColor(awareness: WebsocketProvider['awareness']): string {
     const usedColors = new Set<string>();
-    for (const [, state] of awareness.getStates()) {
+    for (const [clientId, state] of awareness.getStates()) {
+      if (clientId === this.doc.clientID) continue;
       if (state?.user?.color) usedColors.add(state.user.color);
     }
     return resolveClientColor(this.ctx.getClientColor(), usedColors);
@@ -570,6 +590,7 @@ export class YjsSyncService {
   }
 
   private rehighlightNodes(nodeIds: Set<string>): void {
+    if (!this.mapAttached) return;
     for (const nodeId of nodeIds) {
       if (!this.mmpService.existNode(nodeId)) continue;
       const color = this.ctx.colorForNode(nodeId);

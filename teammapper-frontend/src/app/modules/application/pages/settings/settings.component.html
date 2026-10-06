@@ -86,7 +86,7 @@
                 </mat-slide-toggle>
                 <mat-form-field>
                   <input
-                    (change)="updateMapOptions()"
+                    (change)="updateMapOptions('fontMinSize', $event)"
                     [(ngModel)]="options.fontMinSize"
                     [placeholder]="'PAGES.SETTINGS.FONT_MIN_SIZE' | translate"
                     [title]="'TOOLTIPS.FONT_MIN_SIZE' | translate"
@@ -100,7 +100,7 @@
                 <br />
                 <mat-form-field>
                   <input
-                    (change)="updateMapOptions()"
+                    (change)="updateMapOptions('fontMaxSize', $event)"
                     [(ngModel)]="options.fontMaxSize"
                     [placeholder]="'PAGES.SETTINGS.FONT_MAX_SIZE' | translate"
                     [title]="'TOOLTIPS.FONT_MAX_SIZE' | translate"
@@ -114,7 +114,7 @@
                 <br />
                 <mat-form-field>
                   <input
-                    (change)="updateMapOptions()"
+                    (change)="updateMapOptions('fontIncrement', $event)"
                     [(ngModel)]="options.fontIncrement"
                     [placeholder]="'PAGES.SETTINGS.FONT_INCREMENT' | translate"
                     [title]="'TOOLTIPS.FONT_INCREMENT' | translate"

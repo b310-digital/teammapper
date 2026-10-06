@@ -163,6 +163,13 @@ export class MapSyncService implements OnDestroy {
     this.colorMapping = {};
   }
 
+  /** Remove the renderer target while keeping the settings page connected. */
+  public detachMap() {
+    this.mapTarget = null;
+    this.removeSyncingToast();
+    this.syncService.detachMap();
+  }
+
   /**
    * Open the connection to the attached map. The map appears in `ref` once
    * the connection syncs; until then the map area stays empty, and a toast

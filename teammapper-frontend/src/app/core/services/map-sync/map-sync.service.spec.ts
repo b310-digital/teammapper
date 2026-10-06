@@ -635,6 +635,17 @@ describe('MapSyncService', () => {
   });
 
   describe('lifecycle', () => {
+    it('detaches the renderer without closing the settings connection', () => {
+      const sync = getSync(service);
+      const detachSpy = jest.spyOn(sync, 'detachMap');
+      const destroySpy = jest.spyOn(sync, 'destroy');
+
+      service.detachMap();
+
+      expect(detachSpy).toHaveBeenCalled();
+      expect(destroySpy).not.toHaveBeenCalled();
+    });
+
     it('ngOnDestroy calls destroy on sync service', () => {
       const destroySpy = jest.spyOn(getSync(service), 'destroy');
 

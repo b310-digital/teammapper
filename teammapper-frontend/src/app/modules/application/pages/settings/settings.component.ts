@@ -96,10 +96,15 @@ export class SettingsComponent {
    * Apply the edited map settings. The call runs synchronously, so the new
    * values reach MmpService before the user types into the next field.
    */
-  public updateMapOptions() {
-    const options = this.mapOptions();
+  public updateMapOptions(key: keyof AdditionalMapOptions, event: Event) {
     const applied = this.appliedMapOptions();
-    if (!options || !applied) return;
+    const input = event.target;
+    if (!applied || !(input instanceof HTMLInputElement)) return;
+
+    // Read the changed field directly and merge it with the latest applied
+    // settings. The form may still hold values from before a local edit or a
+    // peer's update, until Angular refreshes its bindings.
+    const options = { ...applied, [key]: input.valueAsNumber };
 
     this.mapSyncService.updateMapOptions(validMapOptions(options, applied));
   }

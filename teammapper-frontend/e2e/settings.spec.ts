@@ -74,10 +74,13 @@ test('keeps the stored map settings when the user reopens the map', async ({
   await openMapSettings();
   await fontMinSize.fill('20');
   await fontMinSize.press('Tab');
+  await expect(fontMinSize).toHaveValue('20');
   await fontMaxSize.fill('80');
   await fontMaxSize.press('Tab');
+  await expect(fontMinSize).toHaveValue('20');
   await fontIncrement.fill('7');
   await fontIncrement.press('Tab');
+  await expect(fontMinSize).toHaveValue('20');
   await page.locator('.close-button').click();
   await expect(page.locator('.map')).toBeVisible();
 
