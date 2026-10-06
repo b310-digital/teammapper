@@ -29,7 +29,6 @@ import {
   LOCAL_ORIGIN,
   META,
   YjsMapData,
-  replacesMainRoot,
 } from './yjs-map-data';
 
 const WS_CLOSE_MAP_DELETED = 4001;
@@ -56,7 +55,6 @@ export class YjsSyncService {
   private yjsWritable = false;
   private yjsSubscriptions: Subscription[] = [];
   private yjsMapId: string | null = null;
-  private yjsNodesObserver: Parameters<NodesMap['observe']>[0] | null = null;
   private yjsOptionsObserver: Parameters<Y.Map<unknown>['observe']>[0] | null =
     null;
   private yjsAwarenessHandler: (() => void) | null = null;
@@ -342,10 +340,7 @@ export class YjsSyncService {
   }
 
   private detachObservers(): void {
-    if (this.yDoc && this.yjsNodesObserver) {
-      this.nodesMap.unobserve(this.yjsNodesObserver);
-      this.yjsNodesObserver = null;
-    }
+    if (this.yjsMapData) this.yjsMapData.onPeerReplacement = null;
     if (this.yDoc && this.yjsOptionsObserver) {
       const optionsMap = this.yDoc.getMap('mapOptions');
       optionsMap.unobserve(this.yjsOptionsObserver);
@@ -477,17 +472,16 @@ export class YjsSyncService {
    * neither: ImportService shows its own toast for a local import.
    */
   private setupNodesObserver(): void {
-    const nodesMap = this.nodesMap;
-    this.yjsNodesObserver = (event, transaction) => {
-      if (transaction.local) return;
-      if (!replacesMainRoot(event.changes.keys, nodesMap)) return;
-      // A peer replaced the whole map, so our history describes a map that no
-      // longer exists. A replacement is a delete-and-reinsert that no CRDT can
-      // merge back, so undoing into it would leave the map with two roots.
-      this.yUndoManager?.clear();
-      if (this.announcesImport(transaction)) void this.showImportToast();
-    };
-    nodesMap.observe(this.yjsNodesObserver);
+    this.mapData.onPeerReplacement = transaction =>
+      this.handlePeerReplacement(transaction);
+  }
+
+  private handlePeerReplacement(transaction: Y.Transaction): void {
+    // A peer replaced the whole map, so our history describes a map that no
+    // longer exists. A replacement is a delete-and-reinsert that no CRDT can
+    // merge back, so undoing into it would leave the map with two roots.
+    this.yUndoManager?.clear();
+    if (this.announcesImport(transaction)) void this.showImportToast();
   }
 
   /**

@@ -353,18 +353,16 @@ export class MmpService implements OnDestroy {
    * Add a node in the mind mmp triggered by the user, then select it and
    * start editing its name.
    *
-   * addNode puts a child under `properties.parent`, or under the selected
-   * node when no parent is named, and adds no child when nothing is selected.
-   * Call `addTree` to add a root node.
+   * addNode puts a child under the selected node and adds no child when
+   * nothing is selected. Call `addTree` to add a root node.
    */
-  public addNode(properties?: Partial<ExportNodeProperties>) {
-    const parent = this.selectNode(properties?.parent || undefined);
+  public addNode() {
+    const parent = this.selectNode();
     if (!parent) return;
 
     const node = this.map.instance.addNode(
-      this.newNodeProperties(parent, properties),
-      parent.id,
-      properties?.id
+      this.newNodeProperties(parent),
+      parent.id
     );
     if (!node) return;
 
@@ -374,18 +372,11 @@ export class MmpService implements OnDestroy {
 
   /**
    * The properties of a new child of `parent`. The branch color comes from
-   * the given properties, then from the parent, then from the automatic
-   * branch colors setting.
+   * the parent, then from the automatic branch colors setting.
    */
-  private newNodeProperties(
-    parent: ExportNodeProperties,
-    properties?: Partial<ExportNodeProperties>
-  ): UserNodeProperties {
-    const newProps: UserNodeProperties = properties || { name: '' };
-    const branch =
-      properties?.colors?.branch ||
-      parent.colors?.branch ||
-      this.autoBranchColor();
+  private newNodeProperties(parent: ExportNodeProperties): UserNodeProperties {
+    const newProps: UserNodeProperties = { name: '' };
+    const branch = parent.colors?.branch || this.autoBranchColor();
     if (branch) newProps.colors = { branch };
     return newProps;
   }

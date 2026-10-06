@@ -308,6 +308,43 @@ describe('applyValidatedMapUpdate', () => {
     ).toThrow()
   })
 
+  it('rejects a node whose id field names another node', () => {
+    const node = new Y.Map<unknown>()
+    const update = change(client, () => {
+      client.getMap('nodes').set('A', node)
+      node.set('id', 'B')
+    })
+    expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    expect(isRejectedMap(server)).toBe(true)
+  })
+
+  it('rejects a later edit that changes the id field away from the key', () => {
+    const node = new Y.Map<unknown>()
+    applyValidatedMapUpdate(
+      server,
+      change(client, () => {
+        client.getMap('nodes').set('A', node)
+        node.set('id', 'A')
+      }),
+      null
+    )
+    const update = change(client, () => node.set('id', 'B'))
+    expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+  })
+
+  it('accepts a node whose id field matches its key', () => {
+    const node = new Y.Map<unknown>()
+    applyValidatedMapUpdate(
+      server,
+      change(client, () => {
+        client.getMap('nodes').set('A', node)
+        node.set('id', 'A')
+      }),
+      null
+    )
+    expect(server.getMap('nodes').toJSON()).toEqual({ A: { id: 'A' } })
+  })
+
   it.each([
     ['arrays', () => new Y.Array()],
     ['submaps', () => new Y.Doc()],

@@ -6,11 +6,7 @@ import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { DefaultNodeValues } from '../options.js';
 import { randomK } from '../data/node-record.js';
-import type {
-  ExportNodeProperties,
-  MapSnapshot,
-  OldMmpNode,
-} from '@teammapper/shared';
+import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 
 /**
  * A node of a map the loader accepts. Older maps carry no link and no isRoot
@@ -38,11 +34,11 @@ function withMainRoot(nodes: ExportNodeProperties[]): ExportNodeProperties[] {
 
 /**
  * Replace every node of the map with the nodes of an exported map, or with a
- * new main root. The loader checks the nodes, converts the format mmp 0.1.7
- * exported and writes the result to the map data as one replacement. The
- * change listener then draws the map, selects the main root and centers the
- * view. ViewState keeps the ids of the nodes whose child nodes are hidden
- * apart from the map data, so a load keeps those child nodes hidden.
+ * new main root. The loader checks the nodes and writes the result to the map
+ * data as one replacement. The change listener then draws the map, selects
+ * the main root and centers the view. ViewState keeps the ids of the nodes
+ * whose child nodes are hidden apart from the map data, so a load keeps those
+ * child nodes hidden.
  */
 export default class MapLoader {
   private map: MmpMap;
@@ -67,7 +63,7 @@ export default class MapLoader {
       return;
     }
 
-    // The conversions below write to the nodes, and the caller keeps its own.
+    // withMainRoot writes to the nodes, and the caller keeps its own.
     const nodes = Utils.cloneObject(input);
     if (!this.isValidMap(nodes)) {
       Log.error('The exported map is not correct');
@@ -125,68 +121,13 @@ export default class MapLoader {
   };
 
   /**
-   * Return true when `nodes` is a list of valid nodes. A map in the legacy
-   * format is converted in place first.
+   * Return true when `nodes` is a list of valid nodes.
    * @param {MapSnapshot} nodes
    * @return {boolean} result
    */
   private isValidMap(nodes: MapSnapshot): boolean {
-    if (!Array.isArray(nodes)) {
-      return false;
-    }
-
-    const firstNode = nodes[0] as unknown;
-    if (
-      firstNode &&
-      typeof firstNode === 'object' &&
-      'key' in firstNode &&
-      'value' in firstNode
-    ) {
-      this.convertOldMmp(nodes as unknown as OldMmpNode[]);
-    }
-
-    return nodes.every(node => v.is(LoadedNodeSchema, node));
-  }
-
-  /**
-   * Convert the nodes of a map that mmp 0.1.7 exported to the current format.
-   * @param {OldMmpNode[]} nodes
-   */
-  private convertOldMmp(nodes: OldMmpNode[]) {
-    for (const node of nodes) {
-      const oldNode = Utils.cloneObject(node);
-      const target = node as unknown as Record<string, unknown>;
-      Utils.clearObject(target);
-
-      target.id = 'map_node_' + oldNode.key.substr(4);
-      target.parent = oldNode.value.parent
-        ? 'map_node_' + oldNode.value.parent.substr(4)
-        : null;
-      target.k = oldNode.value.k;
-      target.isRoot = !oldNode.value.parent;
-      target.name = oldNode.value.name;
-      target.coordinates = {
-        x: oldNode.value.x,
-        y: oldNode.value.y,
-      };
-      target.image = {
-        size: oldNode.value['image-size']
-          ? parseInt(oldNode.value['image-size'], 10)
-          : 0,
-        src: oldNode.value['image-src'] || '',
-      };
-      target.colors = {
-        background: oldNode.value['background-color'],
-        branch: oldNode.value['branch-color'] || '',
-        name: oldNode.value['text-color'],
-      };
-      target.font = {
-        size: oldNode.value['font-size']
-          ? parseInt(oldNode.value['font-size'], 10)
-          : 12,
-        weight: oldNode.value.bold ? 'bold' : 'normal',
-        style: oldNode.value.italic ? 'italic' : 'normal',
-      };
-    }
+    return (
+      Array.isArray(nodes) && nodes.every(node => v.is(LoadedNodeSchema, node))
+    );
   }
 }

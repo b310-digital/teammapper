@@ -345,8 +345,8 @@ The nodes of one mind map as every client shares them. The app draws the map
 from the map data and keeps no copy of its own, so your edits, a peer's edits
 and an undo all change the map data first, and the app then redraws.
 
-In the app, the map data syncs with the server and the other clients. Tests,
-and a host without sync, use `InMemoryMapData`. The **view state** and the
+In the app, the map data syncs with the server and the other clients. The
+mmp specs use `InMemoryMapData`. The **view state** and the
 **selection** stay with one person and never enter the map data.
 
 ### Mark

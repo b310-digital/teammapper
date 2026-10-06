@@ -64,8 +64,10 @@ export const populateYMapFromNode = (
   nodesMap.set(node.id, yNode)
 }
 
-// Converts a Y.Map entry back to a partial MmpNode for persistence
+// Converts a Y.Map entry back to a partial MmpNode for persistence. The id is
+// the entry's key in the nodes map, as on the client, never the `id` field.
 export const yMapToMmpNode = (
+  id: string,
   yNode: Y.Map<unknown>,
   mapId: string
 ): Partial<MmpNode> => {
@@ -89,7 +91,7 @@ export const yMapToMmpNode = (
   const parent = yNode.get('parent') as string | null | undefined
 
   return sanitizeNodeFields({
-    id: yNode.get('id') as string,
+    id,
     nodeParentId: parent || undefined,
     name: (yNode.get('name') as string) ?? '',
     root: (yNode.get('isRoot') as boolean) ?? false,

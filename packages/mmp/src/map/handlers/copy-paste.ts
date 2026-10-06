@@ -308,13 +308,10 @@ export default class CopyPaste {
       newSide !== undefined && oldParent.x < oldTreeRootX !== newSide;
     const dx = mirrored ? node.x - oldParent.x : oldParent.x - node.x;
 
-    return this.map.nodes.fixCoordinates(
-      {
-        x: newParentPosition.x - dx,
-        y: newParentPosition.y - (oldParent.y - node.y),
-      },
-      true
-    );
+    return {
+      x: newParentPosition.x - dx,
+      y: newParentPosition.y - (oldParent.y - node.y),
+    };
   }
 
   private findInCopiedNodes = (

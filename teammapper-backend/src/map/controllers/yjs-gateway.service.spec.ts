@@ -4,7 +4,11 @@ import { YjsPersistenceService } from '../services/yjs-persistence.service'
 import { MapsService } from '../services/maps.service'
 import { WsConnectionLimiterService } from '../services/ws-connection-limiter.service'
 import configService from '../../config.service'
-import { WS_CLOSE_MAP_SYNC_RESET } from '@teammapper/shared'
+import {
+  WS_CLOSE_MAP_SYNC_RESET,
+  YJS_SECRET_SUBPROTOCOL_PREFIX,
+  YJS_SUBPROTOCOL,
+} from '@teammapper/shared'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { WebSocket } from 'ws'
 import * as Y from 'yjs'
@@ -23,10 +27,6 @@ import {
   encodeSyncUpdateMessage,
   encodeSyncStep1Message,
 } from '../utils/yjsProtocol'
-import {
-  YJS_SECRET_SUBPROTOCOL_PREFIX,
-  YJS_SUBPROTOCOL,
-} from '@teammapper/shared'
 import * as syncProtocol from 'y-protocols/sync'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'

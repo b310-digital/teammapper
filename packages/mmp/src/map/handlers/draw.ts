@@ -154,8 +154,8 @@ export default class Draw {
 
   /**
    * Remove every drawn node and draw the map again from one scan of the map
-   * data. `drawAll` clears the rings and keeps the measured sizes and image
-   * loads of the nodes that stay.
+   * data. `drawAll` keeps the measured sizes, image loads and rings of the
+   * nodes that stay, and drops those of the nodes the map data lacks.
    */
   public drawAll() {
     const records = this.map.data.nodes();
@@ -163,27 +163,15 @@ export default class Draw {
 
     [...this.groups.keys()].forEach(id => this.dropGroup(id));
     [...this.branches.keys()].forEach(id => this.dropBranch(id));
-    this.rings.clear();
     this.orphans.clear();
     this.missingParents.clear();
 
     const present = new Set(ids);
-    for (const state of [this.textExtents, this.images]) {
+    for (const state of [this.textExtents, this.images, this.rings]) {
       for (const id of state.keys()) if (!present.has(id)) state.delete(id);
     }
 
     this.drawNodes(ids, records);
-  }
-
-  /**
-   * Draw the nodes again from one scan of the map data, keeping their DOM.
-   */
-  public redrawAll() {
-    const records = this.map.data.nodes();
-    this.drawNodes(
-      records.map(record => record.id),
-      records
-    );
   }
 
   /**
