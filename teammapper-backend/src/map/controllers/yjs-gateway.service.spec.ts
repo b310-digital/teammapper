@@ -23,6 +23,10 @@ import {
   encodeSyncUpdateMessage,
   encodeSyncStep1Message,
 } from '../utils/yjsProtocol'
+import {
+  YJS_SECRET_SUBPROTOCOL_PREFIX,
+  YJS_SUBPROTOCOL,
+} from '@teammapper/shared'
 import * as syncProtocol from 'y-protocols/sync'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
@@ -80,6 +84,9 @@ const createMockWs = (): MockWs => {
   }
 }
 
+// Builds the request of a current client, which offers the modification
+// secret as a subprotocol next to `YJS_SUBPROTOCOL`, as the browser sends
+// the `protocols` argument of its `WebSocket` constructor
 const createMockRequest = (
   mapId: string | null,
   secret: string | null = null,
@@ -87,22 +94,14 @@ const createMockRequest = (
 ): IncomingMessage => {
   const params = new URLSearchParams()
   if (mapId) params.set('mapId', mapId)
-  if (secret) params.set('secret', secret)
+  const offer = secret
+    ? `${YJS_SUBPROTOCOL}, ${YJS_SECRET_SUBPROTOCOL_PREFIX}${secret}`
+    : YJS_SUBPROTOCOL
   return {
     url: `/yjs?${params.toString()}`,
     socket: { remoteAddress: ip },
-    headers: {},
+    headers: { 'sec-websocket-protocol': offer },
   } as unknown as IncomingMessage
-}
-
-// Adds the `Sec-WebSocket-Protocol` offer a browser sends from the
-// `protocols` argument of its `WebSocket` constructor
-const withSubprotocols = (
-  req: IncomingMessage,
-  offer: string
-): IncomingMessage => {
-  req.headers['sec-websocket-protocol'] = offer
-  return req
 }
 
 // Triggers the private handleConnection method — the WebSocket 'connection'
@@ -351,26 +350,11 @@ describe('YjsGateway', () => {
       return doc.getMap('nodes').has('new-node')
     }
 
-    it('applies writes from a client offering the secret subprotocol', async () => {
+    it('ignores a secret in the query param', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
       const ws = createMockWs()
-      const req = withSubprotocols(
-        createMockRequest('map-1'),
-        'teammapper.v1, teammapper.secret.secret-123'
-      )
-
-      await connectClient(gateway, ws, req)
-
-      expect(serverAppliesWrite(ws)).toBe(true)
-    })
-
-    it('prefers the secret subprotocol over the query secret', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
-      const ws = createMockWs()
-      const req = withSubprotocols(
-        createMockRequest('map-1', 'secret-123'),
-        'teammapper.v1, teammapper.secret.wrong-secret'
-      )
+      const req = createMockRequest('map-1')
+      req.url = '/yjs?mapId=map-1&secret=secret-123'
 
       await connectClient(gateway, ws, req)
 
@@ -873,17 +857,44 @@ describe('YjsGateway', () => {
       })
     }
 
+    // Opens a socket offering the given subprotocols and resolves with the
+    // HTTP status and `Upgrade` header of the refused upgrade
+    const refusal = (
+      protocols: string[]
+    ): Promise<{ status?: number; upgrade?: string }> => {
+      const { port } = server.address() as AddressInfo
+      const client = new WebSocket(
+        `ws://127.0.0.1:${port}/yjs/map-1`,
+        protocols
+      )
+      return new Promise((resolve, reject) => {
+        client.on('unexpected-response', (_req, res) => {
+          resolve({ status: res.statusCode, upgrade: res.headers.upgrade })
+          client.terminate()
+        })
+        client.on('open', () => {
+          client.terminate()
+          reject(new Error('The server accepted the upgrade'))
+        })
+        client.on('error', reject)
+      })
+    }
+
     it('selects the Yjs subprotocol and leaves the secret out of the response', async () => {
       const protocol = await selectedProtocol([
-        'teammapper.v1',
+        YJS_SUBPROTOCOL,
         'teammapper.secret.test-secret',
       ])
 
-      expect(protocol).toBe('teammapper.v1')
+      expect(protocol).toBe(YJS_SUBPROTOCOL)
     })
 
-    it('accepts a client that offers no subprotocol', async () => {
-      expect(await selectedProtocol([])).toBe('')
+    it('refuses a client that offers no subprotocol or an older version', async () => {
+      const upgradeRequired = { status: 426, upgrade: 'websocket' }
+      expect([await refusal([]), await refusal(['teammapper.v1'])]).toEqual([
+        upgradeRequired,
+        upgradeRequired,
+      ])
     })
   })
 })

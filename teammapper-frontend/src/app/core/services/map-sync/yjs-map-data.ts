@@ -13,6 +13,8 @@ import {
   NodesMap,
   nodesMapOf,
   populateYMapFromNodeProps,
+  toPlainValue,
+  toStoredValue,
   yMapToNodeProps,
 } from './yjs-utils';
 
@@ -87,6 +89,29 @@ function withValueAt(
 }
 
 /**
+ * Write the value at the path below the node's `key`. When `key` holds a
+ * nested Y.Map, the write sets one key inside it. A peer with write access
+ * can store any other value under `key`, such as a plain object, and the
+ * write then replaces that value with a nested Y.Map holding the merged
+ * attributes. Two clients that replace the same value at once both write
+ * `key`, and Yjs keeps only one of their edits.
+ */
+function writeAt(
+  yNode: Y.Map<unknown>,
+  key: string,
+  path: readonly string[],
+  value: unknown
+): void {
+  const current = yNode.get(key);
+  if (current instanceof Y.Map && path.length === 1) {
+    current.set(path[0], clone(value));
+    return;
+  }
+  const next = withValueAt(toPlainValue(current), path, value);
+  yNode.set(key, toStoredValue(key, next));
+}
+
+/**
  * The map data of a collaborative map: the nodes in the Y.Doc's `nodes` map.
  * Every write carries `LOCAL_ORIGIN`, so the undo manager records it. The
  * observer reports every transaction, local, remote and undo alike, as one
@@ -131,17 +156,15 @@ export class YjsMapData implements MapData {
   }
 
   /**
-   * Write the whole top-level key the property belongs to, such as `colors`
-   * for `backgroundColor`, so a peer receives the object in one piece.
+   * Write the property, such as `backgroundColor`, under its own key in the
+   * nested Y.Map of its attribute group (see the glossary).
    */
   public updateNode(id: string, property: NodeProperty, value: unknown): void {
     const yNode = nodeAt(this.nodesMap, id);
     if (!yNode) return;
 
     const [key, ...path]: readonly string[] = NodePropertyMapping[property];
-    this.transact(() =>
-      yNode.set(key, withValueAt(yNode.get(key), path, value))
-    );
+    this.transact(() => writeAt(yNode, key, path, value));
   }
 
   public removeNode(id: string): void {

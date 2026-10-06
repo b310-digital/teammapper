@@ -38,7 +38,8 @@ import {
   WS_CLOSE_TRY_AGAIN,
   ConnectionMeta,
   extractPathname,
-  parseQueryParams,
+  parseMapId,
+  offersCurrentSubprotocol,
   parseSecretSubprotocol,
   selectSubprotocol,
   checkWriteAccess,
@@ -109,6 +110,16 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       'upgrade',
       (request: IncomingMessage, socket: Duplex, head: Buffer) => {
         if (!extractPathname(request.url).startsWith('/yjs')) return
+
+        if (
+          !offersCurrentSubprotocol(request.headers['sec-websocket-protocol'])
+        ) {
+          socket.write(
+            'HTTP/1.1 426 Upgrade Required\r\nUpgrade: websocket\r\nConnection: close\r\n\r\n'
+          )
+          socket.destroy()
+          return
+        }
 
         const rejection = this.limiter.checkLimits(request)
         if (rejection) {
@@ -229,10 +240,10 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     signal: AbortSignal
   ): Promise<void> {
     try {
-      const { mapId, secret: querySecret } = parseQueryParams(req.url)
-      const secret =
-        parseSecretSubprotocol(req.headers['sec-websocket-protocol']) ??
-        querySecret
+      const mapId = parseMapId(req.url)
+      const secret = parseSecretSubprotocol(
+        req.headers['sec-websocket-protocol']
+      )
       if (!mapId) {
         this.rejectConnection(ws, ip, WS_CLOSE_MISSING_PARAM, 'Missing mapId')
         return

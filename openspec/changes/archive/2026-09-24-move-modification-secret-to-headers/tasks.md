@@ -24,4 +24,4 @@
 
 ## 5. Follow-up
 
-- [ ] 5.1 Next release: drop the `secret` query parameter from `parseQueryParams` and the gateway fallback
+- [x] 5.1 Next release: drop the `secret` query parameter from `parseQueryParams` and the gateway fallback

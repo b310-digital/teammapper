@@ -90,7 +90,7 @@ describe('YjsSyncService connection status', () => {
     it('offers the secret as a subprotocol', () => {
       expect(jest.mocked(WebsocketProvider).mock.lastCall?.[3]).toEqual(
         expect.objectContaining({
-          protocols: ['teammapper.v1', 'teammapper.secret.secret'],
+          protocols: ['teammapper.v2', 'teammapper.secret.secret'],
         })
       );
     });

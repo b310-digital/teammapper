@@ -324,6 +324,15 @@ A value a data object holds, such as a node's `isRoot`, `protected` or
 `name`. A boolean attribute is still an attribute: write "the `isRoot`
 attribute is true", not "the node carries the root flag".
 
+### Attribute group
+
+A set of related node attributes that a node record holds under one key:
+`colors`, `font`, `image` and `link`. The Y.Doc stores each attribute group
+as a nested Y.Map with one key per attribute. When you change the background
+color while a peer changes the name color, your clients write different keys
+and both colors survive the merge. The frontend and the backend also read a
+group that a peer stored as a plain object.
+
 ### Flag
 
 A switch that configures the app from outside its data: an environment
