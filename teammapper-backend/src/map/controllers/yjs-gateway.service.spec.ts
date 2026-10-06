@@ -3,6 +3,8 @@ import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsPersistenceService } from '../services/yjs-persistence.service'
 import { MapsService } from '../services/maps.service'
 import { WsConnectionLimiterService } from '../services/ws-connection-limiter.service'
+import configService from '../../config.service'
+import { WS_CLOSE_MAP_SYNC_RESET } from '@teammapper/shared'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { WebSocket } from 'ws'
 import * as Y from 'yjs'
@@ -19,6 +21,7 @@ import {
   CONNECTION_SETUP_TIMEOUT_MS,
   MESSAGE_SYNC,
   encodeSyncUpdateMessage,
+  encodeSyncStep1Message,
 } from '../utils/yjsProtocol'
 import * as syncProtocol from 'y-protocols/sync'
 import * as encoding from 'lib0/encoding'
@@ -122,6 +125,7 @@ describe('YjsGateway', () => {
   let docManager: jest.Mocked<YjsDocManagerService>
   let limiter: jest.Mocked<WsConnectionLimiterService>
   let doc: Y.Doc
+  let persistenceService: jest.Mocked<YjsPersistenceService>
 
   beforeEach(() => {
     doc = new Y.Doc()
@@ -138,12 +142,17 @@ describe('YjsGateway', () => {
       notifyClientCount: jest
         .fn<YjsDocManagerService['notifyClientCount']>()
         .mockResolvedValue(undefined),
-      destroyDoc: jest.fn(),
+      destroyDoc: jest
+        .fn<YjsDocManagerService['destroyDoc']>()
+        .mockImplementation(() => {
+          doc.destroy()
+          docManager.getDoc.mockReturnValue(undefined)
+        }),
       hasDoc: jest.fn<YjsDocManagerService['hasDoc']>().mockReturnValue(true),
       restoreGraceTimer: jest.fn(),
     } as unknown as jest.Mocked<YjsDocManagerService>
 
-    const persistenceService = {
+    persistenceService = {
       registerDebounce: jest.fn(),
       unregisterDebounce: jest.fn(),
     } as unknown as jest.Mocked<YjsPersistenceService>
@@ -369,6 +378,283 @@ describe('YjsGateway', () => {
     })
   })
 
+  describe('incoming message limits', () => {
+    const connectWriter = async (): Promise<MockWs> => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+      return ws
+    }
+
+    const unrelatedUpdate = (): Uint8Array => {
+      const client = new Y.Doc()
+      try {
+        client.getMap('unused').set('payload', 'unrelated data')
+        return Y.encodeStateAsUpdate(client)
+      } finally {
+        client.destroy()
+      }
+    }
+
+    describe.each([
+      syncProtocol.messageYjsUpdate,
+      syncProtocol.messageYjsSyncStep2,
+    ])('invalid writable sync type %s', (syncType) => {
+      let attacker: MockWs
+      let peer: MockWs
+      beforeEach(async () => {
+        attacker = await connectWriter()
+        peer = await connectWriter()
+        peer.send.mockClear()
+        const encoder = encoding.createEncoder()
+        encoding.writeVarUint(encoder, MESSAGE_SYNC)
+        encoding.writeVarUint(encoder, syncType)
+        encoding.writeVarUint8Array(encoder, unrelatedUpdate())
+        attacker._triggerMessage(encoding.toUint8Array(encoder))
+      })
+      it('closes the writer with a map reset', () => {
+        expect(attacker.close).toHaveBeenCalledWith(
+          WS_CLOSE_MAP_SYNC_RESET,
+          'Map sync reset'
+        )
+      })
+      it('closes the peer with a map reset', () => {
+        expect(peer.close).toHaveBeenCalledWith(
+          WS_CLOSE_MAP_SYNC_RESET,
+          'Map sync reset'
+        )
+      })
+      it('discards the rejected state', () => {
+        expect(docManager.destroyDoc).toHaveBeenCalledWith('map-1')
+        expect(docManager.getDoc('map-1')).toBeUndefined()
+      })
+      it('does not broadcast invalid data', () => {
+        expect(peer.send).not.toHaveBeenCalled()
+      })
+      it('ignores another update queued on the rejected connection', () => {
+        attacker._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+        expect(docManager.destroyDoc).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    it('enforces cumulative map size through the gateway', async () => {
+      jest
+        .spyOn(configService, 'getYjsMapLimits')
+        .mockReturnValue({ maxBytes: 160, maxEntries: 100, maxNodes: 10 })
+      const ws = await connectWriter()
+      const client = new Y.Doc()
+      try {
+        for (let i = 0; i < 2; i++) {
+          const vector = Y.encodeStateVector(client)
+          const node = new Y.Map<unknown>()
+          node.set('name', 'a'.repeat(80))
+          client.getMap('nodes').set(String(i), node)
+          ws._triggerMessage(
+            encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client, vector))
+          )
+        }
+        expect(ws.close).toHaveBeenCalledWith(
+          WS_CLOSE_MAP_SYNC_RESET,
+          'Map sync reset'
+        )
+        expect(docManager.destroyDoc).toHaveBeenCalledWith('map-1')
+      } finally {
+        client.destroy()
+      }
+    })
+
+    describe('discarding a rejected map', () => {
+      let ws: MockWs
+      let peer: MockWs
+      beforeEach(async () => {
+        ws = await connectWriter()
+        peer = await connectWriter()
+        docManager.notifyClientCount.mockClear()
+        ws._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+      })
+      it('cancels pending persistence', () => {
+        expect(persistenceService.unregisterDebounce).toHaveBeenCalledWith(
+          'map-1'
+        )
+      })
+      it('releases both connection slots', () => {
+        expect(limiter.releaseConnection).toHaveBeenCalledTimes(2)
+      })
+      it('ignores stale close callbacks', () => {
+        ws._triggerClose()
+        peer._triggerClose()
+        expect(docManager.notifyClientCount).not.toHaveBeenCalled()
+        expect(limiter.releaseConnection).toHaveBeenCalledTimes(2)
+      })
+      it('does not save rejected state on shutdown', () => {
+        gateway.onModuleDestroy()
+        expect(docManager.notifyClientCount).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('recovery after a map reset', () => {
+      let stale: MockWs
+      let currentTime: number
+      beforeEach(async () => {
+        currentTime = 1000
+        jest.spyOn(Date, 'now').mockImplementation(() => currentTime)
+        stale = await connectWriter()
+        stale._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+      })
+      it('rejects a reconnect during the cooldown', async () => {
+        const ws = await connectWriter()
+        expect(ws.close).toHaveBeenCalledWith(
+          WS_CLOSE_TRY_AGAIN,
+          expect.any(String)
+        )
+      })
+      describe('after fresh hydration', () => {
+        let freshDoc: Y.Doc
+        let fresh: MockWs
+        beforeEach(async () => {
+          freshDoc = new Y.Doc()
+          docManager.getOrCreateDoc.mockResolvedValue(freshDoc)
+          docManager.getDoc.mockReturnValue(freshDoc)
+          currentTime = 11000
+          fresh = await connectWriter()
+          docManager.notifyClientCount.mockClear()
+        })
+        afterEach(() => freshDoc.destroy())
+        it('accepts a reconnect after the cooldown', () => {
+          expect(fresh.close).not.toHaveBeenCalled()
+        })
+        it('ignores stale close callbacks', () => {
+          stale._triggerClose()
+          expect(docManager.notifyClientCount).not.toHaveBeenCalled()
+          expect(fresh.close).not.toHaveBeenCalled()
+        })
+        it('ignores updates from stale connections', () => {
+          stale._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+          expect(docManager.destroyDoc).toHaveBeenCalledTimes(1)
+          expect(fresh.close).not.toHaveBeenCalled()
+        })
+        it('accepts fresh writes after stale callbacks', () => {
+          stale._triggerClose()
+          stale._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+          const client = new Y.Doc()
+          try {
+            client.getMap('mapOptions').set('name', 'Recovered map')
+            fresh._triggerMessage(
+              encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client))
+            )
+            expect(freshDoc.getMap('mapOptions').get('name')).toBe(
+              'Recovered map'
+            )
+          } finally {
+            client.destroy()
+          }
+        })
+      })
+    })
+
+    it('terminates a peer that ignores the reset close handshake', async () => {
+      jest.useFakeTimers()
+      const ws = await connectWriter()
+      const client = new Y.Doc()
+      try {
+        client.getMap('unused').set('payload', 'unrelated data')
+        ws._triggerMessage(
+          encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client))
+        )
+        expect(ws.terminate).not.toHaveBeenCalled()
+        jest.advanceTimersByTime(1000)
+        expect(ws.terminate).toHaveBeenCalledTimes(1)
+      } finally {
+        client.destroy()
+        jest.useRealTimers()
+      }
+    })
+
+    it('rejects a connection whose database lookup crosses a map reset', async () => {
+      const writer = await connectWriter()
+      let resolveMap: (map: MmpMap) => void = () => {
+        throw new Error('Lookup not initialized')
+      }
+      mapsService.findMap.mockReturnValueOnce(
+        new Promise<MmpMap>((resolve) => {
+          resolveMap = resolve
+        })
+      )
+      const waiting = createMockWs()
+      const setup = connectClient(
+        gateway,
+        waiting,
+        createMockRequest('map-1', 'test-secret')
+      )
+      const client = new Y.Doc()
+      client.getMap('unused').set('payload', 'unrelated data')
+      writer._triggerMessage(
+        encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client))
+      )
+      resolveMap(createMockMap())
+      await setup
+      expect(waiting.close).toHaveBeenCalledWith(
+        WS_CLOSE_TRY_AGAIN,
+        expect.any(String)
+      )
+      expect(docManager.getOrCreateDoc).toHaveBeenCalledTimes(1)
+      client.destroy()
+    })
+
+    it('shares the message count budget across connections and reconnects', async () => {
+      jest
+        .spyOn(configService, 'getYjsMessageLimits')
+        .mockReturnValue({ windowMs: 10_000, maxMessages: 2, maxBytes: 10000 })
+      const first = await connectWriter()
+      const second = await connectWriter()
+      const message = encodeSyncStep1Message(doc)
+      first._triggerMessage(message)
+      second._triggerMessage(message)
+      first._triggerClose()
+      const reconnected = await connectWriter()
+      reconnected._triggerMessage(message)
+      expect(reconnected.close).toHaveBeenCalledWith(
+        1008,
+        'Map message rate limit exceeded'
+      )
+    })
+
+    it('bounds bytes as well as count before decoding', async () => {
+      const message = encodeSyncStep1Message(doc)
+      jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
+        windowMs: 10_000,
+        maxMessages: 100,
+        maxBytes: message.byteLength,
+      })
+      const ws = await connectWriter()
+      ws._triggerMessage(message)
+      expect(ws.close).not.toHaveBeenCalled()
+      ws._triggerMessage(message)
+      expect(ws.close).toHaveBeenCalledWith(
+        1008,
+        'Map message rate limit exceeded'
+      )
+    })
+
+    it('allows messages again when the rate window expires', async () => {
+      jest
+        .spyOn(configService, 'getYjsMessageLimits')
+        .mockReturnValue({ windowMs: 10_000, maxMessages: 1, maxBytes: 10000 })
+      let currentTime = 1000
+      jest.spyOn(Date, 'now').mockImplementation(() => currentTime)
+      const ws = await connectWriter()
+      const message = encodeSyncStep1Message(doc)
+      ws._triggerMessage(message)
+      currentTime = 11000
+      ws._triggerMessage(message)
+      expect(ws.close).not.toHaveBeenCalled()
+    })
+  })
+
   // ─── Disconnect handling ───────────────────────────────────
 
   describe('disconnect handling', () => {
@@ -409,23 +695,33 @@ describe('YjsGateway', () => {
       expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
 
-    it('releases a client that left while the setup awaited the database', async () => {
-      const ws = createMockWs()
-      limiter.getClientIp.mockReturnValue('10.0.0.2')
-      mapsService.findMap.mockImplementation(async () => {
-        ws.readyState = WebSocket.CLOSED
-        return createMockMap()
+    describe('a client leaving while setup awaits the database', () => {
+      let ws: MockWs
+      beforeEach(async () => {
+        ws = createMockWs()
+        limiter.getClientIp.mockReturnValue('10.0.0.2')
+        mapsService.findMap.mockImplementation(async () => {
+          ws.readyState = WebSocket.CLOSED
+          return createMockMap()
+        })
+        await connectClient(
+          gateway,
+          ws,
+          createMockRequest('map-1', 'test-secret', '10.0.0.2')
+        )
       })
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret', '10.0.0.2')
-      )
-
-      expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.2')
-      expect(docManager.notifyClientCount).toHaveBeenLastCalledWith('map-1', 0)
-      expect(ws.send).not.toHaveBeenCalled()
+      it('releases the connection slot', () => {
+        expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.2')
+      })
+      it('restores the client count', () => {
+        expect(docManager.notifyClientCount).toHaveBeenLastCalledWith(
+          'map-1',
+          0
+        )
+      })
+      it('does not send initial sync data', () => {
+        expect(ws.send).not.toHaveBeenCalled()
+      })
     })
 
     it('survives notifyClientCount errors without crashing', async () => {

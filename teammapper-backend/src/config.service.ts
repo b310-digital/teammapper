@@ -3,6 +3,10 @@
 import { DataSourceOptions } from 'typeorm'
 import { LogLevel } from '@nestjs/common'
 import { join } from 'path'
+import {
+  DEFAULT_YJS_MAP_LIMITS,
+  DEFAULT_YJS_MESSAGE_LIMITS,
+} from './map/utils/yjsLimits'
 
 interface EnvProps {
   [k: string]: string | undefined
@@ -92,6 +96,40 @@ class ConfigService {
   public isYjsRateLimitingEnabled(): boolean {
     const value = this.getValue('FEATURE_YJS_RATE_LIMITING', false)
     return value?.toLowerCase() === 'true'
+  }
+
+  public getYjsMapLimits() {
+    return {
+      maxBytes: this.parsePositiveInt(
+        'YJS_MAP_MAX_BYTES',
+        DEFAULT_YJS_MAP_LIMITS.maxBytes
+      ),
+      maxEntries: this.parsePositiveInt(
+        'YJS_MAP_MAX_ENTRIES',
+        DEFAULT_YJS_MAP_LIMITS.maxEntries
+      ),
+      maxNodes: this.parsePositiveInt(
+        'YJS_MAP_MAX_NODES',
+        DEFAULT_YJS_MAP_LIMITS.maxNodes
+      ),
+    }
+  }
+
+  public getYjsMessageLimits() {
+    return {
+      windowMs: this.parsePositiveInt(
+        'YJS_MESSAGE_WINDOW_MS',
+        DEFAULT_YJS_MESSAGE_LIMITS.windowMs
+      ),
+      maxMessages: this.parsePositiveInt(
+        'YJS_MESSAGE_MAX_COUNT',
+        DEFAULT_YJS_MESSAGE_LIMITS.maxMessages
+      ),
+      maxBytes: this.parsePositiveInt(
+        'YJS_MESSAGE_MAX_BYTES',
+        DEFAULT_YJS_MESSAGE_LIMITS.maxBytes
+      ),
+    }
   }
 
   public getWsGlobalMaxConnections(): number {

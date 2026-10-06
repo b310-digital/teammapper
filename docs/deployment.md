@@ -1,4 +1,5 @@
 # Deployment
+
 ## Behind a Reverse Proxy
 
 TeamMapper supports deployment behind a reverse proxy. Here's an example configuration using nginx with docker compose, though other reverse proxy setups will work as well. Add these lines to your docker-compose.yml:
@@ -15,6 +16,7 @@ nginx:
 Then create a `nginx.conf` file in the folder `nginx`, with one of the following setups.
 
 ### Reverse Proxy using a Subdomain
+
 ```
 server {
   listen 80;
@@ -47,6 +49,7 @@ server {
 ```
 
 ### Reverse Proxy using a Path
+
 When hosting TeamMapper under a path (e.g. /teammapper/), the `<base href>` tag in the HTML needs to be updated to match that path. This ensures TeamMapper can correctly resolve relative URLs for assets, API calls, and navigation. For nginx, this can be achieved using the `sub_filter` directive to dynamically replace the base href. For Apache, the equivalent functionality is provided by the `mod_substitute` module.
 
 ```
@@ -64,13 +67,13 @@ http {
       sub_filter '<base href="/"/>' '<base href="/teammapper/" />';
       sub_filter_types text/html;
       sub_filter_once on;
-      
+
       # Add proper proxy headers
       proxy_set_header Host $host;
       proxy_set_header X-Real-IP $remote_addr;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;
-      
+
       # WebSocket support
       proxy_http_version 1.1;
       proxy_set_header Upgrade $http_upgrade;
@@ -79,3 +82,18 @@ http {
   }
 }
 ```
+
+### Yjs sync limits
+
+Map sync validates content and limits cumulative size, entries and message rates.
+Invalid or oversized maps reload their persisted content; unsaved edits may be lost.
+These limits apply independently of `FEATURE_YJS_RATE_LIMITING`.
+
+| Backend variable        | Default | Limit                                          |
+| ----------------------- | ------- | ---------------------------------------------- |
+| `YJS_MAP_MAX_BYTES`     | 5242880 | Encoded state bytes, including history         |
+| `YJS_MAP_MAX_ENTRIES`   | 100000  | Retained Yjs entries                           |
+| `YJS_MAP_MAX_NODES`     | 10000   | Current nodes                                  |
+| `YJS_MESSAGE_WINDOW_MS` | 10000   | Rate window and reset cooldown in milliseconds |
+| `YJS_MESSAGE_MAX_COUNT` | 100     | Messages per window                            |
+| `YJS_MESSAGE_MAX_BYTES` | 5242880 | Incoming bytes per window                      |
