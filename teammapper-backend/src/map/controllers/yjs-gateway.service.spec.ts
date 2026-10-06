@@ -378,6 +378,8 @@ describe('YjsGateway', () => {
     })
   })
 
+  // Cover updates adding a top-level map absent from the schema, plus size and
+  // rate limits. Invalid map data must be discarded before broadcast or persistence.
   describe('incoming message limits', () => {
     const connectWriter = async (): Promise<MockWs> => {
       mapsService.findMap.mockResolvedValue(createMockMap())
@@ -574,7 +576,9 @@ describe('YjsGateway', () => {
       }
     })
 
-    it('rejects a connection whose database lookup crosses a map reset', async () => {
+    // The writer's invalid update discards live map state and closes its peers.
+    // A connection still awaiting its database lookup must then be rejected.
+    it('rejects a pending connection when invalid data resets the map', async () => {
       const writer = await connectWriter()
       let resolveMap: (map: MmpMap) => void = () => {
         throw new Error('Lookup not initialized')
