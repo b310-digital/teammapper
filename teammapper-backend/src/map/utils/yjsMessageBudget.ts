@@ -11,15 +11,15 @@ export interface MessageBudget extends MessageTally {
 
 /**
  * A map's budget, with the share each connection sent within the window.
- * The gateway keys shares by its WebSocket.
+ * The gateway uses each connection's WebSocket as its key in `shares`.
  */
 export interface MapMessageBudget extends MessageBudget {
   shares: Map<object, MessageTally>
 }
 
-// Past this multiple of its limit, a map rejects every sender, so senders
-// spread over many connections or reconnects cannot raise its traffic
-// without bound.
+// Once a map's traffic passes this multiple of its limit, `overrunsMap`
+// blames every sender. A client that keeps opening new connections gets a
+// fresh share each time, and this ceiling caps the traffic it can add.
 const MAP_HARD_LIMIT_FACTOR = 2
 
 /** An empty connection budget for a window opened at `startedAt`. */
@@ -36,8 +36,8 @@ export const openMapMessageBudget = (startedAt: number): MapMessageBudget => ({
 })
 
 /**
- * The budget `key` holds for the current window. Once the window has
- * elapsed, `open` starts a new one at the current time.
+ * Returns the budget of `key` for the current window. Once the window has
+ * elapsed, calls `open` to start a new window at the current time.
  */
 export const currentBudget = <K extends object, B extends MessageBudget>(
   budgets: WeakMap<K, B>,

@@ -69,8 +69,9 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null
 
   // Each connection has a budget for all its messages. Each map has a budget
-  // for sync messages, shared by its peers. Weak keys keep a map's budget
-  // across reconnects, without retaining evicted maps.
+  // for sync messages, shared by its peers. The gateway keys both weakly, so
+  // a map's budget survives reconnects for as long as the map stays loaded,
+  // and the garbage collector frees it once the doc manager evicts the map.
   private readonly connectionBudgets = new WeakMap<WebSocket, MessageBudget>()
   private readonly mapBudgets = new WeakMap<Y.Doc, MapMessageBudget>()
   private readonly rejectedConnections = new WeakSet<WebSocket>()
@@ -519,10 +520,10 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Charges a sync message to the map, under the sending connection. Past
-   * the map's limit, the sender loses its connection only when it sent the
-   * most within the window, so lighter peers stay connected. Shares count
-   * connections, not client IPs, because behind a reverse proxy every peer
-   * can share one address.
+   * the map's limit, the gateway closes the sender only when no other
+   * connection sent more within the window, so lighter peers stay connected. Each share
+   * belongs to one connection, because behind a reverse proxy every peer can
+   * arrive from the same client IP.
    */
   private acceptMapMessage(ws: WebSocket, doc: Y.Doc, bytes: number): boolean {
     const { windowMs, maxMessages, maxBytes } =

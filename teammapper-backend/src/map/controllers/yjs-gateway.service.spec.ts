@@ -658,7 +658,7 @@ describe('YjsGateway', () => {
         expect(editing.close).not.toHaveBeenCalled()
       })
 
-      it('still bounds presence messages per connection', async () => {
+      it('bounds presence messages per connection', async () => {
         const selecting = await connectWriter()
         for (const nodeId of ['a', 'b', 'c', 'd'])
           selecting._triggerMessage(presenceMessage(nodeId))
@@ -691,8 +691,8 @@ describe('YjsGateway', () => {
         })
       })
 
-      // Reconnecting gives a peer a fresh share, so only this ceiling bounds
-      // a peer that cycles its connections.
+      // A peer that reconnects starts a fresh share, so only the ceiling
+      // bounds a peer that keeps opening new connections.
       it('closes any sender past twice the limit', async () => {
         jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
           windowMs: 10_000,

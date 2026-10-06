@@ -100,8 +100,8 @@ These limits apply independently of `FEATURE_YJS_RATE_LIMITING`.
 
 The message limits apply twice:
 
-1. Per connection, to every message, presence included. A connection that
-   exceeds either limit is closed.
+1. Per connection, to every message, presence included. The backend closes
+   a connection that exceeds either limit.
 2. Per map, to sync messages only, shared by all peers on the map. Past the
    limit, the backend closes a sender only when no other connection sent more
    within the window, so lighter peers stay connected. Past twice the limit,

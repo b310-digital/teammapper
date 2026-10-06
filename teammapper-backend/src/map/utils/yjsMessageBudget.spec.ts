@@ -9,7 +9,8 @@ import {
   overrunsMap,
 } from './yjsMessageBudget'
 
-// The budget keys connections by identity only, so plain objects stand in.
+// `chargeShare` tells connections apart by identity, so plain objects stand
+// in for sockets.
 const connection = (): object => ({})
 
 describe('currentBudget', () => {
