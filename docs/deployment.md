@@ -97,3 +97,12 @@ These limits apply independently of `FEATURE_YJS_RATE_LIMITING`.
 | `YJS_MESSAGE_WINDOW_MS` | 10000   | Rate window and reset cooldown in milliseconds |
 | `YJS_MESSAGE_MAX_COUNT` | 100     | Messages per window                            |
 | `YJS_MESSAGE_MAX_BYTES` | 5242880 | Incoming bytes per window                      |
+
+The message limits apply twice:
+
+1. Per connection, to every message, presence included. A connection that
+   exceeds either limit is closed.
+2. Per map, to sync messages only, shared by all peers on the map. Past the
+   limit, the backend closes a sender only when no other connection sent more
+   within the window, so lighter peers stay connected. Past twice the limit,
+   it closes any sender.
