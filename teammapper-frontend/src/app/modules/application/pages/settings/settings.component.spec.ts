@@ -139,7 +139,42 @@ describe('SettingsComponent', () => {
     });
   });
 
-  it('drops the values out of range, so MmpService fills the defaults', async () => {
+  it.each([6, 10, 12])(
+    'preserves a stored minimum font size of %s when another field changes',
+    async fontMinSize => {
+      await render({ fontMaxSize: 70, fontMinSize, fontIncrement: 5 });
+      const component = fixture.componentInstance;
+      const edited = component.mapOptions();
+      if (!edited) throw new Error('No map settings to edit');
+
+      edited.fontMaxSize = 80;
+      component.updateMapOptions();
+
+      expect(updateMapOptions).toHaveBeenCalledWith({
+        fontMaxSize: 80,
+        fontMinSize,
+        fontIncrement: 5,
+      });
+    }
+  );
+
+  it('preserves a stored maximum below the form range when the increment changes', async () => {
+    await render({ fontMaxSize: 10, fontMinSize: 6, fontIncrement: 2 });
+    const component = fixture.componentInstance;
+    const edited = component.mapOptions();
+    if (!edited) throw new Error('No map settings to edit');
+
+    edited.fontIncrement = 3;
+    component.updateMapOptions();
+
+    expect(updateMapOptions).toHaveBeenCalledWith({
+      fontMaxSize: 10,
+      fontMinSize: 6,
+      fontIncrement: 3,
+    });
+  });
+
+  it('drops edited values out of range, so MmpService fills the defaults', async () => {
     await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
     const component = fixture.componentInstance;
     const edited = component.mapOptions();

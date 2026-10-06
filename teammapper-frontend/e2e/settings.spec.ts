@@ -59,6 +59,7 @@ test('deletes a map that is not open from the map list', async ({ page }) => {
 test('keeps the stored map settings when the user reopens the map', async ({
   page,
 }) => {
+  const fontMinSize = page.locator('input[name="fontMinSize"]');
   const fontMaxSize = page.locator('input[name="fontMaxSize"]');
   const fontIncrement = page.locator('input[name="fontIncrement"]');
   const openMapSettings = async () => {
@@ -71,6 +72,8 @@ test('keeps the stored map settings when the user reopens the map', async ({
   const mapUrl = page.url();
 
   await openMapSettings();
+  await fontMinSize.fill('20');
+  await fontMinSize.press('Tab');
   await fontMaxSize.fill('80');
   await fontMaxSize.press('Tab');
   await fontIncrement.fill('7');
@@ -82,6 +85,7 @@ test('keeps the stored map settings when the user reopens the map', async ({
   await expect(page.locator('.map')).toBeVisible();
   await openMapSettings();
 
+  await expect(fontMinSize).toHaveValue('20');
   await expect(fontMaxSize).toHaveValue('80');
   await expect(fontIncrement).toHaveValue('7');
 });

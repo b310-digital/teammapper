@@ -98,9 +98,10 @@ export class SettingsComponent {
    */
   public updateMapOptions() {
     const options = this.mapOptions();
-    if (!options) return;
+    const applied = this.appliedMapOptions();
+    if (!options || !applied) return;
 
-    this.mapSyncService.updateMapOptions(validMapOptions(options));
+    this.mapSyncService.updateMapOptions(validMapOptions(options, applied));
   }
 
   public async updateLanguage() {
@@ -123,19 +124,34 @@ export class SettingsComponent {
 }
 
 /**
- * The map settings without the values out of range. MmpService puts the
- * configured default in place of each value this drops.
+ * Validate edited values and preserve the other stored map settings, including
+ * values from older maps outside the form's range. MmpService puts the
+ * configured default in place of each invalid edit.
  */
-function validMapOptions(options: AdditionalMapOptions): CachedMapOptions {
-  const fontSize = (size: number) =>
-    size >= 15 && size <= 99 ? size : undefined;
+function validMapOptions(
+  options: AdditionalMapOptions,
+  applied: AdditionalMapOptions
+): CachedMapOptions {
+  const validOrUnchanged = (
+    value: number,
+    stored: number,
+    min: number,
+    max: number
+  ) => (value === stored || (value >= min && value <= max) ? value : undefined);
   const { fontIncrement, fontMaxSize } = options;
   return {
-    fontMinSize: fontSize(options.fontMinSize),
-    fontMaxSize: fontSize(fontMaxSize),
-    fontIncrement:
-      fontIncrement >= 1 && fontIncrement <= fontMaxSize
-        ? fontIncrement
-        : undefined,
+    fontMinSize: validOrUnchanged(
+      options.fontMinSize,
+      applied.fontMinSize,
+      15,
+      99
+    ),
+    fontMaxSize: validOrUnchanged(fontMaxSize, applied.fontMaxSize, 15, 99),
+    fontIncrement: validOrUnchanged(
+      fontIncrement,
+      applied.fontIncrement,
+      1,
+      fontMaxSize
+    ),
   };
 }

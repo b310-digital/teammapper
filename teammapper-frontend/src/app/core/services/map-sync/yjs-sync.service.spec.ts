@@ -254,6 +254,98 @@ describe('YjsSyncService', () => {
     });
   });
 
+  describe('map settings between two clients', () => {
+    let editor: YjsSyncService;
+    let viewer: YjsSyncService;
+    let editorMmp: jest.Mocked<MmpService>;
+    let viewerMmp: jest.Mocked<MmpService>;
+
+    function sync(from: YjsSyncService, to: YjsSyncService): void {
+      const source = internals(from).yDoc;
+      const target = internals(to).yDoc;
+      Y.applyUpdate(
+        target,
+        Y.encodeStateAsUpdate(source, Y.encodeStateVector(target)),
+        'peer'
+      );
+    }
+
+    beforeEach(() => {
+      editorMmp = capturingMmpService({});
+      viewerMmp = capturingMmpService({});
+      editor = createService(editorMmp);
+      viewer = createService(viewerMmp);
+      editor.setWritable(true);
+      viewer.setWritable(false);
+      editor.initMap('shared-map');
+      viewer.initMap('shared-map');
+      editor.updateMapOptions({
+        fontMaxSize: 70,
+        fontMinSize: 6,
+        fontIncrement: 2,
+      });
+      sync(editor, viewer);
+      for (const service of [editor, viewer]) {
+        internals(service).handleFirstSync();
+        service.attachMap();
+      }
+      editorMmp.updateAdditionalMapOptions.mockClear();
+      viewerMmp.updateAdditionalMapOptions.mockClear();
+    });
+
+    afterEach(() => {
+      editor.destroy();
+      viewer.destroy();
+    });
+
+    it('applies an editor update to a viewer without echoing it back locally', () => {
+      const options = { fontMaxSize: 80, fontMinSize: 6, fontIncrement: 7 };
+      editor.updateMapOptions(options);
+      sync(editor, viewer);
+      sync(viewer, editor);
+
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledTimes(1);
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith(
+        options
+      );
+      expect(editorMmp.updateAdditionalMapOptions).not.toHaveBeenCalled();
+    });
+
+    it('applies updates in both directions when both clients can edit', () => {
+      viewer.setWritable(true);
+      editor.updateMapOptions({
+        fontMaxSize: 80,
+        fontMinSize: 20,
+        fontIncrement: 7,
+      });
+      sync(editor, viewer);
+      const options = { fontMaxSize: 90, fontMinSize: 25, fontIncrement: 5 };
+      viewer.updateMapOptions(options);
+      sync(viewer, editor);
+
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith({
+        fontMaxSize: 80,
+        fontMinSize: 20,
+        fontIncrement: 7,
+      });
+      expect(editorMmp.updateAdditionalMapOptions).toHaveBeenCalledTimes(1);
+      expect(editorMmp.updateAdditionalMapOptions).toHaveBeenCalledWith(
+        options
+      );
+    });
+
+    it('passes a deleted peer setting to MmpService to restore its default', () => {
+      internals(editor).yDoc.getMap('mapOptions').delete('fontMinSize');
+      sync(editor, viewer);
+
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith({
+        fontMaxSize: 70,
+        fontMinSize: undefined,
+        fontIncrement: 2,
+      });
+    });
+  });
+
   describe('a peer replacing the map', () => {
     let context: MapSyncContext;
     let service: YjsSyncService;
