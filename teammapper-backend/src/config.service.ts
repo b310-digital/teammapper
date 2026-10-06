@@ -110,9 +110,9 @@ class ConfigService {
     return this.parsePositiveInt('WS_PER_IP_RATE_WINDOW_MS', 10000)
   }
 
-  /** Total bytes of the images one map may hold; 50 MB by default. */
+  /** Total bytes of the images one map may hold; 2 MB by default. */
   public getMaxImageBytesPerMap(): number {
-    return this.parsePositiveInt('MAX_IMAGE_BYTES_PER_MAP', 50_000_000)
+    return this.parsePositiveInt('MAX_IMAGE_BYTES_PER_MAP', 2_000_000)
   }
 
   /** Largest single image upload in bytes; the frontend resize stays below the default. */
@@ -126,6 +126,19 @@ class ConfigService {
 
   public getUploadImageRateWindowMs(): number {
     return this.parsePositiveInt('UPLOAD_IMAGE_RATE_WINDOW_MS', 60_000)
+  }
+
+  public getDuplicateMapRateLimit(): number {
+    return this.parsePositiveInt('DUPLICATE_MAP_RATE_LIMIT', 5)
+  }
+
+  public getDuplicateMapRateWindowMs(): number {
+    return this.parsePositiveInt('DUPLICATE_MAP_RATE_WINDOW_MS', 60_000)
+  }
+
+  /** Duplication stops when stored images across all maps would exceed 1 GB. */
+  public getDuplicateMapMaxImageBytes(): number {
+    return this.parsePositiveInt('DUPLICATE_MAP_MAX_IMAGE_BYTES', 1_000_000_000)
   }
 
   private parsePositiveInt(key: string, fallback: number): number {
