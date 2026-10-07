@@ -51,6 +51,16 @@ import {
   processReadOnlySyncMessage,
   parseAwarenessClientIds,
 } from '../utils/yjsProtocol'
+import {
+  MessageBudget,
+  MapMessageBudget,
+  openMessageBudget,
+  openMapMessageBudget,
+  currentBudget,
+  addMessage,
+  chargeShare,
+  overrunsMap,
+} from '../utils/yjsMessageBudget'
 
 @Injectable()
 export class YjsGateway implements OnModuleInit, OnModuleDestroy {
@@ -58,16 +68,12 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   private wss: WebSocketServer | null = null
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null
 
-  // Weak keys keep rate budgets for a loaded map across reconnects, without
-  // retaining evicted maps or closed sockets.
-  private readonly messageBudgets = new WeakMap<
-    object,
-    {
-      startedAt: number
-      count: number
-      bytes: number
-    }
-  >()
+  // Each connection has a budget for all its messages. Each map has a budget
+  // for sync messages, shared by its peers. The gateway keys both weakly, so
+  // a map's budget survives reconnects for as long as the map stays loaded,
+  // and the garbage collector frees it once the doc manager evicts the map.
+  private readonly connectionBudgets = new WeakMap<WebSocket, MessageBudget>()
+  private readonly mapBudgets = new WeakMap<Y.Doc, MapMessageBudget>()
   private readonly rejectedConnections = new WeakSet<WebSocket>()
   private readonly resetUntil = new Map<string, number>()
 
@@ -459,9 +465,8 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       isRejectedMap(doc)
     )
       return
-    if (!this.acceptMessage(ws, doc, data.byteLength)) {
-      this.rejectedConnections.add(ws)
-      ws.close(1008, 'Map message rate limit exceeded')
+    if (!this.acceptConnectionMessage(ws, data.byteLength)) {
+      this.rejectOverLimit(ws)
       return
     }
     try {
@@ -471,7 +476,9 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
 
       switch (messageType) {
         case MESSAGE_SYNC:
-          this.handleSyncMessage(ws, doc, decoder, writable, mapId)
+          if (this.acceptMapMessage(ws, doc, data.byteLength))
+            this.handleSyncMessage(ws, doc, decoder, writable, mapId)
+          else this.rejectOverLimit(ws)
           break
         case MESSAGE_AWARENESS:
           this.handleAwarenessMessage(ws, awareness, mapId, decoder)
@@ -486,21 +493,52 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private acceptMessage(ws: WebSocket, doc: Y.Doc, bytes: number): boolean {
+  /**
+   * Closes a connection that exceeded a message budget, and ignores the rest
+   * of its messages.
+   */
+  private rejectOverLimit(ws: WebSocket): void {
+    this.rejectedConnections.add(ws)
+    ws.close(1008, 'Map message rate limit exceeded')
+  }
+
+  /**
+   * Charges any message, presence included, to the connection that sent it.
+   * Returns false once the connection exceeds its budget.
+   */
+  private acceptConnectionMessage(ws: WebSocket, bytes: number): boolean {
     const limits = configService.getYjsMessageLimits()
-    const now = Date.now()
-    for (const key of [ws, doc]) {
-      let budget = this.messageBudgets.get(key)
-      if (!budget || now - budget.startedAt >= limits.windowMs) {
-        budget = { startedAt: now, count: 0, bytes: 0 }
-        this.messageBudgets.set(key, budget)
-      }
-      budget.count++
-      budget.bytes += bytes
-      if (budget.count > limits.maxMessages || budget.bytes > limits.maxBytes)
-        return false
-    }
-    return true
+    const budget = currentBudget(
+      this.connectionBudgets,
+      ws,
+      limits.windowMs,
+      openMessageBudget
+    )
+    addMessage(budget, bytes)
+    return budget.count <= limits.maxMessages && budget.bytes <= limits.maxBytes
+  }
+
+  /**
+   * Charges a sync message to the map, under the sending connection. Past
+   * the map's limit, the gateway closes the sender only when no other
+   * connection sent more within the window, so lighter peers stay connected. Each share
+   * belongs to one connection, because behind a reverse proxy every peer can
+   * arrive from the same client IP.
+   */
+  private acceptMapMessage(ws: WebSocket, doc: Y.Doc, bytes: number): boolean {
+    const { windowMs, maxMessages, maxBytes } =
+      configService.getYjsMessageLimits()
+    const budget = currentBudget(
+      this.mapBudgets,
+      doc,
+      windowMs,
+      openMapMessageBudget
+    )
+    const share = chargeShare(budget, ws, bytes)
+    return !(
+      overrunsMap(budget, share, 'count', maxMessages) ||
+      overrunsMap(budget, share, 'bytes', maxBytes)
+    )
   }
 
   private handleSyncMessage(

@@ -26,8 +26,10 @@ import {
   MESSAGE_SYNC,
   encodeSyncUpdateMessage,
   encodeSyncStep1Message,
+  encodeAwarenessMessage,
 } from '../utils/yjsProtocol'
 import * as syncProtocol from 'y-protocols/sync'
+import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
 
@@ -593,24 +595,6 @@ describe('YjsGateway', () => {
       client.destroy()
     })
 
-    it('shares the message count budget across connections and reconnects', async () => {
-      jest
-        .spyOn(configService, 'getYjsMessageLimits')
-        .mockReturnValue({ windowMs: 10_000, maxMessages: 2, maxBytes: 10000 })
-      const first = await connectWriter()
-      const second = await connectWriter()
-      const message = encodeSyncStep1Message(doc)
-      first._triggerMessage(message)
-      second._triggerMessage(message)
-      first._triggerClose()
-      const reconnected = await connectWriter()
-      reconnected._triggerMessage(message)
-      expect(reconnected.close).toHaveBeenCalledWith(
-        1008,
-        'Map message rate limit exceeded'
-      )
-    })
-
     it('bounds bytes as well as count before decoding', async () => {
       const message = encodeSyncStep1Message(doc)
       jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
@@ -640,6 +624,94 @@ describe('YjsGateway', () => {
       currentTime = 11000
       ws._triggerMessage(message)
       expect(ws.close).not.toHaveBeenCalled()
+    })
+
+    describe('map budget', () => {
+      const presenceMessage = (selectedNodeId: string): Uint8Array => {
+        const client = new Y.Doc()
+        const awareness = new awarenessProtocol.Awareness(client)
+        try {
+          awareness.setLocalStateField('user', { selectedNodeId })
+          return encodeAwarenessMessage(awareness, [client.clientID])
+        } finally {
+          awareness.destroy()
+          client.destroy()
+        }
+      }
+
+      beforeEach(() => {
+        jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
+          windowMs: 10_000,
+          maxMessages: 3,
+          maxBytes: 10000,
+        })
+      })
+
+      it('does not charge presence messages to the map', async () => {
+        const selecting = await connectWriter()
+        const editing = await connectWriter()
+        for (const nodeId of ['a', 'b', 'c'])
+          selecting._triggerMessage(presenceMessage(nodeId))
+        for (let i = 0; i < 3; i++)
+          editing._triggerMessage(encodeSyncStep1Message(doc))
+        expect(selecting.close).not.toHaveBeenCalled()
+        expect(editing.close).not.toHaveBeenCalled()
+      })
+
+      it('bounds presence messages per connection', async () => {
+        const selecting = await connectWriter()
+        for (const nodeId of ['a', 'b', 'c', 'd'])
+          selecting._triggerMessage(presenceMessage(nodeId))
+        expect(selecting.close).toHaveBeenCalledWith(
+          1008,
+          'Map message rate limit exceeded'
+        )
+      })
+
+      describe('when one connection exceeds it', () => {
+        let heavy: MockWs
+        let light: MockWs
+        beforeEach(async () => {
+          heavy = await connectWriter()
+          const other = await connectWriter()
+          light = await connectWriter()
+          for (const ws of [heavy, heavy, other])
+            ws._triggerMessage(encodeSyncStep1Message(doc))
+          light._triggerMessage(encodeSyncStep1Message(doc))
+        })
+        it('keeps a lighter peer connected when it crosses the limit', () => {
+          expect(light.close).not.toHaveBeenCalled()
+        })
+        it('closes the heaviest sender on its next message', () => {
+          heavy._triggerMessage(encodeSyncStep1Message(doc))
+          expect(heavy.close).toHaveBeenCalledWith(
+            1008,
+            'Map message rate limit exceeded'
+          )
+        })
+      })
+
+      // A peer that reconnects starts a fresh share, so only the ceiling
+      // bounds a peer that keeps opening new connections.
+      it('closes any sender past twice the limit', async () => {
+        jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
+          windowMs: 10_000,
+          maxMessages: 4,
+          maxBytes: 10000,
+        })
+        const light = await connectWriter()
+        light._triggerMessage(encodeSyncStep1Message(doc))
+        const heavy = await connectWriter()
+        for (let i = 0; i < 4; i++)
+          heavy._triggerMessage(encodeSyncStep1Message(doc))
+        for (let i = 0; i < 3; i++)
+          (await connectWriter())._triggerMessage(encodeSyncStep1Message(doc))
+        light._triggerMessage(encodeSyncStep1Message(doc))
+        expect(light.close).toHaveBeenCalledWith(
+          1008,
+          'Map message rate limit exceeded'
+        )
+      })
     })
   })
 

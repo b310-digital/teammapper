@@ -1,4 +1,10 @@
-import { auditTime, Subscription } from 'rxjs';
+import {
+  asyncScheduler,
+  auditTime,
+  Subject,
+  Subscription,
+  throttleTime,
+} from 'rxjs';
 import {
   CachedMapOptions,
   ExportNodeProperties,
@@ -41,6 +47,14 @@ const stringOr = (value: unknown, fallback: string): string =>
 export const ATTACHED_MAP_AUDIT_MS = 250;
 
 /**
+ * The shortest interval between two selection updates this client sends to
+ * its peers. Holding an arrow key changes the selection about 30 times a
+ * second. At 200 ms the client sends at most 50 updates per 10 s rate window
+ * of the backend, half the backend's default per-connection limit.
+ */
+export const PRESENCE_THROTTLE_MS = 200;
+
+/**
  * Keeps one open map in sync with the other clients over a Yjs websocket.
  * The Y.Doc holds the only copy of the map, and mmp reads and writes it
  * through `YjsMapData`. The service owns the connection, presence, the undo
@@ -62,6 +76,7 @@ export class YjsSyncService {
   // The node this client has selected, which setupAwareness publishes once
   // awareness is up.
   private selectedNodeId: string | null = null;
+  private readonly selectionChanges = new Subject<void>();
   private mapAttached = false;
 
   constructor(
@@ -70,7 +85,19 @@ export class YjsSyncService {
     private settingsService: SettingsService,
     private utilsService: UtilsService,
     private toastrService: ToastrService
-  ) {}
+  ) {
+    // The throttle sends the first change at once. For further changes within
+    // the interval, the throttle sends one update with the selection at the
+    // end of the interval.
+    this.selectionChanges
+      .pipe(
+        throttleTime(PRESENCE_THROTTLE_MS, asyncScheduler, {
+          leading: true,
+          trailing: true,
+        })
+      )
+      .subscribe(() => this.publishSelection());
+  }
 
   /**
    * The Y.Doc of the open connection. initMap creates it, and the reads and
@@ -537,15 +564,20 @@ export class YjsSyncService {
     return resolveClientColor(this.ctx.getClientColor(), usedColors);
   }
 
+  /** Records the selection and schedules a throttled update to peers. */
   private updateAwarenessSelection(nodeId: string | null): void {
     this.selectedNodeId = nodeId;
-    // Until setupAwareness runs, the method only records the selection, and
-    // setupAwareness publishes it. A write before then would make
+    this.selectionChanges.next();
+  }
+
+  private publishSelection(): void {
+    // Until setupAwareness runs, publishSelection sends nothing, and
+    // setupAwareness publishes the recorded selection. A write before then would make
     // pickClientColor count this client's own colour as taken.
     if (!this.wsProvider || this.yjsAwarenessHandler === null) return;
     this.wsProvider.awareness.setLocalStateField('user', {
       color: this.ctx.getClientColor(),
-      selectedNodeId: nodeId,
+      selectedNodeId: this.selectedNodeId,
     });
   }
 

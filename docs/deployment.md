@@ -85,15 +85,27 @@ http {
 
 ### Yjs sync limits
 
-Map sync validates content and limits cumulative size, entries and message rates.
-Invalid or oversized maps reload their persisted content; unsaved edits may be lost.
 These limits apply independently of `FEATURE_YJS_RATE_LIMITING`.
 
-| Backend variable        | Default | Limit                                          |
-| ----------------------- | ------- | ---------------------------------------------- |
-| `YJS_MAP_MAX_BYTES`     | 5242880 | Encoded state bytes, including history         |
-| `YJS_MAP_MAX_ENTRIES`   | 100000  | Retained Yjs entries                           |
-| `YJS_MAP_MAX_NODES`     | 10000   | Current nodes                                  |
-| `YJS_MESSAGE_WINDOW_MS` | 10000   | Rate window and reset cooldown in milliseconds |
-| `YJS_MESSAGE_MAX_COUNT` | 100     | Messages per window                            |
-| `YJS_MESSAGE_MAX_BYTES` | 5242880 | Incoming bytes per window                      |
+| Backend variable        | Default | Unit         | Limit                                  |
+| ----------------------- | ------- | ------------ | -------------------------------------- |
+| `YJS_MAP_MAX_BYTES`     | 5242880 | bytes        | Map state, including history           |
+| `YJS_MAP_MAX_ENTRIES`   | 100000  | Yjs entries  | Entries in the map                     |
+| `YJS_MAP_MAX_NODES`     | 10000   | nodes        | Nodes in the map                       |
+| `YJS_MESSAGE_WINDOW_MS` | 10000   | milliseconds | Rate window and reset cooldown         |
+| `YJS_MESSAGE_MAX_COUNT` | 100     | messages     | Per window, per connection and per map |
+| `YJS_MESSAGE_MAX_BYTES` | 5242880 | bytes        | Per window, per connection and per map |
+
+When a limit is reached:
+
+- **Map size** (`YJS_MAP_*`), or invalid content: the backend discards the
+  live map and disconnects every peer. Peers reload the saved map after the
+  cooldown, and unsaved edits may be lost.
+- **Messages per connection**, all messages including presence: the backend
+  disconnects that connection.
+- **Messages per map**, edits only: the backend disconnects the connection that
+  sent the most in the window, and the other peers keep working. At twice the
+  limit it disconnects every sender.
+
+A disconnected client reconnects after a few hundred milliseconds and resends
+any edits the backend did not apply.
