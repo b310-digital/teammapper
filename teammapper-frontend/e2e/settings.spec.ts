@@ -56,6 +56,43 @@ test('deletes a map that is not open from the map list', async ({ page }) => {
   await expect(openMapRow.first()).toBeVisible();
 });
 
+test('keeps the stored map settings when the user reopens the map', async ({
+  page,
+}) => {
+  const fontMinSize = page.locator('input[name="fontMinSize"]');
+  const fontMaxSize = page.locator('input[name="fontMaxSize"]');
+  const fontIncrement = page.locator('input[name="fontIncrement"]');
+  const openMapSettings = async () => {
+    await page.locator('button[routerlink="/app/settings"]').click();
+    await page.locator('.mat-mdc-tab').nth(1).click();
+  };
+  await page.goto('/');
+  await page.getByText('Create mind map').click();
+  await page.waitForURL(/\/map\/[0-9a-f-]+/);
+  const mapUrl = page.url();
+
+  await openMapSettings();
+  await fontMinSize.fill('20');
+  await fontMinSize.press('Tab');
+  await expect(fontMinSize).toHaveValue('20');
+  await fontMaxSize.fill('80');
+  await fontMaxSize.press('Tab');
+  await expect(fontMinSize).toHaveValue('20');
+  await fontIncrement.fill('7');
+  await fontIncrement.press('Tab');
+  await expect(fontMinSize).toHaveValue('20');
+  await page.locator('.close-button').click();
+  await expect(page.locator('.map')).toBeVisible();
+
+  await page.goto(mapUrl);
+  await expect(page.locator('.map')).toBeVisible();
+  await openMapSettings();
+
+  await expect(fontMinSize).toHaveValue('20');
+  await expect(fontMaxSize).toHaveValue('80');
+  await expect(fontIncrement).toHaveValue('7');
+});
+
 test('modifies map options in settings', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();

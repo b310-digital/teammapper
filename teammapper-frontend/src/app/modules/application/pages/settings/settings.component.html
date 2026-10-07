@@ -57,7 +57,8 @@
 
       <!-- The font fields below belong to the open map, so this tab needs the
       map options as well as the user settings. -->
-      @if (mapOptions && settings; as userSettings) {
+      @let options = mapOptions();
+      @if (options && settings; as userSettings) {
         <mat-tab [label]="'PAGES.SETTINGS.MAP_OPTIONS' | translate">
           <div class="content map-options">
             <teammapper-map-deletion></teammapper-map-deletion>
@@ -85,8 +86,8 @@
                 </mat-slide-toggle>
                 <mat-form-field>
                   <input
-                    (change)="updateMapOptions()"
-                    [(ngModel)]="mapOptions.fontMinSize"
+                    (change)="updateMapOptions('fontMinSize', $event)"
+                    [(ngModel)]="options.fontMinSize"
                     [placeholder]="'PAGES.SETTINGS.FONT_MIN_SIZE' | translate"
                     [title]="'TOOLTIPS.FONT_MIN_SIZE' | translate"
                     [disabled]="editMode | async | inverseBool"
@@ -99,8 +100,8 @@
                 <br />
                 <mat-form-field>
                   <input
-                    (change)="updateMapOptions()"
-                    [(ngModel)]="mapOptions.fontMaxSize"
+                    (change)="updateMapOptions('fontMaxSize', $event)"
+                    [(ngModel)]="options.fontMaxSize"
                     [placeholder]="'PAGES.SETTINGS.FONT_MAX_SIZE' | translate"
                     [title]="'TOOLTIPS.FONT_MAX_SIZE' | translate"
                     [disabled]="editMode | async | inverseBool"
@@ -113,8 +114,8 @@
                 <br />
                 <mat-form-field>
                   <input
-                    (change)="updateMapOptions()"
-                    [(ngModel)]="mapOptions.fontIncrement"
+                    (change)="updateMapOptions('fontIncrement', $event)"
+                    [(ngModel)]="options.fontIncrement"
                     [placeholder]="'PAGES.SETTINGS.FONT_INCREMENT' | translate"
                     [title]="'TOOLTIPS.FONT_INCREMENT' | translate"
                     [disabled]="editMode | async | inverseBool"

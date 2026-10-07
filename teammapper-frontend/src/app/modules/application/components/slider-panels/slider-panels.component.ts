@@ -1,4 +1,5 @@
-import { Component, Input, OnChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, Signal, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ExportNodeProperties } from '@teammapper/shared';
 import {
   AdditionalMapOptions,
@@ -28,13 +29,18 @@ export class SliderPanelsComponent implements OnChanges {
   public fontSize = 0;
   public imageSize = 0;
 
-  /** The font bounds of the open map, absent until one has been created. */
-  public mapOptions: AdditionalMapOptions | null = null;
+  /**
+   * The font bounds of the open map, null until MmpService creates one. A
+   * peer's change to the map settings updates them.
+   */
+  public readonly mapOptions: Signal<AdditionalMapOptions | null> = toSignal(
+    this.mmpService.additionalMapOptions$,
+    { initialValue: null }
+  );
 
   ngOnChanges() {
     this.fontSize = this.node?.font?.size ?? 0;
     this.imageSize = this.node?.image?.size ?? 0;
-    this.mapOptions = this.mmpService.getAdditionalMapOptions();
   }
 
   public updateNodeFontSize(event: Event) {

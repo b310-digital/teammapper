@@ -1,5 +1,6 @@
-import { Component, inject } from '@angular/core';
-import { UserSettings } from '@teammapper/shared';
+import { Component, Signal, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { CachedMapOptions, UserSettings } from '@teammapper/shared';
 import { AdditionalMapOptions } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
@@ -64,13 +65,24 @@ export class SettingsComponent {
 
   public readonly languages: string[];
   public settings: UserSettings | null;
-  public mapOptions: AdditionalMapOptions | null;
+  private readonly appliedMapOptions = toSignal(
+    this.mmpService.additionalMapOptions$,
+    { initialValue: null }
+  );
+  /**
+   * The copy of the map settings the form edits. A peer's change replaces it.
+   */
+  public readonly mapOptions: Signal<AdditionalMapOptions | null> = computed(
+    () => {
+      const options = this.appliedMapOptions();
+      return options && { ...options };
+    }
+  );
   public editMode: Observable<boolean | null>;
 
   constructor() {
     this.languages = SettingsService.LANGUAGES;
     this.settings = this.settingsService.getCachedUserSettings();
-    this.mapOptions = this.mmpService.getAdditionalMapOptions();
     this.editMode = this.settingsService.getEditModeObservable();
   }
 
@@ -80,11 +92,21 @@ export class SettingsComponent {
     await this.settingsService.updateCachedSettings(this.settings);
   }
 
-  public async updateMapOptions() {
-    if (!this.mapOptions) return;
+  /**
+   * Apply the edited map settings. The call runs synchronously, so the new
+   * values reach MmpService before the user types into the next field.
+   */
+  public updateMapOptions(key: keyof AdditionalMapOptions, event: Event) {
+    const applied = this.appliedMapOptions();
+    const input = event.target;
+    if (!applied || !(input instanceof HTMLInputElement)) return;
 
-    await this.validateMapOptionsInput(this.mapOptions);
-    this.mapSyncService.updateMapOptions(this.mapOptions);
+    // Read the changed field directly and merge it with the latest applied
+    // settings. The form may still hold values from before a local edit or a
+    // peer's update, until Angular refreshes its bindings.
+    const options = { ...applied, [key]: input.valueAsNumber };
+
+    this.mapSyncService.updateMapOptions(validMapOptions(options, applied));
   }
 
   public async updateLanguage() {
@@ -104,19 +126,37 @@ export class SettingsComponent {
   public back() {
     this.location.back();
   }
+}
 
-  private async validateMapOptionsInput(mapOptions: AdditionalMapOptions) {
-    const defaultSettings: UserSettings = (
-      await this.settingsService.getDefaultSettings()
-    ).userSettings;
-    if (
-      mapOptions.fontIncrement > mapOptions.fontMaxSize ||
-      mapOptions.fontIncrement < 1
-    )
-      mapOptions.fontIncrement = defaultSettings.mapOptions.fontIncrement;
-    if (mapOptions.fontMaxSize > 99 || mapOptions.fontMaxSize < 15)
-      mapOptions.fontMaxSize = defaultSettings.mapOptions.fontMaxSize;
-    if (mapOptions.fontMinSize > 99 || mapOptions.fontMinSize < 15)
-      mapOptions.fontMinSize = defaultSettings.mapOptions.fontMinSize;
-  }
+/**
+ * Validate edited values and preserve the other stored map settings, including
+ * values from older maps outside the form's range. MmpService puts the
+ * configured default in place of each invalid edit.
+ */
+function validMapOptions(
+  options: AdditionalMapOptions,
+  applied: AdditionalMapOptions
+): CachedMapOptions {
+  const validOrUnchanged = (
+    value: number,
+    stored: number,
+    min: number,
+    max: number
+  ) => (value === stored || (value >= min && value <= max) ? value : undefined);
+  const { fontIncrement, fontMaxSize } = options;
+  return {
+    fontMinSize: validOrUnchanged(
+      options.fontMinSize,
+      applied.fontMinSize,
+      15,
+      99
+    ),
+    fontMaxSize: validOrUnchanged(fontMaxSize, applied.fontMaxSize, 15, 99),
+    fontIncrement: validOrUnchanged(
+      fontIncrement,
+      applied.fontIncrement,
+      1,
+      fontMaxSize
+    ),
+  };
 }

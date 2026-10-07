@@ -72,6 +72,7 @@ describe('MapSyncService', () => {
       on: jest.fn(),
       updateNode: jest.fn(),
       updateAdditionalMapOptions: jest.fn(),
+      getAdditionalMapOptions: jest.fn().mockReturnValue(null),
       existNode: jest.fn().mockReturnValue(true),
       removeNode: jest.fn(),
       highlightNode: jest.fn(),
@@ -523,6 +524,35 @@ describe('MapSyncService', () => {
 
       expect(setWritableSpy).toHaveBeenCalledWith(true);
     });
+
+    // The Y.Doc holds the stored map settings, and YjsSyncService applies
+    // them when the map opens. The REST copy would race the map's creation.
+    it('leaves the map settings to the Yjs sync', async () => {
+      httpService.get.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockServerMap),
+      } as unknown as Response);
+
+      await service.prepareExistingMap('test-uuid', '');
+
+      expect(mmpService.updateAdditionalMapOptions).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateMapOptions', () => {
+    it('applies the map settings locally and writes the result for the peers', () => {
+      const applied = { fontMaxSize: 80, fontMinSize: 12, fontIncrement: 7 };
+      mmpService.getAdditionalMapOptions.mockReturnValue(applied);
+      const writeSpy = jest.spyOn(getSync(service), 'updateMapOptions');
+
+      service.updateMapOptions({ fontMaxSize: 80, fontIncrement: 7 });
+
+      expect(mmpService.updateAdditionalMapOptions).toHaveBeenCalledWith({
+        fontMaxSize: 80,
+        fontIncrement: 7,
+      });
+      expect(writeSpy).toHaveBeenCalledWith(applied);
+    });
   });
 
   describe('node images', () => {
@@ -605,6 +635,17 @@ describe('MapSyncService', () => {
   });
 
   describe('lifecycle', () => {
+    it('detaches the renderer without closing the settings connection', () => {
+      const sync = getSync(service);
+      const detachSpy = jest.spyOn(sync, 'detachMap');
+      const destroySpy = jest.spyOn(sync, 'destroy');
+
+      service.detachMap();
+
+      expect(detachSpy).toHaveBeenCalled();
+      expect(destroySpy).not.toHaveBeenCalled();
+    });
+
     it('ngOnDestroy calls destroy on sync service', () => {
       const destroySpy = jest.spyOn(getSync(service), 'destroy');
 

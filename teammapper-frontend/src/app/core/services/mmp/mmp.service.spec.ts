@@ -1,5 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { MmpService, NODE_FONT_FAMILY } from './mmp.service';
+import {
+  AdditionalMapOptions,
+  MmpService,
+  NODE_FONT_FAMILY,
+} from './mmp.service';
 import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
@@ -357,6 +361,49 @@ describe('MmpService', () => {
         fontMaxSize: 24,
         fontIncrement: 2,
       });
+    });
+  });
+
+  describe('updateAdditionalMapOptions', () => {
+    it('keeps the stored map settings and fills missing ones with defaults', async () => {
+      await createMap();
+
+      service.updateAdditionalMapOptions({ fontMaxSize: 70, fontIncrement: 5 });
+
+      expect(service.getAdditionalMapOptions()).toEqual({
+        fontMinSize: 12,
+        fontMaxSize: 70,
+        fontIncrement: 5,
+      });
+    });
+
+    it('resets the map settings of the previous map on the next create', async () => {
+      await createMap();
+      service.updateAdditionalMapOptions({ fontMaxSize: 70, fontIncrement: 5 });
+
+      await createMap();
+
+      expect(service.getAdditionalMapOptions()).toEqual({
+        fontMinSize: 12,
+        fontMaxSize: 24,
+        fontIncrement: 2,
+      });
+    });
+
+    it('emits the new map settings to subscribers', async () => {
+      await createMap();
+      const emitted: (AdditionalMapOptions | null)[] = [];
+      service.additionalMapOptions$.subscribe(options => emitted.push(options));
+
+      service.updateAdditionalMapOptions({ fontMaxSize: 70 });
+
+      expect(emitted[emitted.length - 1]?.fontMaxSize).toBe(70);
+    });
+
+    it('ignores map settings before a map exists', () => {
+      service.updateAdditionalMapOptions({ fontMaxSize: 70 });
+
+      expect(service.getAdditionalMapOptions()).toBeNull();
     });
   });
 
