@@ -5,6 +5,7 @@ import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { yMapToMmpNode, yMapToMapOptions } from '../utils/yDocConversion'
+import { MapUpdateOrigin, isRejectedMap } from '../utils/yjsValidation'
 import { orderNodesFromRoot } from '../utils/nodeOrdering'
 
 interface DebounceEntry {
@@ -12,7 +13,7 @@ interface DebounceEntry {
   timer: ReturnType<typeof setTimeout> | null
   // When the oldest change the pending timer covers arrived
   pendingSince: number | null
-  observer: () => void
+  observer: (update: Uint8Array, origin: unknown) => void
 }
 
 @Injectable()
@@ -40,6 +41,7 @@ export class YjsPersistenceService implements OnModuleDestroy {
 
   // Persists a Y.Doc's nodes and options to the database in a transaction
   async persistDoc(mapId: string, doc: Y.Doc): Promise<void> {
+    this.assertMapAccepted(doc)
     const queryRunner =
       this.nodesRepository.manager.connection.createQueryRunner()
     await queryRunner.connect()
@@ -47,6 +49,7 @@ export class YjsPersistenceService implements OnModuleDestroy {
     try {
       await queryRunner.startTransaction()
 
+      this.assertMapAccepted(doc)
       const nodesMap = doc.getMap('nodes')
       const optionsMap = doc.getMap('mapOptions') as Y.Map<unknown>
       const now = new Date()
@@ -62,8 +65,10 @@ export class YjsPersistenceService implements OnModuleDestroy {
       }
 
       // Update map options and lastModified
+      this.assertMapAccepted(doc)
       await this.updateMapMetadata(queryRunner, mapId, optionsMap, now)
 
+      this.assertMapAccepted(doc)
       await queryRunner.commitTransaction()
       this.logger.debug(
         `Persisted Y.Doc for map ${mapId} (${mmpNodes.length} nodes)`
@@ -86,7 +91,8 @@ export class YjsPersistenceService implements OnModuleDestroy {
     if (this.debounceTimers.get(mapId)?.doc === doc) return
     this.unregisterDebounce(mapId)
 
-    const observer = (): void => {
+    const observer = (_update: Uint8Array, origin: unknown): void => {
+      if (origin instanceof MapUpdateOrigin && !origin.accepted) return
       this.resetDebounceTimer(mapId, doc)
     }
 
@@ -155,6 +161,11 @@ export class YjsPersistenceService implements OnModuleDestroy {
       },
       Math.max(0, delay)
     )
+  }
+
+  private assertMapAccepted(doc: Y.Doc): void {
+    if (isRejectedMap(doc))
+      throw new Error('Rejected map state cannot be persisted')
   }
 
   private cancelDebounceTimer(mapId: string): void {

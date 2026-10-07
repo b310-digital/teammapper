@@ -3,6 +3,7 @@ import {
   CachedMapOptions,
   DEFAULT_FONT_MAX_SIZE,
   ExportNodeProperties,
+  WS_CLOSE_MAP_SYNC_RESET,
 } from '@teammapper/shared';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -156,7 +157,7 @@ export class YjsSyncService {
     this.yjsMapData = new YjsMapData(this.yDoc, () => this.yUndoManager);
     const provider = this.setupConnection(uuid);
     this.setupConnectionStatus(provider);
-    this.setupMapDeletionHandler(provider);
+    this.setupMapCloseHandler(provider);
   }
 
   /**
@@ -262,10 +263,18 @@ export class YjsSyncService {
     );
   }
 
-  private setupMapDeletionHandler(provider: WebsocketProvider): void {
+  private setupMapCloseHandler(provider: WebsocketProvider): void {
     provider.on('connection-close', (event: CloseEvent | null) => {
       if (!this.isCurrentProvider(provider)) return;
-      if (event?.code === WS_CLOSE_MAP_DELETED) {
+      if (event?.code === WS_CLOSE_MAP_SYNC_RESET && this.yjsMapId) {
+        const mapId = this.yjsMapId;
+        const writable = this.yjsWritable;
+        this.settingsService.setEditMode(false);
+        this.destroy();
+        this.setWritable(writable);
+        this.initMap(mapId);
+        this.ctx.setConnectionStatus('disconnected');
+      } else if (event?.code === WS_CLOSE_MAP_DELETED) {
         this.ctx.mapDeleted();
         window.location.reload();
       }

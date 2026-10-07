@@ -52,3 +52,6 @@ export const MODIFICATION_SECRET_HEADER = 'x-map-modification-secret';
  */
 export const YJS_SUBPROTOCOL = 'teammapper.v1';
 export const YJS_SECRET_SUBPROTOCOL_PREFIX = 'teammapper.secret.';
+
+/** The loaded map was discarded; clients must reconnect with fresh Yjs state. */
+export const WS_CLOSE_MAP_SYNC_RESET = 4002;
