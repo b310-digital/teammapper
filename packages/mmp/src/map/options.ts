@@ -93,11 +93,11 @@ export default class Options implements OptionParameters {
       Log.error('The value must be a boolean', 'type');
     }
 
+    if (flag === this.drag) return;
     this.drag = flag;
 
     // The drag behavior attaches when a node's DOM is created.
     this.map.draw.drawAll();
-    this.map.nodes.redrawSelectionRing();
   }
 
   /**
@@ -109,10 +109,10 @@ export default class Options implements OptionParameters {
       Log.error('The value must be a boolean', 'type');
     }
 
+    if (flag === this.edit) return;
     this.edit = flag;
 
     this.map.draw.drawAll();
-    this.map.nodes.redrawSelectionRing();
   }
 }
 

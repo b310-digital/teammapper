@@ -10,7 +10,6 @@ import type {
   MapSnapshot,
   MmpEventType,
   NodeProperty,
-  OldMmpNode,
 } from '@teammapper/shared';
 
 /**
@@ -686,27 +685,17 @@ describe('new with nodes', () => {
     }
   });
 
-  it('leaves a legacy map unchanged', () => {
+  it("leaves the caller's nodes unchanged", () => {
     const map = makeMap();
-    const legacy: OldMmpNode[] = [
-      {
-        key: 'node0',
-        value: {
-          name: 'Legacy',
-          x: 0,
-          y: 0,
-          k: 1,
-          'background-color': '#ffffff',
-          'text-color': '#000000',
-        },
-      },
-    ];
-    const copy = JSON.parse(JSON.stringify(legacy));
+    // Without a main root the loader picks one, which writes to a node.
+    const nodes = map.instance
+      .exportAsJSON()
+      .map(node => ({ ...node, isRoot: false }));
+    const copy = JSON.parse(JSON.stringify(nodes));
 
-    map.instance.new(deepFreeze(legacy) as unknown as MapSnapshot);
+    map.instance.new(deepFreeze(nodes));
 
-    expect(legacy).toEqual(copy);
-    expect(map.instance.exportAsJSON().map(n => n.name)).toEqual(['Legacy']);
+    expect(nodes).toEqual(copy);
   });
 
   it('refuses a map whose node carries an invalid color', () => {

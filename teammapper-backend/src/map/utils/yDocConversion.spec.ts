@@ -112,7 +112,7 @@ describe('yDocConversion', () => {
       const { yNode, doc } = populateAndGet(createTestNode({ protected: true }))
 
       expect(yNode.get('protected')).toBe(true)
-      expect(yMapToMmpNode(yNode, 'map-1').protected).toBe(true)
+      expect(yMapToMmpNode('node-1', yNode, 'map-1').protected).toBe(true)
 
       doc.destroy()
     })
@@ -175,7 +175,9 @@ describe('yDocConversion', () => {
       sync(second, doc)
 
       const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
-      expect(yMapToMmpNode(nodesMap.get('node-1')!, 'map-1')).toMatchObject({
+      expect(
+        yMapToMmpNode('node-1', nodesMap.get('node-1')!, 'map-1')
+      ).toMatchObject({
         colorsBackground: '#ff0000',
         colorsName: '#00ff00',
         colorsBranch: '#999999',
@@ -195,7 +197,7 @@ describe('yDocConversion', () => {
         yNode.set('link', { href: 'https://example.org' })
       })
 
-      expect(yMapToMmpNode(yNode, 'map-1')).toMatchObject({
+      expect(yMapToMmpNode('node-1', yNode, 'map-1')).toMatchObject({
         colorsName: '#111111',
         fontSize: 20,
         imageSize: 0,
@@ -208,7 +210,7 @@ describe('yDocConversion', () => {
     it('converts Y.Map back to MmpNode with all fields', () => {
       const { yNode, doc } = populateAndGet(createTestNode())
 
-      expect(yMapToMmpNode(yNode, 'map-1')).toMatchObject({
+      expect(yMapToMmpNode('node-1', yNode, 'map-1')).toMatchObject({
         id: 'node-1',
         name: 'Test Node',
         root: true,
@@ -231,12 +233,32 @@ describe('yDocConversion', () => {
       doc.destroy()
     })
 
+    it('takes the id from the key, not from the id field', () => {
+      const { yNode, doc } = populateAndGet(createTestNode())
+      yNode.set('id', 'other-node')
+
+      expect(yMapToMmpNode('node-1', yNode, 'map-1').id).toBe('node-1')
+
+      doc.destroy()
+    })
+
+    it('takes the id from the key when the id field is missing', () => {
+      const { yNode, doc } = populateAndGet(createTestNode())
+      yNode.delete('id')
+
+      expect(yMapToMmpNode('node-1', yNode, 'map-1').id).toBe('node-1')
+
+      doc.destroy()
+    })
+
     it('sets nodeParentId to undefined for null parent', () => {
       const { yNode, doc } = populateAndGet(
         createTestNode({ nodeParentId: null })
       )
 
-      expect(yMapToMmpNode(yNode, 'map-1').nodeParentId).toBeUndefined()
+      expect(
+        yMapToMmpNode('node-1', yNode, 'map-1').nodeParentId
+      ).toBeUndefined()
 
       doc.destroy()
     })
@@ -247,7 +269,9 @@ describe('yDocConversion', () => {
       )
       yNode.set('parent', '')
 
-      expect(yMapToMmpNode(yNode, 'map-1').nodeParentId).toBeUndefined()
+      expect(
+        yMapToMmpNode('node-1', yNode, 'map-1').nodeParentId
+      ).toBeUndefined()
 
       doc.destroy()
     })
@@ -257,7 +281,9 @@ describe('yDocConversion', () => {
         createTestNode({ nodeParentId: 'parent-id', root: false })
       )
 
-      expect(yMapToMmpNode(yNode, 'map-1').nodeParentId).toBe('parent-id')
+      expect(yMapToMmpNode('node-1', yNode, 'map-1').nodeParentId).toBe(
+        'parent-id'
+      )
 
       doc.destroy()
     })
@@ -354,7 +380,7 @@ describe('yDocConversion', () => {
       )!
 
       expect(groupOf(yNode, 'image')).toEqual({ src, size: 80 })
-      expect(yMapToMmpNode(yNode, 'map-1').imageSrc).toBe(src)
+      expect(yMapToMmpNode('node-1', yNode, 'map-1').imageSrc).toBe(src)
 
       doc.destroy()
     })
@@ -390,7 +416,7 @@ describe('yDocConversion', () => {
       })
 
       const yNode = nodesMap.get('node-xss')!
-      const result = yMapToMmpNode(yNode, 'map-1')
+      const result = yMapToMmpNode('node-xss', yNode, 'map-1')
 
       expect(result.name).toBe('Hello')
       expect(result.imageSrc).toBe('')

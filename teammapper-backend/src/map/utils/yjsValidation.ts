@@ -110,8 +110,11 @@ const validateMapContent = (doc: Y.Doc, limits: YjsMapLimits): void => {
   if (nodes.size > limits.maxNodes) invalid()
   // Nodes must remain Y.Maps for client and persistence operations. JSON
   // alone cannot distinguish a shared node from an ordinary object.
-  for (const node of nodes.values()) {
+  // The map key is the node's id, so an `id` field naming another node would
+  // make clients and persistence disagree about which node an entry is.
+  for (const [key, node] of nodes.entries()) {
     if (!(node instanceof Y.Map)) invalid()
+    if (node.has('id') && node.get('id') !== key) invalid()
   }
   if (!v.safeParse(mapSchema, doc.toJSON()).success) invalid()
 }

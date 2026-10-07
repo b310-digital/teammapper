@@ -31,15 +31,14 @@ change is local, a peer's or an undo, and emits `mapChange` afterwards. mmp
 keeps render data only: measured sizes, rings, image loads, the drag preview,
 the selection and the view state.
 
-`InMemoryMapData` implements the interface over a `Map`. The mmp specs run
-against it, and a host without its own store can use it.
+The entry point exports no implementation. The mmp specs run against
+`InMemoryMapData` in `src/map/data/in-memory-map-data.ts`, and the frontend
+implements `YjsMapData`.
 
 ```ts
-import { create, InMemoryMapData } from '@teammapper/mmp';
+import { create, type MapData } from '@teammapper/mmp';
 
-const data = new InMemoryMapData([
-  { id: 'root', parent: null, k: 1, name: 'Root', isRoot: true },
-]);
+declare const data: MapData;
 const ref = document.getElementById('map');
 if (!ref) throw new Error('The page has no #map element');
 const map = create('map', ref, undefined, data);

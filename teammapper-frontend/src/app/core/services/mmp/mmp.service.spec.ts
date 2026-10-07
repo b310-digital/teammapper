@@ -435,18 +435,21 @@ describe('MmpService', () => {
         service.addNode();
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
           { name: '' },
-          'selected',
-          undefined
+          'selected'
         );
       });
 
-      it('should add a node with custom properties', () => {
-        const props = { name: 'Test Node', id: '123' };
-        service.addNode(props);
+      it('gives the new node the branch color of the selected node', () => {
+        mockMap.instance.selectNode.mockReturnValue({
+          id: 'selected',
+          colors: { branch: '#123456' },
+        });
+
+        service.addNode();
+
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
-          props,
-          'selected',
-          '123'
+          { name: '', colors: { branch: '#123456' } },
+          'selected'
         );
       });
 
@@ -484,32 +487,7 @@ describe('MmpService', () => {
         service.addNode();
         expect(mockMap.instance.addNode).toHaveBeenCalledWith(
           { name: '' },
-          'second-root',
-          undefined
-        );
-      });
-
-      it('attaches the new node to the parent it names', () => {
-        mockMap.instance.selectNode.mockReturnValue({ id: 'named' });
-
-        service.addNode({ name: '', parent: 'named' });
-
-        expect(mockMap.instance.selectNode).toHaveBeenCalledWith('named');
-        expect(mockMap.instance.addNode).toHaveBeenCalledWith(
-          { name: '', parent: 'named' },
-          'named',
-          undefined
-        );
-      });
-
-      it('adds under the selected node for an empty parent', () => {
-        service.addNode({ name: '', parent: '' });
-
-        expect(mockMap.instance.selectNode).toHaveBeenCalledWith(undefined);
-        expect(mockMap.instance.addNode).toHaveBeenCalledWith(
-          { name: '', parent: '' },
-          'selected',
-          undefined
+          'second-root'
         );
       });
     });

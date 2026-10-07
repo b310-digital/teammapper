@@ -1,5 +1,4 @@
 import MmpMap from '../map.js';
-import * as d3 from 'd3';
 import * as v from 'valibot';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -102,10 +101,12 @@ export default class Nodes {
    * Draw the whole map again, select the main root and center the view on
    * it. A running drag ends without a write, so a peer's import is never
    * overwritten. The selection drops without `nodeDeselect`: the old DOM is
-   * gone, and a blur there would commit a name edit.
+   * gone, and a blur there would commit a name edit. A node that survives
+   * the replacement keeps the rings of peers but not a stale selection ring.
    */
   public drawReplaced() {
     this.map.drag.cancel();
+    if (this.selectedId !== null) this.map.draw.setRing(this.selectedId, null);
     this.map.draw.drawAll();
     this.selectedId = null;
     this.selectRootNode();
@@ -302,17 +303,15 @@ export default class Nodes {
    * @param {UserNodeProperties} userProperties
    * @param {string | null} parentId the parent's id, null to add a root, or
    * undefined to add a child of the selected node
-   * @param {string} overwriteId
    */
   public addNode = (
     userProperties?: UserNodeProperties,
-    parentId?: string | null,
-    overwriteId?: string
+    parentId?: string | null
   ): ExportNodeProperties | null => {
     const parent = this.resolveParent(parentId);
     if (parent !== null && this.refusesChange(parent)) return null;
 
-    const record = this.newRecord(userProperties, parent, overwriteId);
+    const record = this.newRecord(userProperties, parent);
     this.data.addNodes([record]);
 
     return this.exportNode(record.id);
@@ -408,19 +407,6 @@ export default class Nodes {
 
     return this.getSelectedNode();
   };
-
-  /**
-   * Draw the ring on the selected node again. A full draw of the map gives
-   * every node a new DOM without the ring.
-   */
-  public redrawSelectionRing() {
-    const node = this.selectedId ? this.record(this.selectedId) : undefined;
-    if (!node) return;
-
-    const color = this.map.draw.ringColor(node);
-    this.selectionRing = color;
-    if (color) this.map.draw.setRing(node.id, color);
-  }
 
   /**
    * Make the node the selected node and tell listeners it took the selection.
@@ -770,45 +756,6 @@ export default class Nodes {
    */
   public exportNode(id: string): ExportNodeProperties | null {
     return this.record(id) ?? null;
-  }
-
-  /**
-   * Convert external coordinates to internal or otherwise.
-   * @param {MapNodeCoordinates} coordinates
-   * @param {boolean} reverse
-   * @returns {MapNodeCoordinates}
-   */
-  public fixCoordinates(
-    coordinates: MapNodeCoordinates,
-    reverse = false
-  ): MapNodeCoordinates {
-    const svgEl = this.map.dom.svg.node();
-    const zoomCoordinates = svgEl
-      ? d3.zoomTransform(svgEl)
-      : { x: 0, y: 0, k: 1 };
-    const fixedCoordinates: MapNodeCoordinates = {} as MapNodeCoordinates;
-
-    if (coordinates.x) {
-      if (reverse === false) {
-        fixedCoordinates.x =
-          (coordinates.x - zoomCoordinates.x) / zoomCoordinates.k;
-      } else {
-        fixedCoordinates.x =
-          coordinates.x * zoomCoordinates.k + zoomCoordinates.x;
-      }
-    }
-
-    if (coordinates.y) {
-      if (reverse === false) {
-        fixedCoordinates.y =
-          (coordinates.y - zoomCoordinates.y) / zoomCoordinates.k;
-      } else {
-        fixedCoordinates.y =
-          coordinates.y * zoomCoordinates.k + zoomCoordinates.y;
-      }
-    }
-
-    return coordinates;
   }
 
   /**

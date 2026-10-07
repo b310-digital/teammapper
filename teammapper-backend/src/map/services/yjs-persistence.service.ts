@@ -186,9 +186,9 @@ export class YjsPersistenceService implements OnModuleDestroy {
     now: Date
   ): Partial<MmpNode>[] {
     const nodes: Partial<MmpNode>[] = []
-    nodesMap.forEach((yNode) => {
+    nodesMap.forEach((yNode, id) => {
       if (!(yNode instanceof Y.Map)) return
-      nodes.push({ ...yMapToMmpNode(yNode, mapId), lastModified: now })
+      nodes.push({ ...yMapToMmpNode(id, yNode, mapId), lastModified: now })
     })
     const ordered = orderNodesFromRoot(nodes)
     if (nodes.length > 0 && ordered.length === 0) {

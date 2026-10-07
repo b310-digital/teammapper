@@ -51,10 +51,7 @@ const clone = <T>(value: T): T =>
  * Yjs reports a delete and re-set of one key as `update`, so the check reads
  * `add` and `update`.
  */
-export function replacesMainRoot(
-  keys: KeyChanges,
-  nodesMap: NodesMap
-): boolean {
+function replacesMainRoot(keys: KeyChanges, nodesMap: NodesMap): boolean {
   for (const [key, change] of keys) {
     if (change.action === 'delete') continue;
     if (nodeAt(nodesMap, key)?.get('isRoot')) return true;
@@ -119,6 +116,14 @@ function writeAt(
  */
 export class YjsMapData implements MapData {
   private readonly listeners = new Set<Listener>();
+
+  /**
+   * Called with the transaction of a peer that replaces the main root, as an
+   * import or its undo does, before the `subscribe` listeners run. A
+   * transaction of ours never calls it.
+   */
+  public onPeerReplacement: ((transaction: Y.Transaction) => void) | null =
+    null;
 
   /**
    * @param undoManager returns the undo manager, which the sync service
@@ -209,6 +214,7 @@ export class YjsMapData implements MapData {
   public destroy(): void {
     this.nodesMap.unobserveDeep(this.notify);
     this.listeners.clear();
+    this.onPeerReplacement = null;
   }
 
   private transact(change: () => void): void {
@@ -235,8 +241,14 @@ export class YjsMapData implements MapData {
     this.nodesMap.set(node.id, yNode);
   }
 
-  private readonly notify: Parameters<NodesMap['observeDeep']>[0] = events => {
+  private readonly notify: Parameters<NodesMap['observeDeep']>[0] = (
+    events,
+    transaction
+  ) => {
     const change = this.changeOf(events);
+    if (change.replaced && !transaction.local) {
+      this.onPeerReplacement?.(transaction);
+    }
     const empty =
       change.added.length + change.updated.length + change.removed.length === 0;
     if (empty && !change.replaced) return;

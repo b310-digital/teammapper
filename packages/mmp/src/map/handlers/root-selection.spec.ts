@@ -1,4 +1,4 @@
-import Options, { DefaultRootNodeValues } from '../options.js';
+import { DefaultRootNodeValues } from '../options.js';
 import type MmpMap from '../map.js';
 import { firedEvents, nodeRecord, ring, stubMap } from '../../test/stub-map.js';
 import type { MapSnapshot } from '@teammapper/shared';
@@ -92,18 +92,6 @@ describe('a map load', () => {
 
     expect(map.nodes.getSelectedNode()?.id).toBe('root');
     expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
-  });
-});
-
-describe('an edit mode change after a map load', () => {
-  it('draws the ring on the selected root again', () => {
-    const { map } = stubMap();
-    map.loader.load(mapNodes('root'));
-
-    new Options({}, map).update('edit', false);
-
-    expect(map.nodes.getSelectedNode()?.id).toBe('root');
-    expect(map.draw.ringOf('root')).toBe(ring('#f0f6f5'));
   });
 });
 

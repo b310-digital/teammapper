@@ -213,28 +213,6 @@ export interface CachedAdminMapEntry {
   cachedAdminMapValue: CachedAdminMapValue;
 }
 
-export interface OldMmpNodeValue {
-  parent?: string;
-  k?: number;
-  name?: string;
-  fixed?: boolean;
-  x?: number;
-  y?: number;
-  'image-size'?: string;
-  'image-src'?: string;
-  'background-color'?: string;
-  'branch-color'?: string;
-  'text-color'?: string;
-  'font-size'?: string;
-  bold?: boolean;
-  italic?: boolean;
-}
-
-export interface OldMmpNode {
-  key: string;
-  value: OldMmpNodeValue;
-}
-
 export interface MmpEventPayloadMap {
   nodeSelect: ExportNodeProperties;
   nodeDeselect: ExportNodeProperties;

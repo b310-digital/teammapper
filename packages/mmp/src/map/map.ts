@@ -155,8 +155,7 @@ export default class MmpMap {
 export interface MmpInstance {
   addNode: (
     userProperties?: UserNodeProperties,
-    parentId?: string | null,
-    overwriteId?: string
+    parentId?: string | null
   ) => ExportNodeProperties | null;
   addTree: () => ExportNodeProperties | null;
   center: (type?: 'zoom' | 'position', duration?: number) => void;

@@ -2,7 +2,7 @@ import { create } from '../../index.js';
 import MmpMap from '../map.js';
 import InMemoryMapData from '../data/in-memory-map-data.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
-import type { MapSnapshot, OldMmpNode } from '@teammapper/shared';
+import type { MapSnapshot } from '@teammapper/shared';
 
 /**
  * A map load replaces every node of the map data, and `exportAsJSON` reads
@@ -46,39 +46,6 @@ function makeLoadedMap(): {
   map.instance.updateNode('linkHref', 'https://example.com/', child.id);
   return { map, data, child: child.id };
 }
-
-/** Two nodes in the format mmp 0.1.7 exported. */
-const LEGACY_MAP: OldMmpNode[] = [
-  {
-    key: 'node0',
-    value: {
-      name: 'Legacy root',
-      x: 10,
-      y: 20,
-      k: 1,
-      'background-color': '#ffffff',
-      'text-color': '#000000',
-    },
-  },
-  {
-    key: 'node1',
-    value: {
-      parent: 'node0',
-      name: 'Legacy child',
-      x: 200,
-      y: 50,
-      k: 2,
-      'background-color': '#eeeeee',
-      'branch-color': '#ff0000',
-      'text-color': '#333333',
-      'font-size': '16',
-      'image-size': '40',
-      'image-src': '',
-      bold: true,
-      italic: true,
-    },
-  },
-];
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -171,7 +138,7 @@ describe('new', () => {
     const listener = jest.fn();
     data.subscribe(listener);
 
-    map.instance.new(LEGACY_MAP as unknown as MapSnapshot);
+    map.instance.new(map.instance.exportAsJSON());
 
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener.mock.calls[0][0].replaced).toBe(true);
@@ -198,37 +165,6 @@ describe('new', () => {
     expect(target.instance.getSelectedNode()?.id).toBe(root);
   });
 
-  it('converts a map in the legacy format', () => {
-    const map = makeMap();
-
-    map.instance.new(LEGACY_MAP as unknown as MapSnapshot);
-
-    expect(map.instance.exportAsJSON()).toMatchObject([
-      {
-        id: 'map_node_0',
-        parent: null,
-        isRoot: true,
-        k: 1,
-        name: 'Legacy root',
-        coordinates: { x: 10, y: 20 },
-        image: { size: 0, src: '' },
-        colors: { background: '#ffffff', branch: '', name: '#000000' },
-        font: { size: 12, weight: 'normal', style: 'normal' },
-      },
-      {
-        id: 'map_node_1',
-        parent: 'map_node_0',
-        isRoot: false,
-        k: 2,
-        name: 'Legacy child',
-        coordinates: { x: 200, y: 50 },
-        image: { size: 40, src: '' },
-        colors: { background: '#eeeeee', branch: '#ff0000', name: '#333333' },
-        font: { size: 16, weight: 'bold', style: 'italic' },
-      },
-    ]);
-  });
-
   it('stores null as the parent of the main root of a new map', () => {
     const data = new InMemoryMapData();
     const map = makeMap(data);
@@ -250,22 +186,14 @@ describe('new', () => {
     expect(data.node(exported[0].id)?.parent).toBeNull();
   });
 
-  it('stores null as the parent of a root in the legacy format', () => {
-    const data = new InMemoryMapData();
-
-    makeMap(data).instance.new(LEGACY_MAP as unknown as MapSnapshot);
-
-    expect(data.node('map_node_0')?.parent).toBeNull();
-  });
-
   it('gives a node without a k a random one', () => {
-    const map = makeMap();
-    const nodes: OldMmpNode[] = JSON.parse(JSON.stringify(LEGACY_MAP));
-    nodes[0].value.k = 0;
+    const { map } = makeLoadedMap();
+    const nodes = map.instance.exportAsJSON().map(node => ({ ...node, k: 0 }));
+    const target = makeMap();
 
-    map.instance.new(nodes as unknown as MapSnapshot);
+    target.instance.new(nodes);
 
-    expect(map.instance.exportAsJSON()[0].k).not.toBe(0);
+    expect(target.instance.exportAsJSON()[0].k).not.toBe(0);
   });
 
   it('keeps only the fields a node has', () => {

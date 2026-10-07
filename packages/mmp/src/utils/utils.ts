@@ -21,16 +21,6 @@ export default class Utils {
   }
 
   /**
-   * Clear an object.
-   * @param {object} object
-   */
-  static clearObject(object: Record<string, unknown>) {
-    for (const property in object) {
-      delete object[property];
-    }
-  }
-
-  /**
    * Merge two objects.
    * @param {object} object1
    * @param {object} object2
