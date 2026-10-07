@@ -254,6 +254,18 @@ Write the map out. Six formats: JSON, Mermaid, SVG, PNG, JPEG and PDF.
 Copy a whole map to a new one with a new address and new secrets. Never "clone"
 or "fork".
 
+### Image cap
+
+The maximum stored image bytes one map may hold through image uploads or
+duplication. Existing inline images and the image extraction job can exceed it.
+
+### Duplication storage budget
+
+The maximum stored image bytes across all maps under which duplication may
+add image bytes. Counts image references' stored image sizes and inline image
+data URLs' UTF-8 bytes. Copies of copies consume the same budget. Distinct from
+the image cap, which limits the images of a single map.
+
 ## Sharing and collaboration
 
 ### Writable
