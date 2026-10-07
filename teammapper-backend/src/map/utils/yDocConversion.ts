@@ -4,6 +4,22 @@ import { DEFAULT_FONT_MAX_SIZE, MapOptions } from '@teammapper/shared'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { sanitizeNodeFields } from './sanitization'
 
+// Builds the nested Y.Map that stores an attribute group, such as `colors`
+// (see the glossary)
+const attributeGroup = (attributes: Record<string, unknown>): Y.Map<unknown> =>
+  new Y.Map(Object.entries(attributes))
+
+// Reads an attribute group as a plain object. A peer with write access can
+// store a plain object under the key instead of a nested Y.Map, and the
+// reader returns that object unchanged.
+const readAttributeGroup = <T>(
+  yNode: Y.Map<unknown>,
+  key: string
+): T | undefined => {
+  const value = yNode.get(key)
+  return (value instanceof Y.Map ? value.toJSON() : value) as T | undefined
+}
+
 // Converts an MmpNode entity to a Y.Map and sets it in the nodes container
 export const populateYMapFromNode = (
   nodesMap: Y.Map<Y.Map<unknown>>,
@@ -20,21 +36,30 @@ export const populateYMapFromNode = (
     x: node.coordinatesX ?? 0,
     y: node.coordinatesY ?? 0,
   })
-  yNode.set('colors', {
-    name: node.colorsName ?? '',
-    background: node.colorsBackground ?? '',
-    branch: node.colorsBranch ?? '',
-  })
-  yNode.set('font', {
-    style: node.fontStyle ?? '',
-    size: node.fontSize ?? 12,
-    weight: node.fontWeight ?? '',
-  })
-  yNode.set('image', {
-    src: node.imageSrc ?? '',
-    size: node.imageSize ?? 0,
-  })
-  yNode.set('link', { href: node.linkHref ?? '' })
+  yNode.set(
+    'colors',
+    attributeGroup({
+      name: node.colorsName ?? '',
+      background: node.colorsBackground ?? '',
+      branch: node.colorsBranch ?? '',
+    })
+  )
+  yNode.set(
+    'font',
+    attributeGroup({
+      style: node.fontStyle ?? '',
+      size: node.fontSize ?? 12,
+      weight: node.fontWeight ?? '',
+    })
+  )
+  yNode.set(
+    'image',
+    attributeGroup({
+      src: node.imageSrc ?? '',
+      size: node.imageSize ?? 0,
+    })
+  )
+  yNode.set('link', attributeGroup({ href: node.linkHref ?? '' }))
   yNode.set('orderNumber', node.orderNumber ?? 0)
   nodesMap.set(node.id, yNode)
 }
@@ -46,27 +71,21 @@ export const yMapToMmpNode = (
 ): Partial<MmpNode> => {
   const coords = yNode.get('coordinates') as
     { x: number; y: number } | undefined
-  const colors = yNode.get('colors') as
-    | {
-        name: string
-        background: string
-        branch: string
-      }
-    | undefined
-  const font = yNode.get('font') as
-    | {
-        style: string
-        size: number
-        weight: string
-      }
-    | undefined
-  const image = yNode.get('image') as
-    | {
-        src: string
-        size: number
-      }
-    | undefined
-  const link = yNode.get('link') as { href: string } | undefined
+  const colors = readAttributeGroup<{
+    name: string
+    background: string
+    branch: string
+  }>(yNode, 'colors')
+  const font = readAttributeGroup<{
+    style: string
+    size: number
+    weight: string
+  }>(yNode, 'font')
+  const image = readAttributeGroup<{ src: string; size: number }>(
+    yNode,
+    'image'
+  )
+  const link = readAttributeGroup<{ href: string }>(yNode, 'link')
   const parent = yNode.get('parent') as string | null | undefined
 
   return sanitizeNodeFields({

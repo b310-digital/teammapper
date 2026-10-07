@@ -39,11 +39,6 @@ export interface ConnectionMeta {
   ip: string
 }
 
-export interface ParsedQueryParams {
-  mapId: string | null
-  secret: string | null
-}
-
 // Encodes a SyncStep1 message for initial doc state exchange
 export const encodeSyncStep1Message = (doc: Y.Doc): Uint8Array => {
   const encoder = encoding.createEncoder()
@@ -121,23 +116,21 @@ export const extractPathname = (url: string | undefined): string => {
   }
 }
 
-// Parses mapId and secret from WebSocket URL query or path params
-// Supports both legacy (/yjs?mapId=<id>) and y-websocket (/yjs/<id>?secret=...)
-// The `secret` query param is the fallback for clients that predate the
-// secret subprotocol (see `parseSecretSubprotocol`)
-export const parseQueryParams = (
-  url: string | undefined
-): ParsedQueryParams => {
-  if (!url) return { mapId: null, secret: null }
+// Reads the map id from the WebSocket URL, as the `mapId` query param
+// (/yjs?mapId=<id>) or as the path segment y-websocket appends (/yjs/<id>).
+// The modification secret arrives as a subprotocol (see
+// `parseSecretSubprotocol`), and the gateway ignores a `secret` query param.
+export const parseMapId = (url: string | undefined): string | null => {
+  if (!url) return null
   try {
     const parsed = new URL(url, 'http://localhost')
     const pathParts = parsed.pathname.split('/').filter(Boolean)
-    const mapId =
+    return (
       parsed.searchParams.get('mapId') ??
       (pathParts.length >= 2 ? pathParts[1] : null)
-    return { mapId, secret: parsed.searchParams.get('secret') }
+    )
   } catch {
-    return { mapId: null, secret: null }
+    return null
   }
 }
 
@@ -146,16 +139,25 @@ export const parseQueryParams = (
 export const selectSubprotocol = (protocols: Set<string>): string | false =>
   protocols.has(YJS_SUBPROTOCOL) ? YJS_SUBPROTOCOL : false
 
+// Lists the subprotocols a `Sec-WebSocket-Protocol` header offers
+const offeredSubprotocols = (header: string | undefined): string[] =>
+  header ? header.split(',').map((protocol) => protocol.trim()) : []
+
+// Whether the client offers the current Yjs subprotocol. A client that
+// offers another version, or none, runs an older frontend that cannot read
+// the map data this server writes, and the gateway refuses its upgrade with
+// HTTP 426
+export const offersCurrentSubprotocol = (header: string | undefined): boolean =>
+  offeredSubprotocols(header).includes(YJS_SUBPROTOCOL)
+
 // Reads the modification secret from an offered subprotocol
 // `teammapper.secret.<secret>` in a `Sec-WebSocket-Protocol` header
 export const parseSecretSubprotocol = (
   header: string | undefined
 ): string | null => {
-  if (!header) return null
-  const offer = header
-    .split(',')
-    .map((protocol) => protocol.trim())
-    .find((protocol) => protocol.startsWith(YJS_SECRET_SUBPROTOCOL_PREFIX))
+  const offer = offeredSubprotocols(header).find((protocol) =>
+    protocol.startsWith(YJS_SECRET_SUBPROTOCOL_PREFIX)
+  )
   const secret = offer?.slice(YJS_SECRET_SUBPROTOCOL_PREFIX.length)
   return secret ? secret : null
 }

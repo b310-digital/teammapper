@@ -49,8 +49,13 @@ export const MODIFICATION_SECRET_HEADER = 'x-map-modification-secret';
  * `<YJS_SECRET_SUBPROTOCOL_PREFIX><secret>`. The server selects
  * `YJS_SUBPROTOCOL` alone, so the handshake response carries no secret.
  * RFC 9110 requires a subprotocol to be a token, and a uuid secret is one.
+ *
+ * Bump the version when you change how the Y.Doc stores the map data. The
+ * server refuses the upgrade of a client that offers another version. In v2
+ * each attribute group is a nested Y.Map, which a v1 client cannot read or
+ * write.
  */
-export const YJS_SUBPROTOCOL = 'teammapper.v1';
+export const YJS_SUBPROTOCOL = 'teammapper.v2';
 export const YJS_SECRET_SUBPROTOCOL_PREFIX = 'teammapper.secret.';
 
 /** The loaded map was discarded; clients must reconnect with fresh Yjs state. */

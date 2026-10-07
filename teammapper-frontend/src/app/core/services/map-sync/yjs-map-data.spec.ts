@@ -108,12 +108,103 @@ describe('YjsMapData', () => {
     });
   });
 
-  it('writes the whole top-level key of a nested property', () => {
+  it('writes a grouped property under its own key in the nested Y.Map', () => {
+    const group = nodesMap().get('root')?.get('colors');
+
     data.updateNode('root', 'backgroundColor', '#ff0000');
 
-    expect({ colors: stored('root')?.colors, change: lastChange() }).toEqual({
+    expect({
+      sameGroup: nodesMap().get('root')?.get('colors') === group,
+      nested: group instanceof Y.Map,
+      colors: stored('root')?.colors,
+      change: lastChange(),
+    }).toEqual({
+      sameGroup: true,
+      nested: true,
       colors: { name: '#000000', background: '#ff0000', branch: '#333333' },
       change: { replaced: false, added: [], updated: ['root'], removed: [] },
+    });
+  });
+
+  it('reads and updates a group a client stored as a plain object', () => {
+    doc.transact(() =>
+      nodesMap()
+        .get('root')
+        ?.set('font', { size: 14, style: 'normal', weight: 'normal' })
+    );
+
+    data.updateNode('root', 'fontWeight', 'bold');
+
+    expect({
+      nested: nodesMap().get('root')?.get('font') instanceof Y.Map,
+      font: data.node('root')?.font,
+    }).toEqual({
+      nested: true,
+      font: { size: 14, style: 'normal', weight: 'bold' },
+    });
+  });
+
+  describe('concurrent edits of one attribute group', () => {
+    let peerDoc: Y.Doc;
+    let peer: YjsMapData;
+
+    beforeEach(() => {
+      peerDoc = new Y.Doc();
+      sync(doc, peerDoc);
+      peer = new YjsMapData(peerDoc, () => null);
+    });
+
+    afterEach(() => {
+      peer.destroy();
+      peerDoc.destroy();
+    });
+
+    /** Exchange the updates both ways, as after a reconnect. */
+    const reconnect = () => {
+      sync(doc, peerDoc);
+      sync(peerDoc, doc);
+    };
+
+    it('keeps a background color and a name color set apart', () => {
+      data.updateNode('root', 'backgroundColor', '#ff0000');
+      peer.updateNode('root', 'nameColor', '#00ff00');
+      reconnect();
+
+      const merged = {
+        name: '#00ff00',
+        background: '#ff0000',
+        branch: '#333333',
+      };
+      expect({
+        local: data.node('root')?.colors,
+        peer: peer.node('root')?.colors,
+      }).toEqual({ local: merged, peer: merged });
+    });
+
+    it("undoes a local color and keeps a peer's color in the same group", () => {
+      data.updateNode('root', 'backgroundColor', '#ff0000');
+      peer.updateNode('root', 'nameColor', '#00ff00');
+      sync(peerDoc, doc);
+
+      undoManager.undo();
+
+      expect(data.node('root')?.colors).toEqual({
+        name: '#00ff00',
+        background: '#ffffff',
+        branch: '#333333',
+      });
+    });
+
+    it('keeps a font weight and a font size set apart', () => {
+      data.updateNode('root', 'fontWeight', 'bold');
+      peer.updateNode('root', 'fontSize', 20);
+      reconnect();
+
+      const merged = { size: 20, style: 'normal', weight: 'bold' };
+      expect({
+        local: data.node('root')?.font,
+        peer: peer.node('root')?.font,
+      }).toEqual({ local: merged, peer: merged });
     });
   });
 

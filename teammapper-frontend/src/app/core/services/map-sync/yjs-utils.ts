@@ -64,6 +64,34 @@ const NODE_KEYS = [
  */
 export type StoredNode = Partial<Record<(typeof NODE_KEYS)[number], unknown>>;
 
+/** The keys of a node's Y.Map that hold an attribute group as a nested Y.Map. */
+const ATTRIBUTE_GROUPS: ReadonlySet<string> = new Set([
+  'colors',
+  'font',
+  'image',
+  'link',
+]);
+
+/**
+ * The value as a node's Y.Map stores it under `key`: an attribute group given
+ * as a plain object becomes a nested Y.Map, and every other value stays as it
+ * is.
+ */
+export function toStoredValue(key: string, value: unknown): unknown {
+  if (!ATTRIBUTE_GROUPS.has(key)) return value;
+  if (typeof value !== 'object' || value === null) return value;
+  return new Y.Map(Object.entries(value));
+}
+
+/**
+ * The stored value as plain JSON, with a nested Y.Map converted to a plain
+ * object. A value of any other type passes through unchanged, so a group a
+ * peer wrote as a plain object reads like a nested one.
+ */
+export function toPlainValue(value: unknown): unknown {
+  return value instanceof Y.Map ? value.toJSON() : value;
+}
+
 /**
  * Write every attribute of the node that is not undefined to its Y.Map. A
  * root's parent goes in as null, also when the caller passes ''.
@@ -74,18 +102,19 @@ export function populateYMapFromNodeProps(
 ): void {
   for (const key of NODE_KEYS) {
     const value = key === 'parent' ? nodeProps.parent || null : nodeProps[key];
-    if (value !== undefined) yNode.set(key, value);
+    if (value !== undefined) yNode.set(key, toStoredValue(key, value));
   }
 }
 
 /**
- * The node as its Y.Map stores it. A key the Y.Map lacks stays absent, and
- * mmp's `resolveNode` fills it on read.
+ * The node as its Y.Map stores it, with each attribute group as a plain
+ * object. A key the Y.Map lacks stays absent, and mmp's `resolveNode` fills
+ * it on read.
  */
 export function yMapToNodeProps(yNode: Y.Map<unknown>): StoredNode {
   const record: StoredNode = {};
   for (const key of NODE_KEYS) {
-    if (yNode.has(key)) record[key] = yNode.get(key);
+    if (yNode.has(key)) record[key] = toPlainValue(yNode.get(key));
   }
   return record;
 }

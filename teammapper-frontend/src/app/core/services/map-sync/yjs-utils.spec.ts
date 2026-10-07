@@ -192,7 +192,7 @@ describe('Yjs URL building', () => {
 describe('buildYjsProtocols', () => {
   it('offers the secret as a second subprotocol', () => {
     expect(buildYjsProtocols('my-secret')).toEqual([
-      'teammapper.v1',
+      'teammapper.v2',
       'teammapper.secret.my-secret',
     ]);
   });
@@ -201,7 +201,7 @@ describe('buildYjsProtocols', () => {
     ['an empty secret', ''],
     ['a null secret', null],
   ])('offers only the Yjs subprotocol for %s', (_label, secret) => {
-    expect(buildYjsProtocols(secret)).toEqual(['teammapper.v1']);
+    expect(buildYjsProtocols(secret)).toEqual(['teammapper.v2']);
   });
 });
 
