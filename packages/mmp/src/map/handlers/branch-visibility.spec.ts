@@ -179,6 +179,184 @@ describe('toggleBranchVisibility', () => {
   });
 });
 
+/**
+ * makeTree, plus two nodes a peer adds: `sibling` below `second` and `leaf`
+ * below `grandchild`.
+ */
+function makeDeepTree(): Tree {
+  const tree = makeTree();
+  tree.data.addNodes([
+    nodeRecord({ id: 'sibling', parent: tree.second, name: 'sibling' }),
+    nodeRecord({ id: 'leaf', parent: tree.grandchild, name: 'leaf' }),
+  ]);
+  return tree;
+}
+
+function branchPath(id: string): SVGPathElement {
+  const path = d3
+    .selectAll<SVGPathElement, string>('path.branch')
+    .filter(datum => datum === id)
+    .node();
+  if (!path) throw new Error('no branch for ' + id);
+  return path;
+}
+
+/**
+ * What a draw shows of each node and branch, by node id: the position, the
+ * visibility, the hidden eye icon and the branch shape.
+ */
+function drawnState() {
+  const nodes = d3
+    .selectAll<SVGGElement, string>('g.node')
+    .nodes()
+    .map(group => [
+      d3.select<SVGGElement, string>(group).datum(),
+      group.getAttribute('transform'),
+      group.style.visibility,
+      group.querySelector('text.hidden-icon') !== null,
+    ]);
+  const branches = d3
+    .selectAll<SVGPathElement, string>('path.branch')
+    .nodes()
+    .map(path => [
+      d3.select<SVGPathElement, string>(path).datum(),
+      path.style.visibility,
+      path.getAttribute('d'),
+    ]);
+  const byId = (a: unknown[], b: unknown[]) =>
+    String(a[0]).localeCompare(String(b[0]));
+  return { nodes: nodes.sort(byId), branches: branches.sort(byId) };
+}
+
+/** Give the node another parent, as a peer's overwrite of its record. */
+function moveTo(data: InMemoryMapData, id: string, parent: string | null) {
+  const record = data.node(id);
+  if (!record) throw new Error('no record for ' + id);
+  data.addNodes([{ ...nodeRecord(record), parent }]);
+}
+
+/** Expect the drawn map to equal what a full redraw draws. */
+function expectFullRedrawState(map: MmpMap) {
+  const drawn = drawnState();
+  map.draw.drawAll();
+  expect(drawn).toEqual(drawnState());
+}
+
+describe('a parent change', () => {
+  it('hides the moved node and its descendants below a parent whose child nodes are hidden', () => {
+    const { map, data, first, second, grandchild } = makeDeepTree();
+    toggle(map, second);
+
+    moveTo(data, first, second);
+
+    expect(visibility(first)).toBe('hidden');
+    expect(visibility(grandchild)).toBe('hidden');
+    expect(visibility('leaf')).toBe('hidden');
+    expectFullRedrawState(map);
+  });
+
+  it('shows the moved node and its descendants again below a visible parent', () => {
+    const { map, data, first, second, grandchild } = makeDeepTree();
+    toggle(map, first);
+
+    moveTo(data, grandchild, second);
+
+    expect(visibility(grandchild)).toBe('visible');
+    expect(visibility('leaf')).toBe('visible');
+    expect(hasEyeIcon(first)).toBe(false);
+    expectFullRedrawState(map);
+  });
+
+  it('marks the new parent once a moved node gives it child nodes', () => {
+    const { map, data, first, second } = makeTree();
+    // toggle() skips a node without child nodes, so the spec writes the view
+    // state itself.
+    map.viewState.toggle(second);
+
+    moveTo(data, first, second);
+
+    expect(hasEyeIcon(second)).toBe(true);
+    expectFullRedrawState(map);
+  });
+
+  it('redraws the branches of descendants that move to another depth', () => {
+    const { map, data, first } = makeDeepTree();
+
+    moveTo(data, first, 'sibling');
+
+    expectFullRedrawState(map);
+  });
+
+  it('redraws the descendants of a node that becomes a root', () => {
+    const { map, data, first, second } = makeDeepTree();
+    toggle(map, second);
+
+    moveTo(data, first, null);
+
+    expectFullRedrawState(map);
+  });
+
+  it('redraws the descendants of a node whose old parent goes in the same change', () => {
+    const { map, data, first, second, grandchild } = makeDeepTree();
+    toggle(map, second);
+
+    data.batch(() => {
+      moveTo(data, grandchild, second);
+      data.removeNode(first);
+    });
+
+    expect(visibility('leaf')).toBe('hidden');
+    expectFullRedrawState(map);
+  });
+
+  it('draws a parent cycle the way a full redraw does', () => {
+    const { map, data, first, grandchild } = makeDeepTree();
+
+    moveTo(data, first, grandchild);
+
+    expectFullRedrawState(map);
+  });
+
+  it('draws a node moved during a drag at its drag preview', () => {
+    const { map, data, first, second } = makeDeepTree();
+    map.draw.setPreview(first, { x: 500, y: 400 });
+
+    moveTo(data, first, second);
+
+    expectFullRedrawState(map);
+  });
+
+  it('leaves the descendants of a node alone when another attribute changes', () => {
+    const { data, root, grandchild } = makeDeepTree();
+    const group = jest.spyOn(nodeGroup(grandchild).style, 'setProperty');
+    const branch = jest.spyOn(branchPath(grandchild), 'setAttribute');
+
+    data.updateNode(root, 'name', 'renamed');
+
+    expect(group).not.toHaveBeenCalled();
+    expect(branch).not.toHaveBeenCalled();
+  });
+
+  it('redraws the descendants of a node whose missing parent arrives', () => {
+    const { map, data, second, grandchild } = makeDeepTree();
+    toggle(map, second);
+    moveTo(data, grandchild, 'late');
+
+    data.addNodes([
+      nodeRecord({
+        id: 'late',
+        parent: second,
+        name: 'late',
+        coordinates: { x: 300, y: 300 },
+      }),
+    ]);
+
+    expect(visibility(grandchild)).toBe('hidden');
+    expect(visibility('leaf')).toBe('hidden');
+    expectFullRedrawState(map);
+  });
+});
+
 describe('the hidden eye icon', () => {
   it('shows on a node whose child nodes are hidden only', () => {
     const { map, root, first, second } = makeTree();

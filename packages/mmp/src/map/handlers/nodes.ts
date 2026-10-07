@@ -113,16 +113,13 @@ export default class Nodes {
   }
 
   /**
-   * Draw the nodes a change added or updated, and drop the removed ones. An
-   * added or removed node also redraws its parent, whose hidden child nodes
-   * mark depends on its children.
+   * Draw the nodes a change added or updated, and drop the removed ones. For
+   * a removed node, `drawChange` also redraws its parent, whose hidden child
+   * nodes mark depends on its children. `drawNodes` redraws the parents and
+   * the descendants a new or changed parent affects.
    */
   private drawChange({ added, updated, removed }: MapDataChange) {
     const redraw = this.map.draw.removeNodes(removed);
-    for (const id of added) {
-      const parent = this.parentOf(id);
-      if (parent) redraw.push(parent);
-    }
     this.map.draw.drawNodes([...added, ...updated, ...redraw]);
 
     const selected = this.selectedId;
@@ -522,7 +519,7 @@ export default class Nodes {
     }
 
     viewState.toggle(id);
-    this.map.draw.drawNodes([id, ...this.descendants(id)]);
+    this.map.draw.drawSubtree(id);
   };
 
   /**

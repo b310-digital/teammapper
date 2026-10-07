@@ -188,8 +188,11 @@ export default class Draw {
 
   /**
    * Draw the nodes with the ids, their branches and the branches of their
-   * children. A node without a DOM gets one. Ids the map data lacks are
-   * skipped. `records` may hold the records a caller already read.
+   * children. The renderer gives a node without a DOM element one. For a
+   * node with a new parent, the renderer also draws the old parent, the new
+   * parent and the node's drawn descendants, so the result matches
+   * `drawAll`. The renderer skips ids the map data lacks. `records` may hold
+   * the records a caller already read.
    * @param {Iterable<string>} ids
    * @param {MapNodeRecord[]} records
    */
@@ -199,11 +202,25 @@ export default class Draw {
     for (const id of [...requested]) {
       this.orphans.get(id)?.forEach(orphan => requested.add(orphan));
     }
-    const present = [...requested].filter(id => lookup(id) !== undefined);
-    if (present.length === 0) return;
+    const present = new Set(
+      [...requested].filter(id => lookup(id) !== undefined)
+    );
+    if (present.size === 0) return;
 
-    this.place(present, lookup);
-    this.render(present, this.branchIdsOf(present), lookup);
+    for (const id of this.place([...present], lookup)) {
+      if (lookup(id) !== undefined) present.add(id);
+    }
+    const drawn = [...present];
+    this.render(drawn, this.branchIdsOf(drawn), lookup);
+  }
+
+  /**
+   * Draw the node and its drawn descendants, read along the drawn branches
+   * instead of a scan of the map data.
+   * @param {string} id
+   */
+  public drawSubtree(id: string) {
+    this.drawNodes(this.withDescendants([id]));
   }
 
   /**
@@ -469,9 +486,16 @@ export default class Draw {
 
   /**
    * Give each node a DOM element when it has none, and its branch the
-   * parent the record names now.
+   * parent the record names now. Returns the ids of the nodes a new parent
+   * affects:
+   *
+   * - the parent a branch leaves and the parent it joins, whose hidden child
+   *   nodes mark depends on their children
+   * - each node that had a DOM element before its parent changed, with its
+   *   drawn descendants, whose visibility and branch width depend on their
+   *   ancestors
    */
-  private place(ids: string[], lookup: RecordLookup) {
+  private place(ids: string[], lookup: RecordLookup): string[] {
     const entering = ids.filter(id => !this.groups.has(id));
     this.enterNodes(
       this.layers.nodes
@@ -480,16 +504,26 @@ export default class Draw {
         .enter()
     ).each((id, i, groups) => this.groups.set(id, groups[i]));
 
+    const entered = new Set(entering);
     const branching: string[] = [];
+    const parents: string[] = [];
+    const moved: string[] = [];
     for (const id of ids) {
       const parent = this.map.nodes.parentOf(id, lookup);
       const named = lookup(id)?.parent || null;
       this.waitForParent(id, parent === null ? named : null);
       const drawn = this.branches.get(id);
-      if (drawn?.parent === parent) continue;
+      if ((drawn?.parent ?? null) === parent) continue;
 
-      if (drawn) this.dropBranch(id);
-      if (parent !== null) branching.push(id);
+      if (drawn) {
+        this.dropBranch(id);
+        parents.push(drawn.parent);
+      }
+      if (parent !== null) {
+        branching.push(id);
+        parents.push(parent);
+      }
+      if (!entered.has(id)) moved.push(id);
     }
 
     this.layers.branches
@@ -507,6 +541,26 @@ export default class Draw {
         from.add(id);
         this.branchesFrom.set(parent, from);
       });
+
+    return [...parents, ...this.withDescendants(moved)];
+  }
+
+  /**
+   * The ids of the nodes and of their drawn descendants, read along the
+   * drawn branches. On a parent cycle, the walk stops at the node that
+   * closes it.
+   */
+  private withDescendants(ids: string[]): string[] {
+    const found = new Set(ids);
+    const pending = [...ids];
+    for (let id = pending.pop(); id !== undefined; id = pending.pop()) {
+      for (const child of this.branchesFrom.get(id) ?? []) {
+        if (found.has(child)) continue;
+        found.add(child);
+        pending.push(child);
+      }
+    }
+    return [...found];
   }
 
   /**
