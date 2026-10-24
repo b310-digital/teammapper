@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "Selects the node below",
     "SELECT_NODE_ABOVE": "Selects the node above",
     "EDIT_NODE": "Allows to edit the text of the node",
-    "COUPLE_NODE": "Groups or ungroups the node",
+    "PROTECT_BRANCH": "Protect this branch",
+    "RELEASE_PROTECTION": "Release protection",
     "NODE_IMAGE": "Adds an image to the node",
     "NODE_IMAGE_REMOVE": "Removes an image from the node",
     "PICTOGRAM": "Pictrogram",
@@ -107,6 +108,9 @@
       "CONTENT": "Generate a mindmap directly from your description using AI. Simply describe what you want to map and the AI will create it for you.",
       "LABEL_DESCRIPTION": "Describe your mindmap",
       "PLACEHOLDER": "E.g. History of Travel",
+      "LABEL_LEVELS": "Levels below the main root",
+      "LABEL_CHILDREN_PER_NODE": "Child nodes per node",
+      "MODEL": "Model: {{model}}",
       "BUTTON_GENERATE": "Generate & Import"
     },
     "PICTOGRAMS": {
@@ -130,11 +134,8 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "DELETED_AT": "Mindmap is going to be deleted at:",
-      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-      "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?",
-      "SHORTCUTS_TITLE": "Keyboard shortcuts"
+      "SHORTCUTS_TITLE": "Keyboard shortcuts",
+      "DELETION_MOVED": "Hint: The deletion date of this mind map is now in the settings under Map options. If you created the mind map, you can also delete it there."
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -195,7 +196,12 @@
       "TITLE": "Settings",
       "TTL": "Last known date of deletion",
       "SHOW_LINKTEXT": "Show linktext",
-      "DARK_MODE": "Dark mode"
+      "DARK_MODE": "Dark mode",
+      "DELETION": "Deletion",
+      "DELETED_AT": "Deletion date:",
+      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
+      "DELETE": "Delete mindmap",
+      "CONFIRM_DELETE": "Delete?"
     }
   },
   "MESSAGES": {
@@ -212,9 +218,11 @@
     "NODE_COPIED": "Node successfully copied!",
     "NODE_CUT": "Node successfully cut!",
     "MAP_IMPORT_SUCCESS": "Mindmap successfully imported!",
+    "MAP_SYNCING": "Loading the mind map…",
     "INVALID_MODIFICATION_SECRET": "The edit link is invalid. The mind map opens read-only.",
     "MAP_UPDATE_SUCCESS": "Mindmap successfully updated!",
     "WARNINGS": {
+      "NODE_PROTECTED": "This branch is protected. Release the protection to edit it.",
       "MAP_IMPORT_IN_PROGRESS": "Importing mindmap...",
       "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
       "MERMAID_SEVERAL_TREES": "Each tree became its own mindmap block. Mermaid tools outside TeamMapper render one block at a time."
@@ -223,7 +231,6 @@
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",
       "ROOT_NODE_CUT": "It's not possible to cut the root node!",
       "ROOT_NODE_DELETED": "It's not possible to delete the root node!",
-      "ROOT_NODE_LOCKED": "It's not possible to lock the root node!",
       "NO_NODES_IN_CLIPBOARD": "There are no nodes in the clipboard!",
       "NODE_COPY_GENERIC": "An error occurred whilst trying to copy the node.",
       "NODE_CUT_GENERIC": "An error occurred whilst trying to cut the node.",
@@ -235,10 +242,12 @@
       "IMPORT_ERROR": "Could not import mindmap",
       "AI_MERMAID_ERROR": "Mermaid could not be generated",
       "IMAGE_STORAGE_FULL": "The image storage of this mind map is full. A removed image frees its space within 7 days of its upload.",
-      "IMAGE_UPLOAD_ERROR": "The image could not be uploaded."
+      "IMAGE_UPLOAD_ERROR": "The image could not be uploaded.",
+      "DELETE_MAP_ERROR": "The mind map could not be deleted."
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",
+    "AI_MERMAID_TRUNCATED": "The model reached its output limit before finishing the mind map. Try fewer levels or child nodes.",
     "AI_MERMAID_GENERATING": "Creating Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "Please provide a description for the mindmap"
   },

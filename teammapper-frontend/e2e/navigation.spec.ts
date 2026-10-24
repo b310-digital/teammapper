@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { createMap } from './helpers';
 
 test('navigates to settings page and back to map', async ({ page }) => {
   await page.goto('/');
@@ -20,14 +21,11 @@ test('navigates to settings page and back to map', async ({ page }) => {
 
 test.describe('info dialog', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.getByText('Create mind map').click();
-    await page.waitForURL(/\/map\/.*/);
-    await expect(page.getByText('Root node')).toBeVisible();
+    await createMap(page);
   });
 
   const dialog = (page: Page) => page.locator('mat-dialog-container');
-  const nodes = (page: Page) => page.locator('.map [class$="_node"]');
+  const nodes = (page: Page) => page.locator('.map g.node');
 
   test('info button opens the dialog with the shortcut list', async ({
     page,

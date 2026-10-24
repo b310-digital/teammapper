@@ -18,8 +18,7 @@ describe('YjsUndoManager', () => {
       k: 1,
       colors: { branch: '#000000' },
       font: { size: 14, style: 'normal', weight: 'normal' },
-      locked: false,
-      hidden: false,
+      protected: false,
       coordinates: undefined,
       image: undefined,
       link: undefined,
@@ -114,74 +113,6 @@ describe('YjsUndoManager', () => {
       expect(undoManager.undoStack.length).toBe(0);
       undoManager.destroy();
       doc.destroy();
-    });
-  });
-
-  // ─── Echo prevention ─────────────────────────────────────────
-
-  describe('echo prevention', () => {
-    let doc: Y.Doc;
-    let nodesMap: Y.Map<Y.Map<unknown>>;
-    let undoManager: Y.UndoManager;
-
-    beforeEach(() => {
-      ({ doc, nodesMap } = createYjsContext());
-    });
-
-    afterEach(() => {
-      undoManager?.destroy();
-      doc.destroy();
-    });
-
-    function observeWithFilter(um: Y.UndoManager): string[] {
-      const calls: string[] = [];
-      nodesMap.observeDeep((_events, transaction) => {
-        if (transaction.local && transaction.origin !== um) {
-          calls.push('skipped');
-          return;
-        }
-        calls.push('applied');
-      });
-      return calls;
-    }
-
-    it('filters local edits in observer', () => {
-      undoManager = createTrackedUndoManager(nodesMap);
-      const calls = observeWithFilter(undoManager);
-
-      addNodeToMap(doc, nodesMap, { id: 'n1' });
-
-      expect(calls).toEqual(['skipped']);
-    });
-
-    it('passes through UndoManager-originated edits', () => {
-      addNodeToMap(doc, nodesMap, { id: 'n1' });
-      undoManager = createTrackedUndoManager(nodesMap);
-      addNodeToMap(doc, nodesMap, { id: 'n2' });
-
-      const calls = observeWithFilter(undoManager);
-      undoManager.undo();
-
-      expect(calls).toEqual(['applied']);
-    });
-
-    it('passes through remote edits', () => {
-      const remoteDoc = new Y.Doc();
-      const remoteNodesMap = remoteDoc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-
-      undoManager = createTrackedUndoManager(nodesMap);
-      const calls = observeWithFilter(undoManager);
-
-      remoteDoc.transact(() => {
-        const yNode = new Y.Map<unknown>();
-        populateYMapFromNodeProps(yNode, createMockNode({ id: 'r1' }));
-        remoteNodesMap.set('r1', yNode);
-      });
-
-      Y.applyUpdate(doc, Y.encodeStateAsUpdate(remoteDoc));
-
-      expect(calls).toEqual(['applied']);
-      remoteDoc.destroy();
     });
   });
 
@@ -294,12 +225,13 @@ describe('YjsUndoManager', () => {
       );
     });
 
-    it('undo restores a deleted node with its coordinates', () => {
+    it('undo restores a deleted node with its coordinates and protection', () => {
       const coords = { x: 200, y: -120 };
       addNodeToMap(doc, nodesMap, {
         id: 'n1',
         parent: 'root',
         coordinates: coords,
+        protected: true,
       });
       undoManager.stopCapturing();
       doc.transact(() => nodesMap.delete('n1'), ORIGIN_LOCAL);
@@ -307,7 +239,11 @@ describe('YjsUndoManager', () => {
       undoManager.undo();
 
       expect(yMapToNodeProps(nodesMap.get('n1')!)).toEqual(
-        expect.objectContaining({ id: 'n1', coordinates: coords })
+        expect.objectContaining({
+          id: 'n1',
+          coordinates: coords,
+          protected: true,
+        })
       );
     });
 

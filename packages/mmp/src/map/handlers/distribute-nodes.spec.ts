@@ -1,201 +1,90 @@
-import * as d3 from 'd3';
-import Nodes from './nodes.js';
-import Node from '../models/node.js';
-import MmpMap from '../map.js';
-import { Event } from './events.js';
+import { fakeDraw } from '../../test/fake-draw.js';
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
+import type { MapDataChange } from '../data/map-data.js';
+import type { MapSnapshot } from '@teammapper/shared';
 
-interface StubMap {
-  id: string;
-  draw: { update: jest.Mock; drawBranch: jest.Mock };
-  history: { save: jest.Mock };
-  events: { call: jest.Mock };
+function handlerWith(snapshot: MapSnapshot) {
+  const stub = stubMap(snapshot, {
+    // Every node measured at 100 by 30.
+    draw: fakeDraw(() => ({ width: 100, height: 30 })),
+  });
+  const changes: MapDataChange[] = [];
+  stub.data.subscribe(change => changes.push(change));
+
+  return { ...stub, handler: stub.nodes, changes };
 }
 
-function stubMap(): StubMap {
-  return {
-    id: 'test-map',
-    draw: {
-      update: jest.fn(),
-      // The real `drawBranch` returns nothing for a node without a parent.
-      drawBranch: jest.fn((node: Node) => (node.parent ? 'M0,0' : undefined)),
-    },
-    history: { save: jest.fn() },
-    events: { call: jest.fn() },
-  };
-}
-
-/** Branch paths the way `draw.update()` binds them: one per node but the root. */
-function attachBranchPaths(mapId: string, nodes: Node[]): void {
-  d3.select(document.body)
-    .append('svg')
-    .selectAll('path')
-    .data<Node>(nodes.slice(1))
-    .enter()
-    .append('path')
-    .attr('class', `${mapId}_branch`)
-    .attr('id', node => `${node.id}_branch`);
-}
-
-/** Only the fields distribution reads, hence the cast. */
-function liveNode(
-  id: string,
-  parent: Node | null,
-  overrides: Partial<Node> = {}
-): Node {
-  return {
-    id,
-    parent,
-    name: id,
-    isRoot: false,
-    hidden: false,
-    coordinates: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 30 },
-    ...overrides,
-  } as unknown as Node;
-}
-
-interface NodesInternals {
-  nodes: Map<string, Node>;
-}
-
-function handlerWith(nodes: Node[]): { handler: Nodes; map: StubMap } {
-  const map = stubMap();
-  const handler = new Nodes(map as unknown as MmpMap);
-  (handler as unknown as NodesInternals).nodes = new Map(
-    nodes.map(node => [node.id, node])
-  );
-
-  return { handler, map };
+function node(id: string, parent: string, isRoot = false) {
+  return nodeRecord({ id, parent, name: id, isRoot });
 }
 
 /** Root with four branches of three children: the shape an AI import makes. */
-function aiShapedNodes(): Node[] {
-  const root = liveNode('root', null, { isRoot: true });
-  const nodes: Node[] = [root];
+function aiShapedNodes(): MapSnapshot {
+  const nodes: MapSnapshot = [node('root', '', true)];
 
   for (const branch of ['A', 'B', 'C', 'D']) {
-    const branchNode = liveNode(branch, root);
-    nodes.push(branchNode);
+    nodes.push(node(branch, 'root'));
     for (let i = 1; i <= 3; i++) {
-      nodes.push(liveNode(`${branch}${i}`, branchNode));
+      nodes.push(node(`${branch}${i}`, branch));
     }
   }
   return nodes;
 }
 
 describe('distributeNodes', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
-  it('writes new coordinates onto the live nodes', () => {
-    const nodes = aiShapedNodes();
-    const { handler } = handlerWith(nodes);
-    const before = nodes.map(node => ({ ...node.coordinates }));
+  it('writes new coordinates to the map data', () => {
+    const { handler, data } = handlerWith(aiShapedNodes());
 
     handler.distributeNodes();
 
-    const moved = nodes.filter(
-      (node, i) =>
-        node.coordinates.x !== before[i].x || node.coordinates.y !== before[i].y
-    );
+    const moved = data
+      .nodes()
+      .filter(n => n.coordinates?.x !== 0 || n.coordinates?.y !== 0);
     expect(moved.length).toBeGreaterThan(0);
   });
 
-  it('hands the hidden nodes to the layout too, so they keep their room', () => {
-    // A collapsed branch is still laid out, so expanding it again does not
-    // leave its children piled up.
-    const root = liveNode('root', null, { isRoot: true });
-    const collapsed = liveNode('collapsed', root);
-    const nodes = [root, collapsed];
-    for (let i = 1; i <= 4; i++) {
-      nodes.push(liveNode(`c${i}`, collapsed, { hidden: true }));
-    }
-    const { handler } = handlerWith(nodes);
+  it('hands every node to the layout, so hidden nodes keep their room', () => {
+    // The layout never reads the view state. Child nodes this person hid are
+    // still laid out, so showing them again does not leave them piled up.
+    const children = [1, 2, 3, 4].map(i => node(`c${i}`, 'parent'));
+    const { handler, data, map } = handlerWith([
+      node('root', '', true),
+      node('parent', 'root'),
+      ...children,
+    ]);
+    map.viewState.toggle('parent');
 
     handler.distributeNodes();
 
     // Filtered out of the layout input they would all keep y: 0.
-    const hiddenYs = nodes
-      .filter(node => node.hidden)
-      .map(node => node.coordinates.y);
-    expect(new Set(hiddenYs).size).toBe(4);
+    const childYs = children.map(child => data.node(child.id)?.coordinates?.y);
+    expect(new Set(childYs).size).toBe(4);
   });
 
-  it('updates the transform of a node that has been drawn', () => {
-    const root = liveNode('root', null, { isRoot: true });
-    const setAttribute = jest.fn();
-    const child = liveNode('child', root, {
-      dom: { setAttribute } as unknown as SVGGElement,
-    });
-    const { handler } = handlerWith([root, child]);
+  it('writes every coordinate in one change', () => {
+    const { handler, changes } = handlerWith(aiShapedNodes());
 
     handler.distributeNodes();
 
-    expect(setAttribute).toHaveBeenCalledWith(
-      'transform',
-      expect.stringContaining('translate(')
-    );
+    expect(changes).toHaveLength(1);
+    expect(changes[0].updated.length).toBeGreaterThan(1);
   });
 
-  it('records the whole redistribution as a single history entry', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
+  it('writes only the coordinates that change', () => {
+    const { handler, changes } = handlerWith(aiShapedNodes());
+    handler.distributeNodes();
 
     handler.distributeNodes();
 
-    expect(map.history.save).toHaveBeenCalledTimes(1);
-  });
-
-  it('redraws the map once rather than once per node', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
-
-    handler.distributeNodes();
-
-    expect(map.draw.update).toHaveBeenCalledTimes(1);
-  });
-
-  it('emits a distribute event so the sync layer can propagate the rewrite', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
-
-    handler.distributeNodes();
-
-    const events = map.events.call.mock.calls.map(call => call[0]);
-    expect(events).toContain(Event.distribute);
-  });
-
-  it('does not emit the distribute event when notification is suppressed', () => {
-    const { handler, map } = handlerWith(aiShapedNodes());
-
-    handler.distributeNodes(false);
-
-    const events = map.events.call.mock.calls.map(call => call[0]);
-    expect(events).not.toContain(Event.distribute);
-  });
-
-  it('redraws every branch, dropping the path of a second root', () => {
-    const root = liveNode('root', null, { isRoot: true });
-    const child = liveNode('child', root);
-    const loose = liveNode('loose', null);
-    const nodes = [root, child, loose];
-    const { handler, map } = handlerWith(nodes);
-    attachBranchPaths(map.id, nodes);
-
-    handler.distributeNodes();
-
-    expect(document.getElementById('child_branch')?.getAttribute('d')).toBe(
-      'M0,0'
-    );
-    // Nothing to draw for a parentless node, so the attribute is dropped.
-    expect(
-      document.getElementById('loose_branch')?.getAttribute('d')
-    ).toBeNull();
+    expect(changes).toHaveLength(1);
   });
 
   it('leaves an empty map alone', () => {
-    const { handler, map } = handlerWith([]);
+    const { handler, events, changes } = handlerWith([]);
 
     handler.distributeNodes();
 
-    expect(map.history.save).not.toHaveBeenCalled();
+    expect(changes).toEqual([]);
+    expect(events.emit).not.toHaveBeenCalled();
   });
 });

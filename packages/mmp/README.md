@@ -21,6 +21,40 @@ pnpm --filter @teammapper/mmp run test
 pnpm --filter @teammapper/mmp run lint
 ```
 
+## Map data
+
+mmp keeps no copy of the map. `create` takes a `MapData`, and mmp reads every
+node through the map data and writes through its typed methods. The host owns
+the nodes, so a Yjs document, a store or a plain array can back them. mmp
+redraws in one listener on every change the map data reports, whether the
+change is local, a peer's or an undo, and emits `mapChange` afterwards. mmp
+keeps render data only: measured sizes, rings, image loads, the drag preview,
+the selection and the view state.
+
+The entry point exports no implementation. The mmp specs run against
+`InMemoryMapData` in `src/map/data/in-memory-map-data.ts`, and the frontend
+implements `YjsMapData`.
+
+```ts
+import { create, type MapData } from '@teammapper/mmp';
+
+declare const data: MapData;
+const ref = document.getElementById('map');
+if (!ref) throw new Error('The page has no #map element');
+const map = create('map', ref, undefined, data);
+
+map.instance.on('mapChange', () => console.log(data.nodes().length));
+
+data.batch(() => {
+  data.addNodes([{ id: 'child', parent: 'root', k: 1, name: 'Child' }]);
+  data.updateNode('child', 'name', 'Renamed');
+});
+```
+
+The `batch` call above produces one redraw and one `mapChange`. The
+`MapData` interface offers `node(id)`, `nodes()`, `mainRootId()`, `addNodes`,
+`updateNode`, `removeNode`, `replaceMap`, `batch` and `subscribe`.
+
 ## Third-party libs
 
 | Library | Authors or maintainers |                           License                            |       Link        |

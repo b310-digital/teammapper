@@ -4,6 +4,7 @@ import {
   NODE_WIDTH_PADDING,
   estimateNodeExtent,
   estimateTextExtent,
+  linesOf,
 } from './node-geometry.js';
 
 /**
@@ -74,6 +75,16 @@ describe('estimateTextExtent', () => {
     );
 
     expect(extent.height).toBeCloseTo(2 * FONT_SIZE * LINE_HEIGHT_FACTOR);
+  });
+});
+
+describe('linesOf', () => {
+  it('reads an entity as the character it shows', () => {
+    expect(linesOf('R&amp;D')).toEqual(['R&D']);
+  });
+
+  it('starts a new line at a line break element', () => {
+    expect(linesOf('first<br>second')).toEqual(['first', 'second']);
   });
 });
 

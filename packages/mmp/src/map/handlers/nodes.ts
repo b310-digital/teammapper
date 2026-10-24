@@ -1,11 +1,20 @@
-import Node, { NodeProperties } from '../models/node.js';
 import MmpMap from '../map.js';
-import * as d3 from 'd3';
-import DOMPurify from 'dompurify';
+import * as v from 'valibot';
 import { v4 as uuidv4 } from 'uuid';
-import { Event } from './events.js';
+import {
+  collectSubtreeIds,
+  CssColorSchema,
+  NodePropertySchemas,
+} from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
+import type { MapData, MapDataChange } from '../data/map-data.js';
+import { isNodeProperty, PropertyMapping } from '../data/property-mapping.js';
+import {
+  randomK,
+  resolveNode,
+  type ResolvedNode,
+} from '../data/node-record.js';
 import { computeMapLayout, LayoutInputNode } from './layout.js';
 import {
   NODE_HORIZONTAL_SPACING,
@@ -21,11 +30,7 @@ import {
 } from './tree-placement.js';
 import type {
   ExportNodeProperties,
-  MapNodeColors,
   MapNodeCoordinates,
-  MapNodeFont,
-  MapNodeImage,
-  MapNodeLink,
   MapSnapshot,
   NodeProperty,
   NodePropertyValue,
@@ -33,173 +38,341 @@ import type {
 } from '@teammapper/shared';
 
 const NODE_VERTICAL_SIBLING_OFFSET = 60; // The y-axis spacing between sibling nodes
-export const PropertyMapping = {
-  name: ['name'],
-  locked: ['locked'],
-  coordinates: ['coordinates'],
-  imageSrc: ['image', 'src'],
-  imageSize: ['image', 'size'],
-  linkHref: ['link', 'href'],
-  backgroundColor: ['colors', 'background'],
-  branchColor: ['colors', 'branch'],
-  fontWeight: ['font', 'weight'],
-  fontStyle: ['font', 'style'],
-  fontSize: ['font', 'size'],
-  nameColor: ['colors', 'name'],
-  hidden: ['hidden'],
-} as const;
 
 /**
- * Manage the nodes of the map.
+ * Reads the record of a node: straight from the map data, or from the
+ * records one draw pass or one scan already read.
+ */
+export type RecordLookup = (id: string) => ResolvedNode | undefined;
+
+/** The lookup over the records of one `Nodes.scan`. */
+export const lookupIn =
+  (records: ReadonlyMap<string, ResolvedNode>): RecordLookup =>
+  id =>
+    records.get(id);
+
+/**
+ * Read, change and select the nodes of the map. Nodes reads every attribute
+ * through the map data and writes through its typed methods. Nodes keeps the
+ * selected node's id and nothing else of the map. The change listener
+ * `onChange` draws every change: a local write, a peer's write and an undo
+ * take this one path.
+ *
+ * A change costs work in proportion to the nodes it adds, updates or removes.
+ * The tree queries that walk up along the parents run per drawn node; the
+ * ones that scan every node (children, siblings, descendants) run once per
+ * user action and never per change, per draw or per drag frame.
  */
 export default class Nodes {
   /**
-   * Get the associated map instance and initialize the nodes.
+   * Get the associated map instance.
    * @param {MmpMap} map
    */
   constructor(map: MmpMap) {
     this.map = map;
-
-    this.nodes = new Map();
   }
-  static NodePropertyMapping: typeof PropertyMapping = PropertyMapping;
 
   private map: MmpMap;
 
-  private nodes: Map<string, Node>;
-  // deselectNode sets this to null. A map load selects the main root.
-  private selectedNode: Node | null = null;
+  // deselectNode sets this to null. A replaced map selects the main root.
+  private selectedId: string | null = null;
+  // The ring color mmp last drew on the selected node. A highlight may have
+  // replaced the ring since, and refreshRing keeps it until the color changes.
+  private selectionRing: string | null = null;
 
-  /**
-   * Add the root node to the map.
-   * @param {MapNodeCoordinates} coordinates
-   */
-  public addRootNode(coordinates?: MapNodeCoordinates) {
-    const rootId = uuidv4();
-
-    const properties = Utils.mergeObjects(this.map.options.rootNode, {
-      coordinates: {
-        x: 0,
-        y: 0,
-      },
-      locked: false,
-      id: rootId,
-      parent: null,
-      hidden: false,
-      isRoot: true,
-    }) as unknown as NodeProperties;
-
-    this.map.rootId = rootId;
-
-    const node: Node = new Node(properties);
-
-    if (coordinates) {
-      node.coordinates.x = coordinates.x || node.coordinates.x;
-      node.coordinates.y = coordinates.y || node.coordinates.y;
-    }
-
-    this.nodes.set(properties.id, node);
-
-    this.map.draw.update();
-
-    this.selectRootNode();
+  private get data(): MapData {
+    return this.map.data;
   }
 
   /**
-   * Add a node in the map.
+   * Draw a change of the map data, keep the selection and the view state in
+   * line with it, and announce it with `mapChange`.
+   * @param {MapDataChange} change
+   */
+  public onChange = (change: MapDataChange) => {
+    if (change.replaced) this.drawReplaced();
+    else this.drawChange(change);
+
+    this.map.viewState.forget(change.removed);
+    this.map.events.emit('mapChange', undefined);
+  };
+
+  /**
+   * Draw the whole map again, select the main root and center the view on
+   * it. A running drag ends without a write, so a peer's import is never
+   * overwritten. The selection drops without `nodeDeselect`: the old DOM is
+   * gone, and a blur there would commit a name edit. A node that survives
+   * the replacement keeps the rings of peers but not a stale selection ring.
+   */
+  public drawReplaced() {
+    this.map.drag.cancel();
+    if (this.selectedId !== null) this.map.draw.setRing(this.selectedId, null);
+    this.map.draw.drawAll();
+    this.selectedId = null;
+    this.selectRootNode();
+    this.map.zoom.center('position', 0);
+  }
+
+  /**
+   * Draw the nodes a change added or updated, and drop the removed ones. For
+   * a removed node, `drawChange` also redraws its parent, whose hidden child
+   * nodes mark depends on its children. `drawNodes` redraws the parents and
+   * the descendants a new or changed parent affects.
+   */
+  private drawChange({ added, updated, removed }: MapDataChange) {
+    const redraw = this.map.draw.removeNodes(removed);
+    this.map.draw.drawNodes([...added, ...updated, ...redraw]);
+
+    const selected = this.selectedId;
+    if (selected === null) return;
+    if (!this.data.node(selected)) {
+      this.deselectNode();
+    } else if (updated.includes(selected)) {
+      this.refreshRing(selected);
+    }
+  }
+
+  /**
+   * Draw the ring of the node again when its background changed: the ring
+   * darkens along with it. Any other update keeps the ring the node carries,
+   * which may be a highlight drawn after the selection.
+   */
+  private refreshRing(id: string) {
+    const node = this.record(id);
+    if (!node || this.map.draw.ringOf(id) === null) return;
+
+    const color = this.map.draw.ringColor(node);
+    if (color === this.selectionRing) return;
+
+    this.selectionRing = color;
+    this.map.draw.setRing(id, color);
+  }
+
+  /**
+   * The node with `id`, every attribute filled, read from the map data.
+   * @param {string} id
+   */
+  public record = (id: string): ResolvedNode | undefined => {
+    const record = this.data.node(id);
+    return record ? resolveNode(record) : undefined;
+  };
+
+  /**
+   * Every node, read in one scan of the map data, by id. For a user action
+   * only.
+   */
+  public scan(): Map<string, ResolvedNode> {
+    return new Map(
+      this.data.nodes().map(record => [record.id, resolveNode(record)])
+    );
+  }
+
+  /**
+   * The id of the node's parent, or null for a root. A node whose parent
+   * the map data lacks counts as a root.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public parentOf(id: string, lookup: RecordLookup = this.record) {
+    const parent = lookup(id)?.parent;
+    return parent && lookup(parent) ? parent : null;
+  }
+
+  /**
+   * The ids along the parents of the node, nearest first. A parent cycle
+   * stops at the node that closes it.
+   */
+  private ancestors(id: string, lookup: RecordLookup): string[] {
+    const visited = new Set<string>([id]);
+    const ancestors: string[] = [];
+
+    for (
+      let parent = this.parentOf(id, lookup);
+      parent !== null && !visited.has(parent);
+      parent = this.parentOf(parent, lookup)
+    ) {
+      visited.add(parent);
+      ancestors.push(parent);
+    }
+    return ancestors;
+  }
+
+  /**
+   * The id of the root of the tree the node belongs to.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public treeRoot(id: string, lookup: RecordLookup = this.record): string {
+    return this.ancestors(id, lookup).pop() ?? id;
+  }
+
+  /**
+   * The depth of the node in its tree: 1 for a root.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public level(id: string, lookup: RecordLookup = this.record): number {
+    return this.ancestors(id, lookup).length + 1;
+  }
+
+  /**
+   * Tell whether the view state hides the node: one of its ancestors hides
+   * its child nodes. Without hidden child nodes no walk runs.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public isHidden(id: string, lookup: RecordLookup = this.record): boolean {
+    const viewState = this.map.viewState;
+    if (viewState.isEmpty()) return false;
+
+    return this.ancestors(id, lookup).some(ancestor =>
+      viewState.hidesChildren(ancestor)
+    );
+  }
+
+  /**
+   * The position mmp draws the node at: its drag preview, or the coordinates
+   * of its record.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public positionOf(
+    id: string,
+    lookup: RecordLookup = this.record
+  ): MapNodeCoordinates {
+    const position = this.map.draw.previewOf(id) ??
+      lookup(id)?.coordinates ?? { x: 0, y: 0 };
+    return { x: position.x, y: position.y };
+  }
+
+  /**
+   * Whether the node is drawn left of the root of its own tree. A root has
+   * no side and returns undefined. The drag preview counts, so a dragged
+   * node mirrors its descendants as it crosses its tree root.
+   * @param {string} id
+   * @param {RecordLookup} lookup
+   */
+  public orientation(
+    id: string,
+    lookup: RecordLookup = this.record
+  ): boolean | undefined {
+    if (this.parentOf(id, lookup) === null) return undefined;
+
+    const root = this.treeRoot(id, lookup);
+    return this.positionOf(id, lookup).x < this.positionOf(root, lookup).x;
+  }
+
+  /**
+   * The children of the node, in the order of the map data. Scans every
+   * node once.
+   * @param {string} id
+   */
+  public children(id: string): ResolvedNode[] {
+    return this.data
+      .nodes()
+      .filter(node => node.parent === id && node.id !== id)
+      .map(resolveNode);
+  }
+
+  /**
+   * The other children of the node's parent, none for a root. Scans every
+   * node once.
+   * @param {string} id
+   */
+  private siblings(id: string): ResolvedNode[] {
+    const parent = this.parentOf(id);
+    if (parent === null) return [];
+
+    return this.children(parent).filter(node => node.id !== id);
+  }
+
+  /**
+   * The ids of every node below the node. Scans every node once.
+   * @param {string} id
+   */
+  public descendants(id: string): string[] {
+    return collectSubtreeIds(this.data.nodes(), id);
+  }
+
+  /**
+   * Add a node to the map and return a copy of it. The node takes the
+   * defaults for every property the caller leaves out, and coordinates next
+   * to its siblings when the caller passes none. The method refuses a child
+   * of a protected branch: it announces the refusal and returns null. The
+   * map does not select the new node.
    * @param {UserNodeProperties} userProperties
    * @param {string | null} parentId the parent's id, null to add a root, or
    * undefined to add a child of the selected node
-   * @param {string} overwriteId
    */
   public addNode = (
     userProperties?: UserNodeProperties,
-    notifyWithEvent = true,
-    updateHistory = true,
-    parentId?: string | null,
-    overwriteId?: string
-  ): Node => {
-    const parentNode = this.resolveParent(parentId);
+    parentId?: string | null
+  ): ExportNodeProperties | null => {
+    const parent = this.resolveParent(parentId);
+    if (parent !== null && this.refusesChange(parent)) return null;
 
-    const properties: NodeProperties = Utils.mergeObjects(
+    const record = this.newRecord(userProperties, parent);
+    this.data.addNodes([record]);
+
+    return this.exportNode(record.id);
+  };
+
+  /**
+   * The record of a new node under `parent`, or of a new root for null.
+   * `lookup` reads the parent and its tree, which may be records a paste has
+   * not written yet.
+   */
+  public newRecord(
+    userProperties: UserNodeProperties | undefined,
+    parent: string | null,
+    id: string = uuidv4(),
+    lookup: RecordLookup = this.record
+  ): ResolvedNode {
+    const properties: UserNodeProperties = Utils.mergeObjects(
       this.map.options.defaultNode,
       userProperties,
       true
-    ) as NodeProperties;
-
-    properties.id = overwriteId || uuidv4();
-    properties.parent = parentNode;
+    );
 
     // A root draws no branch. Its children fall through to the automatic
     // branch colors, as the main root's children do.
-    if (!parentNode && userProperties?.colors?.branch === undefined) {
+    if (parent === null && userProperties?.colors?.branch === undefined) {
       properties.colors = { ...properties.colors, branch: '' };
     }
 
-    // A node added to a branch this person hid starts hidden itself, so a node
-    // somebody else creates there does not appear on its own.
-    if (parentNode && this.hidesChildNodes(parentNode)) {
-      properties.hidden = true;
+    const record = resolveNode({
+      ...properties,
+      id,
+      parent,
+      k: randomK(),
+      protected: false,
+    });
+
+    if (!properties.coordinates?.x && !properties.coordinates?.y && parent) {
+      record.coordinates = this.calculateCoordinates(parent, lookup);
     }
-
-    const node: Node = new Node(properties);
-
-    this.nodes.set(properties.id, node);
-
-    if (
-      !properties.coordinates?.x &&
-      !properties.coordinates?.y &&
-      node.parent
-    ) {
-      node.coordinates = this.calculateCoordinates(node);
-    }
-
-    this.map.draw.update();
-
-    if (updateHistory) {
-      this.map.history.save();
-    }
-
-    if (notifyWithEvent)
-      this.map.events.call(
-        Event.nodeCreate,
-        node.dom,
-        this.getNodeProperties(node)
-      );
-    return node;
-  };
+    return record;
+  }
 
   /**
    * The parent a node added through addNode gets: none for an explicit null,
    * the named node for an id, the selected node otherwise. Throws when the
+   * named parent is missing, such as one a peer just removed, and when the
    * caller names no parent and nothing is selected, because a new root node
    * would hide the caller's mistake.
    */
-  private resolveParent(parentId: string | null | undefined): Node | null {
+  private resolveParent(parentId: string | null | undefined): string | null {
     if (parentId === null) return null;
-    if (parentId) return this.getNode(parentId) ?? null;
-    if (!this.selectedNode) Log.error('There is no selected node');
-
-    return this.selectedNode;
-  }
-
-  /**
-   * Adds multiple nodes at once and saves one snapshot to history. A node
-   * with an empty parent becomes a root, whatever node is selected.
-   * @param {ExportNodeProperties[]} nodes
-   * @param {boolean} updateHistory
-   */
-  public addNodes = (nodes: ExportNodeProperties[], updateHistory = true) => {
-    nodes.forEach(node => {
-      if (!this.existNode(node.id)) {
-        this.addNode(node, false, false, node.parent || null, node.id);
+    if (parentId) {
+      if (!this.data.node(parentId)) {
+        Log.error('There are no nodes with id "' + parentId + '"');
       }
-    });
-
-    if (updateHistory) {
-      this.map.history.save();
+      return parentId;
     }
-  };
+    if (!this.selectedId) Log.error('There is no selected node');
+
+    return this.selectedId;
+  }
 
   /**
    * Select a node or return the current selected node, null when nothing is
@@ -214,18 +387,17 @@ export default class Nodes {
       }
 
       if (!this.nodeSelectionTo(id)) {
-        const node = this.nodes.get(id);
+        const node = this.record(id);
         if (node) {
-          const background = node.getBackgroundDOM();
+          const color = this.map.draw.ringColor(node);
 
-          const color = this.ringColor(node);
+          if (color && this.map.draw.ringOf(id) !== color) {
+            this.releaseSelection(id);
 
-          if (color && background.style.stroke !== color) {
-            this.releaseSelection(node);
+            this.selectionRing = color;
+            this.map.draw.setRing(id, color);
 
-            background.style.stroke = color;
-
-            this.announceSelection(node);
+            this.announceSelection(id);
           }
         } else {
           Log.error('The node id or the direction is not correct');
@@ -233,113 +405,63 @@ export default class Nodes {
       }
     }
 
-    return this.selectedNode ? this.getNodeProperties(this.selectedNode) : null;
+    return this.getSelectedNode();
   };
 
   /**
-   * Draw the ring on the selected node again. A full draw of the map gives
-   * every node a new DOM without the ring.
-   */
-  public redrawSelectionRing() {
-    if (!this.selectedNode) return;
-
-    const color = this.ringColor(this.selectedNode);
-    if (color) this.selectedNode.getBackgroundDOM().style.stroke = color;
-  }
-
-  /**
-   * The ring colour of a node: its background fill, darkened. Null when the
-   * fill holds no colour.
-   * @param {Node} node
-   * @returns {string | null}
-   */
-  private ringColor(node: Node): string | null {
-    const fill = node.getBackgroundDOM().style.fill;
-    return d3.color(fill)?.darker(0.5).toString() ?? null;
-  }
-
-  /**
    * Make the node the selected node and tell listeners it took the selection.
-   * @param {Node} node
+   * @param {string} id
    */
-  private announceSelection(node: Node) {
-    this.selectedNode = node;
-    this.map.events.call(
-      Event.nodeSelect,
-      node.dom,
-      this.getNodeProperties(node)
-    );
+  private announceSelection(id: string) {
+    this.selectedId = id;
+    const node = this.exportNode(id);
+    if (node) this.map.events.emit('nodeSelect', node);
   }
 
   /**
    * Clear the ring and the focus of the selected node, leave nothing
    * selected, and tell listeners the node lost the selection. `next` names
    * the node about to take the selection, or null for a deselect.
-   * @param {Node | null} next
+   * @param {string | null} next
    */
-  private releaseSelection(next: Node | null) {
-    const previous = this.selectedNode;
+  private releaseSelection(next: string | null) {
+    const previous = this.selectedId;
     if (!previous) return;
 
-    previous.getBackgroundDOM().style.stroke = '';
+    this.map.draw.setRing(previous, null);
 
     // Keep focus on the node the user is editing (#1249): on mobile,
     // d3-drag's `started` callback fires on the second tap that enters edit
     // mode and calls selectNode for the same node, which used to steal focus
     // from the just-focused contenteditable and stop the soft keyboard from
     // opening.
-    const prevName = previous.getNameDOM();
     const editingSameNode =
-      previous === next && document.activeElement === prevName;
+      previous === next && this.map.draw.isEditing(previous);
     if (!editingSameNode) {
       Utils.removeAllRanges();
-      prevName.blur();
+      // The blur commits a running name edit of the node.
+      this.map.draw.blurName(previous);
     }
 
-    // The blur runs first: the name editor's onblur commits the name through
-    // updateNode without an id, which targets the selected node.
-    this.selectedNode = null;
-    this.map.events.call(
-      Event.nodeDeselect,
-      previous.dom,
-      this.getNodeProperties(previous)
+    this.selectedId = null;
+    // For a node the map data no longer holds, the event carries its id alone.
+    this.map.events.emit(
+      'nodeDeselect',
+      this.exportNode(previous) ?? { id: previous, parent: null, k: 0 }
     );
   }
 
   /**
-   * Highlighs node with a border
+   * Draw a ring in `color` around the node, as a peer's selection does. A
+   * peer picks its own color, so an invalid one draws nothing.
    * @param {string} id
    * @param {string} color
-   * @returns {void}
    */
-  public highlightNodeWithColor = (
-    id: string,
-    color: string,
-    notifyWithEvent = true
-  ): void => {
-    if (id !== undefined) {
-      if (typeof id !== 'string') {
-        Log.error('The node id must be a string', 'type');
-      }
+  public highlightNodeWithColor = (id: string, color: string): void => {
+    if (!this.data.node(id)) Log.error('The node id is not correct');
+    if (!v.is(CssColorSchema, color)) return;
 
-      const node = this.nodes.get(id);
-      if (node) {
-        const background = node.getBackgroundDOM();
-
-        if (background.style.stroke !== color) {
-          background.style.stroke = DOMPurify.sanitize(color);
-
-          if (notifyWithEvent)
-            this.map.events.call(
-              Event.nodeUpdate,
-              node.dom,
-              this.getNodeProperties(node)
-            );
-        }
-      } else {
-        Log.error('The node id is not correct');
-      }
-    }
+    this.map.draw.setRing(id, color);
   };
 
   /**
@@ -351,10 +473,9 @@ export default class Nodes {
     if (id !== undefined) {
       if (typeof id !== 'string') {
         Log.error('The node id must be a string', 'type');
-        return false;
       }
 
-      return this.nodes.has(id);
+      return this.data.node(id) !== undefined;
     }
     return false;
   };
@@ -363,54 +484,42 @@ export default class Nodes {
    * Enable the node name editing of the selected node.
    */
   public editNode = () => {
-    if (this.selectedNode) {
-      this.map.draw.enableNodeNameEditing(this.selectedNode);
+    if (this.selectedId) {
+      this.map.draw.enableNodeNameEditing(this.selectedId);
     }
   };
 
   /**
-   * Toggle (hide/show) all child nodes of selected node
+   * Hide the child nodes of the selected node, or show them again, in the
+   * view state, and redraw the branch. The toggle skips a node without child
+   * nodes, unless the view state already lists it. A node further down keeps
+   * its own child nodes hidden. Fires no event.
    */
   public toggleBranchVisibility = () => {
-    if (!this.selectedNode) return;
+    const id = this.selectedId;
+    if (!id) return;
 
-    const children = this.getChildren(this.selectedNode);
+    const viewState = this.map.viewState;
+    if (!viewState.hidesChildren(id) && this.children(id).length === 0) {
+      return;
+    }
 
-    // One hidden child shows the whole branch, and children that all show hide
-    // it. Deciding once for the branch repairs children that disagree, which
-    // happens after somebody else adds a node to a branch hidden here.
-    this.selectedNode.hasHiddenChildNodes =
-      children.length > 0 && !children.some(x => x.hidden);
-
-    this.applyHiddenStateToDescendants(this.selectedNode);
-
-    this.map.draw.update();
-    this.map.history.save();
+    viewState.toggle(id);
+    this.map.draw.drawSubtree(id);
   };
 
   /**
-   * Set the hidden flag of every descendant from its parent, so a descendant
-   * hides whenever its parent hides its children. A branch this person hid
-   * further down stays hidden, because getDescendants returns each parent
-   * before its own children.
-   * @param {Node} node
-   */
-  private applyHiddenStateToDescendants = (node: Node) => {
-    this.getDescendants(node).forEach(descendant => {
-      const parent = descendant.parent;
-      const hidden = parent ? this.hidesChildNodes(parent) : false;
-      this.updateNode('hidden', hidden, false, false, descendant.id);
-    });
-  };
-
-  /**
-   * Tell whether the children of a node are hidden, which happens when the
-   * node itself is hidden or when this person hid its branch.
-   * @param {Node} node
+   * Tell whether the view state hides the child nodes of the node with `id`.
+   * Without an `id`, the method asks about the selected node and returns
+   * false when nothing is selected. A node without child nodes returns false
+   * and shows no hidden child nodes mark.
+   * @param {string} id
    * @returns {boolean}
    */
-  private hidesChildNodes = (node: Node): boolean =>
-    node.hidden || node.hasHiddenChildNodes;
+  public childNodesHidden = (id?: string): boolean => {
+    const node = this.getTargetNode(id);
+    return node ? this.map.draw.hidesDrawnChildren(node.id) : false;
+  };
 
   /**
    * Deselect the current selected node, the main root included, and leave
@@ -425,146 +534,210 @@ export default class Nodes {
    * id. Return null when the caller passes no id and nothing is selected.
    * Throw when `id` names no node.
    * @param {string} id
-   * @returns {Node | null}
+   * @returns {ResolvedNode | null}
    */
-  public getTargetNode = (id?: string): Node | null => {
+  public getTargetNode = (id?: string): ResolvedNode | null => {
     if (id && typeof id !== 'string') {
       Log.error('The node id must be a string', 'type');
     }
-    if (!id) return this.selectedNode;
+    const target = id || this.selectedId;
+    if (!target) return null;
 
-    const node = this.getNode(id);
+    const node = this.record(target);
     if (node === undefined) {
-      Log.error('There are no nodes with id "' + id + '"');
+      Log.error('There are no nodes with id "' + target + '"');
     }
 
     return node;
   };
 
   /**
-   * Update the properties of the selected node.
+   * Write one property of the node with `id`, or of the selected node. The
+   * value must pass the shared schema. A protected branch refuses every
+   * property but `protected` itself, and an unchanged value writes nothing.
    */
   public updateNode = (
     property: NodeProperty | string,
     value: NodePropertyValue | unknown,
-    notifyWithEvent = true,
-    updateHistory = true,
     id?: string
   ) => {
     const node = this.getTargetNode(id);
     if (!node) return;
 
-    if (typeof property !== 'string') {
-      Log.error('The property must be a string', 'type');
+    if (typeof property !== 'string' || !isNodeProperty(property)) {
+      Log.error('The property does not exist');
     }
 
-    let updated: boolean | void = false;
-    const propertyPath =
-      PropertyMapping[property as keyof typeof PropertyMapping];
-    const previousValue: unknown = propertyPath
-      ? Utils.get(node, propertyPath)
-      : undefined;
+    // Changing the protection itself stays allowed.
+    if (property !== 'protected' && this.refusesChange(node.id)) return;
 
-    switch (property) {
-      case 'name':
-        updated = this.updateNodeName(node, value as string);
-        break;
-      case 'locked':
-        updated = this.updateNodeLockedStatus(node, value as boolean);
-        break;
-      case 'coordinates':
-        updated = this.updateNodeCoordinatesWithoutDescendants(
-          node,
-          value as MapNodeCoordinates
-        );
-        break;
-      case 'imageSrc':
-        updated = this.updateNodeImageSrc(node, value as string);
-        break;
-      case 'imageSize':
-        updated = this.updateNodeImageSize(node, value as number);
-        break;
-      case 'linkHref':
-        updated = this.updateNodeLinkHref(node, value as string);
-        break;
-      case 'backgroundColor':
-        updated = this.updateNodeBackgroundColor(node, value as string);
-        break;
-      case 'branchColor':
-        updated = this.updateNodeBranchColor(node, value as string);
-        break;
-      case 'fontWeight':
-        updated = this.updateNodeFontWeight(node, value as string);
-        break;
-      case 'fontStyle':
-        updated = this.updateNodeFontStyle(node, value as string);
-        break;
-      case 'fontSize':
-        updated = this.updateNodeFontSize(node, value as number);
-        break;
-      case 'nameColor':
-        updated = this.updateNodeNameColor(node, value as string);
-        break;
-      case 'hidden':
-        updated = this.updateNodeHidden(node, value as boolean);
-        break;
-      default:
-        Log.error('The property does not exist');
-    }
-    if (updated !== false && updateHistory) {
-      this.map.history.save();
-    }
+    const previousValue = Utils.get(node, PropertyMapping[property]);
+    const nextValue = this.validatedValue(node, property, value);
+    if (Nodes.sameValue(previousValue, nextValue)) return;
 
-    if (updated !== false && notifyWithEvent) {
-      this.map.events.call(Event.nodeUpdate, node.dom, {
-        nodeProperties: this.getNodeProperties(node),
-        changedProperty: property,
-        previousValue,
-      });
-    }
+    this.data.updateNode(node.id, property, nextValue);
   };
 
   /**
-   * Remove the selected node.
+   * Check a new value of the property against the shared schema and the
+   * node, and return the value the node takes. An empty value clears a
+   * text property and leaves a number as it is.
+   */
+  private validatedValue(
+    node: ResolvedNode,
+    property: NodeProperty,
+    value: unknown
+  ): unknown {
+    const result = v.safeParse(NodePropertySchemas[property], value);
+    if (!result.success) {
+      Log.error(`The value of ${property} is not valid`, 'type');
+    }
+
+    if (property === 'imageSize' && node.image.src === '') {
+      Log.error('The node does not have an image');
+    }
+
+    const previousValue = Utils.get(node, PropertyMapping[property]);
+    const nextValue =
+      result.output ?? (typeof previousValue === 'string' ? '' : previousValue);
+
+    // A colors write carries the branch color with the other colors,
+    // unchanged, so a root accepts its own value without an error.
+    if (
+      property === 'branchColor' &&
+      this.parentOf(node.id) === null &&
+      nextValue !== node.colors.branch
+    ) {
+      Log.error('A root node has no branches');
+    }
+
+    return nextValue;
+  }
+
+  private static sameValue(a: unknown, b: unknown): boolean {
+    if (Utils.isPureObjectType(a) && Utils.isPureObjectType(b)) {
+      return JSON.stringify(a) === JSON.stringify(b);
+    }
+    return a === b;
+  }
+
+  /**
+   * Remove the node with `id`, or the selected node, with its descendants.
+   * The main root and a branch holding a protected node stay.
    * @param {string} id
    */
-  public removeNode = (id?: string, notifyWithEvent = true) => {
+  public removeNode = (id?: string) => {
     const node = this.getTargetNode(id);
     if (!node) return;
 
-    if (!node.isRoot) {
-      this.nodes.delete(node.id);
+    if (this.refusesRemoval(node.id)) return;
+    if (node.isRoot) Log.error('The root node can not be deleted');
 
-      this.getDescendants(node).forEach((node: Node) => {
-        this.nodes.delete(node.id);
-      });
-
-      this.map.draw.clear();
-      this.map.draw.update();
-
-      this.map.history.save();
-
-      if (notifyWithEvent)
-        this.map.events.call(
-          Event.nodeRemove,
-          undefined,
-          this.getNodeProperties(node)
-        );
-
-      // Deselect only when the removal deleted the selected node or one of
-      // its ancestors.
-      if (this.selectedNode && !this.nodes.has(this.selectedNode.id)) {
-        this.deselectNode();
-      } else {
-        this.redrawSelectionRing();
-      }
-    } else {
-      Log.error('The root node can not be deleted');
-    }
+    this.data.removeNode(node.id);
   };
 
   /**
-   * Return the children of the node.
+   * Return the id of the node carrying the protection of the node with `id`,
+   * or of the selected node: the node itself or its nearest protected
+   * ancestor. Null when the node is not protected or nothing is selected.
+   * @param {string} id
+   * @returns {string | null}
+   */
+  public protectingNode = (id?: string): string | null => {
+    const node = this.getTargetNode(id);
+    if (!node) return null;
+
+    return (
+      [node.id, ...this.ancestors(node.id, this.record)].find(
+        candidate => this.record(candidate)?.protected
+      ) ?? null
+    );
+  };
+
+  /**
+   * Tell whether the node or one of its ancestors carries the protection.
+   * @param {string} id
+   * @returns {boolean}
+   */
+  public isProtected(id: string): boolean {
+    return this.protectingNode(id) !== null;
+  }
+
+  /**
+   * Refuse a change of the node when its branch is protected: announce the
+   * refusal and return true.
+   * @param {string} id
+   * @returns {boolean}
+   */
+  public refusesChange(id: string): boolean {
+    if (!this.isProtected(id)) return false;
+
+    this.refuseProtected(id);
+    return true;
+  }
+
+  /**
+   * Refuse a removal of the node when the node is protected or holds a
+   * protected descendant, since the removal would delete a protected node.
+   * @param {string} id
+   * @returns {boolean}
+   */
+  public refusesRemoval(id: string): boolean {
+    if (this.refusesChange(id)) return true;
+
+    const records = this.scan();
+    const holdsProtected = collectSubtreeIds([...records.values()], id).some(
+      descendant => records.get(descendant)?.protected
+    );
+    if (!holdsProtected) return false;
+
+    this.refuseProtected(id);
+    return true;
+  }
+
+  /**
+   * Announce that a protected branch refused an edit of the node.
+   * @param {string} id
+   */
+  public refuseProtected(id: string) {
+    const node = this.exportNode(id);
+    if (node) this.map.events.emit('nodeProtected', node);
+  }
+
+  /**
+   * Protect the node with `id`, or the selected node, and every node below
+   * it. The method sets `protected` to false on every protected descendant,
+   * so each path from a root to a leaf holds at most one protected node. A
+   * node that is already protected stays as it is. The writes form one batch.
+   * @param {string} id
+   */
+  public protectBranch = (id?: string) => {
+    const node = this.getTargetNode(id);
+    if (!node || this.isProtected(node.id)) return;
+
+    const records = this.scan();
+    this.data.batch(() => {
+      collectSubtreeIds([...records.values()], node.id)
+        .filter(descendant => records.get(descendant)?.protected)
+        .forEach(descendant => this.updateNode('protected', false, descendant));
+      this.updateNode('protected', true, node.id);
+    });
+  };
+
+  /**
+   * Release the protection of the branch the node with `id`, or the selected
+   * node, belongs to, which releases every node below the protecting node.
+   * @param {string} id
+   */
+  public releaseBranch = (id?: string) => {
+    const protecting = this.protectingNode(id);
+    if (protecting === null) return;
+
+    this.updateNode('protected', false, protecting);
+  };
+
+  /**
+   * Return copies of the children of the node.
    * @param {string} id
    * @returns {ExportNodeProperties[]}
    */
@@ -572,75 +745,17 @@ export default class Nodes {
     const node = this.getTargetNode(id);
     if (!node) return [];
 
-    return this.getChildren(node).map((n: Node) => this.getNodeProperties(n));
+    return this.children(node.id);
   };
 
   /**
-   * Return the export properties of the node.
-   * @param {Node} node
-   * @param {boolean} fixedCoordinates
-   * @returns {ExportNodeProperties} properties
+   * Return a copy of the node with every attribute filled, which the caller
+   * may change, or null when the map data lacks the node.
+   * @param {string} id
+   * @returns {ExportNodeProperties | null}
    */
-  public getNodeProperties(
-    node: Node,
-    fixedCoordinates = false
-  ): ExportNodeProperties {
-    return {
-      id: node.id,
-      parent: node.parent ? node.parent.id : '',
-      name: node.name,
-      coordinates: fixedCoordinates
-        ? this.fixCoordinates(node.coordinates, true)
-        : (Utils.cloneObject(node.coordinates) as MapNodeCoordinates),
-      image: Utils.cloneObject(node.image) as MapNodeImage,
-      colors: Utils.cloneObject(node.colors) as MapNodeColors,
-      font: Utils.cloneObject(node.font) as MapNodeFont,
-      link: Utils.cloneObject(node.link) as MapNodeLink,
-      locked: node.locked,
-      isRoot: node.isRoot,
-      hidden: node.hidden,
-      hasHiddenChildNodes: node.hasHiddenChildNodes,
-      k: node.k,
-    };
-  }
-
-  /**
-   * Convert external coordinates to internal or otherwise.
-   * @param {MapNodeCoordinates} coordinates
-   * @param {boolean} reverse
-   * @returns {MapNodeCoordinates}
-   */
-  public fixCoordinates(
-    coordinates: MapNodeCoordinates,
-    reverse = false
-  ): MapNodeCoordinates {
-    const svgEl = this.map.dom.svg.node();
-    const zoomCoordinates = svgEl
-      ? d3.zoomTransform(svgEl)
-      : { x: 0, y: 0, k: 1 };
-    const fixedCoordinates: MapNodeCoordinates = {} as MapNodeCoordinates;
-
-    if (coordinates.x) {
-      if (reverse === false) {
-        fixedCoordinates.x =
-          (coordinates.x - zoomCoordinates.x) / zoomCoordinates.k;
-      } else {
-        fixedCoordinates.x =
-          coordinates.x * zoomCoordinates.k + zoomCoordinates.x;
-      }
-    }
-
-    if (coordinates.y) {
-      if (reverse === false) {
-        fixedCoordinates.y =
-          (coordinates.y - zoomCoordinates.y) / zoomCoordinates.k;
-      } else {
-        fixedCoordinates.y =
-          coordinates.y * zoomCoordinates.k + zoomCoordinates.y;
-      }
-    }
-
-    return coordinates;
+  public exportNode(id: string): ExportNodeProperties | null {
+    return this.record(id) ?? null;
   }
 
   /**
@@ -650,7 +765,7 @@ export default class Nodes {
    */
   private nodeSelectionTo(direction: string): boolean {
     // Arrow keys move no selection while nothing is selected.
-    const selected = this.selectedNode;
+    const selected = this.selectedId ? this.record(this.selectedId) : null;
 
     switch (direction) {
       case 'up':
@@ -666,49 +781,6 @@ export default class Nodes {
       default:
         return false;
     }
-  }
-
-  /**
-   * Return the children of a node.
-   * @param {Node} node
-   * @returns {Node[]}
-   */
-  public getChildren(node: Node): Node[] {
-    return Array.from(this.nodes.values()).filter((n: Node) => {
-      return n.parent && n.parent.id === node.id;
-    });
-  }
-
-  /**
-   * Return whether a node is left of the root of its own tree (true if left).
-   * A root has no side and returns undefined.
-   * @return {boolean}
-   */
-  public getOrientation(node: Node): boolean | undefined {
-    if (!node.parent) {
-      return;
-    }
-
-    const root = this.getTreeRoot(node);
-
-    return (node.coordinates?.x ?? 0) < (root.coordinates?.x ?? 0);
-  }
-
-  /**
-   * Return the root of the tree a node belongs to: the ancestor with no
-   * parent. A cycle of ancestors stops at the node that closes it.
-   * @returns {Node} root
-   */
-  public getTreeRoot(node: Node): Node {
-    const visited = new Set<Node>([node]);
-    let current = node;
-
-    while (current.parent && !visited.has(current.parent)) {
-      current = current.parent;
-      visited.add(current);
-    }
-
-    return current;
   }
 
   /**
@@ -737,7 +809,13 @@ export default class Nodes {
       x: (view.minX + view.maxX) / 2,
       y: (view.minY + view.maxY) / 2,
     };
-    const trees = treeBounds(this.getNodes(), node => this.getTreeRoot(node));
+    const records = this.scan();
+    const lookup = lookupIn(records);
+    const trees = treeBounds(
+      [...records.values()],
+      node => records.get(this.treeRoot(node.id, lookup)) ?? node,
+      this.boundsOf
+    );
 
     return findClearSpot(start, footprint, trees, NEW_TREE_GAP);
   };
@@ -745,189 +823,102 @@ export default class Nodes {
   /**
    * Add the root of a new tree at `newTreeCoordinates`, then select it and
    * pan the view the shortest distance that shows it. The root has no parent
-   * and no main-root mark. The frontend's nodeCreate handler may select the
-   * root already. addTree selects it anyway, so the mmp API does not depend
-   * on that handler.
-   * @returns {Node} the new root
+   * and its isRoot attribute is false.
+   * @returns {ExportNodeProperties | null} a copy of the new root
    */
-  public addTree = (): Node => {
+  public addTree = (): ExportNodeProperties | null => {
     const root = this.addNode(
       { name: '', coordinates: this.newTreeCoordinates() },
-      true,
-      true,
       null
     );
+    if (!root) return null;
+
     this.selectNode(root.id);
-    this.map.zoom.panIntoView(nodeBounds(root));
+    this.map.zoom.panIntoView(this.boundsOf(resolveNode(root)));
 
     return root;
   };
 
   private rightOfEveryTree(): MapNodeCoordinates {
-    const rightEdge = this.getNodes().reduce(
-      (edge, node) =>
-        Math.max(edge, node.coordinates.x + node.dimensions.width / 2),
+    const rightEdge = [...this.scan().values()].reduce(
+      (edge, node) => Math.max(edge, this.boundsOf(node).maxX),
       -Infinity
     );
 
     return {
       x: rightEdge + 2 * NODE_HORIZONTAL_SPACING,
-      y: this.getRoot().coordinates.y,
+      y: this.mainRoot()?.coordinates.y ?? 0,
     };
   }
 
   /**
-   * Return all descendants of a node.
-   * @returns {Node[]} nodes
+   * Return a copy of the selected node, or null when nothing is selected.
+   * @returns {ExportNodeProperties | null}
    */
-  public getDescendants(node: Node): Node[] {
-    let nodes: Node[] = [];
-    this.getChildren(node).forEach((node: Node) => {
-      nodes.push(node);
-      nodes = nodes.concat(this.getDescendants(node));
-    });
-    return nodes;
-  }
-
-  /**
-   * Return an array of all nodes.
-   */
-  public getNodes(): Node[] {
-    return Array.from(this.nodes.values());
-  }
-
-  /**
-   * Return the root parameters
-   */
-  public exportRootProperties = (): ExportNodeProperties => {
-    return this.getNodeProperties(this.getRoot());
+  public getSelectedNode = (): ExportNodeProperties | null => {
+    return this.selectedId ? this.exportNode(this.selectedId) : null;
   };
 
   /**
-   * Set a node as a id-value copy.
-   */
-  public setNode(key: string, node: Node) {
-    this.nodes.set(key, node);
-  }
-
-  /**
-   * Return the current selected node, or null when nothing is selected.
-   * @returns {Node | null}
-   */
-  public getSelectedNode = (): Node | null => {
-    return this.selectedNode;
-  };
-
-  /**
-   * Select the main root: draw its ring and fire `nodeSelect`.
+   * Select the main root: draw its ring and fire `nodeSelect`. A map
+   * without a main root selects nothing.
    */
   public selectRootNode() {
-    // A full draw replaces every node object. Drop a selected node the map no
-    // longer holds and fire no deselect: its DOM is detached, and a blur there
-    // would commit a name edit.
-    const selected = this.selectedNode;
-    if (selected && this.nodes.get(selected.id) !== selected) {
-      this.selectedNode = null;
-    }
+    const root = this.data.mainRootId();
+    if (root === null) return;
 
-    const root = this.getRoot();
-    this.selectNode(root.id);
+    this.selectNode(root);
 
     // selectNode draws no ring on a main root without a background colour,
     // and the main root still takes the selection.
-    if (this.selectedNode !== root) {
+    if (this.selectedId !== root) {
       this.releaseSelection(root);
       this.announceSelection(root);
     }
   }
 
   /**
-   * Delete all nodes.
+   * Return the main root, or null for a map without one.
+   * @returns {ResolvedNode | null}
    */
-  public clear() {
-    this.nodes.clear();
+  public mainRoot(): ResolvedNode | null {
+    const id = this.data.mainRootId();
+    return id === null ? null : (this.record(id) ?? null);
   }
 
   /**
-   * Return the root node.
-   * @returns {Node} rootNode
+   * Where a node added interactively under `parent` goes: one column out
+   * from its parent and below its lowest sibling.
    */
-  public getRoot = (): Node => {
-    const root = this.nodes.get(this.map.rootId);
+  private calculateCoordinates(
+    parent: string,
+    lookup: RecordLookup
+  ): MapNodeCoordinates {
+    const anchor = lookup(parent)?.coordinates ?? { x: 0, y: 0 };
+    const { column, siblings } = this.pickColumn(parent, lookup);
 
-    if (root === undefined) {
-      Log.error('The map has no root node');
-    }
-
-    return root;
-  };
-
-  /**
-   * Return the node with the id equal to id passed as parameter.
-   * @param {string} id
-   * @returns {Node | undefined}
-   */
-  public getNode = (id: string): Node | undefined => {
-    if (id !== undefined) {
-      if (typeof id !== 'string') {
-        Log.error('The node id must be a string', 'type');
-        return undefined;
-      }
-      return this.nodes.get(id);
-    }
-    return undefined;
-  };
-
-  /**
-   * Return the siblings of a node.
-   * @param {Node} node
-   * @returns {Array<Node>} siblings
-   */
-  private getSiblings(node: Node): Node[] {
-    if (!node.parent) {
-      return [];
-    }
-
-    const parentChildren: Node[] = this.getChildren(node.parent);
-
-    if (parentChildren.length > 1) {
-      parentChildren.splice(parentChildren.indexOf(node), 1);
-      return parentChildren;
-    }
-
-    return [];
+    return { x: anchor.x + column, y: this.stackBelow(anchor.y, siblings) };
   }
 
   /**
-   * Where a node added interactively goes: one column out from its parent and
-   * below its lowest sibling.
+   * The column mmp places a new node under `parent` in, as an offset from
+   * the parent, plus the siblings sharing that column. A child of a root takes
+   * the side of its tree that holds fewer siblings.
    */
-  private calculateCoordinates(node: Node): MapNodeCoordinates {
-    const parent = node.parent;
-    const anchorX = parent?.coordinates?.x ?? node.coordinates?.x ?? 0;
-    const anchorY = parent?.coordinates?.y ?? node.coordinates?.y ?? 0;
-    const { column, siblings } = this.pickColumn(node);
+  private pickColumn(
+    parent: string,
+    lookup: RecordLookup
+  ): { column: number; siblings: ResolvedNode[] } {
+    const siblings = this.children(parent);
 
-    return { x: anchorX + column, y: this.stackBelow(anchorY, siblings) };
-  }
-
-  /**
-   * The column a new node lands in, as an offset from its parent, plus the
-   * siblings sharing that column. A child of a root takes the side of its
-   * tree that currently holds fewer siblings.
-   */
-  private pickColumn(node: Node): { column: number; siblings: Node[] } {
-    const siblings = this.getSiblings(node);
-    const parent = node.parent;
-
-    if (parent && !parent.parent) {
+    if (this.parentOf(parent, lookup) === null) {
       const [left, right] = this.splitByOrientation(siblings);
       return left.length <= right.length
         ? { column: -NODE_HORIZONTAL_SPACING, siblings: left }
         : { column: NODE_HORIZONTAL_SPACING, siblings: right };
     }
 
-    const goesLeft = !!parent && this.getOrientation(parent);
+    const goesLeft = !!this.orientation(parent, lookup);
     const column = goesLeft
       ? -NODE_HORIZONTAL_SPACING
       : NODE_HORIZONTAL_SPACING;
@@ -935,22 +926,24 @@ export default class Nodes {
     return { column, siblings };
   }
 
-  private splitByOrientation(siblings: Node[]): [Node[], Node[]] {
-    const left: Node[] = [];
-    const right: Node[] = [];
+  private splitByOrientation(
+    siblings: ResolvedNode[]
+  ): [ResolvedNode[], ResolvedNode[]] {
+    const left: ResolvedNode[] = [];
+    const right: ResolvedNode[] = [];
 
     for (const sibling of siblings) {
-      (this.getOrientation(sibling) ? left : right).push(sibling);
+      (this.orientation(sibling.id) ? left : right).push(sibling);
     }
 
     return [left, right];
   }
 
   /** Below the lowest sibling, or just above the parent when there is none. */
-  private stackBelow(anchorY: number, siblings: Node[]): number {
-    if (siblings.length > 0) {
-      const lowerNode = this.getLowerNode(siblings);
-      return (lowerNode?.coordinates?.y ?? 0) + NODE_VERTICAL_SIBLING_OFFSET;
+  private stackBelow(anchorY: number, siblings: ResolvedNode[]): number {
+    const lowerNode = Nodes.lowerNode(siblings);
+    if (lowerNode) {
+      return lowerNode.coordinates.y + NODE_VERTICAL_SIBLING_OFFSET;
     }
 
     return anchorY - NODE_VERTICAL_SPACING;
@@ -969,7 +962,7 @@ export default class Nodes {
   ): MapSnapshot => {
     if (mapSnapshot.every(node => !!node.coordinates)) return mapSnapshot;
 
-    const layout = computeMapLayout(mapSnapshot);
+    const layout = computeMapLayout(mapSnapshot, this.map.draw.estimateExtent);
 
     return mapSnapshot.map(node => {
       const position = layout.get(node.id);
@@ -983,503 +976,139 @@ export default class Nodes {
 
   /**
    * Recompute every node's coordinates from the tree structure and the node
-   * sizes, discarding manual positioning. One mmp history entry covers the
-   * whole rewrite; the undo the user actually sees comes from the Y.Doc
-   * transaction that the distribute event triggers.
+   * sizes, discarding manual positioning. The writes form one batch, so one
+   * undo reverts the whole rewrite.
    */
-  public distributeNodes = (notifyWithEvent = true) => {
-    const layout = computeMapLayout(this.toLayoutInput());
+  public distributeNodes = () => {
+    const records = this.scan();
+    const layout = computeMapLayout(
+      [...records.values()].map(node => this.toLayoutInput(node)),
+      this.map.draw.estimateExtent
+    );
     if (layout.size === 0) return;
 
-    for (const [id, coordinates] of layout) {
-      this.moveNodeTo(id, coordinates);
-    }
-
-    // Redrawing the branches costs a full selection pass, so it happens once
-    // here rather than once per node as the single-node move path does.
-    this.redrawBranches();
-    this.map.draw.update();
-    this.map.history.save();
-
-    if (notifyWithEvent) {
-      this.map.events.call(Event.distribute);
-    }
+    this.writePositions(layout);
   };
 
-  /** Move one node, leaving the branch redraw to the caller. */
-  private moveNodeTo(id: string, coordinates: MapNodeCoordinates): void {
-    const node = this.nodes.get(id);
-    if (!node) return;
+  /**
+   * Write the coordinates of the given nodes in one batch, and only those
+   * that differ from the stored ones, so one undo reverts them all.
+   * @param {Map<string, MapNodeCoordinates>} positions
+   */
+  public writePositions(positions: Map<string, MapNodeCoordinates>) {
+    this.data.batch(() => {
+      for (const [id, { x, y }] of positions) {
+        const current = this.record(id)?.coordinates;
+        if (!current || (current.x === x && current.y === y)) continue;
 
-    node.coordinates = { x: coordinates.x, y: coordinates.y };
-    node.dom?.setAttribute(
-      'transform',
-      'translate(' + [coordinates.x, coordinates.y] + ')'
-    );
-  }
-
-  private redrawBranches(): void {
-    d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
-      'd',
-      (node: Node) => {
-        // A root node has no parent and so no branch to draw. Returning
-        // null makes d3 drop the attribute, as the other redraw paths do.
-        const branch = this.map.draw.drawBranch(node);
-
-        return branch ? branch.toString() : null;
+        this.data.updateNode(id, 'coordinates', { x, y });
       }
-    );
+    });
   }
 
-  private toLayoutInput(): LayoutInputNode[] {
-    return Array.from(this.nodes.values()).map(node => ({
+  /**
+   * The bounding box of the node as it is drawn, or as it will be drawn
+   * before the renderer has measured it.
+   * @param {ResolvedNode} node
+   */
+  public boundsOf = (node: ResolvedNode): Bounds =>
+    nodeBounds({
+      coordinates: node.coordinates,
+      dimensions: this.map.draw.dimensionsOf(node),
+    });
+
+  private toLayoutInput(node: ResolvedNode): LayoutInputNode {
+    return {
       id: node.id,
-      parent: node.parent ? node.parent.id : '',
+      parent: node.parent,
       isRoot: node.isRoot,
       name: node.name,
       font: node.font,
       coordinates: node.coordinates,
-      dimensions: node.dimensions,
-    }));
+      dimensions: this.map.draw.dimensionsOf(node),
+    };
   }
 
   /**
-   * Return the lower node of a list of nodes.
-   * @param {Node[]} nodes
-   * @returns {Node} lowerNode
+   * Return the lowest node of a list of nodes.
+   * @param {ResolvedNode[]} nodes
+   * @returns {ResolvedNode | undefined} lowerNode
    */
-  private getLowerNode(nodes: Node[]): Node | undefined {
-    if (nodes.length === 0) {
-      return;
-    }
+  private static lowerNode(nodes: ResolvedNode[]): ResolvedNode | undefined {
+    if (nodes.length === 0) return;
 
-    return nodes.reduce((lowest, current) => {
-      const lowestY = lowest.coordinates?.y ?? 0;
-      const currentY = current.coordinates?.y ?? 0;
-
-      return currentY > lowestY ? current : lowest;
-    }, nodes[0]);
+    return nodes.reduce(
+      (lowest, current) =>
+        current.coordinates.y > lowest.coordinates.y ? current : lowest,
+      nodes[0]
+    );
   }
-
-  /**
-   * Update the node name with a new value.
-   * @param {Node} node
-   * @param {string} name
-   * @returns {boolean}
-   */
-  private updateNodeName = (node: Node, name: string): boolean => {
-    if (name && typeof name !== 'string') {
-      Log.error('The name must be a string', 'type');
-    }
-
-    if (node.name != name) {
-      node.getNameDOM().innerHTML = DOMPurify.sanitize(name);
-
-      this.map.draw.updateNodeShapes(node);
-
-      node.name = name;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node coordinates with a new value.
-   * The main method for moving nodes is located inside the drag module.
-   * This method acts as a more simpler way of just moving one node.
-   * @param {Node} node
-   * @param {MapNodeCoordinates} coordinates
-   * @returns {boolean}
-   */
-  private updateNodeCoordinatesWithoutDescendants = (
-    initialNode: Node,
-    coordinates: MapNodeCoordinates
-  ): boolean => {
-    // no moving of descendants here
-    const fixedCoordinates = coordinates;
-
-    coordinates = Utils.mergeObjects(
-      initialNode.coordinates,
-      fixedCoordinates,
-      true
-    ) as MapNodeCoordinates;
-
-    if (!(
-      coordinates.x === initialNode.coordinates.x &&
-      coordinates.y === initialNode.coordinates.y
-    )) {
-      initialNode.coordinates = Utils.cloneObject(
-        coordinates
-      ) as MapNodeCoordinates;
-      initialNode.dom.setAttribute(
-        'transform',
-        'translate(' + [coordinates.x, coordinates.y] + ')'
-      );
-
-      d3.selectAll<SVGPathElement, Node>('.' + this.map.id + '_branch').attr(
-        'd',
-        (node: Node) => {
-          const branch = this.map.draw.drawBranch(node);
-          return branch ? branch.toString() : null;
-        }
-      );
-
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node background color with a new value.
-   * @param {Node} node
-   * @param {string} color
-   * @returns {boolean}
-   */
-  private updateNodeBackgroundColor = (node: Node, color: string): boolean => {
-    if (color && typeof color !== 'string') {
-      Log.error('The background color must be a string', 'type');
-    }
-
-    const sanitizedColor = DOMPurify.sanitize(color);
-
-    if (node.colors.background !== color) {
-      const background = node.getBackgroundDOM();
-
-      background.style.fill = sanitizedColor;
-
-      if (background.style.stroke !== '') {
-        const darker = d3.color(sanitizedColor)?.darker(0.5);
-        if (darker) {
-          background.style.stroke = darker.toString();
-        }
-      }
-
-      node.colors.background = sanitizedColor;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node text color with a new value.
-   * @param {Node} node
-   * @param {string} color
-   * @returns {boolean}
-   */
-  private updateNodeNameColor = (node: Node, color: string): boolean => {
-    if (color && typeof color !== 'string') {
-      Log.error('The text color must be a string', 'type');
-    }
-
-    const sanitizedColor = DOMPurify.sanitize(color);
-
-    if (node.colors.name !== color) {
-      node.getNameDOM().style.color = sanitizedColor;
-
-      node.colors.name = sanitizedColor;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node branch color with a new value.
-   * @param {Node} node
-   * @param {string} color
-   * @returns {boolean}
-   */
-  private updateNodeBranchColor = (node: Node, color: string): boolean => {
-    if (color && typeof color !== 'string') {
-      Log.error('The branch color must be a string', 'type');
-    }
-
-    const sanitizedColor = DOMPurify.sanitize(color);
-
-    if (node.parent) {
-      if (node.colors.name !== color) {
-        const branch = document.getElementById(node.id + '_branch');
-
-        if (branch) {
-          branch.style.fill = branch.style.stroke = sanitizedColor;
-        }
-
-        node.colors.branch = sanitizedColor;
-        return true;
-      } else {
-        return false;
-      }
-    } else if (node.colors.branch === sanitizedColor) {
-      // A remote colors sync sends the branch color with the other colors,
-      // unchanged, so a root accepts its own value without an error.
-      return false;
-    } else {
-      Log.error('A root node has no branches');
-    }
-  };
-
-  /**
-   * Update the node font size with a new value.
-   * @param {Node} node
-   * @param {number} size
-   * @returns {boolean}
-   */
-  private updateNodeFontSize = (node: Node, size: number): boolean => {
-    if (size && typeof size !== 'number') {
-      Log.error('The font size must be a number', 'type');
-    }
-
-    if (node.font.size != size) {
-      node.getNameDOM().style.fontSize = size + 'px';
-
-      this.map.draw.updateNodeShapes(node);
-
-      node.font.size = size;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node image size with a new value.
-   * @param {Node} node
-   * @param {number} size
-   * @returns {boolean}
-   */
-  private updateNodeImageSize = (node: Node, size: number): boolean => {
-    if (size && typeof size !== 'number') {
-      Log.error('The image size must be a number', 'type');
-    }
-
-    if (node.image.src !== '') {
-      if (node.image.size !== size) {
-        // An image that failed to load has no element; keep its value and
-        // its new size so the Y.Doc still holds both.
-        const image = node.dom.querySelector('image');
-        if (!image) {
-          node.image.size = size;
-          return true;
-        }
-        const box = image.getBBox(),
-          height = size,
-          width = (box.width * height) / box.height,
-          y = -(height + node.dimensions.height / 2 + 5),
-          x = -width / 2;
-
-        image.setAttribute('height', height.toString());
-        image.setAttribute('width', width.toString());
-        image.setAttribute('y', y.toString());
-        image.setAttribute('x', x.toString());
-
-        node.image.size = height;
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      Log.error('The node does not have an image');
-      return false;
-    }
-  };
-
-  /**
-   * Update the node image src with a new value.
-   * @param {Node} node
-   * @param {string} src
-   * @returns {boolean}
-   */
-  private updateNodeImageSrc = (node: Node, src: string): boolean => {
-    if (src && typeof src !== 'string') {
-      Log.error('The image path must be a string', 'type');
-    }
-
-    if (node.image.src !== src) {
-      node.image.src = src;
-
-      this.map.draw.setImage(node);
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node link href with a new value.
-   * @param {Node} node
-   * @param {string} href
-   * @returns {boolean}
-   */
-  private updateNodeLinkHref = (node: Node, href: string): boolean => {
-    if (href && typeof href !== 'string') {
-      Log.error('The link href must be a string', 'type');
-    }
-
-    if (node.link.href !== href) {
-      node.link.href = href;
-
-      this.map.draw.setLink(node);
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node hidden value
-   * @param {Node} node
-   * @param {boolean} hidden
-   * @returns {boolean}
-   */
-  private updateNodeHidden = (node: Node, hidden: boolean): boolean => {
-    if (hidden && typeof hidden !== 'boolean') {
-      Log.error('The hidden value must be boolean', 'type');
-    }
-
-    if (node.hidden !== hidden) {
-      node.hidden = hidden;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node font style.
-   * @param {Node} node
-   * @param {string} style
-   * @returns {boolean}
-   */
-  private updateNodeFontStyle = (node: Node, style: string): boolean => {
-    if (style && typeof style !== 'string') {
-      Log.error('The font style must be a string', 'type');
-    }
-
-    if (node.font.style !== style) {
-      node.getNameDOM().style.fontStyle = DOMPurify.sanitize(style);
-
-      node.font.style = style;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node font weight.
-   * @param {Node} node
-   * @param {string} weight
-   * @returns {boolean}
-   */
-  private updateNodeFontWeight = (node: Node, weight: string): boolean => {
-    if (weight && typeof weight !== 'string') {
-      Log.error('The font weight must be a string', 'type');
-    }
-
-    if (node.font.weight !== weight) {
-      node.getNameDOM().style.fontWeight = DOMPurify.sanitize(weight);
-
-      this.map.draw.updateNodeShapes(node);
-
-      node.font.weight = weight;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Update the node locked status.
-   * @param {Node} node
-   * @param {boolean} flag
-   * @returns {boolean}
-   */
-  private updateNodeLockedStatus = (node: Node, flag: boolean): boolean => {
-    if (flag && typeof flag !== 'boolean') {
-      Log.error('The node locked status must be a boolean', 'type');
-    }
-
-    if (!node.isRoot) {
-      node.locked = flag || !node.locked;
-      return true;
-    } else {
-      Log.error('The root node can not be locked');
-      return false;
-    }
-  };
 
   /**
    * Move the node selection on the level of the selected node (true: up).
-   * @param {Node} selected
+   * @param {ResolvedNode} selected
    * @param {boolean} direction
    */
-  private moveSelectionOnLevel(selected: Node, direction: boolean) {
-    const parent = selected.parent;
+  private moveSelectionOnLevel(selected: ResolvedNode, direction: boolean) {
+    const parent = this.parentOf(selected.id);
+    if (parent === null) return;
 
-    if (parent) {
-      let siblings = this.getSiblings(selected).filter((node: Node) => {
-        return direction === node.coordinates.y < selected.coordinates.y;
-      });
+    let siblings = this.siblings(selected.id).filter(node => {
+      return direction === node.coordinates.y < selected.coordinates.y;
+    });
 
-      if (!parent.parent) {
-        siblings = siblings.filter((node: Node) => {
-          return this.getOrientation(node) === this.getOrientation(selected);
-        });
-      }
+    if (this.parentOf(parent) === null) {
+      const side = this.orientation(selected.id);
+      siblings = siblings.filter(node => this.orientation(node.id) === side);
+    }
 
-      if (siblings.length > 0) {
-        let closerNode: Node = siblings[0],
-          tmp = Math.abs(siblings[0].coordinates.y - selected.coordinates.y);
+    if (siblings.length === 0) return;
 
-        for (const node of siblings) {
-          const distance = Math.abs(
-            node.coordinates.y - selected.coordinates.y
-          );
+    let closerNode = siblings[0],
+      tmp = Math.abs(siblings[0].coordinates.y - selected.coordinates.y);
 
-          if (distance < tmp) {
-            tmp = distance;
-            closerNode = node;
-          }
-        }
+    for (const node of siblings) {
+      const distance = Math.abs(node.coordinates.y - selected.coordinates.y);
 
-        this.selectNode(closerNode.id);
+      if (distance < tmp) {
+        tmp = distance;
+        closerNode = node;
       }
     }
+
+    this.selectNode(closerNode.id);
   }
 
   /**
    * Move the node selection in a child node or in the parent node (true: left)
-   * @param {Node} selected
+   * @param {ResolvedNode} selected
    * @param {boolean} direction
    */
-  private moveSelectionOnBranch(selected: Node, direction: boolean) {
-    const orientation = this.getOrientation(selected);
-    const parent = selected.parent;
+  private moveSelectionOnBranch(selected: ResolvedNode, direction: boolean) {
+    const orientation = this.orientation(selected.id);
+    const parent = this.parentOf(selected.id);
     const movesToParent =
       (!orientation && direction) || (orientation && !direction);
 
     // A root has no parent and no orientation, so it always moves to a child
     // on the requested side.
     if (movesToParent && parent) {
-      this.selectNode(parent.id);
+      this.selectNode(parent);
       return;
     }
 
-    let children = this.getChildren(selected);
+    let children = this.children(selected.id);
 
     if (orientation === undefined) {
       // The selected node is a root
-      children = children.filter((node: Node) => {
-        return this.getOrientation(node) === direction;
+      children = children.filter(node => {
+        return this.orientation(node.id) === direction;
       });
     }
 
-    const lowerNode = this.getLowerNode(children);
+    const lowerNode = Nodes.lowerNode(children);
 
-    if (children.length > 0 && lowerNode) {
+    if (lowerNode) {
       this.selectNode(lowerNode.id);
     }
   }

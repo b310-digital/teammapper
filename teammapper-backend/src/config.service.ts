@@ -3,6 +3,10 @@
 import { DataSourceOptions } from 'typeorm'
 import { LogLevel } from '@nestjs/common'
 import { join } from 'path'
+import {
+  DEFAULT_YJS_MAP_LIMITS,
+  DEFAULT_YJS_MESSAGE_LIMITS,
+} from './map/utils/yjsLimits'
 
 interface EnvProps {
   [k: string]: string | undefined
@@ -94,6 +98,40 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
+  public getYjsMapLimits() {
+    return {
+      maxBytes: this.parsePositiveInt(
+        'YJS_MAP_MAX_BYTES',
+        DEFAULT_YJS_MAP_LIMITS.maxBytes
+      ),
+      maxEntries: this.parsePositiveInt(
+        'YJS_MAP_MAX_ENTRIES',
+        DEFAULT_YJS_MAP_LIMITS.maxEntries
+      ),
+      maxNodes: this.parsePositiveInt(
+        'YJS_MAP_MAX_NODES',
+        DEFAULT_YJS_MAP_LIMITS.maxNodes
+      ),
+    }
+  }
+
+  public getYjsMessageLimits() {
+    return {
+      windowMs: this.parsePositiveInt(
+        'YJS_MESSAGE_WINDOW_MS',
+        DEFAULT_YJS_MESSAGE_LIMITS.windowMs
+      ),
+      maxMessages: this.parsePositiveInt(
+        'YJS_MESSAGE_MAX_COUNT',
+        DEFAULT_YJS_MESSAGE_LIMITS.maxMessages
+      ),
+      maxBytes: this.parsePositiveInt(
+        'YJS_MESSAGE_MAX_BYTES',
+        DEFAULT_YJS_MESSAGE_LIMITS.maxBytes
+      ),
+    }
+  }
+
   public getWsGlobalMaxConnections(): number {
     return this.parsePositiveInt('WS_GLOBAL_MAX_CONNECTIONS', 500)
   }
@@ -110,9 +148,9 @@ class ConfigService {
     return this.parsePositiveInt('WS_PER_IP_RATE_WINDOW_MS', 10000)
   }
 
-  /** Total bytes of the images one map may hold; 50 MB by default. */
+  /** Total bytes of the images one map may hold; 2 MB by default. */
   public getMaxImageBytesPerMap(): number {
-    return this.parsePositiveInt('MAX_IMAGE_BYTES_PER_MAP', 50_000_000)
+    return this.parsePositiveInt('MAX_IMAGE_BYTES_PER_MAP', 2_000_000)
   }
 
   /** Largest single image upload in bytes; the frontend resize stays below the default. */
@@ -126,6 +164,19 @@ class ConfigService {
 
   public getUploadImageRateWindowMs(): number {
     return this.parsePositiveInt('UPLOAD_IMAGE_RATE_WINDOW_MS', 60_000)
+  }
+
+  public getDuplicateMapRateLimit(): number {
+    return this.parsePositiveInt('DUPLICATE_MAP_RATE_LIMIT', 5)
+  }
+
+  public getDuplicateMapRateWindowMs(): number {
+    return this.parsePositiveInt('DUPLICATE_MAP_RATE_WINDOW_MS', 60_000)
+  }
+
+  /** Duplication stops when stored images across all maps would exceed 1 GB. */
+  public getDuplicateMapMaxImageBytes(): number {
+    return this.parsePositiveInt('DUPLICATE_MAP_MAX_IMAGE_BYTES', 1_000_000_000)
   }
 
   private parsePositiveInt(key: string, fallback: number): number {

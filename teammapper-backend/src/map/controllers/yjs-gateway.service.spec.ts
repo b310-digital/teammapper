@@ -3,6 +3,12 @@ import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsPersistenceService } from '../services/yjs-persistence.service'
 import { MapsService } from '../services/maps.service'
 import { WsConnectionLimiterService } from '../services/ws-connection-limiter.service'
+import configService from '../../config.service'
+import {
+  WS_CLOSE_MAP_SYNC_RESET,
+  YJS_SECRET_SUBPROTOCOL_PREFIX,
+  YJS_SUBPROTOCOL,
+} from '@teammapper/shared'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { WebSocket } from 'ws'
 import * as Y from 'yjs'
@@ -19,8 +25,11 @@ import {
   CONNECTION_SETUP_TIMEOUT_MS,
   MESSAGE_SYNC,
   encodeSyncUpdateMessage,
+  encodeSyncStep1Message,
+  encodeAwarenessMessage,
 } from '../utils/yjsProtocol'
 import * as syncProtocol from 'y-protocols/sync'
+import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
 
@@ -77,6 +86,9 @@ const createMockWs = (): MockWs => {
   }
 }
 
+// Builds the request of a current client, which offers the modification
+// secret as a subprotocol next to `YJS_SUBPROTOCOL`, as the browser sends
+// the `protocols` argument of its `WebSocket` constructor
 const createMockRequest = (
   mapId: string | null,
   secret: string | null = null,
@@ -84,22 +96,14 @@ const createMockRequest = (
 ): IncomingMessage => {
   const params = new URLSearchParams()
   if (mapId) params.set('mapId', mapId)
-  if (secret) params.set('secret', secret)
+  const offer = secret
+    ? `${YJS_SUBPROTOCOL}, ${YJS_SECRET_SUBPROTOCOL_PREFIX}${secret}`
+    : YJS_SUBPROTOCOL
   return {
     url: `/yjs?${params.toString()}`,
     socket: { remoteAddress: ip },
-    headers: {},
+    headers: { 'sec-websocket-protocol': offer },
   } as unknown as IncomingMessage
-}
-
-// Adds the `Sec-WebSocket-Protocol` offer a browser sends from the
-// `protocols` argument of its `WebSocket` constructor
-const withSubprotocols = (
-  req: IncomingMessage,
-  offer: string
-): IncomingMessage => {
-  req.headers['sec-websocket-protocol'] = offer
-  return req
 }
 
 // Triggers the private handleConnection method — the WebSocket 'connection'
@@ -122,6 +126,7 @@ describe('YjsGateway', () => {
   let docManager: jest.Mocked<YjsDocManagerService>
   let limiter: jest.Mocked<WsConnectionLimiterService>
   let doc: Y.Doc
+  let persistenceService: jest.Mocked<YjsPersistenceService>
 
   beforeEach(() => {
     doc = new Y.Doc()
@@ -138,12 +143,17 @@ describe('YjsGateway', () => {
       notifyClientCount: jest
         .fn<YjsDocManagerService['notifyClientCount']>()
         .mockResolvedValue(undefined),
-      destroyDoc: jest.fn(),
+      destroyDoc: jest
+        .fn<YjsDocManagerService['destroyDoc']>()
+        .mockImplementation(() => {
+          doc.destroy()
+          docManager.getDoc.mockReturnValue(undefined)
+        }),
       hasDoc: jest.fn<YjsDocManagerService['hasDoc']>().mockReturnValue(true),
       restoreGraceTimer: jest.fn(),
     } as unknown as jest.Mocked<YjsDocManagerService>
 
-    const persistenceService = {
+    persistenceService = {
       registerDebounce: jest.fn(),
       unregisterDebounce: jest.fn(),
     } as unknown as jest.Mocked<YjsPersistenceService>
@@ -342,30 +352,366 @@ describe('YjsGateway', () => {
       return doc.getMap('nodes').has('new-node')
     }
 
-    it('applies writes from a client offering the secret subprotocol', async () => {
+    it('ignores a secret in the query param', async () => {
       mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
       const ws = createMockWs()
-      const req = withSubprotocols(
-        createMockRequest('map-1'),
-        'teammapper.v1, teammapper.secret.secret-123'
-      )
-
-      await connectClient(gateway, ws, req)
-
-      expect(serverAppliesWrite(ws)).toBe(true)
-    })
-
-    it('prefers the secret subprotocol over the query secret', async () => {
-      mapsService.findMap.mockResolvedValue(createMockMap('secret-123'))
-      const ws = createMockWs()
-      const req = withSubprotocols(
-        createMockRequest('map-1', 'secret-123'),
-        'teammapper.v1, teammapper.secret.wrong-secret'
-      )
+      const req = createMockRequest('map-1')
+      req.url = '/yjs?mapId=map-1&secret=secret-123'
 
       await connectClient(gateway, ws, req)
 
       expect(serverAppliesWrite(ws)).toBe(false)
+    })
+  })
+
+  // Cover updates adding a top-level map absent from the schema, plus size and
+  // rate limits. Invalid map data must be discarded before broadcast or persistence.
+  describe('incoming message limits', () => {
+    const connectWriter = async (): Promise<MockWs> => {
+      mapsService.findMap.mockResolvedValue(createMockMap())
+      const ws = createMockWs()
+      await connectClient(
+        gateway,
+        ws,
+        createMockRequest('map-1', 'test-secret')
+      )
+      return ws
+    }
+
+    const unrelatedUpdate = (): Uint8Array => {
+      const client = new Y.Doc()
+      try {
+        client.getMap('unused').set('payload', 'unrelated data')
+        return Y.encodeStateAsUpdate(client)
+      } finally {
+        client.destroy()
+      }
+    }
+
+    describe.each([
+      syncProtocol.messageYjsUpdate,
+      syncProtocol.messageYjsSyncStep2,
+    ])('invalid writable sync type %s', (syncType) => {
+      let attacker: MockWs
+      let peer: MockWs
+      beforeEach(async () => {
+        attacker = await connectWriter()
+        peer = await connectWriter()
+        peer.send.mockClear()
+        const encoder = encoding.createEncoder()
+        encoding.writeVarUint(encoder, MESSAGE_SYNC)
+        encoding.writeVarUint(encoder, syncType)
+        encoding.writeVarUint8Array(encoder, unrelatedUpdate())
+        attacker._triggerMessage(encoding.toUint8Array(encoder))
+      })
+      it('closes the writer with a map reset', () => {
+        expect(attacker.close).toHaveBeenCalledWith(
+          WS_CLOSE_MAP_SYNC_RESET,
+          'Map sync reset'
+        )
+      })
+      it('closes the peer with a map reset', () => {
+        expect(peer.close).toHaveBeenCalledWith(
+          WS_CLOSE_MAP_SYNC_RESET,
+          'Map sync reset'
+        )
+      })
+      it('discards the rejected state', () => {
+        expect(docManager.destroyDoc).toHaveBeenCalledWith('map-1')
+        expect(docManager.getDoc('map-1')).toBeUndefined()
+      })
+      it('does not broadcast invalid data', () => {
+        expect(peer.send).not.toHaveBeenCalled()
+      })
+      it('ignores another update queued on the rejected connection', () => {
+        attacker._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+        expect(docManager.destroyDoc).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    it('enforces cumulative map size through the gateway', async () => {
+      jest
+        .spyOn(configService, 'getYjsMapLimits')
+        .mockReturnValue({ maxBytes: 160, maxEntries: 100, maxNodes: 10 })
+      const ws = await connectWriter()
+      const client = new Y.Doc()
+      try {
+        for (let i = 0; i < 2; i++) {
+          const vector = Y.encodeStateVector(client)
+          const node = new Y.Map<unknown>()
+          node.set('name', 'a'.repeat(80))
+          client.getMap('nodes').set(String(i), node)
+          ws._triggerMessage(
+            encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client, vector))
+          )
+        }
+        expect(ws.close).toHaveBeenCalledWith(
+          WS_CLOSE_MAP_SYNC_RESET,
+          'Map sync reset'
+        )
+        expect(docManager.destroyDoc).toHaveBeenCalledWith('map-1')
+      } finally {
+        client.destroy()
+      }
+    })
+
+    describe('discarding a rejected map', () => {
+      let ws: MockWs
+      let peer: MockWs
+      beforeEach(async () => {
+        ws = await connectWriter()
+        peer = await connectWriter()
+        docManager.notifyClientCount.mockClear()
+        ws._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+      })
+      it('cancels pending persistence', () => {
+        expect(persistenceService.unregisterDebounce).toHaveBeenCalledWith(
+          'map-1'
+        )
+      })
+      it('releases both connection slots', () => {
+        expect(limiter.releaseConnection).toHaveBeenCalledTimes(2)
+      })
+      it('ignores stale close callbacks', () => {
+        ws._triggerClose()
+        peer._triggerClose()
+        expect(docManager.notifyClientCount).not.toHaveBeenCalled()
+        expect(limiter.releaseConnection).toHaveBeenCalledTimes(2)
+      })
+      it('does not save rejected state on shutdown', () => {
+        gateway.onModuleDestroy()
+        expect(docManager.notifyClientCount).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('recovery after a map reset', () => {
+      let stale: MockWs
+      let currentTime: number
+      beforeEach(async () => {
+        currentTime = 1000
+        jest.spyOn(Date, 'now').mockImplementation(() => currentTime)
+        stale = await connectWriter()
+        stale._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+      })
+      it('rejects a reconnect during the cooldown', async () => {
+        const ws = await connectWriter()
+        expect(ws.close).toHaveBeenCalledWith(
+          WS_CLOSE_TRY_AGAIN,
+          expect.any(String)
+        )
+      })
+      describe('after fresh hydration', () => {
+        let freshDoc: Y.Doc
+        let fresh: MockWs
+        beforeEach(async () => {
+          freshDoc = new Y.Doc()
+          docManager.getOrCreateDoc.mockResolvedValue(freshDoc)
+          docManager.getDoc.mockReturnValue(freshDoc)
+          currentTime = 11000
+          fresh = await connectWriter()
+          docManager.notifyClientCount.mockClear()
+        })
+        afterEach(() => freshDoc.destroy())
+        it('accepts a reconnect after the cooldown', () => {
+          expect(fresh.close).not.toHaveBeenCalled()
+        })
+        it('ignores stale close callbacks', () => {
+          stale._triggerClose()
+          expect(docManager.notifyClientCount).not.toHaveBeenCalled()
+          expect(fresh.close).not.toHaveBeenCalled()
+        })
+        it('ignores updates from stale connections', () => {
+          stale._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+          expect(docManager.destroyDoc).toHaveBeenCalledTimes(1)
+          expect(fresh.close).not.toHaveBeenCalled()
+        })
+        it('accepts fresh writes after stale callbacks', () => {
+          stale._triggerClose()
+          stale._triggerMessage(encodeSyncUpdateMessage(unrelatedUpdate()))
+          const client = new Y.Doc()
+          try {
+            client.getMap('mapOptions').set('name', 'Recovered map')
+            fresh._triggerMessage(
+              encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client))
+            )
+            expect(freshDoc.getMap('mapOptions').get('name')).toBe(
+              'Recovered map'
+            )
+          } finally {
+            client.destroy()
+          }
+        })
+      })
+    })
+
+    it('terminates a peer that ignores the reset close handshake', async () => {
+      jest.useFakeTimers()
+      const ws = await connectWriter()
+      const client = new Y.Doc()
+      try {
+        client.getMap('unused').set('payload', 'unrelated data')
+        ws._triggerMessage(
+          encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client))
+        )
+        expect(ws.terminate).not.toHaveBeenCalled()
+        jest.advanceTimersByTime(1000)
+        expect(ws.terminate).toHaveBeenCalledTimes(1)
+      } finally {
+        client.destroy()
+        jest.useRealTimers()
+      }
+    })
+
+    // The writer's invalid update discards live map state and closes its peers.
+    // A connection still awaiting its database lookup must then be rejected.
+    it('rejects a pending connection when invalid data resets the map', async () => {
+      const writer = await connectWriter()
+      let resolveMap: (map: MmpMap) => void = () => {
+        throw new Error('Lookup not initialized')
+      }
+      mapsService.findMap.mockReturnValueOnce(
+        new Promise<MmpMap>((resolve) => {
+          resolveMap = resolve
+        })
+      )
+      const waiting = createMockWs()
+      const setup = connectClient(
+        gateway,
+        waiting,
+        createMockRequest('map-1', 'test-secret')
+      )
+      const client = new Y.Doc()
+      client.getMap('unused').set('payload', 'unrelated data')
+      writer._triggerMessage(
+        encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client))
+      )
+      resolveMap(createMockMap())
+      await setup
+      expect(waiting.close).toHaveBeenCalledWith(
+        WS_CLOSE_TRY_AGAIN,
+        expect.any(String)
+      )
+      expect(docManager.getOrCreateDoc).toHaveBeenCalledTimes(1)
+      client.destroy()
+    })
+
+    it('bounds bytes as well as count before decoding', async () => {
+      const message = encodeSyncStep1Message(doc)
+      jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
+        windowMs: 10_000,
+        maxMessages: 100,
+        maxBytes: message.byteLength,
+      })
+      const ws = await connectWriter()
+      ws._triggerMessage(message)
+      expect(ws.close).not.toHaveBeenCalled()
+      ws._triggerMessage(message)
+      expect(ws.close).toHaveBeenCalledWith(
+        1008,
+        'Map message rate limit exceeded'
+      )
+    })
+
+    it('allows messages again when the rate window expires', async () => {
+      jest
+        .spyOn(configService, 'getYjsMessageLimits')
+        .mockReturnValue({ windowMs: 10_000, maxMessages: 1, maxBytes: 10000 })
+      let currentTime = 1000
+      jest.spyOn(Date, 'now').mockImplementation(() => currentTime)
+      const ws = await connectWriter()
+      const message = encodeSyncStep1Message(doc)
+      ws._triggerMessage(message)
+      currentTime = 11000
+      ws._triggerMessage(message)
+      expect(ws.close).not.toHaveBeenCalled()
+    })
+
+    describe('map budget', () => {
+      const presenceMessage = (selectedNodeId: string): Uint8Array => {
+        const client = new Y.Doc()
+        const awareness = new awarenessProtocol.Awareness(client)
+        try {
+          awareness.setLocalStateField('user', { selectedNodeId })
+          return encodeAwarenessMessage(awareness, [client.clientID])
+        } finally {
+          awareness.destroy()
+          client.destroy()
+        }
+      }
+
+      beforeEach(() => {
+        jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
+          windowMs: 10_000,
+          maxMessages: 3,
+          maxBytes: 10000,
+        })
+      })
+
+      it('does not charge presence messages to the map', async () => {
+        const selecting = await connectWriter()
+        const editing = await connectWriter()
+        for (const nodeId of ['a', 'b', 'c'])
+          selecting._triggerMessage(presenceMessage(nodeId))
+        for (let i = 0; i < 3; i++)
+          editing._triggerMessage(encodeSyncStep1Message(doc))
+        expect(selecting.close).not.toHaveBeenCalled()
+        expect(editing.close).not.toHaveBeenCalled()
+      })
+
+      it('bounds presence messages per connection', async () => {
+        const selecting = await connectWriter()
+        for (const nodeId of ['a', 'b', 'c', 'd'])
+          selecting._triggerMessage(presenceMessage(nodeId))
+        expect(selecting.close).toHaveBeenCalledWith(
+          1008,
+          'Map message rate limit exceeded'
+        )
+      })
+
+      describe('when one connection exceeds it', () => {
+        let heavy: MockWs
+        let light: MockWs
+        beforeEach(async () => {
+          heavy = await connectWriter()
+          const other = await connectWriter()
+          light = await connectWriter()
+          for (const ws of [heavy, heavy, other])
+            ws._triggerMessage(encodeSyncStep1Message(doc))
+          light._triggerMessage(encodeSyncStep1Message(doc))
+        })
+        it('keeps a lighter peer connected when it crosses the limit', () => {
+          expect(light.close).not.toHaveBeenCalled()
+        })
+        it('closes the heaviest sender on its next message', () => {
+          heavy._triggerMessage(encodeSyncStep1Message(doc))
+          expect(heavy.close).toHaveBeenCalledWith(
+            1008,
+            'Map message rate limit exceeded'
+          )
+        })
+      })
+
+      // A peer that reconnects starts a fresh share, so only the ceiling
+      // bounds a peer that keeps opening new connections.
+      it('closes any sender past twice the limit', async () => {
+        jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
+          windowMs: 10_000,
+          maxMessages: 4,
+          maxBytes: 10000,
+        })
+        const light = await connectWriter()
+        light._triggerMessage(encodeSyncStep1Message(doc))
+        const heavy = await connectWriter()
+        for (let i = 0; i < 4; i++)
+          heavy._triggerMessage(encodeSyncStep1Message(doc))
+        for (let i = 0; i < 3; i++)
+          (await connectWriter())._triggerMessage(encodeSyncStep1Message(doc))
+        light._triggerMessage(encodeSyncStep1Message(doc))
+        expect(light.close).toHaveBeenCalledWith(
+          1008,
+          'Map message rate limit exceeded'
+        )
+      })
     })
   })
 
@@ -409,23 +755,33 @@ describe('YjsGateway', () => {
       expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.1')
     })
 
-    it('releases a client that left while the setup awaited the database', async () => {
-      const ws = createMockWs()
-      limiter.getClientIp.mockReturnValue('10.0.0.2')
-      mapsService.findMap.mockImplementation(async () => {
-        ws.readyState = WebSocket.CLOSED
-        return createMockMap()
+    describe('a client leaving while setup awaits the database', () => {
+      let ws: MockWs
+      beforeEach(async () => {
+        ws = createMockWs()
+        limiter.getClientIp.mockReturnValue('10.0.0.2')
+        mapsService.findMap.mockImplementation(async () => {
+          ws.readyState = WebSocket.CLOSED
+          return createMockMap()
+        })
+        await connectClient(
+          gateway,
+          ws,
+          createMockRequest('map-1', 'test-secret', '10.0.0.2')
+        )
       })
-
-      await connectClient(
-        gateway,
-        ws,
-        createMockRequest('map-1', 'test-secret', '10.0.0.2')
-      )
-
-      expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.2')
-      expect(docManager.notifyClientCount).toHaveBeenLastCalledWith('map-1', 0)
-      expect(ws.send).not.toHaveBeenCalled()
+      it('releases the connection slot', () => {
+        expect(limiter.releaseConnection).toHaveBeenCalledWith('10.0.0.2')
+      })
+      it('restores the client count', () => {
+        expect(docManager.notifyClientCount).toHaveBeenLastCalledWith(
+          'map-1',
+          0
+        )
+      })
+      it('does not send initial sync data', () => {
+        expect(ws.send).not.toHaveBeenCalled()
+      })
     })
 
     it('survives notifyClientCount errors without crashing', async () => {
@@ -573,17 +929,44 @@ describe('YjsGateway', () => {
       })
     }
 
+    // Opens a socket offering the given subprotocols and resolves with the
+    // HTTP status and `Upgrade` header of the refused upgrade
+    const refusal = (
+      protocols: string[]
+    ): Promise<{ status?: number; upgrade?: string }> => {
+      const { port } = server.address() as AddressInfo
+      const client = new WebSocket(
+        `ws://127.0.0.1:${port}/yjs/map-1`,
+        protocols
+      )
+      return new Promise((resolve, reject) => {
+        client.on('unexpected-response', (_req, res) => {
+          resolve({ status: res.statusCode, upgrade: res.headers.upgrade })
+          client.terminate()
+        })
+        client.on('open', () => {
+          client.terminate()
+          reject(new Error('The server accepted the upgrade'))
+        })
+        client.on('error', reject)
+      })
+    }
+
     it('selects the Yjs subprotocol and leaves the secret out of the response', async () => {
       const protocol = await selectedProtocol([
-        'teammapper.v1',
+        YJS_SUBPROTOCOL,
         'teammapper.secret.test-secret',
       ])
 
-      expect(protocol).toBe('teammapper.v1')
+      expect(protocol).toBe(YJS_SUBPROTOCOL)
     })
 
-    it('accepts a client that offers no subprotocol', async () => {
-      expect(await selectedProtocol([])).toBe('')
+    it('refuses a client that offers no subprotocol or an older version', async () => {
+      const upgradeRequired = { status: 426, upgrade: 'websocket' }
+      expect([await refusal([]), await refusal(['teammapper.v1'])]).toEqual([
+        upgradeRequired,
+        upgradeRequired,
+      ])
     })
   })
 })

@@ -26,8 +26,7 @@ test('branch colors are inherited correctly from parent nodes', async ({
   // Small delay to ensure rendering is complete
   await page.waitForTimeout(500);
 
-  // Get all branch paths (these have IDs ending with '_branch')
-  const branches = await page.locator('path[id$="_branch"]').all();
+  const branches = await page.locator('path.branch').all();
 
   // We should have at least 2 branches for the two first-level nodes
   expect(branches.length).toBeGreaterThanOrEqual(2);
@@ -63,7 +62,7 @@ test('branch colors are inherited correctly from parent nodes', async ({
   await page.waitForTimeout(500);
 
   // Get all branches again
-  const allBranches = await page.locator('path[id$="_branch"]').all();
+  const allBranches = await page.locator('path.branch').all();
 
   // We should now have 4 branches (2 first-level + 2 second-level)
   expect(allBranches.length).toBe(4);
@@ -89,7 +88,7 @@ test('branch colors are inherited correctly from parent nodes', async ({
   await expect(page.getByText('Another Child of First')).toBeVisible();
   await page.waitForTimeout(500);
 
-  const finalBranches = await page.locator('path[id$="_branch"]').all();
+  const finalBranches = await page.locator('path.branch').all();
   expect(finalBranches.length).toBe(5);
 
   const anotherChildColor = await finalBranches[4].evaluate(

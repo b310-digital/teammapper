@@ -55,10 +55,9 @@ export interface UserNodeProperties {
   link?: MapNodeLink;
   colors?: MapNodeColors;
   font?: MapNodeFont;
-  locked?: boolean;
+  /** Protects this node and its descendants against local edits. */
+  protected?: boolean;
   isRoot?: boolean;
-  hidden?: boolean;
-  hasHiddenChildNodes?: boolean;
 }
 
 export interface MapNode extends UserNodeProperties {
@@ -105,9 +104,18 @@ export interface ClientPrivateMap {
   modificationSecret: string | null;
 }
 
+/** The server's answer to an AI generate request. */
+export interface MermaidCreateResult {
+  mermaid: string;
+  /** True when the LLM hit its output token cap and cut the map short. */
+  truncated: boolean;
+}
+
 export interface SystemSettingsInfo {
   name: string;
   version: string;
+  /** The LLM that AI generate uses; null when AI generate is off. */
+  aiModel: string | null;
 }
 
 export interface SystemSettingsUrls {
@@ -141,7 +149,6 @@ export interface MapNodeSettings {
   image: MapNodeImage;
   colors: MapNodeColors;
   font: MapNodeFont;
-  locked?: boolean;
 }
 
 /**
@@ -163,7 +170,7 @@ export interface UserSettings {
 
 export type NodeProperty =
   | 'name'
-  | 'locked'
+  | 'protected'
   | 'coordinates'
   | 'imageSrc'
   | 'imageSize'
@@ -173,21 +180,10 @@ export type NodeProperty =
   | 'fontWeight'
   | 'fontStyle'
   | 'fontSize'
-  | 'nameColor'
-  | 'hidden';
+  | 'nameColor';
 
 export type NodePropertyValue =
   string | number | boolean | MapNodeCoordinates | null | undefined;
-
-export interface NodeUpdateEvent {
-  nodeProperties: ExportNodeProperties;
-  previousValue: unknown;
-  changedProperty: NodeProperty | string;
-}
-
-export interface MapCreateEvent {
-  previousMapData?: MapSnapshot;
-}
 
 export interface CachedMap {
   lastModified: number;
@@ -217,37 +213,12 @@ export interface CachedAdminMapEntry {
   cachedAdminMapValue: CachedAdminMapValue;
 }
 
-export interface OldMmpNodeValue {
-  parent?: string;
-  k?: number;
-  name?: string;
-  fixed?: boolean;
-  x?: number;
-  y?: number;
-  'image-size'?: string;
-  'image-src'?: string;
-  'background-color'?: string;
-  'branch-color'?: string;
-  'text-color'?: string;
-  'font-size'?: string;
-  bold?: boolean;
-  italic?: boolean;
-}
-
-export interface OldMmpNode {
-  key: string;
-  value: OldMmpNodeValue;
-}
-
 export interface MmpEventPayloadMap {
-  create: MapCreateEvent;
   nodeSelect: ExportNodeProperties;
   nodeDeselect: ExportNodeProperties;
-  nodeUpdate: NodeUpdateEvent;
-  nodeCreate: ExportNodeProperties;
-  nodePaste: ExportNodeProperties[];
-  nodeRemove: ExportNodeProperties;
-  distribute: void;
+  nodeProtected: ExportNodeProperties;
+  /** The map data changed, by a local, a peer's or an undo write. */
+  mapChange: void;
 }
 
 export type MmpEventType = keyof MmpEventPayloadMap;

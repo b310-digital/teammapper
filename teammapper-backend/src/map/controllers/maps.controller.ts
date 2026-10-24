@@ -9,11 +9,16 @@ import {
   Param,
   Post,
   Headers,
-  Logger,
+  UseGuards,
 } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
+import { MapDuplicationThrottlerGuard } from './map-duplication-throttler.guard'
+import configService from '../../config.service'
 import * as v from 'valibot'
 import { MapsService } from '../services/maps.service'
+import type { MmpMap } from '../entities/mmpMap.entity'
 import { ImagesService } from '../services/images.service'
+import { totalInlineImageBytes } from '../utils/imageStorage'
 import { checkWriteAccess } from '../utils/yjsProtocol'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
@@ -32,7 +37,6 @@ import { EntityNotFoundError } from 'typeorm'
 
 @Controller('api/maps')
 export default class MapsController {
-  private readonly logger = new Logger(MapsController.name)
   constructor(
     private mapsService: MapsService,
     private yjsDocManager: YjsDocManagerService,
@@ -128,39 +132,48 @@ export default class MapsController {
   }
 
   @Post(':id/duplicate')
+  @UseGuards(MapDuplicationThrottlerGuard)
+  @Throttle({
+    default: {
+      limit: () => configService.getDuplicateMapRateLimit(),
+      ttl: () => configService.getDuplicateMapRateWindowMs(),
+    },
+  })
   async duplicate(
     @Param('id') mapId: string
   ): Promise<ClientPrivateMap | undefined> {
-    const oldMap = await this.mapsService.findMap(mapId).catch((e: Error) => {
-      if (e.name === 'MalformedUUIDError') {
-        this.logger.warn(
-          `:id/duplicate(): Wrong/no UUID provided for findMap() with mapId ${mapId}`
-        )
-        return
+    return this.imagesService.withDuplicationLimit(async () => {
+      const oldMap = await this.findMapForDuplication(mapId)
+
+      const oldNodes = await this.mapsService.findNodes(oldMap.id)
+      const inlineBytes = totalInlineImageBytes(oldNodes)
+      const newMap = await this.mapsService.createEmptyMap()
+      try {
+        // Read nodes first so an intervening upload cannot leave a missing reference.
+        await this.imagesService.copyImages(oldMap.id, newMap.id, inlineBytes)
+        await this.mapsService.addNodes(newMap.id, oldNodes)
+        const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
+        if (!exportedMap) throw new NotFoundException()
+        return {
+          map: exportedMap,
+          adminId: newMap.adminId,
+          modificationSecret: newMap.modificationSecret,
+        }
+      } catch (error) {
+        await this.mapsService.deleteMap(newMap.id)
+        throw error
       }
     })
+  }
 
-    if (!oldMap) throw new NotFoundException()
-
-    const newMap = await this.mapsService.createEmptyMap()
-
-    // Read the nodes before copying the images: an image uploaded in between
-    // then gets copied too, instead of a copied reference missing its image.
-    const oldNodes = await this.mapsService.findNodes(oldMap.id)
-
-    // The copies keep their ids, so the copied references resolve as is.
-    await this.imagesService.copyImages(oldMap.id, newMap.id)
-
-    await this.mapsService.addNodes(newMap.id, oldNodes)
-
-    const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
-
-    if (exportedMap) {
-      return {
-        map: exportedMap,
-        adminId: newMap.adminId,
-        modificationSecret: newMap.modificationSecret,
-      }
+  private async findMapForDuplication(mapId: string): Promise<MmpMap> {
+    try {
+      const map = await this.mapsService.findMap(mapId)
+      if (!map) throw new NotFoundException()
+      return map
+    } catch (error) {
+      if (error instanceof MalformedUUIDError) throw new NotFoundException()
+      throw error
     }
   }
 }

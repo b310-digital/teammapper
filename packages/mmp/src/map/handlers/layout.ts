@@ -24,7 +24,7 @@ export interface LayoutInputNode {
   parent: string | null;
   isRoot?: boolean;
   name?: string | null;
-  font?: Pick<MapNodeFont, 'size'>;
+  font?: MapNodeFont;
   coordinates?: MapNodeCoordinates;
   dimensions?: MapNodeDimensions;
 }
@@ -91,10 +91,20 @@ function findTreeRoots(nodes: LayoutInputNode[]): LayoutInputNode[] {
   ];
 }
 
+/** Sizes a node that carries no measured dimensions from its name. */
+export type NodeExtentMeasure = (
+  name: string,
+  font: MapNodeFont & { size: number }
+) => MapNodeDimensions;
+
+const countCharacters: NodeExtentMeasure = (name, font) =>
+  estimateNodeExtent(name, font.size);
+
 export function computeMapLayout(
-  nodes: LayoutInputNode[]
+  nodes: LayoutInputNode[],
+  measure: NodeExtentMeasure = countCharacters
 ): Map<string, MapNodeCoordinates> {
-  return new MapLayout(nodes).build();
+  return new MapLayout(nodes, measure).build();
 }
 
 class MapLayout {
@@ -108,7 +118,10 @@ class MapLayout {
   private readonly roots: LayoutInputNode[];
   private readonly mainAnchor: MapNodeCoordinates;
 
-  constructor(nodes: LayoutInputNode[]) {
+  constructor(
+    nodes: LayoutInputNode[],
+    private readonly measure: NodeExtentMeasure
+  ) {
     this.nodes = this.dedupeById(nodes);
     this.roots = findTreeRoots(this.nodes);
     this.mainAnchor = {
@@ -228,7 +241,7 @@ class MapLayout {
         ? node.font.size
         : DEFAULT_FONT_SIZE;
 
-    return estimateNodeExtent(node.name, fontSize);
+    return this.measure(node.name, { ...node.font, size: fontSize });
   }
 
   private heightOf(node: LayoutInputNode): number {

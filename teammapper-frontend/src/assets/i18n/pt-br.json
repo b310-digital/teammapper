@@ -46,7 +46,8 @@
     "SELECT_NODE_BELOW": "Selecionar o nó abaixo",
     "SELECT_NODE_ABOVE": "Selecionar o nó acima",
     "EDIT_NODE": "Permitir editar o texto do nó",
-    "COUPLE_NODE": "Bloqueia ou desbloqueia o nó",
+    "PROTECT_BRANCH": "Proteger este ramo",
+    "RELEASE_PROTECTION": "Remover a proteção",
     "NODE_IMAGE": "Adiciona uma imagem ao nó",
     "NODE_IMAGE_REMOVE": "Remove uma imagem do nó",
     "PICTOGRAM": "Pictrogram",
@@ -106,6 +107,9 @@
       "CONTENT": "Gere um mapa mental diretamente da sua descrição usando IA. Simplesmente descreva o que você deseja mapear e a IA criará para você.",
       "LABEL_DESCRIPTION": "Descreva seu mapa mental",
       "PLACEHOLDER": "Por exemplo, crie um mapa mental de uma casa com cômodos, móveis e jardim",
+      "LABEL_LEVELS": "Níveis abaixo da raiz",
+      "LABEL_CHILDREN_PER_NODE": "Nós filhos por nó",
+      "MODEL": "Modelo: {{model}}",
       "BUTTON_GENERATE": "Gerar e Importar"
     },
     "PICTOGRAMS": {
@@ -129,11 +133,8 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "DELETED_AT": "Mindmap is going to be deleted at:",
-      "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
-      "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?",
-      "SHORTCUTS_TITLE": "Atalhos"
+      "SHORTCUTS_TITLE": "Atalhos",
+      "DELETION_MOVED": "Observação: a data de exclusão deste mapa agora está nas configurações, em Opções de mapa. Quem criou o mapa também pode excluí-lo lá."
     },
     "LINK": {
       "URL": "Link URL (https://...)"
@@ -192,8 +193,13 @@
       "ROOT_NODE_NAME": "Nome do nó raiz",
       "NODE_NAME": "Nome do nó",
       "TITLE": "Configurações",
-      "TTL": "Last known date of deletion",
-      "DARK_MODE": "Modo escuro"
+      "TTL": "Última data de exclusão conhecida",
+      "DARK_MODE": "Modo escuro",
+      "DELETION": "Exclusão",
+      "DELETED_AT": "Data de exclusão:",
+      "DELETE_AFTER_DAYS": "Este servidor exclui os mapas após {{deleteAfterDays}} dias.",
+      "DELETE": "Excluir mapa",
+      "CONFIRM_DELETE": "Excluir?"
     }
   },
   "MESSAGES": {
@@ -210,9 +216,11 @@
     "NODE_COPIED": "Nó copiado com sucesso!",
     "NODE_CUT": "Nó cortado com sucesso!",
     "MAP_IMPORT_SUCCESS": "Mapa mental importado com sucesso",
+    "MAP_SYNCING": "Carregando o mapa mental…",
     "INVALID_MODIFICATION_SECRET": "O link de edição é inválido. O mapa mental abre somente para leitura.",
     "MAP_UPDATE_SUCCESS": "Mindmap atualizado com sucesso",
     "WARNINGS": {
+      "NODE_PROTECTED": "Este ramo está protegido. Remova a proteção para editá-lo.",
       "MAP_IMPORT_IN_PROGRESS": "Importação de mapa mental em andamento",
       "MAP_UPDATE_IN_PROGRESS": "Atualizando o mapa mental",
       "MERMAID_SEVERAL_TREES": "Cada árvore virou seu próprio bloco mindmap. Ferramentas Mermaid fora do TeamMapper exibem um bloco por vez."
@@ -221,7 +229,6 @@
       "ROOT_NODE_COPIED": "Não é possível copiar o nó raiz!",
       "ROOT_NODE_CUT": "Não é possível cortar o nó da raiz!",
       "ROOT_NODE_DELETED": "Não é possível excluir o nó raiz!",
-      "ROOT_NODE_LOCKED": "Não é possível bloquear o nó raiz!",
       "NO_NODES_IN_CLIPBOARD": "Não há nós na área de transferência!",
       "NODE_COPY_GENERIC": "Ocorreu um erro ao tentar copiar o nó.",
       "NODE_CUT_GENERIC": "Ocorreu um erro ao tentar cortar o nó.",
@@ -233,10 +240,12 @@
       "IMPORT_ERROR": "O mapa mental não pôde ser importado!",
       "AI_MERMAID_ERROR": "Mermaid não pôde ser gerado",
       "IMAGE_STORAGE_FULL": "O armazenamento de imagens deste mapa mental está cheio. Uma imagem removida libera seu espaço em até 7 dias após o envio.",
-      "IMAGE_UPLOAD_ERROR": "Não foi possível enviar a imagem."
+      "IMAGE_UPLOAD_ERROR": "Não foi possível enviar a imagem.",
+      "DELETE_MAP_ERROR": "Não foi possível excluir o mapa."
     },
     "DELETE_MAP_SUCCESS": "Mapa mental excluído com sucesso!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid gerado com sucesso!",
+    "AI_MERMAID_TRUNCATED": "O modelo atingiu seu limite de saída antes de terminar o mapa mental. Tente menos níveis ou nós filhos.",
     "AI_MERMAID_GENERATING": "Criando Mermaid...",
     "AI_DESCRIPTION_REQUIRED": "Por favor, forneça uma descrição para o mapa mental"
   },

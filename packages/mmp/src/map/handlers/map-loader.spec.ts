@@ -1,0 +1,247 @@
+import { create } from '../../index.js';
+import MmpMap from '../map.js';
+import InMemoryMapData from '../data/in-memory-map-data.js';
+import { stubSvgLengths } from '../../test/svg-lengths.js';
+import type { MapSnapshot } from '@teammapper/shared';
+
+/**
+ * A map load replaces every node of the map data, and `exportAsJSON` reads
+ * them back. These specs drive both through `MmpInstance`, as the frontend
+ * does.
+ */
+
+beforeAll(stubSvgLengths);
+
+function makeMap(data = new InMemoryMapData()): MmpMap {
+  const ref = document.createElement('div');
+  document.body.appendChild(ref);
+  return create('map', ref, undefined, data);
+}
+
+function rootOf(map: MmpMap): string {
+  const root = map.instance.exportRootProperties();
+  if (!root) throw new Error('the map has no main root');
+  return root.id;
+}
+
+/** A loaded map: the main root with a styled child and a grandchild. */
+function makeLoadedMap(): {
+  map: MmpMap;
+  data: InMemoryMapData;
+  child: string;
+} {
+  const data = new InMemoryMapData();
+  const map = makeMap(data);
+  map.instance.new();
+  const child = map.instance.addNode(
+    {
+      name: 'child',
+      colors: { background: '#ff0000' },
+      font: { size: 18, weight: 'bold' },
+    },
+    rootOf(map)
+  );
+  if (!child) throw new Error('addNode added no child');
+  map.instance.addNode({ name: 'grandchild' }, child.id);
+  map.instance.updateNode('linkHref', 'https://example.com/', child.id);
+  return { map, data, child: child.id };
+}
+
+afterEach(() => {
+  document.body.innerHTML = '';
+});
+
+describe('exportAsJSON', () => {
+  it('returns no node for an empty map data', () => {
+    expect(makeMap().instance.exportAsJSON()).toEqual([]);
+  });
+
+  it('returns the properties of every node in the order they were added', () => {
+    const { map, child } = makeLoadedMap();
+    const root = rootOf(map);
+
+    expect(map.instance.exportAsJSON()).toMatchObject([
+      { id: root, parent: null, isRoot: true, name: 'Root node' },
+      {
+        id: child,
+        parent: root,
+        isRoot: false,
+        protected: false,
+        name: 'child',
+        colors: { background: '#ff0000' },
+        font: { size: 18, weight: 'bold' },
+        link: { href: 'https://example.com/' },
+      },
+      { parent: child, isRoot: false, name: 'grandchild' },
+    ]);
+  });
+
+  it('returns plain JSON data', () => {
+    const { map } = makeLoadedMap();
+    const exported = map.instance.exportAsJSON();
+
+    expect(exported).toStrictEqual(JSON.parse(JSON.stringify(exported)));
+  });
+
+  it('returns a copy the caller may change', () => {
+    const { map, data, child } = makeLoadedMap();
+    const before = JSON.stringify(map.instance.exportAsJSON());
+
+    const exported = map.instance.exportAsJSON();
+    exported.forEach(node => {
+      node.name = 'changed';
+      if (node.colors) node.colors.background = '#000000';
+      if (node.coordinates) node.coordinates.x = 999;
+    });
+    exported.pop();
+
+    expect(JSON.stringify(map.instance.exportAsJSON())).toBe(before);
+    expect(data.node(child)?.name).toBe('child');
+  });
+
+  it('includes a peer write to the map data', () => {
+    const { map, data, child } = makeLoadedMap();
+
+    data.updateNode(child, 'name', 'Remote');
+
+    const node = map.instance.exportAsJSON().find(n => n.id === child);
+    expect(node?.name).toBe('Remote');
+  });
+
+  it('includes nodes added and leaves out nodes removed', () => {
+    const { map, child } = makeLoadedMap();
+    const added = map.instance.addNode({ name: 'added' }, rootOf(map));
+    if (!added) throw new Error('addNode added no node');
+
+    map.instance.removeNode(child);
+
+    expect(map.instance.exportAsJSON().map(n => n.name)).toEqual([
+      'Root node',
+      'added',
+    ]);
+  });
+});
+
+describe('new', () => {
+  it('loads an exported map unchanged', () => {
+    const { map } = makeLoadedMap();
+    const exported = map.instance.exportAsJSON();
+
+    const target = makeMap();
+    target.instance.new(exported);
+
+    expect(target.instance.exportAsJSON()).toStrictEqual(exported);
+  });
+
+  it('writes one replacement to the map data', () => {
+    const { map, data } = makeLoadedMap();
+    const listener = jest.fn();
+    data.subscribe(listener);
+
+    map.instance.new(map.instance.exportAsJSON());
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0][0].replaced).toBe(true);
+  });
+
+  it('makes the first node without a parent the main root of a map naming none', () => {
+    const { map, child } = makeLoadedMap();
+    const root = rootOf(map);
+    const [rootNode, ...rest] = map.instance.exportAsJSON();
+    const withoutRoot = [...rest, rootNode].map(node => ({
+      ...node,
+      isRoot: false,
+    }));
+    const data = new InMemoryMapData();
+    const target = makeMap(data);
+    const listener = jest.fn();
+    data.subscribe(listener);
+
+    target.instance.new(withoutRoot);
+
+    expect(data.mainRootId()).toBe(root);
+    expect(data.node(child)?.isRoot).toBe(false);
+    expect(listener.mock.calls[0][0].replaced).toBe(true);
+    expect(target.instance.getSelectedNode()?.id).toBe(root);
+  });
+
+  it('stores null as the parent of the main root of a new map', () => {
+    const data = new InMemoryMapData();
+    const map = makeMap(data);
+
+    map.instance.new();
+
+    expect(data.node(rootOf(map))?.parent).toBeNull();
+  });
+
+  it('stores null as the parent of an imported root that holds an empty string', () => {
+    const { map } = makeLoadedMap();
+    const exported = map.instance
+      .exportAsJSON()
+      .map(node => (node.parent ? node : { ...node, parent: '' }));
+    const data = new InMemoryMapData();
+
+    makeMap(data).instance.new(exported);
+
+    expect(data.node(exported[0].id)?.parent).toBeNull();
+  });
+
+  it('gives a node without a k a random one', () => {
+    const { map } = makeLoadedMap();
+    const nodes = map.instance.exportAsJSON().map(node => ({ ...node, k: 0 }));
+    const target = makeMap();
+
+    target.instance.new(nodes);
+
+    expect(target.instance.exportAsJSON()[0].k).not.toBe(0);
+  });
+
+  it('keeps only the fields a node has', () => {
+    const { map, child } = makeLoadedMap();
+    const legacy = map.instance
+      .exportAsJSON()
+      .map(node => ({ ...node, hidden: true, hasHiddenChildNodes: true }));
+    const data = new InMemoryMapData();
+
+    const target = makeMap(data);
+    target.instance.new(legacy);
+
+    const stored = data.nodes();
+    expect(stored.every(node => !('hidden' in node))).toBe(true);
+    expect(stored.every(node => !('hasHiddenChildNodes' in node))).toBe(true);
+    const group = target.dom.g
+      .selectAll<SVGGElement, string>('g.node')
+      .filter(id => id === child)
+      .node();
+    expect(group?.style.visibility).toBe('visible');
+  });
+
+  it('refuses a map that is not a list of nodes and keeps the current map', () => {
+    const { map, data } = makeLoadedMap();
+    const before = map.instance.exportAsJSON();
+    const listener = jest.fn();
+    data.subscribe(listener);
+
+    expect(() =>
+      map.instance.new({ id: 'x' } as unknown as MapSnapshot)
+    ).toThrow('The exported map is not correct');
+    expect(map.instance.exportAsJSON()).toStrictEqual(before);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  describe('with an empty node list', () => {
+    it('keeps the current map and writes nothing', () => {
+      const { map, data } = makeLoadedMap();
+      const before = map.instance.exportAsJSON();
+      const listener = jest.fn();
+      data.subscribe(listener);
+
+      expect(() => map.instance.new([])).toThrow(
+        'The map holds no nodes; the import changed nothing.'
+      );
+      expect(map.instance.exportAsJSON()).toStrictEqual(before);
+      expect(map.instance.getSelectedNode()?.id).toBe(before[0].id);
+      expect(listener).not.toHaveBeenCalled();
+    });
+  });
+});

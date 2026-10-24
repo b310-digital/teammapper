@@ -12,11 +12,14 @@ export const sanitizeText = (text: string): string => {
 let nodes: MindmapNode[] = [];
 let cnt = 0;
 let elements: Record<number, D3Element> = {};
+// Indentation of the root, subtracted from every level so the root sits at 0
+let baseLevel: number | undefined;
 
 const clear = () => {
   nodes = [];
   cnt = 0;
   elements = {};
+  baseLevel = undefined;
 };
 
 const getParent = function (level: number) {
@@ -34,6 +37,14 @@ const getMindmap = () => {
 };
 
 const addNode = (level: number, id: string, descr: string, type: number) => {
+  const isRoot = nodes.length === 0;
+  if (isRoot) {
+    baseLevel = level;
+    level = 0;
+  } else if (baseLevel !== undefined) {
+    level -= baseLevel;
+  }
+
   let padding = 10;
   switch (type) {
     case nodeType.ROUNDED_RECT:
@@ -51,6 +62,7 @@ const addNode = (level: number, id: string, descr: string, type: number) => {
     children: [],
     width: 10,
     padding,
+    isRoot,
   } satisfies MindmapNode;
 
   const parent = getParent(level);
@@ -59,8 +71,7 @@ const addNode = (level: number, id: string, descr: string, type: number) => {
     // Keep all nodes in the list
     nodes.push(node);
   } else {
-    if (nodes.length === 0) {
-      // First node, the root
+    if (isRoot) {
       nodes.push(node);
     } else {
       // Syntax error ... there can only bee one root
@@ -141,8 +152,11 @@ const type2Str = (type: number) => {
   }
 };
 
-// Expose logger to grammar
-const getLogger = () => console;
+// Expose logger to grammar. Mermaid's own logger drops these calls at its
+// default level, and console.trace would print a stack trace per token.
+const noop = () => undefined;
+const silentLogger = { trace: noop, debug: noop, info: noop };
+const getLogger = () => silentLogger;
 const getElementById = (id: number) => elements[id];
 
 const db = {

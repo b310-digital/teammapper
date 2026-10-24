@@ -1,70 +1,62 @@
-import { dispatch, Dispatch } from 'd3';
-import Utils from '../../utils/utils.js';
 import Log from '../../utils/log.js';
+import type { MmpEventPayloadMap, MmpEventType } from '@teammapper/shared';
 
-export type MmpEventCallback = (...args: unknown[]) => void;
+export type MmpEventCallback<K extends MmpEventType> = (
+  payload: MmpEventPayloadMap[K]
+) => void;
+
+type EventCallbacks<K extends MmpEventType> = {
+  [P in K]?: Set<MmpEventCallback<P>>;
+};
+
+const EVENT_TYPES: readonly MmpEventType[] = [
+  'nodeSelect',
+  'nodeDeselect',
+  'nodeProtected',
+  'mapChange',
+];
 
 /**
- * Manage the events of the map.
+ * Manage the events of the map. `@teammapper/shared` types each payload, and
+ * each event holds any number of callbacks.
  */
 export default class Events {
-  private dispatcher: Dispatch<object>;
+  private callbacks: EventCallbacks<MmpEventType> = {};
 
   /**
-   * Initialize the events.
+   * Call every callback registered for the event with its payload. The loop
+   * runs over a copy, so a callback may remove itself without skipping the next.
    */
-  constructor() {
-    const events = Utils.fromObjectToArray(Event);
-
-    this.dispatcher = dispatch(...events);
+  public emit<K extends MmpEventType>(
+    event: K,
+    payload: MmpEventPayloadMap[K]
+  ) {
+    const callbacks = this.callbacks[event];
+    if (callbacks) [...callbacks].forEach(callback => callback(payload));
   }
 
   /**
-   * Call all registered callbacks for specified map event.
-   * @param {Event} event
-   * @param {object} that
-   * @param parameters
+   * Add the callback to the event and return a function that removes it again.
    */
-  public call(event: Event, that?: object, ...parameters: unknown[]) {
-    return this.dispatcher.call(event, that, ...parameters);
-  }
+  public on = <K extends MmpEventType>(
+    event: K,
+    callback: MmpEventCallback<K>
+  ): (() => void) => {
+    if (!EVENT_TYPES.includes(event)) Log.error('The event does not exist');
 
-  /**
-   * Add a callback for specific map event.
-   * @param {string} event
-   * @param {Function} callback
-   */
-  public on = (event: string, callback: MmpEventCallback) => {
-    if (typeof event !== 'string') {
-      Log.error('The event must be a string', 'type');
-    }
-
-    const eventName = Event[event as keyof typeof Event];
-
-    if (!eventName) {
-      Log.error('The event does not exist');
-    }
-
-    this.dispatcher.on(eventName, callback);
+    const callbacks: EventCallbacks<K> = this.callbacks;
+    const set = callbacks[event] ?? new Set<MmpEventCallback<K>>();
+    callbacks[event] = set;
+    set.add(callback);
+    return () => {
+      set.delete(callback);
+    };
   };
 
   /**
-   * Removes / resets all callbacks
+   * Remove every callback.
    */
   public unsubscribeAll = () => {
-    Object.values(Event).forEach((event: string) => {
-      this.dispatcher.on(event, null);
-    });
+    this.callbacks = {};
   };
-}
-
-export enum Event {
-  create = 'mmp-create',
-  nodeSelect = 'mmp-node-select',
-  nodeDeselect = 'mmp-node-deselect',
-  nodeUpdate = 'mmp-node-update',
-  nodeCreate = 'mmp-node-create',
-  nodePaste = 'mmp-node-paste',
-  nodeRemove = 'mmp-node-remove',
-  distribute = 'mmp-distribute',
 }

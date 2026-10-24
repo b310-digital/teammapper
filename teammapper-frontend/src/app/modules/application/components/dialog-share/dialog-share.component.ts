@@ -11,7 +11,6 @@ import { API_URL, HttpService } from 'src/app/core/http/http.service';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
-import { Router } from '@angular/router';
 import {
   MatDialogRef,
   MatDialogTitle,
@@ -61,7 +60,6 @@ export class DialogShareComponent implements OnInit {
   private utilsService = inject(UtilsService);
   private storageService = inject(StorageService);
   private dialogRef = inject<MatDialogRef<DialogShareComponent>>(MatDialogRef);
-  private router = inject(Router);
 
   @ViewChild('qrcodecanvas', { static: true })
   private qrCodeCanvasRef: ElementRef<HTMLCanvasElement> | null = null;
@@ -136,7 +134,8 @@ export class DialogShareComponent implements OnInit {
   }
 
   async duplicateMindMap(): Promise<void> {
-    // getCurrentMap from the MmpService doesn't give us the UUID of the map, only a legacy id and the root note ID, so we'll have to use the URL params.
+    // MmpService holds no map uuid, and the second path segment of the URL
+    // is the map's uuid.
     const id = window.location.pathname.split('/')[2];
     const response = await this.httpService.post(
       API_URL.ROOT,

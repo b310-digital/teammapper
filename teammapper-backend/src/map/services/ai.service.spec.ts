@@ -1,9 +1,15 @@
 import { jest } from '@jest/globals'
 
-import { AiService, SYSTEM_PROMPT_TOKEN_OVERHEAD } from './ai.service'
+import { AiService, DEFAULT_MAX_OUTPUT_TOKENS } from './ai.service'
+import {
+  DEFAULT_AI_MAP_SHAPE,
+  systemPrompt,
+  userPrompt,
+} from '../utils/prompts'
+import type { AiMapShape } from '@teammapper/shared'
 import type { LlmUsageCounting } from './llm-usage-counter.service'
 import { RateLimitExceededException } from '../controllers/rate-limit.exception'
-import { generateText } from 'ai'
+import { APICallError, generateText } from 'ai'
 import * as aiProvider from '../utils/aiProvider'
 import configService from '../../config.service'
 import type { LLMProps } from '../../config.service'
@@ -14,9 +20,31 @@ type GetLLMConfigMock = jest.MockedFunction<typeof configService.getLLMConfig>
 
 type MockGenerateTextReturn = Awaited<ReturnType<typeof generateText>>
 
-jest.mock('ai')
+// Only generateText is faked; APICallError keeps its real isInstance check.
+jest.mock('ai', () => ({
+  ...jest.requireActual<typeof import('ai')>('ai'),
+  generateText: jest.fn(),
+}))
 jest.mock('../utils/aiProvider')
 jest.mock('../../config.service')
+
+// One token per UTF-8 byte of the prompts sent, plus the full output cap.
+const estimateFor = (
+  description: string,
+  maxOutputTokens = DEFAULT_MAX_OUTPUT_TOKENS,
+  shape: AiMapShape = DEFAULT_AI_MAP_SHAPE
+) =>
+  Buffer.byteLength(systemPrompt(shape), 'utf8') +
+  Buffer.byteLength(userPrompt(description, 'en'), 'utf8') +
+  maxOutputTokens
+
+const apiError = (statusCode: number | undefined) =>
+  new APICallError({
+    message: 'provider error',
+    url: 'localhost:3000',
+    requestBodyValues: {},
+    statusCode,
+  })
 
 interface FakeUsageState {
   tokensUsed: number
@@ -38,10 +66,6 @@ const buildUsageCounterMock = (
   }),
   adjustTokens: jest.fn(async (_dateUsage: string, delta: number) => {
     state.tokensUsed = Math.max(0, state.tokensUsed + delta)
-  }),
-  release: jest.fn(async (_dateUsage: string, tokens: number) => {
-    state.tokensUsed = Math.max(0, state.tokensUsed - tokens)
-    state.requestsCount = Math.max(0, state.requestsCount - 1)
   }),
 })
 
@@ -84,9 +108,9 @@ describe('AiService', () => {
       token: 'test-token',
       provider: 'openai',
       model: 'gpt-4',
-      tpm: '1000',
+      tpm: '10000',
       rpm: '5',
-      tpd: '10000',
+      tpd: '100000',
     } satisfies LLMProps)
 
     usageState = { tokensUsed: 0, requestsCount: 0 }
@@ -102,15 +126,59 @@ describe('AiService', () => {
     jest.useRealTimers()
   })
 
-  describe('estimateTokens', () => {
-    it('estimates tokens for short input', () => {
-      expect(aiService.estimateTokens('hello')).toBe(
-        Math.ceil(5 / 4) + SYSTEM_PROMPT_TOKEN_OVERHEAD
+  describe('token estimate', () => {
+    const reserved = () => usageCounter.reserve.mock.calls[0][1]
+
+    it('counts every byte of both prompts plus the output cap', async () => {
+      await aiService.generateMermaid('hello', 'en')
+
+      expect(reserved()).toBe(estimateFor('hello'))
+    })
+
+    it('counts a multi-byte character as several tokens', async () => {
+      await aiService.generateMermaid('漢字', 'en')
+
+      // Each of the two characters takes three UTF-8 bytes.
+      expect(reserved()).toBe(estimateFor('') + 6)
+    })
+
+    it('reserves more for a larger map shape', async () => {
+      const shape: AiMapShape = { levels: 3, childrenPerNode: 4 }
+      await aiService.generateMermaid('hello', 'en', shape)
+
+      expect(reserved()).toBe(
+        estimateFor('hello', DEFAULT_MAX_OUTPUT_TOKENS, shape)
       )
     })
 
-    it('estimates tokens for empty input', () => {
-      expect(aiService.estimateTokens('')).toBe(SYSTEM_PROMPT_TOKEN_OVERHEAD)
+    it('reserves the full configured output cap', async () => {
+      getLLMConfigMock.mockReturnValue({
+        url: 'localhost:3000',
+        token: 'test-token',
+        provider: 'openai',
+        model: 'gpt-4',
+        maxOutputTokens: '1000',
+      } satisfies LLMProps)
+      aiService = new AiService(usageCounter)
+
+      await aiService.generateMermaid('hello', 'en')
+
+      expect(reserved()).toBe(estimateFor('hello', 1000))
+    })
+
+    it('falls back to the default output cap when the configured one is 0', async () => {
+      getLLMConfigMock.mockReturnValue({
+        url: 'localhost:3000',
+        token: 'test-token',
+        provider: 'openai',
+        model: 'gpt-4',
+        maxOutputTokens: '0',
+      } satisfies LLMProps)
+      aiService = new AiService(usageCounter)
+
+      await aiService.generateMermaid('hello', 'en')
+
+      expect(reserved()).toBe(estimateFor('hello'))
     })
   })
 
@@ -124,6 +192,80 @@ describe('AiService', () => {
           abortSignal: expect.any(AbortSignal),
         })
       )
+    })
+
+    it('turns off SDK retries so one reservation pays for one attempt', async () => {
+      await aiService.generateMermaid('create a mindmap', 'en')
+
+      expect(generateTextMock).toHaveBeenCalledWith(
+        expect.objectContaining({ maxRetries: 0 })
+      )
+    })
+
+    it('escapes markup so the description cannot close the topic tag', async () => {
+      await aiService.generateMermaid('a </topic> & <b>', 'en')
+
+      expect(generateTextMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: '<topic lang="en">a &lt;/topic&gt; &amp; &lt;b&gt;</topic>',
+        })
+      )
+    })
+
+    it('writes a given map shape into the system prompt', async () => {
+      await aiService.generateMermaid('create a mindmap', 'en', {
+        levels: 3,
+        childrenPerNode: 1,
+      })
+
+      const { system } = generateTextMock.mock.calls[0][0]
+      expect(system).toContain('exactly 3 levels')
+      expect(system).toContain('no more than 1 child nodes')
+    })
+
+    it('shows the same example for every map shape', async () => {
+      await aiService.generateMermaid('create a mindmap', 'en', {
+        levels: 1,
+        childrenPerNode: 1,
+      })
+      await aiService.generateMermaid('create a mindmap', 'en', {
+        levels: 3,
+        childrenPerNode: 2,
+      })
+
+      const example = (call: number) =>
+        String(generateTextMock.mock.calls[call][0].system).match(
+          /<example>[\s\S]*<\/example>/
+        )?.[0]
+      expect(example(0)).toContain('Subtopic A')
+      expect(example(0)).toBe(example(1))
+    })
+
+    it('drops the nodes that exceed the requested shape', async () => {
+      generateTextMock.mockResolvedValueOnce({
+        text: 'mindmap\n  Root\n    A\n      A1\n    B\n    C',
+        finishReason: 'stop',
+        usage: { inputTokens: 100, outputTokens: 20, totalTokens: 120 },
+      } as MockGenerateTextReturn)
+
+      const result = await aiService.generateMermaid('create a mindmap', 'en', {
+        levels: 1,
+        childrenPerNode: 2,
+      })
+
+      expect(result.mermaid).toBe('mindmap\n  Root\n    A\n    B')
+    })
+
+    it('flags the result as truncated when the LLM hits the token cap', async () => {
+      generateTextMock.mockResolvedValueOnce({
+        text: 'mindmap',
+        finishReason: 'length',
+        usage: { inputTokens: 100, outputTokens: 400, totalTokens: 500 },
+      } as MockGenerateTextReturn)
+
+      const result = await aiService.generateMermaid('create a mindmap', 'en')
+
+      expect(result).toEqual({ mermaid: 'mindmap', truncated: true })
     })
 
     it('forwards configured maxOutputTokens to generateText', async () => {
@@ -143,17 +285,33 @@ describe('AiService', () => {
       )
     })
 
-    it('returns empty string when provider is not configured', async () => {
+    it('leaves a reasoning model room to think when no cap is configured', async () => {
+      getLLMConfigMock.mockReturnValue({
+        url: 'localhost:3000',
+        token: 'test-token',
+        provider: 'openai-compatible',
+        model: 'qwen3',
+      } satisfies LLMProps)
+      aiService = new AiService(usageCounter)
+
+      await aiService.generateMermaid('hi', 'en')
+
+      expect(generateTextMock).toHaveBeenCalledWith(
+        expect.objectContaining({ maxOutputTokens: DEFAULT_MAX_OUTPUT_TOKENS })
+      )
+    })
+
+    it('returns empty mermaid when provider is not configured', async () => {
       createProviderMock.mockReturnValueOnce(undefined)
 
       aiService = new AiService(usageCounter)
       const result = await aiService.generateMermaid('create a mindmap', 'en')
 
-      expect(result).toBe('')
+      expect(result).toEqual({ mermaid: '', truncated: false })
       expect(generateTextMock).not.toHaveBeenCalled()
     })
 
-    it('returns empty string when model is not configured', async () => {
+    it('returns empty mermaid when model is not configured', async () => {
       getLLMConfigMock.mockReturnValue({
         url: 'localhost:3000',
         token: 'test-token',
@@ -167,7 +325,7 @@ describe('AiService', () => {
       aiService = new AiService(usageCounter)
       const result = await aiService.generateMermaid('create a mindmap', 'en')
 
-      expect(result).toBe('')
+      expect(result).toEqual({ mermaid: '', truncated: false })
       expect(generateTextMock).not.toHaveBeenCalled()
     })
 
@@ -177,51 +335,76 @@ describe('AiService', () => {
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpd: '300',
+        tpd: String(estimateFor('short') + 50),
       } satisfies LLMProps)
       aiService = new AiService(usageCounter)
 
-      // estimateTokens('short') = 202; first call is fine and bills 100 tokens
+      // The first call fits and bills 100 tokens
       generateTextMock.mockResolvedValueOnce({
         text: 'first response',
         usage: { inputTokens: 50, outputTokens: 50, totalTokens: 100 },
       } as MockGenerateTextReturn)
       await aiService.generateMermaid('short', 'en')
 
-      // Second call estimate (202) + already-billed (100) = 302 > 300 -> reject
+      // Second call estimate + already-billed (100) exceeds the cap -> reject
       await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(
         RateLimitExceededException
       )
 
       // No reservation was created for the rejected call, so totals reflect
-      // only the first call's actual (100) and one request — and no rollback.
-      expect({
-        ...usageState,
-        releaseCalls: usageCounter.release.mock.calls.length,
-      }).toEqual({
-        tokensUsed: 100,
-        requestsCount: 1,
-        releaseCalls: 0,
-      })
+      // only the first call's actual (100) and one request.
+      expect(usageState).toEqual({ tokensUsed: 100, requestsCount: 1 })
     })
 
-    it('allows a reservation that lands exactly at the TPD cap', async () => {
+    it('allows a reservation that reaches the TPD cap exactly', async () => {
       getLLMConfigMock.mockReturnValue({
         url: 'localhost:3000',
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpd: '202',
+        tpd: String(estimateFor('short')),
       } satisfies LLMProps)
       aiService = new AiService(usageCounter)
 
-      // estimateTokens('short') = 202; equal to the cap, so this must succeed.
+      // The estimate equals the cap, so this must succeed.
       await aiService.generateMermaid('short', 'en')
       expect(usageCounter.reserve).toHaveBeenCalledWith(
         expect.any(String),
-        202,
-        202
+        estimateFor('short'),
+        estimateFor('short')
       )
+    })
+
+    it('rejects every call when TPD is 0', async () => {
+      getLLMConfigMock.mockReturnValue({
+        url: 'localhost:3000',
+        token: 'test-token',
+        provider: 'openai',
+        model: 'gpt-4',
+        tpd: '0',
+      } satisfies LLMProps)
+      aiService = new AiService(usageCounter)
+
+      await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(
+        RateLimitExceededException
+      )
+      expect(generateTextMock).not.toHaveBeenCalled()
+    })
+
+    it('rejects every call when TPM is 0', async () => {
+      getLLMConfigMock.mockReturnValue({
+        url: 'localhost:3000',
+        token: 'test-token',
+        provider: 'openai',
+        model: 'gpt-4',
+        tpm: '0',
+      } satisfies LLMProps)
+      aiService = new AiService(usageCounter)
+
+      await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(
+        RateLimitExceededException
+      )
+      expect(generateTextMock).not.toHaveBeenCalled()
     })
 
     it('reconciles billed tokens via adjustTokens with the correct delta', async () => {
@@ -239,11 +422,20 @@ describe('AiService', () => {
       } as MockGenerateTextReturn)
       await aiService.generateMermaid('short', 'en')
 
-      // estimated = 202, actual = 100 -> delta = -102
       expect(usageCounter.adjustTokens).toHaveBeenCalledWith(
         expect.any(String),
-        -102
+        100 - estimateFor('short')
       )
+    })
+
+    it('keeps the estimate when the provider reports no usage', async () => {
+      generateTextMock.mockResolvedValueOnce({
+        text: 'response',
+        usage: {},
+      } as MockGenerateTextReturn)
+      await aiService.generateMermaid('short', 'en')
+
+      expect(usageState.tokensUsed).toBe(estimateFor('short'))
     })
 
     it('keeps the conservative reservation when adjustTokens fails after a successful LLM call', async () => {
@@ -256,28 +448,80 @@ describe('AiService', () => {
       aiService = new AiService(usageCounter)
       usageCounter.adjustTokens.mockRejectedValueOnce(new Error('db hiccup'))
 
-      // Reconciliation failure must not propagate, must not release.
+      // Reconciliation failure must not propagate.
       await aiService.generateMermaid('short', 'en')
-      expect(usageCounter.release).not.toHaveBeenCalled()
-      // Reservation persists at the conservative estimate (202), not actual.
-      expect(usageState.tokensUsed).toBe(202)
+      // Reservation persists at the conservative estimate, not actual.
+      expect(usageState.tokensUsed).toBe(estimateFor('short'))
     })
 
-    it('does not mask the original LLM error when release fails during rollback', async () => {
+    it('keeps the estimate booked when generateText fails', async () => {
+      generateTextMock.mockRejectedValueOnce(new Error('boom'))
+      await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(
+        'boom'
+      )
+
+      // The provider may have billed the failed call.
+      expect(usageState).toEqual({
+        tokensUsed: estimateFor('short'),
+        requestsCount: 1,
+      })
+    })
+
+    it('keeps the estimate when the provider reports a total of 0', async () => {
+      generateTextMock.mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+      } as MockGenerateTextReturn)
+      await aiService.generateMermaid('short', 'en')
+
+      expect(usageState.tokensUsed).toBe(estimateFor('short'))
+    })
+
+    it('books input plus output when the reported total is lower', async () => {
+      generateTextMock.mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 300, outputTokens: 500, totalTokens: 10 },
+      } as MockGenerateTextReturn)
+      await aiService.generateMermaid('short', 'en')
+
+      expect(usageState.tokensUsed).toBe(800)
+    })
+
+    it.each([
+      ['a 401', 401],
+      ['a 400', 400],
+      ['a failed connection', undefined],
+    ])('refunds the reservation after %s', async (_label, statusCode) => {
       getLLMConfigMock.mockReturnValue({
         url: 'localhost:3000',
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
+        rpm: '1',
       } satisfies LLMProps)
       aiService = new AiService(usageCounter)
-      usageCounter.release.mockRejectedValueOnce(new Error('db unreachable'))
 
-      generateTextMock.mockRejectedValueOnce(new Error('boom'))
+      generateTextMock.mockRejectedValueOnce(apiError(statusCode))
       await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(
-        'boom'
+        APICallError
       )
+      expect(usageState.tokensUsed).toBe(0)
+
+      // The refund frees the per-minute request slot.
+      await aiService.generateMermaid('short', 'en')
     })
+
+    it.each([408, 429, 500, 503])(
+      'keeps the reservation after a %i',
+      async (statusCode) => {
+        generateTextMock.mockRejectedValueOnce(apiError(statusCode))
+        await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(
+          APICallError
+        )
+
+        expect(usageState.tokensUsed).toBe(estimateFor('short'))
+      }
+    )
 
     it('throws an error if the tokens per minute limit is reached', async () => {
       getLLMConfigMock.mockReturnValue({
@@ -285,7 +529,7 @@ describe('AiService', () => {
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpm: '1000',
+        tpm: String(estimateFor('short') + 500),
         rpm: undefined,
         tpd: undefined,
       } satisfies LLMProps)
@@ -336,12 +580,12 @@ describe('AiService', () => {
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpm: '500',
+        tpm: String(2 * estimateFor('short') - 1),
       } satisfies LLMProps)
       aiService = new AiService(usageCounter)
 
-      // estimateTokens('short') = 202. Two concurrent calls would need 404 reserved
-      // up-front; with TPM=500, only the first should succeed.
+      // Both calls together need two estimates reserved up-front; with a TPM
+      // one below that, only the first should succeed.
       let release!: () => void
       const block = new Promise<void>((resolve) => {
         release = resolve
@@ -355,16 +599,16 @@ describe('AiService', () => {
       }) as unknown as typeof generateText)
 
       const first = aiService.generateMermaid('short', 'en')
-      // Second call must observe first's pre-charge of 202 already in the
-      // per-minute window, blocking it instead of racing through the precheck.
-      await expect(
-        aiService.generateMermaid('s'.repeat(1200), 'en')
-      ).rejects.toThrow(RateLimitExceededException)
+      // Second call must observe first's pre-charge already in the per-minute
+      // window, blocking it instead of racing through the precheck.
+      await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(
+        RateLimitExceededException
+      )
       release()
       await first
     })
 
-    it('releases the per-minute reservation when generateText fails', async () => {
+    it('counts a failed call against the per-minute limits', async () => {
       getLLMConfigMock.mockReturnValue({
         url: 'localhost:3000',
         token: 'test-token',
@@ -379,8 +623,9 @@ describe('AiService', () => {
         'boom'
       )
 
-      // After release, RPM=1 should still allow one more call.
-      await aiService.generateMermaid('short', 'en')
+      await expect(aiService.generateMermaid('short', 'en')).rejects.toThrow(
+        RateLimitExceededException
+      )
     })
 
     it('resets token count after one minute', async () => {
@@ -389,7 +634,7 @@ describe('AiService', () => {
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpm: '1000',
+        tpm: String(estimateFor('short') + 500),
         rpm: undefined,
         tpd: undefined,
       } satisfies LLMProps)
@@ -420,7 +665,7 @@ describe('AiService', () => {
         token: 'test-token',
         provider: 'openai',
         model: 'gpt-4',
-        tpm: '600',
+        tpm: String(estimateFor('') + 1000),
         rpm: undefined,
         tpd: undefined,
       } satisfies LLMProps)

@@ -1,5 +1,5 @@
-import Map from '../map.js';
-import Node from '../models/node.js';
+import MmpMap from '../map.js';
+import { collectSubtreeIds } from '@teammapper/shared';
 import type {
   ExportNodeProperties,
   MapNodeCoordinates,
@@ -7,17 +7,20 @@ import type {
 } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
-import { Event } from './events.js';
+import type { ResolvedNode } from '../data/node-record.js';
+import { lookupIn, type RecordLookup } from './nodes.js';
 import type { Bounds } from './node-geometry.js';
-import { moveBounds, nodeBounds, unionBounds } from './tree-placement.js';
+import { moveBounds, unionBounds } from './tree-placement.js';
 
 const ORIGIN: MapNodeCoordinates = { x: 0, y: 0 };
 
 /**
- * Manage the drag events of the nodes.
+ * Copy, cut and paste branches through the mmp clipboard. The clipboard
+ * holds copies of the copied records, so a later change of the map leaves
+ * it as it was.
  */
 export default class CopyPaste {
-  private map: Map;
+  private map: MmpMap;
 
   private copiedNodes: ExportNodeProperties[] = [];
 
@@ -36,9 +39,9 @@ export default class CopyPaste {
 
   /**
    * Get the associated map instance.
-   * @param {Map} map
+   * @param {MmpMap} map
    */
-  constructor(map: Map) {
+  constructor(map: MmpMap) {
     this.map = map;
   }
 
@@ -60,46 +63,54 @@ export default class CopyPaste {
 
   /**
    * Remove and copy the node with the id passed as parameter or
-   * the selected node in the mmp clipboard.
+   * the selected node in the mmp clipboard. The method refuses a branch that
+   * is or holds a protected node and announces the refusal.
    * @param {string} id
+   * @returns {boolean} true when the method cut the node
    */
-  public cut = (id?: string) => {
+  public cut = (id?: string): boolean => {
     const node = this.map.nodes.getTargetNode(id);
-    if (!node) return;
+    if (!node) return false;
 
-    if (!node.isRoot) {
-      this.copyToClipboard(node);
+    if (node.isRoot) return Log.error('The root node can not be cut');
+    if (this.map.nodes.refusesRemoval(node.id)) return false;
 
-      this.map.nodes.removeNode(node.id);
-    } else {
-      Log.error('The root node can not be cut');
-    }
+    this.copyToClipboard(node);
+    this.map.nodes.removeNode(node.id);
+    return true;
   };
 
   /**
-   * Write a node and its descendants to the mmp clipboard, together with the
-   * x of the root of its tree.
-   * @param {Node} node
+   * Write copies of a node and its descendants to the mmp clipboard,
+   * together with the x of the root of its tree.
+   * @param {ResolvedNode} node
    */
-  private copyToClipboard(node: Node) {
-    const copied = [node, ...this.map.nodes.getDescendants(node)];
-    this.copiedNodes = copied.map(copiedNode =>
-      this.map.nodes.getNodeProperties(copiedNode, false)
-    );
-    this.copiedTreeRootX = this.map.nodes.getTreeRoot(node).coordinates.x;
+  private copyToClipboard(node: ResolvedNode) {
+    const nodes = this.map.nodes;
+    const records = nodes.scan();
+    const lookup = lookupIn(records);
+    const copied = [
+      node,
+      ...collectSubtreeIds([...records.values()], node.id).flatMap(
+        id => records.get(id) ?? []
+      ),
+    ];
+
+    this.copiedNodes = copied.map(record => Utils.cloneObject(record));
+    this.copiedTreeRootX = nodes.positionOf(
+      nodes.treeRoot(node.id, lookup),
+      lookup
+    ).x;
     this.copiedFootprint = this.footprintOf(copied, node.coordinates);
   }
 
   /** The bounding box of `nodes` relative to `origin`. */
-  private footprintOf(nodes: Node[], origin: MapNodeCoordinates): Bounds {
+  private footprintOf(nodes: ResolvedNode[], origin: MapNodeCoordinates) {
     return nodes
       .map(node =>
-        nodeBounds({
-          coordinates: {
-            x: node.coordinates.x - origin.x,
-            y: node.coordinates.y - origin.y,
-          },
-          dimensions: node.dimensions,
+        moveBounds(this.map.nodes.boundsOf(node), {
+          x: -origin.x,
+          y: -origin.y,
         })
       )
       .reduce(unionBounds);
@@ -116,7 +127,9 @@ export default class CopyPaste {
     const node = this.map.nodes.getTargetNode(id);
     if (!node) return;
 
-    this.pasteInto(node);
+    if (this.map.nodes.refusesChange(node.id)) return;
+
+    this.pasteInto(node.id);
   };
 
   /**
@@ -150,72 +163,82 @@ export default class CopyPaste {
   }
 
   /**
-   * Add the copied nodes under `parent`, or as a new tree for null, and
-   * announce them in one paste event. Returns the node pasted in place of the
-   * copied node.
+   * Add the copied nodes under `parent`, or as a new tree for null, in one
+   * write. The records are built first, each placed against the records
+   * built before it. Returns the record pasted in place of the copied node.
    */
-  private pasteInto(parent: Node | null): Node {
+  private pasteInto(parent: string | null): ResolvedNode {
     this.pastingTree = parent === null;
-    const newNodes: Node[] = [];
+    const pasted = new Map<string, ResolvedNode>();
+    const lookup: RecordLookup = id =>
+      pasted.get(id) ?? this.map.nodes.record(id);
+
     const pastedNode = this.addCopiedNode(
       this.copiedNodes[0],
       parent,
-      newNodes
+      pasted,
+      lookup,
+      new Set()
     );
-
-    this.map.draw.clear();
-    this.map.draw.update();
-    this.map.nodes.redrawSelectionRing();
-    this.map.history.save();
-
-    const pasted = newNodes.map(node => this.map.nodes.getNodeProperties(node));
-    this.map.events.call(Event.nodePaste, parent?.dom, pasted);
+    // The batch makes the paste one undo step of its own, apart from an
+    // edit right before or after it.
+    const data = this.map.data;
+    data.batch(() => data.addNodes([...pasted.values()]));
 
     return pastedNode;
   }
 
   /**
-   * Add a copied node under `newParentNode`, then its copied children under
-   * the node just created. Returns the node just created.
+   * Build the record of a copied node under `newParent`, then those of its
+   * copied children under the record just built. Returns that record.
+   * `visited` holds the copied ids built so far, so a parent cycle among the
+   * copied nodes ends at the node that closes it.
    */
   private addCopiedNode(
     nodeProperties: ExportNodeProperties,
-    newParentNode: Node | null,
-    newNodes: Node[]
-  ): Node {
-    const createdNode = this.map.nodes.addNode(
-      this.pastedProperties(nodeProperties, newParentNode),
-      false,
-      false,
-      newParentNode?.id ?? null
+    newParent: string | null,
+    pasted: Map<string, ResolvedNode>,
+    lookup: RecordLookup,
+    visited: Set<string>
+  ): ResolvedNode {
+    visited.add(nodeProperties.id);
+    const record = this.map.nodes.newRecord(
+      this.pastedProperties(nodeProperties, newParent, lookup),
+      newParent,
+      undefined,
+      lookup
     );
-    newNodes.push(createdNode);
+    pasted.set(record.id, record);
 
-    this.getChildrenInCopiedNodes(nodeProperties.id).forEach(child =>
-      this.addCopiedNode(child, createdNode, newNodes)
-    );
+    this.getChildrenInCopiedNodes(nodeProperties.id)
+      .filter(child => !visited.has(child.id))
+      .forEach(child =>
+        this.addCopiedNode(child, record.id, pasted, lookup, visited)
+      );
 
-    return createdNode;
+    return record;
   }
 
   /**
    * The properties a pasted node gets. Every pasted node gets
-   * `isRoot = false`, whatever the copied node carried.
+   * `isRoot = false` and starts unprotected, whatever the copied node
+   * carried.
    */
   private pastedProperties(
     nodeProperties: ExportNodeProperties,
-    newParentNode: Node | null
+    newParent: string | null,
+    lookup: RecordLookup
   ): UserNodeProperties {
     const copy = Utils.cloneObject(nodeProperties);
-    const branch = this.pastedBranchColor(newParentNode);
+    const branch = this.pastedBranchColor(newParent, lookup);
 
     return {
       name: copy.name,
-      coordinates: this.pastedCoordinates(nodeProperties, newParentNode),
+      coordinates: this.pastedCoordinates(nodeProperties, newParent, lookup),
       image: copy.image,
       colors: { ...copy.colors, branch },
       font: copy.font,
-      locked: copy.locked,
+      protected: false,
       isRoot: false,
     };
   }
@@ -225,11 +248,15 @@ export default class CopyPaste {
    * root node. A pasted child takes its new parent's branch color, or the
    * default one.
    */
-  private pastedBranchColor(newParentNode: Node | null): string {
-    if (!newParentNode) return '';
+  private pastedBranchColor(
+    newParent: string | null,
+    lookup: RecordLookup
+  ): string {
+    if (newParent === null) return '';
 
     return (
-      newParentNode.colors?.branch || this.map.options.defaultNode.colors.branch
+      lookup(newParent)?.colors.branch ||
+      this.map.options.defaultNode.colors.branch
     );
   }
 
@@ -237,54 +264,54 @@ export default class CopyPaste {
    * The coordinates of a pasted node:
    * - a pasted root takes `newTreeCoordinates()` for the footprint of the
    *   copied nodes
-   * - the first node pasted under a parent takes `undefined`, and `addNode`
-   *   places it
+   * - the first node pasted under a parent takes `undefined`, and
+   *   `newRecord` places it
    * - every other node keeps its offset to its own copied parent
    */
   private pastedCoordinates(
     nodeProperties: ExportNodeProperties,
-    newParentNode: Node | null
+    newParent: string | null,
+    lookup: RecordLookup
   ): MapNodeCoordinates | undefined {
-    if (!newParentNode) {
+    if (newParent === null) {
       return this.map.nodes.newTreeCoordinates(this.requireCopiedFootprint());
     }
     if (nodeProperties.id === this.copiedNodes[0].id) return undefined;
 
-    return this.calculatePastedCoordinates(nodeProperties, newParentNode);
+    return this.calculatePastedCoordinates(nodeProperties, newParent, lookup);
   }
 
   /**
    * Keep the offset a copied node had to its old parent, mirrored when the new
    * parent is on the other side of its tree root.
    * @param {ExportNodeProperties} nodeProperties
-   * @param {Node} newParentNode
+   * @param {string} newParent
    * @returns {MapNodeCoordinates} coordinates
    */
   private calculatePastedCoordinates(
     nodeProperties: ExportNodeProperties,
-    newParentNode: Node
+    newParent: string,
+    lookup: RecordLookup
   ): MapNodeCoordinates {
     const oldParentNode = this.findInCopiedNodes(nodeProperties.parent);
     const oldParent = oldParentNode?.coordinates ?? ORIGIN;
     const node = nodeProperties.coordinates ?? ORIGIN;
+    const newParentPosition = this.map.nodes.positionOf(newParent, lookup);
 
     // Only a pasted tree has a root as a new parent. The root has no side,
     // and its children keep the sides they had.
     const oldTreeRootX = this.pastingTree
       ? (this.copiedNodes[0].coordinates?.x ?? 0)
       : this.copiedTreeRootX;
-    const newSide = this.map.nodes.getOrientation(newParentNode);
+    const newSide = this.map.nodes.orientation(newParent, lookup);
     const mirrored =
       newSide !== undefined && oldParent.x < oldTreeRootX !== newSide;
     const dx = mirrored ? node.x - oldParent.x : oldParent.x - node.x;
 
-    return this.map.nodes.fixCoordinates(
-      {
-        x: newParentNode.coordinates.x - dx,
-        y: newParentNode.coordinates.y - (oldParent.y - node.y),
-      },
-      true
-    );
+    return {
+      x: newParentPosition.x - dx,
+      y: newParentPosition.y - (oldParent.y - node.y),
+    };
   }
 
   private findInCopiedNodes = (

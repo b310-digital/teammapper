@@ -1,20 +1,21 @@
 import Nodes from './nodes.js';
 import MmpMap from '../map.js';
+import { fakeDraw } from '../../test/fake-draw.js';
 import type {
   MapNodeCoordinates,
   ExportNodeProperties,
 } from '@teammapper/shared';
 
 /**
- * Snapshots here are shaped the way an import delivers them: the root has
- * `parent: ''` and `isRoot: true`, and a node without a saved position has no
- * `coordinates` key at all.
+ * Snapshots here are shaped the way an import of an older export delivers
+ * them: the root has `parent: ''` and `isRoot: true`, and a node without a
+ * saved position has no `coordinates` key at all.
  */
 
 function createHandler(): Nodes {
   // No live map needed: the snapshot's nodes do not exist yet, so everything is
-  // derived from the snapshot itself.
-  return new Nodes({} as unknown as MmpMap);
+  // derived from the snapshot itself and the sizes its names have.
+  return new Nodes({ draw: fakeDraw() } as unknown as MmpMap);
 }
 
 function makeNode(

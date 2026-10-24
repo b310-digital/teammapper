@@ -21,7 +21,7 @@ function makeMap() {
   const root = { coordinates: { x: 100, y: 50 } };
   const map = {
     dom: { svg: d3.select(svgElement), g: d3.select(gElement) },
-    nodes: { getRoot: () => root },
+    nodes: { mainRoot: () => root },
   } as unknown as MmpMap;
 
   const zoom = new Zoom(map);

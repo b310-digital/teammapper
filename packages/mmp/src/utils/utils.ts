@@ -21,31 +21,6 @@ export default class Utils {
   }
 
   /**
-   * Clear an object.
-   * @param {object} object
-   */
-  static clearObject(object: Record<string, unknown>) {
-    for (const property in object) {
-      delete object[property];
-    }
-  }
-
-  /**
-   * Convert an Object to an array.
-   * @param {object} object
-   * @returns {Array}
-   */
-  static fromObjectToArray<T = unknown>(object: Record<string, T>): T[] {
-    const array: T[] = [];
-
-    for (const p in object) {
-      array.push(object[p]);
-    }
-
-    return array;
-  }
-
-  /**
    * Merge two objects.
    * @param {object} object1
    * @param {object} object2

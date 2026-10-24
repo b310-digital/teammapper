@@ -203,6 +203,8 @@ If needed, you can make the connection to Postgres more secure by using a SSL co
 
     within the docker-compose-prod file.
 
+Anonymous map duplication has shared rate and concurrency limits and an image storage budget. See the [backend configuration](teammapper-backend/README.md#node-images).
+
 #### Migrating node images to image references
 
 TeamMapper stores a node image in its own table, and the node holds an `image:<uuid>` reference to it. Earlier releases wrote each image into the node as a base64 data URL.

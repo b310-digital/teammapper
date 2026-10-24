@@ -87,15 +87,16 @@ function overlaps(a: Bounds, b: Bounds): boolean {
  * One bounding box per tree, over every node of the tree, hidden nodes
  * included.
  */
-export function treeBounds<T extends PlacedNode>(
+export function treeBounds<T>(
   nodes: T[],
-  treeRootOf: (node: T) => T
+  treeRootOf: (node: T) => T,
+  boundsOf: (node: T) => Bounds
 ): Bounds[] {
   const byRoot = new Map<T, Bounds>();
 
   for (const node of nodes) {
     const root = treeRootOf(node);
-    const bounds = nodeBounds(node);
+    const bounds = boundsOf(node);
     const known = byRoot.get(root);
     byRoot.set(root, known ? unionBounds(known, bounds) : bounds);
   }

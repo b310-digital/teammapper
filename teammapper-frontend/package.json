@@ -62,7 +62,7 @@
     "@teammapper/mmp": "workspace:*",
     "@teammapper/shared": "workspace:*",
     "angular2-hotkeys": "^16.0.1",
-    "dompurify": "3.4.15",
+    "dompurify": "3.4.16",
     "jspdf": "^4.2.1",
     "localforage": "1.10.0",
     "ngx-color-picker": "^20.1.1",

@@ -2,9 +2,16 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { Router } from '@angular/router';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
-import { first, Subscription } from 'rxjs';
+import { distinctUntilChanged, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
 import { DialogService } from '../dialog/dialog.service';
+
+/** One shortcut before it becomes a `Hotkey`. */
+interface HotkeyOptions {
+  keys: string | string[];
+  description: string;
+  callback: (event?: KeyboardEvent) => void;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -18,27 +25,38 @@ export class ShortcutsService implements OnDestroy {
 
   private hotKeys: Hotkey[] = [];
   private editMode: boolean | null = null;
-  private settingsSubscription: Subscription | null = null;
+  private mapCreated = false;
+  private readonly subscriptions = new Subscription();
 
   /**
-   * Add all global hot keys of the application.
+   * Add all global hot keys of the application. The viewer keys work at once,
+   * and the edit keys follow edit mode, which stays unknown until the map
+   * connection syncs and can change when a map turns out writable. Every key
+   * that acts on the map does nothing until the map exists.
    */
   public init() {
-    this.settingsSubscription = this.settingsService
-      .getEditModeObservable()
-      .pipe(first((val: boolean | null) => val !== null))
-      .subscribe((result: boolean | null) => {
-        this.editMode = result;
-        this.registerHotKeys();
-      });
+    this.subscriptions.add(
+      this.settingsService
+        .getEditModeObservable()
+        .pipe(distinctUntilChanged())
+        .subscribe((result: boolean | null) => {
+          this.editMode = result;
+          this.registerHotKeys();
+        })
+    );
+    this.subscriptions.add(
+      this.mmpService.mapCreated$.subscribe(created => {
+        this.mapCreated = created;
+      })
+    );
   }
 
   ngOnDestroy() {
-    this.settingsSubscription?.unsubscribe();
+    this.subscriptions.unsubscribe();
   }
 
   public registerHotKeys() {
-    const viewerHotkeys = [
+    const appHotkeys: HotkeyOptions[] = [
       {
         keys: '?',
         description: 'TOOLTIPS.SHORTCUTS',
@@ -61,6 +79,9 @@ export class ShortcutsService implements OnDestroy {
           window.location.replace(`${document.baseURI}/map`);
         },
       },
+    ];
+
+    const mapHotkeys: HotkeyOptions[] = [
       {
         keys: 'c',
         description: 'TOOLTIPS.CENTER_MAP',
@@ -77,7 +98,7 @@ export class ShortcutsService implements OnDestroy {
       },
     ];
 
-    const editHotkeys = [
+    const editHotkeys: HotkeyOptions[] = [
       {
         keys: '+',
         description: 'TOOLTIPS.ADD_NODE',
@@ -198,11 +219,7 @@ export class ShortcutsService implements OnDestroy {
           const options = this.mmpService.getAdditionalMapOptions();
           if (size == null || !options || size >= options.fontMaxSize) return;
 
-          this.mmpService.updateNode(
-            'fontSize',
-            size + options.fontIncrement,
-            false
-          );
+          this.mmpService.updateNode('fontSize', size + options.fontIncrement);
         },
       },
       {
@@ -213,22 +230,32 @@ export class ShortcutsService implements OnDestroy {
           const options = this.mmpService.getAdditionalMapOptions();
           if (size == null || !options || size <= options.fontMinSize) return;
 
-          this.mmpService.updateNode(
-            'fontSize',
-            size - options.fontIncrement,
-            false
-          );
+          this.mmpService.updateNode('fontSize', size - options.fontIncrement);
         },
       },
     ];
 
-    if (this.editMode) {
-      this.hotKeys = [...viewerHotkeys, ...editHotkeys].map(this.getHotKey);
-    } else {
-      this.hotKeys = viewerHotkeys.map(this.getHotKey);
-    }
+    if (this.hotKeys.length > 0) this.hotkeysService.remove(this.hotKeys);
+
+    const mapKeys = this.editMode
+      ? [...mapHotkeys, ...editHotkeys]
+      : mapHotkeys;
+    this.hotKeys = [
+      ...appHotkeys,
+      ...mapKeys.map(options => this.requireMap(options)),
+    ].map(this.getHotKey);
 
     this.hotkeysService.add(this.hotKeys);
+  }
+
+  /** Make the hot key do nothing while no map exists. */
+  private requireMap(options: HotkeyOptions): HotkeyOptions {
+    return {
+      ...options,
+      callback: event => {
+        if (this.mapCreated) options.callback(event);
+      },
+    };
   }
 
   /**
@@ -241,11 +268,7 @@ export class ShortcutsService implements OnDestroy {
   /**
    * Get some shortcut parameters and return the corresponding hot key.
    */
-  private getHotKey(options: {
-    keys: string | string[];
-    description: string;
-    callback: (event?: KeyboardEvent) => void;
-  }) {
+  private getHotKey(options: HotkeyOptions) {
     return new Hotkey(
       options.keys,
       (event: KeyboardEvent) => {

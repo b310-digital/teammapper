@@ -50,6 +50,11 @@ test('toggles node font styles (bold and italic)', async ({ page }) => {
 });
 
 test('adds a node and drags it - screenshot test', async ({ page }) => {
+  // mmp bends each new node's outline by a random k. A fixed Math.random
+  // gives every run the same outline, so the screenshots compare.
+  await page.addInitScript(() => {
+    Math.random = () => 0.25;
+  });
   await page.goto('/');
   await page.getByText('Create mind map').click();
   await expect(page.getByText('Root node')).toBeVisible();

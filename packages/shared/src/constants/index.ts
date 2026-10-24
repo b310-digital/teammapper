@@ -19,6 +19,13 @@ export const MAX_FONT_STYLE_LENGTH = 20;
 export const MAX_FONT_WEIGHT_LENGTH = 20;
 export const MAX_MERMAID_DESCRIPTION_LENGTH = 5000;
 
+/** Levels of nodes below the main root that AI generate asks for. */
+export const AI_LEVELS = { min: 1, max: 3, default: 2 } as const;
+/** Child nodes per node that AI generate asks for. */
+export const AI_CHILDREN_PER_NODE = { min: 1, max: 4, default: 4 } as const;
+/** Most nodes below the main root that one AI generate request may ask for. */
+export const AI_MAX_NODES = 20;
+
 export const DEFAULT_ROOT_NAME = 'Root node';
 export const DEFAULT_ROOT_COLOR_NAME = '#787878';
 export const DEFAULT_ROOT_COLOR_BACKGROUND = '#f0f6f5';
@@ -42,6 +49,14 @@ export const MODIFICATION_SECRET_HEADER = 'x-map-modification-secret';
  * `<YJS_SECRET_SUBPROTOCOL_PREFIX><secret>`. The server selects
  * `YJS_SUBPROTOCOL` alone, so the handshake response carries no secret.
  * RFC 9110 requires a subprotocol to be a token, and a uuid secret is one.
+ *
+ * Bump the version when you change how the Y.Doc stores the map data. The
+ * server refuses the upgrade of a client that offers another version. In v2
+ * each attribute group is a nested Y.Map, which a v1 client cannot read or
+ * write.
  */
-export const YJS_SUBPROTOCOL = 'teammapper.v1';
+export const YJS_SUBPROTOCOL = 'teammapper.v2';
 export const YJS_SECRET_SUBPROTOCOL_PREFIX = 'teammapper.secret.';
+
+/** The loaded map was discarded; clients must reconnect with fresh Yjs state. */
+export const WS_CLOSE_MAP_SYNC_RESET = 4002;

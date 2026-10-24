@@ -1,205 +1,122 @@
-import * as d3 from 'd3';
-import Nodes from './nodes.js';
-import History from './history.js';
-import MmpMap from '../map.js';
-import { Event } from './events.js';
-import Options, {
-  DefaultNodeValues,
-  DefaultRootNodeValues,
-} from '../options.js';
-import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
+import { DefaultRootNodeValues } from '../options.js';
+import type MmpMap from '../map.js';
+import { firedEvents, nodeRecord, ring, stubMap } from '../../test/stub-map.js';
+import type { MapSnapshot } from '@teammapper/shared';
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-/** The parts of a node's DOM that selection reads: the background and name. */
-function nodeDom(fill: string): SVGGElement {
-  const group = document.createElementNS(SVG_NS, 'g');
-  const background = document.createElementNS(SVG_NS, 'path');
-  background.style.fill = fill;
-  const foreignObject = document.createElementNS(SVG_NS, 'foreignObject');
-  foreignObject.appendChild(document.createElement('div'));
-  group.append(background, foreignObject);
-  return group;
-}
-
-/**
- * A map stub around the real node handler and history. Its draw gives each
- * node a DOM filled with the node's background colour.
- */
-function makeMap() {
-  const events = { call: jest.fn() };
-  const update = jest.fn(() => {
-    for (const node of map.nodes.getNodes()) {
-      node.dom = nodeDom(node.colors.background);
-    }
-  });
-  const map = {
-    rootId: '',
-    options: {
-      defaultNode: DefaultNodeValues,
-      rootNode: DefaultRootNodeValues,
-    },
-    draw: { clear: jest.fn(), update },
-    zoom: { center: jest.fn() },
-    events,
-    export: { asJSON: () => [] },
-  } as unknown as MmpMap;
-  map.nodes = new Nodes(map);
-  map.history = new History(map);
-  return { map, events };
-}
-
-function node(
-  id: string,
-  parent: string,
-  overrides: Partial<ExportNodeProperties> = {}
-): ExportNodeProperties {
-  return {
-    ...DefaultNodeValues,
-    colors: { ...DefaultNodeValues.colors },
-    id,
-    parent,
-    k: 1,
-    ...overrides,
-  } as ExportNodeProperties;
-}
-
-function snapshot(rootId: string, background = '#f0f6f5'): MapSnapshot {
+function mapNodes(rootId: string, background = '#f0f6f5'): MapSnapshot {
   return [
-    node(rootId, '', {
+    nodeRecord({
+      id: rootId,
       ...DefaultRootNodeValues,
       colors: { ...DefaultRootNodeValues.colors, background },
       isRoot: true,
       coordinates: { x: 0, y: 0 },
     }),
-    node('child', rootId, { coordinates: { x: 200, y: 0 } }),
+    nodeRecord({ id: 'child', parent: rootId, coordinates: { x: 200, y: 0 } }),
   ];
 }
 
-/** The ring selection draws on a background filled with `fill`. */
-function ring(fill: string): string | undefined {
-  return d3.color(fill)?.darker(0.5).toString();
-}
-
-/** The event names mmp fired, in order. */
-function firedEvents(events: { call: jest.Mock }): string[] {
-  return events.call.mock.calls.map(call => call[0]);
+function rootId(map: MmpMap): string {
+  const root = map.nodes.mainRoot();
+  if (!root) throw new Error('the map has no main root');
+  return root.id;
 }
 
 // A map load selects the main root: it draws the ring on the root and tells
-// listeners through `nodeSelect`, even when the load itself fires no event.
+// listeners through `nodeSelect`.
 describe('a map load', () => {
   it('draws the ring on the root and selects it', () => {
-    const { map } = makeMap();
+    const { map } = stubMap();
 
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'));
 
-    const root = map.nodes.getRoot();
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
-    expect(map.nodes.getSelectedNode()).toBe(root);
+    expect(map.draw.ringOf('root')).toBe(ring('#f0f6f5'));
+    expect(map.nodes.getSelectedNode()?.id).toBe('root');
   });
 
-  it('fires nodeSelect for the root although it fires no create event', () => {
-    const { map, events } = makeMap();
+  it('fires nodeSelect for the root, then mapChange', () => {
+    const { map, events } = stubMap();
 
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'));
 
-    expect(events.call).toHaveBeenCalledWith(
-      Event.nodeSelect,
-      expect.anything(),
+    expect(events.emit).toHaveBeenCalledWith(
+      'nodeSelect',
       expect.objectContaining({ id: 'root' })
     );
-    expect(firedEvents(events)).not.toContain(Event.create);
+    expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
   });
 
   it('rings the new root DOM when the same map loads twice', () => {
-    const { map, events } = makeMap();
-    map.history.new(snapshot('root'), false);
-    events.call.mockClear();
+    const { map, events } = stubMap();
+    map.loader.load(mapNodes('root'));
+    events.emit.mockClear();
 
-    map.history.new(snapshot('root'), false);
+    map.loader.load(mapNodes('root'));
 
-    const root = map.nodes.getRoot();
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
+    expect(map.draw.ringOf('root')).toBe(ring('#f0f6f5'));
+    expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
   });
 
   it('selects the new root when a map with another root loads', () => {
-    const { map, events } = makeMap();
-    map.history.new(snapshot('root'), false);
-    events.call.mockClear();
+    const { map, events } = stubMap();
+    map.loader.load(mapNodes('root'));
+    events.emit.mockClear();
 
-    map.history.new(snapshot('other-root'), false);
+    map.loader.load(mapNodes('other-root'));
 
-    const root = map.nodes.getRoot();
-    expect(root.id).toBe('other-root');
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
-    expect(events.call.mock.calls[0][2].id).toBe('other-root');
+    expect(rootId(map)).toBe('other-root');
+    expect(map.draw.ringOf('other-root')).toBe(ring('#f0f6f5'));
+    expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
+    expect(events.emit.mock.calls[0][1].id).toBe('other-root');
   });
 
-  it('rings the root it creates when no snapshot is given', () => {
-    const { map, events } = makeMap();
+  it('rings the root it creates when no nodes are given', () => {
+    const { map, events } = stubMap();
 
-    map.history.new(undefined, false);
+    map.loader.load();
 
-    const root = map.nodes.getRoot();
-    expect(root.getBackgroundDOM().style.stroke).toBe(
+    const root = rootId(map);
+    expect(map.draw.ringOf(root)).toBe(
       ring(DefaultRootNodeValues.colors.background)
     );
-    expect(events.call).toHaveBeenCalledWith(
-      Event.nodeSelect,
-      root.dom,
-      expect.objectContaining({ id: root.id })
+    expect(events.emit).toHaveBeenCalledWith(
+      'nodeSelect',
+      expect.objectContaining({ id: root })
     );
   });
 
   it('selects a root without a background colour', () => {
-    const { map, events } = makeMap();
+    const { map, events } = stubMap();
 
-    map.history.new(snapshot('root', ''), false);
+    map.loader.load(mapNodes('root', ''));
 
     expect(map.nodes.getSelectedNode()?.id).toBe('root');
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
-  });
-});
-
-describe('an edit mode change after a map load', () => {
-  it('draws the ring on the new DOM of the selected root', () => {
-    const { map } = makeMap();
-    map.history.new(snapshot('root'), false);
-
-    new Options({}, map).update('edit', false);
-
-    const root = map.nodes.getRoot();
-    expect(map.nodes.getSelectedNode()).toBe(root);
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
+    expect(firedEvents(events)).toEqual(['nodeSelect', 'mapChange']);
   });
 });
 
 describe('removing a node after a map load', () => {
-  it('draws the ring on the new DOM of the selected root', () => {
-    const { map } = makeMap();
-    map.history.new(snapshot('root'), false);
+  it('keeps the ring on the selected root', () => {
+    const { map } = stubMap();
+    map.loader.load(mapNodes('root'));
 
-    map.nodes.removeNode('child', false);
+    map.nodes.removeNode('child');
 
-    const root = map.nodes.getRoot();
-    expect(map.nodes.getSelectedNode()).toBe(root);
-    expect(root.getBackgroundDOM().style.stroke).toBe(ring('#f0f6f5'));
+    expect(map.nodes.getSelectedNode()?.id).toBe('root');
+    expect(map.draw.ringOf('root')).toBe(ring('#f0f6f5'));
   });
 });
 
 describe('selectRootNode', () => {
   it('fires nodeSelect once when called twice', () => {
-    const { map, events } = makeMap();
-    map.history.new(snapshot('root'), false);
+    const { map, events } = stubMap();
+    map.loader.load(mapNodes('root'));
     map.nodes.deselectNode();
-    events.call.mockClear();
+    events.emit.mockClear();
 
     map.nodes.selectRootNode();
     map.nodes.selectRootNode();
 
-    expect(firedEvents(events)).toEqual([Event.nodeSelect]);
+    expect(firedEvents(events)).toEqual(['nodeSelect']);
   });
 });

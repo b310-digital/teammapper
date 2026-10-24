@@ -65,13 +65,4 @@ describe('LlmUsageCounterService', () => {
       -50,
     ])
   })
-
-  it('release decrements both tokens and request count', async () => {
-    queryMock.mockResolvedValueOnce([])
-    await service.release('2026-05-08', 200)
-    expect(queryMock).toHaveBeenCalledWith(
-      expect.stringContaining('"requestsCount" - 1'),
-      ['2026-05-08', 200]
-    )
-  })
 })

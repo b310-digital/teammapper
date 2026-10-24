@@ -1,13 +1,13 @@
 <div class="sliders-panel">
-  @if (node?.font && mapOptions) {
+  @if (node?.font && mapOptions(); as options) {
     <mat-slider
       [title]="'TOOLTIPS.TEXT_SIZE' | translate"
       [disabled]="editDisabled"
       class="font-size slider-vertical"
       color="primary"
-      [max]="mapOptions.fontMaxSize"
-      [min]="mapOptions.fontMinSize"
-      [step]="mapOptions.fontIncrement"
+      [max]="options.fontMaxSize"
+      [min]="options.fontMinSize"
+      [step]="options.fontIncrement"
       discrete
       showTickMarks>
       <input

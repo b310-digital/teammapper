@@ -139,8 +139,7 @@ test('imports Mermaid mindmap with different branch colors', async ({
   );
 
   // Get the branch path elements (these are the curved lines connecting nodes)
-  // Branch paths have IDs ending with '_branch'
-  const branches = await page.locator('path[id$="_branch"]').all();
+  const branches = await page.locator('path.branch').all();
 
   // We should have 4 branches total (3 direct children + 1 grandchild)
   expect(branches.length).toBe(4);

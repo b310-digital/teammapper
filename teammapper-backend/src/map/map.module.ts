@@ -23,7 +23,7 @@ import configService from '../config.service'
     MapDataModule,
     TypeOrmModule.forFeature([LlmUsageCounter]),
     ScheduleModule.forRoot(),
-    // Only the image upload route applies ThrottlerGuard.
+    // Image uploads and map duplication apply ThrottlerGuard.
     ThrottlerModule.forRoot([
       {
         ttl: configService.getUploadImageRateWindowMs(),

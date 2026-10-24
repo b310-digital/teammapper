@@ -37,7 +37,7 @@ The server SHALL expose a WebSocket endpoint at the `/yjs` path, mounted on the 
 - **THEN** the server SHALL close the WebSocket connection with an appropriate error code
 
 ### Requirement: Y.Doc structure mirrors node model
-Each Y.Doc SHALL contain a `Y.Map("nodes")` where keys are node IDs and values are `Y.Map` instances with the same fields as `ExportNodeProperties` (id, parent, name, isRoot, locked, k, coordinates, colors, font, image, link). `isRoot` SHALL mark the main root. A node with no parent is a root, and a Y.Doc MAY hold several roots. Exactly one node SHALL carry the main-root mark. The detached property SHALL NOT be written. A separate `Y.Map("mapOptions")` SHALL hold map-level metadata.
+Each Y.Doc SHALL contain a `Y.Map("nodes")` where keys are node IDs and values are `Y.Map` instances with the same fields as `ExportNodeProperties` (id, parent, name, isRoot, locked, k, coordinates, colors, font, image, link). `isRoot` SHALL mark the main root. A node with no parent is a root, and a Y.Doc MAY hold several roots. Exactly one node SHALL carry the main-root mark. The detached property SHALL NOT be written. Each attribute group (`colors`, `font`, `image`, `link`) SHALL be a nested `Y.Map` with one key per attribute, and `coordinates` SHALL stay a plain object. Readers SHALL also accept an attribute group stored as a plain object. A separate `Y.Map("mapOptions")` SHALL hold map-level metadata.
 
 #### Scenario: Y.Doc hydrated from database
 - **WHEN** a Y.Doc is created from database rows
@@ -51,6 +51,11 @@ Each Y.Doc SHALL contain a `Y.Map("nodes")` where keys are node IDs and values a
 - **WHEN** a map with three trees is hydrated
 - **THEN** the `nodes` map SHALL hold three entries with no parent
 - **AND** one of them SHALL carry the main-root mark
+
+#### Scenario: Two clients change different attributes of one group
+- **WHEN** one client changes a node's background color and another client changes the same node's name color before either receives the other's update
+- **THEN** both clients SHALL hold both colors after they sync
+- **AND** the server SHALL persist both colors
 
 ### Requirement: Full-map replacement detection reads the main-root mark only
 The frontend SHALL classify a remote or undo transaction as a full-map replacement when it adds or rewrites the top-level `nodes` entry of the node carrying the main-root mark, which an import, a redistribution and an undo of either produce. A transaction that adds a root without the main-root mark SHALL be applied as an ordinary node add.
@@ -89,25 +94,24 @@ When a transaction adds several nodes, the receiving client SHALL order them so 
 - **AND** every added node SHALL find its parent already present
 
 ### Requirement: Authentication at WebSocket handshake
-The server SHALL verify the modification secret during the WebSocket handshake. The client SHALL send the `mapId` in the path or as a query parameter. The client SHALL offer the secret as the subprotocol `teammapper.secret.<secret>` next to `teammapper.v1`. The server SHALL select `teammapper.v1` and SHALL NOT select the secret subprotocol, so the handshake response carries no secret. When no secret subprotocol arrives, the server SHALL read the `secret` query parameter as a fallback for one release. Clients with a valid secret SHALL receive read-write access. Clients without a valid secret SHALL receive read-only access, unless the map has no modification secret, which grants read-write access.
+The server SHALL verify the modification secret during the WebSocket handshake. The client SHALL send the `mapId` in the path or as a query parameter. The client SHALL offer the secret as the subprotocol `teammapper.secret.<secret>` next to `teammapper.v2`. The server SHALL select `teammapper.v2` and SHALL NOT select the secret subprotocol, so the handshake response carries no secret. The server SHALL refuse the upgrade with HTTP 426 when the client does not offer `teammapper.v2`, because an older client cannot read the nested attribute groups. The server SHALL ignore a `secret` query parameter. Clients with a valid secret SHALL receive read-write access. Clients without a valid secret SHALL receive read-only access, unless the map has no modification secret, which grants read-write access.
 
 #### Scenario: Client offers a valid secret subprotocol
-- **WHEN** a client connects offering `teammapper.v1, teammapper.secret.<valid-secret>`
-- **THEN** the server SHALL select the subprotocol `teammapper.v1`
+- **WHEN** a client connects offering `teammapper.v2, teammapper.secret.<valid-secret>`
+- **THEN** the server SHALL select the subprotocol `teammapper.v2`
 - **AND** the server SHALL allow the client to send Y.Doc updates (read-write access)
 
 #### Scenario: Client offers an invalid secret subprotocol
-- **WHEN** a client connects offering `teammapper.v1, teammapper.secret.<invalid-secret>`
+- **WHEN** a client connects offering `teammapper.v2, teammapper.secret.<invalid-secret>`
 - **THEN** the server SHALL allow the client to receive Y.Doc state but SHALL silently drop any write messages from the client
 
-#### Scenario: Secret subprotocol and query parameter both arrive
-- **WHEN** a client offers a secret subprotocol and also sends `?secret=`
-- **THEN** the server SHALL decide write access from the subprotocol
+#### Scenario: Client sends the secret as a query parameter
+- **WHEN** a client offers `teammapper.v2` without a secret subprotocol and sends `?secret=<valid-secret>`
+- **THEN** the server SHALL grant read-only access
 
-#### Scenario: Client from an older frontend sends the query parameter
-- **WHEN** a client connects with `?secret=<valid-secret>` and offers no subprotocol
-- **THEN** the server SHALL complete the handshake without a subprotocol
-- **AND** the server SHALL grant read-write access
+#### Scenario: Client from an older frontend connects
+- **WHEN** a client offers `teammapper.v1`, or no subprotocol
+- **THEN** the server SHALL refuse the upgrade with HTTP 426 and an `Upgrade: websocket` header
 
 #### Scenario: Client connects to a map with no modification secret
 - **WHEN** a client connects to a map that has no modification secret set
@@ -119,12 +123,12 @@ The frontend SHALL connect to the Yjs WebSocket endpoint using `y-websocket`'s `
 #### Scenario: Frontend establishes Yjs connection
 - **WHEN** a user navigates to a map with a modification secret
 - **THEN** the frontend SHALL create a `WebsocketProvider` targeting `/yjs` with the map's UUID as the room name
-- **AND** the provider SHALL offer the subprotocols `teammapper.v1` and `teammapper.secret.<secret>`
+- **AND** the provider SHALL offer the subprotocols `teammapper.v2` and `teammapper.secret.<secret>`
 - **AND** the WebSocket URL SHALL NOT contain the secret
 
 #### Scenario: Frontend connects to a map without a secret
 - **WHEN** the frontend holds no modification secret for the map
-- **THEN** the provider SHALL offer the subprotocol `teammapper.v1` alone
+- **THEN** the provider SHALL offer the subprotocol `teammapper.v2` alone
 
 #### Scenario: WebSocket connection lost
 - **WHEN** the WebSocket connection is interrupted

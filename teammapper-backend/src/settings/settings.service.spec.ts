@@ -11,7 +11,7 @@ const mockedFs = fs as jest.Mocked<typeof fs>
 
 const defaultSettings: Settings = {
   systemSettings: {
-    info: { name: 'TeamMapper', version: '1.0.0' },
+    info: { name: 'TeamMapper', version: '1.0.0', aiModel: null },
     urls: {
       pictogramApiUrl: 'https://api.example.com',
       pictogramStaticUrl: 'https://static.example.com',
@@ -33,7 +33,6 @@ const defaultSettings: Settings = {
         image: { src: '', size: 60 },
         colors: { name: '#666666', background: '#f5f5f5', branch: '#546e7a' },
         font: { size: 22, style: 'normal', weight: 'normal' },
-        locked: true,
       },
       rootNode: {
         name: 'Root node',
@@ -52,6 +51,10 @@ describe('SettingsService', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
+    ;(configService.getLLMConfig as jest.Mock).mockReturnValue({
+      provider: 'openai',
+      model: 'gpt-test',
+    })
     mockedFs.readFileSync.mockReturnValue(JSON.stringify(defaultSettings))
     mockedFs.existsSync.mockReturnValue(false)
 
@@ -65,6 +68,7 @@ describe('SettingsService', () => {
       expect(settings.systemSettings.info).toEqual({
         name: 'TeamMapper',
         version: '1.0.0',
+        aiModel: null,
       })
     })
 
@@ -94,6 +98,7 @@ describe('SettingsService', () => {
       expect(settings.systemSettings.info).toEqual({
         name: 'TeamMapper',
         version: '2.0.0',
+        aiModel: null,
       })
     })
 
@@ -149,6 +154,14 @@ describe('SettingsService', () => {
         pictograms: true,
         ai: false,
       })
+    })
+
+    it('should expose the AI model when AI_ENABLED is true', () => {
+      ;(configService.isAiEnabled as jest.Mock).mockReturnValue(true)
+
+      const settings = service.getSettings()
+
+      expect(settings.systemSettings.info.aiModel).toBe('gpt-test')
     })
   })
 })

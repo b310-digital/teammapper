@@ -47,6 +47,9 @@ export class ToolbarComponent {
 
   public canUndo$ = this.mapSyncService.canUndo$;
   public canRedo$ = this.mapSyncService.canRedo$;
+  // Import and export need a map, read-only or not. The edit buttons get
+  // the same gate through `editDisabled`.
+  public mapCreated$ = this.mmpService.mapCreated$;
 
   constructor() {
     const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;
@@ -62,10 +65,8 @@ export class ToolbarComponent {
       );
   }
 
-  get hasHiddenNodes() {
-    return (
-      this.mmpService.nodeChildren()?.filter(node => node.hidden).length > 0
-    );
+  get childNodesHidden() {
+    return this.mmpService.childNodesHidden();
   }
 
   /**
@@ -74,6 +75,15 @@ export class ToolbarComponent {
    */
   get nodeActionsDisabled(): boolean {
     return this.editDisabled || !this.mmpService.hasSelectedNode();
+  }
+
+  /**
+   * True when the selected node lies in a protected branch. Angular reads the
+   * getter on every change detection, so the button follows a peer's protect
+   * or release. The walk up the parents costs one step per ancestor.
+   */
+  get branchProtected(): boolean {
+    return this.mmpService.protectingNode() !== null;
   }
 
   // In some cases the mmpService is not yet initialized so trying to call getSelectedNode() will throw an error

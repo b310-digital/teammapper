@@ -27,6 +27,7 @@
       id="center-map-button"
       (click)="mmpService.center()"
       [title]="'TOOLTIPS.CENTER_MAP' | translate"
+      [disabled]="(mapCreated$ | async) !== true"
       class="mat-elevation-z2"
       mat-mini-fab>
       <mat-icon aria-label="Center">center_focus_weak</mat-icon>
@@ -38,6 +39,7 @@
       id="zoom-in-button"
       (click)="mmpService.zoomIn()"
       [title]="'TOOLTIPS.ZOOM_IN_MAP' | translate"
+      [disabled]="(mapCreated$ | async) !== true"
       class="mat-elevation-z2"
       mat-mini-fab>
       <mat-icon aria-label="Zoom in">zoom_in</mat-icon>
@@ -49,6 +51,7 @@
       id="zoom-out-button"
       (click)="mmpService.zoomOut()"
       [title]="'TOOLTIPS.ZOOM_OUT_MAP' | translate"
+      [disabled]="(mapCreated$ | async) !== true"
       class="mat-elevation-z2"
       mat-mini-fab>
       <mat-icon aria-label="Zoom out">zoom_out</mat-icon>

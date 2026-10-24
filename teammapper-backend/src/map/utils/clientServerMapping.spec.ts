@@ -15,11 +15,9 @@ const buildClientNode = (
   image: { src: '', size: 0 },
   link: { href: '' },
   k: 1,
-  locked: false,
+  protected: false,
   isRoot: false,
   parent: 'parent-uuid',
-  hidden: false,
-  hasHiddenChildNodes: false,
   ...overrides,
 })
 
@@ -74,6 +72,13 @@ describe('mapClientNodeToMmpNode sanitization', () => {
     })
     const result = mapClientNodeToMmpNode(client, 'map-id')
     expect(result.fontStyle).toBe('normal')
+  })
+})
+
+describe('mapClientNodeToMmpNode protection', () => {
+  it('keeps the protected flag', () => {
+    const client = buildClientNode({ protected: true })
+    expect(mapClientNodeToMmpNode(client, 'map-id').protected).toBe(true)
   })
 })
 

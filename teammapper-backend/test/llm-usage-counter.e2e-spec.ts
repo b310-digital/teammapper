@@ -73,12 +73,4 @@ describe('LlmUsageCounterService (e2e)', () => {
     await service.adjustTokens(date, -150)
     expect(await readRow(date)).toEqual({ tokensUsed: 50, requestsCount: 1 })
   })
-
-  it('release rolls a reservation back fully', async () => {
-    const date = '2026-05-13'
-    await service.reserve(date, 200, 1000)
-    await service.reserve(date, 300, 1000)
-    await service.release(date, 300)
-    expect(await readRow(date)).toEqual({ tokensUsed: 200, requestsCount: 1 })
-  })
 })

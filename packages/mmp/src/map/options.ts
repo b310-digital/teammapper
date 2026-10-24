@@ -1,4 +1,9 @@
-import { NodeColors, NodeFont, NodeImage, NodeLink } from './models/node.js';
+import type {
+  NodeColors,
+  NodeFont,
+  NodeImage,
+  NodeLink,
+} from './data/node-record.js';
 import type {
   ImageReference,
   MapNodeCoordinates,
@@ -88,11 +93,11 @@ export default class Options implements OptionParameters {
       Log.error('The value must be a boolean', 'type');
     }
 
+    if (flag === this.drag) return;
     this.drag = flag;
 
-    this.map.draw.clear();
-    this.map.draw.update();
-    this.map.nodes.redrawSelectionRing();
+    // The drag behavior attaches when a node's DOM is created.
+    this.map.draw.drawAll();
   }
 
   /**
@@ -104,11 +109,10 @@ export default class Options implements OptionParameters {
       Log.error('The value must be a boolean', 'type');
     }
 
+    if (flag === this.edit) return;
     this.edit = flag;
 
-    this.map.draw.clear();
-    this.map.draw.update();
-    this.map.nodes.redrawSelectionRing();
+    this.map.draw.drawAll();
   }
 }
 
@@ -136,8 +140,6 @@ export const DefaultNodeValues: DefaultNodeProperties = {
     style: 'normal',
     weight: 'normal',
   },
-  locked: true,
-  hidden: false,
   isRoot: false,
 };
 
@@ -165,9 +167,7 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
     style: 'normal',
     weight: 'normal',
   },
-  locked: true,
   isRoot: true,
-  hidden: false,
 };
 
 export interface DefaultNodeProperties {
@@ -177,9 +177,7 @@ export interface DefaultNodeProperties {
   link: NodeLink;
   colors: NodeColors;
   font: NodeFont;
-  locked: boolean;
   isRoot: boolean;
-  hidden: boolean;
 }
 
 /**

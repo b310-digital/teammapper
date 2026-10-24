@@ -1,24 +1,25 @@
-import { YjsSyncService } from './yjs-sync.service';
+import { ATTACHED_MAP_AUDIT_MS, YjsSyncService } from './yjs-sync.service';
 import * as Y from 'yjs';
 import { ExportNodeProperties } from '@teammapper/shared';
 import { MmpService } from '../mmp/mmp.service';
+import { SettingsService } from '../settings/settings.service';
 import { MapSyncContext } from './map-sync-context';
 import { populateYMapFromNodeProps } from './yjs-utils';
+import { YjsMapData } from './yjs-map-data';
 import {
+  capturingMmpService,
   createMockContext,
   createYjsSyncService as createService,
+  MmpHandlers,
 } from '../../../../test/mocks/yjs-sync.mock';
 
 interface YjsSyncInternals {
   yjsWritable: boolean;
   yjsSynced: boolean;
   yDoc: Y.Doc;
-  handleTopLevelNodeChanges: (
-    event: unknown,
-    nodesMap: Y.Map<Y.Map<unknown>>
-  ) => void;
+  yjsMapData: YjsMapData;
   showImportToast: () => Promise<void>;
-  loadMapFromYDoc: () => void;
+  handleFirstSync: () => void;
   initUndoManager: () => void;
   setupNodesObserver: () => void;
   yUndoManager: Y.UndoManager | null;
@@ -28,12 +29,24 @@ function internals(service: YjsSyncService): YjsSyncInternals {
   return service as unknown as YjsSyncInternals;
 }
 
+function node(
+  id: string,
+  parent: string | null,
+  isRoot = false
+): ExportNodeProperties {
+  return { id, parent, isRoot } as ExportNodeProperties;
+}
+
 describe('YjsSyncService', () => {
   describe('setWritable', () => {
+    let settingsService: jest.Mocked<SettingsService>;
     let service: YjsSyncService;
 
     beforeEach(() => {
-      service = createService();
+      settingsService = {
+        setEditMode: jest.fn(),
+      } as unknown as jest.Mocked<SettingsService>;
+      service = createService(undefined, createMockContext(), settingsService);
     });
 
     it('sets yjsWritable to true', () => {
@@ -46,6 +59,35 @@ describe('YjsSyncService', () => {
       service.setWritable(false);
 
       expect(internals(service).yjsWritable).toBe(false);
+    });
+
+    it('does not change edit mode before the first sync', () => {
+      service.setWritable(true);
+
+      expect(settingsService.setEditMode).not.toHaveBeenCalled();
+    });
+
+    it('sets edit mode when called after the first sync', () => {
+      internals(service).yjsSynced = true;
+
+      service.setWritable(true);
+
+      expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
+    });
+
+    // The settings page reads edit mode to decide whether the map settings
+    // of the map the user left stay editable.
+    it('keeps edit mode on destroy', () => {
+      service.destroy();
+
+      expect(settingsService.setEditMode).not.toHaveBeenCalled();
+    });
+
+    it('keeps edit mode when it opens a new connection', () => {
+      service.initMap('test-uuid');
+
+      expect(settingsService.setEditMode).not.toHaveBeenCalled();
+      service.destroy();
     });
   });
 
@@ -82,281 +124,287 @@ describe('YjsSyncService', () => {
     });
   });
 
-  describe('distributing nodes', () => {
-    type Handlers = Record<string, (payload?: unknown) => void>;
-
-    const snapshot = [
-      { id: 'root', parent: '', isRoot: true },
-      { id: 'child', parent: 'root', isRoot: false },
-    ] as ExportNodeProperties[];
-
-    let handlers: Handlers;
-    let service: YjsSyncService;
+  describe('with an open connection', () => {
+    let handlers: MmpHandlers;
+    let mmpService: jest.Mocked<MmpService>;
     let context: MapSyncContext;
-
-    function capturingMmpService(): jest.Mocked<MmpService> {
-      return {
-        on: jest.fn((event: string) => ({
-          subscribe: (callback: (payload?: unknown) => void) => {
-            handlers[event] = callback;
-            return { unsubscribe: jest.fn() };
-          },
-        })),
-        selectNode: jest.fn(),
-        existNode: jest.fn().mockReturnValue(true),
-        exportAsJSON: jest.fn().mockReturnValue(snapshot),
-      } as unknown as jest.Mocked<MmpService>;
-    }
+    let settingsService: jest.Mocked<SettingsService>;
+    let service: YjsSyncService;
 
     beforeEach(() => {
       handlers = {};
+      mmpService = capturingMmpService(handlers);
       context = createMockContext();
-      service = createService(capturingMmpService(), context);
+      settingsService = {
+        setEditMode: jest.fn(),
+      } as unknown as jest.Mocked<SettingsService>;
+      service = createService(mmpService, context, settingsService);
       service.initMap('test-uuid');
-      internals(service).yjsSynced = true;
-      // Normally created by handleFirstSync, which needs a live websocket.
-      internals(service).initUndoManager();
     });
 
     afterEach(() => {
       service.destroy();
     });
 
-    it('subscribes to the mmp distribute event', () => {
-      expect(Object.keys(handlers)).toContain('distribute');
+    it('hands the map data of an empty doc over on the first sync', () => {
+      internals(service).handleFirstSync();
+
+      expect(context.createMap).toHaveBeenCalledWith(
+        internals(service).yjsMapData
+      );
     });
 
-    it('writes every node to the doc when a distribute happens', () => {
-      handlers['distribute']();
+    it('subscribes to no mmp event before the map exists', () => {
+      internals(service).handleFirstSync();
 
-      const nodesMap = internals(service).yDoc.getMap('nodes');
-      expect(Array.from(nodesMap.keys()).sort()).toEqual(['child', 'root']);
+      expect(mmpService.on).not.toHaveBeenCalled();
     });
 
-    it('refreshes the cached map so it does not keep the old coordinates', () => {
-      handlers['distribute']();
+    it('hands the map data over again when a map component reattaches', () => {
+      internals(service).yjsSynced = true;
 
-      expect(context.updateAttachedMap).toHaveBeenCalled();
+      service.initMap('test-uuid');
+
+      expect(context.createMap).toHaveBeenCalledWith(
+        internals(service).yjsMapData
+      );
     });
 
-    it('records the replacement as a distribute so peers can identify it', () => {
-      handlers['distribute']();
+    it('closes the previous connection before opening a different map', () => {
+      const previousDoc = internals(service).yDoc;
+      const destroySpy = jest.spyOn(previousDoc, 'destroy');
+      service.setWritable(true);
 
-      expect(
-        internals(service).yDoc.getMap('meta').get('lastMapAnnouncement')
-      ).toBe('distribute');
+      service.initMap('another-map');
+
+      expect(destroySpy).toHaveBeenCalled();
+      expect(internals(service).yDoc).not.toBe(previousDoc);
+      expect(internals(service).yjsWritable).toBe(true);
     });
 
-    it('still records an import as an import', () => {
-      handlers['create']();
-
-      expect(
-        internals(service).yDoc.getMap('meta').get('lastMapAnnouncement')
-      ).toBe('import');
-    });
-
-    // Lay a root node down as a local edit, so the undo manager has a state
-    // to return to.
-    function seedRootNode(id: string): Y.Map<Y.Map<unknown>> {
-      const doc = internals(service).yDoc;
-      const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-      doc.transact(() => {
-        const yNode = new Y.Map<unknown>();
-        nodesMap.set(id, yNode);
-        yNode.set('id', id);
-        yNode.set('isRoot', true);
-        yNode.set('coordinates', { x: 5, y: 5 });
-      }, 'local');
-
-      return nodesMap;
-    }
-
-    it('makes an import undoable', () => {
-      const nodesMap = seedRootNode('before-import');
-
-      handlers['create']();
-      service.undo();
-
-      expect({
-        ids: Array.from(nodesMap.keys()),
-        coordinates: nodesMap.get('before-import')?.get('coordinates'),
-      }).toEqual({
-        ids: ['before-import'],
-        coordinates: { x: 5, y: 5 },
-      });
-    });
-
-    // The import is sealed off from the edit before it, so reaching that edit
-    // takes a second press rather than being swept up in the first.
-    it('needs a second undo to reach the edit before the import', () => {
-      const nodesMap = seedRootNode('before-import');
-
-      handlers['create']();
-      service.undo();
-      service.undo();
-
-      expect(Array.from(nodesMap.keys())).toEqual([]);
-    });
-
-    it('makes a distribute undoable', () => {
-      const nodesMap = seedRootNode('root');
-
-      handlers['distribute']();
-      service.undo();
-
-      expect(nodesMap.get('root')?.get('coordinates')).toEqual({ x: 5, y: 5 });
-    });
-
-    describe('on a receiving client', () => {
-      let nodesMap: Y.Map<Y.Map<unknown>>;
-      let importToast: jest.SpyInstance;
+    describe('attachMap', () => {
+      const root = node('root', null, true);
 
       beforeEach(() => {
+        mmpService.selectNode.mockReturnValue(root);
+        service.setWritable(true);
+        const options = internals(service).yDoc.getMap('mapOptions');
+        options.set('fontMaxSize', 70);
+        options.set('fontIncrement', 5);
+        internals(service).handleFirstSync();
+        service.attachMap();
+      });
+
+      it('applies the synced map settings before edit mode', () => {
+        const optionsOrder =
+          mmpService.updateAdditionalMapOptions.mock.invocationCallOrder[0];
+        const editModeOrder =
+          settingsService.setEditMode.mock.invocationCallOrder[0];
+
+        expect(mmpService.updateAdditionalMapOptions).toHaveBeenCalledWith({
+          fontMaxSize: 70,
+          fontMinSize: undefined,
+          fontIncrement: 5,
+        });
+        expect(optionsOrder).toBeLessThan(editModeOrder);
+      });
+
+      it('keeps settings edits in the same doc while the renderer is detached', () => {
         const doc = internals(service).yDoc;
-        nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
-        const yNode = new Y.Map<unknown>();
-        nodesMap.set('root', yNode);
-        yNode.set('isRoot', true);
+        const options = { fontMaxSize: 80, fontMinSize: 20, fontIncrement: 7 };
 
-        importToast = jest
-          .spyOn(internals(service), 'showImportToast')
-          .mockResolvedValue(undefined);
-        jest
-          .spyOn(internals(service), 'loadMapFromYDoc')
-          .mockImplementation(() => undefined);
-      });
+        service.detachMap();
+        service.updateMapOptions(options);
+        service.initMap('test-uuid');
+        service.attachMap();
 
-      /**
-       * Feed the service a full-map replacement. `metaKeys` are the meta keys
-       * the transaction wrote - an announcement, or nothing for an undo replay;
-       * `local` marks it as our own undo rather than a peer's replacement.
-       */
-      function receiveReplacement({
-        metaKeys = ['lastMapAnnouncement'],
-        local = false,
-      }: { metaKeys?: string[]; local?: boolean } = {}): void {
-        const changed = new Map<unknown, Set<string>>();
-        if (metaKeys.length > 0) {
-          changed.set(
-            internals(service).yDoc.getMap('meta'),
-            new Set(metaKeys)
-          );
-        }
-
-        internals(service).handleTopLevelNodeChanges(
-          {
-            changes: { keys: new Map([['root', { action: 'add' }]]) },
-            keysChanged: new Set(['root']),
-            transaction: { changed, local },
-          },
-          nodesMap
+        expect(internals(service).yDoc).toBe(doc);
+        expect(doc.getMap('mapOptions').toJSON()).toEqual(options);
+        expect(mmpService.updateAdditionalMapOptions).toHaveBeenLastCalledWith(
+          options
         );
-      }
-
-      function setLastOperation(operation: string): void {
-        internals(service)
-          .yDoc.getMap('meta')
-          .set('lastMapAnnouncement', operation);
-      }
-
-      it('does not show the import toast for a redistribution', () => {
-        setLastOperation('distribute');
-
-        receiveReplacement();
-
-        expect(importToast).not.toHaveBeenCalled();
       });
 
-      // An undo replays nodes without recording an operation, so the stale
-      // 'import' left in the meta map must not make it announce one.
-      it('does not show the import toast when an import is undone', () => {
-        setLastOperation('import');
+      it('stops updating the removed renderer when it is detached', () => {
+        jest.useFakeTimers();
+        service.detachMap();
+        (context.setAttachedNode as jest.Mock).mockClear();
 
-        receiveReplacement({ metaKeys: [] });
+        handlers['mapChange']();
+        handlers['nodeSelect'](root);
+        jest.advanceTimersByTime(ATTACHED_MAP_AUDIT_MS);
 
-        expect(importToast).not.toHaveBeenCalled();
+        expect(context.setAttachedNode).not.toHaveBeenCalled();
+        expect(context.updateAttachedMap).not.toHaveBeenCalled();
+        jest.useRealTimers();
       });
 
-      it('does not show the import toast when a distribute is undone', () => {
-        setLastOperation('distribute');
-
-        receiveReplacement({ metaKeys: [] });
-
-        expect(importToast).not.toHaveBeenCalled();
+      it('subscribes to the map change and the selection events', () => {
+        expect(Object.keys(handlers).sort()).toEqual([
+          'mapChange',
+          'nodeDeselect',
+          'nodeSelect',
+        ]);
       });
 
-      // A replacement cannot be merged as a replacement, so undoing into a
-      // map a peer has already replaced would leave two roots behind.
-      it('drops the undo history when a peer replaces the map', () => {
-        seedRootNode('mine');
-
-        receiveReplacement();
-
-        expect(internals(service).yUndoManager?.undoStack.length).toBe(0);
+      it('attaches the node the map selected when it was created', () => {
+        expect(context.setAttachedNode).toHaveBeenLastCalledWith(root);
       });
 
-      // Clearing the stack has to reach the toolbar, or undo stays enabled
-      // with nothing left to undo.
-      it('reports that there is nothing left to undo', () => {
-        seedRootNode('mine');
-
-        receiveReplacement();
-
-        expect(context.setCanUndo).toHaveBeenLastCalledWith(false);
+      it('creates the undo manager', () => {
+        expect(internals(service).yUndoManager).not.toBeNull();
       });
 
-      it('keeps the history when the replacement is our own undo', () => {
-        seedRootNode('mine');
+      it('sets edit mode after awareness is up', () => {
+        const awarenessOrder = (context.setClientColor as jest.Mock).mock
+          .invocationCallOrder[0];
+        const editModeOrder =
+          settingsService.setEditMode.mock.invocationCallOrder[0];
 
-        receiveReplacement({ metaKeys: [], local: true });
-
-        expect(internals(service).yUndoManager?.undoStack.length).toBe(1);
+        expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
+        expect(editModeOrder).toBeGreaterThan(awarenessOrder);
       });
 
-      // The announcement is read per key, so `meta` gaining unrelated fields
-      // later must not turn every replacement into an import.
-      it('does not show the import toast for an unrelated meta write', () => {
-        setLastOperation('import');
+      it('refreshes the cached map and the attached node on a map change', () => {
+        jest.useFakeTimers();
+        const selected = node('child', 'root');
+        mmpService.selectNode.mockReturnValue(selected);
 
-        receiveReplacement({ metaKeys: ['someOtherField'] });
+        handlers['mapChange']();
+        jest.advanceTimersByTime(ATTACHED_MAP_AUDIT_MS);
 
-        expect(importToast).not.toHaveBeenCalled();
+        expect(context.updateAttachedMap).toHaveBeenCalled();
+        expect(context.setAttachedNode).toHaveBeenLastCalledWith(selected);
+        jest.useRealTimers();
       });
 
-      it('still shows the import toast for an actual import', () => {
-        setLastOperation('import');
+      it('refreshes the attached node at once and the cached map once per burst', () => {
+        jest.useFakeTimers();
+        const selected = node('child', 'root');
+        mmpService.selectNode.mockReturnValue(selected);
 
-        receiveReplacement();
+        handlers['mapChange']();
+        handlers['mapChange']();
+        handlers['mapChange']();
 
-        expect(importToast).toHaveBeenCalled();
+        expect(context.setAttachedNode).toHaveBeenLastCalledWith(selected);
+        expect(context.updateAttachedMap).not.toHaveBeenCalled();
+        jest.advanceTimersByTime(ATTACHED_MAP_AUDIT_MS);
+        expect(context.updateAttachedMap).toHaveBeenCalledTimes(1);
+        jest.useRealTimers();
       });
     });
   });
 
-  describe('receiving trees from a peer', () => {
+  describe('map settings between two clients', () => {
+    let editor: YjsSyncService;
+    let viewer: YjsSyncService;
+    let editorMmp: jest.Mocked<MmpService>;
+    let viewerMmp: jest.Mocked<MmpService>;
+
+    function sync(from: YjsSyncService, to: YjsSyncService): void {
+      const source = internals(from).yDoc;
+      const target = internals(to).yDoc;
+      Y.applyUpdate(
+        target,
+        Y.encodeStateAsUpdate(source, Y.encodeStateVector(target)),
+        'peer'
+      );
+    }
+
+    beforeEach(() => {
+      editorMmp = capturingMmpService({});
+      viewerMmp = capturingMmpService({});
+      editor = createService(editorMmp);
+      viewer = createService(viewerMmp);
+      editor.setWritable(true);
+      viewer.setWritable(false);
+      editor.initMap('shared-map');
+      viewer.initMap('shared-map');
+      editor.updateMapOptions({
+        fontMaxSize: 70,
+        fontMinSize: 6,
+        fontIncrement: 2,
+      });
+      sync(editor, viewer);
+      for (const service of [editor, viewer]) {
+        internals(service).handleFirstSync();
+        service.attachMap();
+      }
+      editorMmp.updateAdditionalMapOptions.mockClear();
+      viewerMmp.updateAdditionalMapOptions.mockClear();
+    });
+
+    afterEach(() => {
+      editor.destroy();
+      viewer.destroy();
+    });
+
+    it('applies an editor update to a viewer without echoing it back locally', () => {
+      const options = { fontMaxSize: 80, fontMinSize: 6, fontIncrement: 7 };
+      editor.updateMapOptions(options);
+      sync(editor, viewer);
+      sync(viewer, editor);
+
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledTimes(1);
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith(
+        options
+      );
+      expect(editorMmp.updateAdditionalMapOptions).not.toHaveBeenCalled();
+    });
+
+    it('receives peer settings while the renderer is detached', () => {
+      viewer.detachMap();
+      const options = { fontMaxSize: 80, fontMinSize: 20, fontIncrement: 7 };
+
+      editor.updateMapOptions(options);
+      sync(editor, viewer);
+
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith(
+        options
+      );
+    });
+
+    it('applies updates in both directions when both clients can edit', () => {
+      viewer.setWritable(true);
+      editor.updateMapOptions({
+        fontMaxSize: 80,
+        fontMinSize: 20,
+        fontIncrement: 7,
+      });
+      sync(editor, viewer);
+      const options = { fontMaxSize: 90, fontMinSize: 25, fontIncrement: 5 };
+      viewer.updateMapOptions(options);
+      sync(viewer, editor);
+
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith({
+        fontMaxSize: 80,
+        fontMinSize: 20,
+        fontIncrement: 7,
+      });
+      expect(editorMmp.updateAdditionalMapOptions).toHaveBeenCalledTimes(1);
+      expect(editorMmp.updateAdditionalMapOptions).toHaveBeenCalledWith(
+        options
+      );
+    });
+
+    it('passes a deleted peer setting to MmpService to restore its default', () => {
+      internals(editor).yDoc.getMap('mapOptions').delete('fontMinSize');
+      sync(editor, viewer);
+
+      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith({
+        fontMaxSize: 70,
+        fontMinSize: undefined,
+        fontIncrement: 2,
+      });
+    });
+  });
+
+  describe('a peer replacing the map', () => {
+    let context: MapSyncContext;
     let service: YjsSyncService;
-    let mmpService: jest.Mocked<MmpService>;
     let peer: Y.Doc;
-    let loadMap: jest.SpyInstance;
-
-    function receivingMmpService(): jest.Mocked<MmpService> {
-      return {
-        on: jest.fn().mockReturnValue({
-          subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
-        }),
-        existNode: jest.fn().mockReturnValue(false),
-        addNodesFromServer: jest.fn(),
-        removeNode: jest.fn(),
-      } as unknown as jest.Mocked<MmpService>;
-    }
-
-    function node(
-      id: string,
-      parent: string | null,
-      isRoot = false
-    ): ExportNodeProperties {
-      return { id, parent, isRoot } as ExportNodeProperties;
-    }
+    let importToast: jest.SpyInstance;
 
     function writeNodes(
       nodesMap: Y.Map<Y.Map<unknown>>,
@@ -387,19 +435,24 @@ describe('YjsSyncService', () => {
       );
     }
 
+    /** The peer replaces every node, as an import or its undo does. */
+    function peerReplaces(metaKeys: Record<string, string> = {}): void {
+      peerTransacts((nodesMap, meta) => {
+        nodesMap.delete('main');
+        Object.entries(metaKeys).forEach(([key, value]) =>
+          meta.set(key, value)
+        );
+        writeNodes(nodesMap, [node('imported', null, true)]);
+      });
+    }
+
     function undoStackLength(): number | undefined {
       return internals(service).yUndoManager?.undoStack.length;
     }
 
-    function addedIds(): string[] {
-      return mmpService.addNodesFromServer.mock.calls.map(
-        ([nodes]) => nodes[0].id
-      );
-    }
-
     beforeEach(() => {
-      mmpService = receivingMmpService();
-      service = createService(mmpService);
+      context = createMockContext();
+      service = createService(undefined, context);
       service.initMap('test-uuid');
       internals(service).yjsSynced = true;
       internals(service).initUndoManager();
@@ -408,17 +461,11 @@ describe('YjsSyncService', () => {
         writeNodes(nodesMap, [node('main', null, true)])
       );
       internals(service).setupNodesObserver();
-      loadMap = jest
-        .spyOn(internals(service), 'loadMapFromYDoc')
-        .mockImplementation(() => undefined);
-      jest
+      importToast = jest
         .spyOn(internals(service), 'showImportToast')
         .mockResolvedValue(undefined);
 
-      const doc = internals(service).yDoc;
-      doc.transact(() => {
-        writeNodes(doc.getMap('nodes'), [node('mine', 'main')]);
-      }, 'local');
+      internals(service).yjsMapData.addNodes([node('mine', 'main')]);
     });
 
     afterEach(() => {
@@ -426,117 +473,70 @@ describe('YjsSyncService', () => {
       peer.destroy();
     });
 
-    it('applies a tree a peer adds as an ordinary add and keeps the undo stack', () => {
+    it('keeps the undo stack when a peer adds a tree', () => {
       peerTransacts(nodesMap => writeNodes(nodesMap, [node('second', null)]));
 
       expect({
-        reloaded: loadMap.mock.calls.length,
-        added: addedIds(),
         undoStack: undoStackLength(),
-      }).toEqual({ reloaded: 0, added: ['second'], undoStack: 1 });
+        toast: importToast.mock.calls,
+      }).toEqual({ undoStack: 1, toast: [] });
     });
 
-    it('applies a tree a peer pastes as ordinary adds, parent first, and keeps the undo stack', () => {
-      peerTransacts(nodesMap =>
-        writeNodes(nodesMap, [
-          node('pastedGrandchild', 'pastedChild'),
-          node('pastedChild', 'pasted'),
-          node('pasted', null),
-        ])
-      );
+    it('clears the undo stack and shows the toast when a peer imports', () => {
+      peerReplaces({ lastMapAnnouncement: 'import' });
 
       expect({
-        reloaded: loadMap.mock.calls.length,
-        added: addedIds(),
         undoStack: undoStackLength(),
-      }).toEqual({
-        reloaded: 0,
-        added: ['pasted', 'pastedChild', 'pastedGrandchild'],
-        undoStack: 1,
-      });
+        toasts: importToast.mock.calls.length,
+      }).toEqual({ undoStack: 0, toasts: 1 });
     });
 
-    it('adds every parent before its child when a peer writes two trees at once', () => {
-      peerTransacts(nodesMap =>
-        writeNodes(nodesMap, [
-          node('secondChild', 'second'),
-          node('second', null),
-          node('thirdChild', 'third'),
-          node('third', null),
-        ])
-      );
-      const added = addedIds();
+    // Clearing the stack has to reach the toolbar, or undo stays enabled
+    // with nothing left to undo.
+    it('reports that there is nothing left to undo', () => {
+      peerReplaces({ lastMapAnnouncement: 'import' });
 
-      expect({
-        reloaded: loadMap.mock.calls.length,
-        secondFirst: added.indexOf('second') < added.indexOf('secondChild'),
-        thirdFirst: added.indexOf('third') < added.indexOf('thirdChild'),
-        count: added.length,
-        undoStack: undoStackLength(),
-      }).toEqual({
-        reloaded: 0,
-        secondFirst: true,
-        thirdFirst: true,
-        count: 4,
-        undoStack: 1,
-      });
+      expect(context.setCanUndo).toHaveBeenLastCalledWith(false);
     });
 
-    it('applies a child a peer adds under the main root and keeps the undo stack', () => {
-      peerTransacts(nodesMap =>
-        writeNodes(nodesMap, [node('peerChild', 'main')])
-      );
+    // An undo replays nodes without recording an operation, so the stale
+    // 'import' left in the meta map must not make it announce one.
+    it('shows no toast when a peer undoes an import', () => {
+      peerTransacts((_, meta) => meta.set('lastMapAnnouncement', 'import'));
+      importToast.mockClear();
 
-      expect({
-        reloaded: loadMap.mock.calls.length,
-        added: addedIds(),
-        undoStack: undoStackLength(),
-      }).toEqual({ reloaded: 0, added: ['peerChild'], undoStack: 1 });
+      peerReplaces();
+
+      expect(importToast).not.toHaveBeenCalled();
     });
 
-    it('adds a subtree a peer pastes under the main root parent first', () => {
-      peerTransacts(nodesMap =>
-        writeNodes(nodesMap, [
-          node('pastedGrandchild', 'pastedChild'),
-          node('pastedChild', 'main'),
-        ])
-      );
+    // The announcement is read per key, so `meta` gaining unrelated fields
+    // later must not turn every replacement into an import.
+    it('shows no toast for an unrelated meta write', () => {
+      peerTransacts((_, meta) => meta.set('lastMapAnnouncement', 'import'));
+      importToast.mockClear();
 
-      expect({
-        reloaded: loadMap.mock.calls.length,
-        added: addedIds(),
-        undoStack: undoStackLength(),
-      }).toEqual({
-        reloaded: 0,
-        added: ['pastedChild', 'pastedGrandchild'],
-        undoStack: 1,
-      });
+      peerReplaces({ someOtherField: 'value' });
+
+      expect(importToast).not.toHaveBeenCalled();
     });
 
-    it('reloads and clears the undo stack when a peer imports a map', () => {
-      peerTransacts((nodesMap, meta) => {
-        nodesMap.delete('main');
-        meta.set('lastMapAnnouncement', 'import');
-        writeNodes(nodesMap, [node('imported', null, true)]);
-      });
+    // ImportService shows its own toast for a local import.
+    it('keeps the history and shows no toast for our own import', () => {
+      internals(service).yjsMapData.replaceMap([node('imported', null, true)]);
 
       expect({
-        reloaded: loadMap.mock.calls.length,
         undoStack: undoStackLength(),
-      }).toEqual({ reloaded: 1, undoStack: 0 });
+        toasts: importToast.mock.calls.length,
+      }).toEqual({ undoStack: 2, toasts: 0 });
     });
 
-    it('reloads and clears the undo stack when a peer redistributes a map', () => {
-      peerTransacts((nodesMap, meta) => {
-        nodesMap.delete('main');
-        meta.set('lastMapAnnouncement', 'distribute');
-        writeNodes(nodesMap, [node('main', null, true), node('second', null)]);
-      });
+    it('keeps the history when the replacement is our own undo', () => {
+      internals(service).yjsMapData.replaceMap([node('imported', null, true)]);
 
-      expect({
-        reloaded: loadMap.mock.calls.length,
-        undoStack: undoStackLength(),
-      }).toEqual({ reloaded: 1, undoStack: 0 });
+      service.undo();
+
+      expect(undoStackLength()).toBe(1);
     });
   });
 });

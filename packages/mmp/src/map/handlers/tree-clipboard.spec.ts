@@ -1,14 +1,12 @@
-import CopyPaste from './copy-paste.js';
-import Nodes from './nodes.js';
-import MmpMap from '../map.js';
-import Node, { NodeProperties } from '../models/node.js';
-import { DefaultNodeValues } from '../options.js';
-import { Event } from './events.js';
 import type { Bounds } from './node-geometry.js';
 import { NEW_TREE_GAP, treeBounds } from './tree-placement.js';
+import type { ResolvedNode } from '../data/node-record.js';
+import { fakeDraw } from '../../test/fake-draw.js';
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import type {
   ExportNodeProperties,
-  MapNodeCoordinates,
+  MapNodeDimensions,
+  MapSnapshot,
 } from '@teammapper/shared';
 
 /**
@@ -21,109 +19,80 @@ interface CopyPasteInternals {
   copiedNodes: ExportNodeProperties[];
 }
 
-interface NodesInternals {
-  selectedNode: Node | null;
-}
-
-function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
-  return new Node({
-    k: 1,
-    parent: null,
-    colors: { ...DefaultNodeValues.colors },
-    ...properties,
-  });
-}
+/**
+ * The main tree (root, branch) and a second tree whose root has a left-hand
+ * child with a grandchild and a right-hand child.
+ */
+const SNAPSHOT: MapSnapshot = [
+  nodeRecord({ id: 'root', isRoot: true }),
+  nodeRecord({ id: 'branch', parent: 'root', coordinates: { x: 200, y: 0 } }),
+  nodeRecord({ id: 'second', coordinates: { x: 1000, y: 0 } }),
+  nodeRecord({
+    id: 'left',
+    parent: 'second',
+    coordinates: { x: 800, y: -120 },
+  }),
+  nodeRecord({
+    id: 'grandchild',
+    parent: 'left',
+    coordinates: { x: 600, y: -240 },
+  }),
+  nodeRecord({
+    id: 'right',
+    parent: 'second',
+    coordinates: { x: 1200, y: -120 },
+  }),
+];
 
 /**
- * A map holding the main tree (root, branch) and a second tree whose root
- * has a left-hand child with a grandchild and a right-hand child.
+ * A map holding SNAPSHOT plus `extra`. `view` is the visible area the zoom
+ * stub reports; the default null stands for jsdom's svg, which has no size.
  */
-function makeMap(view: Bounds | null = null) {
-  const events = { call: jest.fn() };
-  // `view` is the visible area the zoom stub reports. The default null stands
-  // for jsdom's svg, which has no size.
-  const zoom = { visibleArea: jest.fn(() => view), panIntoView: jest.fn() };
-  const map = {
-    rootId: 'root',
-    options: { defaultNode: DefaultNodeValues },
-    draw: { update: jest.fn(), clear: jest.fn() },
-    history: { save: jest.fn() },
-    events,
+function makeMap(view: Bounds | null = null, extra: MapSnapshot = []) {
+  const sizes = new Map<string, MapNodeDimensions>();
+  const zoom = {
+    center: jest.fn(),
+    visibleArea: jest.fn(() => view),
+    panIntoView: jest.fn(),
+  };
+  const stub = stubMap([...SNAPSHOT, ...extra], {
+    draw: fakeDraw(node => sizes.get(node.id) ?? { width: 0, height: 0 }),
     zoom,
-  } as unknown as MmpMap;
-
-  const nodes = new Nodes(map);
-  map.nodes = nodes;
-  // No zoom transform applies in these tests, so `fixCoordinates` returns its
-  // input.
-  nodes.fixCoordinates = (coordinates: MapNodeCoordinates) => coordinates;
-  // No node has a DOM in these tests, so selecting one records the call only,
-  // and a redraw draws no ring.
-  const selectNode = jest.fn();
-  nodes.selectNode = selectNode;
-  nodes.redrawSelectionRing = jest.fn();
-
-  const root = makeNode({ id: 'root', isRoot: true });
-  const branch = makeNode({
-    id: 'branch',
-    parent: root,
-    coordinates: { x: 200, y: 0 },
   });
-  const second = makeNode({ id: 'second', coordinates: { x: 1000, y: 0 } });
-  const left = makeNode({
-    id: 'left',
-    parent: second,
-    coordinates: { x: 800, y: -120 },
-  });
-  const grandchild = makeNode({
-    id: 'grandchild',
-    parent: left,
-    coordinates: { x: 600, y: -240 },
-  });
-  const right = makeNode({
-    id: 'right',
-    parent: second,
-    coordinates: { x: 1200, y: -120 },
+  const pastes: string[][] = [];
+  stub.data.subscribe(change => {
+    if (change.added.length > 0) pastes.push(change.added);
   });
 
-  const tree = { root, branch, second, left, grandchild, right };
-  Object.values(tree).forEach(node => nodes.setNode(node.id, node));
-
-  const clipboard = new CopyPaste(map);
-
-  return { nodes, clipboard, tree, events, zoom, selectNode };
+  return { ...stub, clipboard: stub.map.copyPaste, zoom, sizes, pastes };
 }
 
-function ids(nodes: Node[]): string[] {
-  return nodes.map(node => node.id).sort();
+function ids(snapshot: readonly { id: string }[]): string[] {
+  return snapshot.map(node => node.id).sort();
 }
 
-/** The nodes the last paste created, read from its paste event. */
-function pastedNodes(nodes: Nodes, events: { call: jest.Mock }): Node[] {
-  const call = events.call.mock.calls.find(
-    ([event]) => event === Event.nodePaste
-  );
-  const pasted = (call?.[2] ?? []) as ExportNodeProperties[];
-
-  return pasted.map(properties => nodes.getNode(properties.id) as Node);
+/** The nodes the last paste created, in the order the paste built them. */
+function pastedNodes(context: ReturnType<typeof makeMap>): ResolvedNode[] {
+  const last = context.pastes[context.pastes.length - 1] ?? [];
+  return last.flatMap(id => context.nodes.record(id) ?? []);
 }
 
 describe('removeNode', () => {
   it('removes a second root together with every descendant', () => {
-    const { nodes } = makeMap();
+    const { nodes, data } = makeMap();
 
     nodes.removeNode('second');
 
-    expect(ids(nodes.getNodes())).toEqual(['branch', 'root']);
+    expect(ids(data.nodes())).toEqual(['branch', 'root']);
   });
 
   it('refuses to remove the main root while other trees exist', () => {
-    const { nodes } = makeMap();
+    const { nodes, data } = makeMap();
 
     expect(() => nodes.removeNode('root')).toThrow(
       'The root node can not be deleted'
     );
-    expect(nodes.getNodes()).toHaveLength(6);
+    expect(data.nodes()).toHaveLength(6);
   });
 });
 
@@ -134,12 +103,7 @@ describe('copy and cut', () => {
     clipboard.copy('second');
 
     const copied = (clipboard as unknown as CopyPasteInternals).copiedNodes;
-    expect(copied.map(node => node.id).sort()).toEqual([
-      'grandchild',
-      'left',
-      'right',
-      'second',
-    ]);
+    expect(ids(copied)).toEqual(['grandchild', 'left', 'right', 'second']);
   });
 
   it('refuses to copy the main root and leaves the clipboard unchanged', () => {
@@ -153,6 +117,16 @@ describe('copy and cut', () => {
     expect(copied[0].id).toBe('second');
   });
 
+  it('keeps copies the map data does not share', () => {
+    const { clipboard, data } = makeMap();
+    clipboard.copy('second');
+
+    data.updateNode('second', 'name', 'changed');
+
+    const copied = (clipboard as unknown as CopyPasteInternals).copiedNodes;
+    expect(copied[0].name).toBe('');
+  });
+
   it('refuses to cut the main root and keeps it on the map', () => {
     const { clipboard, nodes } = makeMap();
 
@@ -164,61 +138,92 @@ describe('copy and cut', () => {
   });
 
   it('cuts a second root with its tree', () => {
-    const { clipboard, nodes } = makeMap();
+    const { clipboard, data } = makeMap();
 
     clipboard.cut('second');
 
-    expect(ids(nodes.getNodes())).toEqual(['branch', 'root']);
+    expect(ids(data.nodes())).toEqual(['branch', 'root']);
   });
 });
 
 describe('paste', () => {
   it('attaches a copied tree under the selected main root', () => {
-    const { clipboard, nodes, tree, events } = makeMap();
-    clipboard.copy('second');
-    (nodes as unknown as NodesInternals).selectedNode = tree.root;
+    const context = makeMap();
+    context.clipboard.copy('second');
+    context.nodes.selectNode('root');
 
-    clipboard.paste();
+    context.clipboard.paste();
 
-    const [pastedRoot, ...rest] = pastedNodes(nodes, events);
-    expect(pastedRoot.parent).toBe(tree.root);
+    const [pastedRoot, ...rest] = pastedNodes(context);
+    expect(pastedRoot.parent).toBe('root');
     expect(rest).toHaveLength(3);
-    expect(nodes.getDescendants(pastedRoot)).toHaveLength(3);
+    expect(context.nodes.descendants(pastedRoot.id)).toHaveLength(3);
   });
 
   it('writes isRoot false on every pasted node', () => {
-    const { clipboard, nodes, tree, events } = makeMap();
-    clipboard.copy('left');
-    const copied = (clipboard as unknown as CopyPasteInternals).copiedNodes;
+    const context = makeMap();
+    context.clipboard.copy('left');
+    const copied = (context.clipboard as unknown as CopyPasteInternals)
+      .copiedNodes;
     copied.forEach(node => (node.isRoot = true));
 
-    clipboard.paste(tree.branch.id);
+    context.clipboard.paste('branch');
 
-    const pasted = pastedNodes(nodes, events);
+    const pasted = pastedNodes(context);
     expect(pasted).toHaveLength(2);
     expect(pasted.every(node => node.isRoot === false)).toBe(true);
   });
 
+  it('writes the paste in a batch, so it takes an undo step of its own', () => {
+    const context = makeMap();
+    context.clipboard.copy('left');
+    const batch = jest.spyOn(context.data, 'batch');
+    const addNodes = jest.spyOn(context.data, 'addNodes');
+
+    context.clipboard.paste('branch');
+
+    expect(addNodes).toHaveBeenCalledTimes(1);
+    expect(batch.mock.invocationCallOrder[0]).toBeLessThan(
+      addNodes.mock.invocationCallOrder[0]
+    );
+    expect(context.pastes).toHaveLength(1);
+  });
+
+  it('pastes each copied node once when the copied nodes form a cycle', () => {
+    const context = makeMap();
+    context.clipboard.copy('left');
+    const copied = (context.clipboard as unknown as CopyPasteInternals)
+      .copiedNodes;
+    copied[0].parent = 'grandchild';
+
+    context.clipboard.paste('branch');
+
+    expect(pastedNodes(context)).toHaveLength(2);
+  });
+
   it('pastes nothing with nothing selected', () => {
-    const { clipboard, nodes } = makeMap();
+    const { clipboard, nodes, data } = makeMap();
     clipboard.copy('second');
+    nodes.deselectNode();
 
     clipboard.paste();
 
-    expect(nodes.getNodes()).toHaveLength(6);
+    expect(data.nodes()).toHaveLength(6);
   });
 });
 
 describe('pasteTree', () => {
   function pasteSecondTree() {
     const context = makeMap();
+    context.nodes.deselectNode();
     context.clipboard.copy('second');
     const expectedRoot = context.nodes.newTreeCoordinates();
+    const selectNode = jest.spyOn(context.nodes, 'selectNode');
 
     context.clipboard.pasteTree();
 
-    const pasted = pastedNodes(context.nodes, context.events);
-    return { ...context, pasted, expectedRoot };
+    const pasted = pastedNodes(context);
+    return { ...context, pasted, expectedRoot, selectNode };
   }
 
   it('pastes the copied nodes as an independent tree', () => {
@@ -226,8 +231,8 @@ describe('pasteTree', () => {
     const [pastedRoot] = pasted;
 
     expect(pasted).toHaveLength(4);
-    expect(pastedRoot.parent).toBeNull();
-    expect(nodes.getDescendants(pastedRoot)).toHaveLength(3);
+    expect(nodes.parentOf(pastedRoot.id)).toBeNull();
+    expect(nodes.descendants(pastedRoot.id)).toHaveLength(3);
   });
 
   it("writes isRoot false on every pasted node and branch color '' on the pasted root", () => {
@@ -262,25 +267,24 @@ describe('pasteTree', () => {
   });
 
   it('keeps the offsets of a copied non-root subtree to its copied node', () => {
-    const context = makeMap();
-    const inner = makeNode({
-      id: 'inner',
-      parent: context.tree.right,
-      coordinates: { x: 1100, y: -240 },
-    });
-    const innermost = makeNode({
-      id: 'innermost',
-      parent: inner,
-      coordinates: { x: 1050, y: -360 },
-    });
-    context.nodes.setNode(inner.id, inner);
-    context.nodes.setNode(innermost.id, innermost);
+    const context = makeMap(null, [
+      nodeRecord({
+        id: 'inner',
+        parent: 'right',
+        coordinates: { x: 1100, y: -240 },
+      }),
+      nodeRecord({
+        id: 'innermost',
+        parent: 'inner',
+        coordinates: { x: 1050, y: -360 },
+      }),
+    ]);
     context.clipboard.copy('right');
     const expectedRoot = context.nodes.newTreeCoordinates();
 
     context.clipboard.pasteTree();
 
-    const offsets = pastedNodes(context.nodes, context.events).map(node => [
+    const offsets = pastedNodes(context).map(node => [
       node.coordinates.x - expectedRoot.x,
       node.coordinates.y - expectedRoot.y,
     ]);
@@ -294,14 +298,13 @@ describe('pasteTree', () => {
   it('pastes a tree whatever node is selected', () => {
     const context = makeMap();
     context.clipboard.copy('second');
-    (context.nodes as unknown as NodesInternals).selectedNode =
-      context.tree.branch;
+    context.nodes.selectNode('branch');
 
     context.clipboard.pasteTree();
 
-    const [pastedRoot] = pastedNodes(context.nodes, context.events);
-    expect(pastedRoot.parent).toBeNull();
-    expect(context.nodes.getChildren(context.tree.branch)).toEqual([]);
+    const [pastedRoot] = pastedNodes(context);
+    expect(context.nodes.parentOf(pastedRoot.id)).toBeNull();
+    expect(context.nodes.children('branch')).toEqual([]);
   });
 
   it('refuses to paste an empty clipboard', () => {
@@ -317,47 +320,51 @@ describe('pasteTree', () => {
 
     // No node has a size in these tests, so the bounding box of the pasted
     // nodes equals the copied footprint moved to the pasted root.
-    const [pastedTree] = treeBounds(pasted, () => pasted[0]);
+    const [pastedTree] = treeBounds(pasted, () => pasted[0], nodes.boundsOf);
     expect(selectNode).not.toHaveBeenCalled();
     expect(nodes.getSelectedNode()).toBeNull();
     expect(zoom.panIntoView).toHaveBeenCalledWith(pastedTree);
   });
 
   it('adds a second tree on a second paste with nothing selected', () => {
-    const { clipboard, nodes, events } = makeMap();
-    clipboard.copy('second');
+    const context = makeMap();
+    context.nodes.deselectNode();
+    context.clipboard.copy('second');
 
-    clipboard.pasteTree();
-    clipboard.pasteTree();
+    context.clipboard.pasteTree();
+    context.clipboard.pasteTree();
 
-    const pasteCalls = events.call.mock.calls.filter(
-      ([event]) => event === Event.nodePaste
-    );
-    const roots = pasteCalls.map(([, , pasted]) => {
-      const [first] = pasted as ExportNodeProperties[];
-      return nodes.getNode(first.id);
-    });
+    const roots = context.pastes.map(([first]) => first);
     expect(roots).toHaveLength(2);
     expect(roots[0]).not.toBe(roots[1]);
-    roots.forEach(root => expect(root?.parent).toBeNull());
-    expect(nodes.getNodes()).toHaveLength(14);
+    roots.forEach(root => expect(context.nodes.parentOf(root)).toBeNull());
+    expect(context.data.nodes()).toHaveLength(14);
   });
 
   it('keeps the whole pasted tree clear of the other trees', () => {
     // The middle of the viewport, (1000, -100), lies on the second tree.
     const context = makeMap({ minX: 600, maxX: 1400, minY: -400, maxY: 200 });
     const size = { width: 120, height: 40 };
-    context.nodes.getNodes().forEach(node => (node.dimensions = { ...size }));
+    context.data
+      .nodes()
+      .forEach(node => context.sizes.set(node.id, { ...size }));
     context.clipboard.copy('second');
 
     context.clipboard.pasteTree();
 
-    const pasted = pastedNodes(context.nodes, context.events);
-    pasted.forEach(node => (node.dimensions = { ...size }));
-    const [pastedTree] = treeBounds(pasted, () => pasted[0]);
+    const pasted = pastedNodes(context);
+    const pastedIds = new Set(pasted.map(node => node.id));
+    pasted.forEach(node => context.sizes.set(node.id, { ...size }));
+    const [pastedTree] = treeBounds(
+      pasted,
+      () => pasted[0],
+      context.nodes.boundsOf
+    );
+    const records = context.nodes.scan();
     const others = treeBounds(
-      context.nodes.getNodes().filter(node => !pasted.includes(node)),
-      node => context.nodes.getTreeRoot(node)
+      [...records.values()].filter(node => !pastedIds.has(node.id)),
+      node => records.get(context.nodes.treeRoot(node.id)) ?? node,
+      context.nodes.boundsOf
     );
     expect(others).toHaveLength(2);
     others.forEach(tree => {

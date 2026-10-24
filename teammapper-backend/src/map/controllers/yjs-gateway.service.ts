@@ -15,6 +15,13 @@ import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsPersistenceService } from '../services/yjs-persistence.service'
+import configService from '../../config.service'
+import {
+  applyValidatedMapUpdate,
+  MapUpdateOrigin,
+  isRejectedMap,
+} from '../utils/yjsValidation'
+import { WS_CLOSE_MAP_SYNC_RESET } from '@teammapper/shared'
 import { MapsService } from '../services/maps.service'
 import { WsConnectionLimiterService } from '../services/ws-connection-limiter.service'
 import {
@@ -31,7 +38,8 @@ import {
   WS_CLOSE_TRY_AGAIN,
   ConnectionMeta,
   extractPathname,
-  parseQueryParams,
+  parseMapId,
+  offersCurrentSubprotocol,
   parseSecretSubprotocol,
   selectSubprotocol,
   checkWriteAccess,
@@ -43,12 +51,31 @@ import {
   processReadOnlySyncMessage,
   parseAwarenessClientIds,
 } from '../utils/yjsProtocol'
+import {
+  MessageBudget,
+  MapMessageBudget,
+  openMessageBudget,
+  openMapMessageBudget,
+  currentBudget,
+  addMessage,
+  chargeShare,
+  overrunsMap,
+} from '../utils/yjsMessageBudget'
 
 @Injectable()
 export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(YjsGateway.name)
   private wss: WebSocketServer | null = null
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null
+
+  // Each connection has a budget for all its messages. Each map has a budget
+  // for sync messages, shared by its peers. The gateway keys both weakly, so
+  // a map's budget survives reconnects for as long as the map stays loaded,
+  // and the garbage collector frees it once the doc manager evicts the map.
+  private readonly connectionBudgets = new WeakMap<WebSocket, MessageBudget>()
+  private readonly mapBudgets = new WeakMap<Y.Doc, MapMessageBudget>()
+  private readonly rejectedConnections = new WeakSet<WebSocket>()
+  private readonly resetUntil = new Map<string, number>()
 
   // Connections per map
   private readonly mapConnections = new Map<string, Set<WebSocket>>()
@@ -89,6 +116,16 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
       'upgrade',
       (request: IncomingMessage, socket: Duplex, head: Buffer) => {
         if (!extractPathname(request.url).startsWith('/yjs')) return
+
+        if (
+          !offersCurrentSubprotocol(request.headers['sec-websocket-protocol'])
+        ) {
+          socket.write(
+            'HTTP/1.1 426 Upgrade Required\r\nUpgrade: websocket\r\nConnection: close\r\n\r\n'
+          )
+          socket.destroy()
+          return
+        }
 
         const rejection = this.limiter.checkLimits(request)
         if (rejection) {
@@ -153,6 +190,9 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     this.limiter.cleanupExpiredRateWindows()
+    for (const [mapId, until] of this.resetUntil) {
+      if (until <= Date.now()) this.resetUntil.delete(mapId)
+    }
   }
 
   private async handleConnection(
@@ -206,26 +246,55 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     signal: AbortSignal
   ): Promise<void> {
     try {
-      const { mapId, secret: querySecret } = parseQueryParams(req.url)
-      const secret =
-        parseSecretSubprotocol(req.headers['sec-websocket-protocol']) ??
-        querySecret
+      const mapId = parseMapId(req.url)
+      const secret = parseSecretSubprotocol(
+        req.headers['sec-websocket-protocol']
+      )
       if (!mapId) {
         this.rejectConnection(ws, ip, WS_CLOSE_MISSING_PARAM, 'Missing mapId')
         return
       }
 
+      if ((this.resetUntil.get(mapId) ?? 0) > Date.now()) {
+        this.rejectConnection(
+          ws,
+          ip,
+          WS_CLOSE_TRY_AGAIN,
+          'Map sync reset; retry later'
+        )
+        return
+      }
       const map = await this.mapsService.findMap(mapId)
       if (signal.aborted) return
+      if ((this.resetUntil.get(mapId) ?? 0) > Date.now()) {
+        this.rejectConnection(
+          ws,
+          ip,
+          WS_CLOSE_TRY_AGAIN,
+          'Map sync reset; retry later'
+        )
+        return
+      }
       if (!map) {
         this.rejectConnection(ws, ip, WS_CLOSE_MAP_NOT_FOUND, 'Map not found')
         return
       }
 
       const doc = await this.docManager.getOrCreateDoc(mapId)
-      if (signal.aborted) {
+      if (
+        signal.aborted ||
+        isRejectedMap(doc) ||
+        (this.resetUntil.get(mapId) ?? 0) > Date.now()
+      ) {
         const count = this.mapConnections.get(mapId)?.size ?? 0
         this.docManager.restoreGraceTimer(mapId, count)
+        if (!signal.aborted)
+          this.rejectConnection(
+            ws,
+            ip,
+            WS_CLOSE_MAP_SYNC_RESET,
+            'Map sync reset'
+          )
         return
       }
 
@@ -234,6 +303,10 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
         const writable = checkWriteAccess(map.modificationSecret, secret)
         const count = this.trackConnection(ws, mapId, writable, ip)
         await this.docManager.notifyClientCount(mapId, count)
+        if (isRejectedMap(doc)) {
+          setupComplete = true
+          return
+        }
         this.setupSync(ws, doc, mapId, writable)
         setupComplete = true
       } finally {
@@ -386,36 +459,121 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     writable: boolean,
     data: Uint8Array
   ): void {
+    if (
+      ws.readyState !== WebSocket.OPEN ||
+      this.rejectedConnections.has(ws) ||
+      isRejectedMap(doc)
+    )
+      return
+    if (!this.acceptConnectionMessage(ws, data.byteLength)) {
+      this.rejectOverLimit(ws)
+      return
+    }
     try {
+      if (data.byteLength > WS_MAX_PAYLOAD) throw new Error('Message too large')
       const decoder = decoding.createDecoder(data)
       const messageType = decoding.readVarUint(decoder)
 
       switch (messageType) {
         case MESSAGE_SYNC:
-          this.handleSyncMessage(ws, doc, decoder, writable)
+          if (this.acceptMapMessage(ws, doc, data.byteLength))
+            this.handleSyncMessage(ws, doc, decoder, writable, mapId)
+          else this.rejectOverLimit(ws)
           break
         case MESSAGE_AWARENESS:
           this.handleAwarenessMessage(ws, awareness, mapId, decoder)
           break
       }
     } catch (error) {
-      this.logger.error(
-        `Message handling error: ${error instanceof Error ? error.message : String(error)}`
+      this.rejectedConnections.add(ws)
+      ws.close(1008, 'Invalid or oversized map update')
+      this.logger.debug(
+        `Rejected message on map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
       )
     }
+  }
+
+  /**
+   * Closes a connection that exceeded a message budget, and ignores the rest
+   * of its messages.
+   */
+  private rejectOverLimit(ws: WebSocket): void {
+    this.rejectedConnections.add(ws)
+    ws.close(1008, 'Map message rate limit exceeded')
+  }
+
+  /**
+   * Charges any message, presence included, to the connection that sent it.
+   * Returns false once the connection exceeds its budget.
+   */
+  private acceptConnectionMessage(ws: WebSocket, bytes: number): boolean {
+    const limits = configService.getYjsMessageLimits()
+    const budget = currentBudget(
+      this.connectionBudgets,
+      ws,
+      limits.windowMs,
+      openMessageBudget
+    )
+    addMessage(budget, bytes)
+    return budget.count <= limits.maxMessages && budget.bytes <= limits.maxBytes
+  }
+
+  /**
+   * Charges a sync message to the map, under the sending connection. Past
+   * the map's limit, the gateway closes the sender only when no other
+   * connection sent more within the window, so lighter peers stay connected. Each share
+   * belongs to one connection, because behind a reverse proxy every peer can
+   * arrive from the same client IP.
+   */
+  private acceptMapMessage(ws: WebSocket, doc: Y.Doc, bytes: number): boolean {
+    const { windowMs, maxMessages, maxBytes } =
+      configService.getYjsMessageLimits()
+    const budget = currentBudget(
+      this.mapBudgets,
+      doc,
+      windowMs,
+      openMapMessageBudget
+    )
+    const share = chargeShare(budget, ws, bytes)
+    return !(
+      overrunsMap(budget, share, 'count', maxMessages) ||
+      overrunsMap(budget, share, 'bytes', maxBytes)
+    )
   }
 
   private handleSyncMessage(
     ws: WebSocket,
     doc: Y.Doc,
     decoder: decoding.Decoder,
-    writable: boolean
+    writable: boolean,
+    mapId: string
   ): void {
     const encoder = encoding.createEncoder()
     encoding.writeVarUint(encoder, MESSAGE_SYNC)
 
     if (writable) {
-      syncProtocol.readSyncMessage(decoder, encoder, doc, null)
+      const syncType = decoding.readVarUint(decoder)
+      if (syncType === syncProtocol.messageYjsSyncStep1) {
+        syncProtocol.readSyncStep1(decoder, encoder, doc)
+      } else if (
+        syncType === syncProtocol.messageYjsSyncStep2 ||
+        syncType === syncProtocol.messageYjsUpdate
+      ) {
+        const update = decoding.readVarUint8Array(decoder)
+        if (decoding.hasContent(decoder)) throw new Error('Trailing sync data')
+        try {
+          applyValidatedMapUpdate(
+            doc,
+            update,
+            ws,
+            configService.getYjsMapLimits()
+          )
+        } catch {
+          this.resetMap(mapId)
+        }
+      } else {
+        throw new Error('Unknown sync message')
+      }
     } else {
       processReadOnlySyncMessage(decoder, encoder, doc)
     }
@@ -423,6 +581,32 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     if (encoding.length(encoder) > 1) {
       this.send(ws, encoding.toUint8Array(encoder))
     }
+  }
+
+  private resetMap(mapId: string): void {
+    this.resetUntil.set(
+      mapId,
+      Date.now() + configService.getYjsMessageLimits().windowMs
+    )
+    const connections = this.mapConnections.get(mapId)
+    // Detach old sockets before closing them: their close callbacks must not
+    // persist rejected state or clean up resources belonging to a new map.
+    this.mapConnections.delete(mapId)
+    for (const ws of connections ?? []) {
+      const meta = this.connectionMeta.get(ws)
+      if (meta) this.limiter.releaseConnection(meta.ip)
+      this.connectionMeta.delete(ws)
+      this.rejectedConnections.add(ws)
+    }
+    this.cleanupMapResources(mapId)
+    this.docManager.destroyDoc(mapId)
+    for (const ws of connections ?? []) {
+      ws.close(WS_CLOSE_MAP_SYNC_RESET, 'Map sync reset')
+      // A peer ignoring the close handshake must not keep rejected state
+      // alive through the message handlers captured by its socket.
+      setTimeout(() => ws.terminate(), 1000).unref()
+    }
+    this.logger.warn(`Discarded rejected sync state for map ${mapId}`)
   }
 
   private handleAwarenessMessage(
@@ -460,8 +644,9 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     awareness: awarenessProtocol.Awareness
   ): void {
     const meta = this.connectionMeta.get(ws)
+    if (!meta) return
 
-    if (meta && meta.awarenessClientIds.size > 0) {
+    if (meta.awarenessClientIds.size > 0) {
       awarenessProtocol.removeAwarenessStates(
         awareness,
         Array.from(meta.awarenessClientIds),
@@ -514,11 +699,13 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     if (this.docUpdateHandlers.has(mapId)) return
 
     const handler = (update: Uint8Array, origin: unknown): void => {
+      if (origin instanceof MapUpdateOrigin && !origin.accepted) return
+      const sender = origin instanceof MapUpdateOrigin ? origin.sender : origin
       const message = encodeSyncUpdateMessage(update)
       this.broadcastToMap(
         mapId,
         message,
-        origin instanceof WebSocket ? origin : null
+        sender instanceof WebSocket ? sender : null
       )
     }
 
@@ -570,6 +757,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     }
     this.mapConnections.clear()
     this.connectionMeta.clear()
+    this.resetUntil.clear()
     this.limiter.reset()
 
     if (this.heartbeatInterval) {

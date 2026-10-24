@@ -1,118 +1,120 @@
-import Nodes from './nodes.js';
-import Node, { NodeProperties } from '../models/node.js';
+import type Nodes from './nodes.js';
+import Export from './export.js';
+import { fakeDraw } from '../../test/fake-draw.js';
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import { DefaultNodeValues } from '../options.js';
-import MmpMap from '../map.js';
+import type { ResolvedNode } from '../data/node-record.js';
 import { NODE_HORIZONTAL_SPACING, type Bounds } from './node-geometry.js';
 import {
   NEW_TREE_FOOTPRINT,
   NEW_TREE_GAP,
-  nodeBounds,
   treeBounds,
 } from './tree-placement.js';
-import type { ExportNodeProperties } from '@teammapper/shared';
+import type { MapNodeDimensions, MapSnapshot } from '@teammapper/shared';
 
 /**
- * A map may hold several trees. A node with no parent is a root, whether or
- * not it carries the main-root mark. Nodes measures sides, sibling navigation
- * and branch colors against the root of each node's own tree.
+ * A map may hold several trees. A node with no parent is a root, whatever its
+ * isRoot attribute holds. Nodes measures sides, sibling navigation and branch
+ * colors against the root of each node's own tree.
  */
 
 interface NodesInternals {
-  nodes: Map<string, Node>;
-  selectedNode: Node | null;
-  moveSelectionOnLevel(selected: Node, direction: boolean): void;
-  moveSelectionOnBranch(selected: Node, direction: boolean): void;
+  moveSelectionOnLevel(selected: ResolvedNode, direction: boolean): void;
+  moveSelectionOnBranch(selected: ResolvedNode, direction: boolean): void;
 }
 
-function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
-  return new Node({ k: 1, parent: null, ...properties });
-}
-
-function exported(
-  id: string,
-  parent: string,
-  coordinates = { x: 0, y: 0 }
-): ExportNodeProperties {
-  return {
-    ...DefaultNodeValues,
-    id,
-    parent,
-    k: 1,
-    coordinates,
-    colors: { ...DefaultNodeValues.colors },
-  };
-}
+const ROOT = nodeRecord({ id: 'root', isRoot: true });
+const BRANCH = nodeRecord({
+  id: 'branch',
+  parent: 'root',
+  coordinates: { x: 200, y: 0 },
+});
+const SECOND_ROOT = nodeRecord({
+  id: 'second-root',
+  coordinates: { x: 1000, y: 0 },
+  colors: { ...DefaultNodeValues.colors, branch: '' },
+});
 
 /**
- * `view` is the visible area the zoom stub reports. The default null stands
- * for jsdom's svg, which has no size.
+ * The main tree (root, branch) and a second root, plus `extra`, with the
+ * branch selected. `view` is the visible area the zoom stub reports. The
+ * default null stands for jsdom's svg, which has no size.
  */
-function makeMap(view: Bounds | null = null): {
-  handler: Nodes;
-  internals: NodesInternals;
-  nodes: Record<string, Node>;
-  history: { save: jest.Mock };
-  zoom: { visibleArea: jest.Mock; panIntoView: jest.Mock };
-} {
-  const history = { save: jest.fn() };
-  const zoom = { visibleArea: jest.fn(() => view), panIntoView: jest.fn() };
-  const map = {
-    rootId: 'root',
-    options: { defaultNode: DefaultNodeValues },
-    draw: { update: jest.fn() },
-    events: { call: jest.fn() },
-    history,
+function makeMap(view: Bounds | null = null, extra: MapSnapshot = []) {
+  const sizes = new Map<string, MapNodeDimensions>();
+  const zoom = {
+    center: jest.fn(),
+    visibleArea: jest.fn(() => view),
+    panIntoView: jest.fn(),
+  };
+  const stub = stubMap([ROOT, BRANCH, SECOND_ROOT, ...extra], {
+    draw: fakeDraw(node => sizes.get(node.id) ?? { width: 0, height: 0 }),
     zoom,
-  } as unknown as MmpMap;
-
-  const handler = new Nodes(map);
-  map.nodes = handler;
-  const internals = handler as unknown as NodesInternals;
-
-  const root = makeNode({ id: 'root', isRoot: true });
-  const branch = makeNode({
-    id: 'branch',
-    parent: root,
-    coordinates: { x: 200, y: 0 },
   });
-  const secondRoot = makeNode({
-    id: 'second-root',
-    coordinates: { x: 1000, y: 0 },
-  });
+  stub.nodes.selectNode('branch');
+  const internals = stub.nodes as unknown as NodesInternals;
 
-  const nodes = { root, branch, secondRoot };
-  for (const node of Object.values(nodes)) internals.nodes.set(node.id, node);
-  internals.selectedNode = branch;
-
-  return { handler, internals, nodes, history, zoom };
+  return { ...stub, handler: stub.nodes, internals, zoom, sizes };
 }
 
-describe('addNodes', () => {
+function record(handler: Nodes, id: string): ResolvedNode {
+  const node = handler.record(id);
+  if (!node) throw new Error('no node ' + id);
+  return node;
+}
+
+describe('a peer write of a second tree', () => {
   it('keeps a root parentless whatever node is selected', () => {
-    const { handler, nodes } = makeMap();
+    const { handler, data } = makeMap();
 
-    handler.addNodes([exported('third-root', '', { x: 2000, y: 0 })], false);
+    data.addNodes([
+      nodeRecord({ id: 'third-root', coordinates: { x: 2000, y: 0 } }),
+    ]);
 
-    expect(handler.getNode('third-root')?.parent).toBeNull();
-    expect(handler.getChildren(nodes.branch)).toEqual([]);
+    expect(handler.parentOf('third-root')).toBeNull();
+    expect(handler.children('branch')).toEqual([]);
   });
 
   it('attaches the nodes of a second tree to their own root', () => {
-    const { handler, nodes } = makeMap();
+    const { handler, data } = makeMap();
 
-    handler.addNodes(
-      [
-        exported('third-root', '', { x: 2000, y: 0 }),
-        exported('child', 'third-root', { x: 1800, y: -120 }),
-        exported('grandchild', 'child', { x: 1600, y: -240 }),
-      ],
-      false
+    data.addNodes([
+      nodeRecord({ id: 'third-root', coordinates: { x: 2000, y: 0 } }),
+      nodeRecord({
+        id: 'child',
+        parent: 'third-root',
+        coordinates: { x: 1800, y: -120 },
+      }),
+      nodeRecord({
+        id: 'grandchild',
+        parent: 'child',
+        coordinates: { x: 1600, y: -240 },
+      }),
+    ]);
+
+    expect(handler.parentOf('third-root')).toBeNull();
+    expect(handler.parentOf('child')).toBe('third-root');
+    expect(handler.parentOf('grandchild')).toBe('child');
+    expect(handler.children('branch')).toEqual([]);
+  });
+
+  it('draws the added nodes and the parent they join in one pass', () => {
+    const { data, draw } = makeMap();
+    draw.drawNodes.mockClear();
+
+    data.addNodes([
+      nodeRecord({ id: 'third-root', coordinates: { x: 2000, y: 0 } }),
+      nodeRecord({
+        id: 'child',
+        parent: 'third-root',
+        coordinates: { x: 1800, y: -120 },
+      }),
+    ]);
+
+    expect(draw.drawNodes).toHaveBeenCalledTimes(1);
+    expect(new Set(draw.drawNodes.mock.calls[0][0])).toEqual(
+      new Set(['third-root', 'child'])
     );
-
-    expect(handler.getNode('third-root')?.parent).toBeNull();
-    expect(handler.getNode('child')?.parent?.id).toBe('third-root');
-    expect(handler.getNode('grandchild')?.parent?.id).toBe('child');
-    expect(handler.getChildren(nodes.branch)).toEqual([]);
   });
 });
 
@@ -120,51 +122,60 @@ describe('addNode', () => {
   it('adds a root for an explicit null parent', () => {
     const { handler } = makeMap();
 
-    const added = handler.addNode(
-      { coordinates: { x: 2000, y: 0 } },
-      false,
-      false,
-      null
-    );
+    const added = handler.addNode({ coordinates: { x: 2000, y: 0 } }, null);
 
-    expect(added.parent).toBeNull();
-    expect(added.isRoot).toBe(false);
+    expect(added?.parent).toBeNull();
+    expect(added?.isRoot).toBe(false);
+  });
+
+  it('stores null as the parent of a new root and exports it', () => {
+    const { handler, data, map } = makeMap();
+
+    const added = handler.addNode({}, null);
+    if (!added) throw new Error('addNode added no root');
+
+    expect(data.node(added.id)?.parent).toBeNull();
+    const exported = new Export(map).asJSON();
+    expect(exported.find(node => node.id === added.id)?.parent).toBeNull();
   });
 
   it('gives a root branch color empty by default', () => {
     const { handler } = makeMap();
 
-    const added = handler.addNode(
-      { coordinates: { x: 2000, y: 0 } },
-      false,
-      false,
-      null
-    );
+    const added = handler.addNode({ coordinates: { x: 2000, y: 0 } }, null);
 
-    expect(added.colors.branch).toBe('');
+    expect(added?.colors?.branch).toBe('');
   });
 
   it('attaches a child to a second root', () => {
-    const { handler, nodes } = makeMap();
+    const { handler } = makeMap();
 
-    const added = handler.addNode({}, false, false, nodes.secondRoot.id);
+    const added = handler.addNode({}, 'second-root');
 
-    expect(added.parent).toBe(nodes.secondRoot);
-    expect(added.coordinates).toEqual({ x: 800, y: -120 });
+    expect(added?.parent).toBe('second-root');
+    expect(added?.coordinates).toEqual({ x: 800, y: -120 });
+  });
+
+  it('leaves the selection where it was', () => {
+    const { handler } = makeMap();
+
+    handler.addNode({}, 'second-root');
+
+    expect(handler.getSelectedNode()?.id).toBe('branch');
   });
 });
 
 describe('newTreeCoordinates', () => {
-  function sizeNodes(nodes: Record<string, Node>, width: number): void {
-    for (const node of Object.values(nodes)) {
-      node.dimensions = { width, height: 30 };
+  function sizeNodes(sizes: Map<string, MapNodeDimensions>, width: number) {
+    for (const id of ['root', 'branch', 'second-root']) {
+      sizes.set(id, { width, height: 30 });
     }
   }
 
   it('places the new root two spacings right of the bounding box of every tree', () => {
-    const { handler, nodes } = makeMap();
-    sizeNodes(nodes, 120);
-    const rightEdge = nodes.secondRoot.coordinates.x + 60;
+    const { handler, sizes } = makeMap();
+    sizeNodes(sizes, 120);
+    const rightEdge = 1000 + 60;
 
     expect(handler.newTreeCoordinates().x).toBe(
       rightEdge + 2 * NODE_HORIZONTAL_SPACING
@@ -172,28 +183,29 @@ describe('newTreeCoordinates', () => {
   });
 
   it("keeps the new root's first child clear of the other trees", () => {
-    const { handler, nodes } = makeMap();
-    sizeNodes(nodes, 120);
-    const rightEdge = nodes.secondRoot.coordinates.x + 60;
+    const { handler, sizes } = makeMap();
+    sizeNodes(sizes, 120);
+    const rightEdge = 1000 + 60;
     const root = handler.addNode(
       { coordinates: handler.newTreeCoordinates() },
-      false,
-      false,
       null
     );
+    if (!root) throw new Error('addNode added no root');
 
-    const child = handler.addNode({}, false, false, root.id);
-    child.dimensions = { width: 120, height: 30 };
+    const child = handler.addNode({}, root.id);
+    if (!child?.coordinates || !root.coordinates) {
+      throw new Error('addNode added no child');
+    }
 
     expect(child.coordinates.x).toBeLessThan(root.coordinates.x);
     expect(child.coordinates.x - 60).toBeGreaterThan(rightEdge);
   });
 
   it("measures the right edge from each node's width", () => {
-    const { handler, nodes } = makeMap();
-    sizeNodes(nodes, 100);
-    nodes.branch.coordinates = { x: 950, y: 0 };
-    nodes.branch.dimensions = { width: 400, height: 30 };
+    const { handler, sizes } = makeMap(null);
+    sizeNodes(sizes, 100);
+    handler.updateNode('coordinates', { x: 950, y: 0 }, 'branch');
+    sizes.set('branch', { width: 400, height: 30 });
 
     expect(handler.newTreeCoordinates().x).toBe(
       1150 + 2 * NODE_HORIZONTAL_SPACING
@@ -201,9 +213,9 @@ describe('newTreeCoordinates', () => {
   });
 
   it('keeps the new root level with the main root', () => {
-    const { handler, nodes } = makeMap();
-    nodes.root.coordinates = { x: 0, y: 340 };
-    nodes.secondRoot.coordinates = { x: 1000, y: -500 };
+    const { handler } = makeMap();
+    handler.updateNode('coordinates', { x: 0, y: 340 }, 'root');
+    handler.updateNode('coordinates', { x: 1000, y: -500 }, 'second-root');
 
     expect(handler.newTreeCoordinates().y).toBe(340);
   });
@@ -212,10 +224,10 @@ describe('newTreeCoordinates', () => {
     const { handler } = makeMap();
     const coordinates = handler.newTreeCoordinates();
 
-    const added = handler.addNode({ coordinates }, false, false, null);
+    const added = handler.addNode({ coordinates }, null);
 
-    expect(added.coordinates).toEqual(coordinates);
-    expect(added.parent).toBeNull();
+    expect(added?.coordinates).toEqual(coordinates);
+    expect(added?.parent).toBeNull();
   });
 });
 
@@ -228,8 +240,11 @@ describe('newTreeCoordinates with a viewport', () => {
       minY: point.y + NEW_TREE_FOOTPRINT.minY,
       maxY: point.y + NEW_TREE_FOOTPRINT.maxY,
     };
-    const trees = treeBounds(handler.getNodes(), node =>
-      handler.getTreeRoot(node)
+    const records = handler.scan();
+    const trees = treeBounds(
+      [...records.values()],
+      node => records.get(handler.treeRoot(node.id)) ?? node,
+      handler.boundsOf
     );
 
     return trees.some(
@@ -253,13 +268,13 @@ describe('newTreeCoordinates with a viewport', () => {
   });
 
   it('moves the new tree to the nearest clear spot when a tree fills the middle', () => {
-    const { handler, nodes } = makeMap({
+    const { handler, sizes } = makeMap({
       minX: 600,
       maxX: 1400,
       minY: -300,
       maxY: 300,
     });
-    nodes.secondRoot.dimensions = { width: 120, height: 60 };
+    sizes.set('second-root', { width: 120, height: 60 });
 
     const coordinates = handler.newTreeCoordinates();
 
@@ -272,33 +287,34 @@ describe('newTreeCoordinates with a viewport', () => {
 
   it('places the new tree outside a viewport a tree fills and pans to it', () => {
     const view = { minX: 900, maxX: 1100, minY: -100, maxY: 100 };
-    const { handler, nodes, zoom } = makeMap(view);
-    nodes.secondRoot.dimensions = { width: 2000, height: 1000 };
-    handler.selectNode = jest.fn();
+    const { handler, zoom, sizes } = makeMap(view);
+    sizes.set('second-root', { width: 2000, height: 1000 });
 
     const { x, y } = handler.newTreeCoordinates();
     const crowds = crowdsATree(handler, { x, y });
     const root = handler.addTree();
+    if (!root) throw new Error('addTree added no root');
 
     const inView =
       x >= view.minX && x <= view.maxX && y >= view.minY && y <= view.maxY;
     expect(inView).toBe(false);
     expect(crowds).toBe(false);
     expect(root.coordinates).toEqual({ x, y });
-    expect(zoom.panIntoView).toHaveBeenCalledWith(nodeBounds(root));
+    expect(zoom.panIntoView).toHaveBeenCalledWith(
+      handler.boundsOf(record(handler, root.id))
+    );
   });
 });
 
 describe('addTree', () => {
-  it('adds a root with no parent and no main-root mark', () => {
+  it('adds a root with no parent and isRoot unset', () => {
     const { handler } = makeMap();
-    handler.selectNode = jest.fn();
 
     const root = handler.addTree();
 
-    expect(root.parent).toBeNull();
-    expect(root.isRoot).toBe(false);
-    expect(root.coordinates).toEqual({
+    expect(root?.parent).toBeNull();
+    expect(root?.isRoot).toBe(false);
+    expect(root?.coordinates).toEqual({
       x: 1000 + 2 * NODE_HORIZONTAL_SPACING,
       y: 0,
     });
@@ -306,107 +322,110 @@ describe('addTree', () => {
 
   it('selects the new root and pans the view to it', () => {
     const { handler, zoom } = makeMap();
-    const selectNode = jest.fn();
-    handler.selectNode = selectNode;
 
     const root = handler.addTree();
+    if (!root) throw new Error('addTree added no root');
 
-    expect(selectNode).toHaveBeenCalledWith(root.id);
-    expect(zoom.panIntoView).toHaveBeenCalledWith(nodeBounds(root));
+    expect(handler.getSelectedNode()?.id).toBe(root.id);
+    expect(zoom.panIntoView).toHaveBeenCalledWith(
+      handler.boundsOf(record(handler, root.id))
+    );
   });
 });
 
-describe('getOrientation', () => {
+describe('orientation', () => {
   it("reads the side against the root of the node's own tree", () => {
-    const { handler, nodes } = makeMap();
-    const leftOfSecond = makeNode({
-      id: 'left-of-second',
-      parent: nodes.secondRoot,
-      coordinates: { x: 800, y: 0 },
-    });
+    const { handler } = makeMap(null, [
+      nodeRecord({
+        id: 'left-of-second',
+        parent: 'second-root',
+        coordinates: { x: 800, y: 0 },
+      }),
+    ]);
 
-    expect(handler.getOrientation(leftOfSecond)).toBe(true);
-    expect(handler.getOrientation(nodes.branch)).toBe(false);
+    expect(handler.orientation('left-of-second')).toBe(true);
+    expect(handler.orientation('branch')).toBe(false);
   });
 
   it('gives every root no side', () => {
-    const { handler, nodes } = makeMap();
+    const { handler } = makeMap();
 
-    expect(handler.getOrientation(nodes.root)).toBeUndefined();
-    expect(handler.getOrientation(nodes.secondRoot)).toBeUndefined();
+    expect(handler.orientation('root')).toBeUndefined();
+    expect(handler.orientation('second-root')).toBeUndefined();
   });
 });
 
-describe('getTreeRoot', () => {
+describe('treeRoot', () => {
   it('returns the ancestor with no parent', () => {
-    const { handler, nodes } = makeMap();
-    const child = makeNode({ id: 'child', parent: nodes.secondRoot });
-    const grandchild = makeNode({ id: 'grandchild', parent: child });
+    const { handler } = makeMap(null, [
+      nodeRecord({ id: 'child', parent: 'second-root' }),
+      nodeRecord({ id: 'grandchild', parent: 'child' }),
+    ]);
 
-    expect(handler.getTreeRoot(grandchild)).toBe(nodes.secondRoot);
-    expect(handler.getTreeRoot(nodes.secondRoot)).toBe(nodes.secondRoot);
+    expect(handler.treeRoot('grandchild')).toBe('second-root');
+    expect(handler.treeRoot('second-root')).toBe('second-root');
   });
 
   it('stops at a cycle of ancestors', () => {
-    const { handler } = makeMap();
-    const first = makeNode({ id: 'first' });
-    const second = makeNode({ id: 'second', parent: first });
-    first.parent = second;
+    const { handler } = makeMap(null, [
+      nodeRecord({ id: 'first', parent: 'second' }),
+      nodeRecord({ id: 'second', parent: 'first' }),
+    ]);
 
-    expect(handler.getTreeRoot(first)).toBe(second);
+    expect(handler.treeRoot('first')).toBe('second');
   });
 });
 
 describe('moveSelectionOnLevel', () => {
   it('stays on the side of the second root', () => {
-    const { handler, internals, nodes } = makeMap();
-    const children = [
-      makeNode({
+    const { handler, internals } = makeMap(null, [
+      nodeRecord({
         id: 'left',
-        parent: nodes.secondRoot,
+        parent: 'second-root',
         coordinates: { x: 800, y: 0 },
       }),
-      makeNode({
+      nodeRecord({
         id: 'right',
-        parent: nodes.secondRoot,
+        parent: 'second-root',
         coordinates: { x: 1200, y: 100 },
       }),
-      makeNode({
+      nodeRecord({
         id: 'left-low',
-        parent: nodes.secondRoot,
+        parent: 'second-root',
         coordinates: { x: 800, y: 200 },
       }),
-    ];
-    children.forEach(child => internals.nodes.set(child.id, child));
-    const selectNode = jest.fn();
-    handler.selectNode = selectNode;
+    ]);
+    // A node id 'left' reads as a direction, so the spy selects nothing.
+    const selectNode = jest
+      .spyOn(handler, 'selectNode')
+      .mockImplementation(() => null);
 
-    internals.moveSelectionOnLevel(children[0], false);
+    internals.moveSelectionOnLevel(record(handler, 'left'), false);
 
     expect(selectNode).toHaveBeenCalledWith('left-low');
   });
 });
 
 describe('moveSelectionOnBranch', () => {
-  function selectionFromSecondRoot(direction: boolean): string[] {
-    const { handler, internals, nodes } = makeMap();
-    const children = [
-      makeNode({
+  function selectionFromSecondRoot(direction: boolean): unknown[] {
+    const { handler, internals } = makeMap(null, [
+      nodeRecord({
         id: 'left',
-        parent: nodes.secondRoot,
+        parent: 'second-root',
         coordinates: { x: 800, y: 0 },
       }),
-      makeNode({
+      nodeRecord({
         id: 'right',
-        parent: nodes.secondRoot,
+        parent: 'second-root',
         coordinates: { x: 1200, y: 0 },
       }),
-    ];
-    children.forEach(child => internals.nodes.set(child.id, child));
-    const selectNode = jest.fn();
-    handler.selectNode = selectNode;
+    ]);
+    // A node id 'left' reads as a direction, so the spy selects nothing.
+    const selectNode = jest
+      .spyOn(handler, 'selectNode')
+      .mockImplementation(() => null);
 
-    internals.moveSelectionOnBranch(nodes.secondRoot, direction);
+    internals.moveSelectionOnBranch(record(handler, 'second-root'), direction);
 
     return selectNode.mock.calls.map(call => call[0]);
   }
@@ -422,33 +441,23 @@ describe('moveSelectionOnBranch', () => {
 
 describe('updateNode branchColor', () => {
   it('refuses a branch color on a second root', () => {
-    const { handler, nodes } = makeMap();
+    const { handler, data } = makeMap();
 
     expect(() =>
-      handler.updateNode(
-        'branchColor',
-        '#ff0000',
-        false,
-        false,
-        nodes.secondRoot.id
-      )
+      handler.updateNode('branchColor', '#ff0000', 'second-root')
     ).toThrow('A root node has no branches');
-    expect(nodes.secondRoot.colors.branch).toBe('');
+    expect(data.node('second-root')?.colors?.branch).toBe('');
   });
 
-  it('accepts the unchanged branch color of a root, as a colors sync sends it', () => {
-    const { handler, nodes, history } = makeMap();
-    nodes.secondRoot.colors.branch = '#577a96';
+  it('accepts the unchanged branch color of a root, as a colors write sends it', () => {
+    const { handler, data } = makeMap();
+    data.updateNode('second-root', 'branchColor', '#577a96');
+    const listener = jest.fn();
+    data.subscribe(listener);
 
-    handler.updateNode(
-      'branchColor',
-      '#577a96',
-      false,
-      true,
-      nodes.secondRoot.id
-    );
+    handler.updateNode('branchColor', '#577a96', 'second-root');
 
-    expect(nodes.secondRoot.colors.branch).toBe('#577a96');
-    expect(history.save).not.toHaveBeenCalled();
+    expect(data.node('second-root')?.colors?.branch).toBe('#577a96');
+    expect(listener).not.toHaveBeenCalled();
   });
 });

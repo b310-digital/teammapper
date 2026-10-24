@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import {
   MatDialogRef,
   MatDialogTitle,
@@ -39,7 +38,6 @@ export class DialogImportMermaidComponent {
 
   private dialogRef =
     inject<MatDialogRef<DialogImportMermaidComponent>>(MatDialogRef);
-  private router = inject(Router);
 
   public mermaidInput = '';
 

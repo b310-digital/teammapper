@@ -1,3 +1,5 @@
+import configService from '../../config.service'
+import { ThrottlerException } from '@nestjs/throttler'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { PayloadTooLargeException } from '@nestjs/common'
@@ -11,6 +13,7 @@ import {
 } from '../../../test/db'
 import { truncateDatabase } from '../../../test/helper'
 import { LOGO_PNG } from '../../../test/imageFixtures'
+import { createClientRootNode } from '../utils/tests/mapFactories'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpImage } from '../entities/mmpImage.entity'
@@ -110,6 +113,27 @@ describe('ImagesService', () => {
       })
     })
 
+    it('allows only one concurrent upload when the remaining cap fits one image', async () => {
+      const cap = jest
+        .spyOn(configService, 'getMaxImageBytesPerMap')
+        .mockReturnValue(LOGO_PNG.length)
+      try {
+        const map = await createMap()
+        const results = await Promise.allSettled([
+          imagesService.storeImage(map.id, pngUpload()),
+          imagesService.storeImage(map.id, pngUpload()),
+        ])
+        expect(
+          results.filter((result) => result.status === 'fulfilled')
+        ).toHaveLength(1)
+        const rejection = results.find((result) => result.status === 'rejected')
+        expect(rejection?.reason).toBeInstanceOf(PayloadTooLargeException)
+        expect(await imagesRepo.countBy({ mapId: map.id })).toBe(1)
+      } finally {
+        cap.mockRestore()
+      }
+    })
+
     it('rejects an upload above the map cap and stores nothing', async () => {
       const previous = process.env.MAX_IMAGE_BYTES_PER_MAP
       // The cap fits one logo.
@@ -152,6 +176,91 @@ describe('ImagesService', () => {
       const map = await createMap()
 
       expect(await imagesService.readImage(map.id, '../secret')).toBeNull()
+    })
+  })
+
+  describe('duplication limits', () => {
+    afterEach(() => jest.restoreAllMocks())
+
+    it('counts repeated copies and copies of copies against one budget', async () => {
+      jest
+        .spyOn(configService, 'getDuplicateMapMaxImageBytes')
+        .mockReturnValue(2 * LOGO_PNG.length)
+      const source = await createMap()
+      const reference = await imagesService.storeImage(source.id, pngUpload())
+      const copy = await createMap()
+      await imagesService.withDuplicationLimit(() =>
+        imagesService.copyImages(source.id, copy.id)
+      )
+      expect(await read(copy.id, reference)).not.toBeNull()
+      for (const map of [source, copy]) {
+        const target = await createMap()
+        await expect(
+          imagesService.withDuplicationLimit(() =>
+            imagesService.copyImages(map.id, target.id)
+          )
+        ).rejects.toThrow(PayloadTooLargeException)
+        expect(await imagesRepo.countBy({ mapId: target.id })).toBe(0)
+        expect(await read(target.id, reference)).toBeNull()
+      }
+    })
+
+    it('checks the per-map cap before copying bytes', async () => {
+      const source = await createMap()
+      const reference = await imagesService.storeImage(source.id, pngUpload())
+      const target = await createMap()
+      jest
+        .spyOn(configService, 'getMaxImageBytesPerMap')
+        .mockReturnValue(LOGO_PNG.length - 1)
+      await expect(
+        imagesService.copyImages(source.id, target.id)
+      ).rejects.toThrow(PayloadTooLargeException)
+      expect(await read(target.id, reference)).toBeNull()
+    })
+
+    it('includes inline images in both stored usage and the proposed copy', async () => {
+      const source = await mapsService.createEmptyMap(createClientRootNode())
+      const inline = `data:image/png;base64,${LOGO_PNG.toString('base64')}`
+      await nodesRepo.update({ nodeMapId: source.id }, { imageSrc: inline })
+      const bytes = Buffer.byteLength(inline)
+      jest
+        .spyOn(configService, 'getDuplicateMapMaxImageBytes')
+        .mockReturnValue(2 * bytes - 1)
+      const target = await createMap()
+      await expect(
+        imagesService.copyImages(source.id, target.id, bytes)
+      ).rejects.toThrow(PayloadTooLargeException)
+    })
+
+    it('rejects concurrent duplication and releases the lock after failure', async () => {
+      let release: () => void = () => undefined
+      const pending = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      let started: () => void = () => undefined
+      const entered = new Promise<void>((resolve) => {
+        started = resolve
+      })
+      const first = imagesService.withDuplicationLimit(async () => {
+        started()
+        await pending
+        throw new Error('copy failed')
+      })
+      // Attach a rejection handler before releasing the pending operation.
+      const firstResult = expect(first).rejects.toThrow('copy failed')
+      await entered
+      const operation = jest.fn(async () => undefined)
+      try {
+        await expect(
+          imagesService.withDuplicationLimit(operation)
+        ).rejects.toThrow(ThrottlerException)
+        expect(operation).not.toHaveBeenCalled()
+      } finally {
+        release()
+      }
+      await firstResult
+      await imagesService.withDuplicationLimit(operation)
+      expect(operation).toHaveBeenCalledTimes(1)
     })
   })
 

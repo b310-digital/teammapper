@@ -177,7 +177,7 @@ export class ImportService {
     }
 
     const parentNode = nodes.find(n => n.id === parentId);
-    const isDirectChildOfRoot = parentNode?.parent === '';
+    const isDirectChildOfRoot = parentNode?.parent === null;
 
     if (isDirectChildOfRoot) {
       const { autoBranchColors, defaultNode } = settings.mapOptions;
@@ -232,11 +232,10 @@ export class ImportService {
 
     return {
       id: nodeId,
-      parent: parentId,
+      parent: parentId || null,
       name: node.descr || node.nodeId || defaultNode.name,
-      locked: !isRoot,
+      protected: false,
       isRoot,
-      hidden: false,
       font: {
         style: defaultNode.font.style,
         size: isRoot ? rootNode.font.size : defaultNode.font.size,

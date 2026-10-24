@@ -1,10 +1,9 @@
-import CopyPaste from './copy-paste.js';
-import Nodes from './nodes.js';
-import MmpMap from '../map.js';
-import Node, { NodeProperties } from '../models/node.js';
+import type { RecordLookup } from './nodes.js';
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import type {
   ExportNodeProperties,
   MapNodeCoordinates,
+  MapSnapshot,
 } from '@teammapper/shared';
 
 /**
@@ -14,16 +13,12 @@ import type {
  * its new parent, and the children of that pasted root keep the sides they had.
  */
 
-const ROOT = new Node({
-  id: 'root',
-  parent: null,
-  k: 1,
-  isRoot: true,
-  coordinates: { x: 0, y: 0 },
-});
+const ROOT = nodeRecord({ id: 'root', isRoot: true });
 
-function makeNode(properties: Partial<NodeProperties> & { id: string }): Node {
-  return new Node({ k: 1, parent: ROOT, ...properties });
+function makeNode(
+  properties: Partial<ExportNodeProperties> & { id: string }
+): ExportNodeProperties {
+  return nodeRecord({ parent: 'root', ...properties });
 }
 
 function copied(
@@ -40,39 +35,33 @@ interface CopyPasteInternals {
   copiedTreeRootX: number;
   calculatePastedCoordinates(
     nodeProperties: ExportNodeProperties,
-    newParentNode: Node
+    newParent: string,
+    lookup: RecordLookup
   ): MapNodeCoordinates;
 }
 
-/** A CopyPaste on a map holding ROOT and the live nodes the test places. */
-function makeHandler(liveNodes: Node[]): {
-  handler: CopyPasteInternals;
-  nodes: Nodes;
-} {
-  const map = { rootId: ROOT.id } as unknown as MmpMap;
-  const nodes = new Nodes(map);
-  map.nodes = nodes;
-  [ROOT, ...liveNodes].forEach(node => nodes.setNode(node.id, node));
-  // No zoom transform applies in these tests, so this is the identity.
-  nodes.fixCoordinates = (coordinates: MapNodeCoordinates) => coordinates;
+/** A CopyPaste on a map holding ROOT and the nodes the test places. */
+function makeHandler(liveNodes: MapSnapshot) {
+  const stub = stubMap([ROOT, ...liveNodes]);
+  const handler = stub.map.copyPaste as unknown as CopyPasteInternals;
 
-  const handler = new CopyPaste(map) as unknown as CopyPasteInternals;
-
-  return { handler, nodes };
+  return { handler, ...stub };
 }
 
 function placementOf(
   pasted: ExportNodeProperties,
   oldParent: ExportNodeProperties,
-  newParent: Node,
-  liveNodes: Node[] = [newParent],
-  oldTreeRootX = ROOT.coordinates.x
+  newParent: ExportNodeProperties,
+  liveNodes: MapSnapshot = [newParent],
+  oldTreeRootX = 0
 ): MapNodeCoordinates {
-  const { handler } = makeHandler(liveNodes);
+  const { handler, nodes } = makeHandler(
+    newParent.id === 'root' ? [] : liveNodes
+  );
   handler.copiedNodes = [oldParent, pasted];
   handler.copiedTreeRootX = oldTreeRootX;
 
-  return handler.calculatePastedCoordinates(pasted, newParent);
+  return handler.calculatePastedCoordinates(pasted, newParent.id, nodes.record);
 }
 
 describe('calculatePastedCoordinates', () => {
@@ -115,27 +104,23 @@ describe('calculatePastedCoordinates', () => {
   });
 
   describe('with a second tree right of the main tree', () => {
-    const secondRoot = new Node({
+    const secondRoot = nodeRecord({
       id: 'second',
-      parent: null,
-      k: 1,
       coordinates: { x: 1000, y: 0 },
     });
-    const oldParentNode = new Node({
+    const oldParentNode = nodeRecord({
       id: 'old',
-      parent: secondRoot,
-      k: 1,
+      parent: 'second',
       coordinates: { x: 800, y: 0 },
     });
-    const childNode = new Node({
+    const childNode = nodeRecord({
       id: 'child',
-      parent: oldParentNode,
-      k: 1,
+      parent: 'old',
       coordinates: { x: 700, y: 50 },
     });
     const oldParent = copied('old', 'second', { x: 800, y: 0 });
     const pasted = copied('child', 'old', { x: 700, y: 50 });
-    const secondTreeRootX = secondRoot.coordinates.x;
+    const secondTreeRootX = 1000;
 
     it('reads the old side against the root of the old tree', () => {
       const newParent = makeNode({
@@ -156,10 +141,9 @@ describe('calculatePastedCoordinates', () => {
 
     it('reads the new side against the root of the new tree', () => {
       // Left of the second root, and right of the main root.
-      const newParent = new Node({
+      const newParent = nodeRecord({
         id: 'new',
-        parent: secondRoot,
-        k: 1,
+        parent: 'second',
         coordinates: { x: 800, y: 100 },
       });
 
@@ -179,19 +163,20 @@ describe('calculatePastedCoordinates', () => {
         id: 'new',
         coordinates: { x: -400, y: 100 },
       });
-      const { handler, nodes } = makeHandler([
+      const { handler, data, nodes } = makeHandler([
         newParent,
         secondRoot,
         oldParentNode,
         childNode,
       ]);
 
-      handler.copy(oldParentNode.id);
-      nodes.clear();
-      [ROOT, newParent].forEach(node => nodes.setNode(node.id, node));
+      handler.copy('old');
+      data.removeNode('second');
 
       expect(handler.copiedTreeRootX).toBe(secondTreeRootX);
-      expect(handler.calculatePastedCoordinates(pasted, newParent)).toEqual({
+      expect(
+        handler.calculatePastedCoordinates(pasted, 'new', nodes.record)
+      ).toEqual({
         x: -500,
         y: 150,
       });

@@ -12,9 +12,47 @@ import {
   NodeBasicsSchema,
   NodeSchema,
   sanitizeIssues,
+  NodePropertySchemas,
 } from './index';
+import type { NodeProperty } from '../models';
 
 describe('Shared Validation Schemas', () => {
+  describe('NodePropertySchemas', () => {
+    it.each<[NodeProperty, unknown]>([
+      ['name', 'A name'],
+      ['protected', true],
+      ['coordinates', { x: 1, y: 2 }],
+      ['imageSrc', 'image:5f0c4b1e-3a8d-4c6e-9f2a-7b1d2e3f4a5b'],
+      ['imageSize', 60],
+      ['linkHref', 'https://example.com'],
+      ['backgroundColor', '#f9f9f9'],
+      ['branchColor', ''],
+      ['fontWeight', 'bold'],
+      ['fontStyle', 'italic'],
+      ['fontSize', 16],
+      ['nameColor', null],
+    ])('accepts %s %p', (property, value) => {
+      expect(v.safeParse(NodePropertySchemas[property], value).success).toBe(
+        true
+      );
+    });
+
+    it.each<[NodeProperty, unknown]>([
+      ['name', 42],
+      ['protected', 'yes'],
+      ['coordinates', { x: 'left', y: 0 }],
+      ['imageSize', '60'],
+      ['linkHref', 'javascript:alert(1)'],
+      ['backgroundColor', 'red'],
+      ['fontWeight', 'x'.repeat(1000)],
+      ['fontSize', 'big'],
+    ])('refuses %s %p', (property, value) => {
+      expect(v.safeParse(NodePropertySchemas[property], value).success).toBe(
+        false
+      );
+    });
+  });
+
   describe('Sub-schemas', () => {
     it('validates ColorSchema with valid hex, null, or empty object', () => {
       expect(v.safeParse(ColorSchema, {}).success).toBe(true);
@@ -38,6 +76,10 @@ describe('Shared Validation Schemas', () => {
         v.safeParse(ColorSchema, { name: 'expression(alert(1))' }).success
       ).toBe(false);
       expect(v.safeParse(ColorSchema, { name: 123 }).success).toBe(false);
+    });
+
+    it('accepts an empty color, which means no color', () => {
+      expect(v.safeParse(ColorSchema, { branch: '' }).success).toBe(true);
     });
 
     it('validates CoordinatesSchema', () => {
@@ -92,6 +134,7 @@ describe('Shared Validation Schemas', () => {
     it('validates LinkSchema', () => {
       expect(v.safeParse(LinkSchema, {}).success).toBe(true);
       expect(v.safeParse(LinkSchema, { href: null }).success).toBe(true);
+      expect(v.safeParse(LinkSchema, { href: '' }).success).toBe(true);
       expect(
         v.safeParse(LinkSchema, { href: 'https://example.com' }).success
       ).toBe(true);
@@ -165,32 +208,32 @@ describe('Shared Validation Schemas', () => {
       link: {
         href: 'https://example.com',
       },
-      locked: false,
+      protected: true,
       k: 1.5,
-      hidden: true,
-      hasHiddenChildNodes: true,
     };
 
-    it('successfully parses a canonical valid node with folding properties', () => {
-      const result = v.safeParse(NodeSchema, validNode);
+    it('accepts and drops the hidden keys of older files', () => {
+      const legacy = { ...validNode, hidden: true, hasHiddenChildNodes: true };
+      const result = v.safeParse(NodeSchema, legacy);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.output.hidden).toBe(true);
-        expect(result.output.hasHiddenChildNodes).toBe(true);
+        expect(result.output).not.toHaveProperty('hidden');
+        expect(result.output).not.toHaveProperty('hasHiddenChildNodes');
       }
     });
 
-    it('defaults hidden and hasHiddenChildNodes to false when omitted', () => {
-      const withoutFolding = { ...validNode };
-      delete (withoutFolding as { hidden?: boolean }).hidden;
-      delete (withoutFolding as { hasHiddenChildNodes?: boolean })
-        .hasHiddenChildNodes;
-      const result = v.safeParse(NodeSchema, withoutFolding);
+    it('keeps protected and defaults it to false when omitted', () => {
+      expect(v.parse(NodeSchema, validNode).protected).toBe(true);
+      const withoutProtection = { ...validNode };
+      delete (withoutProtection as { protected?: boolean }).protected;
+      expect(v.parse(NodeSchema, withoutProtection).protected).toBe(false);
+    });
+
+    it('accepts and drops the locked field of older files', () => {
+      const legacy = { ...validNode, locked: true };
+      const result = v.safeParse(NodeSchema, legacy);
       expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.output.hidden).toBe(false);
-        expect(result.output.hasHiddenChildNodes).toBe(false);
-      }
+      if (result.success) expect(result.output).not.toHaveProperty('locked');
     });
 
     it('permits non-breaking schema additions (tolerant validation)', () => {
@@ -298,6 +341,72 @@ describe('Shared Validation Schemas', () => {
         v.safeParse(MermaidCreateSchema, {
           mindmapDescription: 'valid',
           language: 'unsupported-lang',
+        }).success
+      ).toBe(false);
+    });
+
+    it('defaults the MermaidCreateSchema shape when omitted', () => {
+      const result = v.safeParse(MermaidCreateSchema, {
+        mindmapDescription: 'valid',
+        language: 'en',
+      });
+      expect(result.success && result.output.levels).toBe(2);
+      expect(result.success && result.output.childrenPerNode).toBe(4);
+    });
+
+    it.each([
+      { levels: 0 },
+      { levels: 4 },
+      { levels: 1.5 },
+      { levels: '2' },
+      { childrenPerNode: 0 },
+      { childrenPerNode: 5 },
+      { childrenPerNode: Number.NaN },
+      { childrenPerNode: null },
+    ])('rejects MermaidCreateSchema shape %o', shape => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'en',
+          ...shape,
+        }).success
+      ).toBe(false);
+    });
+
+    it('accepts the MermaidCreateSchema shape bounds', () => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'en',
+          levels: 3,
+          childrenPerNode: 1,
+        }).success
+      ).toBe(true);
+    });
+
+    it.each([
+      { levels: 3, childrenPerNode: 2 },
+      { levels: 2, childrenPerNode: 3 },
+      { levels: 2, childrenPerNode: 4 },
+    ])('accepts the MermaidCreateSchema shape %o', shape => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'en',
+          ...shape,
+        }).success
+      ).toBe(true);
+    });
+
+    it.each([
+      { levels: 3, childrenPerNode: 3 },
+      { levels: 3, childrenPerNode: 4 },
+    ])('rejects the MermaidCreateSchema shape %o as too many nodes', shape => {
+      expect(
+        v.safeParse(MermaidCreateSchema, {
+          mindmapDescription: 'valid',
+          language: 'en',
+          ...shape,
         }).success
       ).toBe(false);
     });

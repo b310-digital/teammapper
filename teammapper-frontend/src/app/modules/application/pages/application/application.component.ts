@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { combineLatest, map, Subscription } from 'rxjs';
 import { ConnectionStatus } from '../../../../core/services/map-sync/map-sync-context';
 import { MapSyncService } from '../../../../core/services/map-sync/map-sync.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
@@ -16,13 +16,12 @@ import { FloatingButtonsComponent } from '../../components/floating-buttons/floa
 import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
 import { MapComponent } from '../../components/map/map.component';
 import { AsyncPipe } from '@angular/common';
-import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
 
 // Initialization process of a map:
 // 1) Render the wrapper element inside the map angular html component
 // 2) Wait for data fetching completion (triggered within application component)
-// 3) Init mmp library and fill map with data when available
-// 4) Register to server events
+// 3) Open the connection to the map
+// 4) Create the mmp map over the map data once the connection syncs
 @Component({
   selector: 'teammapper-application',
   templateUrl: './application.component.html',
@@ -35,7 +34,6 @@ import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
     ToolbarComponent,
     MapComponent,
     AsyncPipe,
-    InverseBoolPipe,
   ],
 })
 export class ApplicationComponent implements OnInit, OnDestroy {
@@ -49,7 +47,11 @@ export class ApplicationComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   public node = this.mapSyncService.getAttachedNodeObservable();
-  public editMode = this.settingsService.getEditModeObservable();
+  // Editing needs edit mode and a map, which exists from the first sync on.
+  public editDisabled = combineLatest([
+    this.settingsService.getEditModeObservable(),
+    this.mmpService.mapCreated$,
+  ]).pipe(map(([editMode, mapCreated]) => editMode !== true || !mapCreated));
 
   private imageDropSubscription: Subscription | null = null;
   private connectionStatusSubscription: Subscription | null = null;

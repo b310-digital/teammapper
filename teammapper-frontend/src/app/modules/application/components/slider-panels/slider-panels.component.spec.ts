@@ -2,7 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ExportNodeProperties } from '@teammapper/shared';
-import { MmpService } from 'src/app/core/services/mmp/mmp.service';
+import { BehaviorSubject } from 'rxjs';
+import {
+  AdditionalMapOptions,
+  MmpService,
+} from 'src/app/core/services/mmp/mmp.service';
 import { SliderPanelsComponent } from './slider-panels.component';
 
 // Material 3 dropped the `value` and `tickInterval` inputs from MatSlider: the
@@ -10,7 +14,10 @@ import { SliderPanelsComponent } from './slider-panels.component';
 // These tests check the displayed value, the bounds and the update call.
 describe('SliderPanelsComponent', () => {
   let fixture: ComponentFixture<SliderPanelsComponent>;
-  let mmpService: { updateNode: jest.Mock; getAdditionalMapOptions: jest.Mock };
+  let mmpService: {
+    updateNode: jest.Mock;
+    additionalMapOptions$: BehaviorSubject<AdditionalMapOptions | null>;
+  };
 
   const node = (): ExportNodeProperties => ({
     id: 'node-1',
@@ -24,7 +31,7 @@ describe('SliderPanelsComponent', () => {
   beforeEach(async () => {
     mmpService = {
       updateNode: jest.fn(),
-      getAdditionalMapOptions: jest.fn().mockReturnValue({
+      additionalMapOptions$: new BehaviorSubject<AdditionalMapOptions | null>({
         fontMaxSize: 70,
         fontMinSize: 15,
         fontIncrement: 5,
@@ -75,12 +82,25 @@ describe('SliderPanelsComponent', () => {
     input.value = '35';
     input.dispatchEvent(new Event('input'));
 
-    expect(mmpService.updateNode).toHaveBeenCalledWith('fontSize', 35, true);
+    expect(mmpService.updateNode).toHaveBeenCalledWith('fontSize', 35);
+  });
+
+  it('takes the new bounds when a peer changes the map settings', () => {
+    mmpService.additionalMapOptions$.next({
+      fontMaxSize: 90,
+      fontMinSize: 20,
+      fontIncrement: 10,
+    });
+    fixture.detectChanges();
+
+    const input = thumb('font-size');
+    expect(input.max).toBe('90');
+    expect(input.min).toBe('20');
+    expect(input.step).toBe('10');
   });
 
   it('hides the font slider while no map has been created', () => {
-    mmpService.getAdditionalMapOptions.mockReturnValue(null);
-    fixture.componentRef.setInput('node', node());
+    mmpService.additionalMapOptions$.next(null);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.font-size')).toBeNull();
@@ -91,6 +111,6 @@ describe('SliderPanelsComponent', () => {
     input.value = '200';
     input.dispatchEvent(new Event('input'));
 
-    expect(mmpService.updateNode).toHaveBeenCalledWith('imageSize', 200, true);
+    expect(mmpService.updateNode).toHaveBeenCalledWith('imageSize', 200);
   });
 });

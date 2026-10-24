@@ -1,13 +1,16 @@
-import Nodes from './nodes.js';
-import History from './history.js';
-import MmpMap from '../map.js';
+import * as d3 from 'd3';
+import { create } from '../../index.js';
+import InMemoryMapData from '../data/in-memory-map-data.js';
 import { DefaultNodeValues, DefaultRootNodeValues } from '../options.js';
+import { nodeRecord, stubMap } from '../../test/stub-map.js';
+import { stubSvgLengths } from '../../test/svg-lengths.js';
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 
 /**
  * A JSON export or a peer running an older release still carries the
  * `detached` key. mmp reads no such key, so a former detached node loads as a
- * root at its stored position and takes children like any other root.
+ * root at its stored position and takes children like any other root. A node
+ * whose parent the map data lacks counts as a root too.
  */
 
 /** A node the way an older release exported it, `detached` key included. */
@@ -27,7 +30,7 @@ function legacyNode(
   } as ExportNodeProperties;
 }
 
-const LEGACY_SNAPSHOT: MapSnapshot = [
+const LEGACY_MAP: MapSnapshot = [
   legacyNode('root', '', {
     ...DefaultRootNodeValues,
     isRoot: true,
@@ -38,68 +41,30 @@ const LEGACY_SNAPSHOT: MapSnapshot = [
   legacyNode('pasted', 'note', { coordinates: { x: 700, y: -400 } }),
 ];
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-/** The parts of a node's DOM that selection reads: the background and name. */
-function nodeDom(fill: string): SVGGElement {
-  const group = document.createElementNS(SVG_NS, 'g');
-  const background = document.createElementNS(SVG_NS, 'path');
-  background.style.fill = fill;
-  const foreignObject = document.createElementNS(SVG_NS, 'foreignObject');
-  foreignObject.appendChild(document.createElement('div'));
-  group.append(background, foreignObject);
-  return group;
+function loadLegacyMap() {
+  const stub = stubMap();
+  stub.map.loader.load(LEGACY_MAP.map(node => ({ ...node })));
+  return stub;
 }
 
-/**
- * A map stub around the real node handler and history. Its draw gives each
- * node the DOM that selection reads.
- */
-function makeMap(): MmpMap {
-  const update = jest.fn(() => {
-    for (const node of map.nodes.getNodes()) {
-      node.dom = nodeDom(node.colors.background);
-    }
-  });
-  const map = {
-    rootId: '',
-    options: { defaultNode: DefaultNodeValues },
-    draw: { clear: jest.fn(), update },
-    zoom: { center: jest.fn() },
-    events: { call: jest.fn() },
-    export: { asJSON: () => [] },
-  } as unknown as MmpMap;
-  map.nodes = new Nodes(map);
-  map.history = new History(map);
-  return map;
-}
-
-function loadLegacySnapshot(): MmpMap {
-  const map = makeMap();
-  map.history.new(
-    LEGACY_SNAPSHOT.map(node => ({ ...node })),
-    false
-  );
-  return map;
-}
-
-describe('a snapshot that still carries the detached key', () => {
+describe('a map whose nodes still carry the detached key', () => {
   it('loads every node', () => {
-    const map = loadLegacySnapshot();
+    const { data } = loadLegacyMap();
 
     expect(
-      map.nodes
-        .getNodes()
+      data
+        .nodes()
         .map(node => node.id)
         .sort()
     ).toEqual(['child', 'note', 'pasted', 'root']);
   });
 
   it('loads a former detached node as a root at its stored position', () => {
-    const note = loadLegacySnapshot().nodes.getNode('note');
+    const { data, nodes } = loadLegacyMap();
+    const note = data.node('note');
 
     expect({
-      parent: note?.parent,
+      parent: nodes.parentOf('note'),
       isRoot: note?.isRoot,
       coordinates: note?.coordinates,
     }).toEqual({
@@ -110,53 +75,118 @@ describe('a snapshot that still carries the detached key', () => {
   });
 
   it('keeps the pasted child under the former detached node', () => {
-    const pasted = loadLegacySnapshot().nodes.getNode('pasted');
+    const { nodes } = loadLegacyMap();
 
-    expect(pasted?.parent?.id).toBe('note');
+    expect(nodes.parentOf('pasted')).toBe('note');
   });
 
-  it('keeps the main root as the only node with the main-root mark', () => {
-    const map = loadLegacySnapshot();
+  it('keeps the main root as the only node with isRoot set', () => {
+    const { data } = loadLegacyMap();
 
     expect(
-      map.nodes
-        .getNodes()
+      data
+        .nodes()
         .filter(node => node.isRoot)
         .map(node => node.id)
     ).toEqual(['root']);
   });
 
   it('adds a child to a former detached node', () => {
-    const map = loadLegacySnapshot();
+    const { nodes } = loadLegacyMap();
 
-    const added = map.nodes.addNode({ name: 'new' }, false, false, 'note');
+    const added = nodes.addNode({ name: 'new' }, 'note');
 
-    expect(added.parent?.id).toBe('note');
+    expect(added?.parent).toBe('note');
   });
 
-  it('exports no detached key', () => {
-    const map = loadLegacySnapshot();
+  it('keeps no detached key', () => {
+    const { data, map } = loadLegacyMap();
 
-    const exported = map.nodes
-      .getNodes()
-      .map(node => map.nodes.getNodeProperties(node));
-    expect(exported.some(node => 'detached' in node)).toBe(false);
+    expect(data.nodes().some(node => 'detached' in node)).toBe(false);
+    expect(map.nodes.exportNode('note')).not.toHaveProperty('detached');
   });
 
-  it('adds a synced former detached node as a root whatever is selected', () => {
-    const map = loadLegacySnapshot();
-    map.nodes.selectRootNode();
+  it('takes a peer write of a former detached node as a root', () => {
+    const { data, nodes } = loadLegacyMap();
 
-    map.nodes.addNodes(
-      [
-        legacyNode('synced', '', {
-          detached: true,
-          coordinates: { x: 5, y: 5 },
-        }),
-      ],
-      false
+    data.addNodes([
+      legacyNode('synced', '', {
+        detached: true,
+        coordinates: { x: 5, y: 5 },
+      }),
+    ]);
+
+    expect(nodes.parentOf('synced')).toBeNull();
+  });
+});
+
+describe('a node whose parent the map data lacks', () => {
+  const ORPHANED: MapSnapshot = [
+    nodeRecord({ id: 'root', isRoot: true }),
+    nodeRecord({ id: 'child', parent: 'root', coordinates: { x: 200, y: 0 } }),
+    nodeRecord({
+      id: 'orphan',
+      parent: 'missing',
+      coordinates: { x: 600, y: 0 },
+    }),
+    nodeRecord({ id: 'leaf', parent: 'orphan', coordinates: { x: 800, y: 0 } }),
+  ];
+
+  beforeAll(stubSvgLengths);
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('answers the tree queries as a root', () => {
+    const { nodes } = stubMap(ORPHANED);
+
+    expect(nodes.parentOf('orphan')).toBeNull();
+    expect(nodes.treeRoot('leaf')).toBe('orphan');
+    expect(nodes.level('leaf')).toBe(2);
+    expect(nodes.orientation('orphan')).toBeUndefined();
+  });
+
+  it('draws as a root: a node without a branch', () => {
+    const ref = document.createElement('div');
+    document.body.appendChild(ref);
+    create('map', ref, undefined, new InMemoryMapData(ORPHANED));
+
+    const branches = d3.selectAll<SVGPathElement, string>('path.branch');
+    expect(branches.data().sort()).toEqual(['child', 'leaf']);
+    expect(d3.selectAll<SVGGElement, string>('g.node').data()).toContain(
+      'orphan'
     );
+  });
 
-    expect(map.nodes.getNode('synced')?.parent).toBeNull();
+  it('draws the branch and the parent marks once the parent arrives', () => {
+    const ref = document.createElement('div');
+    document.body.appendChild(ref);
+    const data = new InMemoryMapData(ORPHANED);
+    const map = create('map', ref, undefined, data);
+    map.viewState.toggle('missing');
+
+    data.addNodes([
+      nodeRecord({
+        id: 'missing',
+        parent: 'root',
+        coordinates: { x: 400, y: 0 },
+      }),
+    ]);
+
+    const branches = d3.selectAll<SVGPathElement, string>('path.branch');
+    expect(branches.data().sort()).toEqual([
+      'child',
+      'leaf',
+      'missing',
+      'orphan',
+    ]);
+    expect(
+      d3.selectAll<SVGTextElement, string>('text.hidden-icon').data()
+    ).toEqual(['missing']);
+    const orphan = d3
+      .selectAll<SVGGElement, string>('g.node')
+      .filter(id => id === 'orphan');
+    expect(orphan.style('visibility')).toBe('hidden');
   });
 });

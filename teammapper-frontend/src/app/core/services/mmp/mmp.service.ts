@@ -1,11 +1,11 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
 import { jsPDF } from 'jspdf';
 import { filter } from 'rxjs/operators';
-import { create, MmpMap, OptionParameters } from '@teammapper/mmp';
+import { create, MapData, MmpMap, OptionParameters } from '@teammapper/mmp';
 import DOMPurify from 'dompurify';
 import {
   CachedMapOptions,
@@ -13,6 +13,7 @@ import {
   MapOptions,
   MapSnapshot,
   MmpEventPayloadMap,
+  MmpEventType,
   NodeProperty,
   NodePropertyValue,
   UserNodeProperties,
@@ -37,6 +38,12 @@ import { ExportService } from '../export/export.service';
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+/**
+ * Node names use the font `styles.scss` ships, so a name has the same width
+ * on every system. An exported image cannot load it and falls back to Arial.
+ */
+export const NODE_FONT_FAMILY = "'Fira Sans', Arial, sans-serif";
+
 /** The formats `exportMap` knows how to write. */
 export type ExportFormat = 'json' | 'pdf' | 'mermaid' | 'svg' | 'jpeg' | 'png';
 
@@ -60,11 +67,34 @@ export class MmpService implements OnDestroy {
   private exportService = inject(ExportService);
 
   private currentMap: MmpMap | null = null;
+  // The last edit mode SettingsService reported, which `create` applies to
+  // a map created after the report.
+  private editMode: boolean | null = null;
+  // Counts the calls of `create` and `remove`, so a create that awaited its
+  // options can tell that a newer one or a removal ran during the wait.
+  private creations = 0;
+  private readonly mapCreatedSubject = new BehaviorSubject<boolean>(false);
+  /**
+   * True once the map is created and wired up, false again after `remove`.
+   * The toolbar, the floating buttons and the shortcuts act only while true.
+   */
+  public readonly mapCreated$: Observable<boolean> =
+    this.mapCreatedSubject.asObservable();
 
   private readonly branchColors: string[];
-  // additional options that are not handled within mmp, like fontMaxSize etc.
-  // `create` resolves them; before that there is no map to hold options for.
-  private additionalOptions: AdditionalMapOptions | null = null;
+  // The map settings mmp does not use, such as fontMaxSize. `create` resolves
+  // them; before that there is no map to hold settings for.
+  private readonly additionalOptionsSubject =
+    new BehaviorSubject<AdditionalMapOptions | null>(null);
+  /**
+   * The map settings of the open map, null until `create` runs. A peer's
+   * change and a change on the settings page each emit a new object.
+   */
+  public readonly additionalMapOptions$: Observable<AdditionalMapOptions | null> =
+    this.additionalOptionsSubject.asObservable();
+  // The configured defaults `create` loaded. `updateAdditionalMapOptions`
+  // fills the map settings a map lacks with them.
+  private defaultOptions: AdditionalMapOptions | null = null;
   private settingsSubscription: Subscription;
   // MapSyncService registers these; it holds the map uuid and the secret.
   private imageHandlers: ImageHandlers | null = null;
@@ -78,18 +108,24 @@ export class MmpService implements OnDestroy {
       .getEditModeObservable()
       .pipe(filter((val: boolean | null): val is boolean => val !== null))
       .subscribe((result: boolean) => {
-        if (!this.currentMap) return;
-
-        this.currentMap.options.update('drag', result);
-        this.currentMap.options.update('edit', result);
+        this.editMode = result;
+        if (this.currentMap) this.applyEditMode(this.currentMap, result);
       });
   }
 
+  /** Let the map edit and drag nodes only in edit mode. */
+  private applyEditMode(map: MmpMap, editMode: boolean) {
+    map.options.update('drag', editMode);
+    map.options.update('edit', editMode);
+  }
+
   /**
-   * The map this service is attached to. Most of the operations below need
-   * one, so calling them before `create` is a programming error, and this
-   * throws instead of returning null. A few methods run before `create`. Those
-   * read `currentMap` directly and return early.
+   * The map this service is attached to. The commands below need one, and
+   * the UI calls them only once `mapCreated$` reports true, so a call before
+   * `create` is a programming error and this throws instead of returning
+   * null. The queries that templates call before `create`, and presence
+   * updates call after `remove`, read `currentMap` directly and return a
+   * default.
    */
   private get map(): MmpMap {
     if (!this.currentMap) {
@@ -103,41 +139,92 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Create a mindmap using mmp and save the instance with corresponding id.
-   * All function below require the mmp id.
+   * Create a mind map with mmp over the map data, keep the instance and
+   * return it. mmp draws every node the data holds while it creates the map.
+   * The map takes the current edit mode and stays read-only while the edit
+   * mode is unknown, so a read-only client never gets an editable map.
+   * Returns null without
+   * creating a map when a later `create` or a `remove` ran while the options
+   * loaded, so a late create never replaces a newer map.
    */
   public async create(
     id: string,
     ref: HTMLElement,
-    options?: OptionParameters
-  ) {
-    const map: MmpMap = create(id, ref, {
-      ...options,
-      resolveImageUrl: reference =>
-        this.imageHandlers?.resolveUrl(reference) ?? null,
-    });
-
+    options: OptionParameters | undefined,
+    data: MapData
+  ): Promise<MmpMap | null> {
+    const creation = ++this.creations;
     // additional options do not include the standard mmp map options
-    this.additionalOptions = await this.defaultAdditionalOptions();
+    const defaultOptions = await this.defaultAdditionalOptions();
+    if (creation !== this.creations) return null;
+    this.defaultOptions = defaultOptions;
+    this.additionalOptionsSubject.next(defaultOptions);
 
+    const map: MmpMap = create(id, ref, this.mapOptions(options), data);
     this.currentMap = map;
+    map.instance.on('nodeProtected', () => void this.showProtectedNotice());
+    return map;
   }
 
   /**
-   * Remove the mind mmp.
+   * The mmp options of a new map: `options` with the app font as default,
+   * the current edit mode, read-only while unknown, and the image resolver.
    */
-  public remove() {
-    if (!this.currentMap) return;
+  private mapOptions(options: OptionParameters | undefined): OptionParameters {
+    const editable = this.editMode ?? false;
+    return {
+      fontFamily: NODE_FONT_FAMILY,
+      ...options,
+      edit: editable,
+      drag: editable,
+      resolveImageUrl: reference =>
+        this.imageHandlers?.resolveUrl(reference) ?? null,
+    };
+  }
 
-    this.currentMap.instance.unsubscribeAll();
-    this.currentMap.instance.remove();
+  /** Report that the map exists and is wired up; see `mapCreated$`. */
+  public markMapCreated() {
+    this.mapCreatedSubject.next(true);
+  }
+
+  /**
+   * Tell the user that a protected branch refused the edit. A color picker
+   * sends an update on every pointer move, so the method skips the notice
+   * while an identical one is still on screen.
+   */
+  private async showProtectedNotice(): Promise<void> {
+    const message = await this.utilsService.translate(
+      'TOASTS.WARNINGS.NODE_PROTECTED'
+    );
+    if (this.toastrService.findDuplicate('', message, true, false)) return;
+    this.toastrService.warning(message);
+  }
+
+  /**
+   * Remove the map, the current one by default. The method destroys a map
+   * that is no longer the current one, such as one a stale create returned,
+   * and leaves the current map alone. Removing the current map also stops a
+   * create that still loads its options.
+   */
+  public remove(map: MmpMap | null = this.currentMap) {
+    if (map !== this.currentMap) {
+      map?.instance.destroy();
+      return;
+    }
+
+    this.creations++;
+    this.mapCreatedSubject.next(false);
+    if (!map) return;
+
+    map.instance.destroy();
     this.currentMap = null;
   }
 
   /**
-   * Clear or load an existing mind mmp.
+   * Replace the mind map with the given nodes: an import.
    */
-  public async new(map: MapSnapshot, notifyWithEvent = true) {
+  public async new(map: MapSnapshot) {
+    const instance = this.map.instance;
     const hasInvalidUUID = map.some(node => !uuidValidate(node.id));
 
     if (hasInvalidUUID) {
@@ -148,9 +235,7 @@ export class MmpService implements OnDestroy {
       return;
     }
 
-    const mapWithCoordinates =
-      this.map.instance.applyCoordinatesToMapSnapshot(map);
-    this.map.instance.new(mapWithCoordinates, notifyWithEvent);
+    instance.new(instance.applyCoordinatesToMapSnapshot(map));
   }
 
   /**
@@ -168,25 +253,30 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Update the additional map settings
+   * Replace the map settings of the created map and emit them on
+   * `additionalMapOptions$`. A setting `options` lacks takes the configured
+   * default. The call runs synchronously, so YjsSyncService can apply the
+   * synced map settings before `markMapCreated`. Before `create` there is no
+   * map, and the call does nothing.
    */
-  public async updateAdditionalMapOptions(options: CachedMapOptions) {
-    const defaultOptions = await this.defaultAdditionalOptions();
+  public updateAdditionalMapOptions(options: CachedMapOptions) {
+    const defaultOptions = this.defaultOptions;
+    if (!defaultOptions) return;
 
     // A stored map may carry a key with no value, and spreading that over the
     // defaults would put the hole back.
-    this.additionalOptions = {
+    this.additionalOptionsSubject.next({
       fontMaxSize: options.fontMaxSize ?? defaultOptions.fontMaxSize,
       fontMinSize: options.fontMinSize ?? defaultOptions.fontMinSize,
       fontIncrement: options.fontIncrement ?? defaultOptions.fontIncrement,
-    };
+    });
   }
 
   /**
-   * Get the additional options, or null while no map has been created.
+   * Get the map settings, or null while no map has been created.
    */
   public getAdditionalMapOptions(): AdditionalMapOptions | null {
-    return this.additionalOptions;
+    return this.additionalOptionsSubject.getValue();
   }
 
   /**
@@ -248,92 +338,82 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Return the subscribe of the mind mmp event with the node or nothing.
+   * Return an Observable of the mmp event. Each subscriber adds its own
+   * callback to mmp, and unsubscribing removes it again.
    */
-  public on<K extends keyof MmpEventPayloadMap>(
+  public on<K extends MmpEventType>(
     event: K
-  ): Observable<MmpEventPayloadMap[K]>;
-  public on<T = unknown>(event: string): Observable<T>;
-  public on(event: string): Observable<unknown> {
-    return new Observable(observer => {
-      this.map.instance.on(event, (args: unknown) => {
-        observer.next(args);
-      });
-    });
-  }
-
-  /**
-   * Adds already created nodes from the server to the local map
-   *
-   * @param nodes Given nodes from the server
-   */
-  public addNodesFromServer(nodes: ExportNodeProperties[]) {
-    this.map.instance.addNodes(nodes);
-  }
-
-  /**
-   * Add a node in the mind mmp triggered by the user.
-   *
-   * addNode puts a child under `properties.parent`, or under the selected
-   * node when no parent is named, and adds no child when nothing is selected.
-   * Call `addTree` to add a root node.
-   */
-  public addNode(
-    properties?: Partial<ExportNodeProperties>,
-    notifyWithEvent = true
-  ) {
-    const newProps: UserNodeProperties = properties || { name: '' };
-    const parent = this.selectNode(properties?.parent || undefined);
-    if (!parent) return;
-
-    const settings = this.settingsService.getCachedUserSettings();
-
-    if (properties?.colors?.branch) {
-      newProps.colors = {
-        branch: properties.colors.branch,
-      };
-    } else if (parent.colors?.branch) {
-      newProps.colors = {
-        branch: parent.colors.branch,
-      };
-    } else if (
-      settings !== null &&
-      settings.mapOptions !== null &&
-      settings.mapOptions.autoBranchColors === true
-    ) {
-      const children = this.nodeChildren().length;
-
-      newProps.colors = {
-        branch: this.branchColors[children % this.branchColors.length],
-      };
-    }
-
-    this.map.instance.addNode(
-      newProps,
-      notifyWithEvent,
-      true,
-      parent.id,
-      properties?.id
+  ): Observable<MmpEventPayloadMap[K]> {
+    return new Observable(observer =>
+      this.map.instance.on(event, payload => observer.next(payload))
     );
   }
 
   /**
+   * Add a node in the mind mmp triggered by the user, then select it and
+   * start editing its name.
+   *
+   * addNode puts a child under the selected node and adds no child when
+   * nothing is selected. Call `addTree` to add a root node.
+   */
+  public addNode() {
+    const parent = this.selectNode();
+    if (!parent) return;
+
+    const node = this.map.instance.addNode(
+      this.newNodeProperties(parent),
+      parent.id
+    );
+    if (!node) return;
+
+    this.selectNode(node.id);
+    this.editNode();
+  }
+
+  /**
+   * The properties of a new child of `parent`. The branch color comes from
+   * the parent, then from the automatic branch colors setting.
+   */
+  private newNodeProperties(parent: ExportNodeProperties): UserNodeProperties {
+    const newProps: UserNodeProperties = { name: '' };
+    const branch = parent.colors?.branch || this.autoBranchColor();
+    if (branch) newProps.colors = { branch };
+    return newProps;
+  }
+
+  /**
+   * The automatic branch color for the next child of the selected node, or
+   * null when the user settings turn automatic branch colors off.
+   */
+  private autoBranchColor(): string | null {
+    const settings = this.settingsService.getCachedUserSettings();
+    if (settings?.mapOptions?.autoBranchColors !== true) return null;
+
+    const children = this.nodeChildren().length;
+    return this.branchColors[children % this.branchColors.length];
+  }
+
+  /**
    * Add the root of a new tree in the viewport, clear of every tree this
-   * client holds, and select it. The root has no parent and no main-root mark.
+   * client holds, select it and start editing its name. The root has no
+   * parent and its isRoot attribute is false.
    */
   public addTree() {
-    this.map.instance.addTree();
+    const instance = this.map.instance;
+    if (!instance.addTree()) return;
+    instance.editNode();
   }
 
   /**
    * Select the node with the id or in the direction passed as parameter.
    * If the node id is not defined return the current selected node, or null
-   * when nothing is selected.
+   * when nothing is selected or no map exists. Templates, `addNode` and
+   * `moveNodeTo` call it while no map exists.
    */
   public selectNode(
     nodeId?: string | 'left' | 'right' | 'up' | 'down'
   ): ExportNodeProperties | null {
-    return this.map.instance.selectNode(nodeId);
+    return this.currentMap?.instance.selectNode(nodeId) ?? null;
   }
 
   /**
@@ -345,28 +425,26 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * exports the root node props
+   * Export the properties of the main root, or null for a map without one.
    */
-  public getRootNode(): ExportNodeProperties {
+  public getRootNode(): ExportNodeProperties | null {
     return this.map.instance.exportRootProperties();
   }
 
   /**
-   * Checks if a given node actually exists
+   * Return true when the map holds the node, and false while no map exists:
+   * a peer's presence update can arrive after `remove`.
    */
   public existNode(nodeId: string): boolean {
-    return this.map.instance.existNode(nodeId);
+    return this.currentMap?.instance.existNode(nodeId) ?? false;
   }
 
   /**
-   * Highlights a node
+   * Draw a ring in the color around the node. A peer's presence update can
+   * arrive after `remove`, and then this draws nothing.
    */
-  public highlightNode(
-    nodeId: string,
-    color: string,
-    notifyWithEvent = true
-  ): void {
-    return this.map.instance.highlightNode(nodeId, color, notifyWithEvent);
+  public highlightNode(nodeId: string, color: string): void {
+    this.currentMap?.instance.highlightNode(nodeId, color);
   }
 
   /**
@@ -389,40 +467,47 @@ export class MmpService implements OnDestroy {
   public async updateNode(
     property: NodeProperty | string,
     value?: NodePropertyValue | ArrayBuffer | unknown,
-    notifyWithEvent?: boolean,
-    updateHistory?: boolean,
     id?: string
   ) {
+    const instance = this.map.instance;
     try {
-      this.map.instance.updateNode(
-        property,
-        value,
-        notifyWithEvent,
-        updateHistory,
-        id
+      instance.updateNode(property, value, id);
+    } catch {
+      const genericErrorMessage = await this.utilsService.translate(
+        'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
       );
-    } catch (e) {
-      if (errorMessage(e) == 'The root node can not be locked') {
-        const rootNodeFailureMessage = await this.utilsService.translate(
-          'TOASTS.ERRORS.ROOT_NODE_LOCKED'
-        );
-        this.toastrService.error(rootNodeFailureMessage);
-      } else {
-        const genericErrorMessage = await this.utilsService.translate(
-          'TOASTS.ERRORS.NODE_UPDATE_GENERIC'
-        );
-        this.toastrService.error(genericErrorMessage);
-      }
+      this.toastrService.error(genericErrorMessage);
     }
+  }
+
+  /**
+   * Return the id of the node protecting the selected node, itself or an
+   * ancestor, or null when the selected node is not protected or no map exists.
+   */
+  public protectingNode(): string | null {
+    return this.currentMap?.instance.protectingNode() ?? null;
+  }
+
+  /**
+   * Protect the selected node and its branch, or release the protection of
+   * the branch the selected node belongs to. mmp writes the whole toggle as
+   * one batch, so peers never see a child released before its parent is
+   * protected.
+   */
+  public toggleBranchProtection() {
+    const instance = this.map.instance;
+    if (this.protectingNode() === null) instance.protectBranch();
+    else instance.releaseBranch();
   }
 
   /**
    * Remove the node with the id passed as parameter or, if the id is
    * not defined, the current selected node.
    */
-  public async removeNode(nodeId?: string, notifyWithEvent = true) {
+  public async removeNode(nodeId?: string) {
+    const instance = this.map.instance;
     try {
-      this.map.instance.removeNode(nodeId, notifyWithEvent);
+      instance.removeNode(nodeId);
     } catch (e) {
       if (errorMessage(e) == 'The root node can not be deleted') {
         const rootNodeFailureMessage = await this.utilsService.translate(
@@ -443,10 +528,11 @@ export class MmpService implements OnDestroy {
    * If id is not specified, copy the selected node.
    */
   public async copyNode(nodeId?: string) {
+    const instance = this.map.instance;
     if (!nodeId && !this.hasSelectedNode()) return;
 
     try {
-      this.map.instance.copyNode(nodeId);
+      instance.copyNode(nodeId);
 
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_COPIED');
@@ -471,10 +557,11 @@ export class MmpService implements OnDestroy {
    * If id is not specified, copy the selected node.
    */
   public async cutNode(nodeId?: string) {
+    const instance = this.map.instance;
     if (!nodeId && !this.hasSelectedNode()) return;
 
     try {
-      this.map.instance.cutNode(nodeId);
+      if (!instance.cutNode(nodeId)) return;
 
       const successMessage =
         await this.utilsService.translate('TOASTS.NODE_CUT');
@@ -499,8 +586,9 @@ export class MmpService implements OnDestroy {
    * paste the nodes of the mmp clipboard in the selected node.
    */
   public async pasteNode(nodeId?: string) {
+    const instance = this.map.instance;
     try {
-      this.pasteFromClipboard(nodeId);
+      this.pasteFromClipboard(instance, nodeId);
     } catch (e) {
       if (errorMessage(e) == 'There are not nodes in the mmp clipboard') {
         const rootNodeFailureMessage = await this.utilsService.translate(
@@ -520,11 +608,11 @@ export class MmpService implements OnDestroy {
    * Paste as an independent tree when the caller names no node and nothing is
    * selected. Paste under the named or the selected node otherwise.
    */
-  private pasteFromClipboard(nodeId?: string) {
+  private pasteFromClipboard(instance: MmpMap['instance'], nodeId?: string) {
     const asTree = !nodeId && !this.hasSelectedNode();
 
-    if (asTree) this.map.instance.pasteTree();
-    else this.map.instance.pasteNode(nodeId);
+    if (asTree) instance.pasteTree();
+    else instance.pasteNode(nodeId);
   }
 
   /**
@@ -532,6 +620,14 @@ export class MmpService implements OnDestroy {
    */
   public toggleBranchVisibility() {
     this.map.instance.toggleBranchVisibility();
+  }
+
+  /**
+   * Return true when this person hid the child nodes of the selected node,
+   * and false with nothing selected or before `create` builds the map.
+   */
+  public childNodesHidden(): boolean {
+    return this.currentMap?.instance.childNodesHidden() ?? false;
   }
 
   /**
@@ -545,14 +641,14 @@ export class MmpService implements OnDestroy {
    * Return the children of the current node.
    */
   public nodeChildren(): ExportNodeProperties[] {
-    return this.currentMap?.instance.nodeChildren() ?? [];
+    return this.map.instance.nodeChildren();
   }
 
   /**
    * Move the node in a direction.
    */
   public moveNodeTo(direction: 'left' | 'right' | 'up' | 'down', range = 10) {
-    const coordinates = this.map.instance.selectNode()?.coordinates;
+    const coordinates = this.selectNode()?.coordinates;
     if (!coordinates) return;
 
     switch (direction) {
@@ -580,7 +676,7 @@ export class MmpService implements OnDestroy {
     format: ExportFormat = 'json'
   ): Promise<{ success: boolean; size?: number }> {
     const name = DOMPurify.sanitize(
-      (this.getRootNode().name ?? '').replace(/\n/g, ' ').replace(/\s+/g, ' ')
+      (this.getRootNode()?.name ?? '').replace(/\n/g, ' ').replace(/\s+/g, ' ')
     );
 
     switch (format) {
@@ -636,7 +732,7 @@ export class MmpService implements OnDestroy {
       // The upload succeeded; a node deleted meanwhile needs no image and no
       // error. The cleanup job deletes the unused image.
       if (!this.existNode(node.id)) return;
-      await this.updateNode('imageSrc', reference, true, true, node.id);
+      await this.updateNode('imageSrc', reference, node.id);
     } catch (error) {
       await this.showImageUploadError(error);
     }
