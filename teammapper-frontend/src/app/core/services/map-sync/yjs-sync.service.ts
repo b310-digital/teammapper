@@ -450,7 +450,7 @@ export class YjsSyncService {
   // ─── Map options (Y.Doc ↔ MMP) ──────────────────────────────
 
   private writeMapOptionsToYDoc(options?: CachedMapOptions): void {
-    // The settings page can change these with no map open, so this is the one
+    // The settings dialog can change these while no doc exists, so this is the one
     // write that has to tolerate a missing doc rather than throw.
     const doc = this.yDoc;
     if (!doc || !options) return;

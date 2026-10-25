@@ -1,20 +1,11 @@
-div.settings {
-  mat-toolbar {
-    background-color: var(--color-bg-toolbar);
+div.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 8px;
+}
 
-    div.container {
-      width: 100%;
-      text-align: center;
-      position: relative;
-
-      button.close-button {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-      }
-    }
-  }
-
+.settings {
   div.content {
     mat-card {
       margin-bottom: 20px;
@@ -77,9 +68,5 @@ div.settings {
         width: 100%;
       }
     }
-  }
-
-  div.content.container {
-    padding-bottom: 20px;
   }
 }

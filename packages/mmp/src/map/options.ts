@@ -79,10 +79,60 @@ export default class Options implements OptionParameters {
       case 'edit':
         this.updateEdit(value as boolean);
         break;
+      case 'centerOnResize':
+        this.updateCenterOnResize(value as boolean);
+        break;
+      case 'showLinktext':
+        this.updateShowLinktext(value as boolean);
+        break;
+      case 'defaultNode':
+        this.defaultNode = Utils.mergeObjects(
+          DefaultNodeValues,
+          value as MapNodeSettings,
+          true
+        ) as DefaultNodeProperties;
+        break;
+      case 'rootNode':
+        this.rootNode = Utils.mergeObjects(
+          DefaultRootNodeValues,
+          value as MapNodeSettings,
+          true
+        ) as DefaultNodeProperties;
+        break;
       default:
         Log.error('The property does not exist');
     }
   };
+
+  /**
+   * Update whether a window resize centers the map.
+   * @param {boolean} flag
+   */
+  private updateCenterOnResize(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    if (flag === this.centerOnResize) return;
+    this.centerOnResize = flag;
+
+    this.map.centerOnWindowResize(flag);
+  }
+
+  /**
+   * Update whether nodes show the text of their link.
+   * @param {boolean} flag
+   */
+  private updateShowLinktext(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    if (flag === this.showLinktext) return;
+    this.showLinktext = flag;
+
+    this.map.draw.drawAll();
+  }
 
   /**
    * Update drag behavior.

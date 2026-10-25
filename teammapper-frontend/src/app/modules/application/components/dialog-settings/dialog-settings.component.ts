@@ -5,11 +5,14 @@ import { AdditionalMapOptions } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
-import { Location, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
-import { MatToolbar } from '@angular/material/toolbar';
-import { MatDialogTitle } from '@angular/material/dialog';
+import {
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogTitle,
+} from '@angular/material/dialog';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
@@ -26,17 +29,18 @@ import { FormsModule } from '@angular/forms';
 import { MatInput } from '@angular/material/input';
 import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
 import { MindmapsOverview } from 'src/app/shared/components/mindmaps-overview/mindmaps-overview.component';
-import { MapDeletionComponent } from '../../components/map-deletion/map-deletion.component';
+import { MapDeletionComponent } from '../map-deletion/map-deletion.component';
 
 @Component({
-  selector: 'teammapper-settings',
-  templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss'],
+  selector: 'teammapper-dialog-settings',
+  templateUrl: './dialog-settings.component.html',
+  styleUrls: ['./dialog-settings.component.scss'],
   imports: [
     MindmapsOverview,
     MapDeletionComponent,
-    MatToolbar,
     MatDialogTitle,
+    MatDialogContent,
+    MatDialogClose,
     MatIconButton,
     MatIcon,
     MatTabGroup,
@@ -56,12 +60,11 @@ import { MapDeletionComponent } from '../../components/map-deletion/map-deletion
     InverseBoolPipe,
   ],
 })
-export class SettingsComponent {
+export class DialogSettingsComponent {
   private settingsService = inject(SettingsService);
   private mmpService = inject(MmpService);
   private mapSyncService = inject(MapSyncService);
   private translateService = inject(TranslateService);
-  private location = inject(Location);
 
   public readonly languages: string[];
   public settings: UserSettings | null;
@@ -86,10 +89,15 @@ export class SettingsComponent {
     this.editMode = this.settingsService.getEditModeObservable();
   }
 
+  /**
+   * Store the edited user settings and apply them to the map behind the
+   * dialog.
+   */
   public async updateGeneralMapOptions() {
     if (!this.settings) return;
 
     await this.settingsService.updateCachedSettings(this.settings);
+    this.mmpService.updateUserMapOptions(this.settings.mapOptions);
   }
 
   /**
@@ -121,10 +129,6 @@ export class SettingsComponent {
     if (!this.settings) return;
 
     await this.settingsService.setDarkMode(this.settings.general.darkMode);
-  }
-
-  public back() {
-    this.location.back();
   }
 }
 

@@ -1,11 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { NavigationStart, Router } from '@angular/router';
 import { HotkeysService } from 'angular2-hotkeys';
+import { filter, Subscription } from 'rxjs';
 import { DialogAboutComponent } from 'src/app/modules/application/components/dialog-about/dialog-about.component';
 import { DialogConnectionInfoComponent } from 'src/app/modules/application/components/dialog-connection-info/dialog-connection-info.component';
 import { DialogImportMermaidComponent } from 'src/app/modules/application/components/dialog-import-mermaid/dialog-import-mermaid.component';
 import { DialogImportAiComponent } from 'src/app/modules/application/components/dialog-import-ai/dialog-import-ai.component';
 import { DialogPictogramsComponent } from 'src/app/modules/application/components/dialog-pictograms/dialog-pictograms.component';
+import { DialogSettingsComponent } from 'src/app/modules/application/components/dialog-settings/dialog-settings.component';
 import { DialogShareComponent } from 'src/app/modules/application/components/dialog-share/dialog-share.component';
 
 @Injectable({
@@ -14,6 +17,7 @@ import { DialogShareComponent } from 'src/app/modules/application/components/dia
 export class DialogService {
   private dialog = inject(MatDialog);
   private hotkeysService = inject(HotkeysService);
+  private router = inject(Router);
 
   private disconnectModalRef: MatDialogRef<DialogConnectionInfoComponent> | null =
     null;
@@ -24,6 +28,7 @@ export class DialogService {
   private importMermaidModalRef: MatDialogRef<DialogImportMermaidComponent> | null =
     null;
   private importAiModalRef: MatDialogRef<DialogImportAiComponent> | null = null;
+  private settingsModalRef: MatDialogRef<DialogSettingsComponent> | null = null;
 
   openPictogramDialog() {
     this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent);
@@ -87,6 +92,35 @@ export class DialogService {
     if (!this.aboutModalRef) return;
 
     this.aboutModalRef.close();
+  }
+
+  /**
+   * Open the settings over the map. Hotkeys pause as for the info dialog, so
+   * typing `-` into a field removes no node. A navigation closes the dialog,
+   * because deleting a map from it leaves for the start page.
+   */
+  openSettingsDialog() {
+    if (this.settingsModalRef) return;
+
+    this.hotkeysService.pause();
+    const dialogRef = this.dialog.open(DialogSettingsComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+    });
+    const navigation = this.closeOnNavigation(dialogRef);
+    dialogRef.afterClosed().subscribe(() => {
+      navigation.unsubscribe();
+      this.settingsModalRef = null;
+      this.hotkeysService.unpause();
+    });
+    this.settingsModalRef = dialogRef;
+  }
+
+  private closeOnNavigation(dialogRef: MatDialogRef<unknown>): Subscription {
+    return this.router.events
+      .pipe(filter(event => event instanceof NavigationStart))
+      .subscribe(() => dialogRef.close());
   }
 
   openShareDialog() {

@@ -1,6 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
-import { Router } from '@angular/router';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
 import { distinctUntilChanged, Subscription } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
@@ -20,7 +19,6 @@ export class ShortcutsService implements OnDestroy {
   private mmpService = inject(MmpService);
   private hotkeysService = inject(HotkeysService);
   private settingsService = inject(SettingsService);
-  private router = inject(Router);
   private dialogService = inject(DialogService);
 
   private hotKeys: Hotkey[] = [];
@@ -68,7 +66,7 @@ export class ShortcutsService implements OnDestroy {
         keys: 'alt+s',
         description: 'TOOLTIPS.SETTINGS',
         callback: () => {
-          this.router.navigate(['app', 'settings']);
+          this.dialogService.openSettingsDialog();
         },
       },
       {

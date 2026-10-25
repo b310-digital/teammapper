@@ -11,15 +11,17 @@ import {
 } from 'src/app/core/services/mmp/mmp.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
-import { SettingsComponent } from './settings.component';
+import { DialogSettingsComponent } from './dialog-settings.component';
 
 // The Map Options tab edits the font bounds of the open map, which MmpService
-// only has once a map has been created. Opening /settings on its own has to
-// leave that tab out rather than show made-up numbers.
-describe('SettingsComponent', () => {
-  let fixture: ComponentFixture<SettingsComponent>;
+// only has once a map has been created. Until then the dialog has to leave
+// that tab out rather than show made-up numbers.
+describe('DialogSettingsComponent', () => {
+  let fixture: ComponentFixture<DialogSettingsComponent>;
   let mapOptions$: BehaviorSubject<AdditionalMapOptions | null>;
   let updateMapOptions: jest.Mock;
+  let updateUserMapOptions: jest.Mock;
+  let updateCachedSettings: jest.Mock;
 
   const node = (): MapNodeSettings => ({
     name: '',
@@ -46,10 +48,12 @@ describe('SettingsComponent', () => {
   async function render(mapOptions: AdditionalMapOptions | null) {
     mapOptions$ = new BehaviorSubject(mapOptions);
     updateMapOptions = jest.fn();
+    updateUserMapOptions = jest.fn();
+    updateCachedSettings = jest.fn().mockResolvedValue(undefined);
 
     await TestBed.configureTestingModule({
       imports: [
-        SettingsComponent,
+        DialogSettingsComponent,
         NoopAnimationsModule,
         TranslateModule.forRoot(),
       ],
@@ -57,7 +61,10 @@ describe('SettingsComponent', () => {
         provideRouter([]),
         {
           provide: MmpService,
-          useValue: { additionalMapOptions$: mapOptions$ },
+          useValue: {
+            additionalMapOptions$: mapOptions$,
+            updateUserMapOptions,
+          },
         },
         {
           provide: MapSyncService,
@@ -71,6 +78,7 @@ describe('SettingsComponent', () => {
           provide: SettingsService,
           useValue: {
             getCachedUserSettings: () => userSettings(),
+            updateCachedSettings,
             getEditModeObservable: () => new BehaviorSubject(true),
             getDefaultSettings: async () => ({ userSettings: userSettings() }),
             getCachedAdminMapEntries: async () => [],
@@ -80,7 +88,7 @@ describe('SettingsComponent', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SettingsComponent);
+    fixture = TestBed.createComponent(DialogSettingsComponent);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -109,7 +117,32 @@ describe('SettingsComponent', () => {
     expect(tabLabels()).toContain('PAGES.SETTINGS.GENERAL');
   });
 
-  it('shows the map settings a peer changes while the page is open', async () => {
+  // The map stays drawn behind the dialog, so it has to pick up the change.
+  it('applies changed user settings to the open map', async () => {
+    await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
+    const settings = fixture.componentInstance.settings;
+    if (!settings) throw new Error('No user settings');
+    settings.mapOptions.showLinktext = true;
+
+    await fixture.componentInstance.updateGeneralMapOptions();
+
+    expect(updateUserMapOptions).toHaveBeenCalledWith(
+      expect.objectContaining({ showLinktext: true })
+    );
+  });
+
+  it('stores changed user settings before it applies them', async () => {
+    await render(null);
+    updateUserMapOptions.mockImplementation(() =>
+      expect(updateCachedSettings).toHaveBeenCalled()
+    );
+
+    await fixture.componentInstance.updateGeneralMapOptions();
+
+    expect(updateUserMapOptions).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the map settings a peer changes while the dialog is open', async () => {
     await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
 
     mapOptions$.next({ fontMaxSize: 90, fontMinSize: 20, fontIncrement: 10 });

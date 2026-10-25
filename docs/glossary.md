@@ -156,9 +156,22 @@ The dialog that the info button or `?` opens over the map. It shows the app
 version, a hint that the map's deletion date moved to the settings, and every
 keyboard shortcut. Map shortcuts do not act while it is open.
 
+### Settings dialog
+
+The dialog that the settings button or `alt+s` opens over the map. It has three
+tabs:
+
+1. General: language and dark mode.
+2. Map options: the deletion card, the map settings of the open map, and the
+   user settings for new nodes, linktext and centering.
+3. The map list.
+
+The map stays drawn behind the dialog and takes each change at once. Map
+shortcuts do not act while it is open.
+
 ### Deletion card
 
-The card at the top of the Map options tab in the settings. It shows the open
+The card at the top of the Map options tab in the settings dialog. It shows the open
 map's deletion date and the server's retention period, and gives the map's
 admin the delete action. The map list, which the settings' third tab and the
 start page both show, offers the same delete action for every listed map whose

@@ -10,6 +10,7 @@ import { UtilsService } from '../utils/utils.service';
 import * as mmp from '@teammapper/mmp';
 import { Subject } from 'rxjs';
 import type { MapData, MmpMap, OptionParameters } from '@teammapper/mmp';
+import type { MapNodeSettings, UserMapOptions } from '@teammapper/shared';
 import { ImageUploadError } from './node-images';
 
 jest.mock('dompurify', () => {
@@ -404,6 +405,47 @@ describe('MmpService', () => {
       service.updateAdditionalMapOptions({ fontMaxSize: 70 });
 
       expect(service.getAdditionalMapOptions()).toBeNull();
+    });
+  });
+
+  describe('updateUserMapOptions', () => {
+    const node = (name: string): MapNodeSettings => ({
+      name,
+      link: { href: '' },
+      image: { src: '', size: 60 },
+      colors: { name: '', background: '', branch: '', link: '' },
+      font: { size: 16, style: 'normal', weight: 'normal' },
+    });
+    const userMapOptions = (): UserMapOptions => ({
+      centerOnResize: true,
+      autoBranchColors: false,
+      showLinktext: false,
+      fontMaxSize: 70,
+      fontMinSize: 15,
+      fontIncrement: 5,
+      defaultNode: node('New node'),
+      rootNode: node('New root'),
+    });
+
+    it.each<[string, unknown]>([
+      ['centerOnResize', true],
+      ['showLinktext', false],
+      ['defaultNode', node('New node')],
+      ['rootNode', node('New root')],
+    ])('hands %s to the open map', async (property, value) => {
+      await createMap();
+      mockMap.options.update.mockClear();
+
+      service.updateUserMapOptions(userMapOptions());
+
+      expect(mockMap.options.update).toHaveBeenCalledWith(property, value);
+    });
+
+    it('ignores the user settings before a map exists', () => {
+      expect(() =>
+        service.updateUserMapOptions(userMapOptions())
+      ).not.toThrow();
+      expect(mockMap.options.update).not.toHaveBeenCalled();
     });
   });
 

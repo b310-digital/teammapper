@@ -74,11 +74,7 @@ export default class MmpMap {
 
     this.dom = this.draw.create();
 
-    if (this.options.centerOnResize === true) {
-      d3.select(window).on('resize.' + this.id, () => {
-        this.zoom.center();
-      });
-    }
+    this.centerOnWindowResize(this.options.centerOnResize === true);
 
     if (this.options.zoom === true) {
       this.dom.svg.call(this.zoom.getZoomBehavior());
@@ -91,11 +87,22 @@ export default class MmpMap {
   }
 
   /**
+   * Center the map on every window resize, or stop doing so.
+   * @param {boolean} flag
+   */
+  public centerOnWindowResize(flag: boolean) {
+    const window$ = d3.select(window);
+    const event = 'resize.' + this.id;
+    if (flag) window$.on(event, () => this.zoom.center());
+    else window$.on(event, null);
+  }
+
+  /**
    * Remove the map for good: its svg, every subscription and the resize
    * listener on the window.
    */
   private destroy = () => {
-    d3.select(window).on('resize.' + this.id, null);
+    this.centerOnWindowResize(false);
     this.unsubscribeData();
     this.events.unsubscribeAll();
     this.draw.destroy();

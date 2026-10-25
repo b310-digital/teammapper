@@ -75,8 +75,8 @@ describe('YjsSyncService', () => {
       expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
     });
 
-    // The settings page reads edit mode to decide whether the map settings
-    // of the map the user left stay editable.
+    // The settings dialog reads edit mode to decide whether the map settings
+    // stay editable.
     it('keeps edit mode on destroy', () => {
       service.destroy();
 

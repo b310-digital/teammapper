@@ -156,6 +156,10 @@ export class ToolbarComponent {
     this.dialogService.openAboutDialog();
   }
 
+  public openSettings() {
+    this.dialogService.openSettingsDialog();
+  }
+
   public async initImageUpload(event: Event) {
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
     const file = fileUpload.files?.[0];

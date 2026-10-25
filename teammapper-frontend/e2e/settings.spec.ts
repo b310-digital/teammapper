@@ -4,8 +4,7 @@ test('changes language in settings', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
 
-  // Navigate to settings (use first() to handle duplicate elements)
-  await page.locator('button[routerlink="/app/settings"]').click();
+  await page.locator('#settings-button').click();
   await expect(page.locator('.settings')).toBeVisible();
 
   // Wait for the language dropdown to be visible
@@ -37,7 +36,7 @@ test('deletes a map that is not open from the map list', async ({ page }) => {
   const closedMapId = await createMap();
   const openMapId = await createMap();
 
-  await page.locator('button[routerlink="/app/settings"]').click();
+  await page.locator('#settings-button').click();
   await page.locator('.mat-mdc-tab').nth(2).click();
 
   const closedMapRow = page.locator('mat-list-item', {
@@ -63,7 +62,7 @@ test('keeps the stored map settings when the user reopens the map', async ({
   const fontMaxSize = page.locator('input[name="fontMaxSize"]');
   const fontIncrement = page.locator('input[name="fontIncrement"]');
   const openMapSettings = async () => {
-    await page.locator('button[routerlink="/app/settings"]').click();
+    await page.locator('#settings-button').click();
     await page.locator('.mat-mdc-tab').nth(1).click();
   };
   await page.goto('/');
@@ -93,12 +92,34 @@ test('keeps the stored map settings when the user reopens the map', async ({
   await expect(fontIncrement).toHaveValue('7');
 });
 
+test('names the next node after the default node name set in the dialog', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByText('Create mind map').click();
+  await expect(page.locator('.map')).toBeVisible();
+
+  await page.locator('#settings-button').click();
+  await page.locator('.mat-mdc-tab').nth(1).click();
+  const defaultNodeName = page.locator('input[name="defaultNodeName"]');
+  await defaultNodeName.fill('Fresh node');
+  await defaultNodeName.press('Tab');
+  await page.locator('.close-button').click();
+
+  await page.getByText('Root node').click();
+  await page.keyboard.press('+');
+  await page.keyboard.press('Enter');
+
+  await expect(
+    page.locator('.map g.node', { hasText: 'Fresh node' })
+  ).toHaveCount(1);
+});
+
 test('modifies map options in settings', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
 
-  // Navigate to settings (use first() to handle duplicate elements)
-  await page.locator('button[routerlink="/app/settings"]').click();
+  await page.locator('#settings-button').click();
 
   // Click on Map Options tab - wait for it to be visible
   await page.waitForSelector('mat-tab-group', { state: 'visible' });
