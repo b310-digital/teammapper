@@ -82,6 +82,8 @@ For examples with a reverse proxy, see [documentation about deployment](docs/dep
 
 ### Development
 
+TeamMapper requires Node.js 24.11.1 or later. `pnpm install` refuses an older version. The `app` container already ships a newer Node.
+
 -   Start up app necessary services
 
     ```bash

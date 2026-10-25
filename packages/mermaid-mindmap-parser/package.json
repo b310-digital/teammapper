@@ -2,6 +2,9 @@
   "name": "@teammapper/mermaid-mindmap-parser",
   "private": false,
   "version": "0.0.1",
+  "engines": {
+    "node": ">=24.11.1"
+  },
   "type": "module",
   "main": "dist/mermaid-mindmap-parser.js",
   "author": {
