@@ -41,13 +41,6 @@ export interface MapNodeLink {
   href?: string | null;
 }
 
-export interface MapNodeBasics {
-  colors: MapNodeColors;
-  font: MapNodeFont;
-  name: string | null;
-  image: MapNodeImage;
-}
-
 export interface UserNodeProperties {
   name?: string | null;
   coordinates?: MapNodeCoordinates;
