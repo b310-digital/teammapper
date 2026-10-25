@@ -45,7 +45,7 @@ export class ImportService {
       }
 
       // One importMap call, since each call replaces the whole map
-      this.mmpService.importMap(JSON.stringify(convertedNodes));
+      await this.mmpService.importMap(JSON.stringify(convertedNodes));
 
       const successMessage = await this.utilsService.translate(
         'TOASTS.MAP_IMPORT_SUCCESS'

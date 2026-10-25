@@ -15,6 +15,8 @@ import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { AsyncPipe, NgClass } from '@angular/common';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { isRasterImageFile } from 'src/app/core/services/mmp/node-images';
+import { ToastrService } from 'ngx-toastr';
+import { UtilsService } from 'src/app/core/services/utils/utils.service';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -39,6 +41,8 @@ export class ToolbarComponent {
   private mapSyncService = inject(MapSyncService);
   private dialogService = inject(DialogService);
   private settingsService = inject(SettingsService);
+  private toastrService = inject(ToastrService);
+  private utilsService = inject(UtilsService);
 
   @Input() public node: ExportNodeProperties | null = null;
   @Input() public editDisabled = false;
@@ -168,12 +172,24 @@ export class ToolbarComponent {
     const fileReader = new FileReader();
 
     fileReader.onload = (_fileEvent: Event) => {
-      this.mmpService.importMap(fileReader.result?.toString() ?? '');
+      void this.importJSON(fileReader.result?.toString() ?? '');
     };
 
     const fileUpload: HTMLInputElement = event.target as HTMLInputElement;
     const file = fileUpload.files?.[0];
     if (file) fileReader.readAsText(file);
+  }
+
+  /** Import the map from the JSON text; the user sees an error on failure. */
+  private async importJSON(json: string): Promise<void> {
+    try {
+      await this.mmpService.importMap(json);
+    } catch {
+      const message = await this.utilsService.translate(
+        'TOASTS.ERRORS.IMPORT_ERROR'
+      );
+      this.toastrService.error(message);
+    }
   }
 
   private isValidLink(input: string): boolean {

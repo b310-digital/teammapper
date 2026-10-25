@@ -291,6 +291,42 @@ describe('MmpService', () => {
       expect(newerMap.instance.destroy).toHaveBeenCalled();
     });
 
+    describe('over a leftover map', () => {
+      const secondMap = () => ({
+        ...mockMap,
+        instance: { ...mockMap.instance, destroy: jest.fn() },
+      });
+
+      it('destroys the leftover map once before it creates the new one', async () => {
+        const first = secondMap();
+        const second = secondMap();
+        (mmp.create as jest.Mock)
+          .mockReturnValueOnce(first)
+          .mockReturnValueOnce(second);
+
+        await createMap();
+        await createMap();
+
+        expect(first.instance.destroy).toHaveBeenCalledTimes(1);
+        expect(second.instance.destroy).not.toHaveBeenCalled();
+      });
+
+      it('keeps the new map as the current map', async () => {
+        const first = secondMap();
+        const second = secondMap();
+        (mmp.create as jest.Mock)
+          .mockReturnValueOnce(first)
+          .mockReturnValueOnce(second);
+        await createMap();
+        await createMap();
+
+        service.remove();
+
+        expect(second.instance.destroy).toHaveBeenCalledTimes(1);
+        expect(first.instance.destroy).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it('creates no map once remove ran during the create', async () => {
       const pending = service.create(
         'a',
@@ -418,6 +454,58 @@ describe('MmpService', () => {
     it('should do nothing if no map exists', () => {
       service.remove();
       expect(mockMap.instance.destroy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('importMap', () => {
+    let newSpy: jest.SpyInstance;
+    const nodes = [{ id: 'a', parent: null, isRoot: true, name: 'Root' }];
+
+    beforeEach(async () => {
+      await createMap();
+      newSpy = jest.spyOn(service, 'new').mockResolvedValue(undefined);
+    });
+
+    it('replaces the map with the nodes of a valid JSON array', async () => {
+      await service.importMap(JSON.stringify(nodes));
+
+      expect(newSpy).toHaveBeenCalledTimes(1);
+      expect(newSpy).toHaveBeenCalledWith(nodes);
+    });
+
+    it('rejects JSON that does not parse', async () => {
+      await expect(service.importMap('{not json')).rejects.toThrow();
+    });
+
+    it('does not replace the map with JSON that does not parse', async () => {
+      await service.importMap('{not json').catch(() => undefined);
+
+      expect(newSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['an object', '{"id":"a"}'],
+      ['a string', '"text"'],
+      ['a number', '1'],
+      ['null', 'null'],
+    ])('rejects JSON that is %s and not an array', async (_, json) => {
+      await expect(service.importMap(json)).rejects.toThrow();
+    });
+
+    it.each([
+      ['null', '[null]'],
+      ['a number', '[1]'],
+      ['a string', '["a"]'],
+    ])('rejects an array with %s as a node', async (_, json) => {
+      await expect(service.importMap(json)).rejects.toThrow();
+    });
+
+    it('does not replace the map when one element is not a node', async () => {
+      const json = JSON.stringify([...nodes, null]);
+
+      await service.importMap(json).catch(() => undefined);
+
+      expect(newSpy).not.toHaveBeenCalled();
     });
   });
 

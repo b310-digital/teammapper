@@ -312,6 +312,7 @@ export class YjsSyncService {
         const mapId = this.yjsMapId;
         const writable = this.yjsWritable;
         this.settingsService.setEditMode(false);
+        this.ctx.removeMap();
         this.destroy();
         this.setWritable(writable);
         this.initMap(mapId);

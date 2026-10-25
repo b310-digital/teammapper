@@ -25,6 +25,7 @@ export function createMockContext(): MapSyncContext {
     updateAttachedMap: jest.fn(),
     emitClientList: jest.fn(),
     createMap: jest.fn(),
+    removeMap: jest.fn(),
     mapDeleted: jest.fn(),
   };
 }

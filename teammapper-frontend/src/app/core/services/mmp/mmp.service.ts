@@ -39,6 +39,14 @@ const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
 /**
+ * Whether the parsed JSON is an array whose elements are all objects. The
+ * check is structural: `MmpService.new` validates the node ids itself.
+ */
+const isNodeArray = (data: unknown): data is MapSnapshot =>
+  Array.isArray(data) &&
+  data.every(node => typeof node === 'object' && node !== null);
+
+/**
  * Node names use the font `styles.scss` ships, so a name has the same width
  * on every system. An exported image cannot load it and falls back to Arial.
  */
@@ -143,9 +151,10 @@ export class MmpService implements OnDestroy {
    * return it. mmp draws every node the data holds while it creates the map.
    * The map takes the current edit mode and stays read-only while the edit
    * mode is unknown, so a read-only client never gets an editable map.
-   * Returns null without
-   * creating a map when a later `create` or a `remove` ran while the options
-   * loaded, so a late create never replaces a newer map.
+   * Returns null without creating a map when a later `create` or a `remove`
+   * ran while the options loaded, so a late create never replaces a newer
+   * map. A map left over from an earlier `create` is destroyed first, so one
+   * renderer exists at most.
    */
   public async create(
     id: string,
@@ -160,6 +169,7 @@ export class MmpService implements OnDestroy {
     this.defaultOptions = defaultOptions;
     this.additionalOptionsSubject.next(defaultOptions);
 
+    this.currentMap?.instance.destroy();
     const map: MmpMap = create(id, ref, this.mapOptions(options), data);
     this.currentMap = map;
     map.instance.on('nodeProtected', () => void this.showProtectedNotice());
@@ -701,10 +711,15 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Import an existing map from the local file system.
+   * Import an existing map from the local file system. Rejects when the JSON
+   * does not parse or is not an array of nodes, and leaves the map as it is.
    */
-  public importMap(json: string) {
-    this.new(JSON.parse(json));
+  public async importMap(json: string): Promise<void> {
+    const data: unknown = JSON.parse(json);
+    if (!isNodeArray(data)) {
+      throw new Error('The JSON is not an array of nodes');
+    }
+    await this.new(data);
   }
 
   /**

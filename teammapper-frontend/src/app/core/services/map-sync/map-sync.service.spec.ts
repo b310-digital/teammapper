@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NEVER } from 'rxjs';
+import { NEVER, Observable } from 'rxjs';
 import { MapSyncService, SYNCING_TOAST_DELAY_MS } from './map-sync.service';
 import { MmpService } from '../mmp/mmp.service';
 import { HttpService } from '../../http/http.service';
@@ -660,6 +660,52 @@ describe('MapSyncService', () => {
       service.reset();
 
       expect(destroySpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('removing the map on a server reset', () => {
+    it('removes the current map from mmp through the context', () => {
+      getSyncContext(service).removeMap();
+
+      expect(mmpService.remove).toHaveBeenCalledTimes(1);
+      expect(mmpService.remove).toHaveBeenCalledWith();
+    });
+  });
+
+  describe('reset', () => {
+    const latest = <T>(observable: Observable<T>): T | undefined => {
+      let value: T | undefined;
+      observable.subscribe(next => (value = next)).unsubscribe();
+      return value;
+    };
+
+    it('clears the attached node', () => {
+      getSyncContext(service).setAttachedNode(mockNode);
+
+      service.reset();
+
+      expect(latest(service.getAttachedNodeObservable())).toBeNull();
+    });
+
+    it('clears the client list', () => {
+      const context = getSyncContext(service);
+      context.setColorMapping({ client: { color: '#ff0000', nodeId: 'a' } });
+      context.emitClientList();
+
+      service.reset();
+
+      expect(latest(service.getClientListObservable())).toEqual([]);
+    });
+
+    it('clears the attached map', () => {
+      service.attachMap({
+        key: 'map-1',
+        cachedMap: { uuid: 'map-1' } as CachedMapEntry['cachedMap'],
+      });
+
+      service.reset();
+
+      expect(latest(service.getAttachedMapObservable())).toBeNull();
     });
   });
 });
