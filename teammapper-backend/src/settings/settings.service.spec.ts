@@ -24,6 +24,7 @@ const defaultSettings: Settings = {
       centerOnResize: false,
       autoBranchColors: true,
       showLinktext: false,
+      branchStyle: 'tapered',
       fontMaxSize: 70,
       fontMinSize: 15,
       fontIncrement: 5,

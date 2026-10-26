@@ -4,10 +4,12 @@ import type {
   NodeImage,
   NodeLink,
 } from './data/node-record.js';
-import type {
-  ImageReference,
-  MapNodeCoordinates,
-  MapNodeSettings,
+import {
+  branchStyleOf,
+  type BranchStyle,
+  type ImageReference,
+  type MapNodeCoordinates,
+  type MapNodeSettings,
 } from '@teammapper/shared';
 import Utils from '../utils/utils.js';
 import Map from './map.js';
@@ -30,6 +32,7 @@ export default class Options implements OptionParameters {
   public defaultNode: DefaultNodeProperties;
   public rootNode: DefaultNodeProperties;
   public showLinktext: boolean;
+  public branchStyle: BranchStyle;
   public resolveImageUrl?: ImageUrlResolver;
 
   /**
@@ -49,6 +52,7 @@ export default class Options implements OptionParameters {
     this.zoom = parameters.zoom !== undefined ? parameters.zoom : true;
     this.showLinktext =
       parameters.showLinktext !== undefined ? parameters.showLinktext : false;
+    this.branchStyle = branchStyleOf(parameters.branchStyle);
     this.resolveImageUrl = parameters.resolveImageUrl;
 
     this.defaultNode = withDefaults(DefaultNodeValues, parameters.defaultNode);
@@ -70,6 +74,9 @@ export default class Options implements OptionParameters {
         break;
       case 'showLinktext':
         this.updateShowLinktext(value as boolean);
+        break;
+      case 'branchStyle':
+        this.updateBranchStyle(value);
         break;
       case 'defaultNode':
         this.defaultNode = withDefaults(
@@ -114,6 +121,18 @@ export default class Options implements OptionParameters {
 
     if (flag === this.showLinktext) return;
     this.showLinktext = flag;
+
+    this.map.draw.drawAll();
+  }
+
+  /**
+   * Update how branches are drawn. An unknown value draws tapered branches.
+   * @param {unknown} value
+   */
+  private updateBranchStyle(value: unknown) {
+    const style = branchStyleOf(value);
+    if (style === this.branchStyle) return;
+    this.branchStyle = style;
 
     this.map.draw.drawAll();
   }
@@ -208,5 +227,6 @@ export interface OptionParameters {
   defaultNode?: MapNodeSettings;
   rootNode?: MapNodeSettings;
   showLinktext?: boolean;
+  branchStyle?: BranchStyle;
   resolveImageUrl?: ImageUrlResolver;
 }

@@ -41,6 +41,7 @@ describe('FooterComponent', () => {
       fontIncrement: 2,
       centerOnResize: true,
       showLinktext: false,
+      branchStyle: 'tapered',
       defaultNode: mockNode,
       rootNode: mockNode,
     },
