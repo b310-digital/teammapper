@@ -206,16 +206,6 @@ export interface CachedAdminMapEntry {
   cachedAdminMapValue: CachedAdminMapValue;
 }
 
-export interface MmpEventPayloadMap {
-  nodeSelect: ExportNodeProperties;
-  nodeDeselect: ExportNodeProperties;
-  nodeProtected: ExportNodeProperties;
-  /** The map data changed, by a local, a peer's or an undo write. */
-  mapChange: void;
-}
-
-export type MmpEventType = keyof MmpEventPayloadMap;
-
 export interface Settings {
   systemSettings: SystemSettings;
   userSettings: UserSettings;

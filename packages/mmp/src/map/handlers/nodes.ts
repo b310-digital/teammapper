@@ -4,12 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   collectSubtreeIds,
   CssColorSchema,
+  isNodeProperty,
+  NodePropertyMapping,
   NodePropertySchemas,
 } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import type { MapData, MapDataChange } from '../data/map-data.js';
-import { isNodeProperty, PropertyMapping } from '../data/property-mapping.js';
 import {
   randomK,
   resolveNode,
@@ -571,7 +572,7 @@ export default class Nodes {
     // Changing the protection itself stays allowed.
     if (property !== 'protected' && this.refusesChange(node.id)) return;
 
-    const previousValue = Utils.get(node, PropertyMapping[property]);
+    const previousValue = Utils.get(node, NodePropertyMapping[property]);
     const nextValue = this.validatedValue(node, property, value);
     if (Nodes.sameValue(previousValue, nextValue)) return;
 
@@ -597,7 +598,7 @@ export default class Nodes {
       Log.error('The node does not have an image');
     }
 
-    const previousValue = Utils.get(node, PropertyMapping[property]);
+    const previousValue = Utils.get(node, NodePropertyMapping[property]);
     const nextValue =
       result.output ?? (typeof previousValue === 'string' ? '' : previousValue);
 

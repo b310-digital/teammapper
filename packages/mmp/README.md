@@ -55,6 +55,13 @@ The `batch` call above produces one redraw and one `mapChange`. The
 `MapData` interface offers `node(id)`, `nodes()`, `mainRootId()`, `addNodes`,
 `updateNode`, `removeNode`, `replaceMap`, `batch` and `subscribe`.
 
+`updateNode` takes a node property name, such as `backgroundColor`.
+`@teammapper/shared` exports `NodePropertyMapping`, the path of each property
+inside a node record, and `NodePropertyValues`, the value type each property
+accepts. `map.instance.updateNode` checks the value type at compile time.
+mmp declares its events and exports their payload types as
+`MmpEventPayloadMap` and `MmpEventType`.
+
 ## Third-party libs
 
 | Library | Authors or maintainers |                           License                            |       Link        |

@@ -16,6 +16,12 @@ import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { ColorPickerDirective } from 'ngx-color-picker';
 import { TranslatePipe } from '@ngx-translate/core';
 
+/** The node properties a color picker of this panel writes. */
+type ColorProperty = Extract<
+  NodeProperty,
+  'backgroundColor' | 'nameColor' | 'branchColor'
+>;
+
 const resolveColors = (colors?: MapNodeColors | null): NodeColors => ({
   name: colors?.name ?? '',
   background: colors?.background ?? '',
@@ -76,13 +82,13 @@ export class ColorPanelsComponent implements OnChanges {
     this.colors = resolveColors(this.node?.colors);
   }
 
-  public colorPickerChange(property: NodeProperty, value: string) {
+  public colorPickerChange(property: ColorProperty, value: string) {
     this.mmpService.updateNode(property, value);
   }
 
   public colorPickerToggleChange(
     opening: boolean,
-    property: NodeProperty,
+    property: ColorProperty,
     value: string
   ) {
     this.background().nativeElement.style.visibility = opening

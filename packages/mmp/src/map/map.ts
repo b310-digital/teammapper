@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import Events, { MmpEventCallback } from './handlers/events.js';
+import Events, { MmpEventCallback, MmpEventType } from './handlers/events.js';
 import Zoom from './handlers/zoom.js';
 import Draw from './handlers/draw.js';
 import Options, { OptionParameters } from './options.js';
@@ -13,9 +13,8 @@ import type { MapData } from './data/map-data.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
-  MmpEventType,
   NodeProperty,
-  NodePropertyValue,
+  NodePropertyValues,
   UserNodeProperties,
 } from '@teammapper/shared';
 
@@ -191,9 +190,9 @@ export interface MmpInstance {
   destroy: () => void;
   removeNode: (id?: string) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;
-  updateNode: (
-    property: NodeProperty | string,
-    value: NodePropertyValue | unknown,
+  updateNode: <P extends NodeProperty>(
+    property: P,
+    value: NodePropertyValues[P],
     id?: string
   ) => void;
   zoomIn: (duration?: number) => void;

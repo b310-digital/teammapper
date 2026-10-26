@@ -1,10 +1,10 @@
 import * as Y from 'yjs';
-import { NodePropertyMapping } from '@teammapper/mmp';
 import type { MapData, MapDataChange, MapNodeRecord } from '@teammapper/mmp';
 import {
   ExportNodeProperties,
   MapSnapshot,
   NodeProperty,
+  NodePropertyMapping,
 } from '@teammapper/shared';
 import {
   collectDescendantIds,
