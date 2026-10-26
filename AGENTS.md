@@ -61,6 +61,15 @@ the suite.
 match, because the protocol between them is not stable across versions. Bump
 both in the same commit.
 
+## Node version
+
+Every `package.json` declares the minimum Node version in `engines.node`.
+Change all of them in the same commit. `engineStrict` in `pnpm-workspace.yaml`
+makes `pnpm install` fail below that floor.
+
+`NODE_VERSION` in the `Dockerfile` sets the version the image ships. Keep it at
+or above the floor.
+
 ## Dev server and workspace packages
 
 The `serve` target in `teammapper-frontend/angular.json` sets

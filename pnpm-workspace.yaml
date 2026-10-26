@@ -10,6 +10,8 @@ minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   # GHSA-67c8-pqhq-4rmx (critical, RCE). See the piscina override below.
   - 'piscina@5.3.2'
+# Refuse to install under a Node version that a workspace's engines.node rejects.
+engineStrict: true
 strictDepBuilds: true
 allowBuilds:
   '@compodoc/compodoc': false

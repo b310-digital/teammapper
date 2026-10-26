@@ -5,6 +5,9 @@
   "description": "Browser mind map rendering library for TeamMapper, based on cedoor/mmp",
   "license": "MIT",
   "sideEffects": false,
+  "engines": {
+    "node": ">=24.11.1"
+  },
   "type": "module",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
