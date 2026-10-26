@@ -24,12 +24,25 @@ The system SHALL provide an import menu that displays JSON and Mermaid import op
 - **THEN** only JSON and Mermaid import options SHALL be visible
 
 ### Requirement: User can import a mind map from a JSON file
-The system SHALL allow users to import a mind map by uploading a JSON file. The imported map SHALL replace the current map and display the nodes defined in the file.
+
+The system SHALL allow users to import a mind map by uploading a JSON file. The imported map SHALL replace the current map and display the nodes defined in the file. The import SHALL keep the `protected` field of each node, and SHALL import a node without that field unprotected. The import SHALL accept and ignore the `locked` field of older files.
 
 #### Scenario: Upload JSON file for import
+
 - **WHEN** the user selects JSON import and uploads a valid JSON map file
 - **THEN** the imported nodes SHALL be visible on the map
 - **AND** each expected node SHALL appear exactly once
+
+#### Scenario: Import keeps protection
+
+- **WHEN** the user imports a JSON file exported from a map with a protected node
+- **THEN** that node SHALL be protected after the import
+
+#### Scenario: Import an older file
+
+- **WHEN** the user imports a JSON file whose nodes carry `locked` and no `protected`
+- **THEN** the import SHALL succeed
+- **AND** no node SHALL be protected
 
 ### Requirement: User can import a mind map from Mermaid syntax
 The system SHALL open a dialog with a text area when the user selects the Mermaid import option. Users SHALL enter Mermaid mindmap syntax and trigger import. The import SHALL replace the current map. A document holding several `mindmap` blocks SHALL import as one tree per block, and only the root of the first block SHALL carry the main-root mark. On success, the dialog SHALL close and the nodes from the Mermaid syntax SHALL appear on the map. The dialog SHALL NOT include any AI generation functionality.
