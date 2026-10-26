@@ -9,24 +9,34 @@ The system SHALL provide a Mind map tab in settings with toggles and input field
 - **WHEN** the user opens the Mind map tab, toggles auto branch colors, sets min font size to 20 and max font size to 80, and closes settings
 - **THEN** the map SHALL be displayed without errors
 
-### Requirement: Settings Page Navigation
+### Requirement: Settings Dialog
 
-The system SHALL provide a settings page accessible from the editor toolbar, organized into tabs.
+The system SHALL provide a settings dialog that opens over the map from the editor toolbar, organized into tabs. The map SHALL stay drawn behind the dialog and SHALL take each change to the user settings at once. The app SHALL not create the map again when the dialog closes.
 
 #### Scenario: Open settings
 
 - **WHEN** the user clicks the settings button or presses alt+s in the map editor
-- **THEN** the settings page SHALL be displayed at `/app/settings`
+- **THEN** the settings dialog SHALL open over the map and the URL SHALL not change
 
 #### Scenario: Tab structure
 
-- **WHEN** the settings page loads
+- **WHEN** the settings dialog opens
 - **THEN** three tabs SHALL be available: "General", "Mind map", "List of created maps"
 
 #### Scenario: Close settings
 
-- **WHEN** the user clicks the close (X) button on the settings page
-- **THEN** the user SHALL be returned to the map editor
+- **WHEN** the user clicks the close (X) button in the settings dialog
+- **THEN** the dialog SHALL close and the map editor SHALL stay in view
+
+#### Scenario: Close on navigation
+
+- **WHEN** the app navigates away while the settings dialog is open, such as after the user deletes the open map
+- **THEN** the dialog SHALL close
+
+#### Scenario: Apply user settings to the open map
+
+- **WHEN** the user changes "Center on resizing", "Show linktext" or "Branch style" in the dialog
+- **THEN** the open map SHALL use the new value without a reload
 
 ### Requirement: Map Options (detailed)
 
@@ -107,5 +117,5 @@ The "User settings" group SHALL provide a "Branch style" select in a "Branches" 
 
 #### Scenario: Select a branch style
 
-- **WHEN** the user opens the Mind map tab, selects "Curved" and closes settings
-- **THEN** the map SHALL be displayed with curved branches
+- **WHEN** the user opens the Mind map tab and selects "Curved"
+- **THEN** the map behind the dialog SHALL redraw with curved branches at once

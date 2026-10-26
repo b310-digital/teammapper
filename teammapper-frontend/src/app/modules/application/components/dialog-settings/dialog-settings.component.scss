@@ -30,21 +30,39 @@ div.settings-header {
     }
 
     div.map-options {
-      mat-card.map-options-map {
+      section.settings-group {
+        margin-top: 24px;
+
+        h3.settings-group-heading {
+          margin: 0;
+        }
+
+        p.settings-group-explanation {
+          margin: 4px 0 12px;
+          color: var(--color-text-secondary);
+        }
+      }
+
+      p.settings-hint {
+        margin: 4px 0 0;
+        font-size: 0.875em;
+        color: var(--color-text-secondary);
+      }
+
+      mat-card.map-options-editor {
         mat-slide-toggle {
           display: block;
           margin-bottom: 20px;
         }
+      }
 
-        mat-slide-toggle:last-child {
-          margin-bottom: 0;
-        }
-
+      mat-card.map-options-fonts {
         mat-form-field {
           margin-top: 16px;
         }
       }
 
+      mat-card.map-options-branches,
       mat-card.map-options-nodes {
         padding-bottom: 15px;
 

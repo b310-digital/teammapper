@@ -4,7 +4,11 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateModule } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
-import { MapNodeSettings, UserSettings } from '@teammapper/shared';
+import {
+  MapNodeSettings,
+  UserMapOptions,
+  UserSettings,
+} from '@teammapper/shared';
 import {
   AdditionalMapOptions,
   MmpService,
@@ -13,7 +17,7 @@ import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { DialogSettingsComponent } from './dialog-settings.component';
 
-// The Map Options tab edits the font bounds of the open map, which MmpService
+// The Mind map tab edits the font bounds of the open map, which MmpService
 // only has once a map has been created. Until then the dialog has to leave
 // that tab out rather than show made-up numbers.
 describe('DialogSettingsComponent', () => {
@@ -46,7 +50,11 @@ describe('DialogSettingsComponent', () => {
     },
   });
 
-  async function render(mapOptions: AdditionalMapOptions | null) {
+  async function render(
+    mapOptions: AdditionalMapOptions | null,
+    editMode = true,
+    cached: UserSettings = userSettings()
+  ) {
     mapOptions$ = new BehaviorSubject(mapOptions);
     updateMapOptions = jest.fn();
     updateUserMapOptions = jest.fn();
@@ -78,9 +86,9 @@ describe('DialogSettingsComponent', () => {
         {
           provide: SettingsService,
           useValue: {
-            getCachedUserSettings: () => userSettings(),
+            getCachedUserSettings: () => cached,
             updateCachedSettings,
-            getEditModeObservable: () => new BehaviorSubject(true),
+            getEditModeObservable: () => new BehaviorSubject(editMode),
             getDefaultSettings: async () => ({ userSettings: userSettings() }),
             getCachedAdminMapEntries: async () => [],
           },
@@ -105,17 +113,152 @@ describe('DialogSettingsComponent', () => {
 
   afterEach(() => TestBed.resetTestingModule());
 
-  it('shows the map options tab once a map holds options', async () => {
+  it('shows the mind map tab once a map holds options', async () => {
     await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
 
-    expect(tabLabels()).toContain('PAGES.SETTINGS.MAP_OPTIONS');
+    expect(tabLabels()).toContain('PAGES.SETTINGS.MIND_MAP');
   });
 
-  it('leaves the map options tab out while no map has been created', async () => {
+  it('leaves the mind map tab out while no map has been created', async () => {
     await render(null);
 
-    expect(tabLabels()).not.toContain('PAGES.SETTINGS.MAP_OPTIONS');
+    expect(tabLabels()).not.toContain('PAGES.SETTINGS.MIND_MAP');
     expect(tabLabels()).toContain('PAGES.SETTINGS.GENERAL');
+  });
+
+  describe('the mind map tab', () => {
+    const defaultOptions = {
+      fontMaxSize: 70,
+      fontMinSize: 15,
+      fontIncrement: 5,
+    };
+
+    async function openMindMapTab() {
+      const root = fixture.nativeElement as HTMLElement;
+      const tab = root.querySelectorAll<HTMLElement>('.mat-mdc-tab')[1];
+      if (!tab) throw new Error('No mind map tab');
+      tab.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return root;
+    }
+
+    function group(root: HTMLElement, name: string): HTMLElement {
+      const element = root.querySelector<HTMLElement>(`.${name}-group`);
+      if (!element) throw new Error(`No ${name} group`);
+      return element;
+    }
+
+    it('heads the map settings first, then the user settings', async () => {
+      await render(defaultOptions);
+      const root = await openMindMapTab();
+
+      const headings = Array.from(
+        root.querySelectorAll('.settings-group-heading')
+      ).map(heading => heading.textContent?.trim());
+
+      expect(headings).toEqual([
+        'PAGES.SETTINGS.MAP_SETTINGS',
+        'PAGES.SETTINGS.USER_SETTINGS',
+      ]);
+    });
+
+    it('explains both groups', async () => {
+      await render(defaultOptions);
+      const root = await openMindMapTab();
+
+      expect(group(root, 'map-settings').textContent).toContain(
+        'PAGES.SETTINGS.MAP_SETTINGS_EXPLANATION'
+      );
+      expect(group(root, 'user-settings').textContent).toContain(
+        'PAGES.SETTINGS.USER_SETTINGS_EXPLANATION'
+      );
+    });
+
+    it('puts the font sizes under the map settings only', async () => {
+      await render(defaultOptions);
+      const root = await openMindMapTab();
+
+      for (const name of ['fontMinSize', 'fontMaxSize', 'fontIncrement']) {
+        const selector = `input[name="${name}"]`;
+        expect(group(root, 'map-settings').querySelector(selector)).not.toBe(
+          null
+        );
+        expect(group(root, 'user-settings').querySelector(selector)).toBe(null);
+      }
+    });
+
+    it('puts the branch style under the user settings', async () => {
+      await render(defaultOptions);
+      const root = await openMindMapTab();
+
+      expect(
+        group(root, 'user-settings').querySelector('mat-select.branch-style')
+      ).not.toBe(null);
+    });
+
+    it('shows the hints of the settings that write onto nodes', async () => {
+      await render(defaultOptions);
+      const root = await openMindMapTab();
+      const text = group(root, 'user-settings').textContent;
+
+      expect(text).toContain('PAGES.SETTINGS.AUTO_BRANCH_COLORS_HINT');
+      expect(text).toContain('PAGES.SETTINGS.NODE_NAMES_HINT');
+    });
+
+    it('disables the map settings for a read-only viewer only', async () => {
+      await render(defaultOptions, false);
+      const root = await openMindMapTab();
+
+      const mapInputs = group(root, 'map-settings').querySelectorAll('input');
+      const userInputs = group(root, 'user-settings').querySelectorAll(
+        'input, mat-select'
+      );
+      expect(mapInputs.length).toBeGreaterThan(0);
+      mapInputs.forEach(input => expect(input.disabled).toBe(true));
+      expect(userInputs.length).toBeGreaterThan(0);
+      userInputs.forEach(input =>
+        expect(
+          input.hasAttribute('disabled') ||
+            input.getAttribute('aria-disabled') === 'true'
+        ).toBe(false)
+      );
+    });
+  });
+
+  describe('the branch style', () => {
+    it('shows tapered when the cached settings lack the key', async () => {
+      const cached = userSettings();
+      delete (cached.mapOptions as Partial<UserMapOptions>).branchStyle;
+      await render(
+        { fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 },
+        true,
+        cached
+      );
+
+      expect(fixture.componentInstance.settings?.mapOptions.branchStyle).toBe(
+        'tapered'
+      );
+    });
+
+    it('applies a new style to the open map', async () => {
+      await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
+      const settings = fixture.componentInstance.settings;
+      if (!settings) throw new Error('No user settings');
+      settings.mapOptions.branchStyle = 'curved';
+
+      await fixture.componentInstance.updateGeneralMapOptions();
+
+      expect(updateCachedSettings).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mapOptions: expect.objectContaining({ branchStyle: 'curved' }),
+        })
+      );
+      expect(updateUserMapOptions).toHaveBeenCalledWith(
+        expect.objectContaining({ branchStyle: 'curved' })
+      );
+    });
   });
 
   // The map stays drawn behind the dialog, so the map has to take the change.

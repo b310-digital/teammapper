@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "置中缩放",
     "NODE_DRAGGING": "拖拽节点",
     "MAP_ZOOM": "缩放思维导图",
-    "AUTO_BRANCH_COLORS": "自动分配分支颜色",
+    "AUTO_BRANCH_COLORS": "为你创建的每个新分支选择颜色。颜色保存在节点上，因此此思维导图上的每个人都能看到。",
+    "BRANCH_STYLE": "此浏览器绘制每个思维导图分支的方式",
     "SHARE": "分享",
     "LINK_ADD": "添加链接",
     "LINK_REMOVE": "移除链接",
@@ -180,7 +181,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "自动分配分支颜色",
+      "AUTO_BRANCH_COLORS_HINT": "为你创建的每个新分支选择颜色。颜色保存在节点上，因此此思维导图上的每个人都能看到。",
+      "BRANCH_STYLE": "分支样式",
+      "BRANCH_STYLES": {
+        "TAPERED": "渐细",
+        "CURVED": "曲线",
+        "STRAIGHT": "直线"
+      },
       "CENTER_ON_RESIZING": "缩放之后居中",
+      "EDITOR": "编辑器",
+      "FONT_SIZES": "字体大小",
+      "MIND_MAP": "思维导图",
+      "MAP_SETTINGS": "思维导图设置",
+      "MAP_SETTINGS_EXPLANATION": "与此思维导图上的所有人共享",
+      "NODE_NAMES_HINT": "用作你创建的思维导图和节点的名称。名称保存在节点上，因此此思维导图上的每个人都能看到。",
+      "USER_SETTINGS": "用户设置",
+      "USER_SETTINGS_EXPLANATION": "仅对你有效，仅限此浏览器",
       "FONT_MIN_SIZE": "最小字体大小",
       "FONT_MAX_SIZE": "最大字体大小",
       "FONT_INCREMENT": "字体大小步长",
@@ -189,7 +205,6 @@
       "MAP_LIST": "已创建思维导图列表",
       "OWNED_MAPS": "我的思维导图",
       "LAST_MAPS": "最近打开的思维导图",
-      "MAP_OPTIONS": "思维导图选项",
       "ROOT_NODE_NAME": "根节点名称",
       "NODE_NAME": "节点名称",
       "TITLE": "设置",
@@ -249,6 +264,7 @@
     "AI_DESCRIPTION_REQUIRED": "请提供思维导图的描述"
   },
   "GENERAL": {
+    "BRANCHES": "分支",
     "REPOSITORY": "源代码",
     "CREATE": "创建思维导图",
     "DISMISS": "解除",

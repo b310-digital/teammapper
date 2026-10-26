@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "Centra la mappa quando viene ridimensionata la finestra",
     "NODE_DRAGGING": "Permetti di trascinare i nodi nella mappa",
     "MAP_ZOOM": "Permetti di effettuare lo zoom sulla mappa",
-    "AUTO_BRANCH_COLORS": "Permetti di scegliere in modo automatico i colori dei rami",
+    "AUTO_BRANCH_COLORS": "Sceglie un colore per ogni nuovo ramo che crei. Il colore viene salvato nel nodo, quindi tutti su questa mappa lo vedono.",
+    "BRANCH_STYLE": "Come questo browser disegna i rami di ogni mappa",
     "SHARE": "Condividi",
     "LINK_ADD": "Aggiungi link",
     "LINK_REMOVE": "Rimuovi link",
@@ -180,7 +181,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "Colori automatici per i rami",
+      "AUTO_BRANCH_COLORS_HINT": "Sceglie un colore per ogni nuovo ramo che crei. Il colore viene salvato nel nodo, quindi tutti su questa mappa lo vedono.",
+      "BRANCH_STYLE": "Stile dei rami",
+      "BRANCH_STYLES": {
+        "TAPERED": "Affusolato",
+        "CURVED": "Curvo",
+        "STRAIGHT": "Dritto"
+      },
       "CENTER_ON_RESIZING": "Centra al ridimensionamento",
+      "EDITOR": "Editor",
+      "FONT_SIZES": "Dimensioni del carattere",
+      "MIND_MAP": "Mappa mentale",
+      "MAP_SETTINGS": "Impostazioni della mappa",
+      "MAP_SETTINGS_EXPLANATION": "Condivise con tutti su questa mappa",
+      "NODE_NAMES_HINT": "Usato come nome delle mappe e dei nodi che crei. Il nome viene salvato nel nodo, quindi tutti su questa mappa lo vedono.",
+      "USER_SETTINGS": "Impostazioni utente",
+      "USER_SETTINGS_EXPLANATION": "Solo per te, in questo browser",
       "FONT_MIN_SIZE": "Dimensione minima del font",
       "FONT_MAX_SIZE": "Dimensione massima del font",
       "FONT_INCREMENT": "Passo dimensione del font",
@@ -189,7 +205,6 @@
       "MAP_LIST": "Elenco delle mappe create",
       "OWNED_MAPS": "Le mie mappe mentali",
       "LAST_MAPS": "Mappe mentali recenti",
-      "MAP_OPTIONS": "Opzioni mappa",
       "ROOT_NODE_NAME": "Nome nodo radice",
       "NODE_NAME": "Nome nodo",
       "TITLE": "Impostazioni",
@@ -249,6 +264,7 @@
     "AI_DESCRIPTION_REQUIRED": "Si prega di fornire una descrizione per la mappa mentale"
   },
   "GENERAL": {
+    "BRANCHES": "Rami",
     "REPOSITORY": "Codice sorgente",
     "APPLICATION": "Applicazione",
     "CREATE": "Provala",
