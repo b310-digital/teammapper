@@ -71,7 +71,7 @@ services:
       - app
     expose:
       - "9323"
-    command: ["npx", "playwright", "run-server", "--port=9323", "--host=0.0.0.0"]
+    command: ["npx", "-y", "playwright@1.63.0", "run-server", "--port=9323", "--host=0.0.0.0"]
 
   chrome:
     image: chromedp/headless-shell:latest
