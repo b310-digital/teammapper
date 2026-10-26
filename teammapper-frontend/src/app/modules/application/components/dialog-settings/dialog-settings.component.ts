@@ -1,6 +1,12 @@
 import { Component, Signal, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CachedMapOptions, UserSettings } from '@teammapper/shared';
+import {
+  BRANCH_STYLES,
+  BranchStyle,
+  branchStyleOf,
+  CachedMapOptions,
+  UserSettings,
+} from '@teammapper/shared';
 import { AdditionalMapOptions } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
@@ -67,6 +73,7 @@ export class DialogSettingsComponent {
   private translateService = inject(TranslateService);
 
   public readonly languages: string[];
+  public readonly branchStyles: readonly BranchStyle[] = BRANCH_STYLES;
   public settings: UserSettings | null;
   private readonly appliedMapOptions = toSignal(
     this.mmpService.additionalMapOptions$,
@@ -85,7 +92,9 @@ export class DialogSettingsComponent {
 
   constructor() {
     this.languages = SettingsService.LANGUAGES;
-    this.settings = this.settingsService.getCachedUserSettings();
+    this.settings = withBranchStyle(
+      this.settingsService.getCachedUserSettings()
+    );
     this.editMode = this.settingsService.getEditModeObservable();
   }
 
@@ -130,6 +139,18 @@ export class DialogSettingsComponent {
 
     await this.settingsService.setDarkMode(this.settings.general.darkMode);
   }
+}
+
+/**
+ * The settings with a known branch style. Settings cached before branch styles
+ * lack one, and the select shows `tapered` for them, as mmp draws it. The
+ * first change in the dialog stores the value.
+ */
+function withBranchStyle(settings: UserSettings | null): UserSettings | null {
+  if (!settings) return null;
+
+  const branchStyle = branchStyleOf(settings.mapOptions.branchStyle);
+  return { ...settings, mapOptions: { ...settings.mapOptions, branchStyle } };
 }
 
 /**

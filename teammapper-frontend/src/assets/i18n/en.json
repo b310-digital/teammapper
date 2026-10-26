@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "Centers the map on window resizing",
     "NODE_DRAGGING": "Allows to drag the nodes in the map",
     "MAP_ZOOM": "Allows to zoom the map",
-    "AUTO_BRANCH_COLORS": "Allows to choose automatically the colors of the branches",
+    "AUTO_BRANCH_COLORS": "Picks a color for each new branch you create. The color is saved on the node, so everyone on this map sees it.",
+    "BRANCH_STYLE": "How this browser draws the branches of every map",
     "SHARE": "Share",
     "LINK_ADD": "Adds a link",
     "LINK_REMOVE": "Removes a link",
@@ -181,7 +182,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "Automatic branch colors",
+      "AUTO_BRANCH_COLORS_HINT": "Picks a color for each new branch you create. The color is saved on the node, so everyone on this map sees it.",
+      "BRANCH_STYLE": "Branch style",
+      "BRANCH_STYLES": {
+        "TAPERED": "Tapered",
+        "CURVED": "Curved",
+        "STRAIGHT": "Straight"
+      },
       "CENTER_ON_RESIZING": "Center on resizing",
+      "EDITOR": "Editor",
+      "FONT_SIZES": "Font sizes",
+      "MIND_MAP": "Mind map",
+      "MAP_SETTINGS": "Map settings",
+      "MAP_SETTINGS_EXPLANATION": "Shared with everyone on this map",
+      "NODE_NAMES_HINT": "Used as the name of maps and nodes you create. The name is saved on the node, so everyone on this map sees it.",
+      "USER_SETTINGS": "User settings",
+      "USER_SETTINGS_EXPLANATION": "Only for you, in this browser",
       "FONT_MIN_SIZE": "Minimal font size",
       "FONT_MAX_SIZE": "Maximal font size",
       "FONT_INCREMENT": "Font size step",
@@ -190,7 +206,6 @@
       "MAP_LIST": "List of created maps",
       "OWNED_MAPS": "My mindmaps",
       "LAST_MAPS": "Recently opened mindmaps",
-      "MAP_OPTIONS": "Map options",
       "ROOT_NODE_NAME": "Root node name",
       "NODE_NAME": "Node name",
       "TITLE": "Settings",
@@ -251,6 +266,7 @@
     "AI_DESCRIPTION_REQUIRED": "Please provide a description for the mindmap"
   },
   "GENERAL": {
+    "BRANCHES": "Branches",
     "REPOSITORY": "Source Code",
     "CREATE": "Create mind map",
     "DISMISS": "Dismiss",

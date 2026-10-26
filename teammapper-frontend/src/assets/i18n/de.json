@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "Mindmap bei Änderung der Fenstergröße zentrieren",
     "NODE_DRAGGING": "Verschieben von Knoten erlauben",
     "MAP_ZOOM": "Zoomen der Mindmap erlauben",
-    "AUTO_BRANCH_COLORS": "Automatische Auswahl von Zweigfarben erlauben",
+    "AUTO_BRANCH_COLORS": "Wählt für jeden neuen Zweig, den du erstellst, eine Farbe. Die Farbe wird am Knoten gespeichert, daher sehen sie alle auf dieser Mindmap.",
+    "BRANCH_STYLE": "Wie dieser Browser die Zweige jeder Mindmap zeichnet",
     "SHARE": "Teilen",
     "LINK_ADD": "Link hinzufügen",
     "LINK_REMOVE": "Link entfernen",
@@ -181,7 +182,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "Automatische Zweigfarben",
+      "AUTO_BRANCH_COLORS_HINT": "Wählt für jeden neuen Zweig, den du erstellst, eine Farbe. Die Farbe wird am Knoten gespeichert, daher sehen sie alle auf dieser Mindmap.",
+      "BRANCH_STYLE": "Zweigstil",
+      "BRANCH_STYLES": {
+        "TAPERED": "Verjüngt",
+        "CURVED": "Geschwungen",
+        "STRAIGHT": "Gerade"
+      },
       "CENTER_ON_RESIZING": "Zentrieren bei Größenänderung",
+      "EDITOR": "Editor",
+      "FONT_SIZES": "Schriftgrößen",
+      "MIND_MAP": "Mindmap",
+      "MAP_SETTINGS": "Mindmap-Einstellungen",
+      "MAP_SETTINGS_EXPLANATION": "Gelten für alle auf dieser Mindmap",
+      "NODE_NAMES_HINT": "Name der Mindmaps und Knoten, die du erstellst. Der Name wird am Knoten gespeichert, daher sehen ihn alle auf dieser Mindmap.",
+      "USER_SETTINGS": "Benutzereinstellungen",
+      "USER_SETTINGS_EXPLANATION": "Nur für dich, in diesem Browser",
       "FONT_INCREMENT": "Schrittgröße bei Einstellung Schriftgröße",
       "FONT_MAX_SIZE": "Maximale Schriftgröße",
       "FONT_MIN_SIZE": "Minimale Schriftgröße",
@@ -190,7 +206,6 @@
       "MAP_LIST": "Liste erstellter Mindmaps",
       "OWNED_MAPS": "Meine Mindmaps",
       "LAST_MAPS": "Zuletzt geöffnete Mindmaps",
-      "MAP_OPTIONS": "Mindmap Optionen",
       "NODE_NAME": "Bezeichnung von Knoten",
       "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
       "TITLE": "Einstellungen",
@@ -252,6 +267,7 @@
     "AI_DESCRIPTION_REQUIRED": "Bitte gib eine Beschreibung für die Mindmap ein"
   },
   "GENERAL": {
+    "BRANCHES": "Zweige",
     "CREATE": "Mindmap erstellen",
     "REPOSITORY": "Source Code",
     "DISMISS": "Verwerfen",

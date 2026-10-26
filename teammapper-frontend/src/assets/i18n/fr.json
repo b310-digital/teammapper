@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "Centre la carte sur le redimensionnement de la fenêtre",
     "NODE_DRAGGING": "Permet de faire glisser les nœuds dans la carte",
     "MAP_ZOOM": "Permet de zoomer sur la carte",
-    "AUTO_BRANCH_COLORS": "Allows to choose automatically the colors of the branches",
+    "AUTO_BRANCH_COLORS": "Choisit une couleur pour chaque nouvelle branche que vous créez. La couleur est enregistrée sur le noeud, donc tout le monde sur cette carte la voit.",
+    "BRANCH_STYLE": "Comment ce navigateur dessine les branches de chaque carte",
     "SHARE": "Share",
     "LINK_ADD": "Adds a link",
     "LINK_REMOVE": "Removes a link",
@@ -180,7 +181,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "Automatic branch colors",
+      "AUTO_BRANCH_COLORS_HINT": "Choisit une couleur pour chaque nouvelle branche que vous créez. La couleur est enregistrée sur le noeud, donc tout le monde sur cette carte la voit.",
+      "BRANCH_STYLE": "Style des branches",
+      "BRANCH_STYLES": {
+        "TAPERED": "Effilé",
+        "CURVED": "Courbe",
+        "STRAIGHT": "Droit"
+      },
       "CENTER_ON_RESIZING": "Centrer sur le redimensionnement",
+      "EDITOR": "Éditeur",
+      "FONT_SIZES": "Tailles de police",
+      "MIND_MAP": "Carte mentale",
+      "MAP_SETTINGS": "Paramètres de la carte",
+      "MAP_SETTINGS_EXPLANATION": "Partagés avec tout le monde sur cette carte",
+      "NODE_NAMES_HINT": "Nom des cartes et des noeuds que vous créez. Le nom est enregistré sur le noeud, donc tout le monde sur cette carte le voit.",
+      "USER_SETTINGS": "Paramètres utilisateur",
+      "USER_SETTINGS_EXPLANATION": "Seulement pour vous, dans ce navigateur",
       "FONT_MIN_SIZE": "Minimal font size",
       "FONT_MAX_SIZE": "Maximal font size",
       "FONT_INCREMENT": "Font size step",
@@ -189,7 +205,6 @@
       "MAP_LIST": "List of created maps",
       "OWNED_MAPS": "Mes cartes mentales",
       "LAST_MAPS": "Cartes mentales récentes",
-      "MAP_OPTIONS": "Options de carte",
       "ROOT_NODE_NAME": "Nom du noeud racine",
       "NODE_NAME": "Nom du noeud",
       "TITLE": "Paramètres",
@@ -249,6 +264,7 @@
     "AI_DESCRIPTION_REQUIRED": "Veuillez fournir une description pour la carte mentale"
   },
   "GENERAL": {
+    "BRANCHES": "Branches",
     "REPOSITORY": "Source Code",
     "CREATE": "Create mind map",
     "DISMISS": "Rejeter",

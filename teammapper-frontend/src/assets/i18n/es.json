@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "Centrar el mapa durante el redimensionamiento de la ventana",
     "NODE_DRAGGING": "Permitir arrastrar los nodos en el mapa",
     "MAP_ZOOM": "Permitir acercar el mapa",
-    "AUTO_BRANCH_COLORS": "Permitir elegir automáticamente los colores de las ramificaciones",
+    "AUTO_BRANCH_COLORS": "Elige un color para cada ramificación nueva que creas. El color se guarda en el nodo, así que todos en este mapa lo ven.",
+    "BRANCH_STYLE": "Cómo dibuja este navegador las ramificaciones de cada mapa",
     "SHARE": "Share",
     "LINK_ADD": "Adds a link",
     "LINK_REMOVE": "Removes a link",
@@ -180,7 +181,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "Colores automáticos de las ramificaciones",
+      "AUTO_BRANCH_COLORS_HINT": "Elige un color para cada ramificación nueva que creas. El color se guarda en el nodo, así que todos en este mapa lo ven.",
+      "BRANCH_STYLE": "Estilo de ramificación",
+      "BRANCH_STYLES": {
+        "TAPERED": "Afilado",
+        "CURVED": "Curvo",
+        "STRAIGHT": "Recto"
+      },
       "CENTER_ON_RESIZING": "Centrar cuando se redimensiona",
+      "EDITOR": "Editor",
+      "FONT_SIZES": "Tamaños de fuente",
+      "MIND_MAP": "Mapa mental",
+      "MAP_SETTINGS": "Ajustes del mapa",
+      "MAP_SETTINGS_EXPLANATION": "Compartidos con todos en este mapa",
+      "NODE_NAMES_HINT": "Se usa como nombre de los mapas y nodos que creas. El nombre se guarda en el nodo, así que todos en este mapa lo ven.",
+      "USER_SETTINGS": "Ajustes de usuario",
+      "USER_SETTINGS_EXPLANATION": "Solo para ti, en este navegador",
       "FONT_MIN_SIZE": "Minimal font size",
       "FONT_MAX_SIZE": "Maximal font size",
       "FONT_INCREMENT": "Font size step",
@@ -189,7 +205,6 @@
       "MAP_LIST": "List of created maps",
       "OWNED_MAPS": "Mis mapas mentales",
       "LAST_MAPS": "Mapas mentales recientes",
-      "MAP_OPTIONS": "Opciones del mapa",
       "ROOT_NODE_NAME": "Nombre del nodo raíz",
       "NODE_NAME": "Nombre del nodo",
       "TITLE": "Ajustes",
@@ -249,6 +264,7 @@
     "AI_DESCRIPTION_REQUIRED": "Por favor, proporciona una descripción para el mapa mental"
   },
   "GENERAL": {
+    "BRANCHES": "Ramificaciones",
     "REPOSITORY": "Source Code",
     "CREATE": "Create mind map",
     "GENERAL": "General",

@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "ウィンドウリサイズ時にマップを中央表示",
     "NODE_DRAGGING": "ノードのドラッグを許可",
     "MAP_ZOOM": "マップのズームを許可",
-    "AUTO_BRANCH_COLORS": "ブランチの色を自動選択",
+    "AUTO_BRANCH_COLORS": "作成した新しいブランチごとに色を選びます。色はノードに保存されるため、このマップの全員に表示されます。",
+    "BRANCH_STYLE": "このブラウザですべてのマップのブランチを描く方法",
     "SHARE": "共有",
     "LINK_ADD": "リンクを追加",
     "LINK_REMOVE": "リンクを削除",
@@ -181,7 +182,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "ブランチの色を自動設定",
+      "AUTO_BRANCH_COLORS_HINT": "作成した新しいブランチごとに色を選びます。色はノードに保存されるため、このマップの全員に表示されます。",
+      "BRANCH_STYLE": "ブランチのスタイル",
+      "BRANCH_STYLES": {
+        "TAPERED": "先細り",
+        "CURVED": "曲線",
+        "STRAIGHT": "直線"
+      },
       "CENTER_ON_RESIZING": "リサイズ時に中央表示",
+      "EDITOR": "エディター",
+      "FONT_SIZES": "フォントサイズ",
+      "MIND_MAP": "マインドマップ",
+      "MAP_SETTINGS": "マップ設定",
+      "MAP_SETTINGS_EXPLANATION": "このマップの全員と共有されます",
+      "NODE_NAMES_HINT": "作成したマップとノードの名前に使われます。名前はノードに保存されるため、このマップの全員に表示されます。",
+      "USER_SETTINGS": "ユーザー設定",
+      "USER_SETTINGS_EXPLANATION": "このブラウザのあなただけに適用されます",
       "FONT_MIN_SIZE": "最小フォントサイズ",
       "FONT_MAX_SIZE": "最大フォントサイズ",
       "FONT_INCREMENT": "フォントサイズの増減幅",
@@ -190,7 +206,6 @@
       "MAP_LIST": "作成済みマップ一覧",
       "OWNED_MAPS": "マイマインドマップ",
       "LAST_MAPS": "最近開いたマインドマップ",
-      "MAP_OPTIONS": "マップオプション",
       "ROOT_NODE_NAME": "ルートノード名",
       "NODE_NAME": "ノード名",
       "TITLE": "設定",
@@ -251,6 +266,7 @@
     "AI_DESCRIPTION_REQUIRED": "マインドマップの説明を入力してください"
   },
   "GENERAL": {
+    "BRANCHES": "ブランチ",
     "REPOSITORY": "ソースコード",
     "CREATE": "マインドマップを作成",
     "DISMISS": "閉じる",
