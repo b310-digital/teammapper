@@ -13,7 +13,7 @@ import {
   ExportNodeProperties,
   UserSettings,
 } from '@teammapper/shared';
-import type { MapData, MmpMap } from '@teammapper/mmp';
+import type { MapData, MmpInstance } from '@teammapper/mmp';
 import { YjsSyncService } from './yjs-sync.service';
 import { MapSyncContext } from './map-sync-context';
 import { ImageHandlers, ImageUploadError } from '../mmp/node-images';
@@ -21,7 +21,7 @@ import { ImageHandlers, ImageUploadError } from '../mmp/node-images';
 const SYNCING_TOAST_ID = 7;
 
 // MmpService is mocked, so a created map only has to be passed through.
-const CREATED_MAP = { id: 'created' } as unknown as MmpMap;
+const CREATED_MAP = { id: 'created' } as unknown as MmpInstance;
 
 // Narrow accessor: only exposes the sync service handle, not its internals
 function getSync(service: MapSyncService): YjsSyncService {
@@ -227,10 +227,10 @@ describe('MapSyncService', () => {
       });
 
       it('removes only the late map when a newer open built its map first', async () => {
-        const lateMap = { id: 'late' } as unknown as MmpMap;
-        let finishLate: (map: MmpMap) => void = () => undefined;
+        const lateMap = { id: 'late' } as unknown as MmpInstance;
+        let finishLate: (map: MmpInstance) => void = () => undefined;
         mmpService.create.mockReturnValueOnce(
-          new Promise<MmpMap>(resolve => (finishLate = resolve))
+          new Promise<MmpInstance>(resolve => (finishLate = resolve))
         );
         getSyncContext(service).createMap(data);
         service.reset();

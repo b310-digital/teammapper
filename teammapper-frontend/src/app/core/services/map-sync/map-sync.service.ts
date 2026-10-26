@@ -16,7 +16,7 @@ import {
   parseImageUploadResponse,
 } from '@teammapper/shared';
 import { ImageUploadError } from '../mmp/node-images';
-import type { MapData, MapProperties, MmpMap } from '@teammapper/mmp';
+import type { MapData, MmpInstance } from '@teammapper/mmp';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
@@ -325,7 +325,7 @@ export class MapSyncService implements OnDestroy {
    * Wire up the map, or remove it when a reset or a newer openMap ran while
    * mmp built it.
    */
-  private adoptMap(map: MmpMap, target: MapTarget): void {
+  private adoptMap(map: MmpInstance, target: MapTarget): void {
     if (this.mapTarget !== target) return this.mmpService.remove(map);
     this.syncService.attachMap();
     this.mmpService.markMapCreated();
@@ -496,7 +496,7 @@ export class MapSyncService implements OnDestroy {
     return `map-${uuid}`;
   }
 
-  private convertServerMapToMmp(serverMap: ServerMap): MapProperties {
+  private convertServerMapToMmp(serverMap: ServerMap): CachedMap {
     return Object.assign({}, serverMap, {
       lastModified: Date.parse(serverMap.lastModified),
       deletedAt: Date.parse(serverMap.deletedAt),

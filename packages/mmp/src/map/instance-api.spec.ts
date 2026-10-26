@@ -24,7 +24,7 @@ function makeMap(options?: OptionParameters) {
   ]);
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const { instance } = create(ref, data, options);
+  const instance = create(ref, data, options);
   return { data, instance };
 }
 
