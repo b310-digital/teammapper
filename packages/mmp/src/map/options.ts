@@ -130,11 +130,8 @@ export default class Options implements OptionParameters {
       Log.error('The value must be a boolean', 'type');
     }
 
-    if (flag === this.drag) return;
+    // The drag behavior reads the flag when a drag starts.
     this.drag = flag;
-
-    // The drag behavior attaches when a node's DOM is created.
-    this.map.draw.drawAll();
   }
 
   /**
@@ -146,10 +143,10 @@ export default class Options implements OptionParameters {
       Log.error('The value must be a boolean', 'type');
     }
 
-    if (flag === this.edit) return;
+    // The edit handlers read the flag when an event arrives. A name edit
+    // that runs already holds its own handlers, so turning edit off ends it.
     this.edit = flag;
-
-    this.map.draw.drawAll();
+    if (!flag) this.map.draw.cancelNameEditing();
   }
 }
 

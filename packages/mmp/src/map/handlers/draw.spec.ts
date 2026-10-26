@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import type { ExportNodeProperties } from '@teammapper/shared';
 import { create } from '../../index.js';
 import MmpMap from '../map.js';
-import InMemoryMapData from '../data/in-memory-map-data.js';
+import InMemoryMapData from '../../test/in-memory-map-data.js';
 import type { ResolvedNode } from '../data/node-record.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 

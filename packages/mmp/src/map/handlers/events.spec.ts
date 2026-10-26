@@ -43,6 +43,54 @@ describe('Events', () => {
     expect(next).toHaveBeenCalledWith(selection);
   });
 
+  describe('a callback that throws', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('does not make emit throw', () => {
+      events.on('nodeSelect', () => {
+        throw new Error('boom');
+      });
+
+      expect(() => events.emit('nodeSelect', selection)).not.toThrow();
+    });
+
+    it('still calls the next callback of the same event', () => {
+      const next = jest.fn();
+      events.on('nodeSelect', () => {
+        throw new Error('boom');
+      });
+      events.on('nodeSelect', next);
+
+      try {
+        events.emit('nodeSelect', selection);
+      } catch {
+        // The assertion below names the failure.
+      }
+
+      expect(next).toHaveBeenCalledWith(selection);
+    });
+
+    it('rethrows the error asynchronously', () => {
+      events.on('nodeSelect', () => {
+        throw new Error('boom');
+      });
+
+      try {
+        events.emit('nodeSelect', selection);
+      } catch {
+        // The assertion below names the failure.
+      }
+
+      expect(() => jest.runAllTimers()).toThrow('boom');
+    });
+  });
+
   it('silences every callback after unsubscribeAll', () => {
     const select = jest.fn();
     const deselect = jest.fn();

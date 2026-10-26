@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import { create } from '../index.js';
 import MmpMap from './map.js';
-import InMemoryMapData from './data/in-memory-map-data.js';
+import InMemoryMapData from '../test/in-memory-map-data.js';
 import type { MapDataChange } from './data/map-data.js';
 import { nodeRecord } from '../test/stub-map.js';
 import { stubSvgLengths } from '../test/svg-lengths.js';
@@ -655,6 +655,14 @@ describe('destroy', () => {
     expect(d3.select(window).on('resize.map')).toBeUndefined();
     expect(onChange).not.toHaveBeenCalled();
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when it runs twice', () => {
+    const map = makeMap();
+
+    map.instance.destroy();
+
+    expect(() => map.instance.destroy()).not.toThrow();
   });
 });
 

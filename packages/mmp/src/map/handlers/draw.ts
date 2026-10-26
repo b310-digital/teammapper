@@ -279,10 +279,15 @@ export default class Draw {
   }
 
   /**
-   * Stop watching names for size changes. The map calls this on removal.
+   * Stop watching names for size changes and drop the pending image loads,
+   * so a load that ends later draws nothing. A running name edit ends without
+   * a write, because removing a focused name fires a blur in some browsers.
+   * The map calls this on removal.
    */
   public destroy() {
+    this.cancelNameEditing();
     this.resizeObserver?.disconnect();
+    this.images.clear();
   }
 
   /**
@@ -420,17 +425,7 @@ export default class Draw {
     };
 
     name.onblur = () => {
-      this.editingId = null;
-
-      name.ondblclick =
-        name.onmousedown =
-        name.onblur =
-        name.onkeydown =
-        name.onpaste =
-          null;
-
-      name.setAttribute('contenteditable', 'false');
-      name.style.setProperty('cursor', 'pointer');
+      this.endNameEditing(id, name);
 
       // The blur commits to the node it edited, whatever node the selection
       // moves to, and reads the name the map data holds now.
@@ -446,6 +441,43 @@ export default class Draw {
       // peer protected the branch during the edit and updateNode refused it.
       this.drawNodes([id]);
     };
+  }
+
+  /**
+   * End a running name edit without writing the typed name. The map calls
+   * this when editing turns off, and the name shows the stored text again.
+   */
+  public cancelNameEditing() {
+    const id = this.editingId;
+    if (id === null) return;
+
+    const name = this.nameOf(id);
+    if (name) {
+      this.endNameEditing(id, name);
+      name.blur();
+    }
+    this.editingId = null;
+    this.drawNodes([id]);
+  }
+
+  /**
+   * Make the name read-only again and remove the handlers the edit added,
+   * the blur handler included, so a later blur writes nothing.
+   */
+  private endNameEditing(id: string, name: HTMLDivElement) {
+    // Focusing the name of a new edit blurs the old one, after editingId
+    // already names the new node.
+    if (this.editingId === id) this.editingId = null;
+
+    name.ondblclick =
+      name.onmousedown =
+      name.onblur =
+      name.onkeydown =
+      name.onpaste =
+        null;
+
+    name.setAttribute('contenteditable', 'false');
+    name.style.setProperty('cursor', 'pointer');
   }
 
   /**
@@ -837,13 +869,13 @@ export default class Draw {
         { passive: false }
       );
 
-    if (this.map.options.drag === true) {
-      groups.call(this.map.drag.getDragBehavior());
-    } else {
-      groups.on('mousedown', (_event: MouseEvent, id: string) => {
-        this.map.nodes.selectNode(id);
+    // Both handlers read the drag option when the event arrives, so a change
+    // of the option needs no redraw. A drag start selects the node itself.
+    groups
+      .call(this.map.drag.getDragBehavior())
+      .on('mousedown', (_event: MouseEvent, id: string) => {
+        if (!this.map.options.drag) this.map.nodes.selectNode(id);
       });
-    }
 
     return groups;
   }

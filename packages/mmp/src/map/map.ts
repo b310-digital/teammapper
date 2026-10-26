@@ -39,9 +39,10 @@ export default class MmpMap {
   public copyPaste: CopyPaste;
   public viewState: ViewState;
 
-  public instance!: MmpInstance;
+  public readonly instance: MmpInstance;
 
   private readonly unsubscribeData: () => void;
+  private destroyed = false;
 
   /**
    * Create all handler instances, set some map behaviors, draw the nodes the
@@ -80,7 +81,7 @@ export default class MmpMap {
       this.dom.svg.call(this.zoom.getZoomBehavior());
     }
 
-    this.createMmpInstance();
+    this.instance = this.createMmpInstance();
 
     this.unsubscribeData = data.subscribe(this.nodes.onChange);
     this.nodes.drawReplaced();
@@ -99,20 +100,17 @@ export default class MmpMap {
 
   /**
    * Remove the map for good: its svg, every subscription and the resize
-   * listener on the window.
+   * listener on the window. A second call does nothing.
    */
   private destroy = () => {
+    if (this.destroyed) return;
+    this.destroyed = true;
+
     this.centerOnWindowResize(false);
     this.unsubscribeData();
     this.events.unsubscribeAll();
     this.draw.destroy();
     this.dom.svg.remove();
-
-    const instanceRecord = this.instance as unknown as Record<string, unknown>;
-    const props = Object.keys(instanceRecord);
-    for (const prop of props) {
-      delete instanceRecord[prop];
-    }
   };
 
   /**
@@ -120,7 +118,7 @@ export default class MmpMap {
    * @return {MmpInstance} mmpInstance
    */
   private createMmpInstance(): MmpInstance {
-    return (this.instance = {
+    return {
       addNode: this.nodes.addNode,
       addTree: this.nodes.addTree,
       center: this.zoom.center,
@@ -151,7 +149,7 @@ export default class MmpMap {
       updateNode: this.nodes.updateNode,
       zoomIn: this.zoom.zoomIn,
       zoomOut: this.zoom.zoomOut,
-    });
+    };
   }
 }
 
