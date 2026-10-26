@@ -155,6 +155,9 @@ export class MapSyncService implements OnDestroy {
     this.removeSyncingToast();
     this.syncService.destroy();
     this.colorMapping = {};
+    this.attachedNodeSubject.next(null);
+    this.clientListSubject.next([]);
+    this.attachedMapSubject.next(null);
   }
 
   /**
@@ -292,6 +295,7 @@ export class MapSyncService implements OnDestroy {
           console.error('Failed to create the map:', error);
           this.removeSyncingToast();
         }),
+      removeMap: () => this.mmpService.remove(),
       mapDeleted: () => this.removeSyncingToast(),
     };
   }
@@ -517,7 +521,7 @@ export class MapSyncService implements OnDestroy {
       cachedMap: {
         ...mapProps,
         options: serverMap.options,
-        data: normalized.data as unknown as ExportNodeProperties[],
+        data: normalized.data,
       },
     });
   }
