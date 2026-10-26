@@ -7,7 +7,7 @@ Lets users undo their most recent action on a mind map and redo an action they u
 ## Requirements
 
 ### Requirement: User can undo the last action
-The system SHALL provide an undo action that reverts the most recent operation. When a node addition is undone, the added node SHALL no longer be visible.
+The system SHALL provide an undo action that reverts the user's own most recent edit of the nodes, never a collaborator's (see the `yjs-undo` spec). When a node addition is undone, the added node SHALL no longer be visible.
 
 #### Scenario: Undo a node addition
 - **WHEN** the user adds a node and triggers undo
