@@ -83,6 +83,7 @@ describe('MmpService', () => {
       protectBranch: jest.fn(),
       protectingNode: jest.fn(),
       releaseBranch: jest.fn(),
+      setEditable: jest.fn(),
     },
     options: {
       update: jest.fn(),
@@ -91,7 +92,7 @@ describe('MmpService', () => {
 
   /** Create the map with no options over `DATA`. */
   const createMap = () =>
-    service.create('test-id', document.createElement('div'), undefined, DATA);
+    service.create(document.createElement('div'), undefined, DATA);
 
   beforeEach(() => {
     (mmp.create as jest.Mock).mockReturnValue(mockMap);
@@ -215,19 +216,17 @@ describe('MmpService', () => {
 
   describe('create', () => {
     it('should create a new mind map', async () => {
-      const id = 'test-id';
       const element = document.createElement('div');
       const options: OptionParameters = { zoom: true };
       editModeSubject.next(true);
 
-      const created = await service.create(id, element, options, DATA);
+      const created = await service.create(element, options, DATA);
 
       expect(created).toBe(mockMap);
       expect(mmp.create).toHaveBeenCalledWith(
-        id,
         element,
-        expect.objectContaining({ ...options, edit: true, drag: true }),
-        DATA
+        DATA,
+        expect.objectContaining({ ...options, edit: true, drag: true })
       );
     });
 
@@ -235,38 +234,34 @@ describe('MmpService', () => {
       editModeSubject.next(false);
 
       await service.create(
-        'test-id',
         document.createElement('div'),
         { drag: true, edit: true },
         DATA
       );
 
       expect(mmp.create).toHaveBeenCalledWith(
-        'test-id',
         expect.anything(),
-        expect.objectContaining({ edit: false, drag: false }),
-        DATA
+        DATA,
+        expect.objectContaining({ edit: false, drag: false })
       );
     });
 
     it('creates a read-only map while the edit mode is unknown', async () => {
-      await service.create('test-id', document.createElement('div'), {}, DATA);
+      await service.create(document.createElement('div'), {}, DATA);
 
       expect(mmp.create).toHaveBeenCalledWith(
-        'test-id',
         expect.anything(),
-        expect.objectContaining({ edit: false, drag: false }),
-        DATA
+        DATA,
+        expect.objectContaining({ edit: false, drag: false })
       );
     });
 
     it('applies an edit mode reported after the map existed', async () => {
-      await service.create('test-id', document.createElement('div'), {}, DATA);
+      await service.create(document.createElement('div'), {}, DATA);
 
       editModeSubject.next(true);
 
-      expect(mockMap.options.update).toHaveBeenCalledWith('drag', true);
-      expect(mockMap.options.update).toHaveBeenCalledWith('edit', true);
+      expect(mockMap.instance.setEditable).toHaveBeenCalledWith(true);
     });
 
     it('creates no map for a create a newer create overtook', async () => {
@@ -276,13 +271,8 @@ describe('MmpService', () => {
       };
       (mmp.create as jest.Mock).mockReturnValueOnce(newerMap);
 
-      const late = service.create('a', document.createElement('div'), {}, DATA);
-      const newer = service.create(
-        'b',
-        document.createElement('div'),
-        {},
-        DATA
-      );
+      const late = service.create(document.createElement('div'), {}, DATA);
+      const newer = service.create(document.createElement('div'), {}, DATA);
 
       await expect(late).resolves.toBeNull();
       await expect(newer).resolves.toBe(newerMap);
@@ -328,12 +318,7 @@ describe('MmpService', () => {
     });
 
     it('creates no map once remove ran during the create', async () => {
-      const pending = service.create(
-        'a',
-        document.createElement('div'),
-        {},
-        DATA
-      );
+      const pending = service.create(document.createElement('div'), {}, DATA);
       service.remove();
 
       await expect(pending).resolves.toBeNull();
@@ -342,7 +327,7 @@ describe('MmpService', () => {
 
     it('removes a map that is not the current one and keeps the current one', async () => {
       const stale = { instance: { destroy: jest.fn() } };
-      await service.create('a', document.createElement('div'), {}, DATA);
+      await service.create(document.createElement('div'), {}, DATA);
       service.markMapCreated();
       const reported: boolean[] = [];
       service.mapCreated$.subscribe(created => reported.push(created));
@@ -358,7 +343,7 @@ describe('MmpService', () => {
       const reported: boolean[] = [];
       service.mapCreated$.subscribe(created => reported.push(created));
 
-      await service.create('test-id', document.createElement('div'), {}, DATA);
+      await service.create(document.createElement('div'), {}, DATA);
       service.markMapCreated();
       service.remove();
 
@@ -386,10 +371,9 @@ describe('MmpService', () => {
     });
 
     it('should initialize additional options with defaults', async () => {
-      const id = 'test-id';
       const element = document.createElement('div');
 
-      await service.create(id, element, undefined, DATA);
+      await service.create(element, undefined, DATA);
 
       const additionalOptions = service.getAdditionalMapOptions();
       expect(additionalOptions).toEqual({

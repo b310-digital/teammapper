@@ -22,10 +22,9 @@ export type {
  * before `create` returns.
  */
 export function create(
-  id: string,
   ref: HTMLElement,
-  options: OptionParameters | undefined,
-  data: MapData
-) {
-  return new MmpMap(id, ref, options, data);
+  data: MapData,
+  options?: OptionParameters
+): MmpMap {
+  return new MmpMap(ref, options, data);
 }

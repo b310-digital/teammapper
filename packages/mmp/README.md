@@ -41,7 +41,7 @@ import { create, type MapData } from '@teammapper/mmp';
 declare const data: MapData;
 const ref = document.getElementById('map');
 if (!ref) throw new Error('The page has no #map element');
-const map = create('map', ref, undefined, data);
+const map = create(ref, data);
 
 map.instance.on('mapChange', () => console.log(data.nodes().length));
 

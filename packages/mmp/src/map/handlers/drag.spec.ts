@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import type { D3DragEvent } from 'd3';
-import { create } from '../../index.js';
+import MmpMap from '../map.js';
 import type { OptionParameters } from '../options.js';
 import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { nodeRecord } from '../../test/stub-map.js';
@@ -36,7 +36,7 @@ function makeMap(options?: OptionParameters) {
   ]);
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref, options, data);
+  const map = new MmpMap(ref, options, data);
   const changes = jest.fn();
   data.subscribe(changes);
   return { data, map, changes, drag: map.drag as unknown as DragInternals };
@@ -208,7 +208,7 @@ describe('the drag option at event time', () => {
   it('moves no node on a pointer drag after drag turned off', () => {
     const { map, data, changes } = makeMap();
     const group = groupOf('a');
-    map.options.update('drag', false);
+    map.options.drag = false;
 
     pointerDrag(group, 60);
 
@@ -219,7 +219,7 @@ describe('the drag option at event time', () => {
   it('selects the node on a mousedown after drag turned off', () => {
     const { map } = makeMap();
     const group = groupOf('c');
-    map.options.update('drag', false);
+    map.options.drag = false;
 
     pointerDrag(group, 0);
 
@@ -229,7 +229,7 @@ describe('the drag option at event time', () => {
   it('moves the node on a pointer drag once drag is back on', () => {
     const { map, data } = makeMap({ drag: false });
     const group = groupOf('a');
-    map.options.update('drag', true);
+    map.options.drag = true;
 
     pointerDrag(group, 60);
 

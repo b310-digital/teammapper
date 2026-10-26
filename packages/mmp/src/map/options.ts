@@ -23,8 +23,8 @@ export default class Options implements OptionParameters {
   public centerOnResize: boolean;
   public drag: boolean;
   public zoom: boolean;
-  // Controls wether edit related click handlers will be registered in the draw module
-  // Note: node property updates are still available
+  // Allows editing through the pointer and keyboard. The edit handlers read
+  // the flag when an event arrives. Node property updates work either way.
   public edit: boolean;
 
   public defaultNode: DefaultNodeProperties;
@@ -35,7 +35,6 @@ export default class Options implements OptionParameters {
   /**
    * Initialize all options.
    * @param {OptionParameters} parameters
-   * @param {Map} map
    */
   constructor(parameters: OptionParameters = {}, map: Map) {
     this.map = map;
@@ -56,18 +55,16 @@ export default class Options implements OptionParameters {
     this.rootNode = withDefaults(DefaultRootNodeValues, parameters.rootNode);
   }
 
+  /**
+   * Apply a changed setting to the open map. Edit and drag change through
+   * `MmpInstance.setEditable`.
+   */
   public update = (property: string, value: unknown) => {
     if (typeof property !== 'string') {
       Log.error('The property must be a string', 'type');
     }
 
     switch (property) {
-      case 'drag':
-        this.updateDrag(value as boolean);
-        break;
-      case 'edit':
-        this.updateEdit(value as boolean);
-        break;
       case 'centerOnResize':
         this.updateCenterOnResize(value as boolean);
         break;
@@ -119,34 +116,6 @@ export default class Options implements OptionParameters {
     this.showLinktext = flag;
 
     this.map.draw.drawAll();
-  }
-
-  /**
-   * Update drag behavior.
-   * @param {boolean} flag
-   */
-  private updateDrag(flag: boolean) {
-    if (typeof flag !== 'boolean') {
-      Log.error('The value must be a boolean', 'type');
-    }
-
-    // The drag behavior reads the flag when a drag starts.
-    this.drag = flag;
-  }
-
-  /**
-   * Update edit behavior.
-   * @param {boolean} flag
-   */
-  private updateEdit(flag: boolean) {
-    if (typeof flag !== 'boolean') {
-      Log.error('The value must be a boolean', 'type');
-    }
-
-    // The edit handlers read the flag when an event arrives. A name edit
-    // that runs already holds its own handlers, so turning edit off ends it.
-    this.edit = flag;
-    if (!flag) this.map.draw.cancelNameEditing();
   }
 }
 

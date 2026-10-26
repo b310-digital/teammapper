@@ -196,7 +196,6 @@ describe('MapSyncService', () => {
           .invocationCallOrder[0];
         const marked = mmpService.markMapCreated.mock.invocationCallOrder[0];
         expect(mmpService.create).toHaveBeenCalledWith(
-          'map_1',
           ref,
           { rootNode: 'Root' },
           data
@@ -214,12 +213,7 @@ describe('MapSyncService', () => {
 
         await sync();
 
-        expect(mmpService.create).toHaveBeenCalledWith(
-          'map_1',
-          ref,
-          mapOptions,
-          data
-        );
+        expect(mmpService.create).toHaveBeenCalledWith(ref, mapOptions, data);
       });
 
       it('removes the map a reset left behind while mmp built it', async () => {

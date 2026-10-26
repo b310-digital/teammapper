@@ -317,12 +317,7 @@ export class MapSyncService implements OnDestroy {
     this.removeSyncingToast();
 
     const options = this.settingsService.getCachedUserSettings()?.mapOptions;
-    const map = await this.mmpService.create(
-      'map_1',
-      target.ref,
-      options,
-      data
-    );
+    const map = await this.mmpService.create(target.ref, options, data);
     if (map) this.adoptMap(map, target);
   }
 

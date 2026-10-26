@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import { create } from '../index.js';
 import MmpMap from './map.js';
 import InMemoryMapData from '../test/in-memory-map-data.js';
 import { nodeRecord } from '../test/stub-map.js';
@@ -9,7 +8,7 @@ import type { OptionParameters } from './options.js';
 
 /**
  * The settings dialog changes the user settings while the map stays drawn, so
- * `Options.update` has to apply them to the open map. Switching edit or drag
+ * `Options.update` has to apply them to the open map. Switching edit and drag
  * changes how the drawn nodes react to the next event and redraws nothing:
  * every node keeps its DOM element.
  */
@@ -23,7 +22,7 @@ afterEach(() => {
 function makeEmptyMap(options?: OptionParameters): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref, options, new InMemoryMapData());
+  const map = new MmpMap(ref, options, new InMemoryMapData());
   map.instance.new();
   return map;
 }
@@ -157,7 +156,7 @@ function makeMap(options?: OptionParameters): MmpMap {
   ]);
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  return create('map', ref, options, data);
+  return new MmpMap(ref, options, data);
 }
 
 function groupOf(id: string): SVGGElement {
@@ -186,13 +185,13 @@ function doubleClick(group: SVGGElement) {
 }
 
 describe('switching an option', () => {
-  it.each(['edit', 'drag'])(
-    'keeps the DOM element of every node when %s turns off',
-    property => {
-      const map = makeMap();
+  it.each([false, true])(
+    'keeps the DOM element of every node on setEditable(%s)',
+    editable => {
+      const map = makeMap({ edit: !editable, drag: !editable });
       const before = groups();
 
-      map.options.update(property, false);
+      map.instance.setEditable(editable);
 
       for (const id of IDS) expect(groupOf(id)).toBe(before.get(id));
     }
@@ -204,20 +203,19 @@ describe('switching an option', () => {
       const map = makeMap({ [property]: false });
       const before = groups();
 
-      map.options.update(property, true);
+      map.instance.setEditable(true);
 
       for (const id of IDS) expect(groupOf(id)).toBe(before.get(id));
     }
   );
 
-  it.each(['edit', 'drag'])(
-    'does not call drawAll when %s changes',
-    property => {
-      const map = makeMap();
+  it.each([false, true])(
+    'does not call drawAll on setEditable(%s)',
+    editable => {
+      const map = makeMap({ edit: !editable, drag: !editable });
       const drawAll = jest.spyOn(map.draw, 'drawAll');
 
-      map.options.update(property, false);
-      map.options.update(property, true);
+      map.instance.setEditable(editable);
 
       expect(drawAll).not.toHaveBeenCalled();
     }
@@ -228,21 +226,21 @@ describe('editing a name', () => {
   it('does nothing on a double click while edit is off', () => {
     const map = makeMap();
     const group = groupOf('a');
-    map.options.update('edit', false);
+    map.instance.setEditable(false);
 
     doubleClick(group);
 
     expect(nameOf(group).getAttribute('contenteditable')).not.toBe('true');
   });
 
-  it('drops a running edit when edit turns off', () => {
+  it('drops a running edit on setEditable(false)', () => {
     const map = makeMap();
     const group = groupOf('a');
     doubleClick(group);
     const name = nameOf(group);
     name.innerHTML = 'typed';
 
-    map.options.update('edit', false);
+    map.instance.setEditable(false);
     name.dispatchEvent(new FocusEvent('blur'));
 
     expect(map.nodes.record('a')?.name).toBe('A');
@@ -250,14 +248,14 @@ describe('editing a name', () => {
     expect(nameOf(groupOf('a')).innerHTML).toBe('A');
   });
 
-  it('drops an edit that started while another ran, when edit turns off', () => {
+  it('drops an edit that started while another ran, on setEditable(false)', () => {
     const map = makeMap();
     doubleClick(groupOf('a'));
     map.draw.enableNodeNameEditing('c');
     const name = nameOf(groupOf('c'));
     name.innerHTML = 'typed';
 
-    map.options.update('edit', false);
+    map.instance.setEditable(false);
     name.dispatchEvent(new FocusEvent('blur'));
 
     expect(map.nodes.record('c')?.name).toBe('C');
@@ -279,7 +277,7 @@ describe('editing a name', () => {
   it('starts on a double click once edit is back on', () => {
     const map = makeMap({ edit: false });
     const group = groupOf('a');
-    map.options.update('edit', true);
+    map.instance.setEditable(true);
 
     doubleClick(group);
 
