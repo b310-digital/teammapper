@@ -59,7 +59,7 @@ The frontend SHALL observe awareness state changes and highlight nodes that othe
 - **THEN** the local client SHALL ignore the highlight update without error
 
 ### Requirement: Connection status from WebSocket provider
-The frontend SHALL derive the connection status (`connected` / `disconnected`) from the `WebsocketProvider`'s connection state, replacing the previous Socket.io-based connection tracking.
+The frontend SHALL derive the connection status (`connected` / `disconnected`) from the `WebsocketProvider`'s connection state.
 
 #### Scenario: Connection established
 - **WHEN** the WebsocketProvider successfully connects

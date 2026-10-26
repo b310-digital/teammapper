@@ -158,34 +158,17 @@ The frontend SHALL expose a reactive `ConnectionStatus` observable (`'connected'
 
 #### Scenario: Connection reset during cleanup
 - **WHEN** the Yjs connection is reset (e.g., navigating away or switching maps)
-- **THEN** the connection status SHALL be reset to `null` as part of `resetYjs()` cleanup
+- **THEN** `YjsSyncService.destroy()` SHALL reset the connection status to `null`
 
-### Requirement: Yjs enabled by default
-The `YJS_ENABLED` feature flag SHALL default to `true` when the environment variable is not set. The backend `isYjsEnabled()` method SHALL treat a missing or undefined `YJS_ENABLED` environment variable as `true`. Only an explicit value of `false` (case-insensitive) SHALL disable Yjs.
-
-#### Scenario: Environment variable not set
-- **WHEN** the `YJS_ENABLED` environment variable is absent from the runtime environment
-- **THEN** the server SHALL behave as if `YJS_ENABLED=true` and activate the Yjs sync path
-
-#### Scenario: Environment variable explicitly set to false
-- **WHEN** the `YJS_ENABLED` environment variable is set to `false` (any casing)
-- **THEN** the server SHALL disable the Yjs sync path and fall back to Socket.io
-
-#### Scenario: Environment variable explicitly set to true
-- **WHEN** the `YJS_ENABLED` environment variable is set to `true` (any casing)
-- **THEN** the server SHALL activate the Yjs sync path
-
-### Requirement: Socket.io removal
-The server SHALL NOT use Socket.io for any data synchronization or presence operations. The `@nestjs/platform-socket.io`, `socket.io`, and `socket.io-client` dependencies SHALL be removed. The frontend SHALL NOT import or use `socket.io-client`.
-
-Note: During the phased rollout, both Socket.io and Yjs code paths coexist behind feature flags (`YJS_ENABLED` backend, `featureFlagYjs` frontend). This requirement is fully satisfied after the cleanup phase (task 13) removes all Socket.io code and feature flag branching.
+### Requirement: Yjs is the only sync path
+The server and the frontend SHALL sync map data and presence through Yjs alone. No feature flag SHALL switch the sync path, and no Socket.io code path SHALL exist. The server SHALL NOT depend on `@nestjs/platform-socket.io` or `socket.io`, and the frontend SHALL NOT depend on `socket.io-client`.
 
 #### Scenario: No Socket.io listeners on the server
-- **WHEN** the server is running after the cleanup phase is complete
+- **WHEN** the server is running
 - **THEN** there SHALL be no Socket.io gateway or `@SubscribeMessage` handlers registered
 
 #### Scenario: No Socket.io client on the frontend
-- **WHEN** the frontend application is built after the cleanup phase is complete
+- **WHEN** the frontend application is built
 - **THEN** the `socket.io-client` package SHALL NOT be included in the bundle
 
 ### Requirement: The Y.Doc carries node images as references or data URLs
