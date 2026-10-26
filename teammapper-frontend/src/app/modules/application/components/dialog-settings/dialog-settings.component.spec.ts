@@ -117,7 +117,7 @@ describe('DialogSettingsComponent', () => {
     expect(tabLabels()).toContain('PAGES.SETTINGS.GENERAL');
   });
 
-  // The map stays drawn behind the dialog, so it has to pick up the change.
+  // The map stays drawn behind the dialog, so the map has to take the change.
   it('applies changed user settings to the open map', async () => {
     await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
     const settings = fixture.componentInstance.settings;

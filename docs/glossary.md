@@ -158,8 +158,8 @@ keyboard shortcut. Map shortcuts do not act while it is open.
 
 ### Settings dialog
 
-The dialog that the settings button or `alt+s` opens over the map. It has three
-tabs:
+The dialog that the settings button or `alt+s` opens over the map. The dialog
+shows these tabs:
 
 1. General: language and dark mode.
 2. Map options: the deletion card, the map settings of the open map, and the
@@ -167,7 +167,7 @@ tabs:
 3. The map list.
 
 The map stays drawn behind the dialog and takes each change at once. Map
-shortcuts do not act while it is open.
+shortcuts do not act while the dialog is open.
 
 ### Deletion card
 

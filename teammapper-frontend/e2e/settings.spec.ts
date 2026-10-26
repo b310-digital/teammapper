@@ -92,6 +92,28 @@ test('keeps the stored map settings when the user reopens the map', async ({
   await expect(fontIncrement).toHaveValue('7');
 });
 
+test('shows the linktext on the open map once the dialog turns it on', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByText('Create mind map').click();
+  await page.getByText('Root node').click();
+  page.once('dialog', dialog => dialog.accept('https://teammapper.org'));
+  await page.locator('#add-link-button').click();
+  const linkText = page.locator('svg a > text.link-text');
+  await expect(linkText).toHaveText('link');
+
+  await page.locator('#settings-button').click();
+  await page.locator('.mat-mdc-tab').nth(1).click();
+  await page
+    .locator('mat-slide-toggle', { hasText: 'Show linktext' })
+    .locator('button')
+    .click();
+  await page.locator('.close-button').click();
+
+  await expect(linkText).toHaveText('https://teammapper.org');
+});
+
 test('modifies map options in settings', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();

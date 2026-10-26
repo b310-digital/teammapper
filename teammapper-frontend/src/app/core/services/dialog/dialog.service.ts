@@ -95,9 +95,10 @@ export class DialogService {
   }
 
   /**
-   * Open the settings over the map. Hotkeys pause as for the info dialog, so
-   * typing `-` into a field removes no node. A navigation closes the dialog,
-   * because deleting a map from it leaves for the start page.
+   * Open the settings dialog over the map. Hotkeys pause as for the info
+   * dialog, so typing `-` into a field removes no node. A navigation closes
+   * the dialog, because deleting the open map sends the user to the start
+   * page.
    */
   openSettingsDialog() {
     if (this.settingsModalRef) return;

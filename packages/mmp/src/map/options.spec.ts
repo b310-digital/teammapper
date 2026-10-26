@@ -66,13 +66,19 @@ describe('Options.update', () => {
       expect(map.options.showLinktext).toBe(true);
     });
 
-    it('redraws the nodes', () => {
+    it('writes the link address in place of the link icon', () => {
       map = makeMap({ showLinktext: false });
-      const drawAll = jest.spyOn(map.draw, 'drawAll');
+      map.instance.addNode(
+        { link: { href: 'https://example.com' } },
+        map.instance.exportRootProperties()?.id
+      );
+      const linkText = () =>
+        map.dom.g.select('a.link text.link-text').node()?.textContent;
+      expect(linkText()).toBe('link');
 
       map.options.update('showLinktext', true);
 
-      expect(drawAll).toHaveBeenCalled();
+      expect(linkText()).toBe('https://example.com');
     });
 
     it('skips the redraw when the value stays the same', () => {

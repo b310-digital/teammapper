@@ -115,7 +115,7 @@ describe('DialogService', () => {
       expect(hotkeysService.unpause).toHaveBeenCalledTimes(1);
     });
 
-    // Deleting a map from the dialog leaves for the start page.
+    // Deleting the open map from the dialog sends the user to the start page.
     it('closes the dialog when the router starts a navigation', () => {
       service.openSettingsDialog();
 

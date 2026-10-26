@@ -41,10 +41,11 @@ test.describe('settings dialog', () => {
     await expect(dialog(page)).toBeVisible();
 
     await page.keyboard.press('+');
-    await expect(nodes(page)).toHaveCount(count);
-
     await page.keyboard.press('Escape');
     await expect(dialog(page)).toHaveCount(0);
+    // The page handles keys in order, so a node the first + added would
+    // exist by now.
+    expect(await nodes(page).count()).toBe(count);
 
     await page.keyboard.press('+');
     await expect(nodes(page)).toHaveCount(count + 1);
@@ -104,10 +105,11 @@ test.describe('info dialog', () => {
     await expect(dialog(page)).toBeVisible();
 
     await page.keyboard.press('+');
-    await expect(nodes(page)).toHaveCount(count);
-
     await page.keyboard.press('Escape');
     await expect(dialog(page)).toHaveCount(0);
+    // The page handles keys in order, so a node the first + added would
+    // exist by now.
+    expect(await nodes(page).count()).toBe(count);
 
     await page.keyboard.press('+');
     await expect(nodes(page)).toHaveCount(count + 1);

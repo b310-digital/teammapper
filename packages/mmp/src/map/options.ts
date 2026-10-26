@@ -52,19 +52,8 @@ export default class Options implements OptionParameters {
       parameters.showLinktext !== undefined ? parameters.showLinktext : false;
     this.resolveImageUrl = parameters.resolveImageUrl;
 
-    // Default node properties
-    this.defaultNode = Utils.mergeObjects(
-      DefaultNodeValues,
-      parameters.defaultNode,
-      true
-    ) as DefaultNodeProperties;
-
-    // Default root node properties
-    this.rootNode = Utils.mergeObjects(
-      DefaultRootNodeValues,
-      parameters.rootNode,
-      true
-    ) as DefaultNodeProperties;
+    this.defaultNode = withDefaults(DefaultNodeValues, parameters.defaultNode);
+    this.rootNode = withDefaults(DefaultRootNodeValues, parameters.rootNode);
   }
 
   public update = (property: string, value: unknown) => {
@@ -86,18 +75,16 @@ export default class Options implements OptionParameters {
         this.updateShowLinktext(value as boolean);
         break;
       case 'defaultNode':
-        this.defaultNode = Utils.mergeObjects(
+        this.defaultNode = withDefaults(
           DefaultNodeValues,
-          value as MapNodeSettings,
-          true
-        ) as DefaultNodeProperties;
+          value as MapNodeSettings
+        );
         break;
       case 'rootNode':
-        this.rootNode = Utils.mergeObjects(
+        this.rootNode = withDefaults(
           DefaultRootNodeValues,
-          value as MapNodeSettings,
-          true
-        ) as DefaultNodeProperties;
+          value as MapNodeSettings
+        );
         break;
       default:
         Log.error('The property does not exist');
@@ -219,6 +206,14 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
   },
   isRoot: true,
 };
+
+/** The node defaults with the caller's settings merged over them. */
+function withDefaults(
+  defaults: DefaultNodeProperties,
+  settings: MapNodeSettings | undefined
+): DefaultNodeProperties {
+  return Utils.mergeObjects(defaults, settings, true) as DefaultNodeProperties;
+}
 
 export interface DefaultNodeProperties {
   name: string;

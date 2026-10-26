@@ -16,12 +16,7 @@ import {
   parseImageUploadResponse,
 } from '@teammapper/shared';
 import { ImageUploadError } from '../mmp/node-images';
-import type {
-  MapData,
-  MapProperties,
-  MmpMap,
-  OptionParameters,
-} from '@teammapper/mmp';
+import type { MapData, MapProperties, MmpMap } from '@teammapper/mmp';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
@@ -40,10 +35,9 @@ import { YjsSyncService } from './yjs-sync.service';
 /** How long the connection may take to sync before the toast says so. */
 export const SYNCING_TOAST_DELAY_MS = 500;
 
-/** The element and the options openMap creates the map with. */
+/** The element openMap creates the map in. */
 interface MapTarget {
   ref: HTMLElement;
-  options?: OptionParameters;
 }
 
 /**
@@ -163,20 +157,13 @@ export class MapSyncService implements OnDestroy {
     this.colorMapping = {};
   }
 
-  /** Remove the renderer target while keeping the settings page connected. */
-  public detachMap() {
-    this.mapTarget = null;
-    this.removeSyncingToast();
-    this.syncService.detachMap();
-  }
-
   /**
    * Open the connection to the attached map. The map appears in `ref` once
    * the connection syncs; until then the map area stays empty, and a toast
    * tells the user after a short delay that the map is loading.
    */
-  public openMap(ref: HTMLElement, options?: OptionParameters) {
-    this.mapTarget = { ref, options };
+  public openMap(ref: HTMLElement) {
+    this.mapTarget = { ref };
     this.scheduleSyncingToast();
     this.syncService.initMap(this.getAttachedMap().cachedMap.uuid);
   }
@@ -312,20 +299,24 @@ export class MapSyncService implements OnDestroy {
   // ─── Map creation ────────────────────────────────────────────
 
   /**
-   * Create the map over the synced map data. The sync service wires it up
-   * and sets edit mode last, so the map exists when edit mode reaches it.
-   * A reset while mmp builds the map leaves nothing to wire up, so the call
-   * removes the map it built and keeps a map that a newer `openMap` built.
+   * Create the map over the synced map data with the user settings cached
+   * now, which a sync reset may meet after the settings dialog changed them.
+   * With no cached settings mmp falls back to its own defaults. The sync
+   * service wires the map up and sets edit mode last, so the map exists
+   * when edit mode reaches it. A reset while mmp builds the map leaves
+   * nothing to wire up, so the call removes the map it built and keeps a map
+   * that a newer `openMap` built.
    */
   private async createMap(data: MapData): Promise<void> {
     const target = this.mapTarget;
     if (!target) return;
     this.removeSyncingToast();
 
+    const options = this.settingsService.getCachedUserSettings()?.mapOptions;
     const map = await this.mmpService.create(
       'map_1',
       target.ref,
-      target.options,
+      options,
       data
     );
     if (map) this.adoptMap(map, target);

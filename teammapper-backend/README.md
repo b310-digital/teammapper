@@ -158,7 +158,7 @@ The `ServeStaticModule` uses a `renderPath` regex to restrict the SPA fallback t
 /            → About page
 /map         → Map landing
 /map/:id     → Map editor
-/app/settings   → Settings
+/app/settings   → Not-found page (retired, kept so old links reach the SPA)
 /app/shortcuts  → Not-found page (retired, kept so old links reach the SPA)
 ```
 
