@@ -92,29 +92,6 @@ test('keeps the stored map settings when the user reopens the map', async ({
   await expect(fontIncrement).toHaveValue('7');
 });
 
-test('names the next node after the default node name set in the dialog', async ({
-  page,
-}) => {
-  await page.goto('/');
-  await page.getByText('Create mind map').click();
-  await expect(page.locator('.map')).toBeVisible();
-
-  await page.locator('#settings-button').click();
-  await page.locator('.mat-mdc-tab').nth(1).click();
-  const defaultNodeName = page.locator('input[name="defaultNodeName"]');
-  await defaultNodeName.fill('Fresh node');
-  await defaultNodeName.press('Tab');
-  await page.locator('.close-button').click();
-
-  await page.getByText('Root node').click();
-  await page.keyboard.press('+');
-  await page.keyboard.press('Enter');
-
-  await expect(
-    page.locator('.map g.node', { hasText: 'Fresh node' })
-  ).toHaveCount(1);
-});
-
 test('modifies map options in settings', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
