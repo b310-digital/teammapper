@@ -1,38 +1,64 @@
-Each section is one pull request of roughly 500 changed lines, tests included, and leaves `main` releasable. PR 1 stands on its own. PR 2 needs PR 1. PR 3 and PR 4 need PR 2 and are independent of each other. PR 5 needs PR 3 and PR 4. No feature flag is needed: no client creates a markdown node until PR 5 ships, and every earlier section only renders, stores or converts the attribute.
+Each section is one pull request of roughly 500 changed lines, tests included, and leaves `main` releasable. PR 1 stands on its own. PR 2 needs PR 1. PR 3 and PR 4 need PR 2 and are independent of each other. No feature flag is needed. Until PR 3 ships, no client writes formatting, and PR 2 renders the stored names unchanged apart from rare wrapped words.
 
-## 1. PR 1: attribute in shared types and storage (~350 lines)
+## 1. PR 1: shared helpers and the parser (~350 lines)
 
-- [ ] 1.1 Add `NodeNameFormat`, its schema, `nameFormat` on `UserNodeProperties`, `NodeSchema` and `NodePropertySchemas`, and `escapeMarkdown` to `packages/shared`
-- [ ] 1.2 Read a missing or invalid `nameFormat` as `text` in `normalizeMapData`
-- [ ] 1.3 Add the `nameFormat` column to `MmpNode` and its migration
-- [ ] 1.4 Write and read the attribute in persistence, hydration and duplication
-- [ ] 1.5 Tests: schema accepts `text` and `markdown` only; escape helper; hydrate and persist round trip; null column reads as `text`; duplication copies
+- [ ] 1.1 Add `escapeMarkdown` and `decodeLegacyName` to `packages/shared`. `decodeLegacyName` decodes entities, turns `<br>` into a newline and strips other tags.
+- [ ] 1.2 Add the markdown parser and `markdownToPlainText` to `packages/mmp`, returning runs per line, and export both from the entry point
+- [ ] 1.3 Specs:
+  - escape helper
+  - `decodeLegacyName` with `Tom &amp; Jerry`, `first<br>second` and `a &lt; b`
+  - parser subset rules, nesting, escapes, `snake_case` and `5 * 3 * 2`
+  - literal links, images and HTML
 
-## 2. PR 2: rendering in the renderer (~500 lines)
+## 2. PR 2: store and render markdown names (~500 lines)
 
-- [ ] 2.1 Add the markdown parser to `packages/mmp` returning runs per line
-- [ ] 2.2 Draw markdown names from runs with `strong`, `em` and `br` through `textContent`, ignoring the deprecated font attributes
-- [ ] 2.3 Map `nameFormat` in the node record and property mapping, and redraw on change
-- [ ] 2.4 Keep runs in image export as `tspan` elements with weight and style
-- [ ] 2.5 Specs: subset rules, nesting, escapes, `snake_case`, literal links, images and HTML; DOM holds no element beyond `strong`, `em` and `br`; text names render unchanged; export keeps bold and italic
+- [ ] 2.1 Add the TypeORM migration that rewrites `mmp_node.name` with a frozen copy of the conversion, in batches, with a down migration
+- [ ] 2.2 Make `sanitizeName` strip tags without escaping, and update `sanitization.spec.ts` and `clientServerMapping.spec.ts`
+- [ ] 2.3 Draw every name from runs with `strong`, `em` and `br` through `textContent`, on top of the whole-node font. Remove the DOMPurify name handling in `node-marks.ts` and `draw.ts`.
+- [ ] 2.4 Switch these plain-text readers to `markdownToPlainText`:
+  - the recent mind maps list
+  - the share dialog
+  - the export file name
+  - the canvas width estimate
+- [ ] 2.5 Keep runs in image export as `tspan` elements with weight and style
+- [ ] 2.6 Specs:
+  - migration up and down
+  - the DOM holds no element beyond `strong`, `em` and `br`
+  - a name arriving as `<img src=x onerror=alert(1)>` shows as text
+  - `a < b & c` round-trips unescaped
+  - export keeps bold and italic
+  - the existing `node-editing`, `node-sizes` and `two-client-sync` e2e specs pass
 
-## 3. PR 3: editing and toolbar (~450 lines)
+## 3. PR 3: WYSIWYG editing and toolbar (~600 lines)
 
-- [ ] 3.1 Edit a markdown name as source with Shift+Enter for a line break, and write the source on blur
-- [ ] 3.2 Make the bold and italic buttons wrap and unwrap the markers on markdown nodes and read their state from the source
-- [ ] 3.3 Add the convert button and the conversion as one transaction and one undo step
-- [ ] 3.4 Texts for the convert button in every language file
-- [ ] 3.5 Tests: edit round trip; Shift+Enter; paste stays plain; bold and italic on markdown and on text nodes; conversion escapes, wraps, resets the font and undoes in one step; read-only clients see no convert button
+- [ ] 3.1 Edit names WYSIWYG:
+  - fill the editor with the rendered runs
+  - allow Ctrl+B and Ctrl+I through `execCommand` with `styleWithCSS` off
+  - insert a `br` on Shift+Enter
+  - serialize the editor DOM to the source on blur, escaping typed `\`, `*` and `_`
+- [ ] 3.2 Export `isEditingNodeName`, `toggleNodeNameBold` and `toggleNodeNameItalic` from mmp, and emit `nodeNameFormat` on `selectionchange` while editing. Update the frontend mmp mock.
+- [ ] 3.3 Route the toolbar's bold and italic to the selection while editing, call `preventDefault` on `mousedown`, and bind the button state to `nodeNameFormat`. Keep the whole-node toggle otherwise.
+- [ ] 3.4 Add **Inline formatting** to `docs/glossary.md`
+- [ ] 3.5 Tests:
+  - the serializer handles `b`, `strong`, `i`, `em`, a styled `span`, `br`, `div` lines, unknown elements and typed markers, and its output parses back to the same runs
+  - Shift+Enter, and paste staying plain
+  - the toolbar formats the selection while editing, keeps the editor open and follows the caret
+  - the toolbar toggles the whole node when not editing
+- [ ] 3.6 E2E:
+  - client A types `Total net`, bolds `Total` with Ctrl+B and italicizes `net` with the toolbar while editing
+  - client B sees the bold and italic parts
+  - a reload keeps them
+  - typed `**x**` stays literal
 
-## 4. PR 4: Mermaid import and export (~400 lines)
+## 4. PR 4: Mermaid and JSON import and export (~400 lines)
 
 - [ ] 4.1 Set `isMarkdown` in `packages/mermaid-mindmap-parser` for descriptions from markdown strings
-- [ ] 4.2 Import markdown strings as source, escape other descriptions, decode `#quot;` and `#96;`, and set `nameFormat: 'markdown'`
-- [ ] 4.3 Export markdown names and styled text names as markdown strings, encoding `"` and backticks
-- [ ] 4.4 Tests: import and export of every subset construct; round trip; legacy bold export; a name with quotes and backticks; a node with a link
-
-## 5. PR 5: markdown by default (~300 lines)
-
-- [ ] 5.1 Create every new node, tree and AI generated node with `nameFormat: 'markdown'`, and keep the copied format on paste
-- [ ] 5.2 Add **Markdown name** and **Text name** to `docs/glossary.md` and note the deprecated bold and italic attributes under **Node**
-- [ ] 5.3 E2E: client A types `**Total** *net*` in a new node, client B sees bold and italic parts; an older text node renders unchanged and converts; Mermaid export and import keep the formatting
+- [ ] 4.2 Import markdown strings as source, escape other descriptions, and decode `#quot;` and `#96;`
+- [ ] 4.3 Export formatted names and names with whole-node bold or italic as markdown strings, encoding `"` and backticks
+- [ ] 4.4 Run `decodeLegacyName` in JSON import on names holding an entity or `<br>`
+- [ ] 4.5 Tests:
+  - import and export of every subset construct, and the round trip
+  - export of a whole-node bold name
+  - a name with quotes and backticks
+  - a node with a link
+  - JSON import of `Tom &amp; Jerry`

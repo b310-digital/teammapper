@@ -1,129 +1,144 @@
 ## ADDED Requirements
 
-### Requirement: A node name has a format
+### Requirement: Every node name is markdown
 
-Each node SHALL have a name format, `text` or `markdown`, stored in the attribute `nameFormat`. A node without the attribute SHALL have the format `text`. A **text name** SHALL render as it did before markdown names existed. A **markdown name** SHALL render its source with the markdown subset below. The name SHALL always hold the source string, never HTML.
+Every node name SHALL hold markdown source and SHALL render with the markdown subset below. The name SHALL never hold HTML and SHALL NOT be HTML-escaped, so `Tom & Jerry` is stored as `Tom & Jerry`.
 
-#### Scenario: Existing node without the attribute
+#### Scenario: Name stores its source
 
-- **GIVEN** a map saved before markdown names existed holds a node named `a *b* c`
-- **WHEN** a client opens the map
-- **THEN** the node SHALL show `a *b* c` with its asterisks and no italic part
-
-#### Scenario: Markdown node stores its source
-
-- **WHEN** a user names a markdown node `**Total** net`
+- **WHEN** a user formats `Total` in bold inside the name `Total net`
 - **THEN** the node name SHALL be stored as `**Total** net`
 
-### Requirement: Markdown names support the Mermaid subset
+#### Scenario: Ampersand and angle brackets stay literal
 
-A markdown name SHALL render `**x**` and `__x__` in bold, `*x*` and `_x_` in italic, either nested in the other, and a newline as a line break. A backslash SHALL escape `\`, `*` and `_`. Emphasis SHALL follow the CommonMark delimiter rules, so an underscore inside a word is plain text. Every other construct, including links, images, headings, lists, code spans and HTML, SHALL render as its literal source text. The rendered name SHALL contain no element other than `strong`, `em` and `br`.
+- **WHEN** a user names a node `a < b & c`
+- **THEN** the node name SHALL be stored as `a < b & c`
+- **AND** the node SHALL show `a < b & c`
+
+### Requirement: Names support the Mermaid markdown subset
+
+A name SHALL render:
+
+- `**x**` and `__x__` in bold
+- `*x*` and `_x_` in italic
+- either one nested in the other
+- a newline as a line break
+
+A backslash SHALL escape `\`, `*` and `_`. Emphasis SHALL follow the CommonMark delimiter rules, so an underscore inside a word and an asterisk surrounded by spaces are plain text.
+
+Every other construct, including links, images, headings, lists, code spans and HTML, SHALL render as its literal source text. The rendered name SHALL contain no element other than `strong`, `em` and `br`.
 
 #### Scenario: Bold and italic parts
 
-- **WHEN** a markdown node is named `**Total** and *net*`
+- **WHEN** a node is named `**Total** and *net*`
 - **THEN** the node SHALL show `Total` in bold, `and` in normal style and `net` in italic
 
 #### Scenario: Nested emphasis
 
-- **WHEN** a markdown node is named `**very *important***`
+- **WHEN** a node is named `**very *important***`
 - **THEN** `very ` SHALL show in bold and `important` in bold italic
 
 #### Scenario: Line break
 
-- **WHEN** a markdown node name holds a newline between `first` and `second`
+- **WHEN** a node name holds a newline between `first` and `second`
 - **THEN** the node SHALL show `first` and `second` on two lines
 
 #### Scenario: Escaped marker
 
-- **WHEN** a markdown node is named `2 \* 3`
+- **WHEN** a node is named `2 \* 3`
 - **THEN** the node SHALL show `2 * 3` with no italic part
 
-#### Scenario: Underscore inside a word
+#### Scenario: Plain asterisks and underscores
 
-- **WHEN** a markdown node is named `snake_case_name`
-- **THEN** the node SHALL show `snake_case_name` with no italic part
+- **WHEN** nodes are named `5 * 3 * 2` and `snake_case_name`
+- **THEN** both SHALL show as written, with no italic part
 
 #### Scenario: Link and image stay text
 
-- **WHEN** a markdown node is named `[site](https://example.com) ![x](a.png)`
+- **WHEN** a node is named `[site](https://example.com) ![x](a.png)`
 - **THEN** the node SHALL show that source text literally
 - **AND** it SHALL contain no anchor and no image element
 
 #### Scenario: HTML stays text
 
-- **WHEN** a markdown name arriving through sync or import holds `<b>x</b>`
-- **THEN** the node SHALL show `<b>x</b>` literally and no bold part
+- **WHEN** a name arriving through sync or import holds `<img src=x onerror=alert(1)>`
+- **THEN** the node SHALL show that text literally and contain no image element
 
-### Requirement: Editing a markdown name shows its source
+### Requirement: Editing a name is WYSIWYG
 
-When the user edits a markdown name, the editable element SHALL show the source. Shift+Enter SHALL insert a line break. Pasting SHALL insert plain text. Ending the edit SHALL store the source and render it again.
+When the user edits a name, the editable element SHALL show the rendered formatting and SHALL NOT show markdown markers. The user never types markdown, so characters the user types or pastes SHALL stay literal, and ending the edit SHALL store typed `\`, `*` and `_` escaped.
 
-#### Scenario: Edit and render
+- Ctrl+B (Cmd+B on macOS) SHALL toggle bold on the selection, and Ctrl+I (Cmd+I) SHALL toggle italic.
+- Shift+Enter SHALL insert a line break.
+- Pasting SHALL insert plain text.
+- Ending the edit SHALL convert the edited content to markdown source and store it.
 
-- **GIVEN** a markdown node shows `Total` in bold
+#### Scenario: Edit keeps the formatting visible
+
+- **GIVEN** a node named `**Total** net`
 - **WHEN** the user starts editing it
-- **THEN** the element SHALL show `**Total**`
-- **AND** after the user ends the edit, it SHALL show `Total` in bold again
+- **THEN** the element SHALL show `Total` in bold and `net` in normal style
+- **AND** it SHALL show no asterisks
+
+#### Scenario: Bold a selected word
+
+- **GIVEN** the user edits a node named `Total net`
+- **WHEN** the user selects `Total`, presses Ctrl+B and ends the edit
+- **THEN** the name SHALL be stored as `**Total** net`
+
+#### Scenario: Typed markers stay literal
+
+- **WHEN** the user types `**x**` into a name and ends the edit
+- **THEN** the name SHALL be stored as `\*\*x\*\*`
+- **AND** the node SHALL show `**x**` with no bold part
 
 #### Scenario: Line break while editing
 
-- **WHEN** the user presses Shift+Enter while editing a markdown name
-- **THEN** the source SHALL hold a newline at the caret
-- **AND** the edit SHALL continue
+- **WHEN** the user presses Shift+Enter while editing a name
+- **THEN** the edit SHALL continue with the caret on a new line
+- **AND** the stored source SHALL hold a newline at that position
 
-### Requirement: New nodes have markdown names
+### Requirement: Inline formatting combines with whole-node bold and italic
 
-A current client SHALL give every node it creates the format `markdown`: a child, a tree, a Mermaid import and an AI generated map. A pasted node SHALL keep the format of the node it copies. A JSON import SHALL keep the format it finds and SHALL read a missing one as `text`.
+The node attributes `font.weight` and `font.style` SHALL keep applying to the whole name as the default for every run. Inline bold and italic SHALL add to that default. A run marked bold inside a node whose `font.weight` is `bold` SHALL stay bold.
 
-#### Scenario: Add a child
+#### Scenario: Inline bold inside an italic node
 
-- **WHEN** the user adds a child node
-- **THEN** the child SHALL have the format `markdown`
+- **GIVEN** a node has `font.style` set to `italic`
+- **WHEN** its name is `**Total** net`
+- **THEN** `Total` SHALL show in bold italic and `net` in italic
 
-#### Scenario: Paste a text node
+#### Scenario: Whole-node bold without markers
 
-- **GIVEN** the user copied a node with the format `text`
-- **WHEN** the user pastes it
-- **THEN** the pasted node SHALL have the format `text`
+- **GIVEN** a node has `font.weight` set to `bold`
+- **WHEN** its name is `Total`
+- **THEN** `Total` SHALL show in bold
 
-#### Scenario: JSON from an older export
+### Requirement: Existing names migrate to markdown source
 
-- **WHEN** the user imports a JSON export whose nodes carry no `nameFormat`
-- **THEN** every imported node SHALL have the format `text`
+A database migration SHALL convert every stored node name from today's HTML-escaped text:
 
-### Requirement: Node-wide bold and italic are deprecated
+1. It SHALL decode HTML entities.
+2. It SHALL turn `<br>` into a newline.
+3. It SHALL strip any other tag.
 
-The attributes `font.weight` and `font.style` SHALL keep applying to text names. A markdown name SHALL ignore them, and no client SHALL write them for a markdown node.
+The migration SHALL leave asterisks, underscores and backslashes unchanged, so a stored `*x*` renders in italic after the migration.
 
-#### Scenario: Legacy bold on a text name
+#### Scenario: Entities and line breaks
 
-- **GIVEN** a text node has `font.weight` set to `bold`
-- **THEN** the whole name SHALL render in bold
+- **WHEN** the migration converts `Tom &amp; Jerry` and `first<br>second`
+- **THEN** the stored names SHALL be `Tom & Jerry`, and `first` and `second` separated by a newline
 
-#### Scenario: Legacy bold on a markdown name
+#### Scenario: Plain name
 
-- **GIVEN** a markdown node named `x` has `font.weight` set to `bold` from an older client
-- **THEN** the name SHALL render in normal weight
+- **WHEN** the migration converts `Plan 2027`
+- **THEN** the stored name SHALL stay `Plan 2027`
 
-### Requirement: User converts a text name to markdown
+### Requirement: Plain-text readers show names without markers
 
-For a selected text node on a writable client, the toolbar SHALL show a button that converts the name to markdown. The conversion SHALL escape `\`, `*` and `_` in the name, wrap it in `**` when `font.weight` is `bold` and in `*` when `font.style` is `italic`, set both to `normal` and set the format to `markdown`, all in one undo step. The button SHALL be hidden for markdown nodes and on read-only clients. There SHALL be no conversion back to text.
+Every place that shows a name outside the map SHALL show the name's plain text: the map title in the list of recent mind maps, the share dialog and the export file name.
 
-#### Scenario: Convert a bold text name
+#### Scenario: Map title
 
-- **GIVEN** a text node named `a*b` has `font.weight` set to `bold`
-- **WHEN** the user converts it
-- **THEN** the name SHALL be `**a\*b**` with the format `markdown`
-- **AND** `font.weight` SHALL be `normal`
-- **AND** the node SHALL still show `a*b` in bold
-
-#### Scenario: Undo a conversion
-
-- **WHEN** the user converts a text name and then undoes once
-- **THEN** the node SHALL have its former name, font and the format `text`
-
-#### Scenario: Markdown node or read-only client
-
-- **GIVEN** the selected node has a markdown name, or the client is not writable
-- **THEN** the convert button SHALL NOT be shown
+- **WHEN** the root node's name is `**Plan** 2027`
+- **THEN** the list of recent mind maps SHALL show `Plan 2027`

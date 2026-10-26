@@ -2,7 +2,10 @@
 
 ### Requirement: User can toggle bold and italic text styles on nodes
 
-The system SHALL provide bold and italic toggle buttons that apply font styles to the selected node's text. Styles SHALL be independently togglable and composable. On a text node the buttons SHALL set the deprecated `font.weight` and `font.style`. On a markdown node they SHALL edit the source instead: bold SHALL wrap the whole name in `**` or remove that wrapping when present, and italic SHALL do the same with `*`. On a markdown node a button SHALL show as active when the whole name carries its wrapping.
+The system SHALL provide bold and italic toggle buttons. Styles SHALL be independently togglable and composable. The buttons SHALL depend on the editing state:
+
+- **While the user edits a name**: bold and italic SHALL toggle formatting on the editor's selection, the same as Ctrl+B and Ctrl+I. A click on a button SHALL keep the editor open with its selection intact, and each button SHALL show the formatting at the caret.
+- **While no name is being edited**: the buttons SHALL apply font styles to the selected node's whole text through `font.weight` and `font.style`, as before.
 
 #### Scenario: Toggle bold on
 
@@ -24,15 +27,17 @@ The system SHALL provide bold and italic toggle buttons that apply font styles t
 - **WHEN** only italic is active and the user deactivates italic
 - **THEN** the node text SHALL render in normal style
 
-#### Scenario: Toggle bold on a markdown node
+#### Scenario: Toggle bold on a selection while editing
 
-- **GIVEN** a markdown node is named `Total`
-- **WHEN** the user activates bold
-- **THEN** the name SHALL be `**Total**`
+- **GIVEN** the user edits a node named `Total net` and selects `net`
+- **WHEN** the user clicks the bold button
+- **THEN** `net` SHALL show in bold and the editor SHALL stay open with `net` selected
+- **AND** after the edit ends, the name SHALL be `Total **net**`
 - **AND** `font.weight` SHALL stay unchanged
 
-#### Scenario: Toggle bold off on a markdown node
+#### Scenario: Button state follows the caret
 
-- **GIVEN** a markdown node is named `**Total**`
-- **WHEN** the user deactivates bold
-- **THEN** the name SHALL be `Total`
+- **GIVEN** the user edits a node named `**Total** net`
+- **WHEN** the caret stands inside `Total`
+- **THEN** the bold button SHALL show as active
+- **AND** when the caret moves into `net`, the bold button SHALL show as inactive

@@ -2,7 +2,7 @@
 
 ### Requirement: Node names SHALL be plain text only
 
-The system SHALL strip all HTML markup from node names. Only plain text content SHALL be persisted. For a markdown name, the plain text is the markdown source, and the renderer SHALL build its output from text nodes and the elements `strong`, `em` and `br` only, never by interpreting the name as HTML.
+The system SHALL strip all HTML markup from node names. Only plain text content SHALL be persisted, and the persisted text SHALL NOT be HTML-escaped. The plain text is the markdown source of the name. The renderer SHALL build its output from text nodes and the elements `strong`, `em` and `br` only, and SHALL never interpret the name as HTML.
 
 #### Scenario: HTML tags stripped from node name
 
@@ -21,21 +21,10 @@ The system SHALL strip all HTML markup from node names. Only plain text content 
 
 #### Scenario: Markdown source passes through unchanged
 
-- **WHEN** a user sets a markdown name to `**bold** _x_`
-- **THEN** the system SHALL store `**bold** _x_` unchanged
+- **WHEN** a user sets a node name to `**bold** _x_ & co`
+- **THEN** the system SHALL store `**bold** _x_ & co` unchanged
 
 #### Scenario: Markup from a peer is not interpreted
 
-- **WHEN** a markdown name arriving through sync or import holds `<img src=x onerror=alert(1)>`
+- **WHEN** a name arriving through sync or import holds `<img src=x onerror=alert(1)>`
 - **THEN** the renderer SHALL show it as text and create no image element
-
-## ADDED Requirements
-
-### Requirement: Node name format SHALL use allowed values only
-
-The system SHALL accept only `text` or `markdown` for a node's `nameFormat`. A missing or unrecognized value SHALL be read as `text`.
-
-#### Scenario: Unrecognized format
-
-- **WHEN** a node arrives with `nameFormat` set to `html`
-- **THEN** the system SHALL treat the node as having the format `text`
