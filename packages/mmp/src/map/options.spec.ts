@@ -73,7 +73,8 @@ describe('Options.update', () => {
         map.instance.exportRootProperties()?.id
       );
       const linkText = () =>
-        map.dom.g.select('a.link text.link-text').node()?.textContent;
+        map.dom.g.select<SVGTextElement>('a.link text.link-text').node()
+          ?.textContent;
       expect(linkText()).toBe('link');
 
       map.options.update('showLinktext', true);
