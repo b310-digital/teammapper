@@ -159,6 +159,7 @@ export default class MmpMap {
       selectNode: this.nodes.selectNode,
       setEditable: this.setEditable,
       updateNode: this.nodes.updateNode,
+      updateOption: this.options.update,
       zoomIn: this.zoom.zoomIn,
       zoomOut: this.zoom.zoomOut,
     };
@@ -209,6 +210,8 @@ export interface MmpInstance {
     value: NodePropertyValues[P],
     id?: string
   ) => void;
+  /** Apply a setting the settings dialog changed to the open map. */
+  updateOption: (property: string, value: unknown) => void;
   zoomIn: (duration?: number) => void;
   zoomOut: (duration?: number) => void;
 }
