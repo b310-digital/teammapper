@@ -24,7 +24,6 @@ jest.mock('dompurify', () => {
 
 jest.mock('@teammapper/mmp', () => ({
   create: jest.fn(),
-  NodePropertyMapping: {},
 }));
 
 const REFERENCE = 'image:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';

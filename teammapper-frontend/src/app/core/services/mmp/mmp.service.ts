@@ -5,17 +5,22 @@ import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from '../utils/utils.service';
 import { jsPDF } from 'jspdf';
 import { filter } from 'rxjs/operators';
-import { create, MapData, MmpMap, OptionParameters } from '@teammapper/mmp';
+import {
+  create,
+  MapData,
+  MmpEventPayloadMap,
+  MmpEventType,
+  MmpMap,
+  OptionParameters,
+} from '@teammapper/mmp';
 import DOMPurify from 'dompurify';
 import {
   CachedMapOptions,
   ExportNodeProperties,
   MapOptions,
   MapSnapshot,
-  MmpEventPayloadMap,
-  MmpEventType,
   NodeProperty,
-  NodePropertyValue,
+  NodePropertyValues,
   UserMapOptions,
   UserNodeProperties,
   findRootNodes,
@@ -490,9 +495,9 @@ export class MmpService implements OnDestroy {
   /**
    * Update a property of the current selected node.
    */
-  public async updateNode(
-    property: NodeProperty | string,
-    value?: NodePropertyValue | ArrayBuffer | unknown,
+  public async updateNode<P extends NodeProperty>(
+    property: P,
+    value: NodePropertyValues[P],
     id?: string
   ) {
     const instance = this.map.instance;

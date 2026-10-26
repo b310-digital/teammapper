@@ -1,10 +1,13 @@
 import { OptionParameters } from './map/options.js';
 import MmpMap from './map/map.js';
 import type { MapData } from './map/data/map-data.js';
-import { PropertyMapping } from './map/data/property-mapping.js';
 
 export { MmpMap };
 export type { OptionParameters, ImageUrlResolver } from './map/options.js';
+export type {
+  MmpEventPayloadMap,
+  MmpEventType,
+} from './map/handlers/events.js';
 export type { MapProperties } from './map/types.js';
 export type { NodeColors } from './map/data/node-record.js';
 export type {
@@ -26,5 +29,3 @@ export function create(
 ) {
   return new MmpMap(id, ref, options, data);
 }
-
-export const NodePropertyMapping = PropertyMapping;

@@ -1,5 +1,16 @@
 import Log from '../../utils/log.js';
-import type { MmpEventPayloadMap, MmpEventType } from '@teammapper/shared';
+import type { ExportNodeProperties } from '@teammapper/shared';
+
+/** The payload each map event passes to its callbacks. */
+export interface MmpEventPayloadMap {
+  nodeSelect: ExportNodeProperties;
+  nodeDeselect: ExportNodeProperties;
+  nodeProtected: ExportNodeProperties;
+  /** The map data changed, by a local, a peer's or an undo write. */
+  mapChange: void;
+}
+
+export type MmpEventType = keyof MmpEventPayloadMap;
 
 export type MmpEventCallback<K extends MmpEventType> = (
   payload: MmpEventPayloadMap[K]
@@ -17,7 +28,7 @@ const EVENT_TYPES: readonly MmpEventType[] = [
 ];
 
 /**
- * Manage the events of the map. `@teammapper/shared` types each payload, and
+ * Manage the events of the map. `MmpEventPayloadMap` types each payload, and
  * each event holds any number of callbacks.
  */
 export default class Events {
