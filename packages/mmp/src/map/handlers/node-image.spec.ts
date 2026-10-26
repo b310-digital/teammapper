@@ -1,4 +1,3 @@
-import { create } from '../../index.js';
 import { DefaultRootNodeValues } from '../options.js';
 import MmpMap from '../map.js';
 import InMemoryMapData from '../../test/in-memory-map-data.js';
@@ -59,7 +58,7 @@ function makeMap(
       image: { src, size: 60 },
     },
   ]);
-  return create('map', ref, { resolveImageUrl }, data);
+  return new MmpMap(ref, { resolveImageUrl }, data);
 }
 
 function setImage(map: MmpMap, src: string) {

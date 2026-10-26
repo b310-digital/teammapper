@@ -22,7 +22,6 @@ import type {
  * Initialize all handlers and return a mmp object.
  */
 export default class MmpMap {
-  public id: string;
   public dom: DomElements;
   /** The nodes of the map. mmp reads and writes them here and keeps none. */
   public readonly data: MapData;
@@ -47,18 +46,15 @@ export default class MmpMap {
    * Create all handler instances, set some map behaviors, draw the nodes the
    * map data holds and return a mmp instance. The map selects the main root
    * and fires `nodeSelect`, and emits no `mapChange` for this first draw.
-   * @param {string} id
    * @param {HTMLElement} ref
    * @param {OptionParameters} options
    * @param {MapData} data
    */
   constructor(
-    id: string,
     ref: HTMLElement,
     options: OptionParameters | undefined,
     data: MapData
   ) {
-    this.id = id;
     this.data = data;
 
     this.events = new Events();
@@ -87,14 +83,14 @@ export default class MmpMap {
   }
 
   /**
-   * Center the map on every window resize, or stop doing so.
+   * Center the map on every window resize, or stop doing so. The map adds
+   * and removes its own function, so it removes no listener another map
+   * registered.
    * @param {boolean} flag
    */
   public centerOnWindowResize(flag: boolean) {
-    const window$ = d3.select(window);
-    const event = 'resize.' + this.id;
-    if (flag) window$.on(event, () => this.zoom.center());
-    else window$.on(event, null);
+    if (flag) window.addEventListener('resize', this.onResize);
+    else window.removeEventListener('resize', this.onResize);
   }
 
   /**
@@ -110,6 +106,22 @@ export default class MmpMap {
     this.events.unsubscribeAll();
     this.draw.destroy();
     this.dom.svg.remove();
+  };
+
+  /** Center the map when the window resizes. */
+  private onResize = () => {
+    this.zoom.center();
+  };
+
+  /**
+   * Switch editing and dragging on or off together. The handlers read both
+   * flags when an event arrives, so the map draws nothing anew. A name edit
+   * that runs already holds its own handlers, so turning editing off ends it.
+   */
+  private setEditable = (editable: boolean) => {
+    this.options.edit = editable;
+    this.options.drag = editable;
+    if (!editable) this.draw.cancelNameEditing();
   };
 
   /**
@@ -145,6 +157,7 @@ export default class MmpMap {
       destroy: this.destroy,
       removeNode: this.nodes.removeNode,
       selectNode: this.nodes.selectNode,
+      setEditable: this.setEditable,
       updateNode: this.nodes.updateNode,
       zoomIn: this.zoom.zoomIn,
       zoomOut: this.zoom.zoomOut,
@@ -190,6 +203,7 @@ export interface MmpInstance {
   destroy: () => void;
   removeNode: (id?: string) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;
+  setEditable: (editable: boolean) => void;
   updateNode: <P extends NodeProperty>(
     property: P,
     value: NodePropertyValues[P],

@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import { create } from '../index.js';
 import MmpMap from './map.js';
 import InMemoryMapData from '../test/in-memory-map-data.js';
 import type { MapDataChange } from './data/map-data.js';
@@ -37,7 +36,7 @@ beforeAll(stubSvgLengths);
 function makeMapOver(data: InMemoryMapData): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  return create('map', ref, undefined, data);
+  return new MmpMap(ref, undefined, data);
 }
 
 function makeMap(): MmpMap {
@@ -653,12 +652,14 @@ describe('destroy', () => {
     const listener = jest.fn();
     map.instance.on('nodeSelect', listener);
     const onChange = jest.spyOn(map.nodes, 'drawReplaced');
+    const center = jest.spyOn(map.zoom, 'center');
 
     map.instance.destroy();
     data.replaceMap([nodeRecord({ id: 'root', isRoot: true })]);
+    window.dispatchEvent(new Event('resize'));
 
     expect(ref?.querySelector('svg')).toBeNull();
-    expect(d3.select(window).on('resize.map')).toBeUndefined();
+    expect(center).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
     expect(listener).not.toHaveBeenCalled();
   });

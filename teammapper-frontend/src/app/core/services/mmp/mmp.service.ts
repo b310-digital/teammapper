@@ -129,8 +129,7 @@ export class MmpService implements OnDestroy {
 
   /** Let the map edit and drag nodes only in edit mode. */
   private applyEditMode(map: MmpMap, editMode: boolean) {
-    map.options.update('drag', editMode);
-    map.options.update('edit', editMode);
+    map.instance.setEditable(editMode);
   }
 
   /**
@@ -163,7 +162,6 @@ export class MmpService implements OnDestroy {
    * renderer exists at most.
    */
   public async create(
-    id: string,
     ref: HTMLElement,
     options: OptionParameters | undefined,
     data: MapData
@@ -176,7 +174,7 @@ export class MmpService implements OnDestroy {
     this.additionalOptionsSubject.next(defaultOptions);
 
     this.currentMap?.instance.destroy();
-    const map: MmpMap = create(id, ref, this.mapOptions(options), data);
+    const map: MmpMap = create(ref, data, this.mapOptions(options));
     this.currentMap = map;
     map.instance.on('nodeProtected', () => void this.showProtectedNotice());
     return map;

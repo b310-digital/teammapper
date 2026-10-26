@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import { create } from '../../index.js';
 import MmpMap from '../map.js';
 import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { nodeRecord } from '../../test/stub-map.js';
@@ -28,7 +27,7 @@ function makeTree(): Tree {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const data = new InMemoryMapData();
-  const map = create('map', ref, undefined, data);
+  const map = new MmpMap(ref, undefined, data);
   map.instance.new();
 
   const root = map.instance.exportRootProperties()?.id;
