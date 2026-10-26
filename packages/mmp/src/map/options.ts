@@ -52,19 +52,8 @@ export default class Options implements OptionParameters {
       parameters.showLinktext !== undefined ? parameters.showLinktext : false;
     this.resolveImageUrl = parameters.resolveImageUrl;
 
-    // Default node properties
-    this.defaultNode = Utils.mergeObjects(
-      DefaultNodeValues,
-      parameters.defaultNode,
-      true
-    ) as DefaultNodeProperties;
-
-    // Default root node properties
-    this.rootNode = Utils.mergeObjects(
-      DefaultRootNodeValues,
-      parameters.rootNode,
-      true
-    ) as DefaultNodeProperties;
+    this.defaultNode = withDefaults(DefaultNodeValues, parameters.defaultNode);
+    this.rootNode = withDefaults(DefaultRootNodeValues, parameters.rootNode);
   }
 
   public update = (property: string, value: unknown) => {
@@ -79,10 +68,58 @@ export default class Options implements OptionParameters {
       case 'edit':
         this.updateEdit(value as boolean);
         break;
+      case 'centerOnResize':
+        this.updateCenterOnResize(value as boolean);
+        break;
+      case 'showLinktext':
+        this.updateShowLinktext(value as boolean);
+        break;
+      case 'defaultNode':
+        this.defaultNode = withDefaults(
+          DefaultNodeValues,
+          value as MapNodeSettings
+        );
+        break;
+      case 'rootNode':
+        this.rootNode = withDefaults(
+          DefaultRootNodeValues,
+          value as MapNodeSettings
+        );
+        break;
       default:
         Log.error('The property does not exist');
     }
   };
+
+  /**
+   * Update whether a window resize centers the map.
+   * @param {boolean} flag
+   */
+  private updateCenterOnResize(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    if (flag === this.centerOnResize) return;
+    this.centerOnResize = flag;
+
+    this.map.centerOnWindowResize(flag);
+  }
+
+  /**
+   * Update whether nodes show the text of their link.
+   * @param {boolean} flag
+   */
+  private updateShowLinktext(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    if (flag === this.showLinktext) return;
+    this.showLinktext = flag;
+
+    this.map.draw.drawAll();
+  }
 
   /**
    * Update drag behavior.
@@ -169,6 +206,14 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
   },
   isRoot: true,
 };
+
+/** The node defaults with the caller's settings merged over them. */
+function withDefaults(
+  defaults: DefaultNodeProperties,
+  settings: MapNodeSettings | undefined
+): DefaultNodeProperties {
+  return Utils.mergeObjects(defaults, settings, true) as DefaultNodeProperties;
+}
 
 export interface DefaultNodeProperties {
   name: string;

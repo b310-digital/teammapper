@@ -137,7 +137,6 @@ describe('MapSyncService', () => {
 
   describe('opening a map', () => {
     const ref = document.createElement('div');
-    const options = { drag: true };
     const data = {} as MapData;
 
     beforeEach(() => {
@@ -160,7 +159,7 @@ describe('MapSyncService', () => {
         jest
           .spyOn(getSync(service), 'initMap')
           .mockImplementation(() => undefined);
-        service.openMap(ref, options);
+        service.openMap(ref);
       });
 
       it('opens the connection to the attached map', () => {
@@ -181,7 +180,7 @@ describe('MapSyncService', () => {
         jest
           .spyOn(getSync(service), 'attachMap')
           .mockImplementation(() => undefined);
-        service.openMap(ref, options);
+        service.openMap(ref);
       });
 
       const sync = async () => {
@@ -199,10 +198,28 @@ describe('MapSyncService', () => {
         expect(mmpService.create).toHaveBeenCalledWith(
           'map_1',
           ref,
-          options,
+          { rootNode: 'Root' },
           data
         );
         expect(created < attached && attached < marked).toBe(true);
+      });
+
+      // A sync reset builds the map again, after the settings dialog may have
+      // changed the user settings.
+      it('creates the map with the user settings cached when it syncs', async () => {
+        const mapOptions = { showLinktext: true };
+        settingsService.getCachedUserSettings.mockReturnValue({
+          mapOptions,
+        } as unknown as UserSettings);
+
+        await sync();
+
+        expect(mmpService.create).toHaveBeenCalledWith(
+          'map_1',
+          ref,
+          mapOptions,
+          data
+        );
       });
 
       it('removes the map a reset left behind while mmp built it', async () => {
@@ -223,7 +240,7 @@ describe('MapSyncService', () => {
         );
         getSyncContext(service).createMap(data);
         service.reset();
-        service.openMap(ref, options);
+        service.openMap(ref);
         await sync();
 
         finishLate(lateMap);
@@ -272,7 +289,7 @@ describe('MapSyncService', () => {
       service
         .getAttachedNodeObservable()
         .subscribe(node => attached.push(node));
-      service.openMap(ref, options);
+      service.openMap(ref);
 
       getSyncContext(service).createMap(data);
       await new Promise(resolve => setTimeout(resolve));
@@ -543,7 +560,9 @@ describe('MapSyncService', () => {
     it('applies the map settings locally and writes the result for the peers', () => {
       const applied = { fontMaxSize: 80, fontMinSize: 12, fontIncrement: 7 };
       mmpService.getAdditionalMapOptions.mockReturnValue(applied);
-      const writeSpy = jest.spyOn(getSync(service), 'updateMapOptions');
+      const writeSpy = jest
+        .spyOn(getSync(service), 'updateMapOptions')
+        .mockImplementation(() => undefined);
 
       service.updateMapOptions({ fontMaxSize: 80, fontIncrement: 7 });
 
@@ -635,17 +654,6 @@ describe('MapSyncService', () => {
   });
 
   describe('lifecycle', () => {
-    it('detaches the renderer without closing the settings connection', () => {
-      const sync = getSync(service);
-      const detachSpy = jest.spyOn(sync, 'detachMap');
-      const destroySpy = jest.spyOn(sync, 'destroy');
-
-      service.detachMap();
-
-      expect(detachSpy).toHaveBeenCalled();
-      expect(destroySpy).not.toHaveBeenCalled();
-    });
-
     it('ngOnDestroy calls destroy on sync service', () => {
       const destroySpy = jest.spyOn(getSync(service), 'destroy');
 

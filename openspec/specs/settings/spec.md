@@ -2,15 +2,15 @@
 
 ## Purpose
 
-Defines the settings page, where users change the language, the map options and dark mode, and see the maps they created.
+Defines the settings dialog, where users change the language, the map options and dark mode, and see the maps they created.
 
 ## Requirements
 
 ### Requirement: User can change the application language
-The system SHALL provide a language dropdown on the settings page with multiple language options. Users SHALL be able to select a different language.
+The system SHALL provide a language dropdown in the settings dialog with multiple language options. Users SHALL be able to select a different language.
 
 #### Scenario: Select a different language
-- **WHEN** the user navigates to settings and selects a language from the dropdown
+- **WHEN** the user opens the settings dialog and selects a language from the dropdown
 - **THEN** the language selection SHALL be accepted
 
 ### Requirement: User can modify map options
@@ -20,20 +20,28 @@ The system SHALL provide a Map Options tab in settings with toggles and input fi
 - **WHEN** the user opens the Map Options tab, toggles auto branch colors, sets min font size to 20 and max font size to 80, and closes settings
 - **THEN** the map SHALL be displayed without errors
 
-### Requirement: Settings Page Navigation
-The system SHALL provide a settings page accessible from the editor toolbar, organized into tabs.
+### Requirement: Settings Dialog
+The system SHALL provide a settings dialog that opens over the map from the editor toolbar, organized into tabs. The map SHALL stay drawn behind the dialog and SHALL take each change to the user settings at once. The app SHALL not create the map again when the dialog closes.
 
 #### Scenario: Open settings
 - **WHEN** the user clicks the settings button or presses alt+s in the map editor
-- **THEN** the settings page SHALL be displayed at `/app/settings`
+- **THEN** the settings dialog SHALL open over the map and the URL SHALL not change
 
 #### Scenario: Tab structure
-- **WHEN** the settings page loads
+- **WHEN** the settings dialog opens
 - **THEN** three tabs SHALL be available: "General", "Map options", "List of created maps"
 
 #### Scenario: Close settings
-- **WHEN** the user clicks the close (X) button on the settings page
-- **THEN** the user SHALL be returned to the map editor
+- **WHEN** the user clicks the close (X) button in the settings dialog
+- **THEN** the dialog SHALL close and the map editor SHALL stay in view
+
+#### Scenario: Close on navigation
+- **WHEN** the app navigates away while the settings dialog is open, such as after the user deletes the open map
+- **THEN** the dialog SHALL close
+
+#### Scenario: Apply user settings to the open map
+- **WHEN** the user changes "Center on resizing" or "Show linktext" in the dialog
+- **THEN** the open map SHALL use the new value without a reload
 
 ### Requirement: Map Options (detailed)
 The system SHALL provide detailed map-specific configuration options beyond the basic toggle and font size range.
@@ -91,10 +99,10 @@ The system SHALL store the user's dark mode preference as part of `userSettings.
 - **AND** the migrated settings SHALL be saved to local storage
 
 ### Requirement: Dark Mode Setting Toggle in User Interface
-The system SHALL provide a dedicated toggle control for Dark Mode on the General tab of the Settings page (`/app/settings`).
+The system SHALL provide a dedicated toggle control for Dark Mode on the General tab of the settings dialog.
 
 #### Scenario: Toggle dark mode on
-- **WHEN** the user navigates to `/app/settings`
+- **WHEN** the user opens the settings dialog
 - **AND** toggles the "Dark mode" switch to enabled
 - **THEN** the application theme SHALL immediately switch to dark mode without requiring a page reload
 - **AND** the `dark-mode` class SHALL be added to `document.body`
@@ -107,6 +115,6 @@ The system SHALL provide a dedicated toggle control for Dark Mode on the General
 - **AND** the updated setting SHALL be persisted in storage
 
 #### Scenario: Dark mode toggle localization
-- **WHEN** the settings page is displayed in any supported language (en, de, es, fr, it, ja, pt-br, zh-cn, zh-tw)
+- **WHEN** the settings dialog is displayed in any supported language (en, de, es, fr, it, ja, pt-br, zh-cn, zh-tw)
 - **THEN** the label for the dark mode toggle SHALL be translated using the key `PAGES.SETTINGS.DARK_MODE`
 

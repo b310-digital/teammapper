@@ -45,7 +45,7 @@ describe('MindmapsOverview', () => {
     storageService = { remove: jest.fn(async () => undefined) };
     toastrService = { success: jest.fn(), error: jest.fn() };
     router = {
-      url: '/app/settings',
+      url: '/map/map-1',
       navigate: jest.fn(),
       createUrlTree: jest.fn(() => ({ toString: () => '/map' })),
     };

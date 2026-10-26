@@ -1,18 +1,17 @@
-<div class="settings">
-  <mat-toolbar>
-    <div class="container">
-      <h2 mat-dialog-title>{{ 'PAGES.SETTINGS.TITLE' | translate }}</h2>
-      <button
-        class="close-button"
-        color="primary"
-        mat-icon-button
-        (click)="back()">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-  </mat-toolbar>
+<div class="settings-header">
+  <h2 mat-dialog-title>{{ 'PAGES.SETTINGS.TITLE' | translate }}</h2>
+  <button
+    class="close-button"
+    color="primary"
+    mat-icon-button
+    mat-dialog-close
+    [attr.aria-label]="'MODALS.GENERAL.BUTTON_CLOSE' | translate">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
 
-  <div class="content container">
+<mat-dialog-content class="settings">
+  <div class="content">
     <mat-tab-group>
       <mat-tab [label]="'PAGES.SETTINGS.GENERAL' | translate">
         @if (settings; as userSettings) {
@@ -180,4 +179,4 @@
       </mat-tab>
     </mat-tab-group>
   </div>
-</div>
+</mat-dialog-content>

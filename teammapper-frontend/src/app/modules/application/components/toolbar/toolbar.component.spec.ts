@@ -96,6 +96,7 @@ async function setupTestBed(): Promise<TestContext> {
         provide: DialogService,
         useValue: {
           openAboutDialog: jest.fn(),
+          openSettingsDialog: jest.fn(),
           openShareDialog: jest.fn(),
           openPictogramDialog: jest.fn(),
         },
@@ -150,6 +151,17 @@ describe('ToolbarComponent', () => {
 
   it('should create', () => {
     expect(ctx.component).toBeTruthy();
+  });
+
+  it('opens the settings dialog from the settings button', () => {
+    const button = (ctx.fixture.nativeElement as HTMLElement).querySelector(
+      '#settings-button'
+    );
+    if (!(button instanceof HTMLButtonElement)) throw new Error('No button');
+
+    button.click();
+
+    expect(TestBed.inject(DialogService).openSettingsDialog).toHaveBeenCalled();
   });
 
   it('should initialize featureFlagAI from settings', () => {

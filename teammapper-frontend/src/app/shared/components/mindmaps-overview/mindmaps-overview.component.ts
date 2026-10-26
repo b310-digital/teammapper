@@ -100,10 +100,9 @@ export class MindmapsOverview implements OnInit {
   }
 
   // The attached map stays set after the user returns to the start page, so
-  // only the map and settings routes can still lead back to a deleted map.
+  // only the map route can still show a deleted map.
   private async showsDeletedMap(mapId: string): Promise<boolean> {
-    const url = this.router.url;
-    if (!url.startsWith('/map') && !url.startsWith('/app')) return false;
+    if (!this.router.url.startsWith('/map')) return false;
     const attachedMap = await firstValueFrom(
       this.mapSyncService.getAttachedMapObservable()
     );

@@ -16,6 +16,7 @@ import {
   MmpEventType,
   NodeProperty,
   NodePropertyValue,
+  UserMapOptions,
   UserNodeProperties,
   findRootNodes,
   ImageReference,
@@ -88,7 +89,7 @@ export class MmpService implements OnDestroy {
     new BehaviorSubject<AdditionalMapOptions | null>(null);
   /**
    * The map settings of the open map, null until `create` runs. A peer's
-   * change and a change on the settings page each emit a new object.
+   * change and a change in the settings dialog each emit a new object.
    */
   public readonly additionalMapOptions$: Observable<AdditionalMapOptions | null> =
     this.additionalOptionsSubject.asObservable();
@@ -250,6 +251,21 @@ export class MmpService implements OnDestroy {
    */
   public zoomOut(duration?: number) {
     this.map.instance.zoomOut(duration);
+  }
+
+  /**
+   * Apply the user settings mmp reads to the open map, so a change in the
+   * settings dialog shows without opening the map again. Before `create`
+   * there is no map, and the call does nothing.
+   */
+  public updateUserMapOptions(options: UserMapOptions) {
+    const map = this.currentMap;
+    if (!map) return;
+
+    map.options.update('centerOnResize', options.centerOnResize);
+    map.options.update('showLinktext', options.showLinktext);
+    map.options.update('defaultNode', options.defaultNode);
+    map.options.update('rootNode', options.rootNode);
   }
 
   /**

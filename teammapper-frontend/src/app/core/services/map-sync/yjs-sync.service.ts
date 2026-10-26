@@ -77,7 +77,6 @@ export class YjsSyncService {
   // awareness is up.
   private selectedNodeId: string | null = null;
   private readonly selectionChanges = new Subject<void>();
-  private mapAttached = false;
 
   constructor(
     private ctx: MapSyncContext,
@@ -155,24 +154,18 @@ export class YjsSyncService {
     this.yUndoManager?.redo();
   }
 
-  updateMapOptions(options?: CachedMapOptions): void {
+  updateMapOptions(options: CachedMapOptions): void {
     this.writeMapOptionsToYDoc(options);
   }
 
   // ─── Connection lifecycle ───────────────────────────────────
 
   /**
-   * Open the connection to a map, or reattach to the open one. The first
-   * sync hands the map data to the context, which creates the map over it
-   * and then calls `attachMap`. An open connection that has synced hands its
-   * map data over before `initMap` returns.
+   * Open the connection to a map, closing any open one. The first sync hands
+   * the map data to the context, which creates the map over it and then
+   * calls `attachMap`.
    */
   initMap(uuid: string): void {
-    if (this.hasActiveConnection(uuid)) {
-      if (this.yjsSynced) this.handOverMapData();
-      return;
-    }
-
     if (this.yDoc) {
       const writable = this.yjsWritable;
       this.destroy();
@@ -197,31 +190,14 @@ export class YjsSyncService {
    * edit mode, so the map exists when edit mode reaches it.
    */
   attachMap(): void {
-    this.detachObservers();
     this.createListeners();
     this.applyMapOptions();
     this.attachSelection();
     this.setupNodesObserver();
     this.setupMapOptionsObserver();
-    if (!this.yUndoManager) this.initUndoManager();
-    // The new renderer has no peer rings yet, even when awareness is unchanged.
-    this.ctx.setColorMapping({});
+    this.initUndoManager();
     this.setupAwareness();
     this.settingsService.setEditMode(this.yjsWritable);
-  }
-
-  /** Keep syncing map settings while the settings page replaces the renderer. */
-  detachMap(): void {
-    this.mapAttached = false;
-    this.unsubscribeListeners();
-    this.updateAwarenessSelection(null);
-    this.ctx.setAttachedNode(null);
-  }
-
-  private hasActiveConnection(mapId: string): boolean {
-    return (
-      this.yDoc !== null && this.wsProvider !== null && this.yjsMapId === mapId
-    );
   }
 
   private setupConnection(mapId: string): WebsocketProvider {
@@ -255,16 +231,12 @@ export class YjsSyncService {
   }
 
   /**
-   * The map exists from the first sync on, an empty doc included: the
-   * context creates it over the map data.
+   * Report the connection as connected and let the context create the map
+   * over the map data. The map exists from the first sync on, an empty doc
+   * included.
    */
   private handleFirstSync(): void {
     this.yjsSynced = true;
-    this.handOverMapData();
-  }
-
-  /** Report the connection as connected and let the context create the map. */
-  private handOverMapData(): void {
     this.ctx.setConnectionStatus('connected');
     this.ctx.createMap(this.mapData);
   }
@@ -326,12 +298,10 @@ export class YjsSyncService {
   // ─── Cleanup ────────────────────────────────────────────────
 
   /**
-   * Close the connection. Edit mode keeps its value, because the settings
-   * page reads it to decide whether the map settings of the map the user
-   * left stay editable.
+   * Close the connection. Edit mode keeps its value until `attachMap` sets it
+   * for the next map.
    */
   destroy(): void {
-    this.mapAttached = false;
     this.unsubscribeListeners();
     this.detachObservers();
     this.destroyUndoManager();
@@ -387,7 +357,6 @@ export class YjsSyncService {
   // ─── mmp event listeners ────────────────────────────────────
 
   private createListeners(): void {
-    this.mapAttached = true;
     this.unsubscribeListeners();
     this.setupMapChangeHandler();
     this.setupSelectionHandlers();
@@ -449,12 +418,8 @@ export class YjsSyncService {
 
   // ─── Map options (Y.Doc ↔ MMP) ──────────────────────────────
 
-  private writeMapOptionsToYDoc(options?: CachedMapOptions): void {
-    // The settings page can change these with no map open, so this is the one
-    // write that has to tolerate a missing doc rather than throw.
-    const doc = this.yDoc;
-    if (!doc || !options) return;
-
+  private writeMapOptionsToYDoc(options: CachedMapOptions): void {
+    const doc = this.doc;
     const optionsMap = doc.getMap('mapOptions');
     doc.transact(() => {
       optionsMap.set('fontMaxSize', options.fontMaxSize);
@@ -616,7 +581,6 @@ export class YjsSyncService {
   }
 
   private rehighlightNodes(nodeIds: Set<string>): void {
-    if (!this.mapAttached) return;
     for (const nodeId of nodeIds) {
       if (!this.mmpService.existNode(nodeId)) continue;
       const color = this.ctx.colorForNode(nodeId);
