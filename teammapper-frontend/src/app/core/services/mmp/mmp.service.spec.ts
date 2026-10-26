@@ -459,6 +459,7 @@ describe('MmpService', () => {
       centerOnResize: true,
       autoBranchColors: false,
       showLinktext: false,
+      branchStyle: 'curved',
       fontMaxSize: 70,
       fontMinSize: 15,
       fontIncrement: 5,
@@ -469,6 +470,7 @@ describe('MmpService', () => {
     it.each<[string, unknown]>([
       ['centerOnResize', true],
       ['showLinktext', false],
+      ['branchStyle', 'curved'],
       ['defaultNode', node('New node')],
       ['rootNode', node('New root')],
     ])('hands %s to the open map', async (property, value) => {

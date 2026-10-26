@@ -1,3 +1,5 @@
+import type { BranchStyle } from '../constants';
+
 /**
  * Every field of T present and non-null. `Required<T>` only drops the `?`;
  * these fields are `v.nullable` in the schemas, so the null has to go too.
@@ -152,6 +154,8 @@ export interface UserMapOptions extends Required<MapOptions> {
   centerOnResize: boolean;
   autoBranchColors: boolean;
   showLinktext: boolean;
+  /** How this browser draws branches. Never synced or stored with a map. */
+  branchStyle: BranchStyle;
   defaultNode: MapNodeSettings;
   rootNode: MapNodeSettings;
 }

@@ -74,9 +74,18 @@ node.
 
 ### Branch
 
-The curve the app draws from a parent node to a child. A branch takes styling
-only; no one selects or addresses one on its own. A branch can take its color
-from the map's automatic branch colors setting instead of an explicit one.
+What the app draws from a parent node to a child, in the shape the **branch
+style** names. A branch takes styling only; no one selects or addresses one on
+its own. A branch can take its color from the automatic branch colors user
+setting instead of an explicit one.
+
+### Branch style
+
+The user setting that names how this browser draws every branch: `tapered`, a
+filled shape that narrows with depth and the default; `curved`, a thin stroked
+curve; or `straight`, a thin line from the parent's center to the child's. The
+setting changes the drawing alone, so collaborators may see one map in
+different branch styles. The app never syncs it or stores it with a map.
 
 ### Link
 
@@ -148,7 +157,8 @@ the view state. Peers see it through Yjs awareness (see **Presence**).
 What a single mind map remembers about how the app draws it, chiefly the font
 size range. Distinct from **user settings**, which are one browser's defaults
 for the maps it creates: automatic branch colors, centering on resize, showing
-linktext, and the starting name and styling for root nodes and ordinary nodes.
+linktext, the branch style, and the starting name and styling for root nodes and
+ordinary nodes.
 
 ### Info dialog
 

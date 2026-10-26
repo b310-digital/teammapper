@@ -1,12 +1,12 @@
 ## 1. Setting and renderer
 
-- [ ] 1.1 Add `BRANCH_STYLES` and derived `BranchStyle` in `packages/shared`; add `branchStyle` to `UserMapOptions`
-- [ ] 1.2 Add `"branchStyle": "tapered"` to `settings.dev.json` and `settings.prod.json`; update backend settings spec fixture
-- [ ] 1.3 Add `branchStyle` to mmp `OptionParameters` and `Options`, defaulting silently to `tapered` for missing or unknown values
-- [ ] 1.4 Split `drawBranch` into `drawTaperedBranch`, `drawCurvedBranch`, `drawStraightBranch` with an end point helper shared by `tapered` and `curved`; `straight` runs center to center
-- [ ] 1.5 Set `fill`, `stroke`, `stroke-width` and `stroke-linecap` per style on draw, and in `Nodes.updateNodeBranchColor`, which today sets both `fill` and `stroke`
-- [ ] 1.6 mmp specs: path shape per style, straight ends at both centers, width 2.5 and round caps for both thin styles, default for missing value, detached node draws nothing, color change keeps fill none
-- [ ] 1.7 `docs/glossary.md`: add **Branch style** under user settings; reword **Branch** from "the curve the app draws" so it covers straight branches, and call automatic branch colors a user setting there
+- [x] 1.1 Add `BRANCH_STYLES` and derived `BranchStyle` in `packages/shared`; add `branchStyle` to `UserMapOptions`
+- [x] 1.2 Add `"branchStyle": "tapered"` to `settings.dev.json` and `settings.prod.json`; update backend settings spec fixture
+- [x] 1.3 Add `branchStyle` to mmp `OptionParameters` and `Options`, defaulting silently to `tapered` for missing or unknown values; `Options.update('branchStyle')` redraws on change, and `MmpService.updateUserMapOptions` forwards it
+- [x] 1.4 Split `Draw.branchShape` into `taperedBranch`, `curvedBranch` and `straightBranch` with a `branchEnd` helper shared by `tapered` and `curved`; `straight` runs center to center
+- [x] 1.5 Set `fill`, `stroke`, `stroke-width` and `stroke-linecap` per style in `Draw.styleBranches`, which every render runs, so a branch color change keeps the style's paint
+- [x] 1.6 mmp specs: path shape per style, straight ends at both centers, width 2.5 and round caps for both thin styles, default for missing value, detached node draws nothing, color change keeps fill none
+- [x] 1.7 `docs/glossary.md`: add **Branch style** under user settings; reword **Branch** from "the curve the app draws" so it covers straight branches, and call automatic branch colors a user setting there
 
 The default stays `tapered` and there is no UI yet, so the app is unchanged after this section.
 

@@ -273,6 +273,7 @@ export class MmpService implements OnDestroy {
 
     map.updateOption('centerOnResize', options.centerOnResize);
     map.updateOption('showLinktext', options.showLinktext);
+    map.updateOption('branchStyle', options.branchStyle);
     map.updateOption('defaultNode', options.defaultNode);
     map.updateOption('rootNode', options.rootNode);
   }
