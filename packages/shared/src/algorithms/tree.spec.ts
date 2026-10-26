@@ -1,7 +1,6 @@
 import {
   assignOrderNumbers,
   collectSubtreeIds,
-  collectTreeIds,
   findMainRoot,
   findRootNodes,
   sortNodesParentFirst,
@@ -189,34 +188,6 @@ describe('Tree Algorithms', () => {
 
       const descendants = collectSubtreeIds(nodes, 'A');
       expect(descendants).toEqual(['B']);
-    });
-  });
-
-  describe('collectTreeIds', () => {
-    const nodes: TreeNodeLike[] = [
-      { id: 'main', isRoot: true, parent: null },
-      { id: 'mainChild', parent: 'main' },
-      { id: 'second', parent: null },
-      { id: 'secondChild', parent: 'second' },
-      { id: 'secondGrandchild', parent: 'secondChild' },
-    ];
-
-    it('returns a root followed by its descendants', () => {
-      expect(collectTreeIds(nodes, 'second')).toEqual([
-        'second',
-        'secondChild',
-        'secondGrandchild',
-      ]);
-    });
-
-    it('returns a root without children alone', () => {
-      expect(collectTreeIds([{ id: 'solo', parent: null }], 'solo')).toEqual([
-        'solo',
-      ]);
-    });
-
-    it('returns nothing for an unknown ID', () => {
-      expect(collectTreeIds(nodes, 'nonexistent')).toEqual([]);
     });
   });
 
