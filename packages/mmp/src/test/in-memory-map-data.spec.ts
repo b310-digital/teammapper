@@ -1,6 +1,6 @@
 import InMemoryMapData from './in-memory-map-data.js';
-import type { MapDataChange } from './map-data.js';
-import { nodeRecord } from '../../test/stub-map.js';
+import type { MapDataChange } from '../map/data/map-data.js';
+import { nodeRecord } from './stub-map.js';
 
 /** root -> a -> b, root -> c. */
 function makeData() {

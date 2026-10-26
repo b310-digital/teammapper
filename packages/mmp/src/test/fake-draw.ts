@@ -30,6 +30,7 @@ export function fakeDraw(
     renderPositions: jest.fn(),
     enableNodeNameEditing: jest.fn(),
     blurName: jest.fn(),
+    cancelNameEditing: jest.fn(),
     isEditing: () => false,
     ringColor: (node: ResolvedNode) => Draw.prototype.ringColor(node),
     ringOf: (id: string) => rings.get(id) ?? null,

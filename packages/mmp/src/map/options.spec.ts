@@ -1,18 +1,26 @@
+import * as d3 from 'd3';
 import { create } from '../index.js';
 import MmpMap from './map.js';
-import InMemoryMapData from './data/in-memory-map-data.js';
+import InMemoryMapData from '../test/in-memory-map-data.js';
+import { nodeRecord } from '../test/stub-map.js';
 import { stubSvgLengths } from '../test/svg-lengths.js';
 import type { MapNodeSettings } from '@teammapper/shared';
 import type { OptionParameters } from './options.js';
 
 /**
  * The settings dialog changes the user settings while the map stays drawn, so
- * `Options.update` has to apply them to the open map.
+ * `Options.update` has to apply them to the open map. Switching edit or drag
+ * changes how the drawn nodes react to the next event and redraws nothing:
+ * every node keeps its DOM element.
  */
 
 beforeAll(stubSvgLengths);
 
-function makeMap(options?: OptionParameters): MmpMap {
+afterEach(() => {
+  document.body.innerHTML = '';
+});
+
+function makeEmptyMap(options?: OptionParameters): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const map = create('map', ref, options, new InMemoryMapData());
@@ -37,7 +45,7 @@ describe('Options.update', () => {
 
   describe('centerOnResize', () => {
     it('centers the map on a window resize once turned on', () => {
-      map = makeMap({ centerOnResize: false });
+      map = makeEmptyMap({ centerOnResize: false });
       const center = jest.spyOn(map.zoom, 'center');
 
       map.options.update('centerOnResize', true);
@@ -47,7 +55,7 @@ describe('Options.update', () => {
     });
 
     it('leaves the map in place on a window resize once turned off', () => {
-      map = makeMap({ centerOnResize: true });
+      map = makeEmptyMap({ centerOnResize: true });
       const center = jest.spyOn(map.zoom, 'center');
 
       map.options.update('centerOnResize', false);
@@ -59,7 +67,7 @@ describe('Options.update', () => {
 
   describe('showLinktext', () => {
     it('stores the new value', () => {
-      map = makeMap({ showLinktext: false });
+      map = makeEmptyMap({ showLinktext: false });
 
       map.options.update('showLinktext', true);
 
@@ -67,7 +75,7 @@ describe('Options.update', () => {
     });
 
     it('writes the link address in place of the link icon', () => {
-      map = makeMap({ showLinktext: false });
+      map = makeEmptyMap({ showLinktext: false });
       map.instance.addNode(
         { link: { href: 'https://example.com' } },
         map.instance.exportRootProperties()?.id
@@ -83,7 +91,7 @@ describe('Options.update', () => {
     });
 
     it('skips the redraw when the value stays the same', () => {
-      map = makeMap({ showLinktext: true });
+      map = makeEmptyMap({ showLinktext: true });
       const drawAll = jest.spyOn(map.draw, 'drawAll');
 
       map.options.update('showLinktext', true);
@@ -94,7 +102,7 @@ describe('Options.update', () => {
 
   describe('defaultNode', () => {
     it('gives the next new node the new name', () => {
-      map = makeMap();
+      map = makeEmptyMap();
 
       map.options.update('defaultNode', nodeSettings('Fresh node'));
       const node = map.instance.addNode(
@@ -106,7 +114,7 @@ describe('Options.update', () => {
     });
 
     it('keeps the library defaults for properties the settings omit', () => {
-      map = makeMap();
+      map = makeEmptyMap();
 
       map.options.update('defaultNode', nodeSettings('Fresh node'));
 
@@ -116,7 +124,7 @@ describe('Options.update', () => {
 
   describe('rootNode', () => {
     it('stores the new root node defaults', () => {
-      map = makeMap();
+      map = makeEmptyMap();
 
       map.options.update('rootNode', nodeSettings('Fresh root'));
 
@@ -124,5 +132,157 @@ describe('Options.update', () => {
         expect.objectContaining({ name: 'Fresh root', isRoot: true })
       );
     });
+  });
+});
+
+const IDS = ['root', 'a', 'b', 'c'];
+
+/** root -> a -> b, root -> c, drawn by a real map. */
+function makeMap(options?: OptionParameters): MmpMap {
+  const data = new InMemoryMapData([
+    nodeRecord({ id: 'root', isRoot: true, name: 'Root' }),
+    nodeRecord({
+      id: 'a',
+      parent: 'root',
+      name: 'A',
+      coordinates: { x: 200, y: 0 },
+    }),
+    nodeRecord({ id: 'b', parent: 'a', coordinates: { x: 400, y: 0 } }),
+    nodeRecord({
+      id: 'c',
+      parent: 'root',
+      name: 'C',
+      coordinates: { x: -200, y: 0 },
+    }),
+  ]);
+  const ref = document.createElement('div');
+  document.body.appendChild(ref);
+  return create('map', ref, options, data);
+}
+
+function groupOf(id: string): SVGGElement {
+  const group = d3
+    .selectAll<SVGGElement, string>('g.node')
+    .filter(datum => datum === id)
+    .node();
+  if (!group) throw new Error('no group for ' + id);
+  return group;
+}
+
+function groups(): Map<string, SVGGElement> {
+  return new Map(IDS.map(id => [id, groupOf(id)]));
+}
+
+function nameOf(group: SVGGElement): HTMLDivElement {
+  const name = group.querySelector('foreignObject > div');
+  if (!(name instanceof HTMLDivElement)) throw new Error('no name element');
+  return name;
+}
+
+function doubleClick(group: SVGGElement) {
+  group.dispatchEvent(
+    new MouseEvent('dblclick', { bubbles: true, cancelable: true })
+  );
+}
+
+describe('switching an option', () => {
+  it.each(['edit', 'drag'])(
+    'keeps the DOM element of every node when %s turns off',
+    property => {
+      const map = makeMap();
+      const before = groups();
+
+      map.options.update(property, false);
+
+      for (const id of IDS) expect(groupOf(id)).toBe(before.get(id));
+    }
+  );
+
+  it.each(['edit', 'drag'])(
+    'keeps the DOM element of every node when %s turns back on',
+    property => {
+      const map = makeMap({ [property]: false });
+      const before = groups();
+
+      map.options.update(property, true);
+
+      for (const id of IDS) expect(groupOf(id)).toBe(before.get(id));
+    }
+  );
+
+  it.each(['edit', 'drag'])(
+    'does not call drawAll when %s changes',
+    property => {
+      const map = makeMap();
+      const drawAll = jest.spyOn(map.draw, 'drawAll');
+
+      map.options.update(property, false);
+      map.options.update(property, true);
+
+      expect(drawAll).not.toHaveBeenCalled();
+    }
+  );
+});
+
+describe('editing a name', () => {
+  it('does nothing on a double click while edit is off', () => {
+    const map = makeMap();
+    const group = groupOf('a');
+    map.options.update('edit', false);
+
+    doubleClick(group);
+
+    expect(nameOf(group).getAttribute('contenteditable')).not.toBe('true');
+  });
+
+  it('drops a running edit when edit turns off', () => {
+    const map = makeMap();
+    const group = groupOf('a');
+    doubleClick(group);
+    const name = nameOf(group);
+    name.innerHTML = 'typed';
+
+    map.options.update('edit', false);
+    name.dispatchEvent(new FocusEvent('blur'));
+
+    expect(map.nodes.record('a')?.name).toBe('A');
+    expect(nameOf(groupOf('a')).getAttribute('contenteditable')).toBe('false');
+    expect(nameOf(groupOf('a')).innerHTML).toBe('A');
+  });
+
+  it('drops an edit that started while another ran, when edit turns off', () => {
+    const map = makeMap();
+    doubleClick(groupOf('a'));
+    map.draw.enableNodeNameEditing('c');
+    const name = nameOf(groupOf('c'));
+    name.innerHTML = 'typed';
+
+    map.options.update('edit', false);
+    name.dispatchEvent(new FocusEvent('blur'));
+
+    expect(map.nodes.record('c')?.name).toBe('C');
+    expect(nameOf(groupOf('c')).getAttribute('contenteditable')).toBe('false');
+  });
+
+  it('drops a running edit when the map is destroyed', () => {
+    const map = makeMap();
+    const name = nameOf(groupOf('a'));
+    doubleClick(groupOf('a'));
+    name.innerHTML = 'typed';
+
+    map.instance.destroy();
+    name.dispatchEvent(new FocusEvent('blur'));
+
+    expect(map.nodes.record('a')?.name).toBe('A');
+  });
+
+  it('starts on a double click once edit is back on', () => {
+    const map = makeMap({ edit: false });
+    const group = groupOf('a');
+    map.options.update('edit', true);
+
+    doubleClick(group);
+
+    expect(nameOf(groupOf('a')).getAttribute('contenteditable')).toBe('true');
   });
 });

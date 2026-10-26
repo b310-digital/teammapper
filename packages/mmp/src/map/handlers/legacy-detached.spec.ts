@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { create } from '../../index.js';
-import InMemoryMapData from '../data/in-memory-map-data.js';
+import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { DefaultNodeValues, DefaultRootNodeValues } from '../options.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';

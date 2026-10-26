@@ -26,13 +26,25 @@ export default class Events {
   /**
    * Call every callback registered for the event with its payload. The loop
    * runs over a copy, so a callback may remove itself without skipping the next.
+   * A callback that throws stops neither the others nor the caller: a timer
+   * rethrows its error after the loop.
    */
   public emit<K extends MmpEventType>(
     event: K,
     payload: MmpEventPayloadMap[K]
   ) {
     const callbacks = this.callbacks[event];
-    if (callbacks) [...callbacks].forEach(callback => callback(payload));
+    if (!callbacks) return;
+
+    for (const callback of [...callbacks]) {
+      try {
+        callback(payload);
+      } catch (error) {
+        setTimeout(() => {
+          throw error;
+        });
+      }
+    }
   }
 
   /**

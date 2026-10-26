@@ -4,9 +4,13 @@ import type {
   MapSnapshot,
   NodeProperty,
 } from '@teammapper/shared';
-import Utils from '../../utils/utils.js';
-import type { MapData, MapDataChange, MapNodeRecord } from './map-data.js';
-import { PropertyMapping } from './property-mapping.js';
+import Utils from '../utils/utils.js';
+import type {
+  MapData,
+  MapDataChange,
+  MapNodeRecord,
+} from '../map/data/map-data.js';
+import { PropertyMapping } from '../map/data/property-mapping.js';
 
 type Listener = (change: MapDataChange) => void;
 

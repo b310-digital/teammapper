@@ -32,8 +32,8 @@ keeps render data only: measured sizes, rings, image loads, the drag preview,
 the selection and the view state.
 
 The entry point exports no implementation. The mmp specs run against
-`InMemoryMapData` in `src/map/data/in-memory-map-data.ts`, and the frontend
-implements `YjsMapData`.
+`InMemoryMapData` in `src/test/in-memory-map-data.ts`, which the build leaves
+out of `dist`, and the frontend implements `YjsMapData`.
 
 ```ts
 import { create, type MapData } from '@teammapper/mmp';
