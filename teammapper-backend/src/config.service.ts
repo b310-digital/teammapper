@@ -98,6 +98,11 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
+  public isArrowsEnabled(): boolean {
+    const value = this.getValue('FEATURE_ARROWS', false)
+    return value?.toLowerCase() === 'true'
+  }
+
   public getYjsMapLimits() {
     return {
       maxBytes: this.parsePositiveInt(

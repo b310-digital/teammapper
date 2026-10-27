@@ -53,6 +53,7 @@ describe('SettingsService', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
+    ;(configService.isArrowsEnabled as jest.Mock).mockReturnValue(false)
     ;(configService.getLLMConfig as jest.Mock).mockReturnValue({
       provider: 'openai',
       model: 'gpt-test',
@@ -183,6 +184,14 @@ describe('SettingsService', () => {
       mockedFs.readFileSync
         .mockReturnValueOnce(JSON.stringify(defaultSettings))
         .mockReturnValueOnce(JSON.stringify(overrideSettings))
+
+      const settings = service.getSettings()
+
+      expect(settings.systemSettings.featureFlags.arrows).toBe(true)
+    })
+
+    it('should turn the arrows flag on when FEATURE_ARROWS is true', () => {
+      ;(configService.isArrowsEnabled as jest.Mock).mockReturnValue(true)
 
       const settings = service.getSettings()
 
