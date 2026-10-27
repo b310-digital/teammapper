@@ -277,6 +277,7 @@ The settings configuration includes the following feature flags:
 
 -   `pictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time in the JSON config!
 -   `ai`: Disables/Enables AI functionality like generating mindmaps with AI. Can be controlled via the `AI_ENABLED` environment variable (default: `false`).
+-   `arrows`: Shows the button and the `alt+a` shortcut that connect two nodes with an arrow (default: disabled). Maps show, sync and export their arrows with the flag off.
 
 #### Environment variable overrides
 

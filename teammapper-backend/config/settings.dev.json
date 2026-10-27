@@ -10,7 +10,8 @@
     },
     "featureFlags": {
       "pictograms": true,
-      "ai": true
+      "ai": true,
+      "arrows": false
     }
   },
   "userSettings": {

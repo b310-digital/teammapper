@@ -138,6 +138,11 @@ export interface SystemSettingsUrls {
 export interface SystemFeatureFlags {
   pictograms: boolean;
   ai: boolean;
+  /**
+   * Shows the connect button and the arrow mode shortcuts. Drawing, selecting,
+   * removing, syncing and exporting arrows work without it.
+   */
+  arrows: boolean;
 }
 
 export interface SystemSettings {

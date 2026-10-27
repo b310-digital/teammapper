@@ -17,7 +17,7 @@ const defaultSettings: Settings = {
       pictogramApiUrl: 'https://api.example.com',
       pictogramStaticUrl: 'https://static.example.com',
     },
-    featureFlags: { pictograms: true, ai: false },
+    featureFlags: { pictograms: true, ai: false, arrows: false },
   },
   userSettings: {
     general: { language: 'en', darkMode: false, displayName: '' },
@@ -159,7 +159,7 @@ describe('SettingsService', () => {
         ...defaultSettings,
         systemSettings: {
           ...defaultSettings.systemSettings,
-          featureFlags: { pictograms: true, ai: true },
+          featureFlags: { pictograms: true, ai: true, arrows: false },
         },
       }
       mockedFs.readFileSync.mockReturnValue(JSON.stringify(settingsWithFlags))
@@ -170,7 +170,23 @@ describe('SettingsService', () => {
       expect(settings.systemSettings.featureFlags).toEqual({
         pictograms: true,
         ai: false,
+        arrows: false,
       })
+    })
+
+    it('should turn the arrows flag on through the override file', () => {
+      const overrideSettings = {
+        systemSettings: { featureFlags: { arrows: true } },
+      }
+      mockedFs.existsSync.mockReturnValue(true)
+      mockedFs.statSync.mockReturnValue({ size: 100 } as fs.Stats)
+      mockedFs.readFileSync
+        .mockReturnValueOnce(JSON.stringify(defaultSettings))
+        .mockReturnValueOnce(JSON.stringify(overrideSettings))
+
+      const settings = service.getSettings()
+
+      expect(settings.systemSettings.featureFlags.arrows).toBe(true)
     })
 
     it('should expose the AI model when AI_ENABLED is true', () => {
