@@ -1,4 +1,3 @@
-import type { D3DragEvent } from 'd3';
 import type { MapArrow } from '@teammapper/shared';
 import MmpMap from '../map.js';
 import InMemoryMapData from '../../test/in-memory-map-data.js';
@@ -12,20 +11,15 @@ import { stubSvgLengths } from '../../test/svg-lengths.js';
  * show. An arrow follows its nodes whatever moves or resizes them.
  */
 
-type DragEvent = D3DragEvent<SVGGElement, string, unknown>;
-
-interface DragInternals {
-  started(event: DragEvent, id: string): void;
-  dragged(event: DragEvent, id: string): void;
-  ended(event: DragEvent, id: string): void;
-}
-
 const COLORS = { background: '#ffffff' };
 
 beforeAll(stubSvgLengths);
 
-afterEach(() => {
+afterEach(async () => {
   document.body.innerHTML = '';
+  // After a drag d3-drag blocks the next click and lifts the block in a
+  // zero timeout. Waiting for it keeps the block out of the next spec.
+  await new Promise(resolve => setTimeout(resolve, 0));
 });
 
 /** root -> a -> a1, root -> b, drawn by a real map, with the arrows. */
@@ -55,7 +49,33 @@ function makeMap(arrows: MapArrow[] = [{ source: 'a1', target: 'b' }]) {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const map = new MmpMap(ref, undefined, data);
-  return { data, map, drag: map.drag as unknown as DragInternals };
+  return { data, map };
+}
+
+/** A mouse event at (x, y), as a browser dispatches it during a drag. */
+function mouse(type: string, x: number, y: number): MouseEvent {
+  return new MouseEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+    clientX: x,
+    clientY: y,
+  });
+}
+
+/** Presses the mouse on the node `id` at the origin. */
+function press(id: string) {
+  nodeGroup(id).dispatchEvent(mouse('mousedown', 0, 0));
+}
+
+/** Moves the pressed mouse to (x, y). */
+function moveTo(x: number, y: number) {
+  window.dispatchEvent(mouse('mousemove', x, y));
+}
+
+/** Releases the pressed mouse at (x, y). */
+function release(x: number, y: number) {
+  window.dispatchEvent(mouse('mouseup', x, y));
 }
 
 function arrowGroup(key: string): SVGGElement | null {
@@ -184,23 +204,25 @@ describe('arrows follow their nodes', () => {
   });
 
   it('follows the target through a drag', () => {
-    const { drag } = makeMap();
+    makeMap();
     const before = arrowShape('a1:b');
 
-    drag.started({} as DragEvent, 'b');
-    drag.dragged({ dx: 50, dy: 80 } as DragEvent, 'b');
+    press('b');
+    moveTo(50, 80);
 
     expect(arrowShape('a1:b')).not.toBe(before);
+    release(50, 80);
   });
 
   it('follows a descendant that a drag moves along', () => {
-    const { drag } = makeMap();
+    makeMap();
     const before = arrowShape('a1:b');
 
-    drag.started({} as DragEvent, 'a');
-    drag.dragged({ dx: 0, dy: 120 } as DragEvent, 'a');
+    press('a');
+    moveTo(0, 120);
 
     expect(arrowShape('a1:b')).not.toBe(before);
+    release(0, 120);
   });
 
   it('follows a redistribute', () => {
@@ -292,9 +314,10 @@ describe('arrow mode in the renderer', () => {
   });
 
   it('creates the arrow when a node press starts on an allowed node', () => {
-    const { map, data, drag } = inArrowMode();
+    const { map, data } = inArrowMode();
 
-    drag.started({} as DragEvent, 'b');
+    press('b');
+    release(0, 0);
 
     expect(data.arrows()).toEqual([{ source: 'a1', target: 'b' }]);
     expect(map.instance.isArrowMode()).toBe(false);
@@ -304,11 +327,11 @@ describe('arrow mode in the renderer', () => {
   });
 
   it('moves no node while in arrow mode', () => {
-    const { data, drag } = inArrowMode();
+    const { data } = inArrowMode();
 
-    drag.started({} as DragEvent, 'a1');
-    drag.dragged({ dx: 50, dy: 50 } as DragEvent, 'a1');
-    drag.ended({} as DragEvent, 'a1');
+    press('a1');
+    moveTo(50, 50);
+    release(50, 50);
 
     expect(data.node('a1')?.coordinates).toEqual({ x: 400, y: 0 });
   });
