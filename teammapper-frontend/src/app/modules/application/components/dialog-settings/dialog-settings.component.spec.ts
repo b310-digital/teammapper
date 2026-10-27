@@ -36,7 +36,7 @@ describe('DialogSettingsComponent', () => {
   });
 
   const userSettings = (): UserSettings => ({
-    general: { language: 'en', darkMode: false },
+    general: { language: 'en', darkMode: false, displayName: '' },
     mapOptions: {
       centerOnResize: false,
       autoBranchColors: true,

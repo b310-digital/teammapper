@@ -132,6 +132,22 @@ export interface SystemSettings {
 export interface UserGeneralSettings {
   language: string;
   darkMode: boolean;
+  /**
+   * The name other clients see in the client list, normalized with
+   * `normalizeDisplayName`. The empty string means no display name.
+   */
+  displayName: string;
+}
+
+/**
+ * The `user` field of a client's awareness state. A peer of any version, a
+ * read-only one included, writes its own state unchecked, so a receiver reads
+ * every field as unknown and normalizes it.
+ */
+export interface AwarenessUser {
+  color: string;
+  selectedNodeId: string | null;
+  displayName: string;
 }
 
 /**

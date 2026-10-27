@@ -215,6 +215,77 @@ describe('SettingsService', () => {
     });
   });
 
+  describe('display name', () => {
+    const serverDefaults = (general: object) => ({
+      json: () =>
+        Promise.resolve({
+          userSettings: { general },
+          systemSettings: {},
+        }),
+    });
+
+    async function initWith(stored: object | null) {
+      httpService.get.mockResolvedValue(
+        serverDefaults({
+          language: 'en',
+          darkMode: false,
+          displayName: '',
+        }) as unknown as Response
+      );
+      storageService.get.mockResolvedValue(stored);
+      await settingsService.init();
+    }
+
+    it('fills an empty display name into stored settings from an older version and keeps the rest', async () => {
+      await initWith({ general: { language: 'de', darkMode: true } });
+
+      expect(storageService.set).toHaveBeenCalledWith('settings', {
+        general: { language: 'de', darkMode: true, displayName: '' },
+      });
+    });
+
+    it('keeps a stored display name', async () => {
+      await initWith({
+        general: { language: 'de', darkMode: true, displayName: 'Vorname' },
+      });
+
+      expect(settingsService.getCachedUserSettings()?.general.displayName).toBe(
+        'Vorname'
+      );
+    });
+
+    it('stores the normalized display name', async () => {
+      await initWith(null);
+
+      await settingsService.setDisplayName('  Vorname   Test ');
+
+      expect(storageService.set).toHaveBeenLastCalledWith(
+        'settings',
+        expect.objectContaining({
+          general: expect.objectContaining({ displayName: 'Vorname Test' }),
+        })
+      );
+    });
+
+    it('announces the new display name to subscribers', async () => {
+      await initWith(null);
+      const names: string[] = [];
+      settingsService.userSettings.subscribe(settings =>
+        names.push(settings?.general.displayName ?? 'none')
+      );
+
+      await settingsService.setDisplayName('Zweiter');
+
+      expect(names).toEqual(['', 'Zweiter']);
+    });
+
+    it('does nothing before settings exist', async () => {
+      await settingsService.setDisplayName('Vorname');
+
+      expect(storageService.set).not.toHaveBeenCalled();
+    });
+  });
+
   describe('init with system preference', () => {
     it('uses system dark mode preference when no cached settings', async () => {
       Object.defineProperty(window, 'matchMedia', {
@@ -286,6 +357,21 @@ describe('SettingsService', () => {
         })
       );
       expect(document.body.classList.contains('dark-mode')).toBe(true);
+    });
+
+    it('falls back to cached settings with an empty display name when they lack one', async () => {
+      httpService.get.mockRejectedValue(new Error('Network error'));
+      storageService.get.mockResolvedValue({
+        general: { language: 'de', darkMode: true },
+      });
+
+      await settingsService.init();
+
+      expect(settingsService.getCachedUserSettings()?.general).toEqual({
+        language: 'de',
+        darkMode: true,
+        displayName: '',
+      });
     });
 
     it('falls back to cached settings if fetching defaults fails', async () => {

@@ -1,13 +1,17 @@
 import {
   asyncScheduler,
   auditTime,
+  distinctUntilChanged,
+  map,
   Subject,
   Subscription,
   throttleTime,
 } from 'rxjs';
 import {
+  AwarenessUser,
   CachedMapOptions,
   ExportNodeProperties,
+  normalizeDisplayName,
   WS_CLOSE_MAP_SYNC_RESET,
 } from '@teammapper/shared';
 import * as Y from 'yjs';
@@ -76,6 +80,9 @@ export class YjsSyncService {
   // The node this client has selected, which setupAwareness publishes once
   // awareness is up.
   private selectedNodeId: string | null = null;
+  // The normalized display name this client announces. setupAwareness reads
+  // it from the settings, and a rename while the map is open replaces it.
+  private displayName = '';
   private readonly selectionChanges = new Subject<void>();
 
   constructor(
@@ -95,7 +102,7 @@ export class YjsSyncService {
           trailing: true,
         })
       )
-      .subscribe(() => this.publishSelection());
+      .subscribe(() => this.publishPresence());
   }
 
   /**
@@ -504,21 +511,50 @@ export class YjsSyncService {
 
   private setupAwareness(): void {
     const awareness = this.provider.awareness;
-    const color = this.pickClientColor(awareness);
-    this.ctx.setClientColor(color);
-
-    awareness.setLocalStateField('user', {
-      color,
-      selectedNodeId: this.selectedNodeId,
-    });
+    this.ctx.setClientColor(this.pickClientColor(awareness));
+    this.displayName = normalizeDisplayName(
+      this.settingsService.getCachedUserSettings()?.general?.displayName
+    );
+    awareness.setLocalStateField('user', this.awarenessUser());
 
     this.yjsAwarenessHandler = () => {
       this.updateFromAwareness();
     };
     awareness.on('change', this.yjsAwarenessHandler);
+    this.watchDisplayName();
 
     // Process awareness states already received before the listener
     this.updateFromAwareness();
+  }
+
+  /** The `user` field of this client's awareness state. */
+  private awarenessUser(): AwarenessUser {
+    return {
+      color: this.ctx.getClientColor(),
+      selectedNodeId: this.selectedNodeId,
+      displayName: this.displayName,
+    };
+  }
+
+  /**
+   * Announce a new display name while the map is open. The settings stream
+   * also emits on every other settings change, which sends nothing.
+   */
+  private watchDisplayName(): void {
+    this.yjsSubscriptions.push(
+      this.settingsService.userSettings
+        .pipe(
+          map(settings => normalizeDisplayName(settings?.general?.displayName)),
+          distinctUntilChanged()
+        )
+        .subscribe(name => this.renameInAwareness(name))
+    );
+  }
+
+  private renameInAwareness(name: string): void {
+    if (name === this.displayName) return;
+    this.displayName = name;
+    this.publishPresence();
   }
 
   private pickClientColor(awareness: WebsocketProvider['awareness']): string {
@@ -536,15 +572,12 @@ export class YjsSyncService {
     this.selectionChanges.next();
   }
 
-  private publishSelection(): void {
-    // Until setupAwareness runs, publishSelection sends nothing, and
+  private publishPresence(): void {
+    // Until setupAwareness runs, publishPresence sends nothing, and
     // setupAwareness publishes the recorded selection. A write before then would make
     // pickClientColor count this client's own colour as taken.
     if (!this.wsProvider || this.yjsAwarenessHandler === null) return;
-    this.wsProvider.awareness.setLocalStateField('user', {
-      color: this.ctx.getClientColor(),
-      selectedNodeId: this.selectedNodeId,
-    });
+    this.wsProvider.awareness.setLocalStateField('user', this.awarenessUser());
   }
 
   private updateFromAwareness(): void {
@@ -559,9 +592,10 @@ export class YjsSyncService {
   }
 
   /**
-   * The color and selected node of every client. Any peer, a read-only one
-   * included, writes its own awareness state, so a value that is no string
-   * falls back to the default instead of reaching mmp.
+   * The color, selected node and display name of every client. Any peer, a
+   * read-only one included, writes its own awareness state, so a value that is
+   * no string falls back to the default instead of reaching mmp, and every
+   * display name, the own one included, passes through normalizeDisplayName.
    */
   private buildColorMappingFromAwareness(): ClientColorMapping {
     const awareness = this.provider.awareness;
@@ -576,6 +610,8 @@ export class YjsSyncService {
           ? DEFAULT_SELF_COLOR
           : stringOr(state.user.color, DEFAULT_COLOR),
         nodeId: stringOr(state.user.selectedNodeId, ''),
+        displayName: normalizeDisplayName(state.user.displayName),
+        isSelf,
       };
     }
     return mapping;

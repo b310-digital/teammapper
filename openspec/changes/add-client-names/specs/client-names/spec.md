@@ -6,9 +6,9 @@ The system SHALL let a user set a display name, stored as `displayName` in the g
 
 #### Scenario: Name applies to every map
 
-- **GIVEN** the user has set the display name "Anna Schmidt"
+- **GIVEN** the user has set the display name "Vorname Test"
 - **WHEN** the user opens a second map in the same browser
-- **THEN** the client on that map SHALL announce the display name "Anna Schmidt"
+- **THEN** the client on that map SHALL announce the display name "Vorname Test"
 
 #### Scenario: Name survives a reload
 
@@ -29,8 +29,8 @@ The system SHALL normalize a display name before it saves it and after it receiv
 
 #### Scenario: Whitespace is collapsed
 
-- **WHEN** the user saves the display name `"  Anna   Schmidt "`
-- **THEN** the stored display name SHALL be "Anna Schmidt"
+- **WHEN** the user saves the display name `"  Vorname   Test "`
+- **THEN** the stored display name SHALL be "Vorname Test"
 
 #### Scenario: Long name is cut
 
@@ -61,15 +61,15 @@ The own client's entry in the client list SHALL be a button. Activating it SHALL
 #### Scenario: Set a name from the client list
 
 - **GIVEN** the user has no display name
-- **WHEN** the user clicks the own client icon, types "Anna Schmidt" and saves
-- **THEN** the display name SHALL be "Anna Schmidt"
-- **AND** the own client icon SHALL show "AS"
+- **WHEN** the user clicks the own client icon, types "Vorname Test" and saves
+- **THEN** the display name SHALL be "Vorname Test"
+- **AND** the own client icon SHALL show "VT"
 
 #### Scenario: Cancel keeps the name
 
-- **GIVEN** the display name is "Anna Schmidt"
-- **WHEN** the user opens the dialog, types "Bob" and cancels
-- **THEN** the display name SHALL be "Anna Schmidt"
+- **GIVEN** the display name is "Vorname Test"
+- **WHEN** the user opens the dialog, types "Zweiter" and cancels
+- **THEN** the display name SHALL be "Vorname Test"
 
 #### Scenario: Read-only map
 
@@ -87,8 +87,8 @@ Each entry of the client list SHALL show the initials of the client's display na
 
 #### Scenario: Two-word name
 
-- **WHEN** a client with the display name "Anna Maria Schmidt" is on the map
-- **THEN** its entry SHALL show "AS"
+- **WHEN** a client with the display name "Vorname Zweitname Test" is on the map
+- **THEN** its entry SHALL show "VT"
 
 #### Scenario: One-word name
 

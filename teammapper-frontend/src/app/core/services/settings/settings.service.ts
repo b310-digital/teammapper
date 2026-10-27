@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   CachedAdminMapEntry,
+  normalizeDisplayName,
   Settings,
   SUPPORTED_LANGUAGES,
   SystemSettings,
@@ -65,12 +66,12 @@ export class SettingsService {
   ): UserSettings {
     if (!loaded) {
       defaults.general.darkMode = this.getSystemDarkModePreference();
-      return defaults;
+      return withDisplayName(defaults);
     }
     if (loaded.general.darkMode === undefined) {
       loaded.general.darkMode = this.getSystemDarkModePreference();
     }
-    return loaded;
+    return withDisplayName(loaded);
   }
 
   /**
@@ -126,7 +127,7 @@ export class SettingsService {
         STORAGE_KEYS.SETTINGS
       )) as UserSettings | null;
       if (cached) {
-        this.userSettingsSubject.next(cached);
+        this.userSettingsSubject.next(withDisplayName(cached));
         this.applyDarkMode(
           cached.general?.darkMode ?? this.getSystemDarkModePreference()
         );
@@ -168,6 +169,17 @@ export class SettingsService {
     if (!settings) return;
 
     settings.general.darkMode = value;
+    await this.updateCachedSettings(settings);
+  }
+
+  /**
+   * Store the normalized display name. A name of whitespace only clears it.
+   */
+  public async setDisplayName(value: string): Promise<void> {
+    const settings = this.getCachedUserSettings();
+    if (!settings) return;
+
+    settings.general.displayName = normalizeDisplayName(value);
     await this.updateCachedSettings(settings);
   }
 
@@ -226,6 +238,19 @@ export class SettingsService {
     const response = await this.httpService.get(API_URL.ROOT, '/settings');
     return await response.json();
   }
+}
+
+/**
+ * The settings with a normalized display name. Settings stored by an older
+ * version hold none, which leaves the user without a display name.
+ */
+function withDisplayName(settings: UserSettings): UserSettings {
+  if (settings.general) {
+    settings.general.displayName = normalizeDisplayName(
+      settings.general.displayName
+    );
+  }
+  return settings;
 }
 
 export function appSettingsFactory(settingsService: SettingsService) {
