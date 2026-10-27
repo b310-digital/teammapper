@@ -1,12 +1,21 @@
 import MmpMap from '../map.js';
 import * as v from 'valibot';
 import { v4 as uuidv4 } from 'uuid';
-import { LinkSchema, NodeSchema } from '@teammapper/shared';
+import {
+  ArrowSchema,
+  canConnect,
+  LinkSchema,
+  NodeSchema,
+} from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { DefaultNodeValues } from '../options.js';
 import { randomK } from '../data/node-record.js';
-import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
+import type {
+  ExportNodeProperties,
+  MapArrow,
+  MapSnapshot,
+} from '@teammapper/shared';
 
 /**
  * A node of a map the loader accepts. Older maps carry no link and no isRoot
@@ -33,6 +42,25 @@ function withMainRoot(nodes: ExportNodeProperties[]): ExportNodeProperties[] {
 }
 
 /**
+ * The arrows the endpoint rules accept, in order: each one is checked against
+ * the nodes and the arrows accepted before it, so a repeated arrow drops.
+ */
+function acceptedArrows(
+  nodes: ExportNodeProperties[],
+  arrows: unknown[]
+): MapArrow[] {
+  const accepted: MapArrow[] = [];
+  for (const arrow of arrows) {
+    if (!v.is(ArrowSchema, arrow)) continue;
+    const { source, target } = arrow;
+    if (canConnect(nodes, accepted, source, target) === null) {
+      accepted.push({ source, target });
+    }
+  }
+  return accepted;
+}
+
+/**
  * Replace every node of the map with the nodes of an exported map, or with a
  * new main root. The loader checks the nodes and writes the result to the map
  * data as one replacement. The change listener then draws the map, selects
@@ -52,12 +80,16 @@ export default class MapLoader {
   }
 
   /**
-   * Replace the map with `input`, or start a new map holding only a main root
-   * when `input` is undefined. An empty `input` leaves the map as it is and
-   * throws.
+   * Replace the map with `input` and `arrows`, or start a new map holding
+   * only a main root when `input` is undefined. An empty `input` leaves the
+   * map as it is and throws. The arrows arrive unchecked, as an imported file
+   * holds them: the map keeps each entry that matches the arrow schema and
+   * the endpoint rules accept against the loaded nodes, and holds no arrows
+   * when the caller passes none.
    * @param {MapSnapshot} input
+   * @param {unknown[]} arrows
    */
-  public load = (input?: MapSnapshot) => {
+  public load = (input?: MapSnapshot, arrows: unknown[] = []) => {
     if (input === undefined) {
       this.map.data.replaceMap([this.newMainRoot()]);
       return;
@@ -72,7 +104,8 @@ export default class MapLoader {
       Log.error('The map holds no nodes; the import changed nothing.');
     }
 
-    this.map.data.replaceMap(withMainRoot(nodes.map(this.completed)));
+    const loaded = withMainRoot(nodes.map(this.completed));
+    this.map.data.replaceMap(loaded, acceptedArrows(loaded, arrows));
   };
 
   /** A main root with the map's root node defaults, at the origin. */

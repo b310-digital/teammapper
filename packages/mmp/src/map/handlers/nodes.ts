@@ -93,6 +93,7 @@ export default class Nodes {
   public onChange = (change: MapDataChange) => {
     if (change.replaced) this.drawReplaced();
     else this.drawChange(change);
+    this.map.arrows.onChange();
 
     this.map.viewState.forget(change.removed);
     this.map.events.emit('mapChange', undefined);
@@ -414,6 +415,7 @@ export default class Nodes {
    * @param {string} id
    */
   private announceSelection(id: string) {
+    this.map.arrows.onNodeSelect(id);
     this.selectedId = id;
     const node = this.exportNode(id);
     if (node) this.map.events.emit('nodeSelect', node);
@@ -507,6 +509,7 @@ export default class Nodes {
 
     viewState.toggle(id);
     this.map.draw.drawSubtree(id);
+    this.map.arrows.onViewChange();
   };
 
   /**
@@ -528,6 +531,7 @@ export default class Nodes {
    */
   public deselectNode = () => {
     this.releaseSelection(null);
+    this.map.arrows.onNodeSelect(null);
   };
 
   /**
