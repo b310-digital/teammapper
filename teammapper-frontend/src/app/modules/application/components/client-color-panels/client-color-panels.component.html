@@ -4,9 +4,20 @@
   <div class="panel">
     @for (client of clients | async; track client.clientId) {
       @let label = client.displayName || ('CLIENT_LIST.ANONYMOUS' | translate);
-      <span class="client" role="img" [attr.aria-label]="label">
-        <teammapper-client-avatar [client]="client" />
-      </span>
+      @if (client.isSelf) {
+        <button
+          type="button"
+          class="client own-client"
+          aria-haspopup="dialog"
+          [attr.aria-label]="label"
+          (click)="editDisplayName()">
+          <teammapper-client-avatar [client]="client" />
+        </button>
+      } @else {
+        <span class="client" role="img" [attr.aria-label]="label">
+          <teammapper-client-avatar [client]="client" />
+        </span>
+      }
     }
   </div>
 </div>

@@ -4,6 +4,7 @@ import { Event, NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { HotkeysService } from 'angular2-hotkeys';
 import { Subject } from 'rxjs';
 import { DialogAboutComponent } from 'src/app/modules/application/components/dialog-about/dialog-about.component';
+import { DialogDisplayNameComponent } from 'src/app/modules/application/components/dialog-display-name/dialog-display-name.component';
 import { DialogSettingsComponent } from 'src/app/modules/application/components/dialog-settings/dialog-settings.component';
 import { DialogService } from './dialog.service';
 
@@ -70,6 +71,47 @@ describe('DialogService', () => {
 
     it('resumes the hotkeys once the dialog is closed', () => {
       service.openAboutDialog();
+      afterClosed.next();
+
+      expect(hotkeysService.unpause).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('openDisplayNameDialog', () => {
+    it('opens the display name dialog', () => {
+      service.openDisplayNameDialog();
+
+      expect(dialog.open).toHaveBeenCalledWith(
+        DialogDisplayNameComponent,
+        expect.anything()
+      );
+    });
+
+    it('opens no second dialog while one is open', () => {
+      service.openDisplayNameDialog();
+      service.openDisplayNameDialog();
+
+      expect(dialog.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('opens the dialog again once it is closed', () => {
+      service.openDisplayNameDialog();
+      afterClosed.next();
+      service.openDisplayNameDialog();
+
+      expect(dialog.open).toHaveBeenCalledTimes(2);
+    });
+
+    // Typing a name holding `-` must not remove the selected node.
+    it('pauses the hotkeys while the dialog is open', () => {
+      service.openDisplayNameDialog();
+
+      expect(hotkeysService.pause).toHaveBeenCalledTimes(1);
+      expect(hotkeysService.unpause).not.toHaveBeenCalled();
+    });
+
+    it('resumes the hotkeys once the dialog is closed', () => {
+      service.openDisplayNameDialog();
       afterClosed.next();
 
       expect(hotkeysService.unpause).toHaveBeenCalledTimes(1);

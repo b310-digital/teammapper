@@ -3,11 +3,20 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { ClientListEntry } from 'src/app/core/services/map-sync/yjs-utils';
+import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { ClientColorPanelsComponent } from './client-color-panels.component';
 
 describe('ClientColorPanelsComponent', () => {
   let fixture: ComponentFixture<ClientColorPanelsComponent>;
   let clients$: BehaviorSubject<ClientListEntry[]>;
+  let openDisplayNameDialog: jest.Mock;
+
+  const self = (displayName = ''): ClientListEntry => ({
+    clientId: '1',
+    color: '#c0c0c0',
+    displayName,
+    isSelf: true,
+  });
 
   const peer = (
     clientId: string,
@@ -17,6 +26,7 @@ describe('ClientColorPanelsComponent', () => {
 
   async function render(clients: ClientListEntry[]) {
     clients$ = new BehaviorSubject(clients);
+    openDisplayNameDialog = jest.fn();
 
     await TestBed.configureTestingModule({
       imports: [ClientColorPanelsComponent, TranslateModule.forRoot()],
@@ -25,6 +35,7 @@ describe('ClientColorPanelsComponent', () => {
           provide: MapSyncService,
           useValue: { getClientListObservable: () => clients$ },
         },
+        { provide: DialogService, useValue: { openDisplayNameDialog } },
       ],
     }).compileComponents();
 
@@ -111,5 +122,36 @@ describe('ClientColorPanelsComponent', () => {
     await render([peer('7', markup)]);
 
     expect(root().querySelector('img')).toBeNull();
+  });
+
+  describe('the own client', () => {
+    beforeEach(() => render([self('Vorname Test'), peer('7', 'Zweiter')]));
+
+    it('is a button', () => {
+      expect(entryLabelled('Vorname Test').tagName).toBe('BUTTON');
+    });
+
+    it('opens the display name dialog on a click', () => {
+      entryLabelled('Vorname Test').click();
+
+      expect(openDisplayNameDialog).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves the other clients as no buttons', () => {
+      expect(entryLabelled('Zweiter').tagName).not.toBe('BUTTON');
+      expect(root().querySelectorAll('button')).toHaveLength(1);
+    });
+
+    it('opens no dialog on a click on another client', () => {
+      entryLabelled('Zweiter').click();
+
+      expect(openDisplayNameDialog).not.toHaveBeenCalled();
+    });
+  });
+
+  it('labels the own client anonymous until it has a name', async () => {
+    await render([self()]);
+
+    expect(entryLabelled('Anonymous').tagName).toBe('BUTTON');
   });
 });

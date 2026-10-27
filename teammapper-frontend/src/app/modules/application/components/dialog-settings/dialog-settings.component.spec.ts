@@ -26,7 +26,6 @@ describe('DialogSettingsComponent', () => {
   let updateMapOptions: jest.Mock;
   let updateUserMapOptions: jest.Mock;
   let updateCachedSettings: jest.Mock;
-  let setDisplayName: jest.Mock;
 
   const node = (): MapNodeSettings => ({
     name: '',
@@ -36,8 +35,19 @@ describe('DialogSettingsComponent', () => {
     font: { size: 16, style: 'normal', weight: 'normal' },
   });
 
+  let setDisplayName: jest.Mock;
+  let setLanguage: jest.Mock;
+  let setUserMapOptions: jest.Mock;
+  let storedDisplayName = '';
+  let cachedSettings: UserSettings;
+  let userSettings$: BehaviorSubject<UserSettings | null>;
+
   const userSettings = (): UserSettings => ({
-    general: { language: 'en', darkMode: false, displayName: '' },
+    general: {
+      language: 'en',
+      darkMode: false,
+      displayName: storedDisplayName,
+    },
     mapOptions: {
       centerOnResize: false,
       autoBranchColors: true,
@@ -61,6 +71,11 @@ describe('DialogSettingsComponent', () => {
     updateUserMapOptions = jest.fn();
     updateCachedSettings = jest.fn().mockResolvedValue(undefined);
     setDisplayName = jest.fn().mockResolvedValue(undefined);
+    setLanguage = jest.fn().mockResolvedValue(undefined);
+    setUserMapOptions = jest.fn().mockResolvedValue(undefined);
+    // SettingsService hands out the one object it caches, as the real one does.
+    cachedSettings = cached;
+    userSettings$ = new BehaviorSubject<UserSettings | null>(cachedSettings);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -88,9 +103,12 @@ describe('DialogSettingsComponent', () => {
         {
           provide: SettingsService,
           useValue: {
-            getCachedUserSettings: () => cached,
+            userSettings: userSettings$,
+            getCachedUserSettings: () => cachedSettings,
             updateCachedSettings,
             setDisplayName,
+            setLanguage,
+            setUserMapOptions,
             getEditModeObservable: () => new BehaviorSubject(editMode),
             getDefaultSettings: async () => ({ userSettings: userSettings() }),
             getCachedAdminMapEntries: async () => [],
@@ -114,15 +132,12 @@ describe('DialogSettingsComponent', () => {
     ).map(label => (label as HTMLElement).textContent?.trim() ?? '');
   }
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    storedDisplayName = '';
+    TestBed.resetTestingModule();
+  });
 
   describe('display name field', () => {
-    function named(displayName: string): UserSettings {
-      const settings = userSettings();
-      settings.general.displayName = displayName;
-      return settings;
-    }
-
     function displayNameInput(): HTMLInputElement {
       const input = (fixture.nativeElement as HTMLElement).querySelector(
         'input[name="displayName"]'
@@ -141,13 +156,6 @@ describe('DialogSettingsComponent', () => {
       expect(text).toContain('PAGES.SETTINGS.DISPLAY_NAME_HINT');
     });
 
-    it('holds the current display name', async () => {
-      await render(null, true, named('Vorname Test'));
-      await fixture.whenStable();
-
-      expect(displayNameInput().value).toBe('Vorname Test');
-    });
-
     it('stores a changed display name', async () => {
       await render(null);
       const input = displayNameInput();
@@ -163,22 +171,21 @@ describe('DialogSettingsComponent', () => {
     // Escape closes the dialog without a change event, and a later save of
     // another setting must not store the half-typed name.
     it('leaves the cached settings alone until the field commits', async () => {
-      const cached = named('Vorname');
-      await render(null, true, cached);
+      storedDisplayName = 'Vorname';
+      await render(null);
       const input = displayNameInput();
 
       input.value = 'Half typ';
       input.dispatchEvent(new Event('input'));
       await fixture.whenStable();
 
-      expect(cached.general.displayName).toBe('Vorname');
+      expect(cachedSettings.general.displayName).toBe('Vorname');
     });
 
     it('shows the stored name once the field commits', async () => {
-      const cached = userSettings();
-      await render(null, true, cached);
+      await render(null);
       setDisplayName.mockImplementation(async (name: string) => {
-        cached.general.displayName = name.trim();
+        cachedSettings.general.displayName = name.trim();
       });
       const input = displayNameInput();
 
@@ -330,10 +337,8 @@ describe('DialogSettingsComponent', () => {
 
       await fixture.componentInstance.updateGeneralMapOptions();
 
-      expect(updateCachedSettings).toHaveBeenCalledWith(
-        expect.objectContaining({
-          mapOptions: expect.objectContaining({ branchStyle: 'curved' }),
-        })
+      expect(setUserMapOptions).toHaveBeenCalledWith(
+        expect.objectContaining({ branchStyle: 'curved' })
       );
       expect(updateUserMapOptions).toHaveBeenCalledWith(
         expect.objectContaining({ branchStyle: 'curved' })
@@ -358,12 +363,66 @@ describe('DialogSettingsComponent', () => {
   it('stores changed user settings before it applies them', async () => {
     await render(null);
     updateUserMapOptions.mockImplementation(() =>
-      expect(updateCachedSettings).toHaveBeenCalled()
+      expect(setUserMapOptions).toHaveBeenCalled()
     );
 
     await fixture.componentInstance.updateGeneralMapOptions();
 
     expect(updateUserMapOptions).toHaveBeenCalledTimes(1);
+  });
+
+  describe('settings another tab saves while the dialog is open', () => {
+    function savedInOtherTab(): void {
+      const newer = userSettings();
+      newer.general.displayName = 'Vorname Test';
+      userSettings$.next(newer);
+    }
+
+    /** The settings the form edits. */
+    function form(): UserSettings {
+      const settings = fixture.componentInstance.settings;
+      if (!settings) throw new Error('No user settings');
+      return settings;
+    }
+
+    it('shows them in the form', async () => {
+      await render(null);
+
+      savedInOtherTab();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const input = (fixture.nativeElement as HTMLElement).querySelector(
+        'input[name="displayName"]'
+      );
+      if (!(input instanceof HTMLInputElement)) throw new Error('No input');
+      expect(input.value).toBe('Vorname Test');
+    });
+
+    // Storing the whole form would write the other tab's name back.
+    it('stores only the changed language', async () => {
+      await render(null);
+      savedInOtherTab();
+
+      form().general.language = 'de';
+      await fixture.componentInstance.updateLanguage();
+
+      expect(setLanguage).toHaveBeenCalledWith('de');
+      expect(updateCachedSettings).not.toHaveBeenCalled();
+    });
+
+    it('stores only the changed map options', async () => {
+      await render(null);
+      savedInOtherTab();
+
+      form().mapOptions.showLinktext = true;
+      await fixture.componentInstance.updateGeneralMapOptions();
+
+      expect(setUserMapOptions).toHaveBeenCalledWith(
+        expect.objectContaining({ showLinktext: true })
+      );
+      expect(updateCachedSettings).not.toHaveBeenCalled();
+    });
   });
 
   it('shows the map settings a peer changes while the dialog is open', async () => {
