@@ -1,4 +1,4 @@
-import { test, expect, Locator, Page, TestInfo } from '@playwright/test';
+import { test, expect, Locator, Page } from '@playwright/test';
 import { createMap } from './helpers';
 
 // A stuck action fails with its own call log instead of the test timeout.
@@ -77,14 +77,10 @@ async function surfaceHeight(page: Page): Promise<number> {
   return box.height;
 }
 
-async function screenshot(page: Page, testInfo: TestInfo, name: string) {
-  await page.screenshot({ path: testInfo.outputPath(`${name}.png`) });
-}
-
 for (const theme of themes) {
   test(`the name field spans the name dialog in ${theme} mode`, async ({
     page,
-  }, testInfo) => {
+  }) => {
     await openMapInTheme(page, theme);
     await page.locator('teammapper-client-colors-panel button.client').click();
     await waitForDialogOpen(page);
@@ -93,12 +89,11 @@ for (const theme of themes) {
     const background = expect(await surfaceBackground(page));
     if (theme === 'dark') background.not.toBe('rgb(255, 255, 255)');
     else background.toBe('rgb(255, 255, 255)');
-    await screenshot(page, testInfo, `display-name-${theme}`);
   });
 
   test(`the settings dialog keeps its height across tabs in ${theme} mode`, async ({
     page,
-  }, testInfo) => {
+  }) => {
     await openMapInTheme(page, theme);
     await page.locator('#settings-button').click();
     await waitForDialogOpen(page);
@@ -107,7 +102,6 @@ for (const theme of themes) {
     for (const tab of ['General', 'Mind map', 'List of created maps']) {
       await openSettingsTab(page, tab);
       heights.push(await surfaceHeight(page));
-      await screenshot(page, testInfo, `settings-${theme}-${tab}`);
     }
     expect(new Set(heights).size).toBe(1);
   });
@@ -119,7 +113,7 @@ test.describe('on a phone', () => {
 
   test('the settings dialog fills the screen and scrolls its content', async ({
     page,
-  }, testInfo) => {
+  }) => {
     await createMap(page);
     await page.locator('#settings-button').click();
     await waitForDialogOpen(page);
@@ -137,16 +131,14 @@ test.describe('on a phone', () => {
     }));
     expect(overflow).toEqual({ scrolls: true, style: 'auto' });
     await expect(page.locator('.close-button')).toBeInViewport();
-    await screenshot(page, testInfo, 'settings-phone');
   });
 
-  test('the name dialog fits on the screen', async ({ page }, testInfo) => {
+  test('the name dialog fits on the screen', async ({ page }) => {
     await createMap(page);
     await page.locator('teammapper-client-colors-panel button.client').click();
     await waitForDialogOpen(page);
 
     await expect(dialogSurface(page)).toBeInViewport({ ratio: 1 });
     await expectNameFieldSpansContent(page);
-    await screenshot(page, testInfo, 'display-name-phone');
   });
 });
