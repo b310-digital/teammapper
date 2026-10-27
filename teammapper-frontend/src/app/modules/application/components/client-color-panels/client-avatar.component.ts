@@ -2,11 +2,11 @@ import { Component, computed, input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { displayNameInitials } from '@teammapper/shared';
 import { ClientListEntry } from 'src/app/core/services/map-sync/yjs-utils';
-import { initialsTextColor } from './initials-color';
 
 /**
  * A client's picture in the client list: the initials of its display name in
- * a circle of its client color, or the generic client icon without a name.
+ * dark text on a white circle ringed in its client color, or the generic
+ * client icon without a name.
  * The entry around it carries the accessible label, so the picture hides from
  * assistive technology.
  */
@@ -17,8 +17,7 @@ import { initialsTextColor } from './initials-color';
       <span
         class="initials"
         aria-hidden="true"
-        [style.background-color]="client().color"
-        [style.color]="textColor()"
+        [style.border-color]="client().color"
         >{{ initials }}</span
       >
     } @else {
@@ -36,9 +35,13 @@ import { initialsTextColor } from './initials-color';
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      box-sizing: border-box;
       width: 24px;
       height: 24px;
+      border: 3px solid;
       border-radius: 50%;
+      background-color: #ffffff;
+      color: #212121;
       font-size: 11px;
       font-weight: bold;
       line-height: 1;
@@ -53,9 +56,5 @@ export class ClientAvatarComponent {
 
   protected readonly initials = computed(() =>
     displayNameInitials(this.client().displayName)
-  );
-
-  protected readonly textColor = computed(() =>
-    initialsTextColor(this.client().color)
   );
 }

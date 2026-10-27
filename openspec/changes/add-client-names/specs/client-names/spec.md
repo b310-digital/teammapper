@@ -88,7 +88,7 @@ The own client's entry in the client list SHALL be a button. Activating it SHALL
 
 ### Requirement: The client list shows initials
 
-Each entry of the client list SHALL show the initials of the client's display name in a circle filled with the client color. The initials SHALL be the upper-cased first character of the first word and, when the name has two or more words, of the last word. The initials SHALL use black or white, whichever contrasts more with the client color. An entry without a display name SHALL show the generic client icon in its client color, as today. Each entry SHALL carry the full display name as its accessible label, or "Anonymous" without one.
+Each entry of the client list SHALL show the initials of the client's display name in dark text on a white circle with a ring in the client color. The initials SHALL be the upper-cased first character of the first word and, when the name has two or more words, of the last word. An entry without a display name SHALL show the generic client icon in its client color, as today. Each entry SHALL carry the full display name as its accessible label, or "Anonymous" without one.
 
 #### Scenario: Two-word name
 
@@ -105,8 +105,3 @@ Each entry of the client list SHALL show the initials of the client's display na
 - **WHEN** a client without a display name is on the map
 - **THEN** its entry SHALL show the generic client icon in its client color
 - **AND** its accessible label SHALL be the translated "Anonymous"
-
-#### Scenario: Readable initials on every palette color
-
-- **WHEN** a client's color is any color of the client color palette
-- **THEN** the contrast ratio between the initials and the circle SHALL be at least 4.5:1

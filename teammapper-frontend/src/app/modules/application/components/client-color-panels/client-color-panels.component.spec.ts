@@ -63,20 +63,12 @@ describe('ClientColorPanelsComponent', () => {
       expect(entryLabelled('Vorname Test').textContent?.trim()).toBe('VT');
     });
 
-    it('fills the circle with the client color', () => {
+    it('rings the circle in the client color', () => {
       const initials = entryLabelled('Vorname Test').querySelector(
         '.initials'
       ) as HTMLElement;
 
-      expect(initials.style.backgroundColor).toBe('rgb(103, 58, 183)');
-    });
-
-    it('writes the initials in the color that contrasts more', () => {
-      const initials = entryLabelled('Vorname Test').querySelector(
-        '.initials'
-      ) as HTMLElement;
-
-      expect(initials.style.color).toBe('rgb(255, 255, 255)');
+      expect(initials.style.borderColor).toBe('rgb(103, 58, 183)');
     });
 
     it('shows no generic icon', () => {
