@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import MmpMap from '../map.js';
 import InMemoryMapData from '../../test/in-memory-map-data.js';
+import { nodeGroup } from '../../test/node-group.js';
 import { nodeRecord } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
@@ -47,15 +48,6 @@ function makeTree(): Tree {
     second: second.id,
     grandchild: grandchild.id,
   };
-}
-
-function nodeGroup(id: string): SVGGElement {
-  const group = d3
-    .selectAll<SVGGElement, string>('g.node')
-    .filter(datum => datum === id)
-    .node();
-  if (!group) throw new Error('no group for ' + id);
-  return group;
 }
 
 function visibility(id: string): string {

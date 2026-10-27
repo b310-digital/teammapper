@@ -2,6 +2,7 @@ import type { D3DragEvent } from 'd3';
 import type { MapArrow } from '@teammapper/shared';
 import MmpMap from '../map.js';
 import InMemoryMapData from '../../test/in-memory-map-data.js';
+import { nodeGroup } from '../../test/node-group.js';
 import { nodeRecord } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
@@ -65,16 +66,6 @@ function arrowShape(key: string): string | null {
   return (
     arrowGroup(key)?.querySelector('path.arrow-line')?.getAttribute('d') ?? null
   );
-}
-
-function nodeGroup(id: string): SVGGElement {
-  const group = Array.from(
-    document.querySelectorAll<SVGGElement>('g.node')
-  ).find(
-    element => (element as unknown as { __data__: string }).__data__ === id
-  );
-  if (!group) throw new Error('no node ' + id);
-  return group;
 }
 
 describe('drawing arrows', () => {
