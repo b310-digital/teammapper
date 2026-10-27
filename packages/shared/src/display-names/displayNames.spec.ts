@@ -2,7 +2,7 @@ import {
   DISPLAY_NAME_MAX_LENGTH,
   displayNameInitials,
   normalizeDisplayName,
-} from './index';
+} from './displayNames';
 
 describe('normalizeDisplayName', () => {
   it.each([42, null, undefined, {}, ['Vorname'], true])(
