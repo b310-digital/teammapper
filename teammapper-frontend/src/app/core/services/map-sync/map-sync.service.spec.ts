@@ -16,6 +16,7 @@ import {
 import type { MapData, MmpInstance } from '@teammapper/mmp';
 import { YjsSyncService } from './yjs-sync.service';
 import { MapSyncContext } from './map-sync-context';
+import { ClientColorMapping, ClientListEntry } from './yjs-utils';
 import { ImageHandlers, ImageUploadError } from '../mmp/node-images';
 
 const SYNCING_TOAST_ID = 7;
@@ -367,6 +368,41 @@ describe('MapSyncService', () => {
       getSyncContext(service).mapDeleted();
 
       expect(toastr().remove).toHaveBeenCalledWith(SYNCING_TOAST_ID);
+    });
+  });
+
+  describe('client list', () => {
+    function emitted(mapping: ClientColorMapping): ClientListEntry[] {
+      let list: ClientListEntry[] = [];
+      const subscription = service
+        .getClientListObservable()
+        .subscribe(entries => (list = entries));
+      getSyncContext(service).setColorMapping(mapping);
+      getSyncContext(service).emitClientList();
+      subscription.unsubscribe();
+      return list;
+    }
+
+    it('emits one entry per client with its id, color, name and whether it is the own client', () => {
+      const list = emitted({
+        '1': { color: '#c0c0c0', nodeId: '', displayName: 'Me', isSelf: true },
+        '7': {
+          color: '#0000ff',
+          nodeId: 'n',
+          displayName: 'Vorname Test',
+          isSelf: false,
+        },
+      });
+
+      expect(list).toEqual([
+        { clientId: '1', color: '#c0c0c0', displayName: 'Me', isSelf: true },
+        {
+          clientId: '7',
+          color: '#0000ff',
+          displayName: 'Vorname Test',
+          isSelf: false,
+        },
+      ]);
     });
   });
 

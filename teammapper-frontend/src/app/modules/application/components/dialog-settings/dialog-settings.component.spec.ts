@@ -26,6 +26,7 @@ describe('DialogSettingsComponent', () => {
   let updateMapOptions: jest.Mock;
   let updateUserMapOptions: jest.Mock;
   let updateCachedSettings: jest.Mock;
+  let setDisplayName: jest.Mock;
 
   const node = (): MapNodeSettings => ({
     name: '',
@@ -59,6 +60,7 @@ describe('DialogSettingsComponent', () => {
     updateMapOptions = jest.fn();
     updateUserMapOptions = jest.fn();
     updateCachedSettings = jest.fn().mockResolvedValue(undefined);
+    setDisplayName = jest.fn().mockResolvedValue(undefined);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -88,6 +90,7 @@ describe('DialogSettingsComponent', () => {
           useValue: {
             getCachedUserSettings: () => cached,
             updateCachedSettings,
+            setDisplayName,
             getEditModeObservable: () => new BehaviorSubject(editMode),
             getDefaultSettings: async () => ({ userSettings: userSettings() }),
             getCachedAdminMapEntries: async () => [],
@@ -112,6 +115,83 @@ describe('DialogSettingsComponent', () => {
   }
 
   afterEach(() => TestBed.resetTestingModule());
+
+  describe('display name field', () => {
+    function named(displayName: string): UserSettings {
+      const settings = userSettings();
+      settings.general.displayName = displayName;
+      return settings;
+    }
+
+    function displayNameInput(): HTMLInputElement {
+      const input = (fixture.nativeElement as HTMLElement).querySelector(
+        'input[name="displayName"]'
+      );
+      if (!(input instanceof HTMLInputElement))
+        throw new Error('No display name input');
+      return input;
+    }
+
+    it('sits on the general tab, with its label and hint', async () => {
+      await render(null);
+
+      displayNameInput();
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('PAGES.SETTINGS.DISPLAY_NAME');
+      expect(text).toContain('PAGES.SETTINGS.DISPLAY_NAME_HINT');
+    });
+
+    it('holds the current display name', async () => {
+      await render(null, true, named('Vorname Test'));
+      await fixture.whenStable();
+
+      expect(displayNameInput().value).toBe('Vorname Test');
+    });
+
+    it('stores a changed display name', async () => {
+      await render(null);
+      const input = displayNameInput();
+
+      input.value = 'Vorname Test';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+
+      expect(setDisplayName).toHaveBeenCalledWith('Vorname Test');
+    });
+
+    // Escape closes the dialog without a change event, and a later save of
+    // another setting must not store the half-typed name.
+    it('leaves the cached settings alone until the field commits', async () => {
+      const cached = named('Vorname');
+      await render(null, true, cached);
+      const input = displayNameInput();
+
+      input.value = 'Half typ';
+      input.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+
+      expect(cached.general.displayName).toBe('Vorname');
+    });
+
+    it('shows the stored name once the field commits', async () => {
+      const cached = userSettings();
+      await render(null, true, cached);
+      setDisplayName.mockImplementation(async (name: string) => {
+        cached.general.displayName = name.trim();
+      });
+      const input = displayNameInput();
+
+      input.value = '  Vorname  ';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(displayNameInput().value).toBe('Vorname');
+    });
+  });
 
   it('shows the mind map tab once a map holds options', async () => {
     await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });

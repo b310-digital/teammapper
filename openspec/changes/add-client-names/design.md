@@ -68,7 +68,7 @@ A client of an older version omits the field, and reading it through `normalizeD
 
 `displayNameInitials(name: string): string` in `packages/shared` splits the normalized name on spaces, takes the first character of the first word and, when there are two or more words, the first character of the last word, and upper-cases them with `toLocaleUpperCase`. An empty name returns `''`.
 
-The component shows the initials in a circle filled with the client color, with a text color chosen for contrast against it. An empty result shows the existing `account_circle` icon. The element carries `aria-label` with the full name, or the translated "Anonymous".
+The component shows the initials in dark text on a white circle with a ring in the client color. The text never sits on the client color, so every palette color works without a contrast calculation, and `COLORS` stays as it is because it also outlines the selected nodes on the map. An empty result shows the existing `account_circle` icon. The element carries `aria-label` with the full name, or the translated "Anonymous".
 
 ### 7. Editing from the own icon
 
@@ -81,8 +81,6 @@ The settings field on the "General" tab writes the same setting on change, like 
 - **Impersonation**: anyone can type anyone's name. Names carry no permissions, and the proposal leaves moderation out. → Accept; a later comments feature must not treat a name as proof of identity.
 - **Same initials**: two clients named "Vorname Test" and "Vorname Tester" both show "VT". The client color still tells them apart. → Accept.
 - **Privacy**: a name is visible to everyone holding the map link. → The field's hint text says so.
-- **Contrast**: a light client color with white initials is unreadable. → Pick black or white per color by relative luminance, tested against the whole `COLORS` palette.
-
 ## Migration Plan
 
 No data migration. Stored settings without `displayName` resolve to `''` on the next start. Mixed versions interoperate as described in decision 4.

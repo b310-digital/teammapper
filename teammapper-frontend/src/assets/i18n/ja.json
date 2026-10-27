@@ -145,6 +145,9 @@
       "TITLE": "接続の問題",
       "WARNING": "最近の変更が保存されていない可能性があります。",
       "RELOAD_BUTTON": "ページを再読み込み"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "あなたの表示名"
     }
   },
   "PAGES": {
@@ -216,7 +219,9 @@
       "DELETED_AT": "削除日：",
       "DELETE_AFTER_DAYS": "このサーバーのマインドマップは {{deleteAfterDays}} 日後に削除されます。",
       "DELETE": "マインドマップを削除",
-      "CONFIRM_DELETE": "削除しますか？"
+      "CONFIRM_DELETE": "削除しますか？",
+      "DISPLAY_NAME": "表示名",
+      "DISPLAY_NAME_HINT": "マップ上の全員にこの名前が表示されます。"
     }
   },
   "MESSAGES": {
@@ -292,5 +297,8 @@
     "SAVED": "保存済み",
     "NOT_SAVED": "未保存",
     "LINKS": "リンク"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "匿名"
   }
 }

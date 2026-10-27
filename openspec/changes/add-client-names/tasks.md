@@ -18,8 +18,8 @@ Each section is one pull request and leaves `main` releasable. PR 1 stores and a
 
 - [x] 2.1 Add `displayName` to `ClientColorMappingValue` and read it through `normalizeDisplayName` in `buildColorMappingFromAwareness`
 - [x] 2.2 Emit `ClientListEntry[]` (`clientId`, `color`, `displayName`, `isSelf`) from `getClientListObservable` and track by `clientId` in the component
-- [x] 2.3 Render initials in a circle of the client color with black or white text by relative luminance, the generic icon without a name, and `aria-label` with the name or "Anonymous"
+- [x] 2.3 Render initials in dark text on a white circle ringed in the client color, the generic icon without a name, and `aria-label` with the name or "Anonymous"
 - [x] 2.4 Make the own entry a button that opens `DialogDisplayNameComponent`, with "Save", "Cancel" and Escape
 - [x] 2.5 Update `src/test/mocks/yjs-sync.mock.ts` and other consumers of the client list type
-- [x] 2.6 Write unit tests: initials and fallback icon, accessible label, contrast of at least 4.5:1 for every `COLORS` entry, two clients with one color give two entries, a remote rename updates the entry, markup renders as text
+- [x] 2.6 Write unit tests: initials and fallback icon, accessible label, ring in the client color, two clients with one color give two entries, a remote rename updates the entry, markup renders as text
 - [x] 2.7 Write e2e tests: set a name from the own icon and see initials in a second browser context, cancel keeps the name, the dialog opens on a view link, a name set in settings shows in the client list

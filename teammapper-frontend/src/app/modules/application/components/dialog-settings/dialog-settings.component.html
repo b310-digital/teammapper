@@ -48,6 +48,23 @@
                     </mat-select>
                   </mat-form-field>
                 </div>
+                <hr />
+                <div class="display-name-row">
+                  <mat-form-field>
+                    <mat-label>{{
+                      'PAGES.SETTINGS.DISPLAY_NAME' | translate
+                    }}</mat-label>
+                    <input
+                      (change)="updateDisplayName()"
+                      [(ngModel)]="displayName"
+                      autocomplete="nickname"
+                      matInput
+                      name="displayName" />
+                    <mat-hint>{{
+                      'PAGES.SETTINGS.DISPLAY_NAME_HINT' | translate
+                    }}</mat-hint>
+                  </mat-form-field>
+                </div>
               </mat-card-content>
             </mat-card>
           </div>

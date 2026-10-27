@@ -2,11 +2,10 @@
   <div class="background"></div>
 
   <div class="panel">
-    @for (clientColor of clientColors | async; track clientColor) {
-      <span>
-        <mat-icon aria-label="user color" [ngStyle]="{ color: clientColor }"
-          >account_circle</mat-icon
-        >
+    @for (client of clients | async; track client.clientId) {
+      @let label = client.displayName || ('CLIENT_LIST.ANONYMOUS' | translate);
+      <span class="client" role="img" [attr.aria-label]="label">
+        <teammapper-client-avatar [client]="client" />
       </span>
     }
   </div>

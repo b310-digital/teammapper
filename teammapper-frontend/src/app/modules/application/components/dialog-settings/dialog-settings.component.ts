@@ -28,7 +28,7 @@ import {
   MatCardTitle,
   MatCardContent,
 } from '@angular/material/card';
-import { MatFormField } from '@angular/material/form-field';
+import { MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { MatSelect, MatOption } from '@angular/material/select';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { FormsModule } from '@angular/forms';
@@ -56,6 +56,8 @@ import { MapDeletionComponent } from '../map-deletion/map-deletion.component';
     MatCardTitle,
     MatCardContent,
     MatFormField,
+    MatLabel,
+    MatHint,
     MatSelect,
     MatOption,
     MatSlideToggle,
@@ -75,6 +77,8 @@ export class DialogSettingsComponent {
   public readonly languages: string[];
   public readonly branchStyles: readonly BranchStyle[] = BRANCH_STYLES;
   public settings: UserSettings | null;
+  /** The display name field's draft, stored when the field commits. */
+  public displayName: string;
   private readonly appliedMapOptions = toSignal(
     this.mmpService.additionalMapOptions$,
     { initialValue: null }
@@ -95,6 +99,7 @@ export class DialogSettingsComponent {
     this.settings = withBranchStyle(
       this.settingsService.getCachedUserSettings()
     );
+    this.displayName = this.settings?.general.displayName ?? '';
     this.editMode = this.settingsService.getEditModeObservable();
   }
 
@@ -132,6 +137,18 @@ export class DialogSettingsComponent {
     await this.settingsService.updateCachedSettings(this.settings);
 
     this.translateService.use(this.settings.general.language);
+  }
+
+  /**
+   * Store the edited display name and show it as SettingsService normalized
+   * it. Until then the field edits a draft, so a dialog closed mid-edit stores
+   * nothing.
+   */
+  public async updateDisplayName() {
+    if (!this.settings) return;
+
+    await this.settingsService.setDisplayName(this.displayName);
+    this.displayName = this.settings.general.displayName;
   }
 
   public async updateDarkMode() {
