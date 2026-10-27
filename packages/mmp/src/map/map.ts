@@ -150,6 +150,7 @@ export default class MmpMap {
       getArrows: this.arrows.getArrows,
       getSelectedArrow: this.arrows.getSelectedArrow,
       getSelectedNode: this.nodes.getSelectedNode,
+      isArrowMode: this.arrows.isArrowMode,
       editNode: this.nodes.editNode,
       toggleBranchVisibility: this.nodes.toggleBranchVisibility,
       childNodesHidden: this.nodes.childNodesHidden,
@@ -172,6 +173,8 @@ export default class MmpMap {
       selectArrow: this.arrows.selectArrow,
       selectNode: this.nodes.selectNode,
       setEditable: this.setEditable,
+      startArrowMode: this.arrows.startArrowMode,
+      stopArrowMode: this.arrows.stopArrowMode,
       updateNode: this.nodes.updateNode,
       updateOption: this.options.update,
       zoomIn: this.zoom.zoomIn,
@@ -204,6 +207,7 @@ export interface MmpInstance {
   getArrows: () => MapArrow[];
   getSelectedArrow: () => MapArrow | null;
   getSelectedNode: () => ExportNodeProperties | null;
+  isArrowMode: () => boolean;
   editNode: () => void;
   toggleBranchVisibility: () => void;
   childNodesHidden: (id?: string) => boolean;
@@ -231,6 +235,12 @@ export interface MmpInstance {
   selectArrow: (key: string) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;
   setEditable: (editable: boolean) => void;
+  /**
+   * Start arrow mode from the selected node. Returns false, and starts
+   * nothing, without a selected node or on a read-only map.
+   */
+  startArrowMode: () => boolean;
+  stopArrowMode: () => void;
   updateNode: <P extends NodeProperty>(
     property: P,
     value: NodePropertyValues[P],

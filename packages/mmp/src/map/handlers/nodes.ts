@@ -93,7 +93,7 @@ export default class Nodes {
   public onChange = (change: MapDataChange) => {
     if (change.replaced) this.drawReplaced();
     else this.drawChange(change);
-    this.map.arrows.onChange();
+    this.map.arrows.onChange(change);
 
     this.map.viewState.forget(change.removed);
     this.map.events.emit('mapChange', undefined);

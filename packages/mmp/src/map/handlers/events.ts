@@ -1,5 +1,9 @@
 import Log from '../../utils/log.js';
-import type { ExportNodeProperties, MapArrow } from '@teammapper/shared';
+import type {
+  ArrowRefusal,
+  ExportNodeProperties,
+  MapArrow,
+} from '@teammapper/shared';
 
 /** The payload each map event passes to its callbacks. */
 export interface MmpEventPayloadMap {
@@ -12,6 +16,10 @@ export interface MmpEventPayloadMap {
   arrowSelect: MapArrow;
   /** The selected arrow lost the selection. */
   arrowDeselect: MapArrow;
+  /** Arrow mode started (true) or ended (false). */
+  arrowMode: boolean;
+  /** Arrow mode refused a target node, and why. */
+  arrowRefused: ArrowRefusal;
 }
 
 export type MmpEventType = keyof MmpEventPayloadMap;
@@ -31,6 +39,8 @@ const EVENT_TYPES: readonly MmpEventType[] = [
   'mapChange',
   'arrowSelect',
   'arrowDeselect',
+  'arrowMode',
+  'arrowRefused',
 ];
 
 /**

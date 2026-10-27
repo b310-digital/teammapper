@@ -242,7 +242,13 @@
       "NODE_PROTECTED": "Questo ramo è protetto. Rimuovi la protezione per modificarlo.",
       "MAP_IMPORT_IN_PROGRESS": "Importazione della mappa mentale in corso",
       "MAP_UPDATE_IN_PROGRESS": "Aggiornamento della mappa mentale...",
-      "MERMAID_SEVERAL_TREES": "Ogni albero è diventato un proprio blocco mindmap. Gli strumenti Mermaid al di fuori di TeamMapper mostrano un blocco alla volta."
+      "MERMAID_SEVERAL_TREES": "Ogni albero è diventato un proprio blocco mindmap. Gli strumenti Mermaid al di fuori di TeamMapper mostrano un blocco alla volta.",
+      "ARROW_REFUSED": {
+        "SELF": "Una freccia non può puntare da un nodo a se stesso.",
+        "DUPLICATE": "Esiste già una freccia tra questi due nodi in questa direzione.",
+        "PARENT": "Un ramo collega già un nodo al suo nodo padre.",
+        "MISSING": "Il nodo di questa freccia non esiste più."
+      }
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Non è possibile copiare il nodo radice!",

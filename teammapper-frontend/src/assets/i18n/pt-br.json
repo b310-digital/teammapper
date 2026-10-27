@@ -242,7 +242,13 @@
       "NODE_PROTECTED": "Este ramo está protegido. Remova a proteção para editá-lo.",
       "MAP_IMPORT_IN_PROGRESS": "Importação de mapa mental em andamento",
       "MAP_UPDATE_IN_PROGRESS": "Atualizando o mapa mental",
-      "MERMAID_SEVERAL_TREES": "Cada árvore virou seu próprio bloco mindmap. Ferramentas Mermaid fora do TeamMapper exibem um bloco por vez."
+      "MERMAID_SEVERAL_TREES": "Cada árvore virou seu próprio bloco mindmap. Ferramentas Mermaid fora do TeamMapper exibem um bloco por vez.",
+      "ARROW_REFUSED": {
+        "SELF": "Uma seta não pode apontar de um nó para ele mesmo.",
+        "DUPLICATE": "Já existe uma seta entre estes dois nós nesta direção.",
+        "PARENT": "Um ramo já conecta um nó ao seu nó pai.",
+        "MISSING": "O nó desta seta não existe mais."
+      }
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Não é possível copiar o nó raiz!",

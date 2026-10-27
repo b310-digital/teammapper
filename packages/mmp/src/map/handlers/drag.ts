@@ -68,9 +68,14 @@ export default class Drag {
 
   /**
    * Select the node and read, once, the nodes the drag moves along with it.
+   * In arrow mode the press picks the target of the arrow instead and starts
+   * no drag.
    * @param {string} id
    */
   private started(_: DragEvent, id: string) {
+    this.session = null;
+    if (this.map.arrows.handleNodeClick(id)) return;
+
     const nodes = this.map.nodes;
     const records = nodes.scan();
     const lookup = lookupIn(records);

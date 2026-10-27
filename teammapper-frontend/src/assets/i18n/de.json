@@ -245,7 +245,13 @@
       "NODE_PROTECTED": "Dieser Zweig ist geschützt. Hebe den Schutz auf, um ihn zu bearbeiten.",
       "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert...",
       "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert...",
-      "MERMAID_SEVERAL_TREES": "Jeder Baum wurde zu einem eigenen mindmap-Block. Mermaid-Werkzeuge außerhalb von TeamMapper stellen nur einen Block auf einmal dar."
+      "MERMAID_SEVERAL_TREES": "Jeder Baum wurde zu einem eigenen mindmap-Block. Mermaid-Werkzeuge außerhalb von TeamMapper stellen nur einen Block auf einmal dar.",
+      "ARROW_REFUSED": {
+        "SELF": "Ein Pfeil kann nicht von einem Knoten auf sich selbst zeigen.",
+        "DUPLICATE": "Zwischen diesen beiden Knoten gibt es in dieser Richtung schon einen Pfeil.",
+        "PARENT": "Ein Zweig verbindet einen Knoten bereits mit seinem übergeordneten Knoten.",
+        "MISSING": "Der Knoten für diesen Pfeil existiert nicht mehr."
+      }
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Es ist nicht möglich, den Hauptknoten zu kopieren!",

@@ -30,6 +30,8 @@ export function fakeDraw(
     renderPositions: jest.fn(),
     drawArrows: jest.fn(),
     setArrowSelected: jest.fn(),
+    showArrowPreview: jest.fn(),
+    markRefused: jest.fn(),
     enableNodeNameEditing: jest.fn(),
     blurName: jest.fn(),
     cancelNameEditing: jest.fn(),

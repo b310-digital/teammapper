@@ -3,8 +3,8 @@ import { emitted, nodeRecord, stubMap } from '../../test/stub-map.js';
 
 /**
  * An arrow connects two nodes without changing the tree. mmp creates one from
- * the selected node, selects and removes it, and keeps arrows in line with
- * node removal, copy and paste.
+ * the selected node or in arrow mode, selects and removes it, and keeps
+ * arrows in line with node removal, copy and paste.
  */
 
 const COLORS = { background: '#ffffff' };
@@ -247,6 +247,150 @@ describe('removeArrow', () => {
     arrows.removeArrow();
 
     expect(data.arrows()).toHaveLength(1);
+  });
+});
+
+describe('arrow mode', () => {
+  function inArrowMode(source = 'a1', arrows: MapArrow[] = []) {
+    const stub = makeMap(arrows);
+    stub.nodes.selectNode(source);
+    stub.arrows.startArrowMode();
+    stub.events.emit.mockClear();
+    return stub;
+  }
+
+  it('starts from the selected node', () => {
+    const { arrows, nodes, events, draw } = makeMap();
+    nodes.selectNode('a1');
+
+    expect(arrows.startArrowMode()).toBe(true);
+    expect(arrows.isArrowMode()).toBe(true);
+    expect(emitted(events.emit, 'arrowMode')).toEqual([true]);
+    expect(draw.showArrowPreview).toHaveBeenLastCalledWith('a1');
+  });
+
+  it('does not start with no node selected', () => {
+    const { arrows } = makeMap();
+
+    expect(arrows.startArrowMode()).toBe(false);
+    expect(arrows.isArrowMode()).toBe(false);
+  });
+
+  it('does not start on a read-only map', () => {
+    const { arrows, nodes } = makeReadOnlyMap();
+    nodes.selectNode('a1');
+
+    expect(arrows.startArrowMode()).toBe(false);
+  });
+
+  it('marks every node the source may not connect to', () => {
+    const { draw } = inArrowMode('a', [{ source: 'a', target: 'b' }]);
+
+    const calls = draw.markRefused.mock.calls;
+    const marked = calls[calls.length - 1][0] as string[];
+    expect([...marked].sort()).toEqual(['a', 'a1', 'a2', 'b', 'root']);
+  });
+
+  it('creates the arrow on a click on an allowed node and ends with the source selected', () => {
+    const { arrows, nodes, data, events, draw } = inArrowMode();
+
+    expect(arrows.handleNodeClick('b')).toBe(true);
+
+    expect(data.arrows()).toEqual([{ source: 'a1', target: 'b' }]);
+    expect(arrows.isArrowMode()).toBe(false);
+    expect(nodes.getSelectedNode()?.id).toBe('a1');
+    expect(emitted(events.emit, 'arrowMode')).toEqual([false]);
+    expect(draw.showArrowPreview).toHaveBeenLastCalledWith(null);
+    expect(draw.markRefused).toHaveBeenLastCalledWith([]);
+  });
+
+  it('refuses the source itself, says why and stays on', () => {
+    const { arrows, data, events } = inArrowMode();
+
+    expect(arrows.handleNodeClick('a1')).toBe(true);
+
+    expect(data.arrows()).toEqual([]);
+    expect(arrows.isArrowMode()).toBe(true);
+    expect(emitted(events.emit, 'arrowRefused')).toEqual(['self']);
+  });
+
+  it('refuses a duplicate and stays on', () => {
+    const { arrows, events } = inArrowMode('a1', [
+      { source: 'a1', target: 'b' },
+    ]);
+
+    arrows.handleNodeClick('b');
+
+    expect(arrows.isArrowMode()).toBe(true);
+    expect(emitted(events.emit, 'arrowRefused')).toEqual(['duplicate']);
+  });
+
+  it('leaves a node click alone outside arrow mode', () => {
+    const { arrows } = makeMap();
+
+    expect(arrows.handleNodeClick('b')).toBe(false);
+  });
+
+  it('ends without an arrow on stopArrowMode', () => {
+    const { arrows, data, events } = inArrowMode();
+
+    arrows.stopArrowMode();
+
+    expect(arrows.isArrowMode()).toBe(false);
+    expect(data.arrows()).toEqual([]);
+    expect(emitted(events.emit, 'arrowMode')).toEqual([false]);
+  });
+
+  it('announces nothing on stopArrowMode outside arrow mode', () => {
+    const { arrows, events } = makeMap();
+
+    arrows.stopArrowMode();
+
+    expect(events.emit).not.toHaveBeenCalled();
+  });
+
+  it('ends when a peer removes the source', () => {
+    const { arrows, data } = inArrowMode('a1');
+
+    data.removeNode('a');
+
+    expect(arrows.isArrowMode()).toBe(false);
+    expect(data.arrows()).toEqual([]);
+  });
+
+  it('ends when a peer moves the source below a node whose child nodes are hidden', () => {
+    const { arrows, data, map } = inArrowMode('b');
+    map.viewState.toggle('a');
+
+    data.addNodes([
+      nodeRecord({ id: 'b', parent: 'a', coordinates: { x: -200, y: 0 } }),
+    ]);
+
+    expect(arrows.isArrowMode()).toBe(false);
+  });
+
+  it('ends when the map is replaced', () => {
+    const { arrows, data } = inArrowMode('a1');
+
+    data.replaceMap([nodeRecord({ id: 'root', isRoot: true })]);
+
+    expect(arrows.isArrowMode()).toBe(false);
+  });
+
+  it('ends when another node takes the selection', () => {
+    const { arrows, nodes } = inArrowMode('a1');
+
+    nodes.selectNode('b');
+
+    expect(arrows.isArrowMode()).toBe(false);
+  });
+
+  it('stays on when a peer changes another node', () => {
+    const { arrows, data } = inArrowMode('a1');
+
+    data.updateNode('b', 'name', 'Peer');
+
+    expect(arrows.isArrowMode()).toBe(true);
   });
 });
 

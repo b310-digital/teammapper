@@ -67,6 +67,16 @@ function arrowShape(key: string): string | null {
   );
 }
 
+function nodeGroup(id: string): SVGGElement {
+  const group = Array.from(
+    document.querySelectorAll<SVGGElement>('g.node')
+  ).find(
+    element => (element as unknown as { __data__: string }).__data__ === id
+  );
+  if (!group) throw new Error('no node ' + id);
+  return group;
+}
+
 describe('drawing arrows', () => {
   it('draws the arrow layer between the branches and the nodes', () => {
     const { map } = makeMap();
@@ -265,5 +275,69 @@ describe('clicking arrows', () => {
     expect(map.instance.getSelectedArrow()).toBeNull();
     expect(map.instance.getSelectedNode()).toBeNull();
     expect(arrowGroup('a1:b')?.classList.contains('selected')).toBe(false);
+  });
+});
+
+describe('arrow mode in the renderer', () => {
+  function inArrowMode() {
+    const stub = makeMap([]);
+    stub.map.instance.selectNode('a1');
+    stub.map.instance.startArrowMode();
+    return stub;
+  }
+
+  it('shows a preview from the source', () => {
+    inArrowMode();
+
+    expect(document.querySelector('path.arrow-preview')).not.toBeNull();
+  });
+
+  it('marks the nodes the source may not connect to', () => {
+    inArrowMode();
+
+    expect(nodeGroup('a').classList.contains('arrow-refused')).toBe(true);
+    expect(nodeGroup('a1').classList.contains('arrow-refused')).toBe(true);
+    expect(nodeGroup('b').classList.contains('arrow-refused')).toBe(false);
+  });
+
+  it('creates the arrow when a node press starts on an allowed node', () => {
+    const { map, data, drag } = inArrowMode();
+
+    drag.started({} as DragEvent, 'b');
+
+    expect(data.arrows()).toEqual([{ source: 'a1', target: 'b' }]);
+    expect(map.instance.isArrowMode()).toBe(false);
+    expect(map.instance.getSelectedNode()?.id).toBe('a1');
+    expect(document.querySelector('path.arrow-preview')).toBeNull();
+    expect(document.querySelectorAll('g.node.arrow-refused')).toHaveLength(0);
+  });
+
+  it('moves no node while in arrow mode', () => {
+    const { data, drag } = inArrowMode();
+
+    drag.started({} as DragEvent, 'a1');
+    drag.dragged({ dx: 50, dy: 50 } as DragEvent, 'a1');
+    drag.ended({} as DragEvent, 'a1');
+
+    expect(data.node('a1')?.coordinates).toEqual({ x: 400, y: 0 });
+  });
+
+  it('ends on a click on empty space and creates nothing', () => {
+    const { map, data } = inArrowMode();
+
+    document
+      .querySelector('rect.map-background')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(map.instance.isArrowMode()).toBe(false);
+    expect(data.arrows()).toEqual([]);
+  });
+
+  it('ends when the map turns read-only', () => {
+    const { map } = inArrowMode();
+
+    map.instance.setEditable(false);
+
+    expect(map.instance.isArrowMode()).toBe(false);
   });
 });
