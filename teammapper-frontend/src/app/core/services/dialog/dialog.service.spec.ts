@@ -124,7 +124,7 @@ describe('DialogService', () => {
 
       expect(dialog.open).toHaveBeenCalledWith(
         DialogSettingsComponent,
-        expect.objectContaining({ maxHeight: '90vh' })
+        expect.objectContaining({ height: '720px', maxHeight: '90vh' })
       );
     });
 

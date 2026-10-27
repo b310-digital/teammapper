@@ -101,7 +101,8 @@ export class DialogService {
    * Open the settings dialog over the map. Hotkeys pause as for the info
    * dialog, so typing `-` into a field removes no node. A navigation closes
    * the dialog, because deleting the open map sends the user to the start
-   * page.
+   * page. The fixed height keeps the dialog still when the user switches
+   * between tabs of different length.
    */
   openSettingsDialog() {
     if (this.settingsModalRef) return;
@@ -110,6 +111,7 @@ export class DialogService {
     const dialogRef = this.dialog.open(DialogSettingsComponent, {
       width: '800px',
       maxWidth: '95vw',
+      height: '720px',
       maxHeight: '90vh',
     });
     const navigation = this.closeOnNavigation(dialogRef);
