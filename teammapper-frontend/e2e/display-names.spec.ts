@@ -27,6 +27,16 @@ async function typeDisplayName(page: Page, name: string) {
   await input.fill(name);
 }
 
+/**
+ * Opens the settings dialog and waits for its open animation to end. The
+ * dialog then focuses the close button, and a field filled before that focus
+ * move loses the typed text on a slow machine.
+ */
+async function openSettings(page: Page) {
+  await page.locator('#settings-button').click();
+  await expect(page.locator('.close-button')).toBeFocused();
+}
+
 async function saveDisplayName(page: Page, name: string) {
   await typeDisplayName(page, name);
   await displayNameDialog(page).getByRole('button', { name: 'Save' }).click();
@@ -84,9 +94,10 @@ test('a name set in the settings shows in the client list and survives a reload'
 }) => {
   await createMap(page);
 
-  await page.locator('#settings-button').click();
+  await openSettings(page);
   const field = page.locator('input[name="displayName"]');
   await field.fill('Vorname Test');
+  await expect(field).toHaveValue('Vorname Test');
   await field.press('Tab');
   await page.locator('.close-button').click();
 
@@ -103,7 +114,7 @@ test('an emptied settings field shows the generic icon again', async ({
   await createMap(page);
   await saveDisplayName(page, 'Vorname Test');
 
-  await page.locator('#settings-button').click();
+  await openSettings(page);
   const field = page.locator('input[name="displayName"]');
   await expect(field).toHaveValue('Vorname Test');
   await field.fill('');
