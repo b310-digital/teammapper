@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { DestroyRef, Injectable, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -8,6 +8,7 @@ import {
   Settings,
   SUPPORTED_LANGUAGES,
   SystemSettings,
+  UserMapOptions,
   UserSettings,
 } from '@teammapper/shared';
 import { API_URL, HttpService } from '../../http/http.service';
@@ -15,6 +16,12 @@ import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
 /** `getLanguage` returns this when no user settings are cached. */
 const DEFAULT_LANGUAGE = 'en';
+
+/**
+ * Name of the channel that carries settings changes to the other open tabs of
+ * the same browser. Storage writes go to IndexedDB, which notifies no tab.
+ */
+export const SETTINGS_CHANNEL = 'teammapper-settings';
 
 @Injectable({
   providedIn: 'root',
@@ -34,6 +41,7 @@ export class SettingsService {
   private readonly editModeSubject: BehaviorSubject<boolean | null>;
   private readonly darkModeSubject: BehaviorSubject<boolean>;
   public readonly darkMode: Observable<boolean>;
+  private readonly channel = openSettingsChannel();
 
   constructor() {
     // Initialization of the behavior subjects.
@@ -45,6 +53,23 @@ export class SettingsService {
     this.darkModeSubject = new BehaviorSubject(false);
     this.userSettings = this.userSettingsSubject.asObservable();
     this.darkMode = this.darkModeSubject.asObservable();
+    this.listenToOtherTabs();
+  }
+
+  /**
+   * Apply the settings another tab saved. That tab already stored them, so
+   * this tab only updates its cache, which keeps a later save here from
+   * writing the old values back.
+   */
+  private listenToOtherTabs(): void {
+    const channel = this.channel;
+    if (!channel) return;
+    // zone.js patches addEventListener, so Angular renders the change.
+    channel.addEventListener('message', (event: MessageEvent<UserSettings>) => {
+      this.userSettingsSubject.next(withDisplayName(event.data));
+      this.applyDarkMode(event.data.general.darkMode);
+    });
+    inject(DestroyRef).onDestroy(() => channel.close());
   }
 
   /**
@@ -141,12 +166,13 @@ export class SettingsService {
   }
 
   /**
-   * Update the settings in the storage.
+   * Update the settings in the storage and in the other open tabs.
    */
   public async updateCachedSettings(settings: UserSettings): Promise<void> {
     await this.storageService.set(STORAGE_KEYS.SETTINGS, settings);
     this.userSettingsSubject.next(settings);
     this.applyDarkMode(settings.general.darkMode);
+    this.channel?.postMessage(settings);
   }
 
   /**
@@ -180,6 +206,27 @@ export class SettingsService {
     if (!settings) return;
 
     settings.general.displayName = normalizeDisplayName(value);
+    await this.updateCachedSettings(settings);
+  }
+
+  /**
+   * Store the language in the latest settings, which may hold changes another
+   * tab made after the caller read its copy.
+   */
+  public async setLanguage(language: string): Promise<void> {
+    const settings = this.getCachedUserSettings();
+    if (!settings) return;
+
+    settings.general.language = language;
+    await this.updateCachedSettings(settings);
+  }
+
+  /** Store the map options in the latest settings, as `setLanguage` does. */
+  public async setUserMapOptions(mapOptions: UserMapOptions): Promise<void> {
+    const settings = this.getCachedUserSettings();
+    if (!settings) return;
+
+    settings.mapOptions = mapOptions;
     await this.updateCachedSettings(settings);
   }
 
@@ -251,6 +298,12 @@ function withDisplayName(settings: UserSettings): UserSettings {
     );
   }
   return settings;
+}
+
+/** The settings channel, or null in an environment without one. */
+function openSettingsChannel(): BroadcastChannel | null {
+  if (typeof BroadcastChannel === 'undefined') return null;
+  return new BroadcastChannel(SETTINGS_CHANNEL);
 }
 
 export function appSettingsFactory(settingsService: SettingsService) {

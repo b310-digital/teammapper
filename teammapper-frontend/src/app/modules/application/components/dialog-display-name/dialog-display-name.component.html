@@ -1,0 +1,23 @@
+<form (ngSubmit)="save()">
+  <h2 mat-dialog-title>{{ 'MODALS.DISPLAY_NAME.TITLE' | translate }}</h2>
+  <mat-dialog-content>
+    <mat-form-field class="max-width">
+      <mat-label>{{ 'PAGES.SETTINGS.DISPLAY_NAME' | translate }}</mat-label>
+      <input
+        matInput
+        cdkFocusInitial
+        name="displayName"
+        autocomplete="nickname"
+        [(ngModel)]="displayName" />
+      <mat-hint>{{ 'PAGES.SETTINGS.DISPLAY_NAME_HINT' | translate }}</mat-hint>
+    </mat-form-field>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" class="cancel-button" (click)="cancel()">
+      {{ 'GENERAL.CANCEL' | translate }}
+    </button>
+    <button mat-flat-button type="submit" class="save-button">
+      {{ 'GENERAL.SAVE' | translate }}
+    </button>
+  </mat-dialog-actions>
+</form>

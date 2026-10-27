@@ -1,4 +1,8 @@
-import { CachedAdminMapValue } from '@teammapper/shared';
+import {
+  CachedAdminMapValue,
+  MapNodeSettings,
+  UserMapOptions,
+} from '@teammapper/shared';
 import { HttpService } from '../../http/http.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from './settings.service';
@@ -283,6 +287,166 @@ describe('SettingsService', () => {
       await settingsService.setDisplayName('Vorname');
 
       expect(storageService.set).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('other open tabs', () => {
+    /** Delivers a message to every other open channel of the same name. */
+    class FakeBroadcastChannel {
+      static open: FakeBroadcastChannel[] = [];
+      private listeners: ((event: MessageEvent) => void)[] = [];
+
+      constructor(readonly name: string) {
+        FakeBroadcastChannel.open.push(this);
+      }
+
+      addEventListener(_type: 'message', listener: (e: MessageEvent) => void) {
+        this.listeners.push(listener);
+      }
+
+      postMessage(data: unknown): void {
+        const event = {
+          data: JSON.parse(JSON.stringify(data)),
+        } as MessageEvent;
+        FakeBroadcastChannel.open
+          .filter(other => other !== this && other.name === this.name)
+          .forEach(other =>
+            other.listeners.forEach(listener => listener(event))
+          );
+      }
+
+      close(): void {
+        FakeBroadcastChannel.open = FakeBroadcastChannel.open.filter(
+          other => other !== this
+        );
+      }
+    }
+
+    const original = Object.getOwnPropertyDescriptor(
+      globalThis,
+      'BroadcastChannel'
+    );
+
+    beforeEach(() => {
+      Object.defineProperty(globalThis, 'BroadcastChannel', {
+        configurable: true,
+        writable: true,
+        value: FakeBroadcastChannel,
+      });
+      httpService.get.mockResolvedValue({
+        json: () =>
+          Promise.resolve({
+            userSettings: {
+              general: { language: 'en', darkMode: false, displayName: '' },
+            },
+            systemSettings: {},
+          }),
+      } as unknown as Response);
+      storageService.get.mockResolvedValue(null);
+    });
+
+    afterEach(() => {
+      FakeBroadcastChannel.open = [];
+      if (original) {
+        Object.defineProperty(globalThis, 'BroadcastChannel', original);
+      } else {
+        Reflect.deleteProperty(globalThis, 'BroadcastChannel');
+      }
+    });
+
+    /** A second service instance, as a further tab of the same browser. */
+    async function openTab(): Promise<SettingsService> {
+      const tab = TestBed.runInInjectionContext(() => new SettingsService());
+      await tab.init();
+      return tab;
+    }
+
+    it('shows a name saved in one tab in the other open tab', async () => {
+      const tabA = await openTab();
+      const tabB = await openTab();
+
+      await tabA.setDisplayName('Vorname Test');
+
+      expect(tabB.getCachedUserSettings()?.general.displayName).toBe(
+        'Vorname Test'
+      );
+    });
+
+    it('stores the name once, from the tab that saved it', async () => {
+      const tabA = await openTab();
+      await openTab();
+      storageService.set.mockClear();
+
+      await tabA.setDisplayName('Vorname Test');
+
+      expect(storageService.set).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the name from another tab when this tab saves another setting', async () => {
+      const tabA = await openTab();
+      const tabB = await openTab();
+
+      await tabA.setDisplayName('Vorname Test');
+      await tabB.setDarkMode(true);
+
+      expect(storageService.set).toHaveBeenLastCalledWith(
+        'settings',
+        expect.objectContaining({
+          general: expect.objectContaining({
+            displayName: 'Vorname Test',
+            darkMode: true,
+          }),
+        })
+      );
+    });
+
+    it('keeps the name from another tab when this tab stores a language', async () => {
+      const tabA = await openTab();
+      const tabB = await openTab();
+
+      await tabA.setDisplayName('Vorname Test');
+      await tabB.setLanguage('de');
+
+      expect(storageService.set).toHaveBeenLastCalledWith(
+        'settings',
+        expect.objectContaining({
+          general: expect.objectContaining({
+            displayName: 'Vorname Test',
+            language: 'de',
+          }),
+        })
+      );
+    });
+
+    it('keeps the name from another tab when this tab stores map options', async () => {
+      const node = (): MapNodeSettings => ({
+        name: '',
+        link: { href: '' },
+        image: { src: '', size: 60 },
+        colors: { name: '', background: '', branch: '', link: '' },
+        font: { size: 16, style: 'normal', weight: 'normal' },
+      });
+      const mapOptions: UserMapOptions = {
+        centerOnResize: false,
+        autoBranchColors: true,
+        showLinktext: true,
+        branchStyle: 'tapered',
+        fontMaxSize: 70,
+        fontMinSize: 15,
+        fontIncrement: 5,
+        defaultNode: node(),
+        rootNode: node(),
+      };
+      const tabA = await openTab();
+      const tabB = await openTab();
+
+      await tabA.setDisplayName('Vorname Test');
+      await tabB.setUserMapOptions(mapOptions);
+
+      expect(storageService.set).toHaveBeenLastCalledWith('settings', {
+        general: expect.objectContaining({ displayName: 'Vorname Test' }),
+        mapOptions,
+      });
     });
   });
 

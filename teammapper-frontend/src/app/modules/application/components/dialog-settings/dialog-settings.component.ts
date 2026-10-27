@@ -1,5 +1,11 @@
-import { Component, Signal, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectorRef,
+  Component,
+  Signal,
+  computed,
+  inject,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   BRANCH_STYLES,
   BranchStyle,
@@ -73,12 +79,13 @@ export class DialogSettingsComponent {
   private mmpService = inject(MmpService);
   private mapSyncService = inject(MapSyncService);
   private translateService = inject(TranslateService);
+  private changeDetector = inject(ChangeDetectorRef);
 
   public readonly languages: string[];
   public readonly branchStyles: readonly BranchStyle[] = BRANCH_STYLES;
-  public settings: UserSettings | null;
+  public settings: UserSettings | null = null;
   /** The display name field's draft, stored when the field commits. */
-  public displayName: string;
+  public displayName = '';
   private readonly appliedMapOptions = toSignal(
     this.mmpService.additionalMapOptions$,
     { initialValue: null }
@@ -96,11 +103,20 @@ export class DialogSettingsComponent {
 
   constructor() {
     this.languages = SettingsService.LANGUAGES;
-    this.settings = withBranchStyle(
-      this.settingsService.getCachedUserSettings()
-    );
-    this.displayName = this.settings?.general.displayName ?? '';
     this.editMode = this.settingsService.getEditModeObservable();
+    this.settingsService.userSettings
+      .pipe(takeUntilDestroyed())
+      .subscribe(settings => this.showSettings(settings));
+  }
+
+  /**
+   * Show the latest settings, which another tab may have saved while the
+   * dialog is open, so the form never edits an outdated copy.
+   */
+  private showSettings(settings: UserSettings | null) {
+    this.settings = withBranchStyle(settings);
+    this.displayName = settings?.general.displayName ?? '';
+    this.changeDetector.markForCheck();
   }
 
   /**
@@ -110,8 +126,9 @@ export class DialogSettingsComponent {
   public async updateGeneralMapOptions() {
     if (!this.settings) return;
 
-    await this.settingsService.updateCachedSettings(this.settings);
-    this.mmpService.updateUserMapOptions(this.settings.mapOptions);
+    const mapOptions = this.settings.mapOptions;
+    await this.settingsService.setUserMapOptions(mapOptions);
+    this.mmpService.updateUserMapOptions(mapOptions);
   }
 
   /**
@@ -134,9 +151,9 @@ export class DialogSettingsComponent {
   public async updateLanguage() {
     if (!this.settings) return;
 
-    await this.settingsService.updateCachedSettings(this.settings);
-
-    this.translateService.use(this.settings.general.language);
+    const language = this.settings.general.language;
+    await this.settingsService.setLanguage(language);
+    this.translateService.use(language);
   }
 
   /**

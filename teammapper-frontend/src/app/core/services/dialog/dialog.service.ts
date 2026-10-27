@@ -5,6 +5,7 @@ import { HotkeysService } from 'angular2-hotkeys';
 import { filter, Subscription } from 'rxjs';
 import { DialogAboutComponent } from 'src/app/modules/application/components/dialog-about/dialog-about.component';
 import { DialogConnectionInfoComponent } from 'src/app/modules/application/components/dialog-connection-info/dialog-connection-info.component';
+import { DialogDisplayNameComponent } from 'src/app/modules/application/components/dialog-display-name/dialog-display-name.component';
 import { DialogImportMermaidComponent } from 'src/app/modules/application/components/dialog-import-mermaid/dialog-import-mermaid.component';
 import { DialogImportAiComponent } from 'src/app/modules/application/components/dialog-import-ai/dialog-import-ai.component';
 import { DialogPictogramsComponent } from 'src/app/modules/application/components/dialog-pictograms/dialog-pictograms.component';
@@ -29,6 +30,8 @@ export class DialogService {
     null;
   private importAiModalRef: MatDialogRef<DialogImportAiComponent> | null = null;
   private settingsModalRef: MatDialogRef<DialogSettingsComponent> | null = null;
+  private displayNameModalRef: MatDialogRef<DialogDisplayNameComponent> | null =
+    null;
 
   openPictogramDialog() {
     this.pictogramsModalRef = this.dialog.open(DialogPictogramsComponent);
@@ -116,6 +119,25 @@ export class DialogService {
       this.hotkeysService.unpause();
     });
     this.settingsModalRef = dialogRef;
+  }
+
+  /**
+   * Open the display name dialog from the client list. Hotkeys pause as for
+   * the settings dialog, so a name holding `-` removes no node.
+   */
+  openDisplayNameDialog() {
+    if (this.displayNameModalRef) return;
+
+    this.hotkeysService.pause();
+    const dialogRef = this.dialog.open(DialogDisplayNameComponent, {
+      width: '400px',
+      maxWidth: '95vw',
+    });
+    dialogRef.afterClosed().subscribe(() => {
+      this.displayNameModalRef = null;
+      this.hotkeysService.unpause();
+    });
+    this.displayNameModalRef = dialogRef;
   }
 
   private closeOnNavigation(dialogRef: MatDialogRef<unknown>): Subscription {
