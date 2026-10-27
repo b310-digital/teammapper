@@ -2,12 +2,22 @@
   <div class="background"></div>
 
   <div class="panel">
-    @for (clientColor of clientColors | async; track clientColor) {
-      <span>
-        <mat-icon aria-label="user color" [ngStyle]="{ color: clientColor }"
-          >account_circle</mat-icon
-        >
-      </span>
+    @for (client of clients | async; track client.clientId) {
+      @let label = client.displayName || ('CLIENT_LIST.ANONYMOUS' | translate);
+      @if (client.isSelf) {
+        <button
+          type="button"
+          class="client own-client"
+          aria-haspopup="dialog"
+          [attr.aria-label]="label"
+          (click)="editDisplayName()">
+          <teammapper-client-avatar [client]="client" />
+        </button>
+      } @else {
+        <span class="client" role="img" [attr.aria-label]="label">
+          <teammapper-client-avatar [client]="client" />
+        </span>
+      }
     }
   </div>
 </div>

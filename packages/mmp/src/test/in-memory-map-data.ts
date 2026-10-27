@@ -1,12 +1,15 @@
-import { collectSubtreeIds } from '@teammapper/shared';
+import { collectSubtreeIds, NodePropertyMapping } from '@teammapper/shared';
 import type {
   ExportNodeProperties,
   MapSnapshot,
   NodeProperty,
 } from '@teammapper/shared';
-import Utils from '../../utils/utils.js';
-import type { MapData, MapDataChange, MapNodeRecord } from './map-data.js';
-import { PropertyMapping } from './property-mapping.js';
+import Utils from '../utils/utils.js';
+import type {
+  MapData,
+  MapDataChange,
+  MapNodeRecord,
+} from '../map/data/map-data.js';
 
 type Listener = (change: MapDataChange) => void;
 
@@ -71,7 +74,7 @@ export default class InMemoryMapData implements MapData {
     // A record read earlier keeps its values, as the contract lets a reader
     // hold one for the length of a call.
     const next = Utils.cloneObject(entry);
-    writePath(next, PropertyMapping[property], value);
+    writePath(next, NodePropertyMapping[property], value);
     this.batch(() => {
       this.recordInChange(id).updated.add(id);
       this.entries.set(id, next);

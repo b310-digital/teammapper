@@ -6,9 +6,9 @@ The system SHALL let a user set a display name, stored as `displayName` in the g
 
 #### Scenario: Name applies to every map
 
-- **GIVEN** the user has set the display name "Anna Schmidt"
+- **GIVEN** the user has set the display name "Vorname Test"
 - **WHEN** the user opens a second map in the same browser
-- **THEN** the client on that map SHALL announce the display name "Anna Schmidt"
+- **THEN** the client on that map SHALL announce the display name "Vorname Test"
 
 #### Scenario: Name survives a reload
 
@@ -25,17 +25,22 @@ The system SHALL let a user set a display name, stored as `displayName` in the g
 
 ### Requirement: Display names are normalized
 
-The system SHALL normalize a display name before it saves it and after it receives one from another client. Normalizing SHALL turn a value that is not a string into the empty string, remove control and format characters, collapse every run of whitespace to one space, trim, and cut the result to 30 graphemes. The system SHALL render a display name as text only.
+The system SHALL normalize a display name before it saves it and after it receives one from another client. Normalizing SHALL turn a value that is not a string into the empty string, remove every character except letters, combining marks, digits, the space and `-'._`, collapse every run of spaces to one space, trim, and cut the result to 20 characters. The system SHALL render a display name as text only.
 
 #### Scenario: Whitespace is collapsed
 
-- **WHEN** the user saves the display name `"  Anna   Schmidt "`
-- **THEN** the stored display name SHALL be "Anna Schmidt"
+- **WHEN** the user saves the display name `"  Vorname   Test "`
+- **THEN** the stored display name SHALL be "Vorname Test"
 
 #### Scenario: Long name is cut
 
-- **WHEN** the user saves a display name of 40 characters
-- **THEN** the stored display name SHALL hold its first 30 graphemes
+- **WHEN** the user saves a display name of 30 characters
+- **THEN** the stored display name SHALL hold its first 20 characters
+
+#### Scenario: Rare characters are removed
+
+- **WHEN** the user saves the display name "Vor\tname 🦊"
+- **THEN** the stored display name SHALL be "Vorname"
 
 #### Scenario: Blank name clears it
 
@@ -46,12 +51,12 @@ The system SHALL normalize a display name before it saves it and after it receiv
 
 - **WHEN** a remote client announces a display name that is a number, or a string of 1000 characters
 - **THEN** the local client SHALL treat the number as no display name
-- **AND** SHALL show at most the first 30 graphemes of the string
+- **AND** SHALL show at most the first 20 characters of the string
 
 #### Scenario: Remote client sends markup
 
 - **WHEN** a remote client announces the display name `<img src=x onerror=alert(1)>`
-- **THEN** the local client SHALL show it as literal text
+- **THEN** the local client SHALL show "img srcx onerroralert1" cut to 20 characters
 - **AND** SHALL run no script
 
 ### Requirement: User edits the display name from the own client icon
@@ -61,15 +66,15 @@ The own client's entry in the client list SHALL be a button. Activating it SHALL
 #### Scenario: Set a name from the client list
 
 - **GIVEN** the user has no display name
-- **WHEN** the user clicks the own client icon, types "Anna Schmidt" and saves
-- **THEN** the display name SHALL be "Anna Schmidt"
-- **AND** the own client icon SHALL show "AS"
+- **WHEN** the user clicks the own client icon, types "Vorname Test" and saves
+- **THEN** the display name SHALL be "Vorname Test"
+- **AND** the own client icon SHALL show "VT"
 
 #### Scenario: Cancel keeps the name
 
-- **GIVEN** the display name is "Anna Schmidt"
-- **WHEN** the user opens the dialog, types "Bob" and cancels
-- **THEN** the display name SHALL be "Anna Schmidt"
+- **GIVEN** the display name is "Vorname Test"
+- **WHEN** the user opens the dialog, types "Zweiter" and cancels
+- **THEN** the display name SHALL be "Vorname Test"
 
 #### Scenario: Read-only map
 
@@ -83,30 +88,20 @@ The own client's entry in the client list SHALL be a button. Activating it SHALL
 
 ### Requirement: The client list shows initials
 
-Each entry of the client list SHALL show the initials of the client's display name in a circle filled with the client color. The initials SHALL be the upper-cased first grapheme of the first word and, when the name has two or more words, of the last word. The initials SHALL use black or white, whichever contrasts more with the client color. An entry without a display name SHALL show the generic client icon in its client color, as today. Each entry SHALL carry the full display name as its accessible label, or "Anonymous" without one.
+Each entry of the client list SHALL show the initials of the client's display name in dark text on a white circle with a ring in the client color. The initials SHALL be the upper-cased first character of the first word and, when the name has two or more words, of the last word. An entry without a display name SHALL show the generic client icon in its client color, as today. Each entry SHALL carry the full display name as its accessible label, or "Anonymous" without one.
 
 #### Scenario: Two-word name
 
-- **WHEN** a client with the display name "Anna Maria Schmidt" is on the map
-- **THEN** its entry SHALL show "AS"
+- **WHEN** a client with the display name "Vorname Zweitname Test" is on the map
+- **THEN** its entry SHALL show "VT"
 
 #### Scenario: One-word name
 
 - **WHEN** a client with the display name "anna" is on the map
 - **THEN** its entry SHALL show "A"
 
-#### Scenario: Name starting with an emoji
-
-- **WHEN** a client with the display name "🦊 Fox" is on the map
-- **THEN** its entry SHALL show "🦊F"
-
 #### Scenario: Anonymous client
 
 - **WHEN** a client without a display name is on the map
 - **THEN** its entry SHALL show the generic client icon in its client color
 - **AND** its accessible label SHALL be the translated "Anonymous"
-
-#### Scenario: Readable initials on every palette color
-
-- **WHEN** a client's color is any color of the client color palette
-- **THEN** the contrast ratio between the initials and the circle SHALL be at least 4.5:1

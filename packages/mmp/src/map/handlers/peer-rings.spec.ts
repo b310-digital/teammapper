@@ -1,6 +1,5 @@
-import { create } from '../../index.js';
 import MmpMap from '../map.js';
-import InMemoryMapData from '../data/in-memory-map-data.js';
+import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { nodeRecord } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
@@ -24,7 +23,7 @@ function makeMap(): { map: MmpMap; data: InMemoryMapData } {
   ]);
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  return { map: create('map', ref, undefined, data), data };
+  return { map: new MmpMap(ref, undefined, data), data };
 }
 
 function strokeOf(map: MmpMap, id: string): string | undefined {
@@ -40,7 +39,7 @@ describe('a full redraw', () => {
     const { map } = makeMap();
     map.nodes.highlightNodeWithColor('child', PEER_COLOR);
 
-    map.options.update('edit', false);
+    map.instance.setEditable(false);
 
     expect(map.draw.ringOf('child')).toBe(PEER_COLOR);
     expect(strokeOf(map, 'child')).toBe(PEER_COLOR);
@@ -51,7 +50,7 @@ describe('a full redraw', () => {
     map.nodes.selectNode('child');
     const ring = map.draw.ringOf('child');
 
-    map.options.update('edit', false);
+    map.instance.setEditable(false);
 
     expect(ring).not.toBeNull();
     expect(map.draw.ringOf('child')).toBe(ring);
@@ -62,7 +61,7 @@ describe('a full redraw', () => {
     const { map } = makeMap();
     map.nodes.highlightNodeWithColor('child', PEER_COLOR);
 
-    map.options.update('drag', false);
+    map.options.drag = false;
 
     expect(map.draw.ringOf('child')).toBe(PEER_COLOR);
   });
@@ -91,11 +90,11 @@ describe('a full redraw', () => {
 });
 
 describe('an unchanged option', () => {
-  it.each(['drag', 'edit'])('redraws nothing for %s', property => {
+  it.each(['drag', 'edit'] as const)('redraws nothing for %s', property => {
     const { map } = makeMap();
     const drawAll = jest.spyOn(map.draw, 'drawAll');
 
-    map.options.update(property, true);
+    map.options[property] = true;
 
     expect(drawAll).not.toHaveBeenCalled();
   });

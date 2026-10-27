@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import Events, { MmpEventCallback } from './handlers/events.js';
+import Events, { MmpEventCallback, MmpEventType } from './handlers/events.js';
 import Zoom from './handlers/zoom.js';
 import Draw from './handlers/draw.js';
 import Options, { OptionParameters } from './options.js';
@@ -13,9 +13,8 @@ import type { MapData } from './data/map-data.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
-  MmpEventType,
   NodeProperty,
-  NodePropertyValue,
+  NodePropertyValues,
   UserNodeProperties,
 } from '@teammapper/shared';
 
@@ -23,7 +22,6 @@ import type {
  * Initialize all handlers and return a mmp object.
  */
 export default class MmpMap {
-  public id: string;
   public dom: DomElements;
   /** The nodes of the map. mmp reads and writes them here and keeps none. */
   public readonly data: MapData;
@@ -39,26 +37,24 @@ export default class MmpMap {
   public copyPaste: CopyPaste;
   public viewState: ViewState;
 
-  public instance!: MmpInstance;
+  public readonly instance: MmpInstance;
 
   private readonly unsubscribeData: () => void;
+  private destroyed = false;
 
   /**
    * Create all handler instances, set some map behaviors, draw the nodes the
    * map data holds and return a mmp instance. The map selects the main root
    * and fires `nodeSelect`, and emits no `mapChange` for this first draw.
-   * @param {string} id
    * @param {HTMLElement} ref
    * @param {OptionParameters} options
    * @param {MapData} data
    */
   constructor(
-    id: string,
     ref: HTMLElement,
     options: OptionParameters | undefined,
     data: MapData
   ) {
-    this.id = id;
     this.data = data;
 
     this.events = new Events();
@@ -74,38 +70,58 @@ export default class MmpMap {
 
     this.dom = this.draw.create();
 
-    if (this.options.centerOnResize === true) {
-      d3.select(window).on('resize.' + this.id, () => {
-        this.zoom.center();
-      });
-    }
+    this.centerOnWindowResize(this.options.centerOnResize === true);
 
     if (this.options.zoom === true) {
       this.dom.svg.call(this.zoom.getZoomBehavior());
     }
 
-    this.createMmpInstance();
+    this.instance = this.createMmpInstance();
 
     this.unsubscribeData = data.subscribe(this.nodes.onChange);
     this.nodes.drawReplaced();
   }
 
   /**
+   * Center the map on every window resize, or stop doing so. The map adds
+   * and removes its own function, so it removes no listener another map
+   * registered.
+   * @param {boolean} flag
+   */
+  public centerOnWindowResize(flag: boolean) {
+    if (flag) window.addEventListener('resize', this.onResize);
+    else window.removeEventListener('resize', this.onResize);
+  }
+
+  /**
    * Remove the map for good: its svg, every subscription and the resize
-   * listener on the window.
+   * listener on the window. A second call does nothing.
    */
   private destroy = () => {
-    d3.select(window).on('resize.' + this.id, null);
+    if (this.destroyed) return;
+    this.destroyed = true;
+
+    this.centerOnWindowResize(false);
     this.unsubscribeData();
     this.events.unsubscribeAll();
     this.draw.destroy();
     this.dom.svg.remove();
+  };
 
-    const instanceRecord = this.instance as unknown as Record<string, unknown>;
-    const props = Object.keys(instanceRecord);
-    for (const prop of props) {
-      delete instanceRecord[prop];
-    }
+  /** Center the map when the window resizes. */
+  private onResize = () => {
+    this.zoom.center();
+  };
+
+  /**
+   * Switch editing and dragging on or off together. The handlers read both
+   * flags when an event arrives, so the map draws nothing anew. A name edit
+   * that runs already holds its own handlers, so turning editing off ends it.
+   */
+  private setEditable = (editable: boolean) => {
+    this.options.edit = editable;
+    this.options.drag = editable;
+    if (!editable) this.draw.cancelNameEditing();
   };
 
   /**
@@ -113,7 +129,7 @@ export default class MmpMap {
    * @return {MmpInstance} mmpInstance
    */
   private createMmpInstance(): MmpInstance {
-    return (this.instance = {
+    return {
       addNode: this.nodes.addNode,
       addTree: this.nodes.addTree,
       center: this.zoom.center,
@@ -141,10 +157,12 @@ export default class MmpMap {
       destroy: this.destroy,
       removeNode: this.nodes.removeNode,
       selectNode: this.nodes.selectNode,
+      setEditable: this.setEditable,
       updateNode: this.nodes.updateNode,
+      updateOption: this.options.update,
       zoomIn: this.zoom.zoomIn,
       zoomOut: this.zoom.zoomOut,
-    });
+    };
   }
 }
 
@@ -186,11 +204,14 @@ export interface MmpInstance {
   destroy: () => void;
   removeNode: (id?: string) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;
-  updateNode: (
-    property: NodeProperty | string,
-    value: NodePropertyValue | unknown,
+  setEditable: (editable: boolean) => void;
+  updateNode: <P extends NodeProperty>(
+    property: P,
+    value: NodePropertyValues[P],
     id?: string
   ) => void;
+  /** Apply a setting the settings dialog changed to the open map. */
+  updateOption: (property: string, value: unknown) => void;
   zoomIn: (duration?: number) => void;
   zoomOut: (duration?: number) => void;
 }

@@ -8,7 +8,7 @@ require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-
 const setupWorkerDatabase = async (workerId: string): Promise<string> => {
   const connection = await mainTestDataSource()
   const databaseName = buildDatabaseName(workerId)
-  await connection.query(`DROP DATABASE IF EXISTS "${databaseName}"`)
+  await dropDatabase(connection, databaseName)
   await connection.query(`CREATE DATABASE "${databaseName}"`)
   await connection.destroy()
 
@@ -46,9 +46,12 @@ const workerDataSourceConfig = (databaseName: string): TypeOrmModuleOptions => {
     synchronize: true,
     autoLoadEntities: true,
     dropSchema: true,
+    // Parallel workers create and drop databases at the same time, and
+    // Postgres runs those one after another, so a TRUNCATE can wait seconds
+    // for its lock on a busy CI runner.
     extra: {
-      query_timeout: 1000,
-      statement_timeout: 1000,
+      query_timeout: 10000,
+      statement_timeout: 10000,
     },
   }
 }
@@ -64,8 +67,20 @@ export const destroyWorkerDatabase = async (
   const databaseName = buildDatabaseName(workerId)
   // delete worker database:
   const connection = await mainTestDataSource()
-  await connection.query(`DROP DATABASE IF EXISTS "${databaseName}"`)
+  await dropDatabase(connection, databaseName)
   await connection.destroy()
+}
+
+// FORCE terminates sessions still connected to the database. A suite that
+// imports AppModule opens a second pool on it, and a plain DROP DATABASE
+// waits for that pool until the jest hook times out.
+const dropDatabase = async (
+  connection: DataSource,
+  databaseName: string
+): Promise<void> => {
+  await connection.query(
+    `DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`
+  )
 }
 
 const buildDatabaseName = (workerId: string): string => {

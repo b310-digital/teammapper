@@ -40,6 +40,19 @@ export type ClientColorMapping = Record<string, ClientColorMappingValue>;
 export interface ClientColorMappingValue {
   nodeId: string;
   color: string;
+  /** Normalized; the empty string means the client has no display name. */
+  displayName: string;
+  /** Whether the entry is the local client. */
+  isSelf: boolean;
+}
+
+/** One connected client, as the client list shows it. */
+export interface ClientListEntry {
+  /** The client's awareness id, unique per connection. */
+  clientId: string;
+  color: string;
+  displayName: string;
+  isSelf: boolean;
 }
 
 /** The keys a node's Y.Map holds, one per node attribute. */
@@ -166,9 +179,12 @@ export function resolveClientColor(
   );
 }
 
+/** The selections a mapping holds, which is all findAffectedNodes reads. */
+type SelectionMapping = Record<string, Pick<ClientColorMappingValue, 'nodeId'>>;
+
 export function findAffectedNodes(
-  oldMapping: ClientColorMapping,
-  newMapping: ClientColorMapping
+  oldMapping: SelectionMapping,
+  newMapping: SelectionMapping
 ): Set<string> {
   const nodes = new Set<string>();
   for (const value of Object.values(oldMapping)) {

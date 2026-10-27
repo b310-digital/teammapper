@@ -37,17 +37,22 @@ The server SHALL expose a WebSocket endpoint at the `/yjs` path, mounted on the 
 - **THEN** the server SHALL close the WebSocket connection with an appropriate error code
 
 ### Requirement: Y.Doc structure mirrors node model
-Each Y.Doc SHALL contain a `Y.Map("nodes")` where keys are node IDs and values are `Y.Map` instances with the same fields as `ExportNodeProperties` (id, parent, name, isRoot, locked, k, coordinates, colors, font, image, link). `isRoot` SHALL mark the main root. A node with no parent is a root, and a Y.Doc MAY hold several roots. Exactly one node SHALL carry the main-root mark. The detached property SHALL NOT be written. Each attribute group (`colors`, `font`, `image`, `link`) SHALL be a nested `Y.Map` with one key per attribute, and `coordinates` SHALL stay a plain object. Readers SHALL also accept an attribute group stored as a plain object. A separate `Y.Map("mapOptions")` SHALL hold map-level metadata.
+
+Each Y.Doc SHALL contain a `Y.Map("nodes")` where keys are node IDs and values are `Y.Map` instances with the same fields as `ExportNodeProperties` (id, parent, name, isRoot, protected, k, coordinates, colors, font, image, link). `isRoot` SHALL mark the main root. A node with no parent is a root, and a Y.Doc MAY hold several roots. Exactly one node SHALL carry the main-root mark. The detached and locked properties SHALL NOT be written. Each attribute group (`colors`, `font`, `image`, `link`) SHALL be a nested `Y.Map` with one key per attribute, and `coordinates` SHALL stay a plain object. Readers SHALL also accept an attribute group stored as a plain object. A separate `Y.Map("mapOptions")` SHALL hold map-level metadata.
 
 #### Scenario: Y.Doc hydrated from database
+
 - **WHEN** a Y.Doc is created from database rows
 - **THEN** each MmpNode row SHALL be converted to a Y.Map entry in the `nodes` map with all `ExportNodeProperties` fields populated
 
 #### Scenario: Node added to Y.Doc
+
 - **WHEN** a client adds a new entry to the `nodes` Y.Map
 - **THEN** the entry SHALL be a Y.Map containing all required `ExportNodeProperties` fields
+- **AND** `protected` SHALL be `false` unless the node is protected
 
 #### Scenario: Y.Doc holds several roots
+
 - **WHEN** a map with three trees is hydrated
 - **THEN** the `nodes` map SHALL hold three entries with no parent
 - **AND** one of them SHALL carry the main-root mark
@@ -153,34 +158,17 @@ The frontend SHALL expose a reactive `ConnectionStatus` observable (`'connected'
 
 #### Scenario: Connection reset during cleanup
 - **WHEN** the Yjs connection is reset (e.g., navigating away or switching maps)
-- **THEN** the connection status SHALL be reset to `null` as part of `resetYjs()` cleanup
+- **THEN** `YjsSyncService.destroy()` SHALL reset the connection status to `null`
 
-### Requirement: Yjs enabled by default
-The `YJS_ENABLED` feature flag SHALL default to `true` when the environment variable is not set. The backend `isYjsEnabled()` method SHALL treat a missing or undefined `YJS_ENABLED` environment variable as `true`. Only an explicit value of `false` (case-insensitive) SHALL disable Yjs.
-
-#### Scenario: Environment variable not set
-- **WHEN** the `YJS_ENABLED` environment variable is absent from the runtime environment
-- **THEN** the server SHALL behave as if `YJS_ENABLED=true` and activate the Yjs sync path
-
-#### Scenario: Environment variable explicitly set to false
-- **WHEN** the `YJS_ENABLED` environment variable is set to `false` (any casing)
-- **THEN** the server SHALL disable the Yjs sync path and fall back to Socket.io
-
-#### Scenario: Environment variable explicitly set to true
-- **WHEN** the `YJS_ENABLED` environment variable is set to `true` (any casing)
-- **THEN** the server SHALL activate the Yjs sync path
-
-### Requirement: Socket.io removal
-The server SHALL NOT use Socket.io for any data synchronization or presence operations. The `@nestjs/platform-socket.io`, `socket.io`, and `socket.io-client` dependencies SHALL be removed. The frontend SHALL NOT import or use `socket.io-client`.
-
-Note: During the phased rollout, both Socket.io and Yjs code paths coexist behind feature flags (`YJS_ENABLED` backend, `featureFlagYjs` frontend). This requirement is fully satisfied after the cleanup phase (task 13) removes all Socket.io code and feature flag branching.
+### Requirement: Yjs is the only sync path
+The server and the frontend SHALL sync map data and presence through Yjs alone. No feature flag SHALL switch the sync path, and no Socket.io code path SHALL exist. The server SHALL NOT depend on `@nestjs/platform-socket.io` or `socket.io`, and the frontend SHALL NOT depend on `socket.io-client`.
 
 #### Scenario: No Socket.io listeners on the server
-- **WHEN** the server is running after the cleanup phase is complete
+- **WHEN** the server is running
 - **THEN** there SHALL be no Socket.io gateway or `@SubscribeMessage` handlers registered
 
 #### Scenario: No Socket.io client on the frontend
-- **WHEN** the frontend application is built after the cleanup phase is complete
+- **WHEN** the frontend application is built
 - **THEN** the `socket.io-client` package SHALL NOT be included in the bundle
 
 ### Requirement: The Y.Doc carries node images as references or data URLs

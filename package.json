@@ -7,7 +7,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.33.4",
   "engines": {
-    "node": "^24.0"
+    "node": ">=24.11.1"
   },
   "scripts": {
     "dev": "pnpm run build:packages && concurrently \"pnpm --filter @teammapper/shared run build:watch\" \"pnpm --filter @teammapper/mmp run build:watch\" \"pnpm --filter teammapper-backend start:dev\" \"pnpm --filter teammapper-frontend start\"",
@@ -34,11 +34,8 @@
     "tsc": "pnpm --filter '*' run tsc"
   },
   "devDependencies": {
-    "@secretlint/secretlint-rule-preset-recommend": "^11.7.1",
     "concurrently": "9.2.4",
-    "eslint": "^10.10.0",
     "prettier": "^3.9.6",
-    "secretlint": "^11.7.1",
     "typescript": "~5.9.3"
   }
 }

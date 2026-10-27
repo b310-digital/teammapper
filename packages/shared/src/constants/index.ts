@@ -12,6 +12,20 @@ export const SUPPORTED_LANGUAGES = [
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
+/** The ways the renderer can draw a branch. The first one is the default. */
+export const BRANCH_STYLES = ['tapered', 'curved', 'straight'] as const;
+
+export type BranchStyle = (typeof BRANCH_STYLES)[number];
+
+/**
+ * The branch style the value names, else the default. User settings cached
+ * before branch styles lack the value, and a stale cache may hold an unknown
+ * one; neither is an error.
+ */
+export function branchStyleOf(value: unknown): BranchStyle {
+  return BRANCH_STYLES.find(style => style === value) ?? BRANCH_STYLES[0];
+}
+
 export const MAX_NODE_NAME_LENGTH = 512;
 export const MAX_IMAGE_SRC_LENGTH = 200_000;
 export const MAX_LINK_HREF_LENGTH = 2048;

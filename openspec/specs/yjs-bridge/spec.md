@@ -2,133 +2,174 @@
 
 ## Purpose
 
-Defines how the frontend writes renderer events into the Y.Doc and applies remote Y.Doc changes to the renderer, including import, load and map deletion.
+Defines the `MapData` contract through which mmp reads and writes the nodes of a mind map, its implementation over the Y.Doc, and how the frontend creates, imports, resets and deletes a map on top of it.
 
 ## Requirements
 
-### Requirement: Local MMP events write to Y.Doc
-When the user performs an action in MMP (create, update, remove node), the MapSyncService bridge SHALL write the change to the local Y.Doc. The bridge SHALL NOT send individual network messages — Yjs handles synchronization automatically. All local write operations SHALL use `'local'` as the transaction origin so that `Y.UndoManager` can track them.
+### Requirement: mmp reads and writes nodes through MapData
+mmp SHALL read every node attribute through the `MapData` contract (`packages/mmp/src/map/data/map-data.ts`) and SHALL keep no copy of the nodes of its own. mmp SHALL write nodes only through the typed methods of the contract: `addNodes`, `updateNode`, `removeNode`, `replaceMap` and `batch`. No component SHALL send a network message per node edit; Yjs syncs the Y.Doc.
 
-#### Scenario: User creates a node
-- **WHEN** MMP fires a `nodeCreate` event with the new node's `ExportNodeProperties`
-- **THEN** the bridge SHALL create a new Y.Map entry in `yDoc.getMap('nodes')` with the node's ID as key and all properties as values
-- **AND** the write SHALL be wrapped in `yDoc.transact(() => { ... }, 'local')`
+#### Scenario: User adds a node
+- **WHEN** the user adds a node in mmp
+- **THEN** mmp SHALL call `MapData.addNodes` with the new node's `ExportNodeProperties`
+- **AND** mmp SHALL draw the node only after the map data reports the change
 
 #### Scenario: User updates a node property
-- **WHEN** MMP fires a `nodeUpdate` event with the updated property and value
-- **THEN** the bridge SHALL update the corresponding property on the node's Y.Map entry in the `nodes` map
-- **AND** the write SHALL be wrapped in `yDoc.transact(() => { ... }, 'local')`
+- **WHEN** the user changes one property of a node, such as `backgroundColor`
+- **THEN** mmp SHALL call `MapData.updateNode` with the node id, the mmp property name and the value
 
 #### Scenario: User removes a node
-- **WHEN** MMP fires a `nodeRemove` event with the removed node's properties
-- **THEN** the bridge SHALL delete the node's entry and all descendant entries from `yDoc.getMap('nodes')`
-- **AND** the `yDoc.transact()` call SHALL use `'local'` as the origin
+- **WHEN** the user removes a node
+- **THEN** mmp SHALL call `MapData.removeNode` with the node id
+- **AND** the map data SHALL remove the node and all its descendants
 
-#### Scenario: User pastes multiple nodes
-- **WHEN** MMP fires a `nodePaste` event with an array of node properties
-- **THEN** the bridge SHALL add all nodes to the Y.Doc `nodes` map within a single `yDoc.transact()` call
-- **AND** the `yDoc.transact()` call SHALL use `'local'` as the origin
+#### Scenario: Write to a missing node
+- **WHEN** mmp calls `updateNode` or `removeNode` with an id the map data does not hold
+- **THEN** the map data SHALL change nothing and SHALL notify no listener
 
-#### Scenario: User updates map options
-- **WHEN** the user changes map options (e.g., map name)
-- **THEN** the bridge SHALL update the corresponding fields in `yDoc.getMap('mapOptions')`
-- **AND** the write SHALL be wrapped in `yDoc.transact(() => { ... }, 'local')`
+#### Scenario: User pastes nodes
+- **WHEN** the user pastes copied nodes
+- **THEN** mmp SHALL write all pasted nodes with `addNodes` inside one `MapData.batch` call
 
-### Requirement: Remote Y.Doc changes apply to MMP
-The bridge SHALL observe the Y.Doc for remote changes and apply them to MMP using its existing API. Remote changes SHALL be applied with `notifyWithEvent: false` to prevent echo loops.
+### Requirement: YjsMapData stores the nodes in the Y.Doc
+The frontend SHALL implement `MapData` in `YjsMapData` (`teammapper-frontend/src/app/core/services/map-sync/yjs-map-data.ts`) over the `nodes` Y.Map of the Y.Doc. Each node SHALL be a Y.Map stored under the node id. Every write SHALL run in a `yDoc.transact()` call whose origin is `LOCAL_ORIGIN` (`'local'`), so that `Y.UndoManager` tracks it.
 
-#### Scenario: Remote node added
-- **WHEN** the Y.Doc `nodes` map emits an add event from a remote transaction
-- **THEN** the bridge SHALL call `mmpService.addNode()` with the node properties and `notifyWithEvent: false`
+#### Scenario: Add writes one Y.Map per node
+- **WHEN** mmp calls `addNodes` with one or more nodes
+- **THEN** `YjsMapData` SHALL set one Y.Map per node in the `nodes` map, keyed by the node id, in one transaction with origin `LOCAL_ORIGIN`
 
-#### Scenario: Remote node property updated
-- **WHEN** the Y.Doc `nodes` map emits an update event for an existing node from a remote transaction
-- **THEN** the bridge SHALL call `mmpService.updateNode()` with the changed property, value, `notifyWithEvent: false`, and the node ID
+#### Scenario: Update writes one key of an attribute group
+- **WHEN** mmp calls `updateNode` with a property of an attribute group, such as `backgroundColor`
+- **THEN** `YjsMapData` SHALL look up the storage path in `NodePropertyMapping`
+- **AND** SHALL set only that key in the nested Y.Map of the group, so a concurrent edit of another key in the same group survives the merge
 
-#### Scenario: Remote node removed
-- **WHEN** the Y.Doc `nodes` map emits a delete event from a remote transaction
-- **THEN** the bridge SHALL call `mmpService.removeNode()` with the node ID and `notifyWithEvent: false`, but only if the node exists in MMP
+#### Scenario: Remove deletes the subtree in one transaction
+- **WHEN** mmp calls `removeNode` for a node with descendants
+- **THEN** `YjsMapData` SHALL delete the node and every descendant from the `nodes` map in one transaction with origin `LOCAL_ORIGIN`
 
-#### Scenario: Remote map options updated
-- **WHEN** the Y.Doc `mapOptions` map emits a change event from a remote transaction
-- **THEN** the bridge SHALL call `mmpService.updateAdditionalMapOptions()` with the updated options
+#### Scenario: Batch runs as one transaction
+- **WHEN** mmp calls `batch` with several writes
+- **THEN** `YjsMapData` SHALL run all writes in one transaction, so peers receive one update
+- **AND** a nested `batch` SHALL join the transaction of the outer one
 
-### Requirement: Echo prevention
-The bridge SHALL prevent echo loops where a local MMP event writes to Y.Doc, which then triggers a Y.Doc observation that would re-apply the same change to MMP. The bridge SHALL use origin-based filtering: skip transactions that are local AND whose origin is NOT the `Y.UndoManager` instance. UndoManager-originated transactions are local but SHALL be applied to MMP because MMP was not the source of the change.
+### Requirement: Every change reaches mmp as one MapDataChange
+`YjsMapData` SHALL observe the `nodes` map and report each transaction to its `subscribe` listeners as one `MapDataChange` that lists the `added`, `updated` and `removed` node ids and sets `replaced` when the transaction adds or rewrites the main root. A local write, a peer's write and an undo SHALL reach mmp through this one path. The map data SHALL notify the listeners before a write returns, and inside `batch` once, when the outermost batch ends.
 
-#### Scenario: Local change does not echo back
-- **WHEN** the user creates a node locally (MMP event -> Y.Doc write with origin `'local'`)
-- **THEN** the Y.Doc observer SHALL detect the transaction as local with origin `'local'` and SHALL NOT apply it back to MMP
+#### Scenario: Peer adds a node
+- **WHEN** a peer's Y.Doc update adds a node to the `nodes` map
+- **THEN** `YjsMapData` SHALL call each listener with a change whose `added` list holds the node id
+- **AND** mmp SHALL draw the node
 
-#### Scenario: Remote change is applied
-- **WHEN** a remote client creates a node (Y.Doc sync update received)
-- **THEN** the Y.Doc observer SHALL detect the change as `transaction.local === false` and SHALL apply it to MMP
+#### Scenario: Undo restores a node
+- **WHEN** `Y.UndoManager` restores a removed node
+- **THEN** `YjsMapData` SHALL report the node id in `added`
+- **AND** mmp SHALL draw the node the same way it draws a peer's node
 
-#### Scenario: UndoManager change is applied to MMP
-- **WHEN** the user triggers undo/redo and `Y.UndoManager` creates a local transaction (origin = UndoManager instance)
-- **THEN** the Y.Doc observer SHALL detect `transaction.origin === yUndoManager` and SHALL apply the changes to MMP
-- **AND** MMP SHALL re-render the affected nodes
+#### Scenario: Change inside an attribute group
+- **WHEN** a transaction changes a key inside a node's nested Y.Map, such as `colors`
+- **THEN** the change SHALL list the node id in `updated` once, and in no other list
 
-### Requirement: Coordinate preservation on node restore
-When the Y.Doc observer applies a node-add to MMP (from undo/redo or remote sync), and the node's Y.Map contains non-zero coordinates, the bridge SHALL ensure those coordinates are used as the node's position. The MMP layer SHALL NOT recalculate positions for nodes that already have stored coordinates from Y.Doc.
+#### Scenario: Transaction that touches no node
+- **WHEN** a transaction changes the `nodes` map without adding, updating or removing a node and without replacing the main root
+- **THEN** `YjsMapData` SHALL notify no listener
 
-**Bug reference:** `nodes.ts:124` unconditionally calls `calculateCoordinates(node)`, overwriting the coordinates passed in from Y.Doc with freshly calculated positions. This causes restored nodes to appear at "append to bottom of siblings" positions rather than their original locations.
+### Requirement: mmp redraws only the nodes a change touches
+mmp SHALL subscribe to the map data when it creates the map and unsubscribe when it removes the map. For a change with `replaced` false, mmp SHALL redraw the added and updated nodes, drop the removed nodes and redraw the parents of the removed nodes. For a change with `replaced` true, mmp SHALL redraw the whole map, select the main root and center the view. After every change mmp SHALL emit `mapChange`.
 
-#### Scenario: Undo of delete preserves original coordinates
+#### Scenario: Peer updates one node
+- **WHEN** the map data reports a change whose `updated` list holds one node id
+- **THEN** mmp SHALL redraw that node and leave every other drawn node in place
+
+#### Scenario: Selected node removed by a peer
+- **WHEN** a change removes the node the user has selected
+- **THEN** mmp SHALL deselect it
+
+#### Scenario: Import replaces the map
+- **WHEN** a change arrives with `replaced` set
+- **THEN** mmp SHALL cancel a running drag without writing, draw the whole map again, select the main root and center the view on it
+
+### Requirement: mmp emits no node events
+mmp SHALL emit only the events `nodeSelect`, `nodeDeselect`, `nodeProtected` and `mapChange`. A node write SHALL reach other components through the map data and the `mapChange` event that follows it.
+
+#### Scenario: Frontend follows a change
+- **WHEN** mmp emits `mapChange`
+- **THEN** the frontend SHALL read the selected node from mmp and update the attached node and the cached map
+
+### Requirement: Stored coordinates decide a node's position
+mmp SHALL draw every node at the coordinates the map data holds. mmp SHALL compute coordinates only when it creates a new child node whose properties carry no coordinates.
+
+#### Scenario: Undo of delete keeps the original coordinates
 - **WHEN** a node at coordinates `{x: 200, y: -120}` is deleted and the user triggers undo
-- **AND** the Y.UndoManager restores the node to Y.Doc with its original coordinates
-- **THEN** the bridge SHALL pass the coordinates from Y.Doc to MMP
-- **AND** MMP SHALL render the node at `{x: 200, y: -120}`, NOT at a recalculated position
+- **THEN** the map data SHALL hold the node at `{x: 200, y: -120}`
+- **AND** mmp SHALL draw the node at `{x: 200, y: -120}`
 
-#### Scenario: Undo of subtree delete preserves all node coordinates
-- **WHEN** a parent node with descendants is deleted (single transaction) and the user triggers undo
-- **THEN** ALL restored nodes (parent and descendants) SHALL retain their original coordinates from Y.Doc
-- **AND** no node SHALL be repositioned by `calculateCoordinates()`
+#### Scenario: Peer adds a node with coordinates
+- **WHEN** a peer adds a node with specific coordinates
+- **THEN** mmp SHALL draw the node at the coordinates from the map data
 
-#### Scenario: Remote node-add with coordinates preserves position
-- **WHEN** a remote client creates a node with specific coordinates
-- **AND** the Y.Doc sync delivers the node with those coordinates
-- **THEN** the bridge SHALL apply the node to MMP at the coordinates from Y.Doc
+### Requirement: Parent lookup does not depend on change order
+mmp SHALL resolve the parent of each node of a change from the map data, whatever order the change lists the ids in. A node whose parent the map data lacks SHALL draw as a root until a later change adds the parent, and a draw of the parent SHALL then draw the node under it.
 
-### Requirement: Parent-first ordering on batch node restore
-When a Y.Doc transaction adds multiple nodes (e.g., undo of a subtree delete), the observer SHALL process parent nodes before their children. This ensures that when `addNode()` is called for a child, the parent already exists in MMP's node map and can be resolved.
-
-**Bug reference:** `keysChanged.forEach` in `handleTopLevelNodeChanges` (`map-sync.service.ts:1557`) iterates in Y.Map internal order, which may not be parent-first. A child node processed before its parent causes `getNode(parentId)` to return `undefined`, corrupting the parent reference and position.
-
-#### Scenario: Subtree restore processes parent before children
+#### Scenario: Subtree restore in one transaction
 - **GIVEN** a parent node `A` with child `B` and grandchild `C` were deleted in one transaction
-- **WHEN** the user triggers undo and all three nodes are restored in one transaction
-- **THEN** the observer SHALL add `A` to MMP before `B`, and `B` before `C`
-- **AND** each child SHALL have a valid parent reference in MMP at the time of insertion
+- **WHEN** the user triggers undo and all three nodes return in one transaction
+- **THEN** mmp SHALL draw `B` under `A` and `C` under `B`, whatever order the change lists them in
 
-#### Scenario: Flat siblings restored in any order
-- **GIVEN** two sibling nodes `B` and `C` (both children of `A`) were deleted
-- **WHEN** the undo restores them
-- **THEN** `A` SHALL be added first (parent-first), but `B` and `C` MAY be added in any order relative to each other
+### Requirement: Map options sync through the Y.Doc
+The frontend SHALL write the map settings `fontMaxSize`, `fontMinSize` and `fontIncrement` to the `mapOptions` Y.Map in one transaction with origin `LOCAL_ORIGIN`. The frontend SHALL apply a peer's change of the `mapOptions` map to mmp with `updateAdditionalMapOptions`.
 
-### Requirement: Map import via Y.Doc transaction
-When a user imports a map, the bridge SHALL clear the Y.Doc `nodes` map and repopulate it with the imported data inside a single `yDoc.transact()` call. Yjs SHALL sync the new state to all connected clients automatically.
+#### Scenario: User changes map settings
+- **WHEN** the user changes a font size setting
+- **THEN** the frontend SHALL write the three settings to the `mapOptions` map
+
+#### Scenario: Peer changes map settings
+- **WHEN** the `mapOptions` map changes in a peer's transaction
+- **THEN** the frontend SHALL hand the settings to `mmpService.updateAdditionalMapOptions()`
+
+### Requirement: Map import through replaceMap
+mmp SHALL import a map with `MapData.replaceMap`. `YjsMapData` SHALL delete every entry of the `nodes` map, write the imported nodes and set `lastMapAnnouncement` to `'import'` in the `meta` map, all in one transaction. The import SHALL take an undo step of its own.
 
 #### Scenario: User imports a map
-- **WHEN** the user triggers a map import with new map data
-- **THEN** the bridge SHALL execute a Y.Doc transaction that deletes all entries from the `nodes` map and adds all imported nodes as new entries
-- **AND** all connected clients SHALL receive the Y.Doc update and re-render via their bridge observers
+- **WHEN** the user imports a map
+- **THEN** `YjsMapData` SHALL replace the nodes and write the announcement in one transaction with origin `LOCAL_ORIGIN`
+- **AND** every connected client SHALL receive the update and redraw the whole map
+
+#### Scenario: Peer imports a map
+- **WHEN** a peer's transaction replaces the main root and writes `lastMapAnnouncement` as `'import'`
+- **THEN** the frontend SHALL clear the undo stack and show the import toast
+
+#### Scenario: Peer undoes an import
+- **WHEN** a peer's transaction replaces the main root without writing `lastMapAnnouncement`
+- **THEN** the frontend SHALL clear the undo stack and show no import toast
 
 ### Requirement: Map deletion handling
-When a map is deleted via the REST API, the server SHALL destroy the Y.Doc and close all WebSocket connections for that map. The frontend SHALL detect the WebSocket close and handle cleanup.
+When a map is deleted via the REST API, the server SHALL destroy the Y.Doc and close all WebSocket connections for that map with close code `4001`. The frontend SHALL detect that close code and reload the page.
 
 #### Scenario: Admin deletes a map
 - **WHEN** the admin calls the map deletion REST endpoint
 - **THEN** the server SHALL destroy the in-memory Y.Doc for that map and close all associated WebSocket connections
 
 #### Scenario: Client detects map deletion
-- **WHEN** the client's WebSocket connection is closed by the server due to map deletion
-- **THEN** the frontend SHALL handle the disconnection (e.g., redirect to home or show a notification)
+- **WHEN** the server closes the client's WebSocket connection with close code `4001`
+- **THEN** the frontend SHALL remove the syncing toast and reload the page
 
-### Requirement: Initial map load via Y.Doc
-When a user opens a map, the frontend SHALL receive the map state through the Yjs sync protocol instead of a Socket.io `join` response. After the Y.Doc syncs, the bridge SHALL extract all nodes and initialize MMP.
+### Requirement: Map creation after the first sync
+When a user opens a map, the frontend SHALL receive the map state through the Yjs sync protocol. `YjsSyncService` SHALL create the Y.Doc and its `YjsMapData` before it connects, and SHALL hand the map data to `MapSyncService` on the first sync. `MapSyncService` SHALL then create mmp over the map data and call `YjsSyncService.attachMap`, which wires the listeners, presence and the undo manager and sets edit mode last. Opening a map SHALL write nothing to the Y.Doc.
 
 #### Scenario: User opens an existing map
-- **WHEN** the WebsocketProvider connects and the Y.Doc syncs with the server
-- **THEN** the bridge SHALL read all entries from the `nodes` map, convert them to `ExportNodeProperties[]`, and call `mmpService.new(snapshot)` to initialize the map
+- **WHEN** the WebsocketProvider fires its first `sync` event with `synced: true`
+- **THEN** `YjsSyncService` SHALL hand the `YjsMapData` to `MapSyncService`
+- **AND** `MapSyncService` SHALL create mmp over it, so mmp draws the nodes the Y.Doc holds
 
+#### Scenario: Reopen a synced map
+- **WHEN** `initMap` runs while a connection is open, for the same map or another
+- **THEN** `YjsSyncService` SHALL destroy the open connection, its Y.Doc and its undo manager, and keep the writable state
+- **AND** `YjsSyncService` SHALL create a new Y.Doc with its `YjsMapData`, open a new connection, and hand the map data over on the next first sync
+
+### Requirement: Map creation after a server reset
+When the server closes the connection with `WS_CLOSE_MAP_SYNC_RESET`, the frontend SHALL tear down the connection, the Y.Doc and the undo manager, reconnect to the same map and create the map anew after the next first sync.
+
+#### Scenario: Server resets the map sync
+- **WHEN** the WebSocket closes with code `WS_CLOSE_MAP_SYNC_RESET`
+- **THEN** the frontend SHALL turn edit mode off, destroy the connection and open a new one to the same map
+- **AND** the frontend SHALL keep the writable state and create the map over the new map data after the next sync

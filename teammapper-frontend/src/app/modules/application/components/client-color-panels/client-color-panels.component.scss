@@ -4,5 +4,25 @@ div.client-colors-panel {
     position: absolute;
     bottom: 5px;
     left: 15px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+}
+
+.client {
+  display: inline-flex;
+}
+
+button.own-client {
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
   }
 }

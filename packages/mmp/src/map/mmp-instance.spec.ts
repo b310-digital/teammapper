@@ -1,15 +1,15 @@
 import * as d3 from 'd3';
-import { create } from '../index.js';
 import MmpMap from './map.js';
-import InMemoryMapData from './data/in-memory-map-data.js';
+import InMemoryMapData from '../test/in-memory-map-data.js';
 import type { MapDataChange } from './data/map-data.js';
+import type { MmpEventType } from './handlers/events.js';
 import { nodeRecord } from '../test/stub-map.js';
 import { stubSvgLengths } from '../test/svg-lengths.js';
 import type {
   ExportNodeProperties,
   MapSnapshot,
-  MmpEventType,
   NodeProperty,
+  NodePropertyValues,
 } from '@teammapper/shared';
 
 /**
@@ -36,7 +36,7 @@ beforeAll(stubSvgLengths);
 function makeMapOver(data: InMemoryMapData): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  return create('map', ref, undefined, data);
+  return new MmpMap(ref, undefined, data);
 }
 
 function makeMap(): MmpMap {
@@ -104,7 +104,7 @@ afterEach(() => {
 
 interface PropertyCase {
   property: NodeProperty;
-  value: unknown;
+  value: NodePropertyValues[NodeProperty];
   read: (node: ExportNodeProperties) => unknown;
   rendered?: (id: string) => unknown;
 }
@@ -271,7 +271,10 @@ describe('updateNode', () => {
   it('refuses a property it does not know', () => {
     const { map, child } = makeMapWithChild();
 
-    expect(() => map.instance.updateNode('shadow', '1px', child)).toThrow();
+    expect(() =>
+      // @ts-expect-error the type rejects it too, and so must the runtime check
+      map.instance.updateNode('shadow', '1px', child)
+    ).toThrow();
   });
 
   it.each<[NodeProperty, unknown]>([
@@ -289,7 +292,8 @@ describe('updateNode', () => {
     const { map, child } = makeMapWithChild();
     const before = exported(map, child);
 
-    expect(() => map.instance.updateNode(property, value, child)).toThrow();
+    // An untyped caller, such as a peer, reaches the check behind the instance.
+    expect(() => map.nodes.updateNode(property, value, child)).toThrow();
     expect(exported(map, child)).toEqual(before);
   });
 
@@ -315,6 +319,7 @@ describe('updateNode', () => {
     const child = map.instance.addNode({ name: 'child' }, rootOf(map));
     if (!child) throw new Error('addNode added no child');
     const original = data.node(child.id)?.colors?.background;
+    if (original === undefined) throw new Error('the child has no background');
 
     map.instance.updateNode('backgroundColor', '#ff0000', child.id);
     expect(data.node(child.id)?.colors?.background).toBe('#ff0000');
@@ -647,14 +652,24 @@ describe('destroy', () => {
     const listener = jest.fn();
     map.instance.on('nodeSelect', listener);
     const onChange = jest.spyOn(map.nodes, 'drawReplaced');
+    const center = jest.spyOn(map.zoom, 'center');
 
     map.instance.destroy();
     data.replaceMap([nodeRecord({ id: 'root', isRoot: true })]);
+    window.dispatchEvent(new Event('resize'));
 
     expect(ref?.querySelector('svg')).toBeNull();
-    expect(d3.select(window).on('resize.map')).toBeUndefined();
+    expect(center).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when it runs twice', () => {
+    const map = makeMap();
+
+    map.instance.destroy();
+
+    expect(() => map.instance.destroy()).not.toThrow();
   });
 });
 

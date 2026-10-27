@@ -1,13 +1,17 @@
 import {
   asyncScheduler,
   auditTime,
+  distinctUntilChanged,
+  map,
   Subject,
   Subscription,
   throttleTime,
 } from 'rxjs';
 import {
+  AwarenessUser,
   CachedMapOptions,
   ExportNodeProperties,
+  normalizeDisplayName,
   WS_CLOSE_MAP_SYNC_RESET,
 } from '@teammapper/shared';
 import * as Y from 'yjs';
@@ -76,8 +80,10 @@ export class YjsSyncService {
   // The node this client has selected, which setupAwareness publishes once
   // awareness is up.
   private selectedNodeId: string | null = null;
+  // The normalized display name this client announces. setupAwareness reads
+  // it from the settings, and a rename while the map is open replaces it.
+  private displayName = '';
   private readonly selectionChanges = new Subject<void>();
-  private mapAttached = false;
 
   constructor(
     private ctx: MapSyncContext,
@@ -96,7 +102,7 @@ export class YjsSyncService {
           trailing: true,
         })
       )
-      .subscribe(() => this.publishSelection());
+      .subscribe(() => this.publishPresence());
   }
 
   /**
@@ -155,24 +161,18 @@ export class YjsSyncService {
     this.yUndoManager?.redo();
   }
 
-  updateMapOptions(options?: CachedMapOptions): void {
+  updateMapOptions(options: CachedMapOptions): void {
     this.writeMapOptionsToYDoc(options);
   }
 
   // ─── Connection lifecycle ───────────────────────────────────
 
   /**
-   * Open the connection to a map, or reattach to the open one. The first
-   * sync hands the map data to the context, which creates the map over it
-   * and then calls `attachMap`. An open connection that has synced hands its
-   * map data over before `initMap` returns.
+   * Open the connection to a map, closing any open one. The first sync hands
+   * the map data to the context, which creates the map over it and then
+   * calls `attachMap`.
    */
   initMap(uuid: string): void {
-    if (this.hasActiveConnection(uuid)) {
-      if (this.yjsSynced) this.handOverMapData();
-      return;
-    }
-
     if (this.yDoc) {
       const writable = this.yjsWritable;
       this.destroy();
@@ -197,31 +197,14 @@ export class YjsSyncService {
    * edit mode, so the map exists when edit mode reaches it.
    */
   attachMap(): void {
-    this.detachObservers();
     this.createListeners();
     this.applyMapOptions();
     this.attachSelection();
     this.setupNodesObserver();
     this.setupMapOptionsObserver();
-    if (!this.yUndoManager) this.initUndoManager();
-    // The new renderer has no peer rings yet, even when awareness is unchanged.
-    this.ctx.setColorMapping({});
+    this.initUndoManager();
     this.setupAwareness();
     this.settingsService.setEditMode(this.yjsWritable);
-  }
-
-  /** Keep syncing map settings while the settings page replaces the renderer. */
-  detachMap(): void {
-    this.mapAttached = false;
-    this.unsubscribeListeners();
-    this.updateAwarenessSelection(null);
-    this.ctx.setAttachedNode(null);
-  }
-
-  private hasActiveConnection(mapId: string): boolean {
-    return (
-      this.yDoc !== null && this.wsProvider !== null && this.yjsMapId === mapId
-    );
   }
 
   private setupConnection(mapId: string): WebsocketProvider {
@@ -255,16 +238,12 @@ export class YjsSyncService {
   }
 
   /**
-   * The map exists from the first sync on, an empty doc included: the
-   * context creates it over the map data.
+   * Report the connection as connected and let the context create the map
+   * over the map data. The map exists from the first sync on, an empty doc
+   * included.
    */
   private handleFirstSync(): void {
     this.yjsSynced = true;
-    this.handOverMapData();
-  }
-
-  /** Report the connection as connected and let the context create the map. */
-  private handOverMapData(): void {
     this.ctx.setConnectionStatus('connected');
     this.ctx.createMap(this.mapData);
   }
@@ -312,6 +291,7 @@ export class YjsSyncService {
         const mapId = this.yjsMapId;
         const writable = this.yjsWritable;
         this.settingsService.setEditMode(false);
+        this.ctx.removeMap();
         this.destroy();
         this.setWritable(writable);
         this.initMap(mapId);
@@ -326,12 +306,10 @@ export class YjsSyncService {
   // ─── Cleanup ────────────────────────────────────────────────
 
   /**
-   * Close the connection. Edit mode keeps its value, because the settings
-   * page reads it to decide whether the map settings of the map the user
-   * left stay editable.
+   * Close the connection. Edit mode keeps its value until `attachMap` sets it
+   * for the next map.
    */
   destroy(): void {
-    this.mapAttached = false;
     this.unsubscribeListeners();
     this.detachObservers();
     this.destroyUndoManager();
@@ -387,7 +365,6 @@ export class YjsSyncService {
   // ─── mmp event listeners ────────────────────────────────────
 
   private createListeners(): void {
-    this.mapAttached = true;
     this.unsubscribeListeners();
     this.setupMapChangeHandler();
     this.setupSelectionHandlers();
@@ -449,12 +426,8 @@ export class YjsSyncService {
 
   // ─── Map options (Y.Doc ↔ MMP) ──────────────────────────────
 
-  private writeMapOptionsToYDoc(options?: CachedMapOptions): void {
-    // The settings page can change these with no map open, so this is the one
-    // write that has to tolerate a missing doc rather than throw.
-    const doc = this.yDoc;
-    if (!doc || !options) return;
-
+  private writeMapOptionsToYDoc(options: CachedMapOptions): void {
+    const doc = this.doc;
     const optionsMap = doc.getMap('mapOptions');
     doc.transact(() => {
       optionsMap.set('fontMaxSize', options.fontMaxSize);
@@ -538,21 +511,50 @@ export class YjsSyncService {
 
   private setupAwareness(): void {
     const awareness = this.provider.awareness;
-    const color = this.pickClientColor(awareness);
-    this.ctx.setClientColor(color);
-
-    awareness.setLocalStateField('user', {
-      color,
-      selectedNodeId: this.selectedNodeId,
-    });
+    this.ctx.setClientColor(this.pickClientColor(awareness));
+    this.displayName = normalizeDisplayName(
+      this.settingsService.getCachedUserSettings()?.general?.displayName
+    );
+    awareness.setLocalStateField('user', this.awarenessUser());
 
     this.yjsAwarenessHandler = () => {
       this.updateFromAwareness();
     };
     awareness.on('change', this.yjsAwarenessHandler);
+    this.watchDisplayName();
 
     // Process awareness states already received before the listener
     this.updateFromAwareness();
+  }
+
+  /** The `user` field of this client's awareness state. */
+  private awarenessUser(): AwarenessUser {
+    return {
+      color: this.ctx.getClientColor(),
+      selectedNodeId: this.selectedNodeId,
+      displayName: this.displayName,
+    };
+  }
+
+  /**
+   * Announce a new display name while the map is open. The settings stream
+   * also emits on every other settings change, which sends nothing.
+   */
+  private watchDisplayName(): void {
+    this.yjsSubscriptions.push(
+      this.settingsService.userSettings
+        .pipe(
+          map(settings => normalizeDisplayName(settings?.general?.displayName)),
+          distinctUntilChanged()
+        )
+        .subscribe(name => this.renameInAwareness(name))
+    );
+  }
+
+  private renameInAwareness(name: string): void {
+    if (name === this.displayName) return;
+    this.displayName = name;
+    this.publishPresence();
   }
 
   private pickClientColor(awareness: WebsocketProvider['awareness']): string {
@@ -570,15 +572,12 @@ export class YjsSyncService {
     this.selectionChanges.next();
   }
 
-  private publishSelection(): void {
-    // Until setupAwareness runs, publishSelection sends nothing, and
+  private publishPresence(): void {
+    // Until setupAwareness runs, publishPresence sends nothing, and
     // setupAwareness publishes the recorded selection. A write before then would make
     // pickClientColor count this client's own colour as taken.
     if (!this.wsProvider || this.yjsAwarenessHandler === null) return;
-    this.wsProvider.awareness.setLocalStateField('user', {
-      color: this.ctx.getClientColor(),
-      selectedNodeId: this.selectedNodeId,
-    });
+    this.wsProvider.awareness.setLocalStateField('user', this.awarenessUser());
   }
 
   private updateFromAwareness(): void {
@@ -593,9 +592,10 @@ export class YjsSyncService {
   }
 
   /**
-   * The color and selected node of every client. Any peer, a read-only one
-   * included, writes its own awareness state, so a value that is no string
-   * falls back to the default instead of reaching mmp.
+   * The color, selected node and display name of every client. Any peer, a
+   * read-only one included, writes its own awareness state, so a value that is
+   * no string falls back to the default instead of reaching mmp, and every
+   * display name, the own one included, passes through normalizeDisplayName.
    */
   private buildColorMappingFromAwareness(): ClientColorMapping {
     const awareness = this.provider.awareness;
@@ -610,13 +610,14 @@ export class YjsSyncService {
           ? DEFAULT_SELF_COLOR
           : stringOr(state.user.color, DEFAULT_COLOR),
         nodeId: stringOr(state.user.selectedNodeId, ''),
+        displayName: normalizeDisplayName(state.user.displayName),
+        isSelf,
       };
     }
     return mapping;
   }
 
   private rehighlightNodes(nodeIds: Set<string>): void {
-    if (!this.mapAttached) return;
     for (const nodeId of nodeIds) {
       if (!this.mmpService.existNode(nodeId)) continue;
       const color = this.ctx.colorForNode(nodeId);

@@ -1,7 +1,8 @@
 import * as d3 from 'd3';
 import type { D3DragEvent } from 'd3';
-import { create } from '../../index.js';
-import InMemoryMapData from '../data/in-memory-map-data.js';
+import MmpMap from '../map.js';
+import type { OptionParameters } from '../options.js';
+import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { nodeRecord } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
@@ -26,7 +27,7 @@ afterEach(() => {
 });
 
 /** root -> a -> b, root -> c, drawn by a real map. */
-function makeMap() {
+function makeMap(options?: OptionParameters) {
   const data = new InMemoryMapData([
     nodeRecord({ id: 'root', isRoot: true }),
     nodeRecord({ id: 'a', parent: 'root', coordinates: { x: 200, y: 0 } }),
@@ -35,7 +36,7 @@ function makeMap() {
   ]);
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  const map = create('map', ref, undefined, data);
+  const map = new MmpMap(ref, options, data);
   const changes = jest.fn();
   data.subscribe(changes);
   return { data, map, changes, drag: map.drag as unknown as DragInternals };
@@ -175,5 +176,72 @@ describe('a drawn map', () => {
     expect(d3.selectAll<SVGPathElement, unknown>('path.branch').data()).toEqual(
       ['a', 'b', 'c']
     );
+  });
+});
+
+function groupOf(id: string): SVGGElement {
+  const group = d3
+    .selectAll<SVGGElement, string>('g.node')
+    .filter(datum => datum === id)
+    .node();
+  if (!group) throw new Error('no group for ' + id);
+  return group;
+}
+
+/** A pointer drag of `dx` pixels to the right on a node group. */
+function pointerDrag(group: SVGGElement, dx: number) {
+  const at = (type: string, clientX: number) =>
+    new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      clientX,
+      clientY: 0,
+    });
+  group.dispatchEvent(at('mousedown', 0));
+  window.dispatchEvent(at('mousemove', dx / 2));
+  window.dispatchEvent(at('mousemove', dx));
+  window.dispatchEvent(at('mouseup', dx));
+}
+
+describe('the drag option at event time', () => {
+  it('moves no node on a pointer drag after drag turned off', () => {
+    const { map, data, changes } = makeMap();
+    const group = groupOf('a');
+    map.options.drag = false;
+
+    pointerDrag(group, 60);
+
+    expect(data.node('a')?.coordinates).toEqual({ x: 200, y: 0 });
+    expect(changes).not.toHaveBeenCalled();
+  });
+
+  it('selects the node on a mousedown after drag turned off', () => {
+    const { map } = makeMap();
+    const group = groupOf('c');
+    map.options.drag = false;
+
+    pointerDrag(group, 0);
+
+    expect(map.instance.getSelectedNode()?.id).toBe('c');
+  });
+
+  it('moves the node on a pointer drag once drag is back on', () => {
+    const { map, data } = makeMap({ drag: false });
+    const group = groupOf('a');
+    map.options.drag = true;
+
+    pointerDrag(group, 60);
+
+    expect(data.node('a')?.coordinates).toEqual({ x: 260, y: 0 });
+  });
+
+  it('moves no node on a pointer drag when the map starts with drag off', () => {
+    const { data, changes } = makeMap({ drag: false });
+
+    pointerDrag(groupOf('a'), 60);
+
+    expect(data.node('a')?.coordinates).toEqual({ x: 200, y: 0 });
+    expect(changes).not.toHaveBeenCalled();
   });
 });

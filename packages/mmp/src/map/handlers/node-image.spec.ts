@@ -1,7 +1,6 @@
-import { create } from '../../index.js';
 import { DefaultRootNodeValues } from '../options.js';
 import MmpMap from '../map.js';
-import InMemoryMapData from '../data/in-memory-map-data.js';
+import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
@@ -59,7 +58,7 @@ function makeMap(
       image: { src, size: 60 },
     },
   ]);
-  return create('map', ref, { resolveImageUrl }, data);
+  return new MmpMap(ref, { resolveImageUrl }, data);
 }
 
 function setImage(map: MmpMap, src: string) {
@@ -173,5 +172,25 @@ describe('node images', () => {
     stale.load();
 
     expect(drawnImage(map)?.getAttribute('href')).toBe(DATA_URL);
+  });
+
+  it('draws nothing when an image finishes loading after destroy', () => {
+    const map = makeMap(DATA_URL);
+    const pending = lastImage();
+    const g = map.dom.g.node();
+
+    map.instance.destroy();
+    pending.load();
+
+    expect(g?.querySelector('image')).toBeNull();
+  });
+
+  it('does not throw when an image finishes loading after destroy', () => {
+    const map = makeMap(DATA_URL);
+    const pending = lastImage();
+
+    map.instance.destroy();
+
+    expect(() => pending.load()).not.toThrow();
   });
 });

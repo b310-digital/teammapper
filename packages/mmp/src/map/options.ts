@@ -4,10 +4,12 @@ import type {
   NodeImage,
   NodeLink,
 } from './data/node-record.js';
-import type {
-  ImageReference,
-  MapNodeCoordinates,
-  MapNodeSettings,
+import {
+  branchStyleOf,
+  type BranchStyle,
+  type ImageReference,
+  type MapNodeCoordinates,
+  type MapNodeSettings,
 } from '@teammapper/shared';
 import Utils from '../utils/utils.js';
 import Map from './map.js';
@@ -23,19 +25,19 @@ export default class Options implements OptionParameters {
   public centerOnResize: boolean;
   public drag: boolean;
   public zoom: boolean;
-  // Controls wether edit related click handlers will be registered in the draw module
-  // Note: node property updates are still available
+  // Allows editing through the pointer and keyboard. The edit handlers read
+  // the flag when an event arrives. Node property updates work either way.
   public edit: boolean;
 
   public defaultNode: DefaultNodeProperties;
   public rootNode: DefaultNodeProperties;
   public showLinktext: boolean;
+  public branchStyle: BranchStyle;
   public resolveImageUrl?: ImageUrlResolver;
 
   /**
    * Initialize all options.
    * @param {OptionParameters} parameters
-   * @param {Map} map
    */
   constructor(parameters: OptionParameters = {}, map: Map) {
     this.map = map;
@@ -50,34 +52,43 @@ export default class Options implements OptionParameters {
     this.zoom = parameters.zoom !== undefined ? parameters.zoom : true;
     this.showLinktext =
       parameters.showLinktext !== undefined ? parameters.showLinktext : false;
+    this.branchStyle = branchStyleOf(parameters.branchStyle);
     this.resolveImageUrl = parameters.resolveImageUrl;
 
-    // Default node properties
-    this.defaultNode = Utils.mergeObjects(
-      DefaultNodeValues,
-      parameters.defaultNode,
-      true
-    ) as DefaultNodeProperties;
-
-    // Default root node properties
-    this.rootNode = Utils.mergeObjects(
-      DefaultRootNodeValues,
-      parameters.rootNode,
-      true
-    ) as DefaultNodeProperties;
+    this.defaultNode = withDefaults(DefaultNodeValues, parameters.defaultNode);
+    this.rootNode = withDefaults(DefaultRootNodeValues, parameters.rootNode);
   }
 
+  /**
+   * Apply a changed setting to the open map. Edit and drag change through
+   * `MmpInstance.setEditable`.
+   */
   public update = (property: string, value: unknown) => {
     if (typeof property !== 'string') {
       Log.error('The property must be a string', 'type');
     }
 
     switch (property) {
-      case 'drag':
-        this.updateDrag(value as boolean);
+      case 'centerOnResize':
+        this.updateCenterOnResize(value as boolean);
         break;
-      case 'edit':
-        this.updateEdit(value as boolean);
+      case 'showLinktext':
+        this.updateShowLinktext(value as boolean);
+        break;
+      case 'branchStyle':
+        this.updateBranchStyle(value);
+        break;
+      case 'defaultNode':
+        this.defaultNode = withDefaults(
+          DefaultNodeValues,
+          value as MapNodeSettings
+        );
+        break;
+      case 'rootNode':
+        this.rootNode = withDefaults(
+          DefaultRootNodeValues,
+          value as MapNodeSettings
+        );
         break;
       default:
         Log.error('The property does not exist');
@@ -85,32 +96,43 @@ export default class Options implements OptionParameters {
   };
 
   /**
-   * Update drag behavior.
+   * Update whether a window resize centers the map.
    * @param {boolean} flag
    */
-  private updateDrag(flag: boolean) {
+  private updateCenterOnResize(flag: boolean) {
     if (typeof flag !== 'boolean') {
       Log.error('The value must be a boolean', 'type');
     }
 
-    if (flag === this.drag) return;
-    this.drag = flag;
+    if (flag === this.centerOnResize) return;
+    this.centerOnResize = flag;
 
-    // The drag behavior attaches when a node's DOM is created.
+    this.map.centerOnWindowResize(flag);
+  }
+
+  /**
+   * Update whether nodes show the text of their link.
+   * @param {boolean} flag
+   */
+  private updateShowLinktext(flag: boolean) {
+    if (typeof flag !== 'boolean') {
+      Log.error('The value must be a boolean', 'type');
+    }
+
+    if (flag === this.showLinktext) return;
+    this.showLinktext = flag;
+
     this.map.draw.drawAll();
   }
 
   /**
-   * Update edit behavior.
-   * @param {boolean} flag
+   * Update how branches are drawn. An unknown value draws tapered branches.
+   * @param {unknown} value
    */
-  private updateEdit(flag: boolean) {
-    if (typeof flag !== 'boolean') {
-      Log.error('The value must be a boolean', 'type');
-    }
-
-    if (flag === this.edit) return;
-    this.edit = flag;
+  private updateBranchStyle(value: unknown) {
+    const style = branchStyleOf(value);
+    if (style === this.branchStyle) return;
+    this.branchStyle = style;
 
     this.map.draw.drawAll();
   }
@@ -170,6 +192,14 @@ export const DefaultRootNodeValues: DefaultNodeProperties = {
   isRoot: true,
 };
 
+/** The node defaults with the caller's settings merged over them. */
+function withDefaults(
+  defaults: DefaultNodeProperties,
+  settings: MapNodeSettings | undefined
+): DefaultNodeProperties {
+  return Utils.mergeObjects(defaults, settings, true) as DefaultNodeProperties;
+}
+
 export interface DefaultNodeProperties {
   name: string;
   image: NodeImage;
@@ -197,5 +227,6 @@ export interface OptionParameters {
   defaultNode?: MapNodeSettings;
   rootNode?: MapNodeSettings;
   showLinktext?: boolean;
+  branchStyle?: BranchStyle;
   resolveImageUrl?: ImageUrlResolver;
 }

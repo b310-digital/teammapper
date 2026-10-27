@@ -74,9 +74,18 @@ node.
 
 ### Branch
 
-The curve the app draws from a parent node to a child. A branch takes styling
-only; no one selects or addresses one on its own. A branch can take its color
-from the map's automatic branch colors setting instead of an explicit one.
+What the app draws from a parent node to a child, in the shape the **branch
+style** names. A branch takes styling only; no one selects or addresses one on
+its own. A branch can take its color from the automatic branch colors user
+setting instead of an explicit one.
+
+### Branch style
+
+The user setting that names how this browser draws every branch: `tapered`, a
+filled shape that narrows with depth and the default; `curved`, a thin stroked
+curve; or `straight`, a thin line from the parent's center to the child's. The
+setting changes the drawing alone, so collaborators may see one map in
+different branch styles. The app never syncs it or stores it with a map.
 
 ### Link
 
@@ -148,7 +157,8 @@ the view state. Peers see it through Yjs awareness (see **Presence**).
 What a single mind map remembers about how the app draws it, chiefly the font
 size range. Distinct from **user settings**, which are one browser's defaults
 for the maps it creates: automatic branch colors, centering on resize, showing
-linktext, and the starting name and styling for root nodes and ordinary nodes.
+linktext, the branch style, and the starting name and styling for root nodes and
+ordinary nodes.
 
 ### Info dialog
 
@@ -156,9 +166,22 @@ The dialog that the info button or `?` opens over the map. It shows the app
 version, a hint that the map's deletion date moved to the settings, and every
 keyboard shortcut. Map shortcuts do not act while it is open.
 
+### Settings dialog
+
+The dialog that the settings button or `alt+s` opens over the map. The dialog
+shows these tabs:
+
+1. General: language and dark mode.
+2. Map options: the deletion card, the map settings of the open map, and the
+   user settings for new nodes, linktext and centering.
+3. The map list.
+
+The map stays drawn behind the dialog and takes each change at once. Map
+shortcuts do not act while the dialog is open.
+
 ### Deletion card
 
-The card at the top of the Map options tab in the settings. It shows the open
+The card at the top of the Map options tab in the settings dialog. It shows the open
 map's deletion date and the server's retention period, and gives the map's
 admin the delete action. The map list, which the settings' third tab and the
 start page both show, offers the same delete action for every listed map whose
@@ -302,8 +325,17 @@ One open connection to a map, not a person: two tabs are two clients.
 
 The **client list** is everyone connected to a map right now. Each client gets a
 **client color** from a fixed palette, which tints the ring around whichever
-node that client has selected. Presence is anonymous, and a color is the only
-identity anyone has.
+node that client has selected. A client without a display name is anonymous,
+and its color is the only identity it has. A client with a display name shows
+its initials in its color.
+
+### Display name
+
+The optional name a browser announces on every map it opens, so others can
+tell clients apart in the client list. The browser keeps it in its user
+settings, and the server never stores it. Anyone can type any name, so a
+display name proves nothing about who someone is. Write "display name", not
+"username" or "nickname": TeamMapper has no accounts.
 
 ### Presence
 

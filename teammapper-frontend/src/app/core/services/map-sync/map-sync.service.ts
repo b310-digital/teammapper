@@ -16,12 +16,7 @@ import {
   parseImageUploadResponse,
 } from '@teammapper/shared';
 import { ImageUploadError } from '../mmp/node-images';
-import type {
-  MapData,
-  MapProperties,
-  MmpMap,
-  OptionParameters,
-} from '@teammapper/mmp';
+import type { MapData, MmpInstance } from '@teammapper/mmp';
 import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
 import { API_URL, HttpService } from '../../http/http.service';
 import { COLORS } from '../mmp/mmp-utils';
@@ -31,7 +26,7 @@ import { SettingsService } from '../settings/settings.service';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import {
   ClientColorMapping,
-  ClientColorMappingValue,
+  ClientListEntry,
   toTransmittableSecret,
 } from './yjs-utils';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
@@ -40,10 +35,9 @@ import { YjsSyncService } from './yjs-sync.service';
 /** How long the connection may take to sync before the toast says so. */
 export const SYNCING_TOAST_DELAY_MS = 500;
 
-/** The element and the options openMap creates the map with. */
+/** The element openMap creates the map in. */
 interface MapTarget {
   ref: HTMLElement;
-  options?: OptionParameters;
 }
 
 /**
@@ -68,7 +62,7 @@ export class MapSyncService implements OnDestroy {
   private toastrService = inject(ToastrService);
 
   // needed in color panel to show all clients
-  private readonly clientListSubject: BehaviorSubject<string[]>;
+  private readonly clientListSubject: BehaviorSubject<ClientListEntry[]>;
   // needed in map component to initialize when map is rendered and data present
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>;
   // needed in the application component for UI related tasks
@@ -102,7 +96,7 @@ export class MapSyncService implements OnDestroy {
       null
     );
     this.connectionStatusSubject = new BehaviorSubject<ConnectionStatus>(null);
-    this.clientListSubject = new BehaviorSubject<string[]>([]);
+    this.clientListSubject = new BehaviorSubject<ClientListEntry[]>([]);
 
     this.availableColors = COLORS;
     this.clientColor =
@@ -161,13 +155,9 @@ export class MapSyncService implements OnDestroy {
     this.removeSyncingToast();
     this.syncService.destroy();
     this.colorMapping = {};
-  }
-
-  /** Remove the renderer target while keeping the settings page connected. */
-  public detachMap() {
-    this.mapTarget = null;
-    this.removeSyncingToast();
-    this.syncService.detachMap();
+    this.attachedNodeSubject.next(null);
+    this.clientListSubject.next([]);
+    this.attachedMapSubject.next(null);
   }
 
   /**
@@ -175,8 +165,8 @@ export class MapSyncService implements OnDestroy {
    * the connection syncs; until then the map area stays empty, and a toast
    * tells the user after a short delay that the map is loading.
    */
-  public openMap(ref: HTMLElement, options?: OptionParameters) {
-    this.mapTarget = { ref, options };
+  public openMap(ref: HTMLElement) {
+    this.mapTarget = { ref };
     this.scheduleSyncingToast();
     this.syncService.initMap(this.getAttachedMap().cachedMap.uuid);
   }
@@ -189,7 +179,7 @@ export class MapSyncService implements OnDestroy {
     return this.attachedMapSubject.asObservable();
   }
 
-  public getClientListObservable(): Observable<string[]> {
+  public getClientListObservable(): Observable<ClientListEntry[]> {
     return this.clientListSubject.asObservable();
   }
 
@@ -305,6 +295,7 @@ export class MapSyncService implements OnDestroy {
           console.error('Failed to create the map:', error);
           this.removeSyncingToast();
         }),
+      removeMap: () => this.mmpService.remove(),
       mapDeleted: () => this.removeSyncingToast(),
     };
   }
@@ -312,22 +303,21 @@ export class MapSyncService implements OnDestroy {
   // ─── Map creation ────────────────────────────────────────────
 
   /**
-   * Create the map over the synced map data. The sync service wires it up
-   * and sets edit mode last, so the map exists when edit mode reaches it.
-   * A reset while mmp builds the map leaves nothing to wire up, so the call
-   * removes the map it built and keeps a map that a newer `openMap` built.
+   * Create the map over the synced map data with the user settings cached
+   * now, which a sync reset may meet after the settings dialog changed them.
+   * With no cached settings mmp falls back to its own defaults. The sync
+   * service wires the map up and sets edit mode last, so the map exists
+   * when edit mode reaches it. A reset while mmp builds the map leaves
+   * nothing to wire up, so the call removes the map it built and keeps a map
+   * that a newer `openMap` built.
    */
   private async createMap(data: MapData): Promise<void> {
     const target = this.mapTarget;
     if (!target) return;
     this.removeSyncingToast();
 
-    const map = await this.mmpService.create(
-      'map_1',
-      target.ref,
-      target.options,
-      data
-    );
+    const options = this.settingsService.getCachedUserSettings()?.mapOptions;
+    const map = await this.mmpService.create(target.ref, options, data);
     if (map) this.adoptMap(map, target);
   }
 
@@ -335,7 +325,7 @@ export class MapSyncService implements OnDestroy {
    * Wire up the map, or remove it when a reset or a newer openMap ran while
    * mmp built it.
    */
-  private adoptMap(map: MmpMap, target: MapTarget): void {
+  private adoptMap(map: MmpInstance, target: MapTarget): void {
     if (this.mapTarget !== target) return this.mmpService.remove(map);
     this.syncService.attachMap();
     this.mmpService.markMapCreated();
@@ -448,10 +438,16 @@ export class MapSyncService implements OnDestroy {
       .shift();
   }
 
+  /** One entry per client, keyed by its awareness id. */
   private extractClientListForSubscriber(): void {
     this.clientListSubject.next(
-      Object.values(this.colorMapping).map(
-        (e: ClientColorMappingValue) => e?.color
+      Object.entries(this.colorMapping).map(
+        ([clientId, { color, displayName, isSelf }]) => ({
+          clientId,
+          color,
+          displayName,
+          isSelf,
+        })
       )
     );
   }
@@ -506,7 +502,7 @@ export class MapSyncService implements OnDestroy {
     return `map-${uuid}`;
   }
 
-  private convertServerMapToMmp(serverMap: ServerMap): MapProperties {
+  private convertServerMapToMmp(serverMap: ServerMap): CachedMap {
     return Object.assign({}, serverMap, {
       lastModified: Date.parse(serverMap.lastModified),
       deletedAt: Date.parse(serverMap.deletedAt),
@@ -526,7 +522,7 @@ export class MapSyncService implements OnDestroy {
       cachedMap: {
         ...mapProps,
         options: serverMap.options,
-        data: normalized.data as unknown as ExportNodeProperties[],
+        data: normalized.data,
       },
     });
   }

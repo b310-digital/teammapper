@@ -42,13 +42,13 @@ Keeping it in user settings means one name per browser, shared by all its tabs a
 `packages/shared` adds `normalizeDisplayName(value: unknown): string`:
 
 1. Return `''` for a value that is not a string.
-2. Remove control and format characters (Unicode categories `Cc` and `Cf`).
-3. Collapse every run of whitespace to one space and trim.
-4. Cut to 30 graphemes, counted with `Intl.Segmenter`, and trim again.
+2. Remove every character except letters, combining marks, digits, the space and `-'._`. Tabs, line breaks, control and format characters, emoji and symbols go.
+3. Collapse every run of spaces to one space and trim.
+4. Cut to 20 characters, then trim again.
 
-The settings field and the avatar dialog normalize before they save. `YjsSyncService` normalizes every name it reads from awareness, including its own, because awareness is relayed without validation and any client can send anything. Angular interpolation renders the result as text, and no template binds it to `innerHTML`.
+The settings field and the avatar dialog save through `SettingsService.setDisplayName`, which normalizes before it stores. `SettingsService` also normalizes the stored name when it loads the settings. `YjsSyncService` normalizes every name it reads from awareness, including its own, because awareness is relayed without validation and any client can send anything. Angular interpolation renders the result as text, and no template binds it to `innerHTML`.
 
-30 graphemes fit a first and last name and keep a malicious name from bloating the presence payload of every client.
+A display name is a short user name. 20 characters fit a first and last name and keep a malicious name from bloating the presence payload of every client.
 
 ### 4. The name rides in the existing awareness field
 
@@ -60,15 +60,15 @@ A client of an older version omits the field, and reading it through `normalizeD
 
 ### 5. The client list becomes a list of clients
 
-`ClientColorMappingValue` gains `displayName`. `getClientListObservable` emits `ClientListEntry[]`, each `{ clientId, color, displayName, isSelf }`, and the component tracks by `clientId`. Tracking by color broke already when two clients shared a color through the fallback, and names make each entry more than its color.
+`ClientColorMappingValue` gains `displayName` and `isSelf`, since only `YjsSyncService` knows the local client id. `getClientListObservable` emits `ClientListEntry[]`, each `{ clientId, color, displayName, isSelf }`, and the component tracks by `clientId`. Tracking by color broke already when two clients shared a color through the fallback, and names make each entry more than its color.
 
 `ClientListEntry` and `ClientColorMappingValue` stay frontend types: they never cross the wire. The awareness payload type `AwarenessUser` goes to `packages/shared`, because the backend relays it and a future comments feature will read it.
 
 ### 6. Initials
 
-`displayNameInitials(name: string): string` in `packages/shared` splits the normalized name on spaces, takes the first grapheme of the first word and, when there are two or more words, the first grapheme of the last word, and upper-cases them with `toLocaleUpperCase`. An empty name returns `''`.
+`displayNameInitials(name: string): string` in `packages/shared` splits the normalized name on spaces, takes the first character of the first word and, when there are two or more words, the first character of the last word, and upper-cases them with `toLocaleUpperCase`. An empty name returns `''`.
 
-The component shows the initials in a circle filled with the client color, with a text color chosen for contrast against it. An empty result shows the existing `account_circle` icon. The element carries `aria-label` with the full name, or the translated "Anonymous".
+The component shows the initials in dark text on a white circle with a ring in the client color. The text never sits on the client color, so every palette color works without a contrast calculation, and `COLORS` stays as it is because it also outlines the selected nodes on the map. An empty result shows the existing `account_circle` icon. The element carries `aria-label` with the full name, or the translated "Anonymous".
 
 ### 7. Editing from the own icon
 
@@ -79,10 +79,8 @@ The settings field on the "General" tab writes the same setting on change, like 
 ## Risks / Trade-offs
 
 - **Impersonation**: anyone can type anyone's name. Names carry no permissions, and the proposal leaves moderation out. → Accept; a later comments feature must not treat a name as proof of identity.
-- **Same initials**: two clients named "Anna Schmidt" and "Alex Stein" both show "AS". The client color still tells them apart. → Accept.
+- **Same initials**: two clients named "Vorname Test" and "Vorname Tester" both show "VT". The client color still tells them apart. → Accept.
 - **Privacy**: a name is visible to everyone holding the map link. → The field's hint text says so.
-- **Contrast**: a light client color with white initials is unreadable. → Pick black or white per color by relative luminance, tested against the whole `COLORS` palette.
-
 ## Migration Plan
 
 No data migration. Stored settings without `displayName` resolve to `''` on the next start. Mixed versions interoperate as described in decision 4.

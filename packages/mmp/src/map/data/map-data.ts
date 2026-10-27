@@ -39,7 +39,8 @@ export interface MapDataChange {
  * - `updateNode` and `removeNode` on an id the data does not hold change
  *   nothing and notify nothing.
  * - `updateNode` takes the mmp property name, such as `backgroundColor`.
- *   Each implementation finds the storage path in `PropertyMapping`.
+ *   Each implementation finds the storage path in `NodePropertyMapping`,
+ *   which `@teammapper/shared` exports.
  * - A `replaceMap` reports the ids that survive it as `updated`, so the view
  *   state keeps the child nodes of those nodes hidden.
  */

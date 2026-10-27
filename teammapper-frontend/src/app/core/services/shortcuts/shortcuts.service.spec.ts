@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
 import { HotkeysService } from 'angular2-hotkeys';
 import { BehaviorSubject } from 'rxjs';
 import { DialogService } from '../dialog/dialog.service';
@@ -13,7 +12,10 @@ import { ShortcutsService } from './shortcuts.service';
  */
 describe('ShortcutsService', () => {
   let service: ShortcutsService;
-  let dialogService: { openAboutDialog: jest.Mock };
+  let dialogService: {
+    openAboutDialog: jest.Mock;
+    openSettingsDialog: jest.Mock;
+  };
   let editMode: BehaviorSubject<boolean | null>;
   let hotkeysService: { add: jest.Mock; remove: jest.Mock };
   let mapCreated: BehaviorSubject<boolean>;
@@ -50,7 +52,10 @@ describe('ShortcutsService', () => {
       }),
     };
 
-    dialogService = { openAboutDialog: jest.fn() };
+    dialogService = {
+      openAboutDialog: jest.fn(),
+      openSettingsDialog: jest.fn(),
+    };
     editMode = new BehaviorSubject<boolean | null>(true);
     hotkeysService = { add: jest.fn(), remove: jest.fn() };
 
@@ -63,7 +68,6 @@ describe('ShortcutsService', () => {
           provide: SettingsService,
           useValue: { getEditModeObservable: () => editMode },
         },
-        { provide: Router, useValue: { navigate: jest.fn() } },
         { provide: DialogService, useValue: dialogService },
       ],
     });
@@ -96,6 +100,12 @@ describe('ShortcutsService', () => {
     press('?');
 
     expect(dialogService.openAboutDialog).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the settings dialog on alt+s', () => {
+    press('alt+s');
+
+    expect(dialogService.openSettingsDialog).toHaveBeenCalledTimes(1);
   });
 
   describe('before the map exists', () => {

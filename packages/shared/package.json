@@ -4,6 +4,9 @@
   "private": false,
   "description": "Cross-stack domain models, validation schemas, and algorithms for TeamMapper",
   "sideEffects": false,
+  "engines": {
+    "node": ">=24.11.1"
+  },
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",

@@ -119,18 +119,6 @@ export function collectSubtreeIds<T extends TreeNodeLike>(
 }
 
 /**
- * Returns `rootId` followed by the IDs of its descendants, or nothing when no
- * node carries that ID. Any node ID works; a root ID yields its whole tree.
- */
-export function collectTreeIds<T extends TreeNodeLike>(
-  nodes: readonly T[],
-  rootId: string
-): string[] {
-  if (!nodes.some(n => n.id === rootId)) return [];
-  return [rootId, ...collectSubtreeIds(nodes, rootId)];
-}
-
-/**
  * Helper to assign sequential 1-based order numbers to ordered nodes.
  */
 export function assignOrderNumbers<T extends object>(

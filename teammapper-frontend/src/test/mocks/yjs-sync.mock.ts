@@ -1,4 +1,5 @@
-import { NEVER, Observable } from 'rxjs';
+import { BehaviorSubject, NEVER, Observable } from 'rxjs';
+import { UserSettings } from '@teammapper/shared';
 import { MmpService } from '../../app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../app/core/services/settings/settings.service';
 import { UtilsService } from '../../app/core/services/utils/utils.service';
@@ -25,6 +26,7 @@ export function createMockContext(): MapSyncContext {
     updateAttachedMap: jest.fn(),
     emitClientList: jest.fn(),
     createMap: jest.fn(),
+    removeMap: jest.fn(),
     mapDeleted: jest.fn(),
   };
 }
@@ -68,8 +70,25 @@ export function capturingMmpService(
   } as unknown as jest.Mocked<MmpService>;
 }
 
-function createMockSettingsService(): SettingsService {
-  return { setEditMode: jest.fn() } as unknown as SettingsService;
+/** User settings that hold `displayName` and only what presence reads. */
+export function userSettingsNamed(displayName: unknown): UserSettings {
+  return {
+    general: { language: 'en', darkMode: false, displayName },
+  } as unknown as UserSettings;
+}
+
+/**
+ * A SettingsService over `userSettings$`: the cached settings are the
+ * subject's value, and a test renames the user by pushing new settings.
+ */
+export function createMockSettingsService(
+  userSettings$ = new BehaviorSubject<UserSettings | null>(null)
+): SettingsService {
+  return {
+    setEditMode: jest.fn(),
+    userSettings: userSettings$.asObservable(),
+    getCachedUserSettings: () => userSettings$.getValue(),
+  } as unknown as SettingsService;
 }
 
 export function createYjsSyncService(

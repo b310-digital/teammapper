@@ -6,6 +6,7 @@ import { SettingsService } from '../settings/settings.service';
 import { YjsSyncService } from './yjs-sync.service';
 import {
   createMockContext,
+  createMockSettingsService,
   createYjsSyncService,
 } from '../../../../test/mocks/yjs-sync.mock';
 
@@ -104,14 +105,11 @@ describe('YjsSyncService connection status', () => {
   describe('a server map reset', () => {
     let old: FakeWebsocketProvider;
     let fresh: FakeWebsocketProvider;
-    const settings = { setEditMode: jest.fn() };
+    const settings =
+      createMockSettingsService() as jest.Mocked<SettingsService>;
     beforeEach(() => {
       settings.setEditMode.mockClear();
-      service = createYjsSyncService(
-        undefined,
-        context,
-        settings as unknown as SettingsService
-      );
+      service = createYjsSyncService(undefined, context, settings);
       service.setWritable(true);
       service.initMap('test-uuid');
       old = currentProvider();
@@ -141,6 +139,9 @@ describe('YjsSyncService connection status', () => {
     it('does not report the map as deleted', () => {
       expect(context.mapDeleted).not.toHaveBeenCalled();
     });
+    it('removes the renderer once', () => {
+      expect(context.removeMap).toHaveBeenCalledTimes(1);
+    });
     describe('after fresh sync', () => {
       beforeEach(() => {
         fresh.emit('sync', true);
@@ -148,6 +149,14 @@ describe('YjsSyncService connection status', () => {
       });
       it('restores editing for a writable map', () => {
         expect(settings.setEditMode).toHaveBeenLastCalledWith(true);
+      });
+      it('removes the renderer before it recreates the map', () => {
+        const removeOrder = jest.mocked(context.removeMap).mock
+          .invocationCallOrder[0];
+        const secondCreateOrder = jest.mocked(context.createMap).mock
+          .invocationCallOrder[1];
+        expect(removeOrder).toBeDefined();
+        expect(removeOrder).toBeLessThan(secondCreateOrder);
       });
       it('recreates the map', () => {
         expect(context.createMap).toHaveBeenCalledTimes(2);

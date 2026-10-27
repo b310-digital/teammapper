@@ -5,3 +5,4 @@ export * from './cache';
 export * from './algorithms';
 export * from './images';
 export * from './links';
+export * from './display-names/displayNames';

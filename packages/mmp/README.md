@@ -31,9 +31,17 @@ change is local, a peer's or an undo, and emits `mapChange` afterwards. mmp
 keeps render data only: measured sizes, rings, image loads, the drag preview,
 the selection and the view state.
 
-The entry point exports no implementation. The mmp specs run against
-`InMemoryMapData` in `src/map/data/in-memory-map-data.ts`, and the frontend
-implements `YjsMapData`.
+The entry point exports one function, `create(ref, data, options?)`, and
+types. `create` returns an `MmpInstance`, the object that carries every map
+function. `setEditable(editable)` switches editing and dragging on or off
+together without a redraw, `updateOption(property, value)` applies
+`centerOnResize`, `showLinktext`, `defaultNode` or `rootNode` to the open map,
+and `destroy()` removes the map. Each map registers
+its own window resize listener, so several maps can share a page.
+
+The entry point exports no `MapData` implementation. The mmp specs run against
+`InMemoryMapData` in `src/test/in-memory-map-data.ts`, which the build leaves
+out of `dist`, and the frontend implements `YjsMapData`.
 
 ```ts
 import { create, type MapData } from '@teammapper/mmp';
@@ -41,9 +49,9 @@ import { create, type MapData } from '@teammapper/mmp';
 declare const data: MapData;
 const ref = document.getElementById('map');
 if (!ref) throw new Error('The page has no #map element');
-const map = create('map', ref, undefined, data);
+const map = create(ref, data);
 
-map.instance.on('mapChange', () => console.log(data.nodes().length));
+map.on('mapChange', () => console.log(data.nodes().length));
 
 data.batch(() => {
   data.addNodes([{ id: 'child', parent: 'root', k: 1, name: 'Child' }]);
@@ -54,6 +62,13 @@ data.batch(() => {
 The `batch` call above produces one redraw and one `mapChange`. The
 `MapData` interface offers `node(id)`, `nodes()`, `mainRootId()`, `addNodes`,
 `updateNode`, `removeNode`, `replaceMap`, `batch` and `subscribe`.
+
+`updateNode` takes a node property name, such as `backgroundColor`.
+`@teammapper/shared` exports `NodePropertyMapping`, the path of each property
+inside a node record, and `NodePropertyValues`, the value type each property
+accepts. `map.updateNode` checks the value type at compile time.
+mmp declares its events and exports their payload types as
+`MmpEventPayloadMap` and `MmpEventType`.
 
 ## Third-party libs
 

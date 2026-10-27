@@ -9,6 +9,7 @@ import { YjsMapData } from './yjs-map-data';
 import {
   capturingMmpService,
   createMockContext,
+  createMockSettingsService,
   createYjsSyncService as createService,
   MmpHandlers,
 } from '../../../../test/mocks/yjs-sync.mock';
@@ -43,9 +44,8 @@ describe('YjsSyncService', () => {
     let service: YjsSyncService;
 
     beforeEach(() => {
-      settingsService = {
-        setEditMode: jest.fn(),
-      } as unknown as jest.Mocked<SettingsService>;
+      settingsService =
+        createMockSettingsService() as jest.Mocked<SettingsService>;
       service = createService(undefined, createMockContext(), settingsService);
     });
 
@@ -75,8 +75,8 @@ describe('YjsSyncService', () => {
       expect(settingsService.setEditMode).toHaveBeenCalledWith(true);
     });
 
-    // The settings page reads edit mode to decide whether the map settings
-    // of the map the user left stay editable.
+    // The settings dialog reads edit mode to decide whether the map settings
+    // stay editable.
     it('keeps edit mode on destroy', () => {
       service.destroy();
 
@@ -135,9 +135,8 @@ describe('YjsSyncService', () => {
       handlers = {};
       mmpService = capturingMmpService(handlers);
       context = createMockContext();
-      settingsService = {
-        setEditMode: jest.fn(),
-      } as unknown as jest.Mocked<SettingsService>;
+      settingsService =
+        createMockSettingsService() as jest.Mocked<SettingsService>;
       service = createService(mmpService, context, settingsService);
       service.initMap('test-uuid');
     });
@@ -158,16 +157,6 @@ describe('YjsSyncService', () => {
       internals(service).handleFirstSync();
 
       expect(mmpService.on).not.toHaveBeenCalled();
-    });
-
-    it('hands the map data over again when a map component reattaches', () => {
-      internals(service).yjsSynced = true;
-
-      service.initMap('test-uuid');
-
-      expect(context.createMap).toHaveBeenCalledWith(
-        internals(service).yjsMapData
-      );
     });
 
     it('closes the previous connection before opening a different map', () => {
@@ -207,36 +196,6 @@ describe('YjsSyncService', () => {
           fontIncrement: 5,
         });
         expect(optionsOrder).toBeLessThan(editModeOrder);
-      });
-
-      it('keeps settings edits in the same doc while the renderer is detached', () => {
-        const doc = internals(service).yDoc;
-        const options = { fontMaxSize: 80, fontMinSize: 20, fontIncrement: 7 };
-
-        service.detachMap();
-        service.updateMapOptions(options);
-        service.initMap('test-uuid');
-        service.attachMap();
-
-        expect(internals(service).yDoc).toBe(doc);
-        expect(doc.getMap('mapOptions').toJSON()).toEqual(options);
-        expect(mmpService.updateAdditionalMapOptions).toHaveBeenLastCalledWith(
-          options
-        );
-      });
-
-      it('stops updating the removed renderer when it is detached', () => {
-        jest.useFakeTimers();
-        service.detachMap();
-        (context.setAttachedNode as jest.Mock).mockClear();
-
-        handlers['mapChange']();
-        handlers['nodeSelect'](root);
-        jest.advanceTimersByTime(ATTACHED_MAP_AUDIT_MS);
-
-        expect(context.setAttachedNode).not.toHaveBeenCalled();
-        expect(context.updateAttachedMap).not.toHaveBeenCalled();
-        jest.useRealTimers();
       });
 
       it('subscribes to the map change and the selection events', () => {
@@ -351,18 +310,6 @@ describe('YjsSyncService', () => {
         options
       );
       expect(editorMmp.updateAdditionalMapOptions).not.toHaveBeenCalled();
-    });
-
-    it('receives peer settings while the renderer is detached', () => {
-      viewer.detachMap();
-      const options = { fontMaxSize: 80, fontMinSize: 20, fontIncrement: 7 };
-
-      editor.updateMapOptions(options);
-      sync(editor, viewer);
-
-      expect(viewerMmp.updateAdditionalMapOptions).toHaveBeenCalledWith(
-        options
-      );
     });
 
     it('applies updates in both directions when both clients can edit', () => {

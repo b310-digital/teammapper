@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
-import InMemoryMapData from '../map/data/in-memory-map-data.js';
+import InMemoryMapData from './in-memory-map-data.js';
 import CopyPaste from '../map/handlers/copy-paste.js';
 import Drag from '../map/handlers/drag.js';
 import MapLoader from '../map/handlers/map-loader.js';

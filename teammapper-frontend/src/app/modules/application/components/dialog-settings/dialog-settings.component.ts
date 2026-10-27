@@ -1,15 +1,30 @@
-import { Component, Signal, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { CachedMapOptions, UserSettings } from '@teammapper/shared';
+import {
+  ChangeDetectorRef,
+  Component,
+  Signal,
+  computed,
+  inject,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  BRANCH_STYLES,
+  BranchStyle,
+  branchStyleOf,
+  CachedMapOptions,
+  UserSettings,
+} from '@teammapper/shared';
 import { AdditionalMapOptions } from 'src/app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../../../core/services/settings/settings.service';
 import { MmpService } from '../../../../core/services/mmp/mmp.service';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
-import { Location, AsyncPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
-import { MatToolbar } from '@angular/material/toolbar';
-import { MatDialogTitle } from '@angular/material/dialog';
+import {
+  MatDialogClose,
+  MatDialogContent,
+  MatDialogTitle,
+} from '@angular/material/dialog';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
@@ -19,24 +34,25 @@ import {
   MatCardTitle,
   MatCardContent,
 } from '@angular/material/card';
-import { MatFormField } from '@angular/material/form-field';
+import { MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { MatSelect, MatOption } from '@angular/material/select';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { FormsModule } from '@angular/forms';
 import { MatInput } from '@angular/material/input';
 import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
 import { MindmapsOverview } from 'src/app/shared/components/mindmaps-overview/mindmaps-overview.component';
-import { MapDeletionComponent } from '../../components/map-deletion/map-deletion.component';
+import { MapDeletionComponent } from '../map-deletion/map-deletion.component';
 
 @Component({
-  selector: 'teammapper-settings',
-  templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss'],
+  selector: 'teammapper-dialog-settings',
+  templateUrl: './dialog-settings.component.html',
+  styleUrls: ['./dialog-settings.component.scss'],
   imports: [
     MindmapsOverview,
     MapDeletionComponent,
-    MatToolbar,
     MatDialogTitle,
+    MatDialogContent,
+    MatDialogClose,
     MatIconButton,
     MatIcon,
     MatTabGroup,
@@ -46,6 +62,8 @@ import { MapDeletionComponent } from '../../components/map-deletion/map-deletion
     MatCardTitle,
     MatCardContent,
     MatFormField,
+    MatLabel,
+    MatHint,
     MatSelect,
     MatOption,
     MatSlideToggle,
@@ -56,15 +74,18 @@ import { MapDeletionComponent } from '../../components/map-deletion/map-deletion
     InverseBoolPipe,
   ],
 })
-export class SettingsComponent {
+export class DialogSettingsComponent {
   private settingsService = inject(SettingsService);
   private mmpService = inject(MmpService);
   private mapSyncService = inject(MapSyncService);
   private translateService = inject(TranslateService);
-  private location = inject(Location);
+  private changeDetector = inject(ChangeDetectorRef);
 
   public readonly languages: string[];
-  public settings: UserSettings | null;
+  public readonly branchStyles: readonly BranchStyle[] = BRANCH_STYLES;
+  public settings: UserSettings | null = null;
+  /** The display name field's draft, stored when the field commits. */
+  public displayName = '';
   private readonly appliedMapOptions = toSignal(
     this.mmpService.additionalMapOptions$,
     { initialValue: null }
@@ -82,14 +103,32 @@ export class SettingsComponent {
 
   constructor() {
     this.languages = SettingsService.LANGUAGES;
-    this.settings = this.settingsService.getCachedUserSettings();
     this.editMode = this.settingsService.getEditModeObservable();
+    this.settingsService.userSettings
+      .pipe(takeUntilDestroyed())
+      .subscribe(settings => this.showSettings(settings));
   }
 
+  /**
+   * Show the latest settings, which another tab may have saved while the
+   * dialog is open, so the form never edits an outdated copy.
+   */
+  private showSettings(settings: UserSettings | null) {
+    this.settings = withBranchStyle(settings);
+    this.displayName = settings?.general.displayName ?? '';
+    this.changeDetector.markForCheck();
+  }
+
+  /**
+   * Store the edited user settings and apply them to the map behind the
+   * dialog.
+   */
   public async updateGeneralMapOptions() {
     if (!this.settings) return;
 
-    await this.settingsService.updateCachedSettings(this.settings);
+    const mapOptions = this.settings.mapOptions;
+    await this.settingsService.setUserMapOptions(mapOptions);
+    this.mmpService.updateUserMapOptions(mapOptions);
   }
 
   /**
@@ -112,9 +151,21 @@ export class SettingsComponent {
   public async updateLanguage() {
     if (!this.settings) return;
 
-    await this.settingsService.updateCachedSettings(this.settings);
+    const language = this.settings.general.language;
+    await this.settingsService.setLanguage(language);
+    this.translateService.use(language);
+  }
 
-    this.translateService.use(this.settings.general.language);
+  /**
+   * Store the edited display name and show it as SettingsService normalized
+   * it. Until then the field edits a draft, so a dialog closed mid-edit stores
+   * nothing.
+   */
+  public async updateDisplayName() {
+    if (!this.settings) return;
+
+    await this.settingsService.setDisplayName(this.displayName);
+    this.displayName = this.settings.general.displayName;
   }
 
   public async updateDarkMode() {
@@ -122,10 +173,18 @@ export class SettingsComponent {
 
     await this.settingsService.setDarkMode(this.settings.general.darkMode);
   }
+}
 
-  public back() {
-    this.location.back();
-  }
+/**
+ * The settings with a known branch style. Settings cached before branch styles
+ * lack one, and the select shows `tapered` for them, as mmp draws it. The
+ * first change in the dialog stores the value.
+ */
+function withBranchStyle(settings: UserSettings | null): UserSettings | null {
+  if (!settings) return null;
+
+  const branchStyle = branchStyleOf(settings.mapOptions.branchStyle);
+  return { ...settings, mapOptions: { ...settings.mapOptions, branchStyle } };
 }
 
 /**

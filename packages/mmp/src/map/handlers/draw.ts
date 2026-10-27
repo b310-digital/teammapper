@@ -279,10 +279,15 @@ export default class Draw {
   }
 
   /**
-   * Stop watching names for size changes. The map calls this on removal.
+   * Stop watching names for size changes and drop the pending image loads,
+   * so a load that ends later draws nothing. A running name edit ends without
+   * a write, because removing a focused name fires a blur in some browsers.
+   * The map calls this on removal.
    */
   public destroy() {
+    this.cancelNameEditing();
     this.resizeObserver?.disconnect();
+    this.images.clear();
   }
 
   /**
@@ -420,17 +425,7 @@ export default class Draw {
     };
 
     name.onblur = () => {
-      this.editingId = null;
-
-      name.ondblclick =
-        name.onmousedown =
-        name.onblur =
-        name.onkeydown =
-        name.onpaste =
-          null;
-
-      name.setAttribute('contenteditable', 'false');
-      name.style.setProperty('cursor', 'pointer');
+      this.endNameEditing(id, name);
 
       // The blur commits to the node it edited, whatever node the selection
       // moves to, and reads the name the map data holds now.
@@ -446,6 +441,43 @@ export default class Draw {
       // peer protected the branch during the edit and updateNode refused it.
       this.drawNodes([id]);
     };
+  }
+
+  /**
+   * End a running name edit without writing the typed name. The map calls
+   * this when editing turns off, and the name shows the stored text again.
+   */
+  public cancelNameEditing() {
+    const id = this.editingId;
+    if (id === null) return;
+
+    const name = this.nameOf(id);
+    if (name) {
+      this.endNameEditing(id, name);
+      name.blur();
+    }
+    this.editingId = null;
+    this.drawNodes([id]);
+  }
+
+  /**
+   * Make the name read-only again and remove the handlers the edit added,
+   * the blur handler included, so a later blur writes nothing.
+   */
+  private endNameEditing(id: string, name: HTMLDivElement) {
+    // Focusing the name of a new edit blurs the old one, after editingId
+    // already names the new node.
+    if (this.editingId === id) this.editingId = null;
+
+    name.ondblclick =
+      name.onmousedown =
+      name.onblur =
+      name.onkeydown =
+      name.onpaste =
+        null;
+
+    name.setAttribute('contenteditable', 'false');
+    name.style.setProperty('cursor', 'pointer');
   }
 
   /**
@@ -568,10 +600,8 @@ export default class Draw {
       .style('visibility', visibilityOf);
     NODE_MARKS.forEach(mark => mark.draw(groups, context));
     this.observe(groups);
-    branches
-      .style('fill', id => context.recordOf(id).colors.branch)
-      .style('stroke', id => context.recordOf(id).colors.branch)
-      .style('visibility', visibilityOf);
+    this.styleBranches(branches, context);
+    branches.style('visibility', visibilityOf);
 
     this.measure(groups);
 
@@ -739,36 +769,36 @@ export default class Draw {
     if (parentId === null || !record) return null;
 
     const parent = nodes.positionOf(parentId, lookup),
-      node = nodes.positionOf(id, lookup),
-      { width: nodeWidth, height: nodeHeight } = this.dimensionsOf(record),
-      path = d3.path(),
-      level = nodes.level(id, lookup),
-      width = 22 - (level < 6 ? level : 6) * 3,
-      mx = (parent.x + node.x) / 2,
-      ory = parent.y < node.y + nodeHeight / 2 ? -1 : 1,
-      orx = parent.x > node.x ? -1 : 1,
-      inv = orx * ory;
+      node = nodes.positionOf(id, lookup);
 
-    path.moveTo(parent.x, parent.y - width * 0.8);
-    path.bezierCurveTo(
-      mx - width * inv,
-      parent.y - width / 2,
-      parent.x - (width / 2) * inv,
-      node.y + nodeHeight / 2 - width / 3,
-      node.x - (nodeWidth / 3) * orx,
-      node.y + nodeHeight / 2 + 3
-    );
-    path.bezierCurveTo(
-      parent.x + (width / 2) * inv,
-      node.y + nodeHeight / 2 + width / 3,
-      mx + width * inv,
-      parent.y + width / 2,
-      parent.x,
-      parent.y + width * 0.8
-    );
-    path.closePath();
+    switch (this.map.options.branchStyle) {
+      case 'curved':
+        return curvedBranch(parent, node, this.dimensionsOf(record));
+      case 'straight':
+        return straightBranch(parent, node);
+      case 'tapered':
+        return taperedBranch(
+          parent,
+          node,
+          this.dimensionsOf(record),
+          nodes.level(id, lookup)
+        );
+    }
+  }
 
-    return path.toString();
+  /**
+   * Paint the branches in their branch color: a tapered branch is a filled
+   * shape, the thin styles stroke an open path at one width.
+   */
+  private styleBranches(branches: BranchPaths, context: MarkContext) {
+    const colorOf = (id: string) => context.recordOf(id).colors.branch;
+    const thin = this.map.options.branchStyle !== 'tapered';
+
+    branches
+      .style('fill', id => (thin ? 'none' : colorOf(id)))
+      .style('stroke', colorOf)
+      .style('stroke-width', () => (thin ? THIN_BRANCH_WIDTH : null))
+      .style('stroke-linecap', () => (thin ? 'round' : null));
   }
 
   /** The drawn nodes with the ids. */
@@ -837,13 +867,13 @@ export default class Draw {
         { passive: false }
       );
 
-    if (this.map.options.drag === true) {
-      groups.call(this.map.drag.getDragBehavior());
-    } else {
-      groups.on('mousedown', (_event: MouseEvent, id: string) => {
-        this.map.nodes.selectNode(id);
+    // Both handlers read the drag option when the event arrives, so a change
+    // of the option needs no redraw. A drag start selects the node itself.
+    groups
+      .call(this.map.drag.getDragBehavior())
+      .on('mousedown', (_event: MouseEvent, id: string) => {
+        if (!this.map.options.drag) this.map.nodes.selectNode(id);
       });
-    }
 
     return groups;
   }
@@ -923,4 +953,90 @@ export default class Draw {
 
 function translate(position: MapNodeCoordinates): string {
   return 'translate(' + position.x + ',' + position.y + ')';
+}
+
+/** The stroke width of curved and straight branches, at every level. */
+const THIN_BRANCH_WIDTH = '2.5';
+
+/**
+ * Where a tapered or curved branch ends: just below the node's name, a third
+ * of the node's width toward the parent.
+ */
+function branchEnd(
+  parent: MapNodeCoordinates,
+  node: MapNodeCoordinates,
+  { width, height }: MapNodeDimensions
+): MapNodeCoordinates {
+  const orx = parent.x > node.x ? -1 : 1;
+  return { x: node.x - (width / 3) * orx, y: node.y + height / 2 + 3 };
+}
+
+/**
+ * A filled shape from the parent's center to the branch end, narrower the
+ * deeper the node sits, down to level 6.
+ */
+function taperedBranch(
+  parent: MapNodeCoordinates,
+  node: MapNodeCoordinates,
+  dimensions: MapNodeDimensions,
+  level: number
+): string {
+  const path = d3.path(),
+    end = branchEnd(parent, node, dimensions),
+    nodeHeight = dimensions.height,
+    width = 22 - (level < 6 ? level : 6) * 3,
+    mx = (parent.x + node.x) / 2,
+    ory = parent.y < node.y + nodeHeight / 2 ? -1 : 1,
+    orx = parent.x > node.x ? -1 : 1,
+    inv = orx * ory;
+
+  path.moveTo(parent.x, parent.y - width * 0.8);
+  path.bezierCurveTo(
+    mx - width * inv,
+    parent.y - width / 2,
+    parent.x - (width / 2) * inv,
+    node.y + nodeHeight / 2 - width / 3,
+    end.x,
+    end.y
+  );
+  path.bezierCurveTo(
+    parent.x + (width / 2) * inv,
+    node.y + nodeHeight / 2 + width / 3,
+    mx + width * inv,
+    parent.y + width / 2,
+    parent.x,
+    parent.y + width * 0.8
+  );
+  path.closePath();
+
+  return path.toString();
+}
+
+/** An open curve from the parent's center to the branch end. */
+function curvedBranch(
+  parent: MapNodeCoordinates,
+  node: MapNodeCoordinates,
+  dimensions: MapNodeDimensions
+): string {
+  const path = d3.path(),
+    end = branchEnd(parent, node, dimensions),
+    mx = (parent.x + node.x) / 2;
+
+  path.moveTo(parent.x, parent.y);
+  path.bezierCurveTo(mx, parent.y, mx, end.y, end.x, end.y);
+  return path.toString();
+}
+
+/**
+ * A line from the parent's center to the node's center. The node backgrounds
+ * cover both ends, so the visible part runs from edge to edge.
+ */
+function straightBranch(
+  parent: MapNodeCoordinates,
+  node: MapNodeCoordinates
+): string {
+  const path = d3.path();
+  path.moveTo(parent.x, parent.y);
+  path.lineTo(node.x, node.y);
+  return path.toString();
 }

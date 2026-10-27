@@ -1,7 +1,6 @@
 import * as d3 from 'd3';
-import { create } from '../../index.js';
 import MmpMap from '../map.js';
-import InMemoryMapData from '../data/in-memory-map-data.js';
+import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
 /**
@@ -16,7 +15,7 @@ function makeChain() {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const data = new InMemoryMapData();
-  const map: MmpMap = create('map', ref, undefined, data);
+  const map: MmpMap = new MmpMap(ref, undefined, data);
   map.instance.new();
 
   const root = map.instance.exportRootProperties()?.id;

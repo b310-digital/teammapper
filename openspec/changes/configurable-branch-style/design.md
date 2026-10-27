@@ -1,8 +1,8 @@
 ## Context
 
-`Draw.drawBranch(node)` in `packages/mmp/src/map/handlers/draw.ts` returns a closed `d3.path` built from two cubic Béziers between the parent's center and a point under the child's name. Width is `22 - min(level, 6) * 3`. `Draw.update` inserts one `path.<mapId>_branch` per node before the node groups, so nodes cover the branch start, and sets `fill` and `stroke` to `node.colors.branch`.
+`Draw.branchShape(id, lookup)` in `packages/mmp/src/map/handlers/draw.ts` returns a closed `d3.path` built from two cubic Béziers between the parent's center and a point under the child's name. Width is `22 - min(level, 6) * 3`. `Draw.place` appends one `path.branch` per child to the branches layer, which sits below the nodes layer, so nodes cover the branch start. `Draw.render` sets `fill` and `stroke` to the record's `colors.branch` on every render, including after a branch color change.
 
-User settings come from the server defaults (`teammapper-backend/config/settings.*.json`) and are cached in local storage by `SettingsService`. `MapComponent.ngAfterViewInit` passes `settings.mapOptions` to `MmpService.create`, which hands them to mmp's `Options`. `showLinktext` travels exactly this way. The settings page is its own route (`/app/settings`), so the map is destroyed when the user opens it and created again with fresh settings on return.
+User settings come from the server defaults (`teammapper-backend/config/settings.*.json`) and are cached in local storage by `SettingsService`. `MapSyncService.openMap` hands the cached `mapOptions` to `MmpService.create`, which passes them to mmp's `Options`. The settings dialog opens over the map, which stays drawn, and `MmpService.updateUserMapOptions` pushes each change into the open map through `Options.update`. `showLinktext` travels exactly this way.
 
 ## Goals / Non-Goals
 
@@ -41,9 +41,9 @@ export interface UserMapOptions extends Required<MapOptions> {
 
 `tapered` and `curved` share one helper for the end point under the child's name. Each function stays under 10 lines.
 
-Thin styles set `fill: none` and `stroke: node.colors.branch`. Both use `stroke-width` 2.5 at every level and `stroke-linecap: round`: clearly thinner than a tapered branch, still visible on light branch colors at normal zoom. `Nodes.updateNodeBranchColor` (`packages/mmp/src/map/handlers/nodes.ts`) sets `branch.style.fill` and `branch.style.stroke` to the new color; it must set `fill` only for `tapered`. The same function compares the new color with `node.colors.name` instead of `node.colors.branch`. That bug predates this change and stays out of scope.
+Thin styles set `fill: none` and `stroke: node.colors.branch`. Both use `stroke-width` 2.5 at every level and `stroke-linecap: round`: clearly thinner than a tapered branch, still visible on light branch colors at normal zoom. `Draw.styleBranches` sets all four properties on every render, and clears `stroke-width` and `stroke-linecap` for `tapered`, so a branch color change and a switch back to `tapered` both leave the right paint.
 
-No `Options.update('branchStyle')` is needed: the map is created again after the settings page closes.
+`Options.update('branchStyle', value)` stores the style, falling back to `tapered` like the constructor, and calls `drawAll` when the value changes. `MmpService.updateUserMapOptions` forwards `branchStyle` next to `showLinktext`, so the map behind the settings dialog redraws at once. `Draw.update` reshapes every branch path but keeps the path element, so the per-style attributes are set on every update, not only when the path is created.
 
 ### 4. Settings UI
 

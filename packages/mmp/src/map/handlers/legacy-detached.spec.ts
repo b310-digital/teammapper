@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
-import { create } from '../../index.js';
-import InMemoryMapData from '../data/in-memory-map-data.js';
+import MmpMap from '../map.js';
+import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { DefaultNodeValues, DefaultRootNodeValues } from '../options.js';
 import { nodeRecord, stubMap } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
@@ -150,7 +150,7 @@ describe('a node whose parent the map data lacks', () => {
   it('draws as a root: a node without a branch', () => {
     const ref = document.createElement('div');
     document.body.appendChild(ref);
-    create('map', ref, undefined, new InMemoryMapData(ORPHANED));
+    new MmpMap(ref, undefined, new InMemoryMapData(ORPHANED));
 
     const branches = d3.selectAll<SVGPathElement, string>('path.branch');
     expect(branches.data().sort()).toEqual(['child', 'leaf']);
@@ -163,7 +163,7 @@ describe('a node whose parent the map data lacks', () => {
     const ref = document.createElement('div');
     document.body.appendChild(ref);
     const data = new InMemoryMapData(ORPHANED);
-    const map = create('map', ref, undefined, data);
+    const map = new MmpMap(ref, undefined, data);
     map.viewState.toggle('missing');
 
     data.addNodes([

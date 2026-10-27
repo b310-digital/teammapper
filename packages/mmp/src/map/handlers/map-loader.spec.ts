@@ -1,6 +1,5 @@
-import { create } from '../../index.js';
 import MmpMap from '../map.js';
-import InMemoryMapData from '../data/in-memory-map-data.js';
+import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 import type { MapSnapshot } from '@teammapper/shared';
 
@@ -15,7 +14,7 @@ beforeAll(stubSvgLengths);
 function makeMap(data = new InMemoryMapData()): MmpMap {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
-  return create('map', ref, undefined, data);
+  return new MmpMap(ref, undefined, data);
 }
 
 function rootOf(map: MmpMap): string {

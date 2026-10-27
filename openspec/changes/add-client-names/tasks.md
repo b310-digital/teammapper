@@ -2,24 +2,24 @@ Each section is one pull request and leaves `main` releasable. PR 1 stores and a
 
 ## 1. PR 1: setting and presence
 
-- [ ] 1.1 Add `displayName: string` to `UserGeneralSettings` and `AwarenessUser` (`color`, `selectedNodeId`, `displayName`) to `packages/shared`
-- [ ] 1.2 Add `normalizeDisplayName` and `displayNameInitials` to `packages/shared`, using `Intl.Segmenter` for graphemes
-- [ ] 1.3 Return `displayName: ''` in the backend default user settings
-- [ ] 1.4 Fill a missing `displayName` with `''` in `SettingsService.resolveUserSettings` and in the fallback path
-- [ ] 1.5 Add the display name field with its hint to the "General" tab of the settings page, saving the normalized value
-- [ ] 1.6 Write `displayName` in `setupAwareness` and `updateAwarenessSelection`, typed as `AwarenessUser`
-- [ ] 1.7 Subscribe `YjsSyncService` to `SettingsService.userSettings` while a map is open, update awareness when the normalized name changes, and unsubscribe in teardown
-- [ ] 1.8 Add the translation keys to every file in `teammapper-frontend/src/assets/i18n`
-- [ ] 1.9 Add the **Display name** entry to `docs/glossary.md` and qualify "Presence is anonymous" in **Client list, client color**
-- [ ] 1.10 Write shared unit tests: non-string input, control and format characters, whitespace, 30-grapheme cut with emoji, initials for one word, several words, emoji, empty name
-- [ ] 1.11 Write frontend tests: settings migration without `displayName`, the settings field saves the normalized value, awareness carries the name on connect, on selection and after a rename with the selection kept
+- [x] 1.1 Add `displayName: string` to `UserGeneralSettings` and `AwarenessUser` (`color`, `selectedNodeId`, `displayName`) to `packages/shared`
+- [x] 1.2 Add `normalizeDisplayName` and `displayNameInitials` to `packages/shared`
+- [x] 1.3 Return `displayName: ''` in the backend default user settings
+- [x] 1.4 Fill a missing `displayName` with `''` in `SettingsService.resolveUserSettings` and in the fallback path
+- [x] 1.5 Add the display name field with its hint to the "General" tab of the settings page, saving the normalized value
+- [x] 1.6 Write `displayName` in `setupAwareness` and `updateAwarenessSelection`, typed as `AwarenessUser`
+- [x] 1.7 Subscribe `YjsSyncService` to `SettingsService.userSettings` while a map is open, update awareness when the normalized name changes, and unsubscribe in teardown
+- [x] 1.8 Add the translation keys to every file in `teammapper-frontend/src/assets/i18n`
+- [x] 1.9 Add the **Display name** entry to `docs/glossary.md` and qualify "Presence is anonymous" in **Client list, client color**
+- [x] 1.10 Write shared unit tests: non-string input, removed characters, spaces, 20-character cut, initials for one word, several words, empty name
+- [x] 1.11 Write frontend tests: settings migration without `displayName`, the settings field saves the normalized value, awareness carries the name on connect, on selection and after a rename with the selection kept
 
 ## 2. PR 2: client list and dialog
 
-- [ ] 2.1 Add `displayName` to `ClientColorMappingValue` and read it through `normalizeDisplayName` in `buildColorMappingFromAwareness`
-- [ ] 2.2 Emit `ClientListEntry[]` (`clientId`, `color`, `displayName`, `isSelf`) from `getClientListObservable` and track by `clientId` in the component
-- [ ] 2.3 Render initials in a circle of the client color with black or white text by relative luminance, the generic icon without a name, and `aria-label` with the name or "Anonymous"
-- [ ] 2.4 Make the own entry a button that opens `DialogDisplayNameComponent`, with "Save", "Cancel" and Escape
-- [ ] 2.5 Update `src/test/mocks/yjs-sync.mock.ts` and other consumers of the client list type
-- [ ] 2.6 Write unit tests: initials and fallback icon, accessible label, contrast of at least 4.5:1 for every `COLORS` entry, two clients with one color give two entries, a remote rename updates the entry, markup renders as text
-- [ ] 2.7 Write e2e tests: set a name from the own icon and see initials in a second browser context, cancel keeps the name, the dialog opens on a view link, a name set in settings shows in the client list
+- [x] 2.1 Add `displayName` to `ClientColorMappingValue` and read it through `normalizeDisplayName` in `buildColorMappingFromAwareness`
+- [x] 2.2 Emit `ClientListEntry[]` (`clientId`, `color`, `displayName`, `isSelf`) from `getClientListObservable` and track by `clientId` in the component
+- [x] 2.3 Render initials in dark text on a white circle ringed in the client color, the generic icon without a name, and `aria-label` with the name or "Anonymous"
+- [x] 2.4 Make the own entry a button that opens `DialogDisplayNameComponent`, with "Save", "Cancel" and Escape
+- [x] 2.5 Update `src/test/mocks/yjs-sync.mock.ts` and other consumers of the client list type
+- [x] 2.6 Write unit tests: initials and fallback icon, accessible label, ring in the client color, two clients with one color give two entries, a remote rename updates the entry, markup renders as text
+- [x] 2.7 Write e2e tests: set a name from the own icon and see initials in a second browser context, cancel keeps the name, the dialog opens on a view link, a name set in settings shows in the client list

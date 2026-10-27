@@ -318,10 +318,11 @@
   <span class="toolbar-spacer"></span>
 
   <button
+    id="settings-button"
     color="primary"
+    (click)="openSettings()"
     [title]="'TOOLTIPS.SETTINGS' | translate"
-    mat-icon-button
-    routerLink="/app/settings">
+    mat-icon-button>
     <mat-icon>settings</mat-icon>
   </button>
 

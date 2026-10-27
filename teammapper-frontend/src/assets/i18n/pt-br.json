@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "Centralizar o mapa no redimensionamento da janela",
     "NODE_DRAGGING": "Permite arrastar os nós no mapa",
     "MAP_ZOOM": "Permite ampliar o mapa",
-    "AUTO_BRANCH_COLORS": "Permite escolher automaticamente as cores dos ramos",
+    "AUTO_BRANCH_COLORS": "Escolhe uma cor para cada novo ramo que você cria. A cor fica salva no nó, então todos neste mapa a veem.",
+    "BRANCH_STYLE": "Como este navegador desenha os ramos de cada mapa",
     "SHARE": "Share",
     "LINK_ADD": "Adds a link",
     "LINK_REMOVE": "Removes a link",
@@ -143,6 +144,9 @@
       "TITLE": "Problema de conexão",
       "WARNING": "Suas alterações recentes podem não ter sido salvas.",
       "RELOAD_BUTTON": "Recarregar página"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "Seu nome de exibição"
     }
   },
   "PAGES": {
@@ -180,7 +184,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "Ramo com cores automáticas",
+      "AUTO_BRANCH_COLORS_HINT": "Escolhe uma cor para cada novo ramo que você cria. A cor fica salva no nó, então todos neste mapa a veem.",
+      "BRANCH_STYLE": "Estilo dos ramos",
+      "BRANCH_STYLES": {
+        "TAPERED": "Afunilado",
+        "CURVED": "Curvo",
+        "STRAIGHT": "Reto"
+      },
       "CENTER_ON_RESIZING": "Centralizar no redimensionamento",
+      "EDITOR": "Editor",
+      "FONT_SIZES": "Tamanhos de fonte",
+      "MIND_MAP": "Mapa mental",
+      "MAP_SETTINGS": "Configurações do mapa",
+      "MAP_SETTINGS_EXPLANATION": "Compartilhadas com todos neste mapa",
+      "NODE_NAMES_HINT": "Usado como nome dos mapas e nós que você cria. O nome fica salvo no nó, então todos neste mapa o veem.",
+      "USER_SETTINGS": "Configurações do usuário",
+      "USER_SETTINGS_EXPLANATION": "Só para você, neste navegador",
       "FONT_MIN_SIZE": "Minimal font size",
       "FONT_MAX_SIZE": "Maximal font size",
       "FONT_INCREMENT": "Font size step",
@@ -189,7 +208,6 @@
       "MAP_LIST": "List of created maps",
       "OWNED_MAPS": "Meus mapas mentais",
       "LAST_MAPS": "Mapas mentais recentes",
-      "MAP_OPTIONS": "Opções de mapa",
       "ROOT_NODE_NAME": "Nome do nó raiz",
       "NODE_NAME": "Nome do nó",
       "TITLE": "Configurações",
@@ -199,7 +217,9 @@
       "DELETED_AT": "Data de exclusão:",
       "DELETE_AFTER_DAYS": "Este servidor exclui os mapas após {{deleteAfterDays}} dias.",
       "DELETE": "Excluir mapa",
-      "CONFIRM_DELETE": "Excluir?"
+      "CONFIRM_DELETE": "Excluir?",
+      "DISPLAY_NAME": "Nome de exibição",
+      "DISPLAY_NAME_HINT": "Todos em um mapa mental veem este nome."
     }
   },
   "MESSAGES": {
@@ -250,6 +270,7 @@
     "AI_DESCRIPTION_REQUIRED": "Por favor, forneça uma descrição para o mapa mental"
   },
   "GENERAL": {
+    "BRANCHES": "Ramos",
     "REPOSITORY": "Source Code",
     "CREATE": "Create mind map",
     "DATAPROTECTION": "Privacy",
@@ -279,5 +300,8 @@
     "FONT_MIN_SIZE": "Minimal font size",
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "Anônimo"
   }
 }

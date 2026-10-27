@@ -56,10 +56,27 @@ already listening on 3000 and 4200 and starts nothing.
 `webkit` is the only project. Chrome forces a redirect to https and cannot run
 the suite.
 
-`@playwright/test` in `teammapper-frontend/package.json` and the
-`mcr.microsoft.com/playwright:vX.Y.Z-noble` tag in `docker-compose.yml` must
-match, because the protocol between them is not stable across versions. Bump
-both in the same commit.
+Three version strings must match, because the protocol between client and
+server is not stable across versions:
+
+1. `@playwright/test` in `teammapper-frontend/package.json`
+2. the `mcr.microsoft.com/playwright:vX.Y.Z-noble` image tag in
+   `docker-compose.yml`
+3. the `playwright@X.Y.Z` that the `playwright` service's `command` runs. The
+   image ships browsers but no Playwright package, so an unpinned `npx
+   playwright` fetches the newest release, which rejects an older client and
+   cannot find the image's browsers.
+
+Bump all three in the same commit.
+
+## Node version
+
+Every `package.json` declares the minimum Node version in `engines.node`.
+Change all of them in the same commit. `engineStrict` in `pnpm-workspace.yaml`
+makes `pnpm install` fail below that floor.
+
+`NODE_VERSION` in the `Dockerfile` sets the version the image ships. Keep it at
+or above the floor.
 
 ## Dev server and workspace packages
 

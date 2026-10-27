@@ -1,3 +1,5 @@
+import type { BranchStyle } from '../constants';
+
 /**
  * Every field of T present and non-null. `Required<T>` only drops the `?`;
  * these fields are `v.nullable` in the schemas, so the null has to go too.
@@ -39,13 +41,6 @@ export interface MapNodeImage {
 
 export interface MapNodeLink {
   href?: string | null;
-}
-
-export interface MapNodeBasics {
-  colors: MapNodeColors;
-  font: MapNodeFont;
-  name: string | null;
-  image: MapNodeImage;
 }
 
 export interface UserNodeProperties {
@@ -137,6 +132,22 @@ export interface SystemSettings {
 export interface UserGeneralSettings {
   language: string;
   darkMode: boolean;
+  /**
+   * The name other clients see in the client list, normalized with
+   * `normalizeDisplayName`. The empty string means no display name.
+   */
+  displayName: string;
+}
+
+/**
+ * The `user` field of a client's awareness state. A peer of any version, a
+ * read-only one included, writes its own state unchecked, so a receiver reads
+ * every field as unknown and normalizes it.
+ */
+export interface AwarenessUser {
+  color: string;
+  selectedNodeId: string | null;
+  displayName: string;
 }
 
 /**
@@ -159,6 +170,8 @@ export interface UserMapOptions extends Required<MapOptions> {
   centerOnResize: boolean;
   autoBranchColors: boolean;
   showLinktext: boolean;
+  /** How this browser draws branches. Never synced or stored with a map. */
+  branchStyle: BranchStyle;
   defaultNode: MapNodeSettings;
   rootNode: MapNodeSettings;
 }
@@ -212,16 +225,6 @@ export interface CachedAdminMapEntry {
   id: string;
   cachedAdminMapValue: CachedAdminMapValue;
 }
-
-export interface MmpEventPayloadMap {
-  nodeSelect: ExportNodeProperties;
-  nodeDeselect: ExportNodeProperties;
-  nodeProtected: ExportNodeProperties;
-  /** The map data changed, by a local, a peer's or an undo write. */
-  mapChange: void;
-}
-
-export type MmpEventType = keyof MmpEventPayloadMap;
 
 export interface Settings {
   systemSettings: SystemSettings;

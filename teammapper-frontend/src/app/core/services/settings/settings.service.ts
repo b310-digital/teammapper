@@ -1,12 +1,14 @@
-import { Injectable, inject } from '@angular/core';
+import { DestroyRef, Injectable, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   CachedAdminMapEntry,
+  normalizeDisplayName,
   Settings,
   SupportedLanguage,
   SystemSettings,
+  UserMapOptions,
   UserSettings,
 } from '@teammapper/shared';
 import { API_URL, HttpService } from '../../http/http.service';
@@ -14,6 +16,12 @@ import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
 /** `getLanguage` returns this when no user settings are cached. */
 const DEFAULT_LANGUAGE = 'en';
+
+/**
+ * Name of the channel that carries settings changes to the other open tabs of
+ * the same browser. Storage writes go to IndexedDB, which notifies no tab.
+ */
+export const SETTINGS_CHANNEL = 'teammapper-settings';
 
 @Injectable({
   providedIn: 'root',
@@ -33,6 +41,7 @@ export class SettingsService {
   private readonly editModeSubject: BehaviorSubject<boolean | null>;
   private readonly darkModeSubject: BehaviorSubject<boolean>;
   public readonly darkMode: Observable<boolean>;
+  private readonly channel = openSettingsChannel();
 
   constructor() {
     // Initialization of the behavior subjects.
@@ -44,6 +53,23 @@ export class SettingsService {
     this.darkModeSubject = new BehaviorSubject(false);
     this.userSettings = this.userSettingsSubject.asObservable();
     this.darkMode = this.darkModeSubject.asObservable();
+    this.listenToOtherTabs();
+  }
+
+  /**
+   * Apply the settings another tab saved. That tab already stored them, so
+   * this tab only updates its cache, which keeps a later save here from
+   * writing the old values back.
+   */
+  private listenToOtherTabs(): void {
+    const channel = this.channel;
+    if (!channel) return;
+    // zone.js patches addEventListener, so Angular renders the change.
+    channel.addEventListener('message', (event: MessageEvent<UserSettings>) => {
+      this.userSettingsSubject.next(withDisplayName(event.data));
+      this.applyDarkMode(event.data.general.darkMode);
+    });
+    inject(DestroyRef).onDestroy(() => channel.close());
   }
 
   /**
@@ -65,12 +91,12 @@ export class SettingsService {
   ): UserSettings {
     if (!loaded) {
       defaults.general.darkMode = this.getSystemDarkModePreference();
-      return defaults;
+      return withDisplayName(defaults);
     }
     if (loaded.general.darkMode === undefined) {
       loaded.general.darkMode = this.getSystemDarkModePreference();
     }
-    return loaded;
+    return withDisplayName(loaded);
   }
 
   /**
@@ -126,7 +152,7 @@ export class SettingsService {
         STORAGE_KEYS.SETTINGS
       )) as UserSettings | null;
       if (cached) {
-        this.userSettingsSubject.next(cached);
+        this.userSettingsSubject.next(withDisplayName(cached));
         this.applyDarkMode(
           cached.general?.darkMode ?? this.getSystemDarkModePreference()
         );
@@ -140,12 +166,13 @@ export class SettingsService {
   }
 
   /**
-   * Update the settings in the storage.
+   * Update the settings in the storage and in the other open tabs.
    */
   public async updateCachedSettings(settings: UserSettings): Promise<void> {
     await this.storageService.set(STORAGE_KEYS.SETTINGS, settings);
     this.userSettingsSubject.next(settings);
     this.applyDarkMode(settings.general.darkMode);
+    this.channel?.postMessage(settings);
   }
 
   /**
@@ -168,6 +195,38 @@ export class SettingsService {
     if (!settings) return;
 
     settings.general.darkMode = value;
+    await this.updateCachedSettings(settings);
+  }
+
+  /**
+   * Store the normalized display name. A name of whitespace only clears it.
+   */
+  public async setDisplayName(value: string): Promise<void> {
+    const settings = this.getCachedUserSettings();
+    if (!settings) return;
+
+    settings.general.displayName = normalizeDisplayName(value);
+    await this.updateCachedSettings(settings);
+  }
+
+  /**
+   * Store the language in the latest settings, which may hold changes another
+   * tab made after the caller read its copy.
+   */
+  public async setLanguage(language: string): Promise<void> {
+    const settings = this.getCachedUserSettings();
+    if (!settings) return;
+
+    settings.general.language = language;
+    await this.updateCachedSettings(settings);
+  }
+
+  /** Store the map options in the latest settings, as `setLanguage` does. */
+  public async setUserMapOptions(mapOptions: UserMapOptions): Promise<void> {
+    const settings = this.getCachedUserSettings();
+    if (!settings) return;
+
+    settings.mapOptions = mapOptions;
     await this.updateCachedSettings(settings);
   }
 
@@ -226,6 +285,25 @@ export class SettingsService {
     const response = await this.httpService.get(API_URL.ROOT, '/settings');
     return await response.json();
   }
+}
+
+/**
+ * The settings with a normalized display name. Settings stored by an older
+ * version hold none, which leaves the user without a display name.
+ */
+function withDisplayName(settings: UserSettings): UserSettings {
+  if (settings.general) {
+    settings.general.displayName = normalizeDisplayName(
+      settings.general.displayName
+    );
+  }
+  return settings;
+}
+
+/** The settings channel, or null in an environment without one. */
+function openSettingsChannel(): BroadcastChannel | null {
+  if (typeof BroadcastChannel === 'undefined') return null;
+  return new BroadcastChannel(SETTINGS_CHANNEL);
 }
 
 export function appSettingsFactory(settingsService: SettingsService) {

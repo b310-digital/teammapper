@@ -1,24 +1,26 @@
-import { ExportNodeProperties } from '@teammapper/shared';
+import { BehaviorSubject } from 'rxjs';
+import {
+  AwarenessUser,
+  ExportNodeProperties,
+  UserSettings,
+} from '@teammapper/shared';
 import { MmpService } from '../mmp/mmp.service';
 import { MapSyncContext } from './map-sync-context';
 import { PRESENCE_THROTTLE_MS, YjsSyncService } from './yjs-sync.service';
-import { ClientColorMapping } from './yjs-utils';
 import {
   capturingMmpService,
   createMockContext,
+  createMockSettingsService,
   createYjsSyncService,
   MmpHandlers,
+  userSettingsNamed,
 } from '../../../../test/mocks/yjs-sync.mock';
 
 /**
- * Presence carries each client's selected node. A client with nothing
- * selected broadcasts an empty selection, and peers draw no ring for it.
+ * Presence carries each client's selected node and display name. A client
+ * with nothing selected broadcasts an empty selection, and peers draw no ring
+ * for it. A client without a display name broadcasts the empty string.
  */
-
-interface AwarenessUser {
-  color: string;
-  selectedNodeId: string | null;
-}
 
 /**
  * Replaces y-websocket's WebsocketProvider. Each test writes peer awareness
@@ -42,7 +44,7 @@ class FakeWebsocketProvider {
   public readonly disconnect = jest.fn();
   public readonly destroy = jest.fn();
 
-  constructor(private readonly localClientId: number) {
+  constructor(public readonly localClientId: number) {
     FakeWebsocketProvider.latest = this;
   }
 }
@@ -68,6 +70,7 @@ describe('YjsSyncService presence', () => {
   let handlers: MmpHandlers;
   let context: MapSyncContext;
   let mmpService: jest.Mocked<MmpService>;
+  let userSettings$: BehaviorSubject<UserSettings | null>;
   let service: YjsSyncService;
 
   function provider(): FakeWebsocketProvider {
@@ -79,9 +82,22 @@ describe('YjsSyncService presence', () => {
     return provider().awareness.setLocalStateField.mock.lastCall;
   }
 
+  function internals(): PresenceInternals {
+    return service as unknown as PresenceInternals;
+  }
+
   /** Lets the presence throttle send the update it holds back. */
   function afterThrottle(): void {
     jest.advanceTimersByTime(PRESENCE_THROTTLE_MS);
+  }
+
+  function rename(displayName: unknown): void {
+    userSettings$.next(userSettingsNamed(displayName));
+  }
+
+  /** The client list mapping the service handed to the context last. */
+  function lastMapping(): unknown {
+    return (context.setColorMapping as jest.Mock).mock.lastCall?.[0];
   }
 
   beforeEach(() => {
@@ -89,11 +105,18 @@ describe('YjsSyncService presence', () => {
     handlers = {};
     context = createMockContext();
     mmpService = capturingMmpService(handlers);
-    service = createYjsSyncService(mmpService, context);
+    userSettings$ = new BehaviorSubject<UserSettings | null>(
+      userSettingsNamed('')
+    );
+    service = createYjsSyncService(
+      mmpService,
+      context,
+      createMockSettingsService(userSettings$)
+    );
     service.initMap('test-uuid');
     // attachMap subscribes once the map exists; these tests set awareness up
     // on their own.
-    (service as unknown as PresenceInternals).createListeners();
+    internals().createListeners();
   });
 
   afterEach(() => {
@@ -109,15 +132,21 @@ describe('YjsSyncService presence', () => {
       expect(context.setAttachedNode).toHaveBeenLastCalledWith({ id: 'root' });
     });
 
+    it('broadcasts nothing on a rename', () => {
+      rename('Vorname');
+
+      expect(provider().awareness.setLocalStateField).not.toHaveBeenCalled();
+    });
+
     it('keeps the client colour and publishes the selection on setup', () => {
       handlers['nodeSelect']({ id: 'root' } as ExportNodeProperties);
 
-      (service as unknown as PresenceInternals).setupAwareness();
+      internals().setupAwareness();
 
       expect(context.setClientColor).toHaveBeenLastCalledWith('#ff0000');
       expect(lastBroadcast()).toEqual([
         'user',
-        { color: '#ff0000', selectedNodeId: 'root' },
+        { color: '#ff0000', selectedNodeId: 'root', displayName: '' },
       ]);
     });
   });
@@ -135,14 +164,50 @@ describe('YjsSyncService presence', () => {
       });
       expect(lastBroadcast()).toEqual([
         'user',
-        { color: '#ff0000', selectedNodeId: 'main-root' },
+        { color: '#ff0000', selectedNodeId: 'main-root', displayName: '' },
       ]);
+    });
+
+    it('announces the normalized display name on connect', () => {
+      rename('  Vorname   Test ');
+
+      service.attachMap();
+
+      expect(lastBroadcast()).toEqual([
+        'user',
+        { color: '#ff0000', selectedNodeId: null, displayName: 'Vorname Test' },
+      ]);
+    });
+
+    it('announces no display name while no settings are cached', () => {
+      userSettings$.next(null);
+
+      service.attachMap();
+
+      expect(lastBroadcast()).toEqual([
+        'user',
+        expect.objectContaining({ displayName: '' }),
+      ]);
+    });
+
+    it('draws the ring of a peer that selected a node before the map existed', () => {
+      provider().states.set(PEER_ID, {
+        user: {
+          color: '#0000ff',
+          selectedNodeId: 'peer-node',
+          displayName: '',
+        },
+      });
+
+      service.attachMap();
+
+      expect(mmpService.highlightNode).toHaveBeenCalledWith('peer-node', '');
     });
   });
 
   describe('after awareness setup', () => {
     beforeEach(() => {
-      (service as unknown as PresenceInternals).setupAwareness();
+      internals().setupAwareness();
     });
 
     it('broadcasts the id of a selected node', () => {
@@ -150,7 +215,7 @@ describe('YjsSyncService presence', () => {
 
       expect(lastBroadcast()).toEqual([
         'user',
-        { color: '#ff0000', selectedNodeId: 'branch' },
+        { color: '#ff0000', selectedNodeId: 'branch', displayName: '' },
       ]);
     });
 
@@ -162,7 +227,7 @@ describe('YjsSyncService presence', () => {
 
       expect(lastBroadcast()).toEqual([
         'user',
-        { color: '#ff0000', selectedNodeId: null },
+        { color: '#ff0000', selectedNodeId: null, displayName: '' },
       ]);
     });
 
@@ -175,7 +240,7 @@ describe('YjsSyncService presence', () => {
       expect(provider().awareness.setLocalStateField).toHaveBeenCalledTimes(3);
       expect(lastBroadcast()).toEqual([
         'user',
-        { color: '#ff0000', selectedNodeId: 'd' },
+        { color: '#ff0000', selectedNodeId: 'd', displayName: '' },
       ]);
     });
 
@@ -185,82 +250,167 @@ describe('YjsSyncService presence', () => {
       expect(context.setAttachedNode).toHaveBeenLastCalledWith(null);
     });
 
-    it('clears selection and receives presence without touching a detached renderer', () => {
-      handlers['nodeSelect']({ id: 'branch' } as ExportNodeProperties);
-      service.detachMap();
-      afterThrottle();
-      provider().states.set(PEER_ID, {
-        user: { color: '#0000ff', selectedNodeId: 'peer-node' },
+    describe('on a rename', () => {
+      it('broadcasts the new name and keeps colour and selection', () => {
+        handlers['nodeSelect']({ id: 'node-1' } as ExportNodeProperties);
+        afterThrottle();
+
+        rename('Vorname Test');
+
+        expect(lastBroadcast()).toEqual([
+          'user',
+          {
+            color: '#ff0000',
+            selectedNodeId: 'node-1',
+            displayName: 'Vorname Test',
+          },
+        ]);
       });
 
-      (service as unknown as PresenceInternals).updateFromAwareness();
+      it('keeps the name in later selection updates', () => {
+        rename('Vorname Test');
+        afterThrottle();
 
-      expect(lastBroadcast()).toEqual([
-        'user',
-        { color: '#ff0000', selectedNodeId: null },
-      ]);
-      expect(context.setColorMapping).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          [PEER_ID]: { color: '#0000ff', nodeId: 'peer-node' },
-        })
-      );
-      expect(mmpService.existNode).not.toHaveBeenCalled();
-      expect(mmpService.highlightNode).not.toHaveBeenCalled();
+        handlers['nodeSelect']({ id: 'node-2' } as ExportNodeProperties);
+        afterThrottle();
+
+        expect(lastBroadcast()).toEqual([
+          'user',
+          expect.objectContaining({
+            selectedNodeId: 'node-2',
+            displayName: 'Vorname Test',
+          }),
+        ]);
+      });
+
+      it('stays connected', () => {
+        rename('Vorname Test');
+
+        expect(provider().disconnect).not.toHaveBeenCalled();
+      });
+
+      it('broadcasts nothing when another setting changes', () => {
+        const before =
+          provider().awareness.setLocalStateField.mock.calls.length;
+        const settings = userSettingsNamed('');
+
+        userSettings$.next({
+          ...settings,
+          general: { ...settings.general, darkMode: true },
+        });
+
+        expect(provider().awareness.setLocalStateField).toHaveBeenCalledTimes(
+          before
+        );
+      });
+
+      it('broadcasts nothing when the normalized name stays the same', () => {
+        rename('Vorname');
+        const before =
+          provider().awareness.setLocalStateField.mock.calls.length;
+
+        rename('  Vorname ');
+
+        expect(provider().awareness.setLocalStateField).toHaveBeenCalledTimes(
+          before
+        );
+      });
+
+      it('broadcasts nothing once the map is closed', () => {
+        const closed = provider();
+        service.destroy();
+        closed.awareness.setLocalStateField.mockClear();
+
+        rename('Vorname');
+
+        expect(closed.awareness.setLocalStateField).not.toHaveBeenCalled();
+      });
     });
 
-    it('redraws unchanged peer selections and keeps its color on reattach', () => {
-      let mapping: ClientColorMapping = {};
-      (context.getColorMapping as jest.Mock).mockImplementation(() => mapping);
-      (context.setColorMapping as jest.Mock).mockImplementation(
-        (next: ClientColorMapping) => {
-          mapping = next;
-        }
-      );
-      provider().states.set(PEER_ID, {
-        user: { color: '#0000ff', selectedNodeId: 'peer-node' },
+    describe('the client list', () => {
+      it('holds the normalized display name of a peer', () => {
+        provider().states.set(PEER_ID, {
+          user: {
+            color: '#0000ff',
+            selectedNodeId: null,
+            displayName: '  Vorname   Test ',
+          },
+        });
+
+        internals().updateFromAwareness();
+
+        expect(lastMapping()).toEqual(
+          expect.objectContaining({
+            [PEER_ID]: {
+              color: '#0000ff',
+              nodeId: '',
+              displayName: 'Vorname Test',
+              isSelf: false,
+            },
+          })
+        );
       });
-      service.attachMap();
-      service.detachMap();
-      mmpService.highlightNode.mockClear();
 
-      service.attachMap();
+      it('marks the own entry and carries the own name', () => {
+        rename('Zweiter');
+        // y-protocols emits 'change' on a local write; the fake does not.
+        internals().updateFromAwareness();
 
-      expect(mmpService.highlightNode).toHaveBeenCalledWith('peer-node', '');
-      expect(lastBroadcast()).toEqual([
-        'user',
-        { color: '#ff0000', selectedNodeId: null },
-      ]);
+        expect(lastMapping()).toEqual(
+          expect.objectContaining({
+            [provider().localClientId]: expect.objectContaining({
+              displayName: 'Zweiter',
+              isSelf: true,
+            }),
+          })
+        );
+      });
     });
 
     it('draws no ring for a peer that selects nothing', () => {
       (context.getColorMapping as jest.Mock).mockReturnValue({
-        [PEER_ID]: { color: '#0000ff', nodeId: 'branch' },
+        [PEER_ID]: {
+          color: '#0000ff',
+          nodeId: 'branch',
+          displayName: '',
+          isSelf: false,
+        },
       });
       provider().states.set(PEER_ID, {
-        user: { color: '#0000ff', selectedNodeId: null },
+        user: { color: '#0000ff', selectedNodeId: null, displayName: '' },
       });
 
-      (service as unknown as PresenceInternals).updateFromAwareness();
+      internals().updateFromAwareness();
 
-      expect(context.setColorMapping).toHaveBeenLastCalledWith(
+      expect(lastMapping()).toEqual(
         expect.objectContaining({
-          [PEER_ID]: { color: '#0000ff', nodeId: '' },
+          [PEER_ID]: {
+            color: '#0000ff',
+            nodeId: '',
+            displayName: '',
+            isSelf: false,
+          },
         })
       );
       expect(mmpService.highlightNode).toHaveBeenCalledWith('branch', '');
     });
 
     it('falls back to the defaults for a peer state that holds no strings', () => {
-      const hostile = { color: { r: 1 }, selectedNodeId: 123 };
+      const hostile = { color: { r: 1 }, selectedNodeId: 123, displayName: [] };
       provider().states.set(PEER_ID, {
         user: hostile as unknown as AwarenessUser,
       });
 
-      (service as unknown as PresenceInternals).updateFromAwareness();
+      internals().updateFromAwareness();
 
-      expect(context.setColorMapping).toHaveBeenLastCalledWith(
+      expect(lastMapping()).toEqual(
         expect.objectContaining({
-          [PEER_ID]: { color: '#000000', nodeId: '' },
+          [PEER_ID]: {
+            color: '#000000',
+            nodeId: '',
+            displayName: '',
+            isSelf: false,
+          },
         })
       );
       expect(mmpService.existNode).not.toHaveBeenCalled();

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { NEVER } from 'rxjs';
+import { NEVER, Observable } from 'rxjs';
 import { MapSyncService, SYNCING_TOAST_DELAY_MS } from './map-sync.service';
 import { MmpService } from '../mmp/mmp.service';
 import { HttpService } from '../../http/http.service';
@@ -13,15 +13,16 @@ import {
   ExportNodeProperties,
   UserSettings,
 } from '@teammapper/shared';
-import type { MapData, MmpMap } from '@teammapper/mmp';
+import type { MapData, MmpInstance } from '@teammapper/mmp';
 import { YjsSyncService } from './yjs-sync.service';
 import { MapSyncContext } from './map-sync-context';
+import { ClientColorMapping, ClientListEntry } from './yjs-utils';
 import { ImageHandlers, ImageUploadError } from '../mmp/node-images';
 
 const SYNCING_TOAST_ID = 7;
 
 // MmpService is mocked, so a created map only has to be passed through.
-const CREATED_MAP = { id: 'created' } as unknown as MmpMap;
+const CREATED_MAP = { id: 'created' } as unknown as MmpInstance;
 
 // Narrow accessor: only exposes the sync service handle, not its internals
 function getSync(service: MapSyncService): YjsSyncService {
@@ -137,7 +138,6 @@ describe('MapSyncService', () => {
 
   describe('opening a map', () => {
     const ref = document.createElement('div');
-    const options = { drag: true };
     const data = {} as MapData;
 
     beforeEach(() => {
@@ -160,7 +160,7 @@ describe('MapSyncService', () => {
         jest
           .spyOn(getSync(service), 'initMap')
           .mockImplementation(() => undefined);
-        service.openMap(ref, options);
+        service.openMap(ref);
       });
 
       it('opens the connection to the attached map', () => {
@@ -181,7 +181,7 @@ describe('MapSyncService', () => {
         jest
           .spyOn(getSync(service), 'attachMap')
           .mockImplementation(() => undefined);
-        service.openMap(ref, options);
+        service.openMap(ref);
       });
 
       const sync = async () => {
@@ -197,12 +197,24 @@ describe('MapSyncService', () => {
           .invocationCallOrder[0];
         const marked = mmpService.markMapCreated.mock.invocationCallOrder[0];
         expect(mmpService.create).toHaveBeenCalledWith(
-          'map_1',
           ref,
-          options,
+          { rootNode: 'Root' },
           data
         );
         expect(created < attached && attached < marked).toBe(true);
+      });
+
+      // A sync reset builds the map again, after the settings dialog may have
+      // changed the user settings.
+      it('creates the map with the user settings cached when it syncs', async () => {
+        const mapOptions = { showLinktext: true };
+        settingsService.getCachedUserSettings.mockReturnValue({
+          mapOptions,
+        } as unknown as UserSettings);
+
+        await sync();
+
+        expect(mmpService.create).toHaveBeenCalledWith(ref, mapOptions, data);
       });
 
       it('removes the map a reset left behind while mmp built it', async () => {
@@ -216,14 +228,14 @@ describe('MapSyncService', () => {
       });
 
       it('removes only the late map when a newer open built its map first', async () => {
-        const lateMap = { id: 'late' } as unknown as MmpMap;
-        let finishLate: (map: MmpMap) => void = () => undefined;
+        const lateMap = { id: 'late' } as unknown as MmpInstance;
+        let finishLate: (map: MmpInstance) => void = () => undefined;
         mmpService.create.mockReturnValueOnce(
-          new Promise<MmpMap>(resolve => (finishLate = resolve))
+          new Promise<MmpInstance>(resolve => (finishLate = resolve))
         );
         getSyncContext(service).createMap(data);
         service.reset();
-        service.openMap(ref, options);
+        service.openMap(ref);
         await sync();
 
         finishLate(lateMap);
@@ -272,7 +284,7 @@ describe('MapSyncService', () => {
       service
         .getAttachedNodeObservable()
         .subscribe(node => attached.push(node));
-      service.openMap(ref, options);
+      service.openMap(ref);
 
       getSyncContext(service).createMap(data);
       await new Promise(resolve => setTimeout(resolve));
@@ -356,6 +368,41 @@ describe('MapSyncService', () => {
       getSyncContext(service).mapDeleted();
 
       expect(toastr().remove).toHaveBeenCalledWith(SYNCING_TOAST_ID);
+    });
+  });
+
+  describe('client list', () => {
+    function emitted(mapping: ClientColorMapping): ClientListEntry[] {
+      let list: ClientListEntry[] = [];
+      const subscription = service
+        .getClientListObservable()
+        .subscribe(entries => (list = entries));
+      getSyncContext(service).setColorMapping(mapping);
+      getSyncContext(service).emitClientList();
+      subscription.unsubscribe();
+      return list;
+    }
+
+    it('emits one entry per client with its id, color, name and whether it is the own client', () => {
+      const list = emitted({
+        '1': { color: '#c0c0c0', nodeId: '', displayName: 'Me', isSelf: true },
+        '7': {
+          color: '#0000ff',
+          nodeId: 'n',
+          displayName: 'Vorname Test',
+          isSelf: false,
+        },
+      });
+
+      expect(list).toEqual([
+        { clientId: '1', color: '#c0c0c0', displayName: 'Me', isSelf: true },
+        {
+          clientId: '7',
+          color: '#0000ff',
+          displayName: 'Vorname Test',
+          isSelf: false,
+        },
+      ]);
     });
   });
 
@@ -543,7 +590,9 @@ describe('MapSyncService', () => {
     it('applies the map settings locally and writes the result for the peers', () => {
       const applied = { fontMaxSize: 80, fontMinSize: 12, fontIncrement: 7 };
       mmpService.getAdditionalMapOptions.mockReturnValue(applied);
-      const writeSpy = jest.spyOn(getSync(service), 'updateMapOptions');
+      const writeSpy = jest
+        .spyOn(getSync(service), 'updateMapOptions')
+        .mockImplementation(() => undefined);
 
       service.updateMapOptions({ fontMaxSize: 80, fontIncrement: 7 });
 
@@ -635,17 +684,6 @@ describe('MapSyncService', () => {
   });
 
   describe('lifecycle', () => {
-    it('detaches the renderer without closing the settings connection', () => {
-      const sync = getSync(service);
-      const detachSpy = jest.spyOn(sync, 'detachMap');
-      const destroySpy = jest.spyOn(sync, 'destroy');
-
-      service.detachMap();
-
-      expect(detachSpy).toHaveBeenCalled();
-      expect(destroySpy).not.toHaveBeenCalled();
-    });
-
     it('ngOnDestroy calls destroy on sync service', () => {
       const destroySpy = jest.spyOn(getSync(service), 'destroy');
 
@@ -660,6 +698,59 @@ describe('MapSyncService', () => {
       service.reset();
 
       expect(destroySpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('removing the map on a server reset', () => {
+    it('removes the current map from mmp through the context', () => {
+      getSyncContext(service).removeMap();
+
+      expect(mmpService.remove).toHaveBeenCalledTimes(1);
+      expect(mmpService.remove).toHaveBeenCalledWith();
+    });
+  });
+
+  describe('reset', () => {
+    const latest = <T>(observable: Observable<T>): T | undefined => {
+      let value: T | undefined;
+      observable.subscribe(next => (value = next)).unsubscribe();
+      return value;
+    };
+
+    it('clears the attached node', () => {
+      getSyncContext(service).setAttachedNode(mockNode);
+
+      service.reset();
+
+      expect(latest(service.getAttachedNodeObservable())).toBeNull();
+    });
+
+    it('clears the client list', () => {
+      const context = getSyncContext(service);
+      context.setColorMapping({
+        client: {
+          color: '#ff0000',
+          nodeId: 'a',
+          displayName: '',
+          isSelf: false,
+        },
+      });
+      context.emitClientList();
+
+      service.reset();
+
+      expect(latest(service.getClientListObservable())).toEqual([]);
+    });
+
+    it('clears the attached map', () => {
+      service.attachMap({
+        key: 'map-1',
+        cachedMap: { uuid: 'map-1' } as CachedMapEntry['cachedMap'],
+      });
+
+      service.reset();
+
+      expect(latest(service.getAttachedMapObservable())).toBeNull();
     });
   });
 });

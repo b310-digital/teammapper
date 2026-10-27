@@ -37,8 +37,13 @@ export default class Drag {
   constructor(map: Map) {
     this.map = map;
 
+    // The filter keeps d3's default conditions and adds the drag option.
     this.dragBehavior = d3
       .drag<SVGGElement, string>()
+      .filter(
+        (event: MouseEvent) =>
+          this.map.options.drag && !event.ctrlKey && !event.button
+      )
       .on('start', (event: DragEvent, id: string) => this.started(event, id))
       .on('drag', (event: DragEvent, id: string) => this.dragged(event, id))
       .on('end', (event: DragEvent, id: string) => this.ended(event, id));

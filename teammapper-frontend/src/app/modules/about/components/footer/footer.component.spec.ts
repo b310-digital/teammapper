@@ -34,7 +34,7 @@ describe('FooterComponent', () => {
   };
 
   const mockSettings: UserSettings = {
-    general: { language: 'en', darkMode: false },
+    general: { language: 'en', darkMode: false, displayName: '' },
     mapOptions: {
       autoBranchColors: true,
       fontMaxSize: 16,
@@ -42,6 +42,7 @@ describe('FooterComponent', () => {
       fontIncrement: 2,
       centerOnResize: true,
       showLinktext: false,
+      branchStyle: 'tapered',
       defaultNode: mockNode,
       rootNode: mockNode,
     },
@@ -97,7 +98,7 @@ describe('FooterComponent', () => {
     it('should update language', async () => {
       const newSettings = {
         ...mockSettings,
-        general: { language: 'fr', darkMode: false },
+        general: { language: 'fr', darkMode: false, displayName: '' },
       };
       component.settings = newSettings;
       await component.updateLanguage();

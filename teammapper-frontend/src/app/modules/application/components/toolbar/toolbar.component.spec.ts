@@ -16,6 +16,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { ExportNodeProperties } from '@teammapper/shared';
 import { of, Observable, BehaviorSubject } from 'rxjs';
 import { provideRouter } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
+import { UtilsService } from 'src/app/core/services/utils/utils.service';
 
 class FakeTranslateLoader implements TranslateLoader {
   getTranslation(): Observable<Record<string, string>> {
@@ -53,6 +55,7 @@ interface TestContext {
     canUndo$: Observable<boolean>;
     canRedo$: Observable<boolean>;
   };
+  toastrService: { error: jest.Mock };
   translateService: TranslateService;
   canUndoSubject: BehaviorSubject<boolean>;
   canRedoSubject: BehaviorSubject<boolean>;
@@ -70,6 +73,11 @@ async function setupTestBed(): Promise<TestContext> {
     canRedo$: canRedoSubject.asObservable(),
   };
 
+  const toastrService = { error: jest.fn() };
+  const utilsService = {
+    translate: jest.fn().mockResolvedValue('import failed'),
+  };
+
   await TestBed.configureTestingModule({
     imports: [
       MatMenuModule,
@@ -84,6 +92,8 @@ async function setupTestBed(): Promise<TestContext> {
     providers: [
       { provide: MmpService, useValue: mmpService },
       { provide: MapSyncService, useValue: mapSyncService },
+      { provide: ToastrService, useValue: toastrService },
+      { provide: UtilsService, useValue: utilsService },
       {
         provide: SettingsService,
         useValue: {
@@ -96,6 +106,7 @@ async function setupTestBed(): Promise<TestContext> {
         provide: DialogService,
         useValue: {
           openAboutDialog: jest.fn(),
+          openSettingsDialog: jest.fn(),
           openShareDialog: jest.fn(),
           openPictogramDialog: jest.fn(),
         },
@@ -119,6 +130,7 @@ async function setupTestBed(): Promise<TestContext> {
     fixture,
     mmpService,
     mapSyncService,
+    toastrService,
     translateService,
     canUndoSubject,
     canRedoSubject,
@@ -150,6 +162,17 @@ describe('ToolbarComponent', () => {
 
   it('should create', () => {
     expect(ctx.component).toBeTruthy();
+  });
+
+  it('opens the settings dialog from the settings button', () => {
+    const button = (ctx.fixture.nativeElement as HTMLElement).querySelector(
+      '#settings-button'
+    );
+    if (!(button instanceof HTMLButtonElement)) throw new Error('No button');
+
+    button.click();
+
+    expect(TestBed.inject(DialogService).openSettingsDialog).toHaveBeenCalled();
   });
 
   it('should initialize featureFlagAI from settings', () => {
@@ -299,6 +322,54 @@ describe('ToolbarComponent', () => {
     } as unknown as Event);
 
     expect(mockFileReader.readAsText).toHaveBeenCalledWith(mockFile);
+  });
+
+  describe('JSON import', () => {
+    const readJsonFile = async (content: string): Promise<void> => {
+      const mockFileReader = {
+        readAsText: jest.fn(),
+        result: content,
+        onload: null as FileReader['onload'],
+      };
+      window.FileReader = jest.fn(
+        () => mockFileReader
+      ) as unknown as typeof FileReader;
+
+      ctx.component.initJSONUpload({
+        target: {
+          files: [
+            new File([content], 'map.json', { type: 'application/json' }),
+          ],
+        },
+      } as unknown as Event);
+      mockFileReader.onload?.call(
+        mockFileReader as unknown as FileReader,
+        new Event('load') as ProgressEvent<FileReader>
+      );
+      await new Promise(resolve => setTimeout(resolve));
+    };
+
+    it('hands the file content to importMap', async () => {
+      await readJsonFile('[]');
+
+      expect(ctx.mmpService.importMap).toHaveBeenCalledWith('[]');
+    });
+
+    it('shows the import error toast when importMap rejects', async () => {
+      ctx.mmpService.importMap.mockRejectedValue(new Error('invalid map'));
+
+      await readJsonFile('{not json');
+
+      expect(ctx.toastrService.error).toHaveBeenCalledWith('import failed');
+    });
+
+    it('shows no error toast when importMap resolves', async () => {
+      ctx.mmpService.importMap.mockResolvedValue(undefined);
+
+      await readJsonFile('[]');
+
+      expect(ctx.toastrService.error).not.toHaveBeenCalled();
+    });
   });
 
   describe('undo/redo', () => {

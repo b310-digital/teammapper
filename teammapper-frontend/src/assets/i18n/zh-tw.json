@@ -74,7 +74,8 @@
     "CENTER_ON_RESIZING": "當視窗縮放後地圖將會被置中",
     "NODE_DRAGGING": "允許拖曳地圖中的節點",
     "MAP_ZOOM": "允許縮放地圖",
-    "AUTO_BRANCH_COLORS": "允許自動分配分支的顏色",
+    "AUTO_BRANCH_COLORS": "為你建立的每個新分支選擇顏色。顏色儲存在節點上，因此此地圖上的每個人都看得到。",
+    "BRANCH_STYLE": "此瀏覽器繪製每張地圖分支的方式",
     "SHARE": "Share",
     "LINK_ADD": "Adds a link",
     "LINK_REMOVE": "Removes a link",
@@ -143,6 +144,9 @@
       "TITLE": "連線問題",
       "WARNING": "您最近的變更可能未儲存。",
       "RELOAD_BUTTON": "重新載入頁面"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "你的顯示名稱"
     }
   },
   "PAGES": {
@@ -180,7 +184,22 @@
     },
     "SETTINGS": {
       "AUTO_BRANCH_COLORS": "自動分配分支顏色",
+      "AUTO_BRANCH_COLORS_HINT": "為你建立的每個新分支選擇顏色。顏色儲存在節點上，因此此地圖上的每個人都看得到。",
+      "BRANCH_STYLE": "分支樣式",
+      "BRANCH_STYLES": {
+        "TAPERED": "漸細",
+        "CURVED": "曲線",
+        "STRAIGHT": "直線"
+      },
       "CENTER_ON_RESIZING": "視窗縮放後置中",
+      "EDITOR": "編輯器",
+      "FONT_SIZES": "字型大小",
+      "MIND_MAP": "心智圖",
+      "MAP_SETTINGS": "地圖設定",
+      "MAP_SETTINGS_EXPLANATION": "與此地圖上的所有人共享",
+      "NODE_NAMES_HINT": "用作你建立的地圖和節點的名稱。名稱儲存在節點上，因此此地圖上的每個人都看得到。",
+      "USER_SETTINGS": "使用者設定",
+      "USER_SETTINGS_EXPLANATION": "只對你有效，僅限此瀏覽器",
       "FONT_MIN_SIZE": "Minimal font size",
       "FONT_MAX_SIZE": "Maximal font size",
       "FONT_INCREMENT": "Font size step",
@@ -189,7 +208,6 @@
       "MAP_LIST": "List of created maps",
       "OWNED_MAPS": "我的心智圖",
       "LAST_MAPS": "最近開啟的心智圖",
-      "MAP_OPTIONS": "地圖選項",
       "ROOT_NODE_NAME": "根節點名稱",
       "NODE_NAME": "節點名稱",
       "TITLE": "設定",
@@ -199,7 +217,9 @@
       "DELETED_AT": "刪除日期：",
       "DELETE_AFTER_DAYS": "此伺服器會在 {{deleteAfterDays}} 天後刪除心智圖。",
       "DELETE": "刪除心智圖",
-      "CONFIRM_DELETE": "確定要刪除嗎？"
+      "CONFIRM_DELETE": "確定要刪除嗎？",
+      "DISPLAY_NAME": "顯示名稱",
+      "DISPLAY_NAME_HINT": "心智圖上的所有人都能看到這個名稱。"
     }
   },
   "MESSAGES": {
@@ -250,6 +270,7 @@
     "AI_DESCRIPTION_REQUIRED": "請提供心智圖的描述"
   },
   "GENERAL": {
+    "BRANCHES": "分支",
     "REPOSITORY": "Source Code",
     "CREATE": "Create mind map",
     "DATAPROTECTION": "Privacy",
@@ -279,5 +300,8 @@
     "FONT_MIN_SIZE": "Minimal font size",
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "匿名"
   }
 }

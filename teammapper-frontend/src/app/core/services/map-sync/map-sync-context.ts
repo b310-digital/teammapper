@@ -22,6 +22,8 @@ export interface MapSyncContext {
   emitClientList(): void;
   /** The connection synced: create the map over its map data. */
   createMap(data: MapData): void;
+  /** The server reset the map: remove the renderer before the next createMap. */
+  removeMap(): void;
   /** The server deleted the map; the page reloads right after. */
   mapDeleted(): void;
 }

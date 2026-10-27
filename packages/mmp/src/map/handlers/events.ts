@@ -1,5 +1,16 @@
 import Log from '../../utils/log.js';
-import type { MmpEventPayloadMap, MmpEventType } from '@teammapper/shared';
+import type { ExportNodeProperties } from '@teammapper/shared';
+
+/** The payload each map event passes to its callbacks. */
+export interface MmpEventPayloadMap {
+  nodeSelect: ExportNodeProperties;
+  nodeDeselect: ExportNodeProperties;
+  nodeProtected: ExportNodeProperties;
+  /** The map data changed, by a local, a peer's or an undo write. */
+  mapChange: void;
+}
+
+export type MmpEventType = keyof MmpEventPayloadMap;
 
 export type MmpEventCallback<K extends MmpEventType> = (
   payload: MmpEventPayloadMap[K]
@@ -17,7 +28,7 @@ const EVENT_TYPES: readonly MmpEventType[] = [
 ];
 
 /**
- * Manage the events of the map. `@teammapper/shared` types each payload, and
+ * Manage the events of the map. `MmpEventPayloadMap` types each payload, and
  * each event holds any number of callbacks.
  */
 export default class Events {
@@ -26,13 +37,25 @@ export default class Events {
   /**
    * Call every callback registered for the event with its payload. The loop
    * runs over a copy, so a callback may remove itself without skipping the next.
+   * A callback that throws stops neither the others nor the caller: a timer
+   * rethrows its error after the loop.
    */
   public emit<K extends MmpEventType>(
     event: K,
     payload: MmpEventPayloadMap[K]
   ) {
     const callbacks = this.callbacks[event];
-    if (callbacks) [...callbacks].forEach(callback => callback(payload));
+    if (!callbacks) return;
+
+    for (const callback of [...callbacks]) {
+      try {
+        callback(payload);
+      } catch (error) {
+        setTimeout(() => {
+          throw error;
+        });
+      }
+    }
   }
 
   /**
