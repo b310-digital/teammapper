@@ -24,10 +24,9 @@ say so.
 
 ### Reserved
 
-This glossary leaves **arrow**, **connector** and **line** undefined on purpose.
-A mind map may one day draw a relation between two nodes that are not parent and
-child, and whoever builds that feature can claim one of these words. Until then,
-do not use any of them as a loose synonym for a branch.
+The **arrow** names a relation between two nodes that are not parent and child.
+Do not write **connector** or **line** for it, and use none of the three as a
+loose synonym for a branch.
 
 ## The model
 
@@ -86,6 +85,22 @@ filled shape that narrows with depth and the default; `curved`, a thin stroked
 curve; or `straight`, a thin line from the parent's center to the child's. The
 setting changes the drawing alone, so collaborators may see one map in
 different branch styles. The app never syncs it or stores it with a map.
+
+### Arrow
+
+A directed connection from a source node to a target node of the same map. The
+map draws it as a dashed curve with one arrowhead at the target, above the
+branches and below the nodes. An arrow changes no parent, no layout and no
+redistribution, and it carries no name or style of its own. Its key is
+`arrowKey(source, target)`, so a map holds at most one arrow per source and
+target; the opposite direction is a second arrow. The map refuses an arrow from
+a node to itself and one between a node and its parent. Removing a node removes
+its arrows; copying a node copies the arrows that lie inside the copied nodes.
+
+**Arrow mode** starts from the selected node and creates an arrow on the next
+click on another node. A **dangling arrow** names a node the map no longer
+holds, after a peer removed it while another added the arrow. The map draws no
+dangling arrow and the backend saves none.
 
 ### Link
 

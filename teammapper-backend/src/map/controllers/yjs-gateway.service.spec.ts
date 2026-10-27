@@ -430,9 +430,12 @@ describe('YjsGateway', () => {
     })
 
     it('enforces cumulative map size through the gateway', async () => {
-      jest
-        .spyOn(configService, 'getYjsMapLimits')
-        .mockReturnValue({ maxBytes: 160, maxEntries: 100, maxNodes: 10 })
+      jest.spyOn(configService, 'getYjsMapLimits').mockReturnValue({
+        maxBytes: 160,
+        maxEntries: 100,
+        maxNodes: 10,
+        maxArrows: 10,
+      })
       const ws = await connectWriter()
       const client = new Y.Doc()
       try {

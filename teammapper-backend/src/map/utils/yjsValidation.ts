@@ -1,6 +1,8 @@
 import * as Y from 'yjs'
 import * as v from 'valibot'
 import {
+  arrowKey,
+  ArrowSchema,
   NodeSchema,
   MapOptionsSchema,
   MAX_NODE_NAME_LENGTH,
@@ -35,12 +37,20 @@ const nodeSchema = strictPartialObject({
   link: strictObject(NodeSchema.entries.link.entries),
   orderNumber: v.number(),
 })
+// Like a node, an arrow may arrive before its fields, so the fields are
+// partial. An endpoint is a node key, so it takes the node key's bounds.
+const nodeKeySchema = v.pipe(v.string(), v.nonEmpty(), v.maxLength(128))
+const arrowSchema = strictPartialObject({
+  source: v.pipe(ArrowSchema.entries.source, v.maxLength(128)),
+  target: v.pipe(ArrowSchema.entries.target, v.maxLength(128)),
+})
 const mapSchema = strictObject({
-  nodes: v.pipe(
+  arrows: v.pipe(
     v.unknown(),
     plainObject,
-    v.record(v.pipe(v.string(), v.nonEmpty(), v.maxLength(128)), nodeSchema)
+    v.record(v.pipe(v.string(), v.nonEmpty(), v.maxLength(257)), arrowSchema)
   ),
+  nodes: v.pipe(v.unknown(), plainObject, v.record(nodeKeySchema, nodeSchema)),
   mapOptions: strictPartialObject({
     ...MapOptionsSchema.entries,
     name: v.nullable(v.pipe(v.string(), v.maxLength(MAX_NODE_NAME_LENGTH))),
@@ -49,6 +59,9 @@ const mapSchema = strictObject({
     lastMapAnnouncement: v.literal('import'),
   }),
 })
+
+// Every top-level Y.Map a map holds
+const MAP_ROOT_KEYS = ['nodes', 'arrows', 'mapOptions', 'meta']
 
 function invalid(): never {
   throw new Error('Invalid map update')
@@ -98,14 +111,29 @@ const validateIncomingUpdateLimits = (
   }
 }
 
+// Arrows must remain Y.Maps, like nodes, and stay within the arrow limit. The
+// key must be the arrow key of the entry's own fields once both are written,
+// so clients and persistence agree about which arrow an entry is.
+const validateArrows = (arrows: Y.Map<unknown>, limits: YjsMapLimits) => {
+  if (arrows.size > limits.maxArrows) invalid()
+  for (const [key, arrow] of arrows.entries()) {
+    if (!(arrow instanceof Y.Map)) invalid()
+    const source = arrow.get('source')
+    const target = arrow.get('target')
+    if (source === undefined || target === undefined) continue
+    if (key !== arrowKey(String(source), String(target))) invalid()
+  }
+}
+
 // Check the resulting shared structure and exported map before observers run.
 const validateMapContent = (doc: Y.Doc, limits: YjsMapLimits): void => {
   if (doc.store.pendingStructs || doc.store.pendingDs) invalid()
   // Unknown roots can disappear from JSON export (for example __proto__).
   for (const key of doc.share.keys()) {
-    if (key !== 'nodes' && key !== 'mapOptions' && key !== 'meta') invalid()
+    if (!MAP_ROOT_KEYS.includes(key)) invalid()
   }
 
+  validateArrows(doc.getMap('arrows'), limits)
   const nodes = doc.getMap('nodes')
   if (nodes.size > limits.maxNodes) invalid()
   // Nodes must remain Y.Maps for client and persistence operations. JSON
@@ -141,9 +169,7 @@ export const applyValidatedMapUpdate = (
   try {
     validateIncomingUpdateLimits(doc, update, limits)
     doc.transact(() => {
-      doc.getMap('nodes')
-      doc.getMap('mapOptions')
-      doc.getMap('meta')
+      for (const key of MAP_ROOT_KEYS) doc.getMap(key)
       Y.applyUpdate(doc, update, origin)
       validateMapContent(doc, limits)
       validateAndCacheMapSize(doc, limits.maxBytes)
