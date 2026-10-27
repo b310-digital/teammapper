@@ -56,6 +56,15 @@ async function contentInnerWidth(page: Page): Promise<number> {
     });
 }
 
+/** clientWidth rounds to whole pixels, so allow one pixel of difference. */
+async function expectNameFieldSpansContent(page: Page) {
+  const field = page.locator('teammapper-dialog-display-name mat-form-field');
+  const fieldBox = await field.boundingBox();
+  if (!fieldBox) throw new Error('the name field is not visible');
+  const difference = Math.abs(fieldBox.width - (await contentInnerWidth(page)));
+  expect(difference).toBeLessThanOrEqual(1);
+}
+
 async function surfaceBackground(page: Page): Promise<string> {
   return dialogSurface(page).evaluate(
     element => getComputedStyle(element).backgroundColor
@@ -80,9 +89,7 @@ for (const theme of themes) {
     await page.locator('teammapper-client-colors-panel button.client').click();
     await waitForDialogOpen(page);
 
-    const field = page.locator('teammapper-dialog-display-name mat-form-field');
-    const fieldBox = await field.boundingBox();
-    expect(fieldBox?.width).toBeCloseTo(await contentInnerWidth(page), 0);
+    await expectNameFieldSpansContent(page);
     const background = expect(await surfaceBackground(page));
     if (theme === 'dark') background.not.toBe('rgb(255, 255, 255)');
     else background.toBe('rgb(255, 255, 255)');
@@ -105,3 +112,41 @@ for (const theme of themes) {
     expect(new Set(heights).size).toBe(1);
   });
 }
+
+test.describe('on a phone', () => {
+  const phone = { width: 390, height: 844 };
+  test.use({ viewport: phone });
+
+  test('the settings dialog fills the screen and scrolls its content', async ({
+    page,
+  }, testInfo) => {
+    await createMap(page);
+    await page.locator('#settings-button').click();
+    await waitForDialogOpen(page);
+    await openSettingsTab(page, 'Mind map');
+
+    const box = await dialogSurface(page).boundingBox();
+    if (!box) throw new Error('the dialog surface is not visible');
+    const { x, y, width, height } = box;
+    const rounded = [x, y, width, height].map(Math.round);
+    expect(rounded).toEqual([0, 0, phone.width, phone.height]);
+    const content = page.locator('mat-dialog-content.settings');
+    const overflow = await content.evaluate(element => ({
+      scrolls: element.scrollHeight > element.clientHeight,
+      style: getComputedStyle(element).overflowY,
+    }));
+    expect(overflow).toEqual({ scrolls: true, style: 'auto' });
+    await expect(page.locator('.close-button')).toBeInViewport();
+    await screenshot(page, testInfo, 'settings-phone');
+  });
+
+  test('the name dialog fits on the screen', async ({ page }, testInfo) => {
+    await createMap(page);
+    await page.locator('teammapper-client-colors-panel button.client').click();
+    await waitForDialogOpen(page);
+
+    await expect(dialogSurface(page)).toBeInViewport({ ratio: 1 });
+    await expectNameFieldSpansContent(page);
+    await screenshot(page, testInfo, 'display-name-phone');
+  });
+});

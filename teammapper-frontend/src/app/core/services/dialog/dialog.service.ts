@@ -102,7 +102,8 @@ export class DialogService {
    * dialog, so typing `-` into a field removes no node. A navigation closes
    * the dialog, because deleting the open map sends the user to the start
    * page. The fixed height keeps the dialog still when the user switches
-   * between tabs of different length.
+   * between tabs of different length. On a phone, styles.scss stretches the
+   * panel to fill the screen.
    */
   openSettingsDialog() {
     if (this.settingsModalRef) return;
@@ -113,6 +114,7 @@ export class DialogService {
       maxWidth: '95vw',
       height: '720px',
       maxHeight: '90vh',
+      panelClass: 'settings-dialog-panel',
     });
     const navigation = this.closeOnNavigation(dialogRef);
     dialogRef.afterClosed().subscribe(() => {

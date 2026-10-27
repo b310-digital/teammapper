@@ -220,6 +220,19 @@ body {
   color: var(--color-text-primary);
 }
 
+// The settings dialog fills a phone screen, held upright or sideways. The
+// overlay writes the configured size into the pane's inline style, so these
+// rules need !important to win.
+@media (max-width: 599.98px), (max-height: 599.98px) {
+  .settings-dialog-panel {
+    --mat-dialog-container-shape: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+}
+
 // Snackbar
 snack-bar-container.snackbar {
   background-color: var(--color-bg-snackbar);
