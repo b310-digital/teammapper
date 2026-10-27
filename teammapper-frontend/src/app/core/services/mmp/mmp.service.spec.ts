@@ -37,6 +37,9 @@ const DATA: MapData = {
   updateNode: jest.fn(),
   removeNode: jest.fn(),
   replaceMap: jest.fn(),
+  arrows: () => [],
+  addArrows: jest.fn(),
+  removeArrow: jest.fn(),
   batch: change => change(),
   subscribe: () => () => undefined,
 };

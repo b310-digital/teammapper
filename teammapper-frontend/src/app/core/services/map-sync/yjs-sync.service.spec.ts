@@ -486,4 +486,44 @@ describe('YjsSyncService', () => {
       expect(undoStackLength()).toBe(1);
     });
   });
+
+  describe('undo with arrows', () => {
+    let service: YjsSyncService;
+
+    const mapData = () => internals(service).yjsMapData;
+    const arrowKeys = () =>
+      mapData()
+        .arrows()
+        .map(({ source, target }) => `${source}:${target}`);
+
+    beforeEach(() => {
+      service = createService(undefined, createMockContext());
+      service.initMap('test-uuid');
+      internals(service).yjsSynced = true;
+      // The map exists before the undo manager, as after the first sync.
+      mapData().addNodes([
+        node('main', null, true),
+        node('a', 'main'),
+        node('b', 'main'),
+      ]);
+      mapData().addArrows([{ source: 'a', target: 'b' }]);
+      internals(service).initUndoManager();
+    });
+
+    afterEach(() => {
+      service.destroy();
+    });
+
+    it('leaves the undo stack empty after the initial hydration', () => {
+      expect(internals(service).yUndoManager?.undoStack).toHaveLength(0);
+    });
+
+    it('undoes the creation of an arrow', () => {
+      mapData().addArrows([{ source: 'b', target: 'a' }]);
+
+      service.undo();
+
+      expect(arrowKeys()).toEqual(['a:b']);
+    });
+  });
 });
