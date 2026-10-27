@@ -31,6 +31,7 @@ const createMockMapsService = (): jest.Mocked<MapsService> => {
   return {
     findMap: jest.fn<MapsService['findMap']>(),
     findNodes: jest.fn<MapsService['findNodes']>(),
+    findArrows: jest.fn<MapsService['findArrows']>(),
   } as unknown as jest.Mocked<MapsService>
 }
 
@@ -63,6 +64,7 @@ describe('YjsDocManagerService', () => {
   ) => {
     mapsService.findMap.mockResolvedValue(createMockMap())
     mapsService.findNodes.mockResolvedValue(nodes)
+    mapsService.findArrows.mockResolvedValue([])
   }
 
   const setupConnectedDoc = async (mapId = 'map-1') => {
@@ -90,6 +92,24 @@ describe('YjsDocManagerService', () => {
       const doc = await service.getOrCreateDoc('map-1')
 
       expect(doc.getMap('nodes').size).toBe(2)
+    })
+
+    it('hydrates the arrows map with the arrows of the database', async () => {
+      setupWithNodes([
+        createMockNode('root-1', true),
+        createMockNode('child-1'),
+        createMockNode('child-2'),
+      ])
+      mapsService.findArrows.mockResolvedValue([
+        { source: 'child-1', target: 'child-2' },
+      ])
+
+      const doc = await service.getOrCreateDoc('map-1')
+
+      expect(mapsService.findArrows).toHaveBeenCalledWith('map-1')
+      expect(Array.from(doc.getMap('arrows').keys())).toEqual([
+        'child-1:child-2',
+      ])
     })
 
     it('returns existing Y.Doc on subsequent access', async () => {

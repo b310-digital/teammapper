@@ -92,6 +92,7 @@ export type CachedMapOptions = MapOptions;
 export interface ClientMap {
   uuid: string;
   data: MapNode[];
+  arrows: MapArrow[];
   options: MapOptions;
   createdAt?: Date | number | string | null;
   lastModified?: Date | number | string | null;

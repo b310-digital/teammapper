@@ -146,12 +146,14 @@ export default class MapsController {
       const oldMap = await this.findMapForDuplication(mapId)
 
       const oldNodes = await this.mapsService.findNodes(oldMap.id)
+      const oldArrows = await this.mapsService.findArrows(oldMap.id)
       const inlineBytes = totalInlineImageBytes(oldNodes)
       const newMap = await this.mapsService.createEmptyMap()
       try {
         // Read nodes first so an intervening upload cannot leave a missing reference.
         await this.imagesService.copyImages(oldMap.id, newMap.id, inlineBytes)
         await this.mapsService.addNodes(newMap.id, oldNodes)
+        await this.mapsService.addArrows(newMap.id, oldArrows)
         const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
         if (!exportedMap) throw new NotFoundException()
         return {

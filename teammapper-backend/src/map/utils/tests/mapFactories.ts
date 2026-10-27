@@ -24,6 +24,7 @@ export const createMmpMap = (overrides = {}): MmpMap => ({
 export const createMmpClientMap = (overrides = {}): ClientMap => ({
   uuid: crypto.randomUUID(),
   data: [],
+  arrows: [],
   deleteAfterDays: 30,
   deletedAt: new Date('1970-01-01'),
   lastModified: new Date('1970-01-01'),

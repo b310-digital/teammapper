@@ -15,12 +15,15 @@ import { truncateDatabase } from 'test/helper'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { YjsPersistenceService } from './yjs-persistence.service'
+import { MmpArrow } from '../entities/mmpArrow.entity'
+import { arrowKey } from '@teammapper/shared'
 import { hydrateYDoc } from '../utils/yDocConversion'
 import { jest } from '@jest/globals'
 
 describe('YjsPersistenceService', () => {
   let service: YjsPersistenceService
   let nodesRepo: Repository<MmpNode>
+  let arrowsRepo: Repository<MmpArrow>
   let mapsRepo: Repository<MmpMap>
   let moduleFixture: TestingModule
 
@@ -40,6 +43,9 @@ describe('YjsPersistenceService', () => {
     mapsRepo = moduleFixture.get<Repository<MmpMap>>(getRepositoryToken(MmpMap))
     nodesRepo = moduleFixture.get<Repository<MmpNode>>(
       getRepositoryToken(MmpNode)
+    )
+    arrowsRepo = moduleFixture.get<Repository<MmpArrow>>(
+      getRepositoryToken(MmpArrow)
     )
     service = new YjsPersistenceService(nodesRepo, mapsRepo)
   })
@@ -84,9 +90,34 @@ describe('YjsPersistenceService', () => {
     const doc = new Y.Doc()
     const dbNodes =
       nodes ?? (await nodesRepo.find({ where: { nodeMapId: map.id } }))
-    hydrateYDoc(doc, dbNodes, map)
+    const dbArrows = await arrowsRepo.find({ where: { nodeMapId: map.id } })
+    hydrateYDoc(
+      doc,
+      dbNodes,
+      map,
+      dbArrows.map((a) => ({ source: a.sourceNodeId, target: a.targetNodeId }))
+    )
     return doc
   }
+
+  // Writes an arrow entry as a client does; `key` overrides the arrow key
+  const addArrowToDoc = (
+    doc: Y.Doc,
+    source: string,
+    target: string,
+    key = arrowKey(source, target)
+  ): void => {
+    const yArrow = new Y.Map<unknown>()
+    yArrow.set('source', source)
+    yArrow.set('target', target)
+    ;(doc.getMap('arrows') as Y.Map<Y.Map<unknown>>).set(key, yArrow)
+  }
+
+  const storedArrows = async (map: MmpMap) =>
+    (await arrowsRepo.find({ where: { nodeMapId: map.id } })).map((a) => ({
+      source: a.sourceNodeId,
+      target: a.targetNodeId,
+    }))
 
   const addChildToDoc = (doc: Y.Doc, parentId: string): string => {
     const childId = uuidv4()
@@ -298,7 +329,7 @@ describe('YjsPersistenceService', () => {
     it('deletes all DB nodes when Y.Doc nodes map is empty', async () => {
       const { map } = await createMapWithRootNode()
       const doc = new Y.Doc()
-      hydrateYDoc(doc, [], map)
+      hydrateYDoc(doc, [], map, [])
 
       await service.persistDoc(map.id, doc)
 
@@ -319,6 +350,147 @@ describe('YjsPersistenceService', () => {
       expect(dbNodes[0].lastModified!.getTime()).toBeGreaterThanOrEqual(
         beforePersist.getTime()
       )
+
+      doc.destroy()
+    })
+  })
+
+  describe('persistDoc arrows', () => {
+    // A map with a root and two children, loaded into a Y.Doc
+    const setUpTwoChildren = async () => {
+      const { map, rootNode } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const sourceId = addChildToDoc(doc, rootNode.id)
+      const targetId = addChildToDoc(doc, rootNode.id)
+      return { map, rootNode, doc, sourceId, targetId }
+    }
+
+    it('persists an arrow of the Y.Doc and hydrates it again', async () => {
+      const { map, doc, sourceId, targetId } = await setUpTwoChildren()
+      addArrowToDoc(doc, sourceId, targetId)
+
+      await service.persistDoc(map.id, doc)
+
+      const reloaded = await hydrateFromDb(map)
+      const arrows = reloaded.getMap('arrows') as Y.Map<Y.Map<unknown>>
+      expect(arrows.get(arrowKey(sourceId, targetId))?.toJSON()).toEqual({
+        source: sourceId,
+        target: targetId,
+      })
+
+      doc.destroy()
+      reloaded.destroy()
+    })
+
+    it('commits two consecutive saves of an unchanged map and holds the arrow once', async () => {
+      const { map, doc, sourceId, targetId } = await setUpTwoChildren()
+      addArrowToDoc(doc, sourceId, targetId)
+
+      await service.persistDoc(map.id, doc)
+      await service.persistDoc(map.id, doc)
+
+      expect(await storedArrows(map)).toEqual([
+        { source: sourceId, target: targetId },
+      ])
+
+      doc.destroy()
+    })
+
+    it('deletes an arrow removed between surviving nodes', async () => {
+      const { map, doc, sourceId, targetId } = await setUpTwoChildren()
+      addArrowToDoc(doc, sourceId, targetId)
+      await service.persistDoc(map.id, doc)
+
+      doc.getMap('arrows').delete(arrowKey(sourceId, targetId))
+      await service.persistDoc(map.id, doc)
+
+      expect(await storedArrows(map)).toEqual([])
+
+      doc.destroy()
+    })
+
+    it('persists the nodes and the other arrows when an arrow is dangling', async () => {
+      const { map, doc, sourceId, targetId } = await setUpTwoChildren()
+      addArrowToDoc(doc, sourceId, targetId)
+      addArrowToDoc(doc, sourceId, uuidv4())
+
+      await service.persistDoc(map.id, doc)
+
+      expect(await nodesRepo.count({ where: { nodeMapId: map.id } })).toBe(3)
+      expect(await storedArrows(map)).toEqual([
+        { source: sourceId, target: targetId },
+      ])
+
+      doc.destroy()
+    })
+
+    it('logs the key of a dangling arrow at debug level', async () => {
+      const { map, doc, sourceId } = await setUpTwoChildren()
+      const missingId = uuidv4()
+      addArrowToDoc(doc, sourceId, missingId)
+      const debug = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation(() => {})
+
+      await service.persistDoc(map.id, doc)
+
+      expect(debug).toHaveBeenCalledWith(
+        expect.stringContaining(arrowKey(sourceId, missingId))
+      )
+
+      doc.destroy()
+    })
+
+    it('leaves out an arrow whose key does not match its fields', async () => {
+      const { map, doc, sourceId, targetId } = await setUpTwoChildren()
+      addArrowToDoc(doc, sourceId, targetId, 'not-the-arrow-key')
+      const debug = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation(() => {})
+
+      await service.persistDoc(map.id, doc)
+
+      expect(await storedArrows(map)).toEqual([])
+      expect(debug).toHaveBeenCalledWith(
+        expect.stringContaining('not-the-arrow-key')
+      )
+
+      doc.destroy()
+    })
+
+    it('leaves out an arrow entry that is no Y.Map', async () => {
+      const { map, doc } = await setUpTwoChildren()
+      doc.getMap('arrows').set('text', 'no arrow')
+
+      await service.persistDoc(map.id, doc)
+
+      expect(await storedArrows(map)).toEqual([])
+
+      doc.destroy()
+    })
+
+    it('leaves out an arrow whose endpoint is a node no root reaches', async () => {
+      const { map, doc, sourceId } = await setUpTwoChildren()
+      const orphanId = addChildToDoc(doc, uuidv4())
+      addArrowToDoc(doc, sourceId, orphanId)
+
+      await service.persistDoc(map.id, doc)
+
+      expect(await storedArrows(map)).toEqual([])
+
+      doc.destroy()
+    })
+
+    it('does not change the arrows map of the Y.Doc', async () => {
+      const { map, doc, sourceId, targetId } = await setUpTwoChildren()
+      addArrowToDoc(doc, sourceId, targetId)
+      addArrowToDoc(doc, sourceId, uuidv4())
+      addArrowToDoc(doc, sourceId, targetId, 'wrong-key')
+      const before = doc.getMap('arrows').toJSON()
+
+      await service.persistDoc(map.id, doc)
+
+      expect(doc.getMap('arrows').toJSON()).toEqual(before)
 
       doc.destroy()
     })

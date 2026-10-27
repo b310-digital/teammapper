@@ -8,6 +8,24 @@ describe('normalizeMapData', () => {
     expect(normalized.options).toEqual({});
   });
 
+  it('gives cached data without arrows an empty arrow list', () => {
+    expect(normalizeMapData({ uuid: 'm', data: [] }).arrows).toEqual([]);
+  });
+
+  it('keeps well-formed arrows and drops malformed ones', () => {
+    const normalized = normalizeMapData({
+      uuid: 'm',
+      data: [],
+      arrows: [
+        { source: 'a', target: 'b' },
+        { source: 'a' },
+        { source: '', target: 'b' },
+        'a:b',
+      ],
+    });
+    expect(normalized.arrows).toEqual([{ source: 'a', target: 'b' }]);
+  });
+
   it('normalizes a legacy node and gives it no hidden keys', () => {
     const legacyNode = {
       id: 'n1',

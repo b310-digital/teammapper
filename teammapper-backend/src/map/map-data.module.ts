@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { MmpMap } from './entities/mmpMap.entity'
 import { MmpNode } from './entities/mmpNode.entity'
+import { MmpArrow } from './entities/mmpArrow.entity'
 import { MmpImage } from './entities/mmpImage.entity'
 import { MmpImageData } from './entities/mmpImageData.entity'
 import { MapsService } from './services/maps.service'
@@ -15,7 +16,13 @@ import { DatabaseImageStore } from './services/database-image-store.service'
 // repositories directly.
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MmpMap, MmpNode, MmpImage, MmpImageData]),
+    TypeOrmModule.forFeature([
+      MmpMap,
+      MmpNode,
+      MmpArrow,
+      MmpImage,
+      MmpImageData,
+    ]),
   ],
   providers: [
     MapsService,

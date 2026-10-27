@@ -1,5 +1,6 @@
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
+import { MmpArrow } from '../entities/mmpArrow.entity'
 import {
   ClientMap,
   DEFAULT_ROOT_COLOR_BACKGROUND,
@@ -10,6 +11,7 @@ import {
   DEFAULT_ROOT_NAME,
   IMmpClientNode,
   IMmpClientNodeBasics,
+  MapArrow,
   MapNode,
 } from '@teammapper/shared'
 import { sanitizeNodeFields } from './sanitization'
@@ -41,15 +43,27 @@ const mapMmpNodeToClient = (serverNode: MmpNode): IMmpClientNode => ({
   isRoot: serverNode.root || false,
 })
 
+// The columns of an arrow row, which insert statements take
+const mapArrowToMmpArrow = (
+  arrow: MapArrow,
+  mapId: string
+): Pick<MmpArrow, 'nodeMapId' | 'sourceNodeId' | 'targetNodeId'> => ({
+  nodeMapId: mapId,
+  sourceNodeId: arrow.source,
+  targetNodeId: arrow.target,
+})
+
 const mapMmpMapToClient = (
   serverMap: MmpMap,
   serverNodes: MmpNode[],
+  arrows: MapArrow[],
   deletedAt: Date,
   deleteAfterDays: number
 ): ClientMap => {
   return {
     uuid: serverMap.id,
     data: serverNodes.map((node) => mapMmpNodeToClient(node)),
+    arrows,
     deleteAfterDays,
     deletedAt,
     lastModified: serverMap.lastModified,
@@ -119,6 +133,7 @@ const mapClientBasicNodeToMmpRootNode = (
 }
 
 export {
+  mapArrowToMmpArrow,
   mapClientNodeToMmpNode,
   mapClientBasicNodeToMmpRootNode,
   mapMmpMapToClient,

@@ -1,6 +1,7 @@
 import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpMap } from '../entities/mmpMap.entity'
+import { arrowKey } from '@teammapper/shared'
 import {
   populateYMapFromNode,
   yMapToMmpNode,
@@ -332,7 +333,8 @@ describe('yDocConversion', () => {
           createTestNode(),
           createTestNode({ id: 'node-2', root: false, name: 'Child' }),
         ],
-        createTestMap()
+        createTestMap(),
+        []
       )
 
       expect((doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).size).toBe(2)
@@ -342,9 +344,34 @@ describe('yDocConversion', () => {
 
     it('handles an empty node list', () => {
       const doc = new Y.Doc()
-      hydrateYDoc(doc, [], createTestMap())
+      hydrateYDoc(doc, [], createTestMap(), [])
 
       expect((doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).size).toBe(0)
+
+      doc.destroy()
+    })
+
+    it('fills the arrows map keyed by arrowKey with source and target', () => {
+      const doc = new Y.Doc()
+      hydrateYDoc(doc, [], createTestMap(), [
+        { source: 'node-1', target: 'node-2' },
+      ])
+
+      const arrows = doc.getMap('arrows') as Y.Map<Y.Map<unknown>>
+      expect(Array.from(arrows.keys())).toEqual([arrowKey('node-1', 'node-2')])
+      expect(arrows.get('node-1:node-2')?.toJSON()).toEqual({
+        source: 'node-1',
+        target: 'node-2',
+      })
+
+      doc.destroy()
+    })
+
+    it('gives an empty arrows map when the map has no arrows', () => {
+      const doc = new Y.Doc()
+      hydrateYDoc(doc, [createTestNode()], createTestMap(), [])
+
+      expect((doc.getMap('arrows') as Y.Map<Y.Map<unknown>>).size).toBe(0)
 
       doc.destroy()
     })
@@ -359,7 +386,8 @@ describe('yDocConversion', () => {
       hydrateYDoc(
         doc,
         [createTestNode(), createTestNode({ id: 'node-2', root: false })],
-        createTestMap()
+        createTestMap(),
+        [{ source: 'node-1', target: 'node-2' }]
       )
 
       expect(updateCount).toBe(1)
@@ -374,7 +402,7 @@ describe('yDocConversion', () => {
       ['a data URL', 'data:image/png;base64,iVBORw0KGgo='],
     ])('keeps %s unchanged through hydrate and persist', (_label, src) => {
       const doc = new Y.Doc()
-      hydrateYDoc(doc, [createTestNode({ imageSrc: src })], createTestMap())
+      hydrateYDoc(doc, [createTestNode({ imageSrc: src })], createTestMap(), [])
       const yNode = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
         'node-1'
       )!
