@@ -17,13 +17,16 @@ function box(x: number, y: number, width = 100, height = 40): Bounds {
   };
 }
 
+// Absorbs floating-point error, far below one pixel
+const ROUNDING = 0.01;
+
 /** Whether the point lies on the border of the box. */
 function onBorder(bounds: Bounds, point: MapNodeCoordinates): boolean {
-  const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+  const near = (a: number, b: number) => Math.abs(a - b) < ROUNDING;
   const insideX =
-    point.x >= bounds.minX - 1e-6 && point.x <= bounds.maxX + 1e-6;
+    point.x >= bounds.minX - ROUNDING && point.x <= bounds.maxX + ROUNDING;
   const insideY =
-    point.y >= bounds.minY - 1e-6 && point.y <= bounds.maxY + 1e-6;
+    point.y >= bounds.minY - ROUNDING && point.y <= bounds.maxY + ROUNDING;
   return (
     ((near(point.x, bounds.minX) || near(point.x, bounds.maxX)) && insideY) ||
     ((near(point.y, bounds.minY) || near(point.y, bounds.maxY)) && insideX)
