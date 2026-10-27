@@ -26,7 +26,7 @@ import { SettingsService } from '../settings/settings.service';
 import { ActiveToast, ToastrService } from 'ngx-toastr';
 import {
   ClientColorMapping,
-  ClientColorMappingValue,
+  ClientListEntry,
   toTransmittableSecret,
 } from './yjs-utils';
 import { MapSyncContext, ConnectionStatus } from './map-sync-context';
@@ -62,7 +62,7 @@ export class MapSyncService implements OnDestroy {
   private toastrService = inject(ToastrService);
 
   // needed in color panel to show all clients
-  private readonly clientListSubject: BehaviorSubject<string[]>;
+  private readonly clientListSubject: BehaviorSubject<ClientListEntry[]>;
   // needed in map component to initialize when map is rendered and data present
   private readonly attachedMapSubject: BehaviorSubject<CachedMapEntry | null>;
   // needed in the application component for UI related tasks
@@ -96,7 +96,7 @@ export class MapSyncService implements OnDestroy {
       null
     );
     this.connectionStatusSubject = new BehaviorSubject<ConnectionStatus>(null);
-    this.clientListSubject = new BehaviorSubject<string[]>([]);
+    this.clientListSubject = new BehaviorSubject<ClientListEntry[]>([]);
 
     this.availableColors = COLORS;
     this.clientColor =
@@ -179,7 +179,7 @@ export class MapSyncService implements OnDestroy {
     return this.attachedMapSubject.asObservable();
   }
 
-  public getClientListObservable(): Observable<string[]> {
+  public getClientListObservable(): Observable<ClientListEntry[]> {
     return this.clientListSubject.asObservable();
   }
 
@@ -438,10 +438,16 @@ export class MapSyncService implements OnDestroy {
       .shift();
   }
 
+  /** One entry per client, keyed by its awareness id. */
   private extractClientListForSubscriber(): void {
     this.clientListSubject.next(
-      Object.values(this.colorMapping).map(
-        (e: ClientColorMappingValue) => e?.color
+      Object.entries(this.colorMapping).map(
+        ([clientId, { color, displayName, isSelf }]) => ({
+          clientId,
+          color,
+          displayName,
+          isSelf,
+        })
       )
     );
   }

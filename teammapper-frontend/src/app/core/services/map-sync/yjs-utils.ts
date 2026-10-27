@@ -46,6 +46,15 @@ export interface ClientColorMappingValue {
   isSelf: boolean;
 }
 
+/** One connected client, as the client list shows it. */
+export interface ClientListEntry {
+  /** The client's awareness id, unique per connection. */
+  clientId: string;
+  color: string;
+  displayName: string;
+  isSelf: boolean;
+}
+
 /** The keys a node's Y.Map holds, one per node attribute. */
 const NODE_KEYS = [
   'id',

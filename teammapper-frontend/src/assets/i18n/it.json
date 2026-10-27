@@ -144,6 +144,9 @@
       "TITLE": "Problema di connessione",
       "WARNING": "Le modifiche recenti potrebbero non essere state salvate.",
       "RELOAD_BUTTON": "Ricarica pagina"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "Il tuo nome visualizzato"
     }
   },
   "PAGES": {
@@ -214,7 +217,9 @@
       "DELETED_AT": "Data di eliminazione:",
       "DELETE_AFTER_DAYS": "Le mappe mentali verranno eliminate da questo server dopo {{deleteAfterDays}} giorni.",
       "DELETE": "Elimina la mappa mentale",
-      "CONFIRM_DELETE": "Eliminare?"
+      "CONFIRM_DELETE": "Eliminare?",
+      "DISPLAY_NAME": "Nome visualizzato",
+      "DISPLAY_NAME_HINT": "Tutti su una mappa mentale vedono questo nome."
     }
   },
   "MESSAGES": {
@@ -293,5 +298,8 @@
     "FONT_MIN_SIZE": "Dimensione minima del font",
     "FONT_MAX_SIZE": "Dimensione massima del font",
     "FONT_INCREMENT": "Passo dimensione del font"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "Anonimo"
   }
 }

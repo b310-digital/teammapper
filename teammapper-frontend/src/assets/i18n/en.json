@@ -145,6 +145,9 @@
       "TITLE": "Connection Issue",
       "WARNING": "Your recent changes may not have been saved.",
       "RELOAD_BUTTON": "Reload Page"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "Your display name"
     }
   },
   "PAGES": {
@@ -216,7 +219,9 @@
       "DELETED_AT": "Deletion date:",
       "DELETE_AFTER_DAYS": "Mindmaps will be deleted on this server after {{deleteAfterDays}} days.",
       "DELETE": "Delete mindmap",
-      "CONFIRM_DELETE": "Delete?"
+      "CONFIRM_DELETE": "Delete?",
+      "DISPLAY_NAME": "Display name",
+      "DISPLAY_NAME_HINT": "Everyone on a mind map can see this name."
     }
   },
   "MESSAGES": {
@@ -292,5 +297,8 @@
     "SAVED": "Saved",
     "NOT_SAVED": "Not saved",
     "LINKS": "Links"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "Anonymous"
   }
 }

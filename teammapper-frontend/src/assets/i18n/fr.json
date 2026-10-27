@@ -144,6 +144,9 @@
       "TITLE": "Problème de connexion",
       "WARNING": "Vos modifications récentes n'ont peut-être pas été enregistrées.",
       "RELOAD_BUTTON": "Recharger la page"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "Votre nom d'affichage"
     }
   },
   "PAGES": {
@@ -214,7 +217,9 @@
       "DELETED_AT": "Date de suppression :",
       "DELETE_AFTER_DAYS": "Ce serveur supprime les cartes après {{deleteAfterDays}} jours.",
       "DELETE": "Supprimer la carte",
-      "CONFIRM_DELETE": "Supprimer ?"
+      "CONFIRM_DELETE": "Supprimer ?",
+      "DISPLAY_NAME": "Nom d'affichage",
+      "DISPLAY_NAME_HINT": "Tout le monde sur une carte mentale voit ce nom."
     }
   },
   "MESSAGES": {
@@ -292,5 +297,8 @@
     "FONT_MIN_SIZE": "Minimal font size",
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "Anonyme"
   }
 }

@@ -145,6 +145,9 @@
       "TITLE": "Verbindungsproblem",
       "WARNING": "Ihre letzten Änderungen wurden möglicherweise nicht gespeichert.",
       "RELOAD_BUTTON": "Seite neu laden"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "Dein Anzeigename"
     }
   },
   "PAGES": {
@@ -216,7 +219,9 @@
       "DELETED_AT": "Löschdatum:",
       "DELETE_AFTER_DAYS": "Mindmaps werden auf diesem Server nach {{deleteAfterDays}} Tagen gelöscht.",
       "DELETE": "Mindmap löschen",
-      "CONFIRM_DELETE": "Wirklich löschen?"
+      "CONFIRM_DELETE": "Wirklich löschen?",
+      "DISPLAY_NAME": "Anzeigename",
+      "DISPLAY_NAME_HINT": "Alle auf einer Mindmap sehen diesen Namen."
     }
   },
   "MESSAGES": {
@@ -293,5 +298,8 @@
     "SAVED": "Gespeichert",
     "NOT_SAVED": "Nicht gespeichert",
     "LINKS": "Links"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "Anonym"
   }
 }

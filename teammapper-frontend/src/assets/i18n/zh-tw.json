@@ -144,6 +144,9 @@
       "TITLE": "連線問題",
       "WARNING": "您最近的變更可能未儲存。",
       "RELOAD_BUTTON": "重新載入頁面"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "你的顯示名稱"
     }
   },
   "PAGES": {
@@ -214,7 +217,9 @@
       "DELETED_AT": "刪除日期：",
       "DELETE_AFTER_DAYS": "此伺服器會在 {{deleteAfterDays}} 天後刪除心智圖。",
       "DELETE": "刪除心智圖",
-      "CONFIRM_DELETE": "確定要刪除嗎？"
+      "CONFIRM_DELETE": "確定要刪除嗎？",
+      "DISPLAY_NAME": "顯示名稱",
+      "DISPLAY_NAME_HINT": "心智圖上的所有人都能看到這個名稱。"
     }
   },
   "MESSAGES": {
@@ -292,5 +297,8 @@
     "FONT_MIN_SIZE": "Minimal font size",
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "匿名"
   }
 }

@@ -144,6 +144,9 @@
       "TITLE": "Problema de conexión",
       "WARNING": "Es posible que sus cambios recientes no se hayan guardado.",
       "RELOAD_BUTTON": "Recargar página"
+    },
+    "DISPLAY_NAME": {
+      "TITLE": "Tu nombre visible"
     }
   },
   "PAGES": {
@@ -214,7 +217,9 @@
       "DELETED_AT": "Fecha de eliminación:",
       "DELETE_AFTER_DAYS": "Este servidor elimina los mapas después de {{deleteAfterDays}} días.",
       "DELETE": "Eliminar mapa",
-      "CONFIRM_DELETE": "¿Eliminar?"
+      "CONFIRM_DELETE": "¿Eliminar?",
+      "DISPLAY_NAME": "Nombre visible",
+      "DISPLAY_NAME_HINT": "Todos en un mapa mental ven este nombre."
     }
   },
   "MESSAGES": {
@@ -293,5 +298,8 @@
     "FONT_MIN_SIZE": "Minimal font size",
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step"
+  },
+  "CLIENT_LIST": {
+    "ANONYMOUS": "Anónimo"
   }
 }
