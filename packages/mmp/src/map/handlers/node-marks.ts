@@ -130,6 +130,8 @@ const name: NodeMark = {
           .style('cursor', 'pointer')
           // fix against cursor jumping out of nodes on firefox if empty
           .style('min-width', '20px')
+          // Firefox gives an empty name no height and cuts the caret in half.
+          .style('min-height', '1lh')
       )
       .style('font-family', context.fontFamily)
       .style('font-size', id => context.recordOf(id).font.size + 'px')
