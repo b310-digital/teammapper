@@ -31,7 +31,7 @@ test.describe('node arrows', () => {
     await expect(arrows(page)).toHaveCount(1);
   });
 
-  test('removes a selected arrow with Delete and brings it back with undo', async ({
+  test('removes a selected arrow with Delete, brings it back with undo and removes it again with redo', async ({
     page,
   }) => {
     await createMapWithTwoChildren(page);
@@ -49,6 +49,9 @@ test.describe('node arrows', () => {
 
     await page.locator('#undo-button').click();
     await expect(arrows(page)).toHaveCount(1);
+
+    await page.locator('#redo-button').click();
+    await expect(arrows(page)).toHaveCount(0);
   });
 
   test('removes a node with its arrow and restores both with one undo', async ({
