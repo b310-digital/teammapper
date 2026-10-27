@@ -281,6 +281,21 @@ describe('MapsService', () => {
       expect(await arrowsRepo.count()).toBe(0)
     })
 
+    it('deletes the arrows of a map when deleteOutdatedMaps deletes the map', async () => {
+      jest.setSystemTime(new Date('2021-01-31'))
+      const map = await saveMapWithArrow()
+      const outdated = new Date('2021-01-01')
+      await mapsRepo.update(map.id, { lastModified: outdated })
+      await nodesRepo.update({ nodeMapId: map.id }, { lastModified: outdated })
+
+      await mapsService.deleteOutdatedMaps(30)
+
+      expect({
+        map: await mapsService.findMap(map.id),
+        arrows: await arrowsRepo.count(),
+      }).toEqual({ map: null, arrows: 0 })
+    })
+
     it('refuses an arrow that names a node of another map', async () => {
       const map = await saveMapWithArrow()
       const other = await mapsRepo.save({})
