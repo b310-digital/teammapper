@@ -16,7 +16,8 @@
   "userSettings": {
     "general": {
       "language": "en",
-      "darkMode": false
+      "darkMode": false,
+      "displayName": ""
     },
     "mapOptions": {
       "centerOnResize": false,

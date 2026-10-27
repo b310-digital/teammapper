@@ -6,6 +6,7 @@ import { SettingsService } from '../settings/settings.service';
 import { YjsSyncService } from './yjs-sync.service';
 import {
   createMockContext,
+  createMockSettingsService,
   createYjsSyncService,
 } from '../../../../test/mocks/yjs-sync.mock';
 
@@ -104,14 +105,11 @@ describe('YjsSyncService connection status', () => {
   describe('a server map reset', () => {
     let old: FakeWebsocketProvider;
     let fresh: FakeWebsocketProvider;
-    const settings = { setEditMode: jest.fn() };
+    const settings =
+      createMockSettingsService() as jest.Mocked<SettingsService>;
     beforeEach(() => {
       settings.setEditMode.mockClear();
-      service = createYjsSyncService(
-        undefined,
-        context,
-        settings as unknown as SettingsService
-      );
+      service = createYjsSyncService(undefined, context, settings);
       service.setWritable(true);
       service.initMap('test-uuid');
       old = currentProvider();

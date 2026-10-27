@@ -325,8 +325,17 @@ One open connection to a map, not a person: two tabs are two clients.
 
 The **client list** is everyone connected to a map right now. Each client gets a
 **client color** from a fixed palette, which tints the ring around whichever
-node that client has selected. Presence is anonymous, and a color is the only
-identity anyone has.
+node that client has selected. A client without a display name is anonymous,
+and its color is the only identity it has. A client with a display name shows
+its initials in its color.
+
+### Display name
+
+The optional name a browser announces on every map it opens, so others can
+tell clients apart in the client list. The browser keeps it in its user
+settings, and the server never stores it. Anyone can type any name, so a
+display name proves nothing about who someone is. Write "display name", not
+"username" or "nickname": TeamMapper has no accounts.
 
 ### Presence
 

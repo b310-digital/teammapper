@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals'
 import * as fs from 'fs'
+import * as path from 'path'
 import configService from '../config.service'
 import { SettingsService } from './settings.service'
 import { Settings } from '@teammapper/shared'
@@ -19,7 +20,7 @@ const defaultSettings: Settings = {
     featureFlags: { pictograms: true, ai: false },
   },
   userSettings: {
-    general: { language: 'en', darkMode: false },
+    general: { language: 'en', darkMode: false, displayName: '' },
     mapOptions: {
       centerOnResize: false,
       autoBranchColors: true,
@@ -72,6 +73,21 @@ describe('SettingsService', () => {
         aiModel: null,
       })
     })
+
+    it.each(['settings.dev.json', 'settings.prod.json'])(
+      'gives users an empty display name by default in %s',
+      (file) => {
+        const realFs = jest.requireActual<typeof fs>('fs')
+        const config: Settings = JSON.parse(
+          realFs.readFileSync(
+            path.join(__dirname, '../../config', file),
+            'utf8'
+          )
+        )
+
+        expect(config.userSettings.general.displayName).toBe('')
+      }
+    )
 
     it('should include user settings from the default config file', () => {
       const settings = service.getSettings()

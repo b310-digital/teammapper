@@ -691,7 +691,14 @@ describe('MapSyncService', () => {
 
     it('clears the client list', () => {
       const context = getSyncContext(service);
-      context.setColorMapping({ client: { color: '#ff0000', nodeId: 'a' } });
+      context.setColorMapping({
+        client: {
+          color: '#ff0000',
+          nodeId: 'a',
+          displayName: '',
+          isSelf: false,
+        },
+      });
       context.emitClientList();
 
       service.reset();

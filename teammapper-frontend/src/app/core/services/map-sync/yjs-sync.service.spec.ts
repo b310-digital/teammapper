@@ -9,6 +9,7 @@ import { YjsMapData } from './yjs-map-data';
 import {
   capturingMmpService,
   createMockContext,
+  createMockSettingsService,
   createYjsSyncService as createService,
   MmpHandlers,
 } from '../../../../test/mocks/yjs-sync.mock';
@@ -43,9 +44,8 @@ describe('YjsSyncService', () => {
     let service: YjsSyncService;
 
     beforeEach(() => {
-      settingsService = {
-        setEditMode: jest.fn(),
-      } as unknown as jest.Mocked<SettingsService>;
+      settingsService =
+        createMockSettingsService() as jest.Mocked<SettingsService>;
       service = createService(undefined, createMockContext(), settingsService);
     });
 
@@ -135,9 +135,8 @@ describe('YjsSyncService', () => {
       handlers = {};
       mmpService = capturingMmpService(handlers);
       context = createMockContext();
-      settingsService = {
-        setEditMode: jest.fn(),
-      } as unknown as jest.Mocked<SettingsService>;
+      settingsService =
+        createMockSettingsService() as jest.Mocked<SettingsService>;
       service = createService(mmpService, context, settingsService);
       service.initMap('test-uuid');
     });
