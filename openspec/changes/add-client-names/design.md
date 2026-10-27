@@ -41,14 +41,14 @@ Keeping it in user settings means one name per browser, shared by all its tabs a
 
 `packages/shared` adds `normalizeDisplayName(value: unknown): string`:
 
-1. Return `''` for a value that is not a string. Read no more than the first 1024 UTF-16 code units, so a peer that sends megabytes costs every receiver no more work than a long name.
-2. Remove format characters (Unicode category `Cf`) except the zero-width non-joiner and joiner, which emoji sequences and scripts such as Persian need. Remove the Hangul fillers and the braille blank, which render blank. Turn a tab or a line break into a space, and remove every other control character (`Cc`).
-3. Collapse every run of whitespace to one space and trim.
-4. Cut to 30 graphemes, counted with `Intl.Segmenter`, and to 256 UTF-16 code units without splitting a grapheme, then trim again. The second cap stops a grapheme stacked with combining marks.
+1. Return `''` for a value that is not a string.
+2. Remove every character except letters, combining marks, digits, the space and `-'._`. Tabs, line breaks, control and format characters, emoji and symbols go.
+3. Collapse every run of spaces to one space and trim.
+4. Cut to 20 characters, then trim again.
 
 The settings field and the avatar dialog save through `SettingsService.setDisplayName`, which normalizes before it stores. `SettingsService` also normalizes the stored name when it loads the settings. `YjsSyncService` normalizes every name it reads from awareness, including its own, because awareness is relayed without validation and any client can send anything. Angular interpolation renders the result as text, and no template binds it to `innerHTML`.
 
-30 graphemes fit a first and last name and keep a malicious name from bloating the presence payload of every client.
+A display name is a short user name. 20 characters fit a first and last name and keep a malicious name from bloating the presence payload of every client.
 
 ### 4. The name rides in the existing awareness field
 
@@ -66,7 +66,7 @@ A client of an older version omits the field, and reading it through `normalizeD
 
 ### 6. Initials
 
-`displayNameInitials(name: string): string` in `packages/shared` splits the normalized name on spaces, takes the first grapheme of the first word and, when there are two or more words, the first grapheme of the last word, and upper-cases them with `toLocaleUpperCase`. An empty name returns `''`.
+`displayNameInitials(name: string): string` in `packages/shared` splits the normalized name on spaces, takes the first character of the first word and, when there are two or more words, the first character of the last word, and upper-cases them with `toLocaleUpperCase`. An empty name returns `''`.
 
 The component shows the initials in a circle filled with the client color, with a text color chosen for contrast against it. An empty result shows the existing `account_circle` icon. The element carries `aria-label` with the full name, or the translated "Anonymous".
 

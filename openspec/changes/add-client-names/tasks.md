@@ -3,7 +3,7 @@ Each section is one pull request and leaves `main` releasable. PR 1 stores and a
 ## 1. PR 1: setting and presence
 
 - [x] 1.1 Add `displayName: string` to `UserGeneralSettings` and `AwarenessUser` (`color`, `selectedNodeId`, `displayName`) to `packages/shared`
-- [x] 1.2 Add `normalizeDisplayName` and `displayNameInitials` to `packages/shared`, using `Intl.Segmenter` for graphemes
+- [x] 1.2 Add `normalizeDisplayName` and `displayNameInitials` to `packages/shared`
 - [x] 1.3 Return `displayName: ''` in the backend default user settings
 - [x] 1.4 Fill a missing `displayName` with `''` in `SettingsService.resolveUserSettings` and in the fallback path
 - [x] 1.5 Add the display name field with its hint to the "General" tab of the settings page, saving the normalized value
@@ -11,7 +11,7 @@ Each section is one pull request and leaves `main` releasable. PR 1 stores and a
 - [x] 1.7 Subscribe `YjsSyncService` to `SettingsService.userSettings` while a map is open, update awareness when the normalized name changes, and unsubscribe in teardown
 - [x] 1.8 Add the translation keys to every file in `teammapper-frontend/src/assets/i18n`
 - [x] 1.9 Add the **Display name** entry to `docs/glossary.md` and qualify "Presence is anonymous" in **Client list, client color**
-- [x] 1.10 Write shared unit tests: non-string input, control and format characters, whitespace, 30-grapheme cut with emoji, initials for one word, several words, emoji, empty name
+- [x] 1.10 Write shared unit tests: non-string input, removed characters, spaces, 20-character cut, initials for one word, several words, empty name
 - [x] 1.11 Write frontend tests: settings migration without `displayName`, the settings field saves the normalized value, awareness carries the name on connect, on selection and after a rename with the selection kept
 
 ## 2. PR 2: client list and dialog
