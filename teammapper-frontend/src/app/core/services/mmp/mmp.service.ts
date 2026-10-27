@@ -17,6 +17,8 @@ import DOMPurify from 'dompurify';
 import {
   CachedMapOptions,
   ExportNodeProperties,
+  MapArrow,
+  MapExport,
   MapOptions,
   MapSnapshot,
   NodeProperty,
@@ -36,6 +38,7 @@ import {
 } from './node-images';
 import { validate as uuidValidate } from 'uuid';
 import { ExportService } from '../export/export.service';
+import { parseMapFile } from './map-import';
 
 /**
  * `catch` binds `unknown`. mmp throws the conditions below as `Error` instances
@@ -231,9 +234,12 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Replace the mind map with the given nodes: an import.
+   * Replace the mind map with the given nodes and arrows: an import. The
+   * arrows may come unchecked from a file, since the loader filters them
+   * against the nodes. The map holds no arrows afterwards when the caller
+   * passes none.
    */
-  public async new(map: MapSnapshot) {
+  public async new(map: MapSnapshot, arrows: unknown[] = []) {
     const instance = this.map;
     const hasInvalidUUID = map.some(node => !uuidValidate(node.id));
 
@@ -245,7 +251,12 @@ export class MmpService implements OnDestroy {
       return;
     }
 
-    instance.new(instance.applyCoordinatesToMapSnapshot(map));
+    instance.new(instance.applyCoordinatesToMapSnapshot(map), arrows);
+  }
+
+  /** Every arrow of the map, or none while no map exists. */
+  public getArrows(): MapArrow[] {
+    return this.currentMap?.getArrows() ?? [];
   }
 
   /**
@@ -313,21 +324,26 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Return the json of the mind map with every image reference replaced by a
-   * data URL, so the file works without the server. A node whose image cannot
-   * be fetched leaves the file without an image. `exportAsJSON` keeps the
+   * Return the nodes and arrows of the mind map with every image reference
+   * replaced by a data URL, so the file works without the server. A node
+   * whose image cannot be fetched leaves the file without an image. The nodes
+   * and arrows come from one read before any download starts, so a peer's
+   * edit during the downloads cannot split them. `exportAsJSON` keeps the
    * references for the map cache and the Mermaid export.
    */
-  public async exportAsJSONWithInlineImages(): Promise<MapSnapshot> {
-    const snapshot = this.exportAsJSON();
+  private async exportWithInlineImages(): Promise<MapExport> {
+    const content: MapExport = {
+      nodes: this.exportAsJSON(),
+      arrows: this.map.getArrows(),
+    };
     await Promise.all(
-      snapshot.map(async node => {
+      content.nodes.map(async node => {
         const src = node.image?.src;
         if (!node.image || !isImageReference(src)) return;
         node.image.src = await this.fetchImageAsDataUrl(src);
       })
     );
-    return snapshot;
+    return content;
   }
 
   /** Fetches a referenced image as a data URL, or '' when that fails. */
@@ -728,11 +744,11 @@ export class MmpService implements OnDestroy {
    * does not parse or is not an array of nodes, and leaves the map as it is.
    */
   public async importMap(json: string): Promise<void> {
-    const data: unknown = JSON.parse(json);
-    if (!isNodeArray(data)) {
+    const { nodes, arrows } = parseMapFile(json);
+    if (!isNodeArray(nodes)) {
       throw new Error('The JSON is not an array of nodes');
     }
-    await this.new(data);
+    await this.new(nodes, arrows);
   }
 
   /**
@@ -909,7 +925,7 @@ export class MmpService implements OnDestroy {
     format: string,
     name: string
   ): Promise<{ success: boolean; size?: number }> {
-    const json = JSON.stringify(await this.exportAsJSONWithInlineImages());
+    const json = JSON.stringify(await this.exportWithInlineImages());
     const uri = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`;
 
     const fileSizeKb = uri.length / 1024;
