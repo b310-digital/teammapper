@@ -137,8 +137,18 @@ describe('selecting an arrow', () => {
     ]);
   });
 
+  it('draws the arrow as selected', () => {
+    const { arrows, draw } = makeMap([{ source: 'a1', target: 'b' }]);
+
+    arrows.selectArrow('a1:b');
+
+    expect(draw.setArrowSelected).toHaveBeenLastCalledWith('a1:b');
+  });
+
   it('clears the arrow selection when a node takes the selection', () => {
-    const { arrows, nodes, events } = makeMap([{ source: 'a1', target: 'b' }]);
+    const { arrows, nodes, events, draw } = makeMap([
+      { source: 'a1', target: 'b' },
+    ]);
     arrows.selectArrow('a1:b');
     events.emit.mockClear();
 
@@ -148,6 +158,7 @@ describe('selecting an arrow', () => {
     expect(emitted(events.emit, 'arrowDeselect')).toEqual([
       { source: 'a1', target: 'b' },
     ]);
+    expect(draw.setArrowSelected).toHaveBeenLastCalledWith(null);
   });
 
   it('clears the selection on deselectArrow', () => {

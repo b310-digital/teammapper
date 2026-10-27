@@ -74,6 +74,8 @@ body {
   --color-colorpicker-border: #a8a8a8;
   --color-toolbar-icon: var(--color-primary);
   --color-toolbar-icon-disabled: rgba(0, 0, 0, 0.26);
+  // Stroke and arrowhead of the arrows mmp draws between nodes
+  --mmp-arrow-color: #6b6b6b;
 
   // Component-specific theme variables
   --color-jumbotron-bg: var(--color-primary);
@@ -110,6 +112,7 @@ body.dark-mode {
   --color-float-btn-disabled-color: rgba(255, 255, 255, 0.38);
   --color-float-btn-disabled-bg: rgba(255, 255, 255, 0.12);
   --color-colorpicker-border: #555555;
+  --mmp-arrow-color: #b0b0b0;
   --color-toolbar-icon: #ffffff;
   --color-toolbar-icon-disabled: rgba(255, 255, 255, 0.38);
 
@@ -212,6 +215,12 @@ div.color-picker {
 // SVG map canvas background
 svg rect.map-background {
   fill: var(--color-bg-primary);
+}
+
+// A selected arrow: a wider stroke in the accent color
+svg g.arrow.selected path.arrow-line {
+  stroke: var(--color-primary) !important;
+  stroke-width: 3;
 }
 
 // Global page background

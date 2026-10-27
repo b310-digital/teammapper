@@ -119,11 +119,13 @@ export default class Nodes {
    * Draw the nodes a change added or updated, and drop the removed ones. For
    * a removed node, `drawChange` also redraws its parent, whose hidden child
    * nodes mark depends on its children. `drawNodes` redraws the parents and
-   * the descendants a new or changed parent affects.
+   * the descendants a new or changed parent affects, and the arrows attached
+   * to them. A change of the arrows or a removal draws every arrow again.
    */
-  private drawChange({ added, updated, removed }: MapDataChange) {
+  private drawChange({ added, updated, removed, arrows }: MapDataChange) {
     const redraw = this.map.draw.removeNodes(removed);
     this.map.draw.drawNodes([...added, ...updated, ...redraw]);
+    if (arrows.length > 0 || removed.length > 0) this.map.draw.drawArrows();
 
     const selected = this.selectedId;
     if (selected === null) return;
