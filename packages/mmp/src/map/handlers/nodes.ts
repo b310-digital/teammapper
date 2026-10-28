@@ -93,6 +93,7 @@ export default class Nodes {
   public onChange = (change: MapDataChange) => {
     if (change.replaced) this.drawReplaced();
     else this.drawChange(change);
+    this.map.arrows.onChange(change);
 
     this.map.viewState.forget(change.removed);
     this.map.events.emit('mapChange', undefined);
@@ -118,11 +119,13 @@ export default class Nodes {
    * Draw the nodes a change added or updated, and drop the removed ones. For
    * a removed node, `drawChange` also redraws its parent, whose hidden child
    * nodes mark depends on its children. `drawNodes` redraws the parents and
-   * the descendants a new or changed parent affects.
+   * the descendants a new or changed parent affects, and the arrows attached
+   * to them. A change of the arrows or a removal draws every arrow again.
    */
-  private drawChange({ added, updated, removed }: MapDataChange) {
+  private drawChange({ added, updated, removed, arrows }: MapDataChange) {
     const redraw = this.map.draw.removeNodes(removed);
     this.map.draw.drawNodes([...added, ...updated, ...redraw]);
+    if (arrows.length > 0 || removed.length > 0) this.map.draw.drawArrows();
 
     const selected = this.selectedId;
     if (selected === null) return;
@@ -414,6 +417,7 @@ export default class Nodes {
    * @param {string} id
    */
   private announceSelection(id: string) {
+    this.map.arrows.onNodeSelect(id);
     this.selectedId = id;
     const node = this.exportNode(id);
     if (node) this.map.events.emit('nodeSelect', node);
@@ -507,6 +511,7 @@ export default class Nodes {
 
     viewState.toggle(id);
     this.map.draw.drawSubtree(id);
+    this.map.arrows.onViewChange();
   };
 
   /**
@@ -528,6 +533,7 @@ export default class Nodes {
    */
   public deselectNode = () => {
     this.releaseSelection(null);
+    this.map.arrows.onNodeSelect(null);
   };
 
   /**

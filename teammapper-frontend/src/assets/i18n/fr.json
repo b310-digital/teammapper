@@ -58,7 +58,9 @@
     "IMAGE_SIZE": "Change la taille de l'image du noeud",
     "ADD_NODE": "Ajoute un noeud",
     "ADD_TREE": "Ajoute un arbre",
-    "REMOVE_NODE": "Supprime un noeud",
+    "REMOVE_NODE": "Supprime la flèche ou le noeud sélectionné",
+    "CONNECT_WITH_ARROW": "Relie le noeud sélectionné avec une flèche",
+    "STOP_ARROW_MODE": "Arrête la liaison avec une flèche",
     "ZOOM_IN_MAP": "Zoom sur la carte",
     "ZOOM_OUT_MAP": "Dézoom la carte",
     "CENTER_MAP": "Centre la carte",
@@ -243,7 +245,13 @@
       "NODE_PROTECTED": "Cette branche est protégée. Levez la protection pour la modifier.",
       "MAP_IMPORT_IN_PROGRESS": "Importation de Mindmap en cours",
       "MAP_UPDATE_IN_PROGRESS": "Mise à jour de la carte heuristique...",
-      "MERMAID_SEVERAL_TREES": "Chaque arbre est devenu son propre bloc mindmap. Les outils Mermaid hors de TeamMapper affichent un bloc à la fois."
+      "MERMAID_SEVERAL_TREES": "Chaque arbre est devenu son propre bloc mindmap. Les outils Mermaid hors de TeamMapper affichent un bloc à la fois.",
+      "ARROW_REFUSED": {
+        "SELF": "Une flèche ne peut pas aller d'un noeud vers lui-même.",
+        "DUPLICATE": "Une flèche existe déjà entre ces deux noeuds dans ce sens.",
+        "PARENT": "Une branche relie déjà un noeud à son noeud parent.",
+        "MISSING": "Le noeud de cette flèche n'existe plus."
+      }
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Il n'est pas possible de copier le noeud racine !",

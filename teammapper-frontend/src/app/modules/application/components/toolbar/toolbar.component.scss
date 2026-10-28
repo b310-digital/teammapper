@@ -49,6 +49,10 @@ mat-toolbar {
       background-color: var(--color-bg-hover);
     }
 
+    &.arrow-mode-active {
+      background-color: var(--color-bg-hover);
+    }
+
     &:disabled,
     &.mat-button-disabled {
       color: var(--color-toolbar-icon-disabled);

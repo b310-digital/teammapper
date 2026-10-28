@@ -1,5 +1,6 @@
 import type {
   ExportNodeProperties,
+  MapArrow,
   MapSnapshot,
   NodeProperty,
 } from '@teammapper/shared';
@@ -25,6 +26,11 @@ export interface MapDataChange {
   updated: string[];
   /** Ids present before the change and absent after it, descendants included. */
   removed: string[];
+  /**
+   * The keys of the arrows the change added, removed or rewrote. A peer can
+   * write an arrow's fields one by one, so a rewrite can complete or break it.
+   */
+  arrows: string[];
 }
 
 /**
@@ -43,6 +49,10 @@ export interface MapDataChange {
  *   which `@teammapper/shared` exports.
  * - A `replaceMap` reports the ids that survive it as `updated`, so the view
  *   state keeps the child nodes of those nodes hidden.
+ * - An arrow is stored under `arrowKey(source, target)` and never changes.
+ *   The data keeps an arrow whose endpoint it lacks; mmp draws none for it.
+ * - `removeNode` removes every arrow attached to a removed node in the same
+ *   change, so one undo step restores the nodes and the arrows.
  */
 export interface MapData {
   /** The node with `id`, or undefined when the data holds none. */
@@ -56,10 +66,20 @@ export interface MapData {
   addNodes(nodes: ExportNodeProperties[]): void;
   /** Write one property of one node. */
   updateNode(id: string, property: NodeProperty, value: unknown): void;
-  /** Remove the node and its descendants. */
+  /** Remove the node, its descendants and every arrow attached to them. */
   removeNode(id: string): void;
-  /** Replace every node: a load, an import or a new map. */
-  replaceMap(nodes: MapSnapshot): void;
+  /**
+   * Replace every node and every arrow: a load, an import or a new map. The
+   * map holds no arrows afterwards when the caller passes none.
+   */
+  replaceMap(nodes: MapSnapshot, arrows?: MapArrow[]): void;
+
+  /** Every arrow, in the data's own order. */
+  arrows(): MapArrow[];
+  /** Add the arrows under their keys. */
+  addArrows(arrows: MapArrow[]): void;
+  /** Remove the arrow with the key; a key the data lacks changes nothing. */
+  removeArrow(key: string): void;
   /**
    * Run the writes `change` makes as one change: one notification, one
    * update to peers and one undo step. A nested batch joins the outer one.

@@ -4,6 +4,9 @@ import { Not, In, QueryRunner, Repository } from 'typeorm'
 import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpMap } from '../entities/mmpMap.entity'
+import { MmpArrow } from '../entities/mmpArrow.entity'
+import { MapArrow, arrowKey } from '@teammapper/shared'
+import { mapArrowToMmpArrow } from '../utils/clientServerMapping'
 import { yMapToMmpNode, yMapToMapOptions } from '../utils/yDocConversion'
 import { MapUpdateOrigin, isRejectedMap } from '../utils/yjsValidation'
 import { orderNodesFromRoot } from '../utils/nodeOrdering'
@@ -63,6 +66,8 @@ export class YjsPersistenceService implements OnModuleDestroy {
       if (mmpNodes.length > 0) {
         await this.upsertNodes(queryRunner, mmpNodes)
       }
+
+      await this.replaceArrows(queryRunner, mapId, doc, mmpNodes)
 
       // Update map options and lastModified
       this.assertMapAccepted(doc)
@@ -229,6 +234,57 @@ export class YjsPersistenceService implements OnModuleDestroy {
       queryRunner.manager.create(MmpNode, node)
     )
     await queryRunner.manager.upsert(MmpNode, entities, ['id', 'nodeMapId'])
+  }
+
+  // Rewrites every arrow row of the map from the Y.Doc, so a surviving arrow
+  // never collides with its own row and a removed arrow leaves the database.
+  private async replaceArrows(
+    queryRunner: QueryRunner,
+    mapId: string,
+    doc: Y.Doc,
+    nodes: Partial<MmpNode>[]
+  ): Promise<void> {
+    const arrows = this.extractArrowsFromYDoc(doc, nodes)
+    await queryRunner.manager.delete(MmpArrow, { nodeMapId: mapId })
+    if (arrows.length === 0) return
+    await queryRunner.manager.insert(
+      MmpArrow,
+      arrows.map((arrow) => mapArrowToMmpArrow(arrow, mapId))
+    )
+  }
+
+  // Reads the arrows the database can hold. The Y.Doc stays unchanged, so a
+  // dangling arrow remains in it and is left out again on every save.
+  private extractArrowsFromYDoc(
+    doc: Y.Doc,
+    nodes: Partial<MmpNode>[]
+  ): MapArrow[] {
+    const nodeIds = new Set(nodes.map((n) => n.id))
+    const arrows: MapArrow[] = []
+    doc.getMap('arrows').forEach((value, key) => {
+      const arrow = this.readStorableArrow(key, value, nodeIds)
+      if (arrow) arrows.push(arrow)
+    })
+    return arrows
+  }
+
+  private readStorableArrow(
+    key: string,
+    value: unknown,
+    nodeIds: Set<string | undefined>
+  ): MapArrow | null {
+    const source = value instanceof Y.Map ? value.get('source') : undefined
+    const target = value instanceof Y.Map ? value.get('target') : undefined
+    if (typeof source !== 'string' || typeof target !== 'string') {
+      this.logger.debug(`Left out arrow ${key}: it has no source and target`)
+    } else if (key !== arrowKey(source, target)) {
+      this.logger.debug(`Left out arrow ${key}: its key does not match`)
+    } else if (!nodeIds.has(source) || !nodeIds.has(target)) {
+      this.logger.debug(`Left out arrow ${key}: an endpoint is not saved`)
+    } else {
+      return { source, target }
+    }
+    return null
   }
 
   private async updateMapMetadata(

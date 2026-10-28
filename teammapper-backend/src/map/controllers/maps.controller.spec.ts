@@ -37,6 +37,8 @@ describe('MapsController', () => {
             createEmptyMap: jest.fn(),
             findNodes: jest.fn(),
             addNodes: jest.fn(),
+            findArrows: jest.fn(),
+            addArrows: jest.fn(),
             exportMapToClient: jest.fn(),
             deleteMap: jest.fn(),
             updateLastAccessed: jest.fn(),
@@ -107,6 +109,34 @@ describe('MapsController', () => {
 
       expect(newMap.name).toEqual(oldMap.name)
       expect(newMap.lastModified).toEqual(oldMap.lastModified)
+    })
+
+    it('copies the arrows of the old map into the new map after the nodes', async () => {
+      const oldMap = createMmpMap()
+      const newMap = createMmpMap()
+      const arrows = [{ source: 'node-a', target: 'node-b' }]
+      const calls: string[] = []
+      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(oldMap)
+      jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValueOnce(newMap)
+      jest.spyOn(mapsService, 'findNodes').mockResolvedValueOnce([])
+      jest.spyOn(mapsService, 'findArrows').mockResolvedValueOnce(arrows)
+      jest.spyOn(mapsService, 'addNodes').mockImplementationOnce(async () => {
+        calls.push('addNodes')
+        return []
+      })
+      jest.spyOn(mapsService, 'addArrows').mockImplementationOnce(async () => {
+        calls.push('addArrows')
+      })
+      jest
+        .spyOn(mapsService, 'exportMapToClient')
+        .mockResolvedValueOnce(createMmpClientMap({ arrows }))
+
+      const response = await mapsController.duplicate(oldMap.id)
+
+      expect(mapsService.findArrows).toHaveBeenCalledWith(oldMap.id)
+      expect(mapsService.addArrows).toHaveBeenCalledWith(newMap.id, arrows)
+      expect(calls).toEqual(['addNodes', 'addArrows'])
+      expect(response?.map.arrows).toEqual(arrows)
     })
 
     it.each(['copyImages', 'addNodes', 'exportMapToClient'] as const)(
@@ -409,6 +439,8 @@ describe('MapsController (HTTP wire contract)', () => {
             createEmptyMap: jest.fn(),
             findNodes: jest.fn(),
             addNodes: jest.fn(),
+            findArrows: jest.fn(),
+            addArrows: jest.fn(),
             exportMapToClient: jest.fn(),
             deleteMap: jest.fn(),
           },

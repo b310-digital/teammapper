@@ -58,7 +58,9 @@
     "START_EDIT_NODE": "Edit node text",
     "ADD_NODE": "Adds a node",
     "ADD_TREE": "Add a tree",
-    "REMOVE_NODE": "Removes a node",
+    "REMOVE_NODE": "Removes the selected arrow or node",
+    "CONNECT_WITH_ARROW": "Connect the selected node with an arrow",
+    "STOP_ARROW_MODE": "Stops connecting with an arrow",
     "ZOOM_IN_MAP": "Zooms in the map",
     "ZOOM_OUT_MAP": "Zooms out the map",
     "CENTER_MAP": "Centers the map",
@@ -245,7 +247,13 @@
       "NODE_PROTECTED": "This branch is protected. Release the protection to edit it.",
       "MAP_IMPORT_IN_PROGRESS": "Importing mindmap...",
       "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
-      "MERMAID_SEVERAL_TREES": "Each tree became its own mindmap block. Mermaid tools outside TeamMapper render one block at a time."
+      "MERMAID_SEVERAL_TREES": "Each tree became its own mindmap block. Mermaid tools outside TeamMapper render one block at a time.",
+      "ARROW_REFUSED": {
+        "SELF": "An arrow cannot point from a node to itself.",
+        "DUPLICATE": "An arrow between these two nodes in this direction exists already.",
+        "PARENT": "A branch already connects a node with its parent.",
+        "MISSING": "The node for this arrow no longer exists."
+      }
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",

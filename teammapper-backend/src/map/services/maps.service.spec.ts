@@ -5,6 +5,9 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
 import { Logger } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
+import { MmpArrow } from '../entities/mmpArrow.entity'
+import { MapNode } from '@teammapper/shared'
+import { createMmpClientMap } from '../utils/tests/mapFactories'
 import { Repository } from 'typeorm'
 import { ConfigModule } from '@nestjs/config'
 import AppModule from '../../app.module'
@@ -20,6 +23,7 @@ describe('MapsService', () => {
   let mapsService: MapsService
   let nodesRepo: Repository<MmpNode>
   let mapsRepo: Repository<MmpMap>
+  let arrowsRepo: Repository<MmpArrow>
   let moduleFixture: TestingModule
 
   beforeAll(async () => {
@@ -38,6 +42,10 @@ describe('MapsService', () => {
     mapsRepo = moduleFixture.get<Repository<MmpMap>>(getRepositoryToken(MmpMap))
     nodesRepo = moduleFixture.get<Repository<MmpNode>>(
       getRepositoryToken(MmpNode)
+    )
+
+    arrowsRepo = moduleFixture.get<Repository<MmpArrow>>(
+      getRepositoryToken(MmpArrow)
     )
 
     mapsService = new MapsService(
@@ -205,6 +213,208 @@ describe('MapsService', () => {
 
       const allNodes = await nodesRepo.find({ where: { nodeMapId: map.id } })
       expect(allNodes.length).toBe(0)
+    })
+  })
+
+  describe('arrows', () => {
+    const rootId = '11111111-1111-4111-8111-111111111111'
+    const sourceId = '22222222-2222-4222-8222-222222222222'
+    const targetId = '33333333-3333-4333-8333-333333333333'
+
+    const saveNodeOf = (
+      mapId: string,
+      id: string,
+      parentId?: string
+    ): Promise<MmpNode> =>
+      nodesRepo.save(
+        nodesRepo.create({
+          id,
+          nodeMapId: mapId,
+          nodeParentId: parentId,
+          root: parentId === undefined,
+          coordinatesX: 0,
+          coordinatesY: 0,
+        })
+      )
+
+    // A map with a root and two children and one arrow between the children
+    const saveMapWithArrow = async (): Promise<MmpMap> => {
+      const map = await mapsRepo.save({})
+      await saveNodeOf(map.id, rootId)
+      await saveNodeOf(map.id, sourceId, rootId)
+      await saveNodeOf(map.id, targetId, rootId)
+      await arrowsRepo.insert({
+        nodeMapId: map.id,
+        sourceNodeId: sourceId,
+        targetNodeId: targetId,
+      })
+      return map
+    }
+
+    const clientNode = (id: string, parent: string | null): MapNode => ({
+      id,
+      parent,
+      name: id,
+      isRoot: parent === null,
+      protected: false,
+      k: 1,
+      coordinates: { x: 0, y: 0 },
+      colors: { name: '', background: '', branch: '' },
+      font: { style: '', size: 12, weight: '' },
+      image: { src: '', size: 0 },
+      link: { href: '' },
+    })
+
+    it('deletes the arrows of a node when the node is deleted', async () => {
+      const map = await saveMapWithArrow()
+
+      await nodesRepo.delete({ nodeMapId: map.id, id: targetId })
+
+      expect(await arrowsRepo.count({ where: { nodeMapId: map.id } })).toBe(0)
+    })
+
+    it('deletes the arrows of a map when the map is deleted', async () => {
+      const map = await saveMapWithArrow()
+
+      await mapsService.deleteMap(map.id)
+
+      expect(await arrowsRepo.count()).toBe(0)
+    })
+
+    it('deletes the arrows of a map when deleteOutdatedMaps deletes the map', async () => {
+      jest.setSystemTime(new Date('2021-01-31'))
+      const map = await saveMapWithArrow()
+      const outdated = new Date('2021-01-01')
+      await mapsRepo.update(map.id, { lastModified: outdated })
+      await nodesRepo.update({ nodeMapId: map.id }, { lastModified: outdated })
+
+      await mapsService.deleteOutdatedMaps(30)
+
+      expect({
+        map: await mapsService.findMap(map.id),
+        arrows: await arrowsRepo.count(),
+      }).toEqual({ map: null, arrows: 0 })
+    })
+
+    it('refuses an arrow that names a node of another map', async () => {
+      const map = await saveMapWithArrow()
+      const other = await mapsRepo.save({})
+      const foreignId = '44444444-4444-4444-8444-444444444444'
+      await saveNodeOf(other.id, foreignId)
+
+      await expect(
+        arrowsRepo.insert({
+          nodeMapId: map.id,
+          sourceNodeId: sourceId,
+          targetNodeId: foreignId,
+        })
+      ).rejects.toThrow()
+    })
+
+    it('refuses a second arrow with the same source and target', async () => {
+      const map = await saveMapWithArrow()
+
+      await expect(
+        arrowsRepo.insert({
+          nodeMapId: map.id,
+          sourceNodeId: sourceId,
+          targetNodeId: targetId,
+        })
+      ).rejects.toThrow()
+    })
+
+    it('finds the arrows of a map as source and target pairs', async () => {
+      const map = await saveMapWithArrow()
+
+      expect(await mapsService.findArrows(map.id)).toEqual([
+        { source: sourceId, target: targetId },
+      ])
+    })
+
+    it('returns the arrows of a map from exportMapToClient', async () => {
+      const map = await saveMapWithArrow()
+
+      const exported = await mapsService.exportMapToClient(map.id)
+
+      expect(exported?.arrows).toEqual([{ source: sourceId, target: targetId }])
+    })
+
+    it('copies an arrow with the same node ids into a duplicate', async () => {
+      const source = await saveMapWithArrow()
+      const copy = await mapsRepo.save({})
+
+      await mapsService.addNodes(
+        copy.id,
+        await mapsService.findNodes(source.id)
+      )
+      await mapsService.addArrows(
+        copy.id,
+        await mapsService.findArrows(source.id)
+      )
+
+      expect(await mapsService.findArrows(copy.id)).toEqual([
+        { source: sourceId, target: targetId },
+      ])
+    })
+
+    it('copies no arrow whose endpoint was not copied', async () => {
+      const copy = await mapsRepo.save({})
+      await saveNodeOf(copy.id, rootId)
+
+      await mapsService.addArrows(copy.id, [
+        { source: rootId, target: targetId },
+      ])
+
+      expect(await mapsService.findArrows(copy.id)).toEqual([])
+    })
+
+    it('replaces the arrows of a map in updateMap', async () => {
+      const map = await saveMapWithArrow()
+      const clientMap = createMmpClientMap({
+        uuid: map.id,
+        data: [
+          clientNode(rootId, null),
+          clientNode(sourceId, rootId),
+          clientNode(targetId, rootId),
+        ],
+        arrows: [{ source: targetId, target: sourceId }],
+      })
+
+      await mapsService.updateMap(clientMap)
+
+      expect(await mapsService.findArrows(map.id)).toEqual([
+        { source: targetId, target: sourceId },
+      ])
+    })
+
+    it('leaves no arrow after updateMap with an empty arrow list', async () => {
+      const map = await saveMapWithArrow()
+      const clientMap = createMmpClientMap({
+        uuid: map.id,
+        data: [clientNode(rootId, null), clientNode(sourceId, rootId)],
+      })
+
+      await mapsService.updateMap(clientMap)
+
+      expect(await mapsService.findArrows(map.id)).toEqual([])
+    })
+
+    it('leaves out an arrow naming a node updateMap does not write', async () => {
+      const map = await saveMapWithArrow()
+      const clientMap = createMmpClientMap({
+        uuid: map.id,
+        data: [clientNode(rootId, null), clientNode(sourceId, rootId)],
+        arrows: [
+          { source: sourceId, target: targetId },
+          { source: rootId, target: sourceId },
+        ],
+      })
+
+      await mapsService.updateMap(clientMap)
+
+      expect(await mapsService.findArrows(map.id)).toEqual([
+        { source: rootId, target: sourceId },
+      ])
     })
   })
 

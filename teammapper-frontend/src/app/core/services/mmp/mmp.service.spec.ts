@@ -37,9 +37,25 @@ const DATA: MapData = {
   updateNode: jest.fn(),
   removeNode: jest.fn(),
   replaceMap: jest.fn(),
+  arrows: () => [],
+  addArrows: jest.fn(),
+  removeArrow: jest.fn(),
   batch: change => change(),
   subscribe: () => () => undefined,
 };
+
+/** The text of a blob, which jsdom cannot read through `Blob.text`. */
+const blobText = (blob: Blob | null): Promise<string> =>
+  new Promise((resolve, reject) => {
+    if (!blob) {
+      reject(new Error('The export wrote no blob'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(blob);
+  });
 
 const downloadFileSpy = jest
   .spyOn(UtilsService, 'downloadFile')
@@ -84,6 +100,13 @@ describe('MmpService', () => {
     releaseBranch: jest.fn(),
     updateOption: jest.fn(),
     setEditable: jest.fn(),
+    applyCoordinatesToMapSnapshot: jest.fn((nodes: unknown) => nodes),
+    getArrows: jest.fn().mockReturnValue([]),
+    getSelectedArrow: jest.fn(),
+    removeArrow: jest.fn(),
+    startArrowMode: jest.fn(),
+    stopArrowMode: jest.fn(),
+    isArrowMode: jest.fn(),
   };
 
   /** Create the map with no options over `DATA`. */
@@ -513,11 +536,11 @@ describe('MmpService', () => {
       newSpy = jest.spyOn(service, 'new').mockResolvedValue(undefined);
     });
 
-    it('replaces the map with the nodes of a valid JSON array', async () => {
+    it('replaces the map with the nodes of a valid JSON array and no arrows', async () => {
       await service.importMap(JSON.stringify(nodes));
 
       expect(newSpy).toHaveBeenCalledTimes(1);
-      expect(newSpy).toHaveBeenCalledWith(nodes);
+      expect(newSpy).toHaveBeenCalledWith(nodes, []);
     });
 
     it('rejects JSON that does not parse', async () => {
@@ -900,10 +923,10 @@ describe('MmpService', () => {
 
           const json = downloadedJson();
           expect(json).not.toContain('image:');
-          expect(JSON.parse(json)).toEqual([
-            nodeWith('a', DATA_URL),
-            nodeWith('b', DATA_URL),
-          ]);
+          expect(JSON.parse(json)).toEqual({
+            nodes: [nodeWith('a', DATA_URL), nodeWith('b', DATA_URL)],
+            arrows: [],
+          });
         });
 
         it('drops an image the endpoint answers with 404', async () => {
@@ -916,7 +939,43 @@ describe('MmpService', () => {
 
           expect(result.success).toBe(true);
           expect(downloadedJson()).not.toContain('image:');
-          expect(JSON.parse(downloadedJson())).toEqual([nodeWith('a', '')]);
+          expect(JSON.parse(downloadedJson())).toEqual({
+            nodes: [nodeWith('a', '')],
+            arrows: [],
+          });
+        });
+
+        it('writes the nodes and every arrow of the map', async () => {
+          mockMap.exportAsJSON.mockReturnValue([
+            nodeWith('a', DATA_URL),
+            nodeWith('b', DATA_URL),
+          ]);
+          mockMap.getArrows.mockReturnValue([{ source: 'a', target: 'b' }]);
+
+          await service.exportMap('json');
+
+          expect(JSON.parse(downloadedJson()).arrows).toEqual([
+            { source: 'a', target: 'b' },
+          ]);
+          mockMap.getArrows.mockReturnValue([]);
+        });
+
+        it('writes the arrows the map held when the export captured its nodes', async () => {
+          mockMap.exportAsJSON.mockReturnValue([
+            nodeWith('a', REFERENCE),
+            nodeWith('b', DATA_URL),
+          ]);
+          mockMap.getArrows.mockReturnValue([{ source: 'a', target: 'b' }]);
+          global.fetch = jest.fn().mockImplementation(() => {
+            mockMap.getArrows.mockReturnValue([]);
+            return Promise.resolve({ ok: false, status: 404 });
+          });
+
+          await service.exportMap('json');
+
+          expect(JSON.parse(downloadedJson()).arrows).toEqual([
+            { source: 'a', target: 'b' },
+          ]);
         });
       });
 
@@ -967,6 +1026,27 @@ describe('MmpService', () => {
           await service.exportMap('mermaid');
 
           expect(toastrService.info).not.toHaveBeenCalled();
+        });
+
+        it('leaves the arrows of the map out of the output', async () => {
+          let written: Blob | null = null;
+          URL.createObjectURL = jest.fn((blob: Blob) => {
+            written = blob;
+            return 'blob:test';
+          });
+          mockMap.exportAsJSON.mockReturnValue([root, second]);
+          mockMap.getArrows.mockReturnValue([
+            { source: 'root', target: 'second' },
+          ]);
+
+          await service.exportMap('mermaid');
+
+          const text = await blobText(written);
+          mockMap.getArrows.mockReturnValue([]);
+          expect({
+            blocks: text.split('mindmap').length - 1,
+            hasArrow: text.includes('root:second') || text.includes('->'),
+          }).toEqual({ blocks: 2, hasArrow: false });
         });
       });
     });
@@ -1023,6 +1103,125 @@ describe('MmpService', () => {
       expect(removeCallback).toHaveBeenCalledTimes(1);
       expect(first).not.toHaveBeenCalled();
       expect(second).toHaveBeenCalledWith('change');
+    });
+  });
+
+  describe('arrows', () => {
+    const arrow = { source: 'a', target: 'b' };
+
+    beforeEach(async () => {
+      await createMap();
+    });
+
+    const imported = [{ id: '11111111-1111-4111-8111-111111111111' } as never];
+
+    it('imports the nodes together with the arrows', async () => {
+      await service.new(imported, [arrow]);
+
+      expect(mockMap.new).toHaveBeenCalledWith(imported, [arrow]);
+    });
+
+    it('imports with no arrows when the caller passes none', async () => {
+      await service.new(imported);
+
+      expect(mockMap.new).toHaveBeenCalledWith(imported, []);
+    });
+
+    it('imports the nodes and arrows of an export file', async () => {
+      const a = '11111111-1111-4111-8111-111111111111';
+      const b = '22222222-2222-4222-8222-222222222222';
+      const c = '33333333-3333-4333-8333-333333333333';
+      const list = [
+        { id: a, parent: null, isRoot: true },
+        { id: b, parent: a },
+        { id: c, parent: a },
+      ];
+
+      await service.importMap(
+        JSON.stringify({ nodes: list, arrows: [{ source: b, target: c }] })
+      );
+
+      expect(mockMap.new).toHaveBeenCalledWith(list, [
+        { source: b, target: c },
+      ]);
+    });
+
+    it('reads the arrows of the map', () => {
+      mockMap.getArrows.mockReturnValue([arrow]);
+
+      expect(service.getArrows()).toEqual([arrow]);
+      mockMap.getArrows.mockReturnValue([]);
+    });
+
+    it('reads no arrows before a map exists', () => {
+      service.remove();
+
+      expect(service.getArrows()).toEqual([]);
+    });
+
+    it.each([
+      ['starts', () => service.startArrowMode(), 'startArrowMode'],
+      ['stops', () => service.stopArrowMode(), 'stopArrowMode'],
+    ])('%s arrow mode in the map', (_, act, method) => {
+      act();
+
+      expect(
+        mockMap[method as 'startArrowMode' | 'stopArrowMode']
+      ).toHaveBeenCalled();
+    });
+
+    it('reports whether the map is in arrow mode', () => {
+      mockMap.isArrowMode.mockReturnValue(true);
+
+      expect(service.isArrowMode()).toBe(true);
+    });
+
+    it('reports no arrow mode before a map exists', () => {
+      service.remove();
+
+      expect(service.isArrowMode()).toBe(false);
+    });
+
+    describe('removeSelected', () => {
+      it('removes the selected arrow and no node', async () => {
+        mockMap.getSelectedArrow.mockReturnValue(arrow);
+
+        await service.removeSelected();
+
+        expect(mockMap.removeArrow).toHaveBeenCalledWith();
+        expect(mockMap.removeNode).not.toHaveBeenCalled();
+      });
+
+      it('removes the selected node when no arrow is selected', async () => {
+        mockMap.getSelectedArrow.mockReturnValue(null);
+
+        await service.removeSelected();
+
+        expect(mockMap.removeNode).toHaveBeenCalled();
+        expect(mockMap.removeArrow).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('refused target', () => {
+      const refuse = async (reason: string) => {
+        const [, callback] = mockMap.on.mock.calls.find(
+          ([event]) => event === 'arrowRefused'
+        );
+        callback(reason);
+        await new Promise(resolve => setTimeout(resolve));
+      };
+
+      it.each([
+        ['self', 'TOASTS.WARNINGS.ARROW_REFUSED.SELF'],
+        ['duplicate', 'TOASTS.WARNINGS.ARROW_REFUSED.DUPLICATE'],
+        ['parent', 'TOASTS.WARNINGS.ARROW_REFUSED.PARENT'],
+        ['missing', 'TOASTS.WARNINGS.ARROW_REFUSED.MISSING'],
+      ])('shows a toast for the reason %s', async (reason, key) => {
+        await refuse(reason);
+
+        expect(utilsService.translate).toHaveBeenCalledWith(key);
+        expect(toastrService.warning).toHaveBeenCalledWith('translated-text');
+      });
     });
   });
 

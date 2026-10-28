@@ -58,7 +58,9 @@
     "START_EDIT_NODE": "Edit node text",
     "ADD_NODE": "Adicionar um nó",
     "ADD_TREE": "Adicionar uma árvore",
-    "REMOVE_NODE": "Remover um nó",
+    "REMOVE_NODE": "Remover a seta ou o nó selecionado",
+    "CONNECT_WITH_ARROW": "Conectar o nó selecionado com uma seta",
+    "STOP_ARROW_MODE": "Encerrar a conexão com uma seta",
     "ZOOM_IN_MAP": "Ampliar o mapa",
     "ZOOM_OUT_MAP": "Diminuir o mapa",
     "CENTER_MAP": "Centralizar o mapa",
@@ -243,7 +245,13 @@
       "NODE_PROTECTED": "Este ramo está protegido. Remova a proteção para editá-lo.",
       "MAP_IMPORT_IN_PROGRESS": "Importação de mapa mental em andamento",
       "MAP_UPDATE_IN_PROGRESS": "Atualizando o mapa mental",
-      "MERMAID_SEVERAL_TREES": "Cada árvore virou seu próprio bloco mindmap. Ferramentas Mermaid fora do TeamMapper exibem um bloco por vez."
+      "MERMAID_SEVERAL_TREES": "Cada árvore virou seu próprio bloco mindmap. Ferramentas Mermaid fora do TeamMapper exibem um bloco por vez.",
+      "ARROW_REFUSED": {
+        "SELF": "Uma seta não pode apontar de um nó para ele mesmo.",
+        "DUPLICATE": "Já existe uma seta entre estes dois nós nesta direção.",
+        "PARENT": "Um ramo já conecta um nó ao seu nó pai.",
+        "MISSING": "O nó desta seta não existe mais."
+      }
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "Não é possível copiar o nó raiz!",

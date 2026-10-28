@@ -17,6 +17,7 @@ describe('ShortcutsService', () => {
     openSettingsDialog: jest.Mock;
   };
   let editMode: BehaviorSubject<boolean | null>;
+  let featureFlags: { pictograms: boolean; ai: boolean; arrows: boolean };
   let hotkeysService: { add: jest.Mock; remove: jest.Mock };
   let mapCreated: BehaviorSubject<boolean>;
   let mmpService: {
@@ -25,6 +26,11 @@ describe('ShortcutsService', () => {
     selectNode: jest.Mock;
     updateNode: jest.Mock;
     getAdditionalMapOptions: jest.Mock;
+    removeSelected: jest.Mock;
+    addNode: jest.Mock;
+    startArrowMode: jest.Mock;
+    stopArrowMode: jest.Mock;
+    isArrowMode: jest.Mock;
   };
 
   /** Run the callback of the hotkey bound to `combo`. */
@@ -44,6 +50,11 @@ describe('ShortcutsService', () => {
       center: jest.fn(),
       selectNode: jest.fn().mockReturnValue(null),
       updateNode: jest.fn(),
+      removeSelected: jest.fn(),
+      addNode: jest.fn(),
+      startArrowMode: jest.fn(),
+      stopArrowMode: jest.fn(),
+      isArrowMode: jest.fn().mockReturnValue(false),
       // Limits that would allow either change, so only the selection blocks it.
       getAdditionalMapOptions: jest.fn().mockReturnValue({
         fontMinSize: 6,
@@ -57,6 +68,7 @@ describe('ShortcutsService', () => {
       openSettingsDialog: jest.fn(),
     };
     editMode = new BehaviorSubject<boolean | null>(true);
+    featureFlags = { pictograms: false, ai: false, arrows: true };
     hotkeysService = { add: jest.fn(), remove: jest.fn() };
 
     TestBed.configureTestingModule({
@@ -66,7 +78,10 @@ describe('ShortcutsService', () => {
         { provide: HotkeysService, useValue: hotkeysService },
         {
           provide: SettingsService,
-          useValue: { getEditModeObservable: () => editMode },
+          useValue: {
+            getEditModeObservable: () => editMode,
+            getCachedSystemSettings: () => ({ featureFlags }),
+          },
         },
         { provide: DialogService, useValue: dialogService },
       ],
@@ -106,6 +121,85 @@ describe('ShortcutsService', () => {
     press('alt+s');
 
     expect(dialogService.openSettingsDialog).toHaveBeenCalledTimes(1);
+  });
+
+  describe('remove', () => {
+    // Mousetrap names the Delete key `del`; it reads `delete` as typed text.
+    it.each(['-', 'backspace', 'del'])('removes the selection on %s', combo => {
+      press(combo);
+
+      expect(mmpService.removeSelected).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('arrow mode', () => {
+    it('starts arrow mode on alt+a', () => {
+      press('alt+a');
+
+      expect(mmpService.startArrowMode).toHaveBeenCalledTimes(1);
+    });
+
+    it('registers alt+a for a writable client only', () => {
+      editMode.next(false);
+
+      expect(() => press('alt+a')).toThrow('No hotkey for alt+a');
+    });
+
+    it.each(['alt+a', 'esc'])(
+      'registers no %s while the arrows flag is off',
+      combo => {
+        featureFlags.arrows = false;
+        service.registerHotKeys();
+
+        expect(() => press(combo)).toThrow(`No hotkey for ${combo}`);
+      }
+    );
+
+    describe('while active', () => {
+      beforeEach(() => {
+        mmpService.isArrowMode.mockReturnValue(true);
+        mmpService.selectNode.mockReturnValue({ font: { size: 12 } });
+      });
+
+      it.each(['-', 'backspace', 'del', '+', 'left', 'c', 'alt+a'])(
+        'ignores the shortcut %s',
+        combo => {
+          press(combo);
+
+          expect({
+            removed: mmpService.removeSelected.mock.calls.length,
+            added: mmpService.addNode.mock.calls.length,
+            selected: mmpService.selectNode.mock.calls.length,
+            centered: mmpService.center.mock.calls.length,
+            started: mmpService.startArrowMode.mock.calls.length,
+          }).toEqual({
+            removed: 0,
+            added: 0,
+            selected: 0,
+            centered: 0,
+            started: 0,
+          });
+        }
+      );
+
+      it('stops arrow mode on Escape', () => {
+        press('esc');
+
+        expect(mmpService.stopArrowMode).toHaveBeenCalledTimes(1);
+      });
+
+      it('still opens the info dialog on ?', () => {
+        press('?');
+
+        expect(dialogService.openAboutDialog).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('does nothing on Escape outside arrow mode', () => {
+      press('esc');
+
+      expect(mmpService.stopArrowMode).not.toHaveBeenCalled();
+    });
   });
 
   describe('before the map exists', () => {

@@ -345,6 +345,83 @@ describe('applyValidatedMapUpdate', () => {
     expect(server.getMap('nodes').toJSON()).toEqual({ A: { id: 'A' } })
   })
 
+  describe('arrows', () => {
+    const writeArrow = (key: string, fields: Record<string, unknown>) => {
+      const arrow = new Y.Map<unknown>()
+      return change(client, () => {
+        client.getMap('arrows').set(key, arrow)
+        for (const [name, value] of Object.entries(fields))
+          arrow.set(name, value)
+      })
+    }
+
+    it('accepts an arrow with a string source and target', () => {
+      applyValidatedMapUpdate(
+        server,
+        writeArrow('a:b', { source: 'a', target: 'b' }),
+        null
+      )
+      expect(server.getMap('arrows').toJSON()).toEqual({
+        'a:b': { source: 'a', target: 'b' },
+      })
+    })
+
+    it.each([
+      ['a numeric source', { source: 1, target: 'b' }],
+      ['an object target', { source: 'a', target: { id: 'b' } }],
+      ['an unknown field', { source: 'a', target: 'b', label: 'extra' }],
+    ])('rejects an arrow with %s', (_name, fields) => {
+      const update = writeArrow('a:b', fields)
+      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    })
+
+    it('rejects an arrow entry that is no Y.Map', () => {
+      const update = change(client, () =>
+        client.getMap('arrows').set('a:b', { source: 'a', target: 'b' })
+      )
+      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    })
+
+    it('rejects an arrow whose key is not the key of its source and target', () => {
+      const update = writeArrow('a:c', { source: 'a', target: 'b' })
+      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    })
+
+    it('rejects an arrow whose source is longer than a node id', () => {
+      const source = 'a'.repeat(129)
+      const update = writeArrow(`${source}:b`, { source, target: 'b' })
+      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    })
+
+    it('rejects an arrow past the arrow limit', () => {
+      applyValidatedMapUpdate(
+        server,
+        writeArrow('a:b', { source: 'a', target: 'b' }),
+        null
+      )
+      const update = writeArrow('b:a', { source: 'b', target: 'a' })
+      expect(() =>
+        applyValidatedMapUpdate(server, update, null, {
+          ...DEFAULT_YJS_MAP_LIMITS,
+          maxArrows: 1,
+        })
+      ).toThrow()
+    })
+
+    it('keeps the arrow limit low enough for one insert of every arrow', () => {
+      // Postgres binds at most 65535 parameters per query, three per arrow row
+      expect(DEFAULT_YJS_MAP_LIMITS.maxArrows * 3).toBeLessThanOrEqual(65535)
+    })
+
+    it.each(['__proto__', 'constructor', 'prototype'])(
+      'rejects arrow key %s that JSON validation could omit',
+      (key) => {
+        const update = writeArrow(key, { source: 'a', target: 'b' })
+        expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+      }
+    )
+  })
+
   it.each([
     ['arrays', () => new Y.Array()],
     ['submaps', () => new Y.Doc()],

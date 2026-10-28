@@ -1,8 +1,10 @@
 import * as d3 from 'd3';
 import DOMPurify from 'dompurify';
 import {
+  arrowKey,
   isImageDataUrl,
   isImageReference,
+  type MapArrow,
   type MapNodeCoordinates,
   type MapNodeDimensions,
   type MapNodeFont,
@@ -17,7 +19,10 @@ import {
   measureNodeExtent,
   measureTextExtent,
   withPadding,
+  type Bounds,
 } from './node-geometry.js';
+import { arrowCurve, arrowPath, borderPoint } from './arrow-geometry.js';
+import { nodeBounds } from './tree-placement.js';
 import {
   NODE_MARKS,
   nameElements,
@@ -30,8 +35,18 @@ type BranchPaths = d3.Selection<SVGPathElement, string, d3.BaseType, unknown>;
 
 interface Layers {
   branches: d3.Selection<SVGGElement, unknown, null, undefined>;
+  arrows: d3.Selection<SVGGElement, unknown, null, undefined>;
   nodes: d3.Selection<SVGGElement, unknown, null, undefined>;
 }
+
+/** The dash pattern that sets an arrow apart from a branch. */
+const ARROW_DASH = '6 4';
+/** The arrow color, which reads on the light and the dark background. */
+const ARROW_COLOR = 'var(--mmp-arrow-color, #8a8a8a)';
+/** The stroke width of the transparent path that takes a click on an arrow. */
+const ARROW_HIT_WIDTH = 12;
+/** Numbers the arrowhead markers, so each map on a page has its own id. */
+let arrowheadCount = 0;
 
 /** An image value the renderer loads, and how far the load got. */
 interface ImageLoad {
@@ -88,6 +103,12 @@ export default class Draw {
   private readonly missingParents = new Map<string, string>();
   /** Where a drag shows each node it moves, by node id. */
   private readonly preview = new Map<string, MapNodeCoordinates>();
+  /** The DOM element of each drawn arrow, by arrow key. */
+  private readonly arrowGroups = new Map<string, SVGGElement>();
+  /** The key of the arrow drawn as selected, or null. */
+  private selectedArrow: string | null = null;
+  /** The id of the arrowhead marker, unique per map on the page. */
+  private readonly arrowheadId = `mmp-arrowhead-${++arrowheadCount}`;
   private readonly resizeObserver: ResizeObserver | null;
   private readonly observed = new WeakSet<Element>();
 
@@ -138,18 +159,52 @@ export default class Draw {
       .attr('fill', 'var(--color-bg-primary, white)')
       .attr('class', 'map-background')
       .attr('pointer-events', 'all')
-      .on('click', () => {
-        // Deselect the selected node when click on the map background
-        this.map.nodes.deselectNode();
-      });
+      .on('click', () => this.clickBackground());
 
     const g = svg.append('g');
+    this.appendArrowhead(g);
     this.layerSelections = {
       branches: g.append('g').attr('class', 'branches'),
+      arrows: g.append('g').attr('class', 'arrows'),
       nodes: g.append('g').attr('class', 'nodes'),
     };
 
     return { container, svg, g };
+  }
+
+  /**
+   * A click on the map background ends arrow mode. Outside arrow mode it
+   * deselects the selected node and the selected arrow.
+   */
+  private clickBackground() {
+    const arrows = this.map.arrows;
+    if (arrows.isArrowMode()) {
+      arrows.stopArrowMode();
+      return;
+    }
+    arrows.deselectArrow();
+    this.map.nodes.deselectNode();
+  }
+
+  /**
+   * Define the arrowhead once, inside the group the image export clones, so
+   * an exported image keeps it.
+   */
+  private appendArrowhead(
+    g: d3.Selection<SVGGElement, unknown, null, undefined>
+  ) {
+    g.append('defs')
+      .append('marker')
+      .attr('id', this.arrowheadId)
+      .attr('viewBox', '0 0 10 10')
+      .attr('refX', 9)
+      .attr('refY', 5)
+      .attr('markerWidth', 8)
+      .attr('markerHeight', 8)
+      .attr('orient', 'auto-start-reverse')
+      .append('path')
+      .attr('d', 'M0,0L10,5L0,10z')
+      .style('fill', ARROW_COLOR);
   }
 
   /**
@@ -172,6 +227,7 @@ export default class Draw {
     }
 
     this.drawNodes(ids, records);
+    this.drawArrows();
   }
 
   /**
@@ -252,6 +308,7 @@ export default class Draw {
     this.branchesOf(this.branchIdsOf(present)).attr('d', id =>
       this.branchShape(id, lookup)
     );
+    this.drawArrows(present);
   }
 
   /**
@@ -606,6 +663,7 @@ export default class Draw {
     this.measure(groups);
 
     this.finish(groups, branches, context, lookup);
+    this.drawArrows(ids);
   }
 
   /**
@@ -625,6 +683,7 @@ export default class Draw {
       this.markContext(lookup),
       lookup
     );
+    this.drawArrows(changed);
   }
 
   /**
@@ -801,6 +860,172 @@ export default class Draw {
       .style('stroke-linecap', () => (thin ? 'round' : null));
   }
 
+  /**
+   * Draw the arrows of the map data that can be drawn and drop the others.
+   * An arrow can be drawn while both endpoints are drawn and shown. With
+   * `touched`, only the arrows attached to those nodes are drawn again; the
+   * other arrows keep their shape.
+   * @param {Iterable<string>} touched
+   */
+  public drawArrows(touched?: Iterable<string>) {
+    const only = touched === undefined ? null : new Set(touched);
+    if (only?.size === 0) return;
+
+    const lookup = this.drawPassLookup();
+    const seen = new Set<string>();
+    for (const arrow of this.map.data.arrows()) {
+      if (only && !only.has(arrow.source) && !only.has(arrow.target)) continue;
+      const key = arrowKey(arrow.source, arrow.target);
+      seen.add(key);
+      this.drawArrow(key, this.arrowShape(arrow, lookup));
+    }
+    if (only) return;
+    for (const key of [...this.arrowGroups.keys()]) {
+      if (!seen.has(key)) this.dropArrow(key);
+    }
+  }
+
+  /**
+   * Draw the arrow with `key` as selected, and no other; null for none.
+   * @param {string | null} key
+   */
+  public setArrowSelected(key: string | null) {
+    this.selectedArrow = key;
+    for (const [drawn, group] of this.arrowGroups) {
+      group.classList.toggle('selected', drawn === key);
+    }
+  }
+
+  /**
+   * Show a dashed line from the source to the pointer while arrow mode runs,
+   * or remove it for null.
+   * @param {string | null} source
+   */
+  public showArrowPreview(source: string | null) {
+    const svg = this.map.dom.svg;
+    this.layers.arrows.selectAll('path.arrow-preview').remove();
+    svg.on('mousemove.arrow-preview', null);
+    if (source === null) return;
+
+    const preview = this.layers.arrows
+      .append('path')
+      .attr('class', 'arrow-preview')
+      .attr('fill', 'none')
+      .attr('stroke-dasharray', ARROW_DASH)
+      .attr('pointer-events', 'none')
+      .style('stroke', ARROW_COLOR);
+    svg.on('mousemove.arrow-preview', (event: MouseEvent) => {
+      const [x, y] = d3.pointer(event, this.layers.arrows.node());
+      preview.attr('d', this.previewShape(source, { x, y }));
+    });
+  }
+
+  /**
+   * Mark the nodes with the ids as targets arrow mode refuses, and unmark
+   * every other node.
+   * @param {string[]} ids
+   */
+  public markRefused(ids: string[]) {
+    const refused = new Set(ids);
+    for (const [id, group] of this.groups) {
+      group.classList.toggle('arrow-refused', refused.has(id));
+    }
+  }
+
+  /** The line from the border of the source to the pointer, or null. */
+  private previewShape(
+    source: string,
+    pointer: MapNodeCoordinates
+  ): string | null {
+    const bounds = this.drawnBounds(source, this.drawPassLookup());
+    if (!bounds) return null;
+
+    const start = borderPoint(bounds, pointer);
+    return `M${start.x},${start.y}L${pointer.x},${pointer.y}`;
+  }
+
+  /**
+   * The path data of the arrow, or null while an endpoint is missing, not
+   * drawn or hidden.
+   */
+  private arrowShape(arrow: MapArrow, lookup: RecordLookup): string | null {
+    const source = this.drawnBounds(arrow.source, lookup);
+    const target = this.drawnBounds(arrow.target, lookup);
+    if (!source || !target) return null;
+
+    const curve = arrowCurve(source, target);
+    return curve ? arrowPath(curve) : null;
+  }
+
+  /** The box of a drawn, shown node at its drawn position, or null. */
+  private drawnBounds(id: string, lookup: RecordLookup): Bounds | null {
+    const record = lookup(id);
+    if (!record || !this.groups.has(id)) return null;
+    if (this.map.nodes.isHidden(id, lookup)) return null;
+
+    return nodeBounds({
+      coordinates: this.map.nodes.positionOf(id, lookup),
+      dimensions: this.dimensionsOf(record),
+    });
+  }
+
+  /** Give the arrow its shape, creating its DOM, or drop it for null. */
+  private drawArrow(key: string, shape: string | null) {
+    if (shape === null) {
+      this.dropArrow(key);
+      return;
+    }
+    const group = this.arrowGroups.get(key) ?? this.enterArrow(key);
+    d3.select(group).selectAll('path').attr('d', shape);
+  }
+
+  /**
+   * Create the DOM of an arrow: a wide transparent path that takes the
+   * click and the dashed line with the arrowhead.
+   */
+  private enterArrow(key: string): SVGGElement {
+    const group = this.layers.arrows
+      .append('g')
+      .attr('class', 'arrow')
+      .attr('data-key', key)
+      .classed('selected', key === this.selectedArrow);
+    group
+      .append('path')
+      .attr('class', 'arrow-hit')
+      .attr('fill', 'none')
+      .attr('stroke', 'transparent')
+      .attr('stroke-width', ARROW_HIT_WIDTH)
+      .attr('pointer-events', 'stroke')
+      .style('cursor', 'pointer')
+      .on('click', (event: MouseEvent) => this.clickArrow(event, key));
+    group
+      .append('path')
+      .attr('class', 'arrow-line')
+      .attr('fill', 'none')
+      .attr('stroke-width', 2)
+      .attr('stroke-dasharray', ARROW_DASH)
+      .attr('marker-end', `url(#${this.arrowheadId})`)
+      .attr('pointer-events', 'none')
+      .style('stroke', ARROW_COLOR);
+
+    const element = group.node();
+    if (!element) throw new Error('The arrow was not drawn');
+    this.arrowGroups.set(key, element);
+    return element;
+  }
+
+  /** Select the clicked arrow, unless arrow mode runs. */
+  private clickArrow(event: MouseEvent, key: string) {
+    event.stopPropagation();
+    if (this.map.arrows.isArrowMode()) return;
+    this.map.arrows.selectArrow(key);
+  }
+
+  private dropArrow(key: string) {
+    this.arrowGroups.get(key)?.remove();
+    this.arrowGroups.delete(key);
+  }
+
   /** The drawn nodes with the ids. */
   private groupsOf(ids: string[]): NodeGroups {
     const elements = ids.flatMap(id => this.groups.get(id) ?? []);
@@ -868,11 +1093,14 @@ export default class Draw {
       );
 
     // Both handlers read the drag option when the event arrives, so a change
-    // of the option needs no redraw. A drag start selects the node itself.
+    // of the option needs no redraw. A drag start selects the node itself,
+    // or in arrow mode picks the target of the arrow.
     groups
       .call(this.map.drag.getDragBehavior())
       .on('mousedown', (_event: MouseEvent, id: string) => {
-        if (!this.map.options.drag) this.map.nodes.selectNode(id);
+        if (this.map.options.drag) return;
+        if (this.map.arrows.handleNodeClick(id)) return;
+        this.map.nodes.selectNode(id);
       });
 
     return groups;

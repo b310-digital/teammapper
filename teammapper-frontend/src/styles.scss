@@ -74,11 +74,11 @@ body {
   --color-colorpicker-border: #a8a8a8;
   --color-toolbar-icon: var(--color-primary);
   --color-toolbar-icon-disabled: rgba(0, 0, 0, 0.26);
+  // Stroke and arrowhead of the arrows mmp draws between nodes
+  --mmp-arrow-color: #6b6b6b;
 
   // Component-specific theme variables
-  --color-jumbotron-bg: var(--color-primary);
-  --color-jumbotron-text: var(--color-text-on-dark);
-  --color-jumbotron-link: var(--color-text-on-dark);
+  --color-start-page-heading: #263238;
   --color-picto-bg: transparent;
   --color-picto-hover: var(--color-primary-light);
 }
@@ -110,12 +110,11 @@ body.dark-mode {
   --color-float-btn-disabled-color: rgba(255, 255, 255, 0.38);
   --color-float-btn-disabled-bg: rgba(255, 255, 255, 0.12);
   --color-colorpicker-border: #555555;
+  --mmp-arrow-color: #b0b0b0;
   --color-toolbar-icon: #ffffff;
   --color-toolbar-icon-disabled: rgba(255, 255, 255, 0.38);
 
-  --color-jumbotron-bg: var(--color-bg-secondary);
-  --color-jumbotron-text: var(--color-text-primary);
-  --color-jumbotron-link: var(--color-primary);
+  --color-start-page-heading: var(--color-text-on-dark);
   --color-picto-bg: #ffffff;
   --color-picto-hover: #f0f0f0;
 
@@ -214,10 +213,36 @@ svg rect.map-background {
   fill: var(--color-bg-primary);
 }
 
+// A selected arrow: a wider stroke in the accent color
+svg g.arrow.selected path.arrow-line {
+  stroke: var(--color-primary) !important;
+  stroke-width: 3;
+}
+
+// A node arrow mode refuses as the target of the arrow. Only the cursor
+// shows it; a click explains the refusal in a toast.
+svg g.node.arrow-refused,
+svg g.node.arrow-refused * {
+  cursor: not-allowed !important;
+}
+
 // Global page background
 body {
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
+}
+
+// The settings dialog fills a phone screen, held upright or sideways. The
+// overlay writes the configured size into the pane's inline style, so these
+// rules need !important to win.
+@media (max-width: 599.98px), (max-height: 599.98px) {
+  .settings-dialog-panel {
+    --mat-dialog-container-shape: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
 }
 
 // Snackbar

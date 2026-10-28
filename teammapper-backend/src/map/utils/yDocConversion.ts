@@ -1,6 +1,11 @@
 import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
-import { DEFAULT_FONT_MAX_SIZE, MapOptions } from '@teammapper/shared'
+import {
+  DEFAULT_FONT_MAX_SIZE,
+  MapArrow,
+  MapOptions,
+  arrowKey,
+} from '@teammapper/shared'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { sanitizeNodeFields } from './sanitization'
 
@@ -141,16 +146,33 @@ export const yMapToMapOptions = (
   }
 }
 
-// Hydrates a Y.Doc from database entities
+// Stores an arrow under its arrow key, as a client does
+const populateYMapFromArrow = (
+  arrowsMap: Y.Map<Y.Map<unknown>>,
+  arrow: MapArrow
+): void => {
+  const yArrow = new Y.Map<unknown>()
+  yArrow.set('source', arrow.source)
+  yArrow.set('target', arrow.target)
+  arrowsMap.set(arrowKey(arrow.source, arrow.target), yArrow)
+}
+
+// Hydrates a Y.Doc from database entities. The database holds no dangling
+// arrow, so hydration drops the ones the previous Y.Doc held.
 export const hydrateYDoc = (
   doc: Y.Doc,
   nodes: MmpNode[],
-  map: MmpMap
+  map: MmpMap,
+  arrows: MapArrow[]
 ): void => {
   doc.transact(() => {
     const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
     for (const node of nodes) {
       populateYMapFromNode(nodesMap, node)
+    }
+    const arrowsMap = doc.getMap('arrows') as Y.Map<Y.Map<unknown>>
+    for (const arrow of arrows) {
+      populateYMapFromArrow(arrowsMap, arrow)
     }
     const optionsMap = doc.getMap('mapOptions') as Y.Map<unknown>
     populateYMapFromMapOptions(optionsMap, map)

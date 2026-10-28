@@ -20,6 +20,7 @@ import { SettingsService } from 'src/app/core/services/settings/settings.service
 @Component({
   selector: 'teammapper-dialog-display-name',
   templateUrl: './dialog-display-name.component.html',
+  styleUrls: ['./dialog-display-name.component.scss'],
   imports: [
     FormsModule,
     MatDialogTitle,

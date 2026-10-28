@@ -84,7 +84,7 @@ test('undo of a node delete restores its image', async ({ page }) => {
   });
   await page.waitForTimeout(UNDO_CAPTURE_WINDOW_MS);
 
-  await page.locator("button[title='Removes a node']").click();
+  await page.locator('#floating-remove-node').click();
   await expect(page.getByText('Undo Image Node')).toHaveCount(0);
   await expect(page.locator('svg image')).toHaveCount(0);
 

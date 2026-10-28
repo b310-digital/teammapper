@@ -19,7 +19,11 @@ describe('FloatingButtonsComponent', () => {
   let fixture: ComponentFixture<FloatingButtonsComponent>;
   let mmpService: {
     hasSelectedNode: jest.Mock;
+    hasSelectedArrow: jest.Mock;
     mapCreated$: BehaviorSubject<boolean>;
+    removeSelected: jest.Mock;
+    removeNode: jest.Mock;
+    stopArrowMode: jest.Mock;
   };
 
   const disabled = (selector: string): boolean | undefined =>
@@ -34,7 +38,11 @@ describe('FloatingButtonsComponent', () => {
   beforeEach(async () => {
     mmpService = {
       hasSelectedNode: jest.fn().mockReturnValue(true),
+      hasSelectedArrow: jest.fn().mockReturnValue(false),
       mapCreated$: new BehaviorSubject<boolean>(true),
+      removeSelected: jest.fn(),
+      removeNode: jest.fn(),
+      stopArrowMode: jest.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -64,12 +72,36 @@ describe('FloatingButtonsComponent', () => {
     expect(disabled('#floating-remove-node')).toBe(true);
   });
 
+  it('enables remove and disables add with only an arrow selected', () => {
+    mmpService.hasSelectedNode.mockReturnValue(false);
+    mmpService.hasSelectedArrow.mockReturnValue(true);
+    refresh();
+
+    expect(disabled('#floating-add-node')).toBe(true);
+    expect(disabled('#floating-remove-node')).toBe(false);
+  });
+
   it('disables add and remove when editing is off', () => {
     fixture.componentRef.setInput('editDisabled', true);
     fixture.detectChanges();
 
     expect(disabled('#floating-add-node')).toBe(true);
     expect(disabled('#floating-remove-node')).toBe(true);
+  });
+
+  it('removes the selected arrow or node when the remove button is pressed', () => {
+    fixture.nativeElement.querySelector('#floating-remove-node').click();
+
+    expect(mmpService.removeSelected).toHaveBeenCalledTimes(1);
+    expect(mmpService.removeNode).not.toHaveBeenCalled();
+  });
+
+  it('stops arrow mode before a button acts', () => {
+    fixture.nativeElement.querySelector('#floating-remove-node').click();
+
+    const stopped = mmpService.stopArrowMode.mock.invocationCallOrder[0];
+    const acted = mmpService.removeSelected.mock.invocationCallOrder[0];
+    expect(stopped).toBeLessThan(acted);
   });
 
   it('enables center and zoom once the map exists', () => {

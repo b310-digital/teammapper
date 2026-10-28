@@ -12,11 +12,19 @@
       <mat-hint>{{ 'PAGES.SETTINGS.DISPLAY_NAME_HINT' | translate }}</mat-hint>
     </mat-form-field>
   </mat-dialog-content>
-  <mat-dialog-actions align="end">
-    <button mat-button type="button" class="cancel-button" (click)="cancel()">
+  <mat-dialog-actions>
+    <button
+      mat-raised-button
+      type="button"
+      class="cancel-button"
+      (click)="cancel()">
       {{ 'GENERAL.CANCEL' | translate }}
     </button>
-    <button mat-flat-button type="submit" class="save-button">
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      class="save-button ml-5">
       {{ 'GENERAL.SAVE' | translate }}
     </button>
   </mat-dialog-actions>

@@ -58,7 +58,9 @@
     "IMAGE_SIZE": "變更節點圖片大小",
     "ADD_NODE": "新增節點",
     "ADD_TREE": "新增樹",
-    "REMOVE_NODE": "移除節點",
+    "REMOVE_NODE": "移除所選箭頭或節點",
+    "CONNECT_WITH_ARROW": "用箭頭連接所選節點",
+    "STOP_ARROW_MODE": "結束箭頭連接",
     "ZOOM_IN_MAP": "放大地圖",
     "ZOOM_OUT_MAP": "縮小地圖",
     "CENTER_MAP": "置中地圖",
@@ -243,7 +245,13 @@
       "NODE_PROTECTED": "此分支已受保護。解除保護後才能編輯。",
       "MAP_IMPORT_IN_PROGRESS": "Map import in progress...",
       "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
-      "MERMAID_SEVERAL_TREES": "每棵樹都成為一個獨立的 mindmap 區塊。TeamMapper 以外的 Mermaid 工具一次只能呈現一個區塊。"
+      "MERMAID_SEVERAL_TREES": "每棵樹都成為一個獨立的 mindmap 區塊。TeamMapper 以外的 Mermaid 工具一次只能呈現一個區塊。",
+      "ARROW_REFUSED": {
+        "SELF": "箭頭不能從節點指向它自己。",
+        "DUPLICATE": "這兩個節點之間已有一條同方向的箭頭。",
+        "PARENT": "分支已經連接了節點與它的父節點。",
+        "MISSING": "此箭頭的節點已不存在。"
+      }
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "It's not possible to copy the root node!",

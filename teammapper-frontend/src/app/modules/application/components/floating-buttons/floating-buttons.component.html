@@ -1,4 +1,4 @@
-<div class="floating-buttons">
+<div class="floating-buttons" teammapperStopArrowMode>
   <div class="add-node no-touch">
     <button
       id="floating-add-node"
@@ -13,9 +13,9 @@
   <div class="remove-node no-touch">
     <button
       id="floating-remove-node"
-      (click)="mmpService.removeNode()"
+      (click)="mmpService.removeSelected()"
       [title]="'TOOLTIPS.REMOVE_NODE' | translate"
-      [disabled]="nodeActionsDisabled"
+      [disabled]="removeDisabled"
       class="mat-elevation-z2"
       mat-mini-fab>
       <mat-icon aria-label="Remove node">remove</mat-icon>
