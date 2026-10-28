@@ -78,9 +78,7 @@ body {
   --mmp-arrow-color: #6b6b6b;
 
   // Component-specific theme variables
-  --color-jumbotron-bg: var(--color-primary);
-  --color-jumbotron-text: var(--color-text-on-dark);
-  --color-jumbotron-link: var(--color-text-on-dark);
+  --color-start-page-heading: #263238;
   --color-picto-bg: transparent;
   --color-picto-hover: var(--color-primary-light);
 }
@@ -116,9 +114,7 @@ body.dark-mode {
   --color-toolbar-icon: #ffffff;
   --color-toolbar-icon-disabled: rgba(255, 255, 255, 0.38);
 
-  --color-jumbotron-bg: var(--color-bg-secondary);
-  --color-jumbotron-text: var(--color-text-primary);
-  --color-jumbotron-link: var(--color-primary);
+  --color-start-page-heading: var(--color-text-on-dark);
   --color-picto-bg: #ffffff;
   --color-picto-hover: #f0f0f0;
 
