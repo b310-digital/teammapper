@@ -277,6 +277,7 @@ The settings configuration includes the following feature flags:
 
 -   `pictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time in the JSON config!
 -   `ai`: Disables/Enables AI functionality like generating mindmaps with AI. Can be controlled via the `AI_ENABLED` environment variable (default: `false`).
+-   `arrows`: Shows the button and the `alt+a` shortcut that connect two nodes with an arrow (default: disabled). Maps show, sync and export their arrows with the flag off. `FEATURE_ARROWS=true` turns it on; without the variable the JSON config decides.
 
 #### Environment variable overrides
 
@@ -285,6 +286,7 @@ The following environment variables override the feature flags from the JSON con
 | Variable | Description | Default |
 | --- | --- | --- |
 | `AI_ENABLED` | Enable AI features (mindmap generation) | `false` |
+| `FEATURE_ARROWS` | Enable creating arrows between nodes; `true` turns the flag on whatever the JSON config says | unset |
 | `DELETE_AFTER_DAYS` | Number of days before mindmaps are deleted | `30` |
 | `LOG_LEVEL` | NestJS log verbosity (`error`, `warn`, `log`, `debug`, `verbose`) | `debug` in DEV, `log` otherwise |
 

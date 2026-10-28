@@ -38,11 +38,23 @@ export class SettingsService {
     }
 
     const settings = deepmerge(defaultSettings, overrideSettings) as Settings
+    this.applyEnvironment(settings)
+    return settings
+  }
+
+  /**
+   * Sets the feature flags the environment controls. `AI_ENABLED` decides the
+   * ai flag. `FEATURE_ARROWS=true` turns arrows on, and without it the
+   * settings files decide.
+   */
+  private applyEnvironment(settings: Settings): void {
     const aiEnabled = configService.isAiEnabled()
     settings.systemSettings.featureFlags.ai = aiEnabled
     settings.systemSettings.info.aiModel = aiEnabled
       ? (configService.getLLMConfig().model ?? null)
       : null
-    return settings
+    if (configService.isArrowsEnabled()) {
+      settings.systemSettings.featureFlags.arrows = true
+    }
   }
 }

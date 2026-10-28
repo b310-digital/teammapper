@@ -17,6 +17,8 @@ import { SettingsService } from 'src/app/core/services/settings/settings.service
 import { isRasterImageFile } from 'src/app/core/services/mmp/node-images';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
+import { Observable, of, switchMap } from 'rxjs';
+import { StopArrowModeDirective } from 'src/app/shared/directives/stop-arrow-mode.directive';
 
 @Component({
   selector: 'teammapper-toolbar',
@@ -33,6 +35,7 @@ import { UtilsService } from 'src/app/core/services/utils/utils.service';
     NgClass,
     TranslatePipe,
     AsyncPipe,
+    StopArrowModeDirective,
   ],
 })
 export class ToolbarComponent {
@@ -48,17 +51,28 @@ export class ToolbarComponent {
   @Input() public editDisabled = false;
   public featureFlagPictograms: boolean;
   public featureFlagAI: boolean;
+  public featureFlagArrows: boolean;
 
   public canUndo$ = this.mapSyncService.canUndo$;
   public canRedo$ = this.mapSyncService.canRedo$;
   // Import and export need a map, read-only or not. The edit buttons get
   // the same gate through `editDisabled`.
   public mapCreated$ = this.mmpService.mapCreated$;
+  /**
+   * Whether arrow mode is active. The event source needs a map, so the stream
+   * reports false until the map exists.
+   */
+  public arrowMode$: Observable<boolean> = this.mapCreated$.pipe(
+    switchMap(created =>
+      created ? this.mmpService.on('arrowMode') : of(false)
+    )
+  );
 
   constructor() {
     const flags = this.settingsService.getCachedSystemSettings()?.featureFlags;
     this.featureFlagPictograms = flags?.pictograms ?? false;
     this.featureFlagAI = flags?.ai ?? false;
+    this.featureFlagArrows = flags?.arrows ?? false;
   }
 
   public async exportMap(format: ExportFormat) {
@@ -96,6 +110,12 @@ export class ToolbarComponent {
       const selectedNode = this.mmpService.getSelectedNode();
       return selectedNode && !selectedNode.isRoot;
     }
+  }
+
+  /** Start arrow mode from the selected node, or end it when it runs. */
+  public toggleArrowMode(): void {
+    if (this.mmpService.isArrowMode()) this.mmpService.stopArrowMode();
+    else this.mmpService.startArrowMode();
   }
 
   public handleUndo(): void {

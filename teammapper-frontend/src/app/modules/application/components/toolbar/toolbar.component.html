@@ -1,4 +1,4 @@
-<mat-toolbar>
+<mat-toolbar teammapperStopArrowMode>
   <a routerLink="/map" target="_blank">
     <button
       [title]="'TOOLTIPS.NEW_MAP' | translate"
@@ -187,6 +187,20 @@
     mat-icon-button>
     <mat-icon>account_tree</mat-icon>
   </button>
+  @if (featureFlagArrows && !editDisabled) {
+    <button
+      id="arrow-mode-button"
+      data-keeps-arrow-mode
+      (click)="toggleArrowMode()"
+      [title]="'TOOLTIPS.CONNECT_WITH_ARROW' | translate"
+      [disabled]="nodeActionsDisabled"
+      [class.arrow-mode-active]="(arrowMode$ | async) === true"
+      [attr.aria-pressed]="(arrowMode$ | async) === true"
+      color="primary"
+      mat-icon-button>
+      <mat-icon>trending_flat</mat-icon>
+    </button>
+  }
 
   <div class="vertical-line">
     <div></div>

@@ -14,7 +14,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { ExportNodeProperties } from '@teammapper/shared';
-import { of, Observable, BehaviorSubject } from 'rxjs';
+import { of, Observable, BehaviorSubject, Subject } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { UtilsService } from 'src/app/core/services/utils/utils.service';
@@ -43,6 +43,12 @@ class MmpServiceStub {
   importMap = jest.fn();
   protectingNode = jest.fn().mockReturnValue(null);
   toggleBranchProtection = jest.fn();
+  copyNode = jest.fn();
+  arrowModeEvents = new Subject<boolean>();
+  on = jest.fn().mockReturnValue(this.arrowModeEvents);
+  startArrowMode = jest.fn().mockReturnValue(true);
+  stopArrowMode = jest.fn();
+  isArrowMode = jest.fn().mockReturnValue(false);
 }
 
 interface TestContext {
@@ -98,7 +104,7 @@ async function setupTestBed(): Promise<TestContext> {
         provide: SettingsService,
         useValue: {
           getCachedSystemSettings: jest.fn().mockReturnValue({
-            featureFlags: { pictograms: false, ai: false },
+            featureFlags: { pictograms: false, ai: false, arrows: false },
           }),
         },
       },
@@ -181,6 +187,10 @@ describe('ToolbarComponent', () => {
 
   it('should initialize featureFlagPictograms from settings', () => {
     expect(ctx.component.featureFlagPictograms).toBe(false);
+  });
+
+  it('should initialize featureFlagArrows from settings', () => {
+    expect(ctx.component.featureFlagArrows).toBe(false);
   });
 
   it('should show alert for large JSON export', async () => {
@@ -544,6 +554,91 @@ describe('ToolbarComponent', () => {
         true
       );
     }
+  });
+
+  describe('connect with arrow', () => {
+    const button = (): HTMLButtonElement | null =>
+      ctx.fixture.nativeElement.querySelector('#arrow-mode-button');
+
+    beforeEach(() => {
+      ctx.component.featureFlagArrows = true;
+      refresh(ctx);
+    });
+
+    it('shows the button for a writable client', () => {
+      expect(button()).not.toBeNull();
+    });
+
+    it('shows no button while the arrows flag is off', () => {
+      ctx.component.featureFlagArrows = false;
+      refresh(ctx);
+
+      expect(button()).toBeNull();
+    });
+
+    it('shows no button for a read-only client', () => {
+      ctx.fixture.componentRef.setInput('editDisabled', true);
+      ctx.fixture.detectChanges();
+
+      expect(button()).toBeNull();
+    });
+
+    it('enables the button with a selected node', () => {
+      expect(button()?.disabled).toBe(false);
+    });
+
+    it('disables the button with nothing selected', () => {
+      ctx.mmpService.hasSelectedNode.mockReturnValue(false);
+      refresh(ctx);
+
+      expect(button()?.disabled).toBe(true);
+    });
+
+    it('shows the unpressed state outside arrow mode', () => {
+      expect(button()?.getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('shows the pressed state while arrow mode is active', () => {
+      ctx.mmpService.arrowModeEvents.next(true);
+      ctx.fixture.detectChanges();
+
+      expect({
+        pressed: button()?.getAttribute('aria-pressed'),
+        active: button()?.classList.contains('arrow-mode-active'),
+      }).toEqual({ pressed: 'true', active: true });
+    });
+
+    it('shows the unpressed state again when arrow mode ends', () => {
+      ctx.mmpService.arrowModeEvents.next(true);
+      ctx.mmpService.arrowModeEvents.next(false);
+      ctx.fixture.detectChanges();
+
+      expect(button()?.getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('starts arrow mode when pressed outside arrow mode', () => {
+      button()?.click();
+
+      expect(ctx.mmpService.startArrowMode).toHaveBeenCalledTimes(1);
+      expect(ctx.mmpService.stopArrowMode).not.toHaveBeenCalled();
+    });
+
+    it('stops arrow mode when pressed again', () => {
+      ctx.mmpService.isArrowMode.mockReturnValue(true);
+
+      button()?.click();
+
+      expect(ctx.mmpService.stopArrowMode).toHaveBeenCalledTimes(1);
+      expect(ctx.mmpService.startArrowMode).not.toHaveBeenCalled();
+    });
+
+    it('stops arrow mode before another toolbar button acts', () => {
+      ctx.fixture.nativeElement.querySelector('#copy-node-button').click();
+
+      const stopped = ctx.mmpService.stopArrowMode.mock.invocationCallOrder[0];
+      const acted = ctx.mmpService.copyNode.mock.invocationCallOrder[0];
+      expect(stopped).toBeLessThan(acted);
+    });
   });
 
   describe('add tree', () => {
