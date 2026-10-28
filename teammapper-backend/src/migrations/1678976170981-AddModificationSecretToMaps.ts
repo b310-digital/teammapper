@@ -8,7 +8,7 @@ export class AddModificationSecretToMaps1678976170981 implements MigrationInterf
       `ALTER TABLE "mmp_map" ADD "modificationSecret" uuid NULL`
     )
     await queryRunner.query(
-      `ALTER TABLE "mmp_map" ALTER "modificationSecret" SET DEFAULT uuid_generate_v4()`
+      `ALTER TABLE "mmp_map" ALTER "modificationSecret" SET DEFAULT gen_random_uuid()`
     )
   }
 

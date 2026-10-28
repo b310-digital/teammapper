@@ -5,7 +5,7 @@ export class AddAdminIdForMaps1640939564906 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      'ALTER TABLE "public"."mmp_map" ADD "adminId" uuid DEFAULT uuid_generate_v4()'
+      'ALTER TABLE "public"."mmp_map" ADD "adminId" uuid DEFAULT gen_random_uuid()'
     )
   }
 

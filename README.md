@@ -56,7 +56,7 @@ services:
       - postgres_prod
 
   postgres_prod:
-    image: postgres:12-alpine
+    image: postgres:15-alpine
     # Pass config parameters to the postgres server.
     # Find more information below when you need to generate the ssl-relevant file your self
     # command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
@@ -77,6 +77,8 @@ services:
 volumes:
   postgres_prod_data:
 ```
+
+TeamMapper requires PostgreSQL 13 or later. Upgrade PostgreSQL before you upgrade TeamMapper, because the migrations fail on PostgreSQL 12. The schema generates UUIDs with the built-in `gen_random_uuid()` and needs no extension. A database that a previous version set up keeps its `uuid-ossp` extension, which TeamMapper no longer uses. Drop it with `DROP EXTENSION "uuid-ossp";` if nothing else in that database uses it.
 
 For examples with a reverse proxy, see [documentation about deployment](docs/deployment.md).
 

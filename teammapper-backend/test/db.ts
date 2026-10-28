@@ -1,6 +1,8 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm'
+import { join } from 'path'
 import { DataSource } from 'typeorm'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
+import { UUID_GENERATION_OPTIONS } from '../src/uuidGenerationOptions'
 
 require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-imports
 
@@ -22,6 +24,7 @@ const createDataSourceConfig: PostgresConnectionOptions = {
   username: process.env.POSTGRES_TEST_USER,
   password: process.env.POSTGRES_TEST_PASSWORD,
   database: process.env.POSTGRES_TEST_DATABASE,
+  ...UUID_GENERATION_OPTIONS,
   synchronize: false,
 }
 
@@ -85,6 +88,22 @@ const dropDatabase = async (
 
 const buildDatabaseName = (workerId: string): string => {
   return `${process.env.POSTGRES_TEST_DATABASE}-${workerId}`
+}
+
+/**
+ * Creates an empty worker database and returns a data source that builds the
+ * schema with the migrations in `src/migrations` instead of synchronizing it.
+ */
+export const createMigrationTestDataSource = async (
+  workerId: string
+): Promise<DataSource> => {
+  const databaseName = await setupWorkerDatabase(workerId)
+  return new DataSource({
+    ...createDataSourceConfig,
+    database: databaseName,
+    migrationsTableName: 'migration',
+    migrations: [join(__dirname, '..', 'src', 'migrations', '*.ts')],
+  })
 }
 
 export const createTestConfiguration = async (
