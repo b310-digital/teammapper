@@ -5,6 +5,7 @@ import { HotkeysService } from 'angular2-hotkeys';
 import { filter, Subscription } from 'rxjs';
 import { DialogAboutComponent } from 'src/app/modules/application/components/dialog-about/dialog-about.component';
 import { DialogConnectionInfoComponent } from 'src/app/modules/application/components/dialog-connection-info/dialog-connection-info.component';
+import { DialogDemoShutdownComponent } from 'src/app/modules/application/components/dialog-demo-shutdown/dialog-demo-shutdown.component';
 import { DialogDisplayNameComponent } from 'src/app/modules/application/components/dialog-display-name/dialog-display-name.component';
 import { DialogImportMermaidComponent } from 'src/app/modules/application/components/dialog-import-mermaid/dialog-import-mermaid.component';
 import { DialogImportAiComponent } from 'src/app/modules/application/components/dialog-import-ai/dialog-import-ai.component';
@@ -31,6 +32,8 @@ export class DialogService {
   private importAiModalRef: MatDialogRef<DialogImportAiComponent> | null = null;
   private settingsModalRef: MatDialogRef<DialogSettingsComponent> | null = null;
   private displayNameModalRef: MatDialogRef<DialogDisplayNameComponent> | null =
+    null;
+  private demoShutdownModalRef: MatDialogRef<DialogDemoShutdownComponent> | null =
     null;
 
   openPictogramDialog() {
@@ -142,6 +145,27 @@ export class DialogService {
       this.hotkeysService.unpause();
     });
     this.displayNameModalRef = dialogRef;
+  }
+
+  /**
+   * Open the demo shutdown warning over the map. Hotkeys pause, so a key
+   * pressed to dismiss the dialog leaves the map unchanged.
+   */
+  openDemoShutdownDialog() {
+    if (this.demoShutdownModalRef) return;
+
+    this.hotkeysService.pause();
+    const dialogRef = this.dialog.open(DialogDemoShutdownComponent, {
+      width: '500px',
+      maxWidth: '95vw',
+    });
+    const navigation = this.closeOnNavigation(dialogRef);
+    dialogRef.afterClosed().subscribe(() => {
+      navigation.unsubscribe();
+      this.demoShutdownModalRef = null;
+      this.hotkeysService.unpause();
+    });
+    this.demoShutdownModalRef = dialogRef;
   }
 
   private closeOnNavigation(dialogRef: MatDialogRef<unknown>): Subscription {

@@ -61,6 +61,8 @@ export class ApplicationComponent implements OnInit, OnDestroy {
 
     this.initMap();
 
+    this.dialogService.openDemoShutdownDialog();
+
     this.handleImageDropObservable();
 
     this.connectionStatusSubscription = this.mapSyncService
