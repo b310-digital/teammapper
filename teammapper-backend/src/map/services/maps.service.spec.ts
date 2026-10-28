@@ -6,6 +6,9 @@ import { Logger } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpArrow } from '../entities/mmpArrow.entity'
+import { MmpImage } from '../entities/mmpImage.entity'
+import { MmpImageData } from '../entities/mmpImageData.entity'
+import { LOGO_PNG } from '../../../test/imageFixtures'
 import { MapNode } from '@teammapper/shared'
 import { createMmpClientMap } from '../utils/tests/mapFactories'
 import { Repository } from 'typeorm'
@@ -366,6 +369,68 @@ describe('MapsService', () => {
       ])
 
       expect(await mapsService.findArrows(copy.id)).toEqual([])
+    })
+
+    describe('duplicateMap', () => {
+      afterEach(() => jest.restoreAllMocks())
+
+      const countRows = async () => ({
+        maps: await mapsRepo.count(),
+        nodes: await nodesRepo.count(),
+        arrows: await arrowsRepo.count(),
+        images: await mapsRepo.manager.count(MmpImage),
+        imageData: await mapsRepo.manager.count(MmpImageData),
+      })
+
+      it('copies the nodes and arrows into a map with its own admin id', async () => {
+        const source = await saveMapWithArrow()
+
+        const duplicate = await mapsService.duplicateMap(source.id)
+
+        expect(duplicate?.map.uuid).not.toEqual(source.id)
+        expect(duplicate?.adminId).not.toEqual(source.adminId)
+        expect(duplicate?.map.data).toHaveLength(3)
+        expect(duplicate?.map.arrows).toEqual([
+          { source: sourceId, target: targetId },
+        ])
+      })
+
+      it('rolls back the map, nodes, arrows and images when a step fails', async () => {
+        const source = await saveMapWithArrow()
+        await moduleFixture.get(ImagesService).storeImage(source.id, {
+          buffer: LOGO_PNG,
+          mimetype: 'image/png',
+          size: LOGO_PNG.length,
+        })
+        const before = await countRows()
+        jest
+          .spyOn(mapsService, 'addArrows')
+          .mockRejectedValueOnce(new Error('copy failed'))
+
+        await expect(mapsService.duplicateMap(source.id)).rejects.toThrow(
+          'copy failed'
+        )
+
+        expect(await countRows()).toEqual(before)
+      })
+
+      it('returns null when the source map does not exist', async () => {
+        expect(
+          await mapsService.duplicateMap('78a2ae85-1815-46da-a2bc-a41de6bdd5ab')
+        ).toBeNull()
+      })
+
+      it('runs every query on one database connection', async () => {
+        const source = await saveMapWithArrow()
+        const createQueryRunner = jest.spyOn(
+          mapsRepo.manager.connection,
+          'createQueryRunner'
+        )
+
+        await mapsService.duplicateMap(source.id)
+
+        expect(createQueryRunner).toHaveBeenCalledTimes(1)
+      })
     })
 
     it('replaces the arrows of a map in updateMap', async () => {

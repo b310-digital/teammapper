@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { EntityManager, Repository } from 'typeorm'
 import { MmpImageData } from '../entities/mmpImageData.entity'
 import { ImageStore } from './image-store'
 
@@ -27,12 +27,13 @@ export class DatabaseImageStore extends ImageStore {
 
   /** Copies inside the database, so the bytes never pass through the server. */
   async copy(
+    manager: EntityManager,
     sourceMapId: string,
     targetMapId: string,
     imageIds: string[]
   ): Promise<void> {
     if (imageIds.length === 0) return
-    await this.imageDataRepository.query(
+    await manager.query(
       `INSERT INTO "mmp_image_data" ("mapId", "id", "data")
        SELECT $1, "id", "data" FROM "mmp_image_data"
        WHERE "mapId" = $2 AND "id" = ANY($3::uuid[])

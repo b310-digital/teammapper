@@ -1,14 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import MapsController from './maps.controller'
 import { MapsService } from '../services/maps.service'
-import { ImagesService } from '../services/images.service'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
 import { NotFoundException } from '@nestjs/common'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { ClientMap, ClientPrivateMap } from '@teammapper/shared'
 import { Request } from '../types'
-import { MmpNode } from '../entities/mmpNode.entity'
 import {
   createClientRootNode,
   createMmpClientMap,
@@ -23,7 +21,6 @@ describe('MapsController', () => {
   let mapsController: MapsController
   let mapsService: MapsService
   let yjsDocManager: YjsDocManagerService
-  let imagesService: ImagesService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -35,10 +32,7 @@ describe('MapsController', () => {
           useValue: {
             findMap: jest.fn(),
             createEmptyMap: jest.fn(),
-            findNodes: jest.fn(),
-            addNodes: jest.fn(),
-            findArrows: jest.fn(),
-            addArrows: jest.fn(),
+            duplicateMap: jest.fn(),
             exportMapToClient: jest.fn(),
             deleteMap: jest.fn(),
             updateLastAccessed: jest.fn(),
@@ -53,119 +47,44 @@ describe('MapsController', () => {
           provide: YjsGateway,
           useValue: { closeConnectionsForMap: jest.fn() },
         },
-        {
-          provide: ImagesService,
-          useValue: {
-            copyImages: jest.fn(),
-            withDuplicationLimit: jest.fn((operation: () => Promise<unknown>) =>
-              operation()
-            ),
-          },
-        },
       ],
     }).compile()
 
     mapsController = module.get<MapsController>(MapsController)
     mapsService = module.get<MapsService>(MapsService)
     yjsDocManager = module.get<YjsDocManagerService>(YjsDocManagerService)
-    imagesService = module.get<ImagesService>(ImagesService)
   })
 
   describe('duplicate', () => {
-    it('should duplicate a map correctly', async () => {
-      const oldMap: MmpMap = createMmpMap({
-        adminId: 'old-admin-id',
-        modificationSecret: 'old-modification-secret',
-      })
-      const newMap: MmpMap = createMmpMap({
-        adminId: 'new-admin-id',
-        modificationSecret: 'new-modification-secret',
-      })
-      const exportedMap: ClientMap = createMmpClientMap()
+    it('returns the duplicate the service creates', async () => {
+      const oldMap = createMmpMap()
       const result: ClientPrivateMap = {
-        map: exportedMap,
+        map: createMmpClientMap(),
         adminId: 'new-admin-id',
         modificationSecret: 'new-modification-secret',
       }
-
-      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(oldMap)
-      jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValueOnce(newMap)
-      jest
-        .spyOn(mapsService, 'findNodes')
-        .mockResolvedValueOnce(Array<MmpNode>())
-      jest.spyOn(mapsService, 'addNodes').mockResolvedValueOnce([])
-      jest
-        .spyOn(mapsService, 'exportMapToClient')
-        .mockResolvedValueOnce(exportedMap)
+      jest.spyOn(mapsService, 'duplicateMap').mockResolvedValueOnce(result)
 
       const response = await mapsController.duplicate(oldMap.id)
 
       expect(response).toEqual(result)
-      expect(imagesService.copyImages).toHaveBeenCalledWith(
-        oldMap.id,
-        newMap.id,
-        0
+      expect(mapsService.duplicateMap).toHaveBeenCalledWith(oldMap.id)
+    })
+
+    it('throws NotFoundException if the old map does not exist', async () => {
+      jest.spyOn(mapsService, 'duplicateMap').mockResolvedValueOnce(null)
+
+      await expect(mapsController.duplicate(createMmpMap().id)).rejects.toThrow(
+        NotFoundException
       )
-
-      expect(newMap.name).toEqual(oldMap.name)
-      expect(newMap.lastModified).toEqual(oldMap.lastModified)
     })
 
-    it('copies the arrows of the old map into the new map after the nodes', async () => {
-      const oldMap = createMmpMap()
-      const newMap = createMmpMap()
-      const arrows = [{ source: 'node-a', target: 'node-b' }]
-      const calls: string[] = []
-      jest.spyOn(mapsService, 'findMap').mockResolvedValueOnce(oldMap)
-      jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValueOnce(newMap)
-      jest.spyOn(mapsService, 'findNodes').mockResolvedValueOnce([])
-      jest.spyOn(mapsService, 'findArrows').mockResolvedValueOnce(arrows)
-      jest.spyOn(mapsService, 'addNodes').mockImplementationOnce(async () => {
-        calls.push('addNodes')
-        return []
-      })
-      jest.spyOn(mapsService, 'addArrows').mockImplementationOnce(async () => {
-        calls.push('addArrows')
-      })
+    it('throws NotFoundException if the map id is not a uuid', async () => {
       jest
-        .spyOn(mapsService, 'exportMapToClient')
-        .mockResolvedValueOnce(createMmpClientMap({ arrows }))
-
-      const response = await mapsController.duplicate(oldMap.id)
-
-      expect(mapsService.findArrows).toHaveBeenCalledWith(oldMap.id)
-      expect(mapsService.addArrows).toHaveBeenCalledWith(newMap.id, arrows)
-      expect(calls).toEqual(['addNodes', 'addArrows'])
-      expect(response?.map.arrows).toEqual(arrows)
-    })
-
-    it.each(['copyImages', 'addNodes', 'exportMapToClient'] as const)(
-      'deletes a partial duplicate when %s fails',
-      async (stage) => {
-        const oldMap = createMmpMap()
-        const newMap = createMmpMap()
-        jest.spyOn(mapsService, 'findMap').mockResolvedValue(oldMap)
-        jest.spyOn(mapsService, 'findNodes').mockResolvedValue([])
-        jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValue(newMap)
-        const failure = new Error('copy failed')
-        if (stage === 'copyImages')
-          jest.spyOn(imagesService, stage).mockRejectedValue(failure)
-        else jest.spyOn(mapsService, stage).mockRejectedValue(failure)
-        await expect(mapsController.duplicate(oldMap.id)).rejects.toThrow(
-          failure
-        )
-        expect(mapsService.deleteMap).toHaveBeenCalledWith(newMap.id)
-      }
-    )
-
-    it('should throw NotFoundException if old map is not found', async () => {
-      const mapId = 'test-map-id'
-
-      jest
-        .spyOn(mapsService, 'findMap')
+        .spyOn(mapsService, 'duplicateMap')
         .mockRejectedValueOnce(new MalformedUUIDError('Invalid UUID'))
 
-      await expect(mapsController.duplicate(mapId)).rejects.toThrow(
+      await expect(mapsController.duplicate('test-map-id')).rejects.toThrow(
         NotFoundException
       )
     })
@@ -437,10 +356,7 @@ describe('MapsController (HTTP wire contract)', () => {
           useValue: {
             findMap: jest.fn(),
             createEmptyMap: jest.fn(),
-            findNodes: jest.fn(),
-            addNodes: jest.fn(),
-            findArrows: jest.fn(),
-            addArrows: jest.fn(),
+            duplicateMap: jest.fn(),
             exportMapToClient: jest.fn(),
             deleteMap: jest.fn(),
           },
@@ -452,15 +368,6 @@ describe('MapsController (HTTP wire contract)', () => {
         {
           provide: YjsGateway,
           useValue: { closeConnectionsForMap: jest.fn() },
-        },
-        {
-          provide: ImagesService,
-          useValue: {
-            copyImages: jest.fn(),
-            withDuplicationLimit: jest.fn((operation: () => Promise<unknown>) =>
-              operation()
-            ),
-          },
         },
       ],
     }).compile()
@@ -483,14 +390,13 @@ describe('MapsController (HTTP wire contract)', () => {
     const source = createMmpMap()
     const target = createMmpMap()
     jest
-      .spyOn(mapsService, 'findMap')
+      .spyOn(mapsService, 'duplicateMap')
       .mockResolvedValue(null)
-      .mockResolvedValueOnce(source)
-    jest.spyOn(mapsService, 'createEmptyMap').mockResolvedValue(target)
-    jest.spyOn(mapsService, 'findNodes').mockResolvedValue([])
-    jest
-      .spyOn(mapsService, 'exportMapToClient')
-      .mockResolvedValue(createMmpClientMap())
+      .mockResolvedValueOnce({
+        map: createMmpClientMap(),
+        adminId: target.adminId,
+        modificationSecret: target.modificationSecret,
+      })
     const response = await request(app.getHttpServer())
       .post(`/api/maps/${source.id}/duplicate`)
       .set('X-Forwarded-For', '192.0.2.1')
@@ -506,7 +412,7 @@ describe('MapsController (HTTP wire contract)', () => {
       .post('/api/maps/another-source/duplicate')
       .set('X-Forwarded-For', '192.0.2.6')
       .expect(429)
-    expect(mapsService.findMap).toHaveBeenCalledTimes(5)
+    expect(mapsService.duplicateMap).toHaveBeenCalledTimes(5)
   })
 
   describe('DELETE /api/maps/:id', () => {

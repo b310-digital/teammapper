@@ -16,9 +16,6 @@ import { MapDuplicationThrottlerGuard } from './map-duplication-throttler.guard'
 import configService from '../../config.service'
 import * as v from 'valibot'
 import { MapsService } from '../services/maps.service'
-import type { MmpMap } from '../entities/mmpMap.entity'
-import { ImagesService } from '../services/images.service'
-import { totalInlineImageBytes } from '../utils/imageStorage'
 import { checkWriteAccess } from '../utils/yjsProtocol'
 import { YjsDocManagerService } from '../services/yjs-doc-manager.service'
 import { YjsGateway } from './yjs-gateway.service'
@@ -40,8 +37,7 @@ export default class MapsController {
   constructor(
     private mapsService: MapsService,
     private yjsDocManager: YjsDocManagerService,
-    private yjsGateway: YjsGateway,
-    private imagesService: ImagesService
+    private yjsGateway: YjsGateway
   ) {}
 
   @Get(':id')
@@ -139,40 +135,11 @@ export default class MapsController {
       ttl: () => configService.getDuplicateMapRateWindowMs(),
     },
   })
-  async duplicate(
-    @Param('id') mapId: string
-  ): Promise<ClientPrivateMap | undefined> {
-    return this.imagesService.withDuplicationLimit(async () => {
-      const oldMap = await this.findMapForDuplication(mapId)
-
-      const oldNodes = await this.mapsService.findNodes(oldMap.id)
-      const oldArrows = await this.mapsService.findArrows(oldMap.id)
-      const inlineBytes = totalInlineImageBytes(oldNodes)
-      const newMap = await this.mapsService.createEmptyMap()
-      try {
-        // Read nodes first so an intervening upload cannot leave a missing reference.
-        await this.imagesService.copyImages(oldMap.id, newMap.id, inlineBytes)
-        await this.mapsService.addNodes(newMap.id, oldNodes)
-        await this.mapsService.addArrows(newMap.id, oldArrows)
-        const exportedMap = await this.mapsService.exportMapToClient(newMap.id)
-        if (!exportedMap) throw new NotFoundException()
-        return {
-          map: exportedMap,
-          adminId: newMap.adminId,
-          modificationSecret: newMap.modificationSecret,
-        }
-      } catch (error) {
-        await this.mapsService.deleteMap(newMap.id)
-        throw error
-      }
-    })
-  }
-
-  private async findMapForDuplication(mapId: string): Promise<MmpMap> {
+  async duplicate(@Param('id') mapId: string): Promise<ClientPrivateMap> {
     try {
-      const map = await this.mapsService.findMap(mapId)
-      if (!map) throw new NotFoundException()
-      return map
+      const duplicate = await this.mapsService.duplicateMap(mapId)
+      if (!duplicate) throw new NotFoundException()
+      return duplicate
     } catch (error) {
       if (error instanceof MalformedUUIDError) throw new NotFoundException()
       throw error
