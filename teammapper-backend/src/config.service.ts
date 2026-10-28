@@ -112,6 +112,9 @@ class ConfigService {
         'YJS_MAP_MAX_NODES',
         DEFAULT_YJS_MAP_LIMITS.maxNodes
       ),
+      // No variable raises it: persistence relies on it to stay within the
+      // bind parameter limit of one Postgres insert.
+      maxArrows: DEFAULT_YJS_MAP_LIMITS.maxArrows,
     }
   }
 

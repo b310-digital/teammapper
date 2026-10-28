@@ -81,6 +81,11 @@ export const NodeSchema = v.object({
   protected: v.optional(v.boolean(), false),
 });
 
+export const ArrowSchema = v.object({
+  source: v.pipe(v.string(), v.nonEmpty()),
+  target: v.pipe(v.string(), v.nonEmpty()),
+});
+
 /** The value each node property accepts in a single node update. */
 export const NodePropertySchemas = {
   name: NodeBasicsSchema.entries.name,

@@ -65,6 +65,22 @@ export type ExportNodeProperties = MapNode;
 
 export type MapSnapshot = MapNode[];
 
+/**
+ * A directed connection from a source node to a target node of the same map.
+ * It changes no parent. `arrowKey(source, target)` identifies it, so a map
+ * holds at most one arrow per source and target pair.
+ */
+export interface MapArrow {
+  source: string;
+  target: string;
+}
+
+/** The content of a JSON export: the node list and every arrow of the map. */
+export interface MapExport {
+  nodes: MapSnapshot;
+  arrows: MapArrow[];
+}
+
 export interface MapOptions {
   fontMaxSize?: number;
   fontMinSize?: number;
@@ -225,6 +241,15 @@ export interface CachedAdminMapEntry {
   id: string;
   cachedAdminMapValue: CachedAdminMapValue;
 }
+
+/**
+ * Why the endpoint rules refuse an arrow:
+ * - `self`: source and target are the same node
+ * - `duplicate`: the map already holds an arrow with this source and target
+ * - `parent`: one endpoint is the parent of the other
+ * - `missing`: the map holds no node with the source or target id
+ */
+export type ArrowRefusal = 'self' | 'duplicate' | 'parent' | 'missing';
 
 export interface Settings {
   systemSettings: SystemSettings;
