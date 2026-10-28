@@ -28,6 +28,8 @@ export function fakeDraw(
     drawSubtree: jest.fn(),
     removeNodes: jest.fn((): string[] => []),
     renderPositions: jest.fn(),
+    drawArrows: jest.fn(),
+    setArrowSelected: jest.fn(),
     enableNodeNameEditing: jest.fn(),
     blurName: jest.fn(),
     cancelNameEditing: jest.fn(),

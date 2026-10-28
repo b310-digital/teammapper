@@ -59,6 +59,7 @@ export default class Arrows {
     this.deselectArrow();
     this.map.nodes.deselectNode();
     this.selected = arrow;
+    this.map.draw.setArrowSelected(key);
     this.map.events.emit('arrowSelect', { ...arrow });
   };
 
@@ -68,6 +69,7 @@ export default class Arrows {
     if (!previous) return;
 
     this.selected = null;
+    this.map.draw.setArrowSelected(null);
     this.map.events.emit('arrowDeselect', { ...previous });
   };
 
