@@ -228,9 +228,9 @@ class ConfigService {
       invalidWhereValuesBehavior: { undefined: 'throw', null: 'throw' },
 
       extra: {
-        query_timeout: this.getValue('POSTGRES_QUERY_TIMEOUT') || 100000,
+        query_timeout: this.getValue('POSTGRES_QUERY_TIMEOUT', false) || 100000,
         statement_timeout:
-          this.getValue('POSTGRES_STATEMENT_TIMEOUT') || 100000,
+          this.getValue('POSTGRES_STATEMENT_TIMEOUT', false) || 100000,
       },
 
       synchronize: false,
@@ -241,9 +241,9 @@ class ConfigService {
       //
       // See https://www.andronio.me/2020/08/20/connecting-typeorm-to-a-postgres-database-on-heroku/
       // See https://github.com/typeorm/typeorm/issues/278
-      ssl: this.getValue('POSTGRES_SSL') !== 'false' && {
+      ssl: this.getValue('POSTGRES_SSL', false) !== 'false' && {
         rejectUnauthorized:
-          this.getValue('POSTGRES_SSL_REJECT_UNAUTHORIZED') !== 'false',
+          this.getValue('POSTGRES_SSL_REJECT_UNAUTHORIZED', false) !== 'false',
       },
     }
   }

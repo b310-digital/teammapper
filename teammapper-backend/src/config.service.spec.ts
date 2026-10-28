@@ -91,4 +91,35 @@ describe('ConfigService', () => {
       expect(config.getTrustProxy()).toBe(expected)
     })
   })
+
+  describe('getTypeOrmConfig', () => {
+    it('applies the defaults when the optional variables are unset', () => {
+      const config = createConfigService({})
+      expect(config.getTypeOrmConfig()).toMatchObject({
+        extra: { query_timeout: 100000, statement_timeout: 100000 },
+        ssl: { rejectUnauthorized: true },
+      })
+    })
+
+    it('reads the optional variables when set', () => {
+      const config = createConfigService({
+        POSTGRES_QUERY_TIMEOUT: '5000',
+        POSTGRES_STATEMENT_TIMEOUT: '6000',
+        POSTGRES_SSL: 'false',
+      })
+      expect(config.getTypeOrmConfig()).toMatchObject({
+        extra: { query_timeout: '5000', statement_timeout: '6000' },
+        ssl: false,
+      })
+    })
+
+    it('disables certificate checks when POSTGRES_SSL_REJECT_UNAUTHORIZED=false', () => {
+      const config = createConfigService({
+        POSTGRES_SSL_REJECT_UNAUTHORIZED: 'false',
+      })
+      expect(config.getTypeOrmConfig().ssl).toEqual({
+        rejectUnauthorized: false,
+      })
+    })
+  })
 })
