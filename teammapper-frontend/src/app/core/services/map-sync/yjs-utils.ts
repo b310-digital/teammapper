@@ -1,7 +1,9 @@
 import * as Y from 'yjs';
 import {
+  arrowKey,
   collectSubtreeIds,
   ExportNodeProperties,
+  MapArrow,
   YJS_SECRET_SUBPROTOCOL_PREFIX,
   YJS_SUBPROTOCOL,
 } from '@teammapper/shared';
@@ -31,6 +33,47 @@ export function nodeEntries<T>(nodesMap: Y.Map<T>): [string, Y.Map<unknown>][] {
   const entries: [string, Y.Map<unknown>][] = [];
   nodesMap.forEach((entry, id) => {
     if (entry instanceof Y.Map) entries.push([id, entry]);
+  });
+  return entries;
+}
+
+/**
+ * The Y.Doc's `arrows` map. A peer with write access can store any value under
+ * a key, so read entries through `arrowAt` and `arrowEntries`, which skip every
+ * value that is no arrow.
+ */
+export type ArrowsMap = Y.Map<unknown>;
+
+export function arrowsMapOf(doc: Y.Doc): ArrowsMap {
+  return doc.getMap('arrows');
+}
+
+/**
+ * The arrow stored under `key`, or undefined when the entry is no Y.Map, lacks
+ * a string `source` or `target`, or sits under a key that differs from
+ * `arrowKey` of its own fields.
+ */
+export function arrowAt(
+  arrowsMap: ArrowsMap,
+  key: string
+): MapArrow | undefined {
+  const entry = arrowsMap.get(key);
+  if (!(entry instanceof Y.Map)) return undefined;
+
+  const source: unknown = entry.get('source');
+  const target: unknown = entry.get('target');
+  if (typeof source !== 'string' || typeof target !== 'string') {
+    return undefined;
+  }
+  return arrowKey(source, target) === key ? { source, target } : undefined;
+}
+
+/** Every arrow of the map with its key, without the entries that are no arrow. */
+export function arrowEntries(arrowsMap: ArrowsMap): [string, MapArrow][] {
+  const entries: [string, MapArrow][] = [];
+  arrowsMap.forEach((_entry, key) => {
+    const arrow = arrowAt(arrowsMap, key);
+    if (arrow) entries.push([key, arrow]);
   });
   return entries;
 }

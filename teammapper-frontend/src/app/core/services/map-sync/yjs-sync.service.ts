@@ -26,6 +26,8 @@ import {
   buildYjsProtocols,
   resolveClientColor,
   findAffectedNodes,
+  ArrowsMap,
+  arrowsMapOf,
   NodesMap,
   nodesMapOf,
 } from './yjs-utils';
@@ -119,6 +121,11 @@ export class YjsSyncService {
   /** The nodes of the open connection. */
   private get nodesMap(): NodesMap {
     return nodesMapOf(this.doc);
+  }
+
+  /** The arrows of the open connection. */
+  private get arrowsMap(): ArrowsMap {
+    return arrowsMapOf(this.doc);
   }
 
   /**
@@ -249,7 +256,9 @@ export class YjsSyncService {
   }
 
   private initUndoManager(): void {
-    const undoManager = new Y.UndoManager(this.nodesMap, {
+    // Both maps share one scope, so one undo step restores a node together
+    // with the arrows its removal took along.
+    const undoManager = new Y.UndoManager([this.nodesMap, this.arrowsMap], {
       // Everything we write is undoable, an import included: its undo
       // restores the map it replaced. Opening a map writes nothing, since
       // mmp reads the doc through the map data.

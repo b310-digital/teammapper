@@ -1,6 +1,11 @@
-import { collectSubtreeIds, NodePropertyMapping } from '@teammapper/shared';
+import {
+  arrowKey,
+  collectSubtreeIds,
+  NodePropertyMapping,
+} from '@teammapper/shared';
 import type {
   ExportNodeProperties,
+  MapArrow,
   MapSnapshot,
   NodeProperty,
 } from '@teammapper/shared';
@@ -20,17 +25,21 @@ type Listener = (change: MapDataChange) => void;
  */
 interface PendingChange {
   existed: Map<string, boolean>;
+  /** Whether the data held each arrow key a write touched when the change began. */
+  arrowExisted: Map<string, boolean>;
   updated: Set<string>;
   replaced: boolean;
 }
 
 /**
- * Map data that holds the records in memory, by id, in insertion order. The
+ * Map data that holds the records in memory, by id, in insertion order, and
+ * the arrows by their key. The
  * mmp specs run against it. Each record goes in as a copy, so no caller
  * shares an object with it; a read returns the stored record.
  */
 export default class InMemoryMapData implements MapData {
   private readonly entries = new Map<string, ExportNodeProperties>();
+  private readonly arrowEntries = new Map<string, MapArrow>();
   private readonly listeners = new Set<Listener>();
   private pending: PendingChange | null = null;
   private depth = 0;
@@ -85,19 +94,49 @@ export default class InMemoryMapData implements MapData {
     if (!this.entries.has(id)) return;
 
     this.batch(() => {
-      const ids = [id, ...collectSubtreeIds(this.nodes(), id)];
+      const ids = new Set([id, ...collectSubtreeIds(this.nodes(), id)]);
       for (const removed of ids) {
         this.recordInChange(removed);
         this.entries.delete(removed);
       }
+      for (const [key, arrow] of this.arrowEntries) {
+        if (ids.has(arrow.source) || ids.has(arrow.target)) {
+          this.removeArrow(key);
+        }
+      }
     });
   }
 
-  public replaceMap(nodes: MapSnapshot): void {
+  public replaceMap(nodes: MapSnapshot, arrows: MapArrow[] = []): void {
     this.batch(() => {
       for (const id of this.entries.keys()) this.recordInChange(id);
       this.entries.clear();
+      [...this.arrowEntries.keys()].forEach(key => this.removeArrow(key));
       this.addNodes(nodes);
+      this.addArrows(arrows);
+    });
+  }
+
+  public arrows(): MapArrow[] {
+    return Array.from(this.arrowEntries.values());
+  }
+
+  public addArrows(arrows: MapArrow[]): void {
+    this.batch(() => {
+      for (const { source, target } of arrows) {
+        const key = arrowKey(source, target);
+        this.recordArrowInChange(key);
+        this.arrowEntries.set(key, { source, target });
+      }
+    });
+  }
+
+  public removeArrow(key: string): void {
+    if (!this.arrowEntries.has(key)) return;
+
+    this.batch(() => {
+      this.recordArrowInChange(key);
+      this.arrowEntries.delete(key);
     });
   }
 
@@ -120,14 +159,28 @@ export default class InMemoryMapData implements MapData {
 
   /** Record `id` in the running change, and return the change. */
   private recordInChange(id: string): PendingChange {
+    const pending = this.pendingChange();
+    if (!pending.existed.has(id)) {
+      pending.existed.set(id, this.entries.has(id));
+    }
+    return pending;
+  }
+
+  /** Record the arrow `key` in the running change. */
+  private recordArrowInChange(key: string) {
+    const pending = this.pendingChange();
+    if (!pending.arrowExisted.has(key)) {
+      pending.arrowExisted.set(key, this.arrowEntries.has(key));
+    }
+  }
+
+  private pendingChange(): PendingChange {
     this.pending ??= {
       existed: new Map(),
+      arrowExisted: new Map(),
       updated: new Set(),
       replaced: false,
     };
-    if (!this.pending.existed.has(id)) {
-      this.pending.existed.set(id, this.entries.has(id));
-    }
     return this.pending;
   }
 
@@ -142,6 +195,7 @@ export default class InMemoryMapData implements MapData {
       added: [],
       updated: [],
       removed: [],
+      arrows: [],
     };
     for (const [id, existed] of pending.existed) {
       const exists = this.entries.has(id);
@@ -151,9 +205,16 @@ export default class InMemoryMapData implements MapData {
         change.updated.push(id);
       }
     }
+    for (const [key, existed] of pending.arrowExisted) {
+      if (existed !== this.arrowEntries.has(key)) change.arrows.push(key);
+    }
 
     const empty =
-      change.added.length + change.updated.length + change.removed.length === 0;
+      change.added.length +
+        change.updated.length +
+        change.removed.length +
+        change.arrows.length ===
+      0;
     if (empty && !change.replaced) return;
 
     this.listeners.forEach(listener => listener(change));

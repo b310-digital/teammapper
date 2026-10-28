@@ -1,12 +1,18 @@
 import * as Y from 'yjs';
 import type { MapData, MapDataChange, MapNodeRecord } from '@teammapper/mmp';
 import {
+  arrowKey,
   ExportNodeProperties,
+  MapArrow,
   MapSnapshot,
   NodeProperty,
   NodePropertyMapping,
 } from '@teammapper/shared';
 import {
+  arrowAt,
+  arrowEntries,
+  ArrowsMap,
+  arrowsMapOf,
   collectDescendantIds,
   nodeAt,
   nodeEntries,
@@ -43,6 +49,23 @@ const clone = <T>(value: T): T =>
   typeof value === 'object' && value !== null
     ? (JSON.parse(JSON.stringify(value)) as T)
     : value;
+
+/** A change that reports nothing, for the observers to add to. */
+const emptyChange = (): MapDataChange => ({
+  replaced: false,
+  added: [],
+  updated: [],
+  removed: [],
+  arrows: [],
+});
+
+/** Whether the change lists no node and no arrow. */
+const isEmpty = (change: MapDataChange): boolean =>
+  change.added.length +
+    change.updated.length +
+    change.removed.length +
+    change.arrows.length ===
+  0;
 
 /**
  * Whether the changed keys add or rewrite the main root's entry. Reads
@@ -133,11 +156,31 @@ export class YjsMapData implements MapData {
     private readonly doc: Y.Doc,
     private readonly undoManager: () => Y.UndoManager | null
   ) {
-    this.nodesMap.observeDeep(this.notify);
+    this.nodesMap.observeDeep(this.collectNodes);
+    this.arrowsMap.observeDeep(this.collectArrows);
+    this.doc.on('afterTransaction', this.flush);
   }
 
   private get nodesMap(): NodesMap {
     return nodesMapOf(this.doc);
+  }
+
+  private get arrowsMap(): ArrowsMap {
+    return arrowsMapOf(this.doc);
+  }
+
+  public arrows(): MapArrow[] {
+    return arrowEntries(this.arrowsMap).map(([, arrow]) => arrow);
+  }
+
+  /** Add the arrows the map lacks; an arrow under a held key stays as it is. */
+  public addArrows(arrows: MapArrow[]): void {
+    this.transact(() => arrows.forEach(arrow => this.writeArrow(arrow)));
+  }
+
+  public removeArrow(key: string): void {
+    if (!arrowAt(this.arrowsMap, key)) return;
+    this.transact(() => this.arrowsMap.delete(key));
   }
 
   public node(id: string): MapNodeRecord | undefined {
@@ -175,8 +218,18 @@ export class YjsMapData implements MapData {
   public removeNode(id: string): void {
     if (!nodeAt(this.nodesMap, id)) return;
 
-    const ids = [id, ...collectDescendantIds(this.nodesMap, id)];
-    this.transact(() => ids.forEach(nodeId => this.nodesMap.delete(nodeId)));
+    const ids = new Set([id, ...collectDescendantIds(this.nodesMap, id)]);
+    this.transact(() => {
+      this.attachedArrowKeys(ids).forEach(key => this.arrowsMap.delete(key));
+      ids.forEach(nodeId => this.nodesMap.delete(nodeId));
+    });
+  }
+
+  /** The keys of the arrows whose source or target is one of the nodes. */
+  private attachedArrowKeys(ids: ReadonlySet<string>): string[] {
+    return arrowEntries(this.arrowsMap)
+      .filter(([, { source, target }]) => ids.has(source) || ids.has(target))
+      .map(([key]) => key);
   }
 
   /**
@@ -185,11 +238,15 @@ export class YjsMapData implements MapData {
    * announcement is how a peer tells an import from an undo. The import gets
    * an undo step of its own, apart from the edits before and after it.
    */
-  public replaceMap(nodes: MapSnapshot): void {
+  public replaceMap(nodes: MapSnapshot, arrows: MapArrow[] = []): void {
     this.inOwnUndoStep(() => {
       this.doc.getMap(META).set(LAST_MAP_ANNOUNCEMENT, 'import');
       Array.from(this.nodesMap.keys()).forEach(id => this.nodesMap.delete(id));
+      Array.from(this.arrowsMap.keys()).forEach(key =>
+        this.arrowsMap.delete(key)
+      );
       nodes.forEach(node => this.writeNode(node));
+      arrows.forEach(arrow => this.writeArrow(arrow));
     });
   }
 
@@ -212,7 +269,10 @@ export class YjsMapData implements MapData {
 
   /** Stop observing the doc and drop every listener. */
   public destroy(): void {
-    this.nodesMap.unobserveDeep(this.notify);
+    this.nodesMap.unobserveDeep(this.collectNodes);
+    this.arrowsMap.unobserveDeep(this.collectArrows);
+    this.doc.off('afterTransaction', this.flush);
+    this.pending = emptyChange();
     this.listeners.clear();
     this.onPeerReplacement = null;
   }
@@ -241,42 +301,99 @@ export class YjsMapData implements MapData {
     this.nodesMap.set(node.id, yNode);
   }
 
-  private readonly notify: Parameters<NodesMap['observeDeep']>[0] = (
-    events,
-    transaction
-  ) => {
-    const change = this.changeOf(events);
+  private writeArrow({ source, target }: MapArrow): void {
+    const key = arrowKey(source, target);
+    if (arrowAt(this.arrowsMap, key)) return;
+    const yArrow = new Y.Map<unknown>();
+    yArrow.set('source', source);
+    yArrow.set('target', target);
+    this.arrowsMap.set(key, yArrow);
+  }
+
+  /**
+   * The change of the running transaction. Both observers add to it, and
+   * `flush` reports it once, so a transaction that touches both maps is one
+   * change, whichever observer Yjs calls first.
+   */
+  private pending: MapDataChange = emptyChange();
+
+  /**
+   * Add the node events of a transaction to the pending change. A key change
+   * on the nodes map adds, removes or rewrites a node; a change inside a
+   * node's own map, such as its `colors`, updates the node under the first
+   * key of the event's path.
+   */
+  private readonly collectNodes: Parameters<NodesMap['observeDeep']>[0] =
+    events => {
+      events.forEach(event => {
+        if (event.target === this.nodesMap) {
+          this.collectKeyChanges(event.changes.keys, this.pending);
+        } else {
+          this.collectNestedNodeChange(event.path);
+        }
+      });
+    };
+
+  /**
+   * Add the arrow events of a transaction to the pending change. A field
+   * written inside an arrow's own map reports the arrow's key, since a peer
+   * can create an arrow before its fields and complete or break it later.
+   */
+  private readonly collectArrows: Parameters<ArrowsMap['observeDeep']>[0] =
+    events => {
+      events.forEach(event => {
+        if (event.target === this.arrowsMap) {
+          this.collectArrowChanges(event.changes.keys, this.pending);
+        } else {
+          this.collectNestedArrowChange(event.path);
+        }
+      });
+    };
+
+  private readonly flush = (transaction: Y.Transaction): void => {
+    const change = this.withDistinctUpdates(this.pending);
+    this.pending = emptyChange();
+
     if (change.replaced && !transaction.local) {
       this.onPeerReplacement?.(transaction);
     }
-    const empty =
-      change.added.length + change.updated.length + change.removed.length === 0;
-    if (empty && !change.replaced) return;
+    if (isEmpty(change) && !change.replaced) return;
     this.listeners.forEach(listener => listener(change));
   };
 
   /**
-   * Sum the events of one transaction up by node id. A key change on the
-   * nodes map adds, removes or rewrites a node; a change inside a node's own
-   * map, such as its `colors`, updates that node. A change inside an entry
-   * that is no Y.Map, such as a peer's Y.Array, updates no node.
+   * Update the node under the first key of the path. A change inside an
+   * entry that is no Y.Map, such as a peer's Y.Array, updates no node.
    */
-  private changeOf(events: Y.YEvent<Y.AbstractType<unknown>>[]) {
-    const change: MapDataChange = {
-      replaced: false,
-      added: [],
-      updated: [],
-      removed: [],
-    };
-    for (const event of events) {
-      if ((event.target as unknown) === this.nodesMap) {
-        this.collectKeyChanges(event.changes.keys, change);
-        continue;
-      }
-      const id = String(event.path[0]);
-      if (nodeAt(this.nodesMap, id)) change.updated.push(id);
+  private collectNestedNodeChange(path: (string | number)[]): void {
+    const [id] = path;
+    if (typeof id === 'string' && nodeAt(this.nodesMap, id)) {
+      this.pending.updated.push(id);
     }
-    return this.withDistinctUpdates(change);
+  }
+
+  /**
+   * Report the arrow under the first key of the path. A change inside an
+   * entry that is no Y.Map holds no arrow before or after, so it reports
+   * nothing.
+   */
+  private collectNestedArrowChange(path: (string | number)[]): void {
+    const [key] = path;
+    if (typeof key === 'string' && this.arrowsMap.get(key) instanceof Y.Map) {
+      this.pending.arrows.push(key);
+    }
+  }
+
+  /**
+   * List the key of every entry that held an arrow before the change or holds
+   * one after it.
+   */
+  private collectArrowChanges(keys: KeyChanges, change: MapDataChange): void {
+    keys.forEach(({ action, oldValue }, key) => {
+      const before = action !== 'add' && oldValue instanceof Y.Map;
+      const after = action !== 'delete' && !!arrowAt(this.arrowsMap, key);
+      if (before || after) change.arrows.push(key);
+    });
   }
 
   /**
@@ -296,10 +413,14 @@ export class YjsMapData implements MapData {
     change.replaced ||= replacesMainRoot(keys, this.nodesMap);
   }
 
-  /** List each updated id once, and none that the change added or removed. */
+  /**
+   * List each updated id once, and none that the change added or removed, and
+   * each arrow key once, sorted.
+   */
   private withDistinctUpdates(change: MapDataChange): MapDataChange {
     const elsewhere = new Set([...change.added, ...change.removed]);
     const updated = new Set(change.updated.filter(id => !elsewhere.has(id)));
-    return { ...change, updated: [...updated] };
+    const arrows = [...new Set(change.arrows)].sort();
+    return { ...change, updated: [...updated], arrows };
   }
 }

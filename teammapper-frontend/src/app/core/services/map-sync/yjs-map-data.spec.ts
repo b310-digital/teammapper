@@ -45,6 +45,8 @@ describe('YjsMapData', () => {
   let changes: MapDataChange[];
 
   const nodesMap = () => doc.getMap('nodes') as Y.Map<Y.Map<unknown>>;
+  const arrowsMap = () => doc.getMap('arrows') as Y.Map<Y.Map<unknown>>;
+  const arrowKeys = () => Array.from(arrowsMap().keys()).sort();
   const stored = (id: string) => {
     const yNode = nodesMap().get(id);
     return yNode ? yMapToNodeProps(yNode) : undefined;
@@ -56,7 +58,7 @@ describe('YjsMapData', () => {
     data = new YjsMapData(doc, () => undoManager);
     // The main root exists before the undo manager, as after a first sync.
     data.addNodes([node('root', null, true)]);
-    undoManager = new Y.UndoManager(nodesMap(), {
+    undoManager = new Y.UndoManager([nodesMap(), arrowsMap()], {
       trackedOrigins: new Set([LOCAL_ORIGIN]),
     });
     changes = [];
@@ -82,7 +84,13 @@ describe('YjsMapData', () => {
     }).toEqual({
       origins: [LOCAL_ORIGIN],
       undoSteps: 1,
-      change: { replaced: false, added: ['a'], updated: [], removed: [] },
+      change: {
+        replaced: false,
+        added: ['a'],
+        updated: [],
+        removed: [],
+        arrows: [],
+      },
     });
   });
 
@@ -122,7 +130,13 @@ describe('YjsMapData', () => {
       sameGroup: true,
       nested: true,
       colors: { name: '#000000', background: '#ff0000', branch: '#333333' },
-      change: { replaced: false, added: [], updated: ['root'], removed: [] },
+      change: {
+        replaced: false,
+        added: [],
+        updated: ['root'],
+        removed: [],
+        arrows: [],
+      },
     });
   });
 
@@ -300,7 +314,13 @@ describe('YjsMapData', () => {
     });
 
     expect(changes).toEqual([
-      { replaced: false, added: ['a'], updated: ['root'], removed: [] },
+      {
+        replaced: false,
+        added: ['a'],
+        updated: ['root'],
+        removed: [],
+        arrows: [],
+      },
     ]);
   });
 
@@ -336,7 +356,13 @@ describe('YjsMapData', () => {
         change: lastChange(),
         undoSteps: undoManager.undoStack.length,
       }).toEqual({
-        change: { replaced: false, added: ['p'], updated: [], removed: [] },
+        change: {
+          replaced: false,
+          added: ['p'],
+          updated: [],
+          removed: [],
+          arrows: [],
+        },
         undoSteps: 0,
       });
       peerData.destroy();
@@ -355,6 +381,7 @@ describe('YjsMapData', () => {
         added: [],
         updated: ['root'],
         removed: [],
+        arrows: [],
       });
     });
 
@@ -414,6 +441,7 @@ describe('YjsMapData', () => {
         added: ['late'],
         updated: [],
         removed: [],
+        arrows: [],
       });
       peerData.destroy();
     });
@@ -425,7 +453,13 @@ describe('YjsMapData', () => {
 
       expect({ nodes: data.nodes(), change: lastChange() }).toEqual({
         nodes: [],
-        change: { replaced: false, added: [], updated: [], removed: ['root'] },
+        change: {
+          replaced: false,
+          added: [],
+          updated: [],
+          removed: ['root'],
+          arrows: [],
+        },
       });
     });
   });
@@ -441,6 +475,7 @@ describe('YjsMapData', () => {
         added: [],
         updated: [],
         removed: ['a'],
+        arrows: [],
       });
     });
 
@@ -513,6 +548,7 @@ describe('YjsMapData', () => {
         added: ['new'],
         updated: ['root'],
         removed: ['old'],
+        arrows: [],
       });
     });
 
@@ -546,6 +582,441 @@ describe('YjsMapData', () => {
       ids: Array.from(nodesMap().keys()).sort(),
       name: stored('a')?.name,
     }).toEqual({ ids: ['a', 'root'], name: 'Edited' });
+  });
+
+  describe('arrows', () => {
+    beforeEach(() => {
+      data.addNodes([node('a', 'root'), node('b', 'root'), node('c', 'a')]);
+      undoManager.clear();
+      changes = [];
+    });
+
+    it('stores an arrow under its key as a Y.Map with source and target', () => {
+      data.addArrows([{ source: 'a', target: 'b' }]);
+
+      const entry = arrowsMap().get('a:b');
+      expect({
+        isMap: entry instanceof Y.Map,
+        stored: entry?.toJSON(),
+        read: data.arrows(),
+      }).toEqual({
+        isMap: true,
+        stored: { source: 'a', target: 'b' },
+        read: [{ source: 'a', target: 'b' }],
+      });
+    });
+
+    it('writes an arrow with the local origin as one undo step', () => {
+      data.addArrows([
+        { source: 'a', target: 'b' },
+        { source: 'b', target: 'c' },
+      ]);
+
+      expect(undoManager.undoStack).toHaveLength(1);
+    });
+
+    it('reports the key of an added arrow as the only change', () => {
+      data.addArrows([{ source: 'a', target: 'b' }]);
+
+      expect(changes).toEqual([
+        {
+          replaced: false,
+          added: [],
+          updated: [],
+          removed: [],
+          arrows: ['a:b'],
+        },
+      ]);
+    });
+
+    it('removes an arrow by key and reports the key', () => {
+      data.addArrows([{ source: 'a', target: 'b' }]);
+      changes = [];
+
+      data.removeArrow('a:b');
+
+      expect({ keys: arrowKeys(), changes }).toEqual({
+        keys: [],
+        changes: [
+          {
+            replaced: false,
+            added: [],
+            updated: [],
+            removed: [],
+            arrows: ['a:b'],
+          },
+        ],
+      });
+    });
+
+    it('changes and notifies nothing when it removes a key it lacks', () => {
+      data.removeArrow('a:b');
+
+      expect({ changes, undoSteps: undoManager.undoStack.length }).toEqual({
+        changes: [],
+        undoSteps: 0,
+      });
+    });
+
+    it('reads past entries that are no valid arrow', () => {
+      doc.transact(() => {
+        const wrongKey = new Y.Map<unknown>();
+        wrongKey.set('source', 'a');
+        wrongKey.set('target', 'b');
+        arrowsMap().set('x:y', wrongKey);
+        const noTarget = new Y.Map<unknown>();
+        noTarget.set('source', 'a');
+        arrowsMap().set('a:', noTarget);
+        const numeric = new Y.Map<unknown>();
+        numeric.set('source', 1);
+        numeric.set('target', 2);
+        arrowsMap().set('1:2', numeric);
+        doc.getMap('arrows').set('text', 'no arrow');
+        const valid = new Y.Map<unknown>();
+        valid.set('source', 'b');
+        valid.set('target', 'c');
+        arrowsMap().set('b:c', valid);
+      }, 'peer');
+
+      expect(data.arrows()).toEqual([{ source: 'b', target: 'c' }]);
+    });
+
+    it('keeps an arrow whose endpoint the data lacks', () => {
+      data.addArrows([{ source: 'a', target: 'gone' }]);
+
+      expect(data.arrows()).toEqual([{ source: 'a', target: 'gone' }]);
+    });
+
+    describe('removeNode', () => {
+      beforeEach(() => {
+        data.addArrows([
+          { source: 'a', target: 'b' },
+          { source: 'c', target: 'b' },
+          { source: 'b', target: 'root' },
+        ]);
+        undoManager.stopCapturing();
+        changes = [];
+      });
+
+      it('removes the arrows attached to the node and its descendants', () => {
+        data.removeNode('a');
+
+        expect(arrowKeys()).toEqual(['b:root']);
+      });
+
+      it('reports the nodes and the arrow keys as one change', () => {
+        data.removeNode('a');
+
+        expect(changes).toEqual([
+          {
+            replaced: false,
+            added: [],
+            updated: [],
+            removed: ['a', 'c'],
+            arrows: ['a:b', 'c:b'],
+          },
+        ]);
+      });
+
+      it('restores the nodes and the arrows with one undo', () => {
+        data.removeNode('a');
+
+        undoManager.undo();
+
+        expect({
+          nodes: Array.from(nodesMap().keys()).sort(),
+          arrows: arrowKeys(),
+        }).toEqual({
+          nodes: ['a', 'b', 'c', 'root'],
+          arrows: ['a:b', 'b:root', 'c:b'],
+        });
+      });
+
+      it('reports the restored nodes and arrows as one change', () => {
+        data.removeNode('a');
+        changes = [];
+
+        undoManager.undo();
+
+        expect(changes).toEqual([
+          {
+            replaced: false,
+            added: ['a', 'c'],
+            updated: [],
+            removed: [],
+            arrows: ['a:b', 'c:b'],
+          },
+        ]);
+      });
+    });
+
+    it('reports one change for a transaction that writes both maps', () => {
+      doc.transact(() => {
+        data.addNodes([node('d', 'root')]);
+        data.addArrows([{ source: 'd', target: 'b' }]);
+      }, LOCAL_ORIGIN);
+
+      expect(changes).toEqual([
+        {
+          replaced: false,
+          added: ['d'],
+          updated: [],
+          removed: [],
+          arrows: ['d:b'],
+        },
+      ]);
+    });
+
+    it('reports a transaction that writes the arrows map first once', () => {
+      doc.transact(() => {
+        data.addArrows([{ source: 'a', target: 'b' }]);
+        data.updateNode('b', 'name', 'Renamed');
+      }, LOCAL_ORIGIN);
+
+      expect(changes).toHaveLength(1);
+    });
+
+    describe('replaceMap', () => {
+      beforeEach(() => {
+        data.addArrows([{ source: 'a', target: 'b' }]);
+        undoManager.stopCapturing();
+        changes = [];
+      });
+
+      it('writes the given arrows and drops the old ones', () => {
+        data.replaceMap(
+          [node('root', null, true), node('x', 'root'), node('y', 'root')],
+          [{ source: 'x', target: 'y' }]
+        );
+
+        expect(data.arrows()).toEqual([{ source: 'x', target: 'y' }]);
+      });
+
+      it('leaves the map with no arrows when none are passed', () => {
+        data.replaceMap([node('root', null, true), node('x', 'root')]);
+
+        expect(data.arrows()).toEqual([]);
+      });
+
+      it('reports the nodes and the arrows as one replacement', () => {
+        data.replaceMap(
+          [node('root', null, true), node('x', 'root'), node('y', 'root')],
+          [{ source: 'x', target: 'y' }]
+        );
+
+        expect(changes).toEqual([
+          {
+            replaced: true,
+            added: ['x', 'y'],
+            updated: ['root'],
+            removed: ['a', 'b', 'c'],
+            arrows: ['a:b', 'x:y'],
+          },
+        ]);
+      });
+
+      it('restores the old nodes and arrows with one undo', () => {
+        data.replaceMap(
+          [node('root', null, true), node('x', 'root'), node('y', 'root')],
+          [{ source: 'x', target: 'y' }]
+        );
+
+        undoManager.undo();
+
+        expect({
+          nodes: Array.from(nodesMap().keys()).sort(),
+          arrows: arrowKeys(),
+        }).toEqual({ nodes: ['a', 'b', 'c', 'root'], arrows: ['a:b'] });
+      });
+    });
+
+    describe('from a peer', () => {
+      let peer: Y.Doc;
+      let peerData: YjsMapData;
+
+      beforeEach(() => {
+        peer = new Y.Doc();
+        sync(doc, peer);
+        peerData = new YjsMapData(peer, () => null);
+      });
+
+      afterEach(() => {
+        peerData.destroy();
+        peer.destroy();
+      });
+
+      it('reports an arrow the peer adds, with no undo step', () => {
+        peerData.addArrows([{ source: 'a', target: 'b' }]);
+
+        sync(peer, doc);
+
+        expect({
+          changes,
+          arrows: data.arrows(),
+          undoSteps: undoManager.undoStack.length,
+        }).toEqual({
+          changes: [
+            {
+              replaced: false,
+              added: [],
+              updated: [],
+              removed: [],
+              arrows: ['a:b'],
+            },
+          ],
+          arrows: [{ source: 'a', target: 'b' }],
+          undoSteps: 0,
+        });
+      });
+
+      it('reports an arrow the peer deletes', () => {
+        data.addArrows([{ source: 'a', target: 'b' }]);
+        sync(doc, peer);
+        changes = [];
+
+        peerData.removeArrow('a:b');
+        sync(peer, doc);
+
+        expect({
+          changes: changes.map(c => c.arrows),
+          arrows: data.arrows(),
+        }).toEqual({ changes: [['a:b']], arrows: [] });
+      });
+
+      describe('an arrow the peer writes field by field', () => {
+        let yArrow: Y.Map<unknown>;
+
+        beforeEach(() => {
+          yArrow = new Y.Map<unknown>();
+          peer.getMap('arrows').set('a:b', yArrow);
+          yArrow.set('source', 'a');
+          sync(peer, doc);
+          changes = [];
+        });
+
+        it('reports the key once a later field update completes it', () => {
+          yArrow.set('target', 'b');
+          sync(peer, doc);
+
+          expect({
+            changes: changes.map(change => change.arrows),
+            arrows: data.arrows(),
+          }).toEqual({
+            changes: [['a:b']],
+            arrows: [{ source: 'a', target: 'b' }],
+          });
+        });
+
+        it('reports the key when a later field update breaks it again', () => {
+          yArrow.set('target', 'b');
+          sync(peer, doc);
+          changes = [];
+
+          yArrow.set('target', 'c');
+          sync(peer, doc);
+
+          expect({
+            changes: changes.map(change => change.arrows),
+            arrows: data.arrows(),
+          }).toEqual({ changes: [['a:b']], arrows: [] });
+        });
+      });
+
+      it('returns an arrow the peer adds before its node exists', () => {
+        peerData.addArrows([{ source: 'a', target: 'late' }]);
+        sync(peer, doc);
+
+        peerData.addNodes([node('late', 'root')]);
+        sync(peer, doc);
+
+        expect({
+          arrows: data.arrows(),
+          lastAdded: lastChange().added,
+        }).toEqual({
+          arrows: [{ source: 'a', target: 'late' }],
+          lastAdded: ['late'],
+        });
+      });
+
+      it('calls onPeerReplacement for a peer import with arrows', () => {
+        const replacements = jest.fn();
+        data.onPeerReplacement = replacements;
+
+        peerData.replaceMap(
+          [node('root', null, true), node('x', 'root'), node('y', 'root')],
+          [{ source: 'x', target: 'y' }]
+        );
+        sync(peer, doc);
+
+        expect({
+          replacements: replacements.mock.calls.length,
+          replaced: changes.map(change => change.replaced),
+        }).toEqual({ replacements: 1, replaced: [true] });
+      });
+
+      it('keeps one arrow when both clients create it at once, and one removal removes it for both', () => {
+        data.addArrows([{ source: 'a', target: 'b' }]);
+        peerData.addArrows([{ source: 'a', target: 'b' }]);
+        sync(doc, peer);
+        sync(peer, doc);
+        const afterCreate = [data.arrows(), peerData.arrows()];
+
+        peerData.removeArrow('a:b');
+        sync(peer, doc);
+
+        expect({ afterCreate, local: data.arrows() }).toEqual({
+          afterCreate: [
+            [{ source: 'a', target: 'b' }],
+            [{ source: 'a', target: 'b' }],
+          ],
+          local: [],
+        });
+      });
+
+      describe('an arrow to a node another client removes at once', () => {
+        beforeEach(() => {
+          data.addNodes([node('a', 'root'), node('b', 'root')]);
+          sync(doc, peer);
+          data.removeNode('b');
+          peerData.addArrows([{ source: 'a', target: 'b' }]);
+          sync(doc, peer);
+          sync(peer, doc);
+        });
+
+        it('stays on both clients as a dangling arrow without its node', () => {
+          expect({
+            local: [data.arrows(), data.node('b')],
+            peer: [peerData.arrows(), peerData.node('b')],
+          }).toEqual({
+            local: [[{ source: 'a', target: 'b' }], undefined],
+            peer: [[{ source: 'a', target: 'b' }], undefined],
+          });
+        });
+
+        it('connects to its node again on both clients once the removal is undone', () => {
+          undoManager.undo();
+          sync(doc, peer);
+
+          expect({
+            local: [data.arrows(), data.node('b')?.id],
+            peer: [peerData.arrows(), peerData.node('b')?.id],
+          }).toEqual({
+            local: [[{ source: 'a', target: 'b' }], 'b'],
+            peer: [[{ source: 'a', target: 'b' }], 'b'],
+          });
+        });
+      });
+
+      it('does not call onPeerReplacement for a peer arrow edit', () => {
+        const replacements = jest.fn();
+        data.onPeerReplacement = replacements;
+
+        peerData.addArrows([{ source: 'a', target: 'b' }]);
+        sync(peer, doc);
+
+        expect(replacements).not.toHaveBeenCalled();
+      });
+    });
   });
 
   it('takes the id of a record from its key, whatever its id field holds', () => {

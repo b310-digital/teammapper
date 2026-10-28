@@ -38,7 +38,7 @@ describe('InMemoryMapData', () => {
 
     expect(ids(data)).toEqual(['root', 'a', 'b', 'c', 'd']);
     expect(changes).toEqual([
-      { replaced: false, added: ['d'], updated: [], removed: [] },
+      { replaced: false, added: ['d'], updated: [], removed: [], arrows: [] },
     ]);
   });
 
@@ -49,7 +49,7 @@ describe('InMemoryMapData', () => {
 
     expect(data.node('c')?.name).toBe('C');
     expect(changes).toEqual([
-      { replaced: false, added: [], updated: ['c'], removed: [] },
+      { replaced: false, added: [], updated: ['c'], removed: [], arrows: [] },
     ]);
   });
 
@@ -91,7 +91,13 @@ describe('InMemoryMapData', () => {
 
     expect(ids(data)).toEqual(['root', 'c']);
     expect(changes).toEqual([
-      { replaced: false, added: [], updated: [], removed: ['a', 'b'] },
+      {
+        replaced: false,
+        added: [],
+        updated: [],
+        removed: ['a', 'b'],
+        arrows: [],
+      },
     ]);
   });
 
@@ -126,7 +132,13 @@ describe('InMemoryMapData', () => {
     });
 
     expect(changes).toEqual([
-      { replaced: false, added: ['d'], updated: ['a'], removed: ['b'] },
+      {
+        replaced: false,
+        added: ['d'],
+        updated: ['a'],
+        removed: ['b'],
+        arrows: [],
+      },
     ]);
   });
 
@@ -151,7 +163,7 @@ describe('InMemoryMapData', () => {
 
     expect(data.node('c')?.name).toBe('C');
     expect(changes).toEqual([
-      { replaced: false, added: [], updated: ['c'], removed: [] },
+      { replaced: false, added: [], updated: ['c'], removed: [], arrows: [] },
     ]);
   });
 
@@ -179,6 +191,116 @@ describe('InMemoryMapData', () => {
 
     expect(data.node('root')?.name).toBe('');
     expect(data.node('root')?.coordinates).toEqual({ x: 1, y: 2 });
+  });
+
+  describe('arrows', () => {
+    it('holds no arrows at first', () => {
+      expect(makeData().data.arrows()).toEqual([]);
+    });
+
+    it('adds arrows and reports their keys', () => {
+      const { data, changes } = makeData();
+
+      data.addArrows([{ source: 'b', target: 'c' }]);
+
+      expect(data.arrows()).toEqual([{ source: 'b', target: 'c' }]);
+      expect(changes).toEqual([
+        {
+          replaced: false,
+          added: [],
+          updated: [],
+          removed: [],
+          arrows: ['b:c'],
+        },
+      ]);
+    });
+
+    it('holds one arrow per source and target', () => {
+      const { data } = makeData();
+
+      data.addArrows([{ source: 'b', target: 'c' }]);
+      data.addArrows([{ source: 'b', target: 'c' }]);
+
+      expect(data.arrows()).toHaveLength(1);
+    });
+
+    it('keeps an arrow whose endpoint it lacks', () => {
+      const { data } = makeData();
+
+      data.addArrows([{ source: 'b', target: 'missing' }]);
+
+      expect(data.arrows()).toEqual([{ source: 'b', target: 'missing' }]);
+    });
+
+    it('removes an arrow by its key and reports the key', () => {
+      const { data, changes } = makeData();
+      data.addArrows([{ source: 'b', target: 'c' }]);
+      changes.length = 0;
+
+      data.removeArrow('b:c');
+
+      expect(data.arrows()).toEqual([]);
+      expect(changes.map(change => change.arrows)).toEqual([['b:c']]);
+    });
+
+    it('changes and announces nothing for a key it lacks', () => {
+      const { data, changes } = makeData();
+
+      data.removeArrow('b:c');
+
+      expect(changes).toEqual([]);
+    });
+
+    it('removes the arrows of a removed node and its descendants in the same change', () => {
+      const { data, changes } = makeData();
+      data.addArrows([
+        { source: 'c', target: 'a' },
+        { source: 'b', target: 'c' },
+        { source: 'root', target: 'c' },
+      ]);
+      changes.length = 0;
+
+      data.removeNode('a');
+
+      expect(data.arrows()).toEqual([{ source: 'root', target: 'c' }]);
+      expect(changes).toHaveLength(1);
+      expect(changes[0].arrows.sort()).toEqual(['b:c', 'c:a']);
+    });
+
+    it('replaces the arrows with the ones a replacement passes', () => {
+      const { data, changes } = makeData();
+      data.addArrows([{ source: 'b', target: 'c' }]);
+      changes.length = 0;
+
+      data.replaceMap(
+        [nodeRecord({ id: 'root', isRoot: true }), nodeRecord({ id: 'x' })],
+        [{ source: 'x', target: 'root' }]
+      );
+
+      expect(data.arrows()).toEqual([{ source: 'x', target: 'root' }]);
+      expect(changes).toHaveLength(1);
+      expect(changes[0].arrows.sort()).toEqual(['b:c', 'x:root']);
+    });
+
+    it('holds no arrows after a replacement that passes none', () => {
+      const { data } = makeData();
+      data.addArrows([{ source: 'b', target: 'c' }]);
+
+      data.replaceMap([nodeRecord({ id: 'root', isRoot: true })]);
+
+      expect(data.arrows()).toEqual([]);
+    });
+
+    it('reports nothing for an arrow added and removed in one batch', () => {
+      const { data, changes } = makeData();
+
+      data.batch(() => {
+        data.addArrows([{ source: 'b', target: 'c' }]);
+        data.removeArrow('b:c');
+      });
+
+      expect(changes).toEqual([]);
+    });
   });
 
   it('stops notifying a listener that unsubscribed', () => {
