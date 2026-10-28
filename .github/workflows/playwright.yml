@@ -42,7 +42,8 @@ jobs:
       if: steps.playwright-cache.outputs.cache-hit == 'true'
       run: pnpm --filter teammapper-frontend exec playwright install-deps webkit
     - name: Run Playwright tests
-      run: pnpm run migrate:dev && pnpm run test:e2e
+      # CI runs one browser to keep the job short. Local runs cover both.
+      run: pnpm run migrate:dev && pnpm run test:e2e --project=webkit
       env:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432

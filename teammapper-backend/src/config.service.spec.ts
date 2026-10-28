@@ -91,4 +91,21 @@ describe('ConfigService', () => {
       expect(config.getTrustProxy()).toBe(expected)
     })
   })
+
+  describe('pictogram upstreams', () => {
+    it('defaults to the public ARASAAC hosts', () => {
+      const config = createConfigService({})
+      expect(config.getPictogramApiUrl()).toBe('https://api.arasaac.org/api')
+      expect(config.getPictogramImagesUrl()).toBe('https://static.arasaac.org/')
+    })
+
+    it('reads PICTOGRAM_API_URL and PICTOGRAM_IMAGES_URL', () => {
+      const config = createConfigService({
+        PICTOGRAM_API_URL: 'https://api.example.com/api',
+        PICTOGRAM_IMAGES_URL: 'https://static.example.com/',
+      })
+      expect(config.getPictogramApiUrl()).toBe('https://api.example.com/api')
+      expect(config.getPictogramImagesUrl()).toBe('https://static.example.com/')
+    })
+  })
 })

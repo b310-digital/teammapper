@@ -20,10 +20,15 @@ function displayNameDialog(page: Page): Locator {
   return page.locator('teammapper-dialog-display-name');
 }
 
-/** Opens the dialog from the own client icon and types `name`. */
+/**
+ * Opens the dialog from the own client icon and types `name`. The dialog
+ * focuses the input once it has opened. A fill before that point loses the
+ * text to the form's initial empty value.
+ */
 async function typeDisplayName(page: Page, name: string) {
   await ownClient(page).click();
   const input = displayNameDialog(page).locator('input[name="displayName"]');
+  await expect(input).toBeFocused();
   await input.fill(name);
 }
 

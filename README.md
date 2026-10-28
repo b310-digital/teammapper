@@ -275,7 +275,7 @@ The settings are conceptually divided into:
 
 The settings configuration includes the following feature flags:
 
--   `pictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time in the JSON config!
+-   `pictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time in the JSON config! With the flag on, the backend proxies `/arasaac/api` and `/arasaac/images` to ARASAAC; with the flag off it mounts neither route.
 -   `ai`: Disables/Enables AI functionality like generating mindmaps with AI. Can be controlled via the `AI_ENABLED` environment variable (default: `false`).
 -   `arrows`: Shows the button and the `alt+a` shortcut that connect two nodes with an arrow (default: disabled). Maps show, sync and export their arrows with the flag off. `FEATURE_ARROWS=true` turns it on; without the variable the JSON config decides.
 
@@ -289,6 +289,8 @@ The following environment variables override the feature flags from the JSON con
 | `FEATURE_ARROWS` | Enable creating arrows between nodes; `true` turns the flag on whatever the JSON config says | unset |
 | `DELETE_AFTER_DAYS` | Number of days before mindmaps are deleted | `30` |
 | `LOG_LEVEL` | NestJS log verbosity (`error`, `warn`, `log`, `debug`, `verbose`) | `debug` in DEV, `log` otherwise |
+| `PICTOGRAM_API_URL` | Upstream the `/arasaac/api` proxy forwards pictogram searches to | `https://api.arasaac.org/api` |
+| `PICTOGRAM_IMAGES_URL` | Upstream the `/arasaac/images` proxy forwards pictogram images to | `https://static.arasaac.org/` |
 
 ### Further details
 

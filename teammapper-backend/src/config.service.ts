@@ -103,6 +103,21 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
+  /** Upstream the /arasaac/api proxy forwards pictogram searches to. */
+  public getPictogramApiUrl(): string {
+    return (
+      this.getValue('PICTOGRAM_API_URL', false) || 'https://api.arasaac.org/api'
+    )
+  }
+
+  /** Upstream the /arasaac/images proxy forwards pictogram images to. */
+  public getPictogramImagesUrl(): string {
+    return (
+      this.getValue('PICTOGRAM_IMAGES_URL', false) ||
+      'https://static.arasaac.org/'
+    )
+  }
+
   public getYjsMapLimits() {
     return {
       maxBytes: this.parsePositiveInt(

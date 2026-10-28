@@ -1,6 +1,6 @@
 @if (node?.colors) {
   <div class="colors-panel">
-    <div #background class="background"></div>
+    <div #background class="background" (mousedown)="closeColorPickers()"></div>
 
     <div class="panel">
       <input
