@@ -38,15 +38,19 @@ export default defineConfig({
     ...connectOptions,
   },
 
-  /* Configure projects for major browsers
-   * Chrome does not work as it always tried to forward to https
-   */
   projects: [
     {
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
         headless: true, // Force headless mode for Docker environment
+      },
+    },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: true,
       },
     },
   ],

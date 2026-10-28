@@ -53,8 +53,13 @@ Run the suite with `pnpm run test:e2e`. The config declares the backend and the
 frontend as `webServer` entries with `reuseExistingServer`, so it adopts servers
 already listening on 3000 and 4200 and starts nothing.
 
-`webkit` is the only project. Chrome forces a redirect to https and cannot run
-the suite.
+The config declares two projects, `webkit` and `chromium`, and every test must
+pass in both. CI runs `webkit` alone to keep the job short, so run `chromium`
+locally before you push a change to the suite. Point the browser at the `teammapper` network alias of the `app`
+service, never at the hostname `app`: Chromium's HSTS preload list covers the
+`.app` top-level domain, so it upgrades `http://app:4200` to https and fails
+with `ERR_SSL_PROTOCOL_ERROR`. A new alias also needs an entry in
+`allowedHosts` of the `serve` target in `teammapper-frontend/angular.json`.
 
 Three version strings must match, because the protocol between client and
 server is not stable across versions:
