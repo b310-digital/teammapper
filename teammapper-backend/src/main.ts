@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core'
 import AppModule from './app.module'
 import configService from './config.service'
-import { createProxyMiddleware } from 'http-proxy-middleware'
+import { mountPictogramProxy } from './pictogram-proxy'
 import { GlobalExceptionFilter } from './filters/global-exception.filter'
 import { Logger } from '@nestjs/common'
 import { NestExpressApplication } from '@nestjs/platform-express'
@@ -37,27 +37,7 @@ async function bootstrap() {
   const trustProxy = configService.getTrustProxy()
   if (trustProxy !== false) app.set('trust proxy', trustProxy)
 
-  app.use(
-    '/arasaac/api',
-    createProxyMiddleware({
-      target: 'https://api.arasaac.org/api',
-      changeOrigin: true,
-      pathRewrite: {
-        '^/arasaac/api': '/',
-      },
-    })
-  )
-
-  app.use(
-    '/arasaac/images',
-    createProxyMiddleware({
-      target: 'https://static.arasaac.org/',
-      changeOrigin: true,
-      pathRewrite: {
-        '^/arasaac/images': '/',
-      },
-    })
-  )
+  mountPictogramProxy(app)
 
   app.useStaticAssets(join(__dirname, '..', 'client/browser/assets'), {
     prefix: '/assets/',
