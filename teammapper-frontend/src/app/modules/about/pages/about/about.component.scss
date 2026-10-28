@@ -176,11 +176,15 @@ $logo-teal: #19b8ae;
 
 .delete-warning {
   max-width: 40rem;
-  margin: 2.5rem auto 0;
+  margin: 0 auto 2rem;
+  padding: 1rem 1.5rem;
+  border: 2px solid $logo-coral;
+  border-radius: 12px;
+  background: rgba($logo-coral, 0.12);
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 1.15rem;
+  font-weight: 600;
   line-height: 1.5;
-  opacity: 0.75;
 }
 
 .node {
