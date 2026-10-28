@@ -6,7 +6,7 @@ Mindmapping made simple: Host and create your own mindmaps. Share your mindmap s
 
 TeamMapper is based on mindmapp (https://github.com/cedoor/mindmapp , discontinued). In contrast to mindmapp, TeamMapper features shared mindmapping sessions for your team based on websockets. Try it: [TeamMapper.org](https://teammapper.org)
 
-![TeamMapper Screenshot](docs/teammapper-screenshot.png?raw=true "TeamMapper Screenshot with two users")
+![TeamMapper Trailer](docs/teammapper-trailer.gif?raw=true "Two users build a mind map together in TeamMapper")
 
 ## Features:
 
