@@ -151,7 +151,7 @@
       "TITLE": "Tu nombre visible"
     },
     "DEMO_SHUTDOWN": {
-      "TITLE": "Demo instance closes at the end of October 2026"
+      "TITLE": "Demo instance closes at the end of November 2026"
     }
   },
   "PAGES": {
@@ -234,7 +234,7 @@
     "MAP_DELETION_CONFIRM": "Are you sure you want to delete the map?",
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images.",
     "DELETE_WARNING": "Attention: Demo instance! Mind maps are deleted automatically when inactive after a couple of days.",
-    "DEMO_SHUTDOWN_WARNING": "This demo instance closes at the end of October 2026. Please export your mind maps now. To keep using TeamMapper, run your own server or use a hosted offering such as kits.app."
+    "DEMO_SHUTDOWN_WARNING": "This demo instance closes at the end of November 2026. Please export your mind maps now. To keep using TeamMapper, run your own server or use a hosted offering such as kits.app."
   },
   "TOASTS": {
     "SUCCESSFULLY_DUPLICATED": "¡Mapa mental duplicado con éxito!",
