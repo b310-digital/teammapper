@@ -2,7 +2,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm'
 import { join } from 'path'
 import { DataSource } from 'typeorm'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
-import { UUID_GENERATION_OPTIONS } from '../src/uuidGenerationOptions'
+import { UUID_GENERATION_OPTIONS } from '../src/uuidGeneration'
 
 require('dotenv').config() // eslint-disable-line @typescript-eslint/no-require-imports
 

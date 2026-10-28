@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { uuidGenerator } from '../uuidGeneration'
 
 const UUID_COLUMNS = [
   { table: 'mmp_map', column: 'id' },
@@ -8,17 +9,18 @@ const UUID_COLUMNS = [
 ]
 
 /**
- * Switches every uuid column default from `uuid_generate_v4()` to
- * `gen_random_uuid()`, which Postgres 13 and later ship built in, so the
- * schema no longer needs the `uuid-ossp` extension. Both functions return
- * random version 4 UUIDs. Leaves an installed `uuid-ossp` in place, because
- * dropping an extension needs rights the database user may lack. Moves no data.
+ * On Postgres 13 and later, switches every uuid column default from
+ * `uuid_generate_v4()` to the built-in `gen_random_uuid()`, so the schema no
+ * longer needs the `uuid-ossp` extension. Both functions return random
+ * version 4 UUIDs. Older servers keep `uuid_generate_v4()`, see
+ * `uuidGenerator`. Leaves an installed `uuid-ossp` in place, because dropping
+ * an extension needs rights the database user may lack. Moves no data.
  */
 export class SwitchUuidDefaultsToGenRandomUuid1790467200000 implements MigrationInterface {
   name = 'SwitchUuidDefaultsToGenRandomUuid1790467200000'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await setUuidDefaults(queryRunner, 'gen_random_uuid()')
+    await setUuidDefaults(queryRunner, await uuidGenerator(queryRunner))
   }
 
   /**

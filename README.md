@@ -78,7 +78,7 @@ volumes:
   postgres_prod_data:
 ```
 
-TeamMapper requires PostgreSQL 13 or later. Upgrade PostgreSQL before you upgrade TeamMapper, because the migrations fail on PostgreSQL 12. The schema generates UUIDs with the built-in `gen_random_uuid()` and needs no extension. A database that a previous version set up keeps its `uuid-ossp` extension, which TeamMapper no longer uses. Drop it with `DROP EXTENSION "uuid-ossp";` if nothing else in that database uses it.
+On PostgreSQL 13 and later, the schema generates UUIDs with the built-in `gen_random_uuid()` and needs no extension, so managed services that restrict extensions work. On PostgreSQL 12 and older, the migrations install the `uuid-ossp` extension and generate UUIDs with `uuid_generate_v4()`. A PostgreSQL 13+ database that a previous version set up keeps its `uuid-ossp` extension, which TeamMapper no longer uses there. Drop it with `DROP EXTENSION "uuid-ossp";` if nothing else in that database uses it.
 
 For examples with a reverse proxy, see [documentation about deployment](docs/deployment.md).
 

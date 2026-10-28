@@ -7,7 +7,7 @@ import {
   DEFAULT_YJS_MAP_LIMITS,
   DEFAULT_YJS_MESSAGE_LIMITS,
 } from './map/utils/yjsLimits'
-import { UUID_GENERATION_OPTIONS } from './uuidGenerationOptions'
+import { UUID_GENERATION_OPTIONS } from './uuidGeneration'
 
 interface EnvProps {
   [k: string]: string | undefined

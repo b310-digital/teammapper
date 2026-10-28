@@ -14,6 +14,7 @@ const UUID_COLUMNS = [
 const expectedDefaults = (generator: string) =>
   UUID_COLUMNS.map((column) => ({ ...column, column_default: generator }))
 
+// Expects Postgres 13 or later, which CI runs; uuidGeneration.spec.ts covers older servers.
 describe('migrations (e2e)', () => {
   let dataSource: DataSource | undefined
 

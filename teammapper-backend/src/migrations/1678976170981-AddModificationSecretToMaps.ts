@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { uuidGenerator } from '../uuidGeneration'
 
 export class AddModificationSecretToMaps1678976170981 implements MigrationInterface {
   name = 'AddModificationSecretToMaps1678976170981'
@@ -7,8 +8,9 @@ export class AddModificationSecretToMaps1678976170981 implements MigrationInterf
     await queryRunner.query(
       `ALTER TABLE "mmp_map" ADD "modificationSecret" uuid NULL`
     )
+    const generator = await uuidGenerator(queryRunner)
     await queryRunner.query(
-      `ALTER TABLE "mmp_map" ALTER "modificationSecret" SET DEFAULT gen_random_uuid()`
+      `ALTER TABLE "mmp_map" ALTER "modificationSecret" SET DEFAULT ${generator}`
     )
   }
 
