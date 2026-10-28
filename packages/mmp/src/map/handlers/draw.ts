@@ -21,7 +21,7 @@ import {
   withPadding,
   type Bounds,
 } from './node-geometry.js';
-import { arrowCurve, arrowPath } from './arrow-geometry.js';
+import { arrowCurve, arrowPath, borderPoint } from './arrow-geometry.js';
 import { nodeBounds } from './tree-placement.js';
 import {
   NODE_MARKS,
@@ -173,11 +173,16 @@ export default class Draw {
   }
 
   /**
-   * A click on the map background deselects the selected node and the
-   * selected arrow.
+   * A click on the map background ends arrow mode. Outside arrow mode it
+   * deselects the selected node and the selected arrow.
    */
   private clickBackground() {
-    this.map.arrows.deselectArrow();
+    const arrows = this.map.arrows;
+    if (arrows.isArrowMode()) {
+      arrows.stopArrowMode();
+      return;
+    }
+    arrows.deselectArrow();
     this.map.nodes.deselectNode();
   }
 
@@ -892,6 +897,54 @@ export default class Draw {
   }
 
   /**
+   * Show a dashed line from the source to the pointer while arrow mode runs,
+   * or remove it for null.
+   * @param {string | null} source
+   */
+  public showArrowPreview(source: string | null) {
+    const svg = this.map.dom.svg;
+    this.layers.arrows.selectAll('path.arrow-preview').remove();
+    svg.on('mousemove.arrow-preview', null);
+    if (source === null) return;
+
+    const preview = this.layers.arrows
+      .append('path')
+      .attr('class', 'arrow-preview')
+      .attr('fill', 'none')
+      .attr('stroke-dasharray', ARROW_DASH)
+      .attr('pointer-events', 'none')
+      .style('stroke', ARROW_COLOR);
+    svg.on('mousemove.arrow-preview', (event: MouseEvent) => {
+      const [x, y] = d3.pointer(event, this.layers.arrows.node());
+      preview.attr('d', this.previewShape(source, { x, y }));
+    });
+  }
+
+  /**
+   * Mark the nodes with the ids as targets arrow mode refuses, and unmark
+   * every other node.
+   * @param {string[]} ids
+   */
+  public markRefused(ids: string[]) {
+    const refused = new Set(ids);
+    for (const [id, group] of this.groups) {
+      group.classList.toggle('arrow-refused', refused.has(id));
+    }
+  }
+
+  /** The line from the border of the source to the pointer, or null. */
+  private previewShape(
+    source: string,
+    pointer: MapNodeCoordinates
+  ): string | null {
+    const bounds = this.drawnBounds(source, this.drawPassLookup());
+    if (!bounds) return null;
+
+    const start = borderPoint(bounds, pointer);
+    return `M${start.x},${start.y}L${pointer.x},${pointer.y}`;
+  }
+
+  /**
    * The path data of the arrow, or null while an endpoint is missing, not
    * drawn or hidden.
    */
@@ -961,9 +1014,10 @@ export default class Draw {
     return element;
   }
 
-  /** Select the clicked arrow. */
+  /** Select the clicked arrow, unless arrow mode runs. */
   private clickArrow(event: MouseEvent, key: string) {
     event.stopPropagation();
+    if (this.map.arrows.isArrowMode()) return;
     this.map.arrows.selectArrow(key);
   }
 
@@ -1039,11 +1093,14 @@ export default class Draw {
       );
 
     // Both handlers read the drag option when the event arrives, so a change
-    // of the option needs no redraw. A drag start selects the node itself.
+    // of the option needs no redraw. A drag start selects the node itself,
+    // or in arrow mode picks the target of the arrow.
     groups
       .call(this.map.drag.getDragBehavior())
       .on('mousedown', (_event: MouseEvent, id: string) => {
-        if (!this.map.options.drag) this.map.nodes.selectNode(id);
+        if (this.map.options.drag) return;
+        if (this.map.arrows.handleNodeClick(id)) return;
+        this.map.nodes.selectNode(id);
       });
 
     return groups;

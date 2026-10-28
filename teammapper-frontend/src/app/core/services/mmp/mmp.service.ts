@@ -15,6 +15,7 @@ import {
 } from '@teammapper/mmp';
 import DOMPurify from 'dompurify';
 import {
+  ArrowRefusal,
   CachedMapOptions,
   ExportNodeProperties,
   MapArrow,
@@ -176,7 +177,22 @@ export class MmpService implements OnDestroy {
     const map = create(ref, data, this.mapOptions(options));
     this.currentMap = map;
     map.on('nodeProtected', () => void this.showProtectedNotice());
+    map.on('arrowRefused', reason => void this.showArrowRefusal(reason));
     return map;
+  }
+
+  /** The translation key that tells the user why mmp refused a target. */
+  private static readonly ARROW_REFUSAL_KEYS: Record<ArrowRefusal, string> = {
+    self: 'TOASTS.WARNINGS.ARROW_REFUSED.SELF',
+    duplicate: 'TOASTS.WARNINGS.ARROW_REFUSED.DUPLICATE',
+    parent: 'TOASTS.WARNINGS.ARROW_REFUSED.PARENT',
+    missing: 'TOASTS.WARNINGS.ARROW_REFUSED.MISSING',
+  };
+
+  /** Tell the user why the clicked node cannot take the arrow. */
+  private async showArrowRefusal(reason: ArrowRefusal): Promise<void> {
+    const key = MmpService.ARROW_REFUSAL_KEYS[reason];
+    this.toastrService.warning(await this.utilsService.translate(key));
   }
 
   /**
@@ -257,6 +273,37 @@ export class MmpService implements OnDestroy {
   /** Every arrow of the map, or none while no map exists. */
   public getArrows(): MapArrow[] {
     return this.currentMap?.getArrows() ?? [];
+  }
+
+  /**
+   * Start arrow mode from the selected node. Returns false, and starts
+   * nothing, with no selected node or in a read-only map.
+   */
+  public startArrowMode(): boolean {
+    return this.map.startArrowMode();
+  }
+
+  public stopArrowMode(): void {
+    this.currentMap?.stopArrowMode();
+  }
+
+  /** Whether arrow mode is active; false while no map exists. */
+  public isArrowMode(): boolean {
+    return this.currentMap?.isArrowMode() ?? false;
+  }
+
+  /** Whether an arrow holds the selection; false while no map exists. */
+  public hasSelectedArrow(): boolean {
+    return !!this.currentMap?.getSelectedArrow();
+  }
+
+  /**
+   * The remove action: remove the selected arrow while one is selected, and
+   * the selected node otherwise.
+   */
+  public async removeSelected() {
+    if (this.hasSelectedArrow()) this.map.removeArrow();
+    else await this.removeNode();
   }
 
   /**

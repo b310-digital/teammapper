@@ -1,7 +1,7 @@
-import type { D3DragEvent } from 'd3';
 import type { MapArrow } from '@teammapper/shared';
 import MmpMap from '../map.js';
 import InMemoryMapData from '../../test/in-memory-map-data.js';
+import { nodeGroup } from '../../test/node-group.js';
 import { nodeRecord } from '../../test/stub-map.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
 
@@ -11,20 +11,15 @@ import { stubSvgLengths } from '../../test/svg-lengths.js';
  * show. An arrow follows its nodes whatever moves or resizes them.
  */
 
-type DragEvent = D3DragEvent<SVGGElement, string, unknown>;
-
-interface DragInternals {
-  started(event: DragEvent, id: string): void;
-  dragged(event: DragEvent, id: string): void;
-  ended(event: DragEvent, id: string): void;
-}
-
 const COLORS = { background: '#ffffff' };
 
 beforeAll(stubSvgLengths);
 
-afterEach(() => {
+afterEach(async () => {
   document.body.innerHTML = '';
+  // After a drag d3-drag blocks the next click and lifts the block in a
+  // zero timeout. Waiting for it keeps the block out of the next spec.
+  await new Promise(resolve => setTimeout(resolve, 0));
 });
 
 /** root -> a -> a1, root -> b, drawn by a real map, with the arrows. */
@@ -54,7 +49,33 @@ function makeMap(arrows: MapArrow[] = [{ source: 'a1', target: 'b' }]) {
   const ref = document.createElement('div');
   document.body.appendChild(ref);
   const map = new MmpMap(ref, undefined, data);
-  return { data, map, drag: map.drag as unknown as DragInternals };
+  return { data, map };
+}
+
+/** A mouse event at (x, y), as a browser dispatches it during a drag. */
+function mouse(type: string, x: number, y: number): MouseEvent {
+  return new MouseEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+    clientX: x,
+    clientY: y,
+  });
+}
+
+/** Presses the mouse on the node `id` at the origin. */
+function press(id: string) {
+  nodeGroup(id).dispatchEvent(mouse('mousedown', 0, 0));
+}
+
+/** Moves the pressed mouse to (x, y). */
+function moveTo(x: number, y: number) {
+  window.dispatchEvent(mouse('mousemove', x, y));
+}
+
+/** Releases the pressed mouse at (x, y). */
+function release(x: number, y: number) {
+  window.dispatchEvent(mouse('mouseup', x, y));
 }
 
 function arrowGroup(key: string): SVGGElement | null {
@@ -183,23 +204,25 @@ describe('arrows follow their nodes', () => {
   });
 
   it('follows the target through a drag', () => {
-    const { drag } = makeMap();
+    makeMap();
     const before = arrowShape('a1:b');
 
-    drag.started({} as DragEvent, 'b');
-    drag.dragged({ dx: 50, dy: 80 } as DragEvent, 'b');
+    press('b');
+    moveTo(50, 80);
 
     expect(arrowShape('a1:b')).not.toBe(before);
+    release(50, 80);
   });
 
   it('follows a descendant that a drag moves along', () => {
-    const { drag } = makeMap();
+    makeMap();
     const before = arrowShape('a1:b');
 
-    drag.started({} as DragEvent, 'a');
-    drag.dragged({ dx: 0, dy: 120 } as DragEvent, 'a');
+    press('a');
+    moveTo(0, 120);
 
     expect(arrowShape('a1:b')).not.toBe(before);
+    release(0, 120);
   });
 
   it('follows a redistribute', () => {
@@ -265,5 +288,70 @@ describe('clicking arrows', () => {
     expect(map.instance.getSelectedArrow()).toBeNull();
     expect(map.instance.getSelectedNode()).toBeNull();
     expect(arrowGroup('a1:b')?.classList.contains('selected')).toBe(false);
+  });
+});
+
+describe('arrow mode in the renderer', () => {
+  function inArrowMode() {
+    const stub = makeMap([]);
+    stub.map.instance.selectNode('a1');
+    stub.map.instance.startArrowMode();
+    return stub;
+  }
+
+  it('shows a preview from the source', () => {
+    inArrowMode();
+
+    expect(document.querySelector('path.arrow-preview')).not.toBeNull();
+  });
+
+  it('marks the nodes the source may not connect to', () => {
+    inArrowMode();
+
+    expect(nodeGroup('a').classList.contains('arrow-refused')).toBe(true);
+    expect(nodeGroup('a1').classList.contains('arrow-refused')).toBe(true);
+    expect(nodeGroup('b').classList.contains('arrow-refused')).toBe(false);
+  });
+
+  it('creates the arrow when a node press starts on an allowed node', () => {
+    const { map, data } = inArrowMode();
+
+    press('b');
+    release(0, 0);
+
+    expect(data.arrows()).toEqual([{ source: 'a1', target: 'b' }]);
+    expect(map.instance.isArrowMode()).toBe(false);
+    expect(map.instance.getSelectedNode()?.id).toBe('a1');
+    expect(document.querySelector('path.arrow-preview')).toBeNull();
+    expect(document.querySelectorAll('g.node.arrow-refused')).toHaveLength(0);
+  });
+
+  it('moves no node while in arrow mode', () => {
+    const { data } = inArrowMode();
+
+    press('a1');
+    moveTo(50, 50);
+    release(50, 50);
+
+    expect(data.node('a1')?.coordinates).toEqual({ x: 400, y: 0 });
+  });
+
+  it('ends on a click on empty space and creates nothing', () => {
+    const { map, data } = inArrowMode();
+
+    document
+      .querySelector('rect.map-background')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(map.instance.isArrowMode()).toBe(false);
+    expect(data.arrows()).toEqual([]);
+  });
+
+  it('ends when the map turns read-only', () => {
+    const { map } = inArrowMode();
+
+    map.instance.setEditable(false);
+
+    expect(map.instance.isArrowMode()).toBe(false);
   });
 });

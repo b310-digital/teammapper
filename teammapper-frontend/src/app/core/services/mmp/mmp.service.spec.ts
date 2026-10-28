@@ -1158,6 +1158,71 @@ describe('MmpService', () => {
 
       expect(service.getArrows()).toEqual([]);
     });
+
+    it.each([
+      ['starts', () => service.startArrowMode(), 'startArrowMode'],
+      ['stops', () => service.stopArrowMode(), 'stopArrowMode'],
+    ])('%s arrow mode in the map', (_, act, method) => {
+      act();
+
+      expect(
+        mockMap[method as 'startArrowMode' | 'stopArrowMode']
+      ).toHaveBeenCalled();
+    });
+
+    it('reports whether the map is in arrow mode', () => {
+      mockMap.isArrowMode.mockReturnValue(true);
+
+      expect(service.isArrowMode()).toBe(true);
+    });
+
+    it('reports no arrow mode before a map exists', () => {
+      service.remove();
+
+      expect(service.isArrowMode()).toBe(false);
+    });
+
+    describe('removeSelected', () => {
+      it('removes the selected arrow and no node', async () => {
+        mockMap.getSelectedArrow.mockReturnValue(arrow);
+
+        await service.removeSelected();
+
+        expect(mockMap.removeArrow).toHaveBeenCalledWith();
+        expect(mockMap.removeNode).not.toHaveBeenCalled();
+      });
+
+      it('removes the selected node when no arrow is selected', async () => {
+        mockMap.getSelectedArrow.mockReturnValue(null);
+
+        await service.removeSelected();
+
+        expect(mockMap.removeNode).toHaveBeenCalled();
+        expect(mockMap.removeArrow).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('refused target', () => {
+      const refuse = async (reason: string) => {
+        const [, callback] = mockMap.on.mock.calls.find(
+          ([event]) => event === 'arrowRefused'
+        );
+        callback(reason);
+        await new Promise(resolve => setTimeout(resolve));
+      };
+
+      it.each([
+        ['self', 'TOASTS.WARNINGS.ARROW_REFUSED.SELF'],
+        ['duplicate', 'TOASTS.WARNINGS.ARROW_REFUSED.DUPLICATE'],
+        ['parent', 'TOASTS.WARNINGS.ARROW_REFUSED.PARENT'],
+        ['missing', 'TOASTS.WARNINGS.ARROW_REFUSED.MISSING'],
+      ])('shows a toast for the reason %s', async (reason, key) => {
+        await refuse(reason);
+
+        expect(utilsService.translate).toHaveBeenCalledWith(key);
+        expect(toastrService.warning).toHaveBeenCalledWith('translated-text');
+      });
+    });
   });
 
   describe('distributeNodes', () => {

@@ -242,7 +242,13 @@
       "NODE_PROTECTED": "Esta rama está protegida. Quita la protección para editarla.",
       "MAP_IMPORT_IN_PROGRESS": "Importación de mapas mentales en curso",
       "MAP_UPDATE_IN_PROGRESS": "Actualizando mapa mental...",
-      "MERMAID_SEVERAL_TREES": "Cada árbol se convirtió en su propio bloque mindmap. Las herramientas de Mermaid fuera de TeamMapper muestran un bloque a la vez."
+      "MERMAID_SEVERAL_TREES": "Cada árbol se convirtió en su propio bloque mindmap. Las herramientas de Mermaid fuera de TeamMapper muestran un bloque a la vez.",
+      "ARROW_REFUSED": {
+        "SELF": "Una flecha no puede apuntar de un nodo a sí mismo.",
+        "DUPLICATE": "Ya existe una flecha entre estos dos nodos en esta dirección.",
+        "PARENT": "Una rama ya conecta un nodo con su nodo padre.",
+        "MISSING": "El nodo de esta flecha ya no existe."
+      }
     },
     "ERRORS": {
       "ROOT_NODE_COPIED": "No es posible copiar el nodo raíz.",

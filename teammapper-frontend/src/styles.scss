@@ -223,6 +223,13 @@ svg g.arrow.selected path.arrow-line {
   stroke-width: 3;
 }
 
+// A node arrow mode refuses as the target of the arrow. Only the cursor
+// shows it; a click explains the refusal in a toast.
+svg g.node.arrow-refused,
+svg g.node.arrow-refused * {
+  cursor: not-allowed !important;
+}
+
 // Global page background
 body {
   background-color: var(--color-bg-primary);
