@@ -82,6 +82,7 @@
               "127.0.0.1",
               "app",
               ".app",
+              "teammapper",
               "host.docker.internal"
             ],
             "prebundle": false

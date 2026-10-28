@@ -5,6 +5,7 @@ import {
   OnChanges,
   inject,
   viewChild,
+  viewChildren,
 } from '@angular/core';
 import { NodeColors } from '@teammapper/mmp';
 import {
@@ -43,6 +44,8 @@ export class ColorPanelsComponent implements OnChanges {
 
   public readonly background =
     viewChild.required<ElementRef<HTMLElement>>('background');
+
+  private readonly pickers = viewChildren(ColorPickerDirective);
 
   public readonly options = {
     width: '250px',
@@ -98,5 +101,15 @@ export class ColorPanelsComponent implements OnChanges {
     if (!opening) {
       this.mmpService.updateNode(property, value);
     }
+  }
+
+  /**
+   * Close the open picker when the backdrop receives a press. ngx-color-picker
+   * registers its own outside-press listener in `ngOnInit`, so a click that
+   * reaches the input before the first change detection leaves that picker
+   * with no listener.
+   */
+  public closeColorPickers(): void {
+    this.pickers().forEach(picker => picker.closeDialog());
   }
 }

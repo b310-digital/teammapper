@@ -37,6 +37,8 @@ async function enableDarkMode(page: Page) {
   await page.getByRole('switch', { name: 'Dark mode' }).click();
   await page.locator('.close-button').click();
   await expect(page.locator('body')).toHaveClass(/dark-mode/);
+  // The next dialog must not find this one still animating out.
+  await expect(page.locator('mat-dialog-container')).toHaveCount(0);
 }
 
 async function openMapInTheme(page: Page, theme: Theme) {
