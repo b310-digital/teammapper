@@ -1,5 +1,7 @@
+import * as v from 'valibot';
 import {
   ClientMap,
+  MapArrow,
   MapNode,
   MapNodeColors,
   MapNodeCoordinates,
@@ -8,6 +10,7 @@ import {
   MapNodeLink,
   MapOptions,
 } from '../models';
+import { ArrowSchema } from '../schemas';
 
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
@@ -122,11 +125,20 @@ export const normalizeMapNode = (raw: unknown): MapNode => {
   };
 };
 
+/** Keeps every entry with a non-empty source and target; cached data from before arrows has none. */
+const normalizeMapArrows = (raw: unknown): MapArrow[] =>
+  Array.isArray(raw)
+    ? raw
+        .filter((a): a is MapArrow => v.is(ArrowSchema, a))
+        .map(a => ({ source: a.source, target: a.target }))
+    : [];
+
 export const normalizeMapData = (rawMap: unknown): ClientMap => {
   if (typeof rawMap !== 'object' || rawMap === null) {
     return {
       uuid: '',
       data: [],
+      arrows: [],
       options: {},
     };
   }
@@ -136,6 +148,7 @@ export const normalizeMapData = (rawMap: unknown): ClientMap => {
   const uuid = typeof r.uuid === 'string' ? r.uuid : '';
   const rawNodes = Array.isArray(r.data) ? r.data : [];
   const data: MapNode[] = rawNodes.map(n => normalizeMapNode(n));
+  const arrows = normalizeMapArrows(r.arrows);
 
   const rawOptions =
     typeof r.options === 'object' && r.options !== null
@@ -161,6 +174,7 @@ export const normalizeMapData = (rawMap: unknown): ClientMap => {
   const result: ClientMap = {
     uuid,
     data,
+    arrows,
     options,
   };
 

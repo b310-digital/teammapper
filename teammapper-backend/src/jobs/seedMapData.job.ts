@@ -45,6 +45,7 @@ const createMap = (uuid: string, nodes: IMmpClientNode[]): ClientMap => {
     createdAt: new Date(),
     deleteAfterDays: 30,
     data: nodes,
+    arrows: [],
     deletedAt: new Date(),
     options: { fontMaxSize: 10, fontIncrement: 5, fontMinSize: 10 },
   }

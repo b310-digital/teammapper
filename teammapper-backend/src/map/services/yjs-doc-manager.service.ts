@@ -110,9 +110,10 @@ export class YjsDocManagerService implements OnModuleDestroy {
   }
 
   private async hydrateDocFromDb(mapId: string): Promise<Y.Doc> {
-    const [map, nodes] = await Promise.all([
+    const [map, nodes, arrows] = await Promise.all([
       this.mapsService.findMap(mapId),
       this.mapsService.findNodes(mapId),
+      this.mapsService.findArrows(mapId),
     ])
 
     if (!map) {
@@ -120,7 +121,7 @@ export class YjsDocManagerService implements OnModuleDestroy {
     }
 
     const doc = new Y.Doc()
-    hydrateYDoc(doc, nodes, map)
+    hydrateYDoc(doc, nodes, map, arrows)
 
     this.docs.set(mapId, {
       doc,

@@ -3,12 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository, QueryRunner, In } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
+import { MmpArrow } from '../entities/mmpArrow.entity'
 import {
   ClientMap,
   IMmpClientNodeBasics,
   ClientMapInfo,
+  MapArrow,
 } from '@teammapper/shared'
 import {
+  mapArrowToMmpArrow,
   mapClientBasicNodeToMmpRootNode,
   mapClientNodeToMmpNode,
   mapMmpMapToClient,
@@ -91,12 +94,53 @@ export class MapsService {
     }
 
     const nodes = await this.findNodes(map?.id)
+    const arrows = await this.findArrows(map.id)
     const days = configService.deleteAfterDays()
     const deletedAt = await this.getDeletedAt(map, days)
 
     if (deletedAt) {
-      return mapMmpMapToClient(map, nodes, deletedAt, days)
+      return mapMmpMapToClient(map, nodes, arrows, deletedAt, days)
     }
+  }
+
+  async findArrows(mapId: string): Promise<MapArrow[]> {
+    const rows = await this.nodesRepository.manager.find(MmpArrow, {
+      where: { nodeMapId: mapId },
+      order: { sourceNodeId: 'ASC', targetNodeId: 'ASC' },
+    })
+    return rows.map((row) => ({
+      source: row.sourceNodeId,
+      target: row.targetNodeId,
+    }))
+  }
+
+  /**
+   * Inserts arrows into a map, used by the duplicate-map flow after the nodes.
+   * Leaves out every arrow whose source or target the map does not hold, and
+   * every arrow the map already holds.
+   */
+  async addArrows(mapId: string, arrows: MapArrow[]): Promise<void> {
+    if (arrows.length === 0) return
+    const nodeIds = await this.findNodeIds(mapId)
+    const rows = arrows
+      .filter((a) => nodeIds.has(a.source) && nodeIds.has(a.target))
+      .map((a) => mapArrowToMmpArrow(a, mapId))
+    if (rows.length === 0) return
+    await this.nodesRepository.manager
+      .createQueryBuilder()
+      .insert()
+      .into(MmpArrow)
+      .values(rows)
+      .orIgnore()
+      .execute()
+  }
+
+  private async findNodeIds(mapId: string): Promise<Set<string>> {
+    const nodes = await this.nodesRepository.find({
+      where: { nodeMapId: mapId },
+      select: ['id'],
+    })
+    return new Set(nodes.map((n) => n.id))
   }
 
   /**
@@ -262,6 +306,7 @@ export class MapsService {
       await queryRunner.startTransaction()
       await queryRunner.manager.delete(MmpNode, { nodeMapId: clientMap.uuid })
       await this.saveValidNodes(queryRunner, clientMap)
+      await this.saveArrows(queryRunner, clientMap)
       await queryRunner.commitTransaction()
       return this.findMap(clientMap.uuid)
     } catch (error) {
@@ -296,6 +341,24 @@ export class MapsService {
       })
       await queryRunner.manager.save(newNode)
     }
+  }
+
+  // Deleting the nodes in updateMap cascaded to the old arrows, so this only
+  // inserts the given ones. It leaves out every arrow whose source or target
+  // the given nodes lack, which the foreign keys would refuse.
+  private async saveArrows(
+    queryRunner: QueryRunner,
+    clientMap: ClientMap
+  ): Promise<void> {
+    const nodeIds = new Set(clientMap.data.map((node) => node.id))
+    const arrows = clientMap.arrows.filter(
+      (a) => nodeIds.has(a.source) && nodeIds.has(a.target)
+    )
+    if (arrows.length === 0) return
+    await queryRunner.manager.insert(
+      MmpArrow,
+      arrows.map((a) => mapArrowToMmpArrow(a, clientMap.uuid))
+    )
   }
 
   async getDeletedAt(
