@@ -7,6 +7,7 @@ import {
   DEFAULT_YJS_MAP_LIMITS,
   DEFAULT_YJS_MESSAGE_LIMITS,
 } from './map/utils/yjsLimits'
+import { UUID_GENERATION_OPTIONS } from './uuidGeneration'
 
 interface EnvProps {
   [k: string]: string | undefined
@@ -232,6 +233,7 @@ class ConfigService {
       username: this.getValue('POSTGRES_USER'),
       password: this.getValue('POSTGRES_PASSWORD'),
       database: this.getValue('POSTGRES_DATABASE'),
+      ...UUID_GENERATION_OPTIONS,
 
       entities: [join(__dirname, '**', '*.entity.{ts,js}')],
 
