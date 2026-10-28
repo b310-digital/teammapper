@@ -116,12 +116,14 @@ $logo-teal: #19b8ae;
 
   // Glow: a blurred conic gradient in the logo colors behind the root.
   // It breathes while idle and brightens and turns on hover.
+  // The mask fades the glow out toward an ellipse. Browsers drop the
+  // border-radius clip under a filter once they composite the animated
+  // layer, and without the mask the glow then shows as a colored rectangle.
   &::before {
     content: '';
     position: absolute;
-    inset: -6px;
+    inset: -18px;
     z-index: -1;
-    border-radius: inherit;
     background: conic-gradient(
       from var(--glow-angle),
       $logo-coral,
@@ -129,6 +131,7 @@ $logo-teal: #19b8ae;
       $logo-teal,
       $logo-coral
     );
+    mask-image: radial-gradient(closest-side, black 60%, transparent);
     filter: blur(18px);
     opacity: 0.35;
     pointer-events: none;
@@ -143,7 +146,7 @@ $logo-teal: #19b8ae;
   &:hover,
   &:focus-visible {
     &::before {
-      inset: -12px;
+      inset: -26px;
       opacity: 0.9;
       animation: glow-spin 2.5s linear infinite;
     }
