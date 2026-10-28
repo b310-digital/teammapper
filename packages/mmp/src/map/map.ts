@@ -9,9 +9,12 @@ import Nodes from './handlers/nodes.js';
 import Export from './handlers/export.js';
 import CopyPaste from './handlers/copy-paste.js';
 import ViewState from './handlers/view-state.js';
+import Arrows from './handlers/arrows.js';
 import type { MapData } from './data/map-data.js';
 import type {
+  ArrowRefusal,
   ExportNodeProperties,
+  MapArrow,
   MapSnapshot,
   NodeProperty,
   NodePropertyValues,
@@ -36,6 +39,7 @@ export default class MmpMap {
   public export: Export;
   public copyPaste: CopyPaste;
   public viewState: ViewState;
+  public arrows: Arrows;
 
   public readonly instance: MmpInstance;
 
@@ -65,6 +69,7 @@ export default class MmpMap {
     this.drag = new Drag(this);
     this.draw = new Draw(this, ref);
     this.nodes = new Nodes(this);
+    this.arrows = new Arrows(this);
     this.export = new Export(this);
     this.copyPaste = new CopyPaste(this);
 
@@ -116,12 +121,15 @@ export default class MmpMap {
   /**
    * Switch editing and dragging on or off together. The handlers read both
    * flags when an event arrives, so the map draws nothing anew. A name edit
-   * that runs already holds its own handlers, so turning editing off ends it.
+   * that runs already holds its own handlers, so turning editing off ends it,
+   * together with arrow mode and the arrow selection.
    */
   private setEditable = (editable: boolean) => {
     this.options.edit = editable;
     this.options.drag = editable;
-    if (!editable) this.draw.cancelNameEditing();
+    if (editable) return;
+    this.draw.cancelNameEditing();
+    this.arrows.onReadOnly();
   };
 
   /**
@@ -130,13 +138,17 @@ export default class MmpMap {
    */
   private createMmpInstance(): MmpInstance {
     return {
+      addArrow: this.arrows.addArrow,
       addNode: this.nodes.addNode,
       addTree: this.nodes.addTree,
       center: this.zoom.center,
       copyNode: this.copyPaste.copy,
       cutNode: this.copyPaste.cut,
       applyCoordinatesToMapSnapshot: this.nodes.applyCoordinatesToMapSnapshot,
+      deselectArrow: this.arrows.deselectArrow,
       distributeNodes: this.nodes.distributeNodes,
+      getArrows: this.arrows.getArrows,
+      getSelectedArrow: this.arrows.getSelectedArrow,
       getSelectedNode: this.nodes.getSelectedNode,
       editNode: this.nodes.editNode,
       toggleBranchVisibility: this.nodes.toggleBranchVisibility,
@@ -155,7 +167,9 @@ export default class MmpMap {
       protectingNode: this.nodes.protectingNode,
       releaseBranch: this.nodes.releaseBranch,
       destroy: this.destroy,
+      removeArrow: this.arrows.removeArrow,
       removeNode: this.nodes.removeNode,
+      selectArrow: this.arrows.selectArrow,
       selectNode: this.nodes.selectNode,
       setEditable: this.setEditable,
       updateNode: this.nodes.updateNode,
@@ -171,6 +185,11 @@ export default class MmpMap {
  * caller may change; the map data keeps its own.
  */
 export interface MmpInstance {
+  /**
+   * Add an arrow from `source`, or from the selected node, to `target`.
+   * Returns why the endpoint rules refuse it, or null once it is added.
+   */
+  addArrow: (target: string, source?: string) => ArrowRefusal | null;
   addNode: (
     userProperties?: UserNodeProperties,
     parentId?: string | null
@@ -180,7 +199,10 @@ export interface MmpInstance {
   copyNode: (id?: string) => void;
   cutNode: (id?: string) => boolean;
   applyCoordinatesToMapSnapshot: (mapSnapshot: MapSnapshot) => MapSnapshot;
+  deselectArrow: () => void;
   distributeNodes: () => void;
+  getArrows: () => MapArrow[];
+  getSelectedArrow: () => MapArrow | null;
   getSelectedNode: () => ExportNodeProperties | null;
   editNode: () => void;
   toggleBranchVisibility: () => void;
@@ -190,7 +212,7 @@ export interface MmpInstance {
   exportAsJSON: () => MapSnapshot;
   exportRootProperties: () => ExportNodeProperties | null;
   highlightNode: (id: string, color: string) => void;
-  new: (nodes?: MapSnapshot) => void;
+  new: (nodes?: MapSnapshot, arrows?: unknown[]) => void;
   nodeChildren: (id?: string) => ExportNodeProperties[];
   on: <K extends MmpEventType>(
     event: K,
@@ -202,7 +224,11 @@ export interface MmpInstance {
   protectingNode: (id?: string) => string | null;
   releaseBranch: (id?: string) => void;
   destroy: () => void;
+  /** Remove the arrow with `key`, or the selected arrow. */
+  removeArrow: (key?: string) => void;
   removeNode: (id?: string) => void;
+  /** Select the arrow with `key` and leave no node selected. */
+  selectArrow: (key: string) => void;
   selectNode: (id?: string) => ExportNodeProperties | null;
   setEditable: (editable: boolean) => void;
   updateNode: <P extends NodeProperty>(

@@ -1,7 +1,8 @@
 import MmpMap from '../map.js';
-import { collectSubtreeIds } from '@teammapper/shared';
+import { collectSubtreeIds, selectArrowsWithin } from '@teammapper/shared';
 import type {
   ExportNodeProperties,
+  MapArrow,
   MapNodeCoordinates,
   UserNodeProperties,
 } from '@teammapper/shared';
@@ -23,6 +24,9 @@ export default class CopyPaste {
   private map: MmpMap;
 
   private copiedNodes: ExportNodeProperties[] = [];
+
+  // The arrows whose source and target both lie among the copied nodes.
+  private copiedArrows: MapArrow[] = [];
 
   // The x of the copied tree's root at copy time. A cut removes the copied
   // nodes, so paste cannot look the root up on the map.
@@ -97,6 +101,10 @@ export default class CopyPaste {
     ];
 
     this.copiedNodes = copied.map(record => Utils.cloneObject(record));
+    this.copiedArrows = selectArrowsWithin(
+      this.map.arrows.getArrows(),
+      new Set(copied.map(record => record.id))
+    );
     this.copiedTreeRootX = nodes.positionOf(
       nodes.treeRoot(node.id, lookup),
       lookup
@@ -163,9 +171,10 @@ export default class CopyPaste {
   }
 
   /**
-   * Add the copied nodes under `parent`, or as a new tree for null, in one
-   * write. The records are built first, each placed against the records
-   * built before it. Returns the record pasted in place of the copied node.
+   * Add the copied nodes under `parent`, or as a new tree for null, and the
+   * copied arrows between them, in one write. The records are built first,
+   * each placed against the records built before it. Returns the record
+   * pasted in place of the copied node.
    */
   private pasteInto(parent: string | null): ResolvedNode {
     this.pastingTree = parent === null;
@@ -173,41 +182,57 @@ export default class CopyPaste {
     const lookup: RecordLookup = id =>
       pasted.get(id) ?? this.map.nodes.record(id);
 
+    const visited = new Map<string, string>();
     const pastedNode = this.addCopiedNode(
       this.copiedNodes[0],
       parent,
       pasted,
       lookup,
-      new Set()
+      visited
     );
     // The batch makes the paste one undo step of its own, apart from an
     // edit right before or after it.
     const data = this.map.data;
-    data.batch(() => data.addNodes([...pasted.values()]));
+    data.batch(() => {
+      data.addNodes([...pasted.values()]);
+      data.addArrows(this.pastedArrows(visited));
+    });
 
     return pastedNode;
   }
 
   /**
+   * The copied arrows between the pasted nodes.
+   * @param {Map<string, string>} pastedIds the pasted id of each copied id
+   */
+  private pastedArrows(pastedIds: Map<string, string>): MapArrow[] {
+    return this.copiedArrows.flatMap(({ source, target }) => {
+      const from = pastedIds.get(source);
+      const to = pastedIds.get(target);
+      return from && to ? [{ source: from, target: to }] : [];
+    });
+  }
+
+  /**
    * Build the record of a copied node under `newParent`, then those of its
    * copied children under the record just built. Returns that record.
-   * `visited` holds the copied ids built so far, so a parent cycle among the
-   * copied nodes ends at the node that closes it.
+   * `visited` maps each copied id built so far to its pasted id, so a parent
+   * cycle among the copied nodes ends at the node that closes it.
    */
   private addCopiedNode(
     nodeProperties: ExportNodeProperties,
     newParent: string | null,
     pasted: Map<string, ResolvedNode>,
     lookup: RecordLookup,
-    visited: Set<string>
+    visited: Map<string, string>
   ): ResolvedNode {
-    visited.add(nodeProperties.id);
     const record = this.map.nodes.newRecord(
       this.pastedProperties(nodeProperties, newParent, lookup),
       newParent,
       undefined,
       lookup
     );
+    visited.set(nodeProperties.id, record.id);
     pasted.set(record.id, record);
 
     this.getChildrenInCopiedNodes(nodeProperties.id)

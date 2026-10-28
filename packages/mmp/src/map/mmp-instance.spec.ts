@@ -21,6 +21,8 @@ const ALL_EVENTS = Object.keys({
   nodeDeselect: true,
   nodeProtected: true,
   mapChange: true,
+  arrowSelect: true,
+  arrowDeselect: true,
 } satisfies Record<MmpEventType, true>) as MmpEventType[];
 
 /**

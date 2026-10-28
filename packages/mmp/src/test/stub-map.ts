@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 import InMemoryMapData from './in-memory-map-data.js';
+import Arrows from '../map/handlers/arrows.js';
 import CopyPaste from '../map/handlers/copy-paste.js';
 import Drag from '../map/handlers/drag.js';
 import MapLoader from '../map/handlers/map-loader.js';
@@ -33,8 +34,8 @@ export function nodeRecord(
 }
 
 /**
- * A map without a DOM around the real node handler, view state, loader,
- * drag and clipboard, over an `InMemoryMapData` holding `snapshot`. The
+ * A map without a DOM around the real node handler, arrow handler, view
+ * state, loader, drag and clipboard, over an `InMemoryMapData` holding `snapshot`. The
  * renderer is `fakeDraw`, the zoom pans and centers nothing, and every event
  * goes to the `events.emit` mock. `overrides` replaces any of these
  * stand-ins. The map draws the snapshot as a replaced map, which selects the
@@ -66,6 +67,7 @@ export function stubMap(
   const map = parts as unknown as MmpMap;
   map.viewState = new ViewState();
   map.nodes = new Nodes(map);
+  map.arrows = new Arrows(map);
   map.loader = new MapLoader(map);
   map.copyPaste = new CopyPaste(map);
   map.drag = new Drag(map);
