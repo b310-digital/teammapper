@@ -74,6 +74,15 @@ describe('ImagesService', () => {
   const read = (mapId: string, reference: ImageReference) =>
     imagesService.readImage(mapId, imageIdOf(reference))
 
+  const duplicateImages = (
+    sourceMapId: string,
+    targetMapId: string,
+    inlineBytes?: number
+  ) =>
+    imagesService.withDuplicationLimit((manager) =>
+      imagesService.copyImages(manager, sourceMapId, targetMapId, inlineBytes)
+    )
+
   /** Moves an image's upload time the given number of days back. */
   const ageImage = async (
     mapId: string,
@@ -189,17 +198,13 @@ describe('ImagesService', () => {
       const source = await createMap()
       const reference = await imagesService.storeImage(source.id, pngUpload())
       const copy = await createMap()
-      await imagesService.withDuplicationLimit(() =>
-        imagesService.copyImages(source.id, copy.id)
-      )
+      await duplicateImages(source.id, copy.id)
       expect(await read(copy.id, reference)).not.toBeNull()
       for (const map of [source, copy]) {
         const target = await createMap()
-        await expect(
-          imagesService.withDuplicationLimit(() =>
-            imagesService.copyImages(map.id, target.id)
-          )
-        ).rejects.toThrow(PayloadTooLargeException)
+        await expect(duplicateImages(map.id, target.id)).rejects.toThrow(
+          PayloadTooLargeException
+        )
         expect(await imagesRepo.countBy({ mapId: target.id })).toBe(0)
         expect(await read(target.id, reference)).toBeNull()
       }
@@ -212,9 +217,9 @@ describe('ImagesService', () => {
       jest
         .spyOn(configService, 'getMaxImageBytesPerMap')
         .mockReturnValue(LOGO_PNG.length - 1)
-      await expect(
-        imagesService.copyImages(source.id, target.id)
-      ).rejects.toThrow(PayloadTooLargeException)
+      await expect(duplicateImages(source.id, target.id)).rejects.toThrow(
+        PayloadTooLargeException
+      )
       expect(await read(target.id, reference)).toBeNull()
     })
 
@@ -228,7 +233,7 @@ describe('ImagesService', () => {
         .mockReturnValue(2 * bytes - 1)
       const target = await createMap()
       await expect(
-        imagesService.copyImages(source.id, target.id, bytes)
+        duplicateImages(source.id, target.id, bytes)
       ).rejects.toThrow(PayloadTooLargeException)
     })
 
@@ -270,7 +275,7 @@ describe('ImagesService', () => {
       const reference = await imagesService.storeImage(source.id, pngUpload())
       const copy = await createMap()
 
-      await imagesService.copyImages(source.id, copy.id)
+      await duplicateImages(source.id, copy.id)
       await mapsService.deleteMap(source.id)
 
       expect(await read(copy.id, reference)).not.toBeNull()
@@ -283,7 +288,7 @@ describe('ImagesService', () => {
       await ageImage(source.id, reference, 30)
       const copy = await createMap()
 
-      await imagesService.copyImages(source.id, copy.id)
+      await duplicateImages(source.id, copy.id)
 
       const row = await imagesRepo.findOneByOrFail({
         mapId: copy.id,

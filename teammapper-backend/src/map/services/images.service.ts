@@ -1,7 +1,7 @@
 import { Injectable, Logger, PayloadTooLargeException } from '@nestjs/common'
 import { ThrottlerException } from '@nestjs/throttler'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { EntityManager, Repository } from 'typeorm'
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 import {
   IMAGE_REFERENCE_PREFIX,
@@ -48,16 +48,20 @@ export class ImagesService {
   ) {}
 
   /** A transaction-scoped lock permits one duplication across all instances.
-   * Other requests fail immediately instead of queuing expensive work.
+   * Other requests fail immediately instead of queuing expensive work. The
+   * operation receives the manager of that transaction and runs every query
+   * through it, so a failure rolls back the whole duplication.
    */
-  async withDuplicationLimit<T>(operation: () => Promise<T>): Promise<T> {
+  async withDuplicationLimit<T>(
+    operation: (manager: EntityManager) => Promise<T>
+  ): Promise<T> {
     return this.imagesRepository.manager.transaction(async (manager) => {
       const rows: { acquired: boolean }[] = await manager.query(
         'SELECT pg_try_advisory_xact_lock($1::integer, $2::integer) AS acquired',
         [MAP_DUPLICATION_LOCK_NAMESPACE, MAP_DUPLICATION_LOCK_KEY]
       )
       if (!rows[0]?.acquired) throw new ThrottlerException()
-      return operation()
+      return operation(manager)
     })
   }
 
@@ -109,21 +113,23 @@ export class ImagesService {
    * Copies every image of the source map to the target map under the same
    * id, so no node reference needs rewriting. The copies count as uploaded
    * now. Writes the metadata rows before the bytes, as storeImageWithoutCap
-   * does. Call within withDuplicationLimit so budget checks and copies
-   * cannot race another duplication.
+   * does. Pass the manager withDuplicationLimit provides, so budget checks
+   * and copies cannot race another duplication and roll back with it.
    */
   async copyImages(
+    manager: EntityManager,
     sourceMapId: string,
     targetMapId: string,
     inlineBytes = 0
   ): Promise<void> {
-    const images = await this.imagesRepository.find({
+    const images = await manager.find(MmpImage, {
       where: { mapId: sourceMapId },
     })
     const copyBytes = totalStoredImageBytes(images) + inlineBytes
-    await this.assertDuplicationFitsImageLimits(copyBytes)
+    await this.assertDuplicationFitsImageLimits(manager, copyBytes)
     if (images.length === 0) return
-    await this.imagesRepository.insert(
+    await manager.insert(
+      MmpImage,
       images.map(({ id, mimetype, size }) => ({
         mapId: targetMapId,
         id,
@@ -132,6 +138,7 @@ export class ImagesService {
       }))
     )
     await this.imageStore.copy(
+      manager,
       sourceMapId,
       targetMapId,
       images.map((image) => image.id)
@@ -193,10 +200,11 @@ export class ImagesService {
 
   /** Requires the duplication lock until the copy and its nodes are stored. */
   private async assertDuplicationFitsImageLimits(
+    manager: EntityManager,
     copyBytes: number
   ): Promise<void> {
     this.assertBelowMapCap(copyBytes)
-    const storedBytes = await this.totalImageBytesAcrossMaps()
+    const storedBytes = await this.totalImageBytesAcrossMaps(manager)
     if (
       copyBytes > 0 &&
       storedBytes + copyBytes > configService.getDuplicateMapMaxImageBytes()
@@ -208,8 +216,10 @@ export class ImagesService {
   }
 
   /** Counts referenced and inline images across every map, including duplicates. */
-  private async totalImageBytesAcrossMaps(): Promise<number> {
-    const totals: { total: string }[] = await this.imagesRepository.query(`
+  private async totalImageBytesAcrossMaps(
+    manager: EntityManager
+  ): Promise<number> {
+    const totals: { total: string }[] = await manager.query(`
       SELECT (SELECT COALESCE(SUM(size), 0) FROM mmp_image)
         + (SELECT COALESCE(SUM(octet_length("imageSrc")), 0)
            FROM mmp_node WHERE "imageSrc" LIKE 'data:%') AS total

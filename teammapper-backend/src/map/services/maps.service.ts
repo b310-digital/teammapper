@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, QueryRunner, In } from 'typeorm'
+import { Repository, QueryRunner, In, EntityManager } from 'typeorm'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpArrow } from '../entities/mmpArrow.entity'
 import {
   ClientMap,
+  ClientPrivateMap,
   IMmpClientNodeBasics,
   ClientMapInfo,
   MapArrow,
@@ -17,6 +18,7 @@ import {
   mapMmpMapToClient,
 } from '../utils/clientServerMapping'
 import { orderNodesFromRoot } from '../utils/nodeOrdering'
+import { totalInlineImageBytes } from '../utils/imageStorage'
 import configService from '../../config.service'
 import { validate as uuidValidate } from 'uuid'
 import MalformedUUIDError from './uuid.error'
@@ -67,13 +69,63 @@ export class MapsService {
     return mapsInfo.slice(0, 20)
   }
 
-  findMap(uuid: string): Promise<MmpMap | null> {
+  findMap(
+    uuid: string,
+    manager: EntityManager = this.mapsRepository.manager
+  ): Promise<MmpMap | null> {
     if (!uuidValidate(uuid))
       return Promise.reject(new MalformedUUIDError('Invalid UUID'))
 
-    return this.mapsRepository.findOne({
+    return manager.findOne(MmpMap, {
       where: { id: uuid },
     })
+  }
+
+  /**
+   * Copies a map with its nodes, arrows and images under a new admin id and
+   * modification secret. Every query runs in the transaction that holds the
+   * duplication lock, so a failure leaves no partial copy behind. Returns
+   * null when the source map does not exist.
+   */
+  async duplicateMap(sourceMapId: string): Promise<ClientPrivateMap | null> {
+    return this.imagesService.withDuplicationLimit(async (manager) => {
+      const source = await this.findMap(sourceMapId, manager)
+      if (!source) return null
+      return this.copyMap(manager, source.id)
+    })
+  }
+
+  private async copyMap(
+    manager: EntityManager,
+    sourceMapId: string
+  ): Promise<ClientPrivateMap> {
+    // Read nodes first so an intervening upload cannot leave a missing reference.
+    const nodes = await this.findNodes(sourceMapId, manager)
+    const arrows = await this.findArrows(sourceMapId, manager)
+    const target = await manager.save(manager.create(MmpMap))
+    const inlineBytes = totalInlineImageBytes(nodes)
+    await this.imagesService.copyImages(
+      manager,
+      sourceMapId,
+      target.id,
+      inlineBytes
+    )
+    await this.addNodes(target.id, nodes, manager)
+    await this.addArrows(target.id, arrows, manager)
+    return this.exportPrivateMap(manager, target)
+  }
+
+  private async exportPrivateMap(
+    manager: EntityManager,
+    map: MmpMap
+  ): Promise<ClientPrivateMap> {
+    const exported = await this.exportMapToClient(map.id, manager)
+    if (!exported) throw new Error(`Map ${map.id} could not be exported`)
+    return {
+      map: exported,
+      adminId: map.adminId,
+      modificationSecret: map.modificationSecret,
+    }
   }
 
   async updateLastAccessed(uuid: string, lastAccessed = new Date()) {
@@ -86,25 +138,31 @@ export class MapsService {
     await this.mapsRepository.update(uuid, { lastAccessed })
   }
 
-  async exportMapToClient(uuid: string): Promise<ClientMap | undefined> {
-    const map = await this.findMap(uuid)
+  async exportMapToClient(
+    uuid: string,
+    manager: EntityManager = this.mapsRepository.manager
+  ): Promise<ClientMap | undefined> {
+    const map = await this.findMap(uuid, manager)
     if (!map) {
       this.logger.warn(`exportMapToClient(): Map was not found`)
       return
     }
 
-    const nodes = await this.findNodes(map?.id)
-    const arrows = await this.findArrows(map.id)
+    const nodes = await this.findNodes(map.id, manager)
+    const arrows = await this.findArrows(map.id, manager)
     const days = configService.deleteAfterDays()
-    const deletedAt = await this.getDeletedAt(map, days)
+    const deletedAt = await this.getDeletedAt(map, days, manager)
 
     if (deletedAt) {
       return mapMmpMapToClient(map, nodes, arrows, deletedAt, days)
     }
   }
 
-  async findArrows(mapId: string): Promise<MapArrow[]> {
-    const rows = await this.nodesRepository.manager.find(MmpArrow, {
+  async findArrows(
+    mapId: string,
+    manager: EntityManager = this.nodesRepository.manager
+  ): Promise<MapArrow[]> {
+    const rows = await manager.find(MmpArrow, {
       where: { nodeMapId: mapId },
       order: { sourceNodeId: 'ASC', targetNodeId: 'ASC' },
     })
@@ -119,14 +177,18 @@ export class MapsService {
    * Leaves out every arrow whose source or target the map does not hold, and
    * every arrow the map already holds.
    */
-  async addArrows(mapId: string, arrows: MapArrow[]): Promise<void> {
+  async addArrows(
+    mapId: string,
+    arrows: MapArrow[],
+    manager: EntityManager = this.nodesRepository.manager
+  ): Promise<void> {
     if (arrows.length === 0) return
-    const nodeIds = await this.findNodeIds(mapId)
+    const nodeIds = await this.findNodeIds(mapId, manager)
     const rows = arrows
       .filter((a) => nodeIds.has(a.source) && nodeIds.has(a.target))
       .map((a) => mapArrowToMmpArrow(a, mapId))
     if (rows.length === 0) return
-    await this.nodesRepository.manager
+    await manager
       .createQueryBuilder()
       .insert()
       .into(MmpArrow)
@@ -135,8 +197,11 @@ export class MapsService {
       .execute()
   }
 
-  private async findNodeIds(mapId: string): Promise<Set<string>> {
-    const nodes = await this.nodesRepository.find({
+  private async findNodeIds(
+    mapId: string,
+    manager: EntityManager
+  ): Promise<Set<string>> {
+    const nodes = await manager.find(MmpNode, {
       where: { nodeMapId: mapId },
       select: ['id'],
     })
@@ -149,9 +214,14 @@ export class MapsService {
    * MmpNode entities. Yjs persistence has its own path that does not rely on
    * this method. The method saves row by row, so the parent foreign key
    * requires parents first. It orders the nodes that way and leaves out every
-   * node no root reaches.
+   * node no root reaches. Given a manager inside a transaction, the insert
+   * runs in a savepoint of that transaction.
    */
-  async addNodes(mapId: string, nodes: Partial<MmpNode>[]): Promise<MmpNode[]> {
+  async addNodes(
+    mapId: string,
+    nodes: Partial<MmpNode>[],
+    manager: EntityManager = this.nodesRepository.manager
+  ): Promise<MmpNode[]> {
     if (!mapId || nodes.length === 0) {
       this.logger.warn(
         `Required arguments mapId or nodes not supplied to addNodes()`
@@ -159,34 +229,29 @@ export class MapsService {
       return []
     }
 
-    const queryRunner = await this.createQueryRunner()
-
     try {
-      await queryRunner.startTransaction()
-
-      const nodesToCreate = await this.filterOutExistingNodes(
-        queryRunner,
-        mapId,
-        orderNodesFromRoot(nodes) as MmpNode[]
+      return await manager.transaction((transaction) =>
+        this.insertNodes(transaction, mapId, nodes)
       )
-
-      const createdNodes = await this.saveAllNodesInTransaction(
-        queryRunner,
-        mapId,
-        nodesToCreate
-      )
-
-      await queryRunner.commitTransaction()
-      return createdNodes
     } catch (error) {
-      await this.rollbackTransactionSafely(queryRunner)
       this.logger.error(
         `addNodes(): Failed to add nodes to map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
       )
       throw error
-    } finally {
-      await this.releaseQueryRunnerSafely(queryRunner)
     }
+  }
+
+  private async insertNodes(
+    manager: EntityManager,
+    mapId: string,
+    nodes: Partial<MmpNode>[]
+  ): Promise<MmpNode[]> {
+    const nodesToCreate = await this.filterOutExistingNodes(
+      manager,
+      mapId,
+      orderNodesFromRoot(nodes) as MmpNode[]
+    )
+    return this.saveAllNodes(manager, mapId, nodesToCreate)
   }
 
   private async rollbackTransactionSafely(
@@ -218,14 +283,14 @@ export class MapsService {
   }
 
   private async filterOutExistingNodes(
-    queryRunner: QueryRunner,
+    manager: EntityManager,
     mapId: string,
     nodes: MmpNode[]
   ): Promise<MmpNode[]> {
     if (nodes.length === 0) return []
 
     const nodeIds = nodes.map((n) => n.id)
-    const existingNodes = await queryRunner.manager.find(MmpNode, {
+    const existingNodes = await manager.find(MmpNode, {
       where: {
         id: In(nodeIds),
         nodeMapId: mapId,
@@ -237,26 +302,29 @@ export class MapsService {
     return nodes.filter((node) => !existingNodeIds.has(node.id))
   }
 
-  private async saveAllNodesInTransaction(
-    queryRunner: QueryRunner,
+  private async saveAllNodes(
+    manager: EntityManager,
     mapId: string,
     nodes: MmpNode[]
   ): Promise<MmpNode[]> {
     if (nodes.length === 0) return []
 
     const newNodes = nodes.map((node) =>
-      queryRunner.manager.create(MmpNode, {
+      manager.create(MmpNode, {
         ...node,
         nodeMapId: mapId,
       })
     )
 
-    return await queryRunner.manager.save(newNodes)
+    return await manager.save(newNodes)
   }
 
-  async findNodes(mapId: string): Promise<MmpNode[]> {
-    return this.nodesRepository
-      .createQueryBuilder('mmpNode')
+  async findNodes(
+    mapId: string,
+    manager: EntityManager = this.nodesRepository.manager
+  ): Promise<MmpNode[]> {
+    return manager
+      .createQueryBuilder(MmpNode, 'mmpNode')
       .where('mmpNode.nodeMapId = :mapId', { mapId })
       .orderBy('mmpNode.orderNumber', 'ASC')
       .getMany()
@@ -363,7 +431,8 @@ export class MapsService {
 
   async getDeletedAt(
     map: MmpMap,
-    afterDays: number
+    afterDays: number,
+    manager: EntityManager = this.nodesRepository.manager
   ): Promise<Date | undefined> {
     if (!map) {
       this.logger.warn(
@@ -372,8 +441,8 @@ export class MapsService {
       return
     }
 
-    const newestNodeQuery = this.nodesRepository
-      .createQueryBuilder('node')
+    const newestNodeQuery = manager
+      .createQueryBuilder(MmpNode, 'node')
       .select('max(node.lastModified) AS lastModified')
       .where({ nodeMapId: map.id })
     const newestNode = newestNodeQuery.getRawOne()
