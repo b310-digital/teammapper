@@ -1,7 +1,7 @@
 $root-color: #546e7a;
 
-// Angle of the branch-colored ring that circles the root on hover.
-@property --ring-angle {
+// Angle of the branch-colored glow behind the root.
+@property --glow-angle {
   syntax: '<angle>';
   initial-value: 0deg;
   inherits: false;
@@ -56,6 +56,8 @@ $root-color: #546e7a;
 
 .map {
   position: relative;
+  // Keeps the root's glow (z-index -1) above the page background.
+  isolation: isolate;
   aspect-ratio: 2 / 1;
   max-width: 68rem;
   margin: 0 auto;
@@ -76,11 +78,14 @@ $root-color: #546e7a;
   }
 }
 
+// Centered with inset and auto margins instead of a transform: a transform
+// would make the root a stacking context and paint its glow over its fill.
 .root {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -93,7 +98,6 @@ $root-color: #546e7a;
   text-decoration: none;
   white-space: nowrap;
   box-shadow: 0 14px 30px rgba($root-color, 0.4);
-  transition: transform 0.2s ease;
 
   img {
     background: white;
@@ -105,25 +109,16 @@ $root-color: #546e7a;
     transition: transform 0.2s ease;
   }
 
-  // Idle pulse: a soft ring that grows out of the root and fades.
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    animation: root-pulse 2.4s ease-out infinite;
-  }
-
-  // Hover ring: a conic gradient in the branch colors, masked to a border.
+  // Glow: a blurred conic gradient in the branch colors behind the root.
+  // It breathes while idle and brightens and turns on hover.
   &::before {
     content: '';
     position: absolute;
-    inset: -5px;
-    padding: 3px;
+    inset: -6px;
+    z-index: -1;
     border-radius: inherit;
     background: conic-gradient(
-      from var(--ring-angle),
+      from var(--glow-angle),
       #7cb342,
       #f9a825,
       #7986cb,
@@ -131,26 +126,23 @@ $root-color: #546e7a;
       #ef6c57,
       #7cb342
     );
-    mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    mask-composite: exclude;
-    opacity: 0;
+    filter: blur(18px);
+    opacity: 0.35;
     pointer-events: none;
-    transition: opacity 0.25s ease;
+    transition:
+      opacity 0.35s ease,
+      inset 0.35s ease;
+    animation:
+      glow-breathe 3s ease-in-out infinite,
+      glow-spin 8s linear infinite;
   }
 
   &:hover,
   &:focus-visible {
-    transform: translate(-50%, -50%) scale(1.05);
-
     &::before {
-      opacity: 1;
-      animation: ring-spin 2.5s linear infinite;
-    }
-
-    &::after {
-      animation: none;
+      inset: -12px;
+      opacity: 0.9;
+      animation: glow-spin 2.5s linear infinite;
     }
 
     fa-icon {
@@ -159,29 +151,22 @@ $root-color: #546e7a;
   }
 }
 
-@keyframes root-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba($root-color, 0.45);
-  }
-
-  70%,
-  100% {
-    box-shadow: 0 0 0 18px rgba($root-color, 0);
+@keyframes glow-breathe {
+  50% {
+    opacity: 0.6;
   }
 }
 
-@keyframes ring-spin {
+@keyframes glow-spin {
   to {
-    --ring-angle: 360deg;
+    --glow-angle: 360deg;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .root,
   .root::before,
-  .root::after,
   .root fa-icon {
-    animation: none !important;
+    animation: none;
     transition: none;
   }
 }
@@ -231,16 +216,9 @@ $root-color: #546e7a;
 
   .root {
     position: relative;
-    left: auto;
-    top: auto;
-    transform: none;
+    inset: auto;
+    margin: 0 0 0.5rem;
     align-self: flex-start;
-    margin-bottom: 0.5rem;
-
-    &:hover,
-    &:focus-visible {
-      transform: scale(1.03);
-    }
   }
 }
 
