@@ -98,6 +98,13 @@ describe('ImportService', () => {
     expect(byName(nodes, 'B')?.colors?.branch).toMatch(/^#/);
   });
 
+  it('hands the map a bare node list, so the import leaves it no arrows', async () => {
+    await service.importFromMermaid('mindmap\n  Main\n    A');
+
+    const parsed: unknown = JSON.parse(importMap.mock.calls[0][0]);
+    expect(Array.isArray(parsed)).toBe(true);
+  });
+
   it('replaces nothing when one block fails to parse', async () => {
     const result = await service.importFromMermaid(
       'mindmap\n  Main\n\nmindmap\n  A\n  B'

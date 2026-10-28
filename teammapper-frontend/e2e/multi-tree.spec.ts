@@ -9,13 +9,19 @@ async function readStream(stream: Readable): Promise<string> {
   return Buffer.concat(chunks).toString('utf-8');
 }
 
-/** Exports the map as JSON through the toolbar and parses the download. */
+/**
+ * Exports the map as JSON through the toolbar and returns the nodes of the
+ * downloaded `{ nodes, arrows }` file.
+ */
 async function exportNodes(page: Page): Promise<ExportNodeProperties[]> {
   await page.locator('#menu-export').click();
   const downloadPromise = page.waitForEvent('download');
   await page.locator("button[title='Exports the map as JSON']").click();
   const download = await downloadPromise;
-  return JSON.parse(await readStream(await download.createReadStream()));
+  const file: { nodes: ExportNodeProperties[] } = JSON.parse(
+    await readStream(await download.createReadStream())
+  );
+  return file.nodes;
 }
 
 /**
