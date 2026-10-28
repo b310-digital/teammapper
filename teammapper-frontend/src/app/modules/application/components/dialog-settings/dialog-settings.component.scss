@@ -6,6 +6,10 @@ div.settings-header {
 }
 
 .settings {
+  // The dialog has a fixed height, so the content fills it in place of
+  // Material's 65vh cap and scrolls when a tab runs longer.
+  max-height: none;
+
   div.content {
     mat-card {
       margin-bottom: 20px;
@@ -81,7 +85,8 @@ div.settings-header {
       }
     }
 
-    .language-row {
+    .language-row,
+    .display-name-row {
       mat-form-field {
         width: 100%;
       }
