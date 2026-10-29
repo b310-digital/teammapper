@@ -16,10 +16,12 @@
                   getMapTitle(ownedEntry)
                 }}</a>
               </span>
-              <span matLine>
-                {{ 'PAGES.SETTINGS.TTL' | translate }}:
-                {{ ownedEntry.cachedAdminMapValue.ttl | localizedDate }}
-              </span>
+              @if (ownedEntry.cachedAdminMapValue.ttl !== null) {
+                <span matLine class="map-ttl">
+                  {{ 'PAGES.SETTINGS.TTL' | translate }}:
+                  {{ ownedEntry.cachedAdminMapValue.ttl | localizedDate }}
+                </span>
+              }
               @if (ownedEntry.cachedAdminMapValue.adminId) {
                 <button
                   matListItemMeta
@@ -60,10 +62,12 @@
                 getMapTitle(cachedMapEntry)
               }}</a>
             </span>
-            <span matLine>
-              {{ 'PAGES.SETTINGS.TTL' | translate }}:
-              {{ cachedMapEntry.cachedAdminMapValue.ttl | localizedDate }}
-            </span>
+            @if (cachedMapEntry.cachedAdminMapValue.ttl !== null) {
+              <span matLine class="map-ttl">
+                {{ 'PAGES.SETTINGS.TTL' | translate }}:
+                {{ cachedMapEntry.cachedAdminMapValue.ttl | localizedDate }}
+              </span>
+            }
             @if (cachedMapEntry.cachedAdminMapValue.adminId) {
               <button
                 matListItemMeta

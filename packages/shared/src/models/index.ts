@@ -97,7 +97,9 @@ export interface ClientMap {
   createdAt?: Date | number | string | null;
   lastModified?: Date | number | string | null;
   lastAccessed?: Date | number | string | null;
-  deleteAfterDays?: number;
+  /** Null when the map never expires. */
+  deleteAfterDays?: number | null;
+  /** Null when the map never expires. */
   deletedAt?: Date | number | string | null;
   writable?: boolean;
 }
@@ -227,8 +229,10 @@ export interface CachedMap {
   createdAt: number;
   data: MapSnapshot;
   uuid: string;
-  deleteAfterDays: number;
-  deletedAt: number;
+  /** Null when the map never expires. */
+  deleteAfterDays: number | null;
+  /** Null when the map never expires. */
+  deletedAt: number | null;
   options: CachedMapOptions;
 }
 
@@ -241,7 +245,8 @@ export interface CachedAdminMapValue {
   // Legacy rows carry neither, so the /maps listing sends both as null.
   adminId: string | null;
   modificationSecret: string | null;
-  ttl: Date | number | string;
+  /** Null when the map never expires. */
+  ttl: Date | number | string | null;
   rootName: string | null;
 }
 

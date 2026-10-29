@@ -184,7 +184,7 @@ export const normalizeMapData = (rawMap: unknown): ClientMap => {
     result.lastModified = r.lastModified as Date | number | string;
   if (r.lastAccessed !== undefined)
     result.lastAccessed = r.lastAccessed as Date | number | string;
-  if (typeof r.deleteAfterDays === 'number')
+  if (typeof r.deleteAfterDays === 'number' || r.deleteAfterDays === null)
     result.deleteAfterDays = r.deleteAfterDays;
   if (r.deletedAt !== undefined)
     result.deletedAt = r.deletedAt as Date | number | string;

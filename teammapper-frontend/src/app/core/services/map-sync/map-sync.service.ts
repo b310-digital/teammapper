@@ -262,7 +262,7 @@ export class MapSyncService implements OnDestroy {
       cachedAdminMapValue: {
         adminId: map.adminId,
         modificationSecret: map.modificationSecret,
-        ttl: map.ttl ? new Date(map.ttl) : new Date(),
+        ttl: map.ttl ? new Date(map.ttl) : null,
         rootName: map.rootName,
       },
     }));
@@ -505,7 +505,8 @@ export class MapSyncService implements OnDestroy {
   private convertServerMapToMmp(serverMap: ServerMap): CachedMap {
     return Object.assign({}, serverMap, {
       lastModified: Date.parse(serverMap.lastModified),
-      deletedAt: Date.parse(serverMap.deletedAt),
+      deletedAt:
+        serverMap.deletedAt === null ? null : Date.parse(serverMap.deletedAt),
       createdAt: Date.parse(serverMap.createdAt),
     });
   }
@@ -532,7 +533,8 @@ export class MapSyncService implements OnDestroy {
       serverMap.uuid
     )) as CachedAdminMapValue | null;
     if (map) {
-      map.ttl = new Date(serverMap.deletedAt);
+      map.ttl =
+        serverMap.deletedAt === null ? null : new Date(serverMap.deletedAt);
       map.rootName =
         findMainRoot(serverMap.data)?.name ?? serverMap.data[0]?.name ?? null;
       this.storageService.set(serverMap.uuid, map);

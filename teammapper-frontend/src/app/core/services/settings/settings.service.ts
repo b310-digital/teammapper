@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
   CachedAdminMapEntry,
+  CachedAdminMapValue,
   normalizeDisplayName,
   Settings,
   SUPPORTED_LANGUAGES,
@@ -240,14 +241,19 @@ export class SettingsService {
       })
       .filter(
         (result: CachedAdminMapEntry) =>
-          new Date(result.cachedAdminMapValue.ttl).getTime() > Date.now()
+          this.expiryTime(result.cachedAdminMapValue.ttl) > Date.now()
       )
       .sort(
         (a, b) =>
-          new Date(b.cachedAdminMapValue.ttl).getTime() -
-          new Date(a.cachedAdminMapValue.ttl).getTime()
+          this.expiryTime(b.cachedAdminMapValue.ttl) -
+          this.expiryTime(a.cachedAdminMapValue.ttl)
       )
       .slice(0, 100);
+  }
+
+  /** A map without a deletion date never expires. */
+  private expiryTime(ttl: CachedAdminMapValue['ttl']): number {
+    return ttl === null ? Infinity : new Date(ttl).getTime();
   }
 
   /**

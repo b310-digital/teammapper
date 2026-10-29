@@ -20,13 +20,17 @@ describe('MindmapsOverview', () => {
   let toastrService: { success: jest.Mock; error: jest.Mock };
   let router: { url: string; navigate: jest.Mock; createUrlTree: jest.Mock };
 
-  function entry(id: string, adminId: string | null): CachedAdminMapEntry {
+  function entry(
+    id: string,
+    adminId: string | null,
+    ttl: Date | null = new Date('2099-01-01')
+  ): CachedAdminMapEntry {
     return {
       id,
       cachedAdminMapValue: {
         adminId,
         modificationSecret: null,
-        ttl: new Date('2099-01-01'),
+        ttl,
         rootName: id,
       },
     };
@@ -79,6 +83,18 @@ describe('MindmapsOverview', () => {
   afterEach(() => {
     TestBed.resetTestingModule();
     jest.restoreAllMocks();
+  });
+
+  it('shows the deletion date of a map that has one', async () => {
+    await render([entry('map-1', 'admin-1')]);
+
+    expect(fixture.nativeElement.querySelectorAll('.map-ttl')).toHaveLength(2);
+  });
+
+  it('shows no deletion date for a map without one', async () => {
+    await render([entry('map-1', 'admin-1', null)]);
+
+    expect(fixture.nativeElement.querySelectorAll('.map-ttl')).toHaveLength(0);
   });
 
   it('shows a delete button only for maps with an admin id', async () => {
