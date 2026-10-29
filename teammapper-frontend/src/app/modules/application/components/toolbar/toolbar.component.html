@@ -115,14 +115,16 @@
     </button>
   </mat-menu>
 
-  <button
-    id="share-button"
-    (click)="share()"
-    [title]="'TOOLTIPS.SHARE' | translate"
-    color="primary"
-    mat-icon-button>
-    <mat-icon>share</mat-icon>
-  </button>
+  @if (featureFlagSharing) {
+    <button
+      id="share-button"
+      (click)="share()"
+      [title]="'TOOLTIPS.SHARE' | translate"
+      color="primary"
+      mat-icon-button>
+      <mat-icon>share</mat-icon>
+    </button>
+  }
 
   <div class="vertical-line">
     <div></div>

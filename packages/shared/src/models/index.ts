@@ -143,6 +143,8 @@ export interface SystemFeatureFlags {
    * removing, syncing and exporting arrows work without it.
    */
   arrows: boolean;
+  /** Shows the share button and opens the share dialog, which duplicates maps. */
+  sharing: boolean;
 }
 
 export interface SystemSettings {

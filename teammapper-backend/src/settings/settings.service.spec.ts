@@ -17,7 +17,7 @@ const defaultSettings: Settings = {
       pictogramApiUrl: 'https://api.example.com',
       pictogramStaticUrl: 'https://static.example.com',
     },
-    featureFlags: { pictograms: true, ai: false, arrows: false },
+    featureFlags: { pictograms: true, ai: false, arrows: false, sharing: true },
   },
   userSettings: {
     general: { language: 'en', darkMode: false, displayName: '' },
@@ -160,7 +160,12 @@ describe('SettingsService', () => {
         ...defaultSettings,
         systemSettings: {
           ...defaultSettings.systemSettings,
-          featureFlags: { pictograms: true, ai: true, arrows: false },
+          featureFlags: {
+            pictograms: true,
+            ai: true,
+            arrows: false,
+            sharing: true,
+          },
         },
       }
       mockedFs.readFileSync.mockReturnValue(JSON.stringify(settingsWithFlags))
@@ -172,7 +177,23 @@ describe('SettingsService', () => {
         pictograms: true,
         ai: false,
         arrows: false,
+        sharing: true,
       })
+    })
+
+    it('should turn the sharing flag off through the override file', () => {
+      const overrideSettings = {
+        systemSettings: { featureFlags: { sharing: false } },
+      }
+      mockedFs.existsSync.mockReturnValue(true)
+      mockedFs.statSync.mockReturnValue({ size: 100 } as fs.Stats)
+      mockedFs.readFileSync
+        .mockReturnValueOnce(JSON.stringify(defaultSettings))
+        .mockReturnValueOnce(JSON.stringify(overrideSettings))
+
+      const settings = service.getSettings()
+
+      expect(settings.systemSettings.featureFlags.sharing).toBe(false)
     })
 
     it('should turn the arrows flag on through the override file', () => {
