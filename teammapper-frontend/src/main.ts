@@ -19,9 +19,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { RootComponent } from './app/root.component';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withHashLocation } from '@angular/router';
 import { rootRoutes } from './app/root.routes';
 import { provideRemoteMapBackend } from './app/core/services/map-backend/remote/remote-map-backend.providers';
+import { provideLocalMapBackend } from './app/core/services/map-backend/local/local-map-backend.providers';
 
 if (environment.production) {
   enableProdMode();
@@ -39,8 +40,13 @@ bootstrapApplication(RootComponent, {
       prefix: './assets/i18n/',
       suffix: '.json',
     }),
-    provideRouter(rootRoutes),
-    provideRemoteMapBackend(),
+    // A static host has no rewrite rules, so the offline build keeps the
+    // route in the hash.
+    provideRouter(
+      rootRoutes,
+      ...(TEAMMAPPER_OFFLINE ? [withHashLocation()] : [])
+    ),
+    TEAMMAPPER_OFFLINE ? provideLocalMapBackend() : provideRemoteMapBackend(),
     {
       provide: APP_INITIALIZER,
       useFactory: appSettingsFactory,

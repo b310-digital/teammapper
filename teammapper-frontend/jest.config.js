@@ -30,6 +30,8 @@ module.exports = {
     '^@teammapper/mmp$': '<rootDir>/src/test/mocks/mmp.ts',
   },
   testEnvironment: 'jsdom',
+  // The Angular build replaces this constant; the tests run the web build.
+  globals: { TEAMMAPPER_OFFLINE: false },
   transformIgnorePatterns: [
     // `.pnpm` must be allowed through, otherwise this pattern matches at pnpm's
     // `/node_modules/.pnpm/` segment and the ESM-only packages are never transformed.

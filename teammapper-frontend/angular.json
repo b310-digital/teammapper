@@ -33,7 +33,10 @@
             ],
             "scripts": [],
             "serviceWorker": false,
-            "browser": "src/main.ts"
+            "browser": "src/main.ts",
+            "define": {
+              "TEAMMAPPER_OFFLINE": "false"
+            }
           },
           "configurations": {
             "production": {
@@ -69,6 +72,15 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
+            },
+            "offline": {
+              "define": {
+                "TEAMMAPPER_OFFLINE": "true"
+              },
+              "baseHref": "./",
+              "outputPath": {
+                "base": "dist-offline"
+              }
             }
           }
         },
@@ -93,6 +105,9 @@
             },
             "development": {
               "buildTarget": "teammapper:build:development"
+            },
+            "offline": {
+              "buildTarget": "teammapper:build:development,offline"
             }
           },
           "defaultConfiguration": "development"
@@ -112,7 +127,12 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html", "e2e/**/*.ts"]
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html",
+              "e2e/**/*.ts",
+              "scripts/**/*.ts"
+            ]
           }
         }
       }

@@ -2,6 +2,8 @@
 
 # compiled output
 /dist
+/dist-offline
+/src/assets/settings.offline.json
 /tmp
 /out-tsc
 /builds

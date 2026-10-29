@@ -1,0 +1,12 @@
+{
+  "systemSettings": {
+    "info": {
+      "aiModel": null
+    },
+    "featureFlags": {
+      "sharing": false,
+      "pictograms": false,
+      "ai": false
+    }
+  }
+}
