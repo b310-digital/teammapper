@@ -1,3 +1,10 @@
+import { Type } from '@angular/core';
+import {
+  APP_BASE_HREF,
+  HashLocationStrategy,
+  LocationStrategy,
+  PathLocationStrategy,
+} from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -37,7 +44,8 @@ describe('MindmapsOverview', () => {
   async function render(
     entries: CachedAdminMapEntry[],
     attachedMap: CachedMapEntry | null = null,
-    deleted = true
+    deleted = true,
+    locationStrategy: Type<LocationStrategy> = PathLocationStrategy
   ) {
     mapSyncService = {
       getAttachedMapObservable: jest.fn(() => new BehaviorSubject(attachedMap)),
@@ -51,7 +59,7 @@ describe('MindmapsOverview', () => {
     router = {
       url: '/map/map-1',
       navigate: jest.fn(),
-      createUrlTree: jest.fn(() => ({ toString: () => '/map' })),
+      createUrlTree: jest.fn(([path]: string[]) => ({ toString: () => path })),
     };
 
     await TestBed.configureTestingModule({
@@ -66,6 +74,8 @@ describe('MindmapsOverview', () => {
         { provide: StorageService, useValue: storageService },
         { provide: ToastrService, useValue: toastrService },
         { provide: Router, useValue: router },
+        { provide: APP_BASE_HREF, useValue: '/' },
+        { provide: LocationStrategy, useClass: locationStrategy },
       ],
     }).compileComponents();
 
@@ -79,6 +89,12 @@ describe('MindmapsOverview', () => {
     return Array.from(
       fixture.nativeElement.querySelectorAll('.delete-map-button')
     );
+  }
+
+  function mapLinks(): (string | null)[] {
+    return Array.from<HTMLAnchorElement>(
+      fixture.nativeElement.querySelectorAll('a')
+    ).map(link => link.getAttribute('href'));
   }
 
   afterEach(() => {
@@ -96,6 +112,18 @@ describe('MindmapsOverview', () => {
     await render([entry('map-1', 'admin-1', null)]);
 
     expect(fixture.nativeElement.querySelectorAll('.map-ttl')).toHaveLength(0);
+  });
+
+  it('links a map by its path in the web build', async () => {
+    await render([entry('map-1', 'admin-1')]);
+
+    expect(mapLinks()).toEqual(['/map/map-1', '/map/map-1']);
+  });
+
+  it('links a map through the hash in the offline build', async () => {
+    await render([entry('map-1', 'admin-1')], null, true, HashLocationStrategy);
+
+    expect(mapLinks()).toEqual(['#/map/map-1', '#/map/map-1']);
   });
 
   it('shows a delete button only for maps with an admin id', async () => {
