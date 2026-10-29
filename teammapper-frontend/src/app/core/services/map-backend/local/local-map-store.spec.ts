@@ -1,6 +1,8 @@
 import '../../../../../test/fake-indexeddb';
 import { TestBed } from '@angular/core/testing';
 import localforage from 'localforage';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { ToastrService } from 'ngx-toastr';
 import { v4 as uuidv4 } from 'uuid';
 import * as Y from 'yjs';
@@ -281,27 +283,81 @@ describe('LocalMapStore', () => {
       expect(await images.length()).toBe(1);
     });
 
-    // The record goes last, so a failed deletion leaves the map listed.
-    it('keeps the record when the content cannot be deleted', async () => {
-      const { map, adminId } = await store.createMap(ROOT_NODE);
+    it('keeps all content when the record cannot be deleted, and allows a retry', async () => {
+      const { map, adminId, modificationSecret } =
+        await store.createMap(ROOT_NODE);
+      const image = new Blob(
+        [
+          readFileSync(
+            join(__dirname, '../../../../../assets/icons/teammapper.svg'),
+            'utf8'
+          ),
+        ],
+        { type: 'image/svg+xml' }
+      );
+      await store.uploadImage(map.uuid, image, '');
+      const keys = await images.keys();
+      const remove = jest
+        .spyOn(IDBObjectStore.prototype, 'delete')
+        .mockImplementationOnce(() => {
+          throw new DOMException('Blocked', 'UnknownError');
+        });
+
+      expect(await store.deleteMap(map.uuid, adminId)).toBe(false);
+      remove.mockRestore();
+
+      const reloaded = TestBed.runInInjectionContext(() => new LocalMapStore());
+      expect((await reloaded.listMaps()).map(entry => entry.id)).toEqual([
+        map.uuid,
+      ]);
+      expect(
+        (await reloaded.getMap(map.uuid, modificationSecret))?.data
+      ).toEqual(map.data);
+      expect(await images.keys()).toEqual(keys);
+      expect(await store.deleteMap(map.uuid, adminId)).toBe(true);
+      expect(await records.keys()).toEqual([]);
+      expect(await images.keys()).toEqual([]);
+    });
+
+    it('commits deletion even when content cleanup fails', async () => {
+      const { map, adminId, modificationSecret } =
+        await store.createMap(ROOT_NODE);
       const persistence = await store.docPersistence();
       jest.spyOn(persistence, 'delete').mockRejectedValue(new Error('Blocked'));
 
-      expect(await store.deleteMap(map.uuid, adminId)).toBe(false);
+      expect(await store.deleteMap(map.uuid, adminId)).toBe(true);
 
-      expect(await records.keys()).toEqual([map.uuid]);
+      expect(await store.listMaps()).toEqual([]);
+      expect(await store.getMap(map.uuid, modificationSecret)).toBeNull();
     });
 
-    it('keeps the record when the images cannot be deleted', async () => {
-      const { map, adminId } = await store.createMap(ROOT_NODE);
-      await store.uploadImage(map.uuid, imageOfSize(10), '');
-      jest.spyOn(IDBObjectStore.prototype, 'delete').mockImplementation(() => {
-        throw new DOMException('Blocked', 'UnknownError');
-      });
+    it('commits deletion even when image cleanup fails', async () => {
+      const { map, adminId, modificationSecret } =
+        await store.createMap(ROOT_NODE);
+      const image = new Blob(
+        [
+          readFileSync(
+            join(__dirname, '../../../../../assets/icons/teammapper.svg'),
+            'utf8'
+          ),
+        ],
+        { type: 'image/svg+xml' }
+      );
+      await store.uploadImage(map.uuid, image, '');
+      const originalDelete = IDBObjectStore.prototype.delete;
+      jest
+        .spyOn(IDBObjectStore.prototype, 'delete')
+        .mockImplementation(function (this: IDBObjectStore, key) {
+          if (this.name === 'images')
+            throw new DOMException('Blocked', 'UnknownError');
+          return originalDelete.call(this, key);
+        });
 
-      expect(await store.deleteMap(map.uuid, adminId)).toBe(false);
+      expect(await store.deleteMap(map.uuid, adminId)).toBe(true);
 
-      expect(await records.keys()).toEqual([map.uuid]);
+      expect(await store.listMaps()).toEqual([]);
+      expect(await store.getMap(map.uuid, modificationSecret)).toBeNull();
+      expect(await databaseNames()).not.toContain(mapDatabaseName(map.uuid));
     });
   });
 

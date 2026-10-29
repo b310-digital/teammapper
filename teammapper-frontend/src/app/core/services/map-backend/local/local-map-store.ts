@@ -351,19 +351,35 @@ export class LocalMapStore implements MapStore {
   }
 
   /**
-   * Deletes the content and the images before the record, so a failed
-   * deletion leaves the map listed for another try.
+   * Commits deletion by removing the record before touching content. If that
+   * fails, the listed map stays intact. Cleanup after the commit is best
+   * effort: a failure may leave unused storage, but cannot leave a listed
+   * map with missing content or report a committed deletion as failed.
    */
   private async removeMap(uuid: string): Promise<void> {
     this.deletedMaps.add(uuid);
     try {
-      await (await this.docPersistence()).delete(uuid);
-      const keys = await this.imageKeysOf(uuid);
-      await Promise.all(keys.map(key => this.images.removeItem(key)));
       await this.maps.removeItem(uuid);
     } catch (error) {
       this.deletedMaps.delete(uuid);
       throw error;
+    }
+    const cleanup = await Promise.allSettled([
+      this.docPersistence().then(persistence => persistence.delete(uuid)),
+      this.imageKeysOf(uuid).then(keys =>
+        Promise.allSettled(keys.map(key => this.images.removeItem(key))).then(
+          results => {
+            for (const result of results) {
+              if (result.status === 'rejected') throw result.reason;
+            }
+          }
+        )
+      ),
+    ]);
+    for (const result of cleanup) {
+      if (result.status === 'rejected') {
+        console.error('Failed to clean up the deleted map:', result.reason);
+      }
     }
   }
 
