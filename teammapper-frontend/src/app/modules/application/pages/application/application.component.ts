@@ -8,6 +8,7 @@ import { UtilsService } from '../../../../core/services/utils/utils.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { ServerMap } from 'src/app/core/services/map-sync/server-types';
+import { ReportedMapStoreError } from 'src/app/core/services/map-backend/map-store';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import { ColorPanelsComponent } from '../../components/color-panels/color-panels.component';
 import { ClientColorPanelsComponent } from '../../components/client-color-panels/client-color-panels.component';
@@ -114,11 +115,15 @@ export class ApplicationComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    const existingMap = await this.mapSyncService.prepareExistingMap(
-      mapId,
-      modificationSecret
-    );
+    const existingMap = await this.mapSyncService
+      .prepareExistingMap(mapId, modificationSecret)
+      .catch((error: unknown) => {
+        // The map store has told the visitor why, so initMap only leaves.
+        if (error instanceof ReportedMapStoreError) return undefined;
+        throw error;
+      });
 
+    if (existingMap === undefined) return null;
     if (!existingMap) {
       const errorMessage = await this.utilsService.translate(
         'TOASTS.ERRORS.MAP_COULD_NOT_BE_FOUND'

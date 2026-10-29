@@ -270,7 +270,9 @@
       "AI_MERMAID_ERROR": "Mermaidを生成できませんでした",
       "IMAGE_STORAGE_FULL": "このマインドマップの画像ストレージがいっぱいです。削除した画像の容量は、アップロードから7日以内に解放されます。",
       "IMAGE_UPLOAD_ERROR": "画像をアップロードできませんでした。",
-      "DELETE_MAP_ERROR": "マインドマップを削除できませんでした。"
+      "DELETE_MAP_ERROR": "マインドマップを削除できませんでした。",
+      "BROWSER_STORAGE_FAILED": "このブラウザのストレージにマインドマップを保存できませんでした。",
+      "BROWSER_STORAGE_NEWER_FORMAT": "このブラウザのマインドマップは新しいバージョンの TeamMapper で保存されたため、開くことができません。"
     },
     "DELETE_MAP_SUCCESS": "マインドマップを削除しました！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaidを生成しました！",

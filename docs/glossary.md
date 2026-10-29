@@ -386,6 +386,12 @@ A switch that configures the app from outside its data: an environment
 variable, a feature flag or a command-line option. A value stored on a node or
 a map is an attribute.
 
+### Format number
+
+The version of the data the offline build stores in a browser. The build
+stamps the number it writes on first access, and refuses to read or change data
+that carries a higher number, which a later build wrote.
+
 ### Map data
 
 The nodes of one mind map as every client shares them. The app draws the map

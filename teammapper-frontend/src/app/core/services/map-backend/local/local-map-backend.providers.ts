@@ -3,34 +3,44 @@ import {
   MAP_CONNECTION_FACTORY,
   MapConnectionFactory,
 } from '../map-connection';
-import { MAP_STORE, MapStore } from '../map-store';
+import { MAP_STORE } from '../map-store';
 import { OFFLINE_MODE, SETTINGS_URL } from '../map-backend-config';
+import { LocalMapConnection } from './local-map-connection';
+import { LocalMapStore } from './local-map-store';
+import { Y_INDEXEDDB_LOADER, YIndexeddbLoader } from './doc-persistence';
 
-const notImplemented = 'Browser storage for maps is not implemented yet';
+/**
+ * Opens connections that keep the doc where the store keeps it. The store
+ * watches the open map until its connection closes, to keep the map's record
+ * current.
+ */
+const connectLocally =
+  (store: LocalMapStore): MapConnectionFactory =>
+  (mapId, doc) =>
+    new LocalMapConnection(
+      mapId,
+      doc,
+      () => store.docPersistence(),
+      store.watchMap(mapId, doc)
+    );
 
-const rejectAll = (): Promise<never> =>
-  Promise.reject(new Error(notImplemented));
-
-/** Placeholder until the map store on browser storage exists. */
-const unimplementedMapStore: MapStore = {
-  createMap: rejectAll,
-  getMap: rejectAll,
-  listMaps: rejectAll,
-  deleteMap: rejectAll,
-  uploadImage: rejectAll,
-  imageUrl: () => null,
-};
-
-/** Placeholder until the map connection on browser storage exists. */
-const unimplementedConnection: MapConnectionFactory = () => {
-  throw new Error(notImplemented);
-};
-
-/** Keeps maps in the browser and reads the bundled default settings. */
-export function provideLocalMapBackend(): EnvironmentProviders {
+/**
+ * Keeps maps in the browser and reads the bundled default settings.
+ *
+ * @param loadYIndexeddb loads y-indexeddb on first use
+ */
+export function provideLocalMapBackend(
+  loadYIndexeddb: YIndexeddbLoader
+): EnvironmentProviders {
   return makeEnvironmentProviders([
-    { provide: MAP_STORE, useValue: unimplementedMapStore },
-    { provide: MAP_CONNECTION_FACTORY, useValue: unimplementedConnection },
+    { provide: Y_INDEXEDDB_LOADER, useValue: loadYIndexeddb },
+    LocalMapStore,
+    { provide: MAP_STORE, useExisting: LocalMapStore },
+    {
+      provide: MAP_CONNECTION_FACTORY,
+      useFactory: connectLocally,
+      deps: [LocalMapStore],
+    },
     { provide: SETTINGS_URL, useValue: 'assets/settings.offline.json' },
     { provide: OFFLINE_MODE, useValue: true },
   ]);
