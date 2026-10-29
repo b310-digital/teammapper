@@ -7,16 +7,19 @@
     </mat-card-header>
     <hr />
     <mat-card-content>
-      <p>
-        {{
-          'PAGES.SETTINGS.DELETE_AFTER_DAYS'
-            | translate: { deleteAfterDays: attached.cachedMap.deleteAfterDays }
-        }}
-      </p>
-      <p class="deleted-at">
-        {{ 'PAGES.SETTINGS.DELETED_AT' | translate }}
-        {{ attached.cachedMap.deletedAt | localizedDate }}
-      </p>
+      @if (attached.cachedMap.deletedAt !== null) {
+        <p class="delete-after-days">
+          {{
+            'PAGES.SETTINGS.DELETE_AFTER_DAYS'
+              | translate
+                : { deleteAfterDays: attached.cachedMap.deleteAfterDays }
+          }}
+        </p>
+        <p class="deleted-at">
+          {{ 'PAGES.SETTINGS.DELETED_AT' | translate }}
+          {{ attached.cachedMap.deletedAt | localizedDate }}
+        </p>
+      }
     </mat-card-content>
     @if (mapAdminId | async) {
       <mat-card-actions>

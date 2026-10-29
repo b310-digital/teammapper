@@ -94,4 +94,17 @@ describe('normalizeMapData', () => {
     expect(map.options.fontMaxSize).toBe(24);
     expect(map.deleteAfterDays).toBe(30);
   });
+
+  it('keeps a null deletion date and null deleteAfterDays as null', () => {
+    const map = normalizeMapData({
+      uuid: 'map-uuid-1',
+      data: [{ id: 'root', parent: null, name: 'Root' }],
+      options: {},
+      deleteAfterDays: null,
+      deletedAt: null,
+    });
+
+    expect(map.deleteAfterDays).toBeNull();
+    expect(map.deletedAt).toBeNull();
+  });
 });

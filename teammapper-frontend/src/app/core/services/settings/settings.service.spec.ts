@@ -89,6 +89,27 @@ describe('SettingsService', () => {
     expect(storageService.getAllCreatedMapsFromStorage).toHaveBeenCalled();
   });
 
+  it('keeps maps without a deletion date and lists them first', async () => {
+    const neverExpires: CachedAdminMapValue = {
+      ttl: null,
+      modificationSecret: '456',
+      adminId: '123',
+      rootName: 'test',
+    };
+    const expiring: CachedAdminMapValue = {
+      ...neverExpires,
+      ttl: new Date(Date.now() + 86400000),
+    };
+    storageService.getAllCreatedMapsFromStorage.mockResolvedValue([
+      ['789', expiring],
+      ['123', neverExpires],
+    ]);
+
+    const result = await settingsService.getCachedAdminMapEntries();
+
+    expect(result.map(entry => entry.id)).toEqual(['123', '789']);
+  });
+
   it('returns sorted cached maps from storage', async () => {
     // Setup
     const futureDateOne = new Date();

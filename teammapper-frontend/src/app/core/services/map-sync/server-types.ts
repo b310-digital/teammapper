@@ -10,12 +10,12 @@ interface ServerMap extends Omit<
   ClientMap,
   'data' | 'options' | 'createdAt' | 'lastModified' | 'deletedAt'
 > {
-  deleteAfterDays: number;
+  deleteAfterDays: number | null;
   data: MapSnapshot;
   options: CachedMapOptions;
   createdAt: string;
   lastModified: string;
-  deletedAt: string;
+  deletedAt: string | null;
 }
 
 interface PrivateServerMap extends Omit<ClientPrivateMap, 'map'> {

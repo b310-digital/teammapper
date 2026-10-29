@@ -77,6 +77,29 @@ describe('MapDeletionComponent', () => {
     ).toContain('28.10.2026');
   });
 
+  it('shows no deletion text for a map without a deletion date', async () => {
+    await render(
+      {
+        key: 'map-1',
+        cachedMap: { uuid: 'map-1', deleteAfterDays: null, deletedAt: null },
+      } as CachedMapEntry,
+      null
+    );
+
+    expect(fixture.nativeElement.querySelector('.deleted-at')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('.delete-after-days')
+    ).toBeNull();
+  });
+
+  it('shows the delete after days text with a deletion date', async () => {
+    await render(attachedMap, null);
+
+    expect(
+      fixture.nativeElement.querySelector('.delete-after-days')
+    ).not.toBeNull();
+  });
+
   it('renders nothing while no map is attached', async () => {
     await render(null, null);
 
