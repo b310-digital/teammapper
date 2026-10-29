@@ -5,8 +5,7 @@ import {
   MapConnectionFactory,
 } from '../map-connection';
 import { MAP_STORE } from '../map-store';
-import { OFFLINE_MODE } from '../offline-mode';
-import { SETTINGS_URL } from '../settings-url';
+import { OFFLINE_MODE, SETTINGS_URL } from '../map-backend-config';
 import { RemoteMapStore } from './remote-map-store';
 import { WebsocketMapConnection } from './websocket-map-connection';
 

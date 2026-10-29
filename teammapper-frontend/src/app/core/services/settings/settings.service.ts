@@ -13,7 +13,7 @@ import {
   UserSettings,
 } from '@teammapper/shared';
 import { HttpService } from '../../http/http.service';
-import { SETTINGS_URL } from '../map-backend/settings-url';
+import { SETTINGS_URL } from '../map-backend/map-backend-config';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
 /** `getLanguage` returns this when no user settings are cached. */

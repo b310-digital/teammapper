@@ -8,7 +8,7 @@ import { StorageService } from '../storage/storage.service';
 import { SettingsService } from './settings.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
-import { SETTINGS_URL } from '../map-backend/settings-url';
+import { SETTINGS_URL } from '../map-backend/map-backend-config';
 
 describe('SettingsService', () => {
   let settingsService: SettingsService;
