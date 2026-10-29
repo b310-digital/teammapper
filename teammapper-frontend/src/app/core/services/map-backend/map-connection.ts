@@ -1,13 +1,7 @@
 import { InjectionToken } from '@angular/core';
-import type { WebsocketProvider } from 'y-websocket';
+import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 import { ConnectionStatus } from '../map-sync/map-sync-context';
-
-/**
- * The presence state of the clients on a map. The type comes from
- * y-protocols, which the frontend reaches only through y-websocket.
- */
-export type Awareness = WebsocketProvider['awareness'];
 
 /**
  * Carries the Y.Doc of the open map and the presence of its clients. A

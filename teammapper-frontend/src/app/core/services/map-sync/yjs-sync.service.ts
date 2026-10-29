@@ -19,8 +19,8 @@ import { MmpService } from '../mmp/mmp.service';
 import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
+import type { Awareness } from 'y-protocols/awareness';
 import {
-  Awareness,
   MapConnection,
   MapConnectionFactory,
 } from '../map-backend/map-connection';

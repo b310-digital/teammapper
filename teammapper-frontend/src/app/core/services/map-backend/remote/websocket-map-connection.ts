@@ -2,7 +2,8 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { buildYjsProtocols, buildYjsWsUrl } from '../../map-sync/yjs-utils';
 import { ConnectionStatus } from '../../map-sync/map-sync-context';
-import { Awareness, MapConnection } from '../map-connection';
+import type { Awareness } from 'y-protocols/awareness';
+import { MapConnection } from '../map-connection';
 
 /**
  * Keeps the Y.Doc of a map in sync with the backend over a Yjs websocket. The
