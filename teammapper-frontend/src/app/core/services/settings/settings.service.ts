@@ -12,7 +12,8 @@ import {
   UserMapOptions,
   UserSettings,
 } from '@teammapper/shared';
-import { API_URL, HttpService } from '../../http/http.service';
+import { HttpService } from '../../http/http.service';
+import { SETTINGS_URL } from '../map-backend/settings-url';
 import { STORAGE_KEYS, StorageService } from '../storage/storage.service';
 
 /** `getLanguage` returns this when no user settings are cached. */
@@ -32,6 +33,7 @@ export class SettingsService {
   private document = inject(DOCUMENT);
   private storageService = inject(StorageService);
   private httpService = inject(HttpService);
+  private settingsUrl = inject(SETTINGS_URL);
   private translateService = inject(TranslateService);
 
   public static readonly LANGUAGES = [...SUPPORTED_LANGUAGES];
@@ -288,7 +290,7 @@ export class SettingsService {
    * Return the default settings.
    */
   public async getDefaultSettings(): Promise<Settings> {
-    const response = await this.httpService.get(API_URL.ROOT, '/settings');
+    const response = await this.httpService.getUrl(this.settingsUrl);
     return await response.json();
   }
 }

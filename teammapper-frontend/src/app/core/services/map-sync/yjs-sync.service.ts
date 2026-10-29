@@ -15,15 +15,17 @@ import {
   WS_CLOSE_MAP_SYNC_RESET,
 } from '@teammapper/shared';
 import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
 import { MmpService } from '../mmp/mmp.service';
 import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import {
+  Awareness,
+  MapConnection,
+  MapConnectionFactory,
+} from '../map-backend/map-connection';
+import {
   ClientColorMapping,
-  buildYjsWsUrl,
-  buildYjsProtocols,
   resolveClientColor,
   findAffectedNodes,
   ArrowsMap,
@@ -61,16 +63,16 @@ export const ATTACHED_MAP_AUDIT_MS = 250;
 export const PRESENCE_THROTTLE_MS = 200;
 
 /**
- * Keeps one open map in sync with the other clients over a Yjs websocket.
- * The Y.Doc holds the only copy of the map, and mmp reads and writes it
- * through `YjsMapData`. The service owns the connection, presence, the undo
- * manager and the import notice. `MapSyncService` calls `initMap` and then
- * `attachMap`.
+ * Keeps one open map in sync with the other clients over a `MapConnection`
+ * from the injected factory. The Y.Doc holds the only copy of the map, and
+ * mmp reads and writes it through `YjsMapData`. The service owns the
+ * connection, presence, the undo manager and the import notice.
+ * `MapSyncService` calls `initMap` and then `attachMap`.
  */
 export class YjsSyncService {
   private yDoc: Y.Doc | null = null;
   private yjsMapData: YjsMapData | null = null;
-  private wsProvider: WebsocketProvider | null = null;
+  private mapConnection: MapConnection | null = null;
   private yjsSynced = false;
   private yjsWritable = false;
   private yjsSubscriptions: Subscription[] = [];
@@ -92,7 +94,8 @@ export class YjsSyncService {
     private mmpService: MmpService,
     private settingsService: SettingsService,
     private utilsService: UtilsService,
-    private toastrService: ToastrService
+    private toastrService: ToastrService,
+    private connectionFactory: MapConnectionFactory
   ) {
     // The throttle sends the first change at once. For further changes within
     // the interval, the throttle sends one update with the selection at the
@@ -139,14 +142,12 @@ export class YjsSyncService {
     return this.yjsMapData;
   }
 
-  /**
-   * The websocket provider of the open connection. initMap creates it.
-   */
-  private get provider(): WebsocketProvider {
-    if (!this.wsProvider) {
-      throw new Error('The map connection has no websocket provider');
+  /** The open connection. initMap creates it. */
+  private get connection(): MapConnection {
+    if (!this.mapConnection) {
+      throw new Error('The map has no open connection');
     }
-    return this.wsProvider;
+    return this.mapConnection;
   }
 
   // ─── Public API ─────────────────────────────────────────────
@@ -193,9 +194,9 @@ export class YjsSyncService {
     // swap in a new object that no transaction's `changed` list contains.
     this.yDoc.getMap(META);
     this.yjsMapData = new YjsMapData(this.yDoc, () => this.yUndoManager);
-    const provider = this.setupConnection(uuid);
-    this.setupConnectionStatus(provider);
-    this.setupMapCloseHandler(provider);
+    const connection = this.setupConnection(uuid);
+    this.setupConnectionStatus(connection);
+    this.setupMapCloseHandler(connection);
   }
 
   /**
@@ -214,34 +215,31 @@ export class YjsSyncService {
     this.settingsService.setEditMode(this.yjsWritable);
   }
 
-  private setupConnection(mapId: string): WebsocketProvider {
-    const wsUrl = buildYjsWsUrl();
-    const provider = new WebsocketProvider(wsUrl, mapId, this.doc, {
-      protocols: buildYjsProtocols(this.ctx.getModificationSecret()),
-      maxBackoffTime: 5000,
-      disableBc: true,
-    });
-    this.wsProvider = provider;
+  private setupConnection(mapId: string): MapConnection {
+    const connection = this.connectionFactory(
+      mapId,
+      this.doc,
+      this.ctx.getModificationSecret()
+    );
+    this.mapConnection = connection;
 
-    provider.on('sync', (synced: boolean) => {
-      if (!this.isCurrentProvider(provider)) return;
-      if (synced && !this.yjsSynced) {
-        this.handleFirstSync();
-      }
+    connection.onSynced(() => {
+      if (!this.isCurrentConnection(connection)) return;
+      if (!this.yjsSynced) this.handleFirstSync();
     });
 
-    return provider;
+    return connection;
   }
 
   /**
-   * Whether this provider is still the open connection. destroy() clears
-   * `wsProvider` before it disconnects, and disconnecting emits both 'status'
-   * and 'connection-close'. Those events therefore arrive for a provider that
-   * is already gone, and acting on them reports the map we just left as
-   * disconnected.
+   * Whether this connection is still the open one. destroy() clears
+   * `mapConnection` before it destroys the connection, and the websocket
+   * connection reports a status and a close while it disconnects. Those
+   * events therefore arrive for a connection that is already gone, and acting
+   * on them reports the map we just left as disconnected.
    */
-  private isCurrentProvider(provider: WebsocketProvider): boolean {
-    return this.wsProvider === provider;
+  private isCurrentConnection(connection: MapConnection): boolean {
+    return this.mapConnection === connection;
   }
 
   /**
@@ -279,24 +277,17 @@ export class YjsSyncService {
     undoManager.on('stack-cleared', updateUndoRedoState);
   }
 
-  private setupConnectionStatus(provider: WebsocketProvider): void {
-    provider.on(
-      'status',
-      (event: { status: 'connected' | 'disconnected' | 'connecting' }) => {
-        if (!this.isCurrentProvider(provider)) return;
-        if (event.status === 'connected') {
-          this.ctx.setConnectionStatus('connected');
-        } else if (event.status === 'disconnected') {
-          this.ctx.setConnectionStatus('disconnected');
-        }
-      }
-    );
+  private setupConnectionStatus(connection: MapConnection): void {
+    connection.onStatus(status => {
+      if (!this.isCurrentConnection(connection)) return;
+      this.ctx.setConnectionStatus(status);
+    });
   }
 
-  private setupMapCloseHandler(provider: WebsocketProvider): void {
-    provider.on('connection-close', (event: CloseEvent | null) => {
-      if (!this.isCurrentProvider(provider)) return;
-      if (event?.code === WS_CLOSE_MAP_SYNC_RESET && this.yjsMapId) {
+  private setupMapCloseHandler(connection: MapConnection): void {
+    connection.onClosed(code => {
+      if (!this.isCurrentConnection(connection)) return;
+      if (code === WS_CLOSE_MAP_SYNC_RESET && this.yjsMapId) {
         const mapId = this.yjsMapId;
         const writable = this.yjsWritable;
         this.settingsService.setEditMode(false);
@@ -305,7 +296,7 @@ export class YjsSyncService {
         this.setWritable(writable);
         this.initMap(mapId);
         this.ctx.setConnectionStatus('disconnected');
-      } else if (event?.code === WS_CLOSE_MAP_DELETED) {
+      } else if (code === WS_CLOSE_MAP_DELETED) {
         this.ctx.mapDeleted();
         window.location.reload();
       }
@@ -341,12 +332,9 @@ export class YjsSyncService {
   }
 
   private destroyConnection(): void {
-    const provider = this.wsProvider;
-    this.wsProvider = null;
-    if (provider) {
-      provider.disconnect();
-      provider.destroy();
-    }
+    const connection = this.mapConnection;
+    this.mapConnection = null;
+    connection?.destroy();
     this.yjsMapData?.destroy();
     this.yjsMapData = null;
     this.yDoc?.destroy();
@@ -360,8 +348,8 @@ export class YjsSyncService {
       optionsMap.unobserve(this.yjsOptionsObserver);
       this.yjsOptionsObserver = null;
     }
-    if (this.wsProvider && this.yjsAwarenessHandler) {
-      this.wsProvider.awareness.off('change', this.yjsAwarenessHandler);
+    if (this.mapConnection && this.yjsAwarenessHandler) {
+      this.mapConnection.awareness.off('change', this.yjsAwarenessHandler);
       this.yjsAwarenessHandler = null;
     }
   }
@@ -519,7 +507,7 @@ export class YjsSyncService {
   // ─── Awareness (presence, selection, client list) ───────────
 
   private setupAwareness(): void {
-    const awareness = this.provider.awareness;
+    const awareness = this.connection.awareness;
     this.ctx.setClientColor(this.pickClientColor(awareness));
     this.displayName = normalizeDisplayName(
       this.settingsService.getCachedUserSettings()?.general?.displayName
@@ -566,7 +554,7 @@ export class YjsSyncService {
     this.publishPresence();
   }
 
-  private pickClientColor(awareness: WebsocketProvider['awareness']): string {
+  private pickClientColor(awareness: Awareness): string {
     const usedColors = new Set<string>();
     for (const [clientId, state] of awareness.getStates()) {
       if (clientId === this.doc.clientID) continue;
@@ -585,8 +573,11 @@ export class YjsSyncService {
     // Until setupAwareness runs, publishPresence sends nothing, and
     // setupAwareness publishes the recorded selection. A write before then would make
     // pickClientColor count this client's own colour as taken.
-    if (!this.wsProvider || this.yjsAwarenessHandler === null) return;
-    this.wsProvider.awareness.setLocalStateField('user', this.awarenessUser());
+    if (!this.mapConnection || this.yjsAwarenessHandler === null) return;
+    this.mapConnection.awareness.setLocalStateField(
+      'user',
+      this.awarenessUser()
+    );
   }
 
   private updateFromAwareness(): void {
@@ -607,7 +598,7 @@ export class YjsSyncService {
    * display name, the own one included, passes through normalizeDisplayName.
    */
   private buildColorMappingFromAwareness(): ClientColorMapping {
-    const awareness = this.provider.awareness;
+    const awareness = this.connection.awareness;
     const localClientId = this.doc.clientID;
     const mapping: ClientColorMapping = {};
 

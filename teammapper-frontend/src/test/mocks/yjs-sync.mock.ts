@@ -6,6 +6,8 @@ import { UtilsService } from '../../app/core/services/utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import { MapSyncContext } from '../../app/core/services/map-sync/map-sync-context';
 import { YjsSyncService } from '../../app/core/services/map-sync/yjs-sync.service';
+import { MapConnectionFactory } from '../../app/core/services/map-backend/map-connection';
+import { FakeMapConnections } from './map-connection.mock';
 
 /**
  * The collaborators YjsSyncService is constructed with. Every suite around the
@@ -94,13 +96,15 @@ export function createMockSettingsService(
 export function createYjsSyncService(
   mmpService: jest.Mocked<MmpService> = createMockMmpService(),
   context: MapSyncContext = createMockContext(),
-  settingsService: SettingsService = createMockSettingsService()
+  settingsService: SettingsService = createMockSettingsService(),
+  connectionFactory: MapConnectionFactory = new FakeMapConnections().factory
 ): YjsSyncService {
   return new YjsSyncService(
     context,
     mmpService,
     settingsService,
     {} as UtilsService,
-    {} as ToastrService
+    {} as ToastrService,
+    connectionFactory
   );
 }

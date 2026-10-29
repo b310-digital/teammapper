@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { NEVER, Observable } from 'rxjs';
 import { MapSyncService, SYNCING_TOAST_DELAY_MS } from './map-sync.service';
 import { MmpService } from '../mmp/mmp.service';
-import { HttpService } from '../../http/http.service';
 import { StorageService } from '../storage/storage.service';
 import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
@@ -18,6 +17,10 @@ import { YjsSyncService } from './yjs-sync.service';
 import { MapSyncContext } from './map-sync-context';
 import { ClientColorMapping, ClientListEntry } from './yjs-utils';
 import { ImageHandlers, ImageUploadError } from '../mmp/node-images';
+import { MAP_STORE, MapStore } from '../map-backend/map-store';
+import { MAP_CONNECTION_FACTORY } from '../map-backend/map-connection';
+import { FakeMapConnections } from '../../../../test/mocks/map-connection.mock';
+import { ServerMap } from './server-types';
 
 const SYNCING_TOAST_ID = 7;
 
@@ -57,7 +60,7 @@ describe('MapSyncService', () => {
   let service: MapSyncService;
   let mmpService: jest.Mocked<MmpService>;
   let settingsService: jest.Mocked<SettingsService>;
-  let httpService: jest.Mocked<HttpService>;
+  let mapStore: jest.Mocked<MapStore>;
 
   const mockNode = createMockNode({ id: 'node-1', name: 'Test Node' });
   const mockMapSnapshot: ExportNodeProperties[] = [mockNode];
@@ -80,12 +83,15 @@ describe('MapSyncService', () => {
       exportAsJSON: jest.fn().mockReturnValue([]),
       registerImageHandlers: jest.fn(),
     } as unknown as jest.Mocked<MmpService>;
-    httpService = {
-      get: jest.fn(),
-      post: jest.fn(),
-      postForm: jest.fn(),
-      delete: jest.fn(),
-    } as unknown as jest.Mocked<HttpService>;
+    mapStore = {
+      createMap: jest.fn(),
+      getMap: jest.fn(),
+      listMaps: jest.fn(),
+      deleteMap: jest.fn(),
+      uploadImage: jest.fn(),
+      imageUrl: jest.fn(),
+      preloadImages: jest.fn(),
+    };
 
     settingsService = {
       getCachedUserSettings: jest.fn(),
@@ -109,7 +115,11 @@ describe('MapSyncService', () => {
       providers: [
         MapSyncService,
         { provide: MmpService, useValue: mmpService },
-        { provide: HttpService, useValue: httpService },
+        { provide: MAP_STORE, useValue: mapStore },
+        {
+          provide: MAP_CONNECTION_FACTORY,
+          useValue: new FakeMapConnections().factory,
+        },
         {
           provide: StorageService,
           useValue: { get: jest.fn(), set: jest.fn() },
@@ -425,33 +435,70 @@ describe('MapSyncService', () => {
   });
 
   describe('deleteMap', () => {
-    it('sends the admin id for the given map', async () => {
-      httpService.delete.mockResolvedValueOnce({ ok: true } as Response);
+    it('asks the map store to delete the given map with the admin id', async () => {
+      mapStore.deleteMap.mockResolvedValueOnce(true);
 
       expect(await service.deleteMap('map-1', 'admin-1')).toBe(true);
-      expect(httpService.delete).toHaveBeenCalledWith(
-        expect.anything(),
-        '/maps/map-1',
-        JSON.stringify({ adminId: 'admin-1' })
-      );
+      expect(mapStore.deleteMap).toHaveBeenCalledWith('map-1', 'admin-1');
     });
 
-    it('resolves to false on an error status', async () => {
-      httpService.delete.mockResolvedValueOnce({ ok: false } as Response);
-
-      expect(await service.deleteMap('map-1', 'admin-1')).toBe(false);
-    });
-
-    it('resolves to false when the request fails', async () => {
-      httpService.delete.mockRejectedValueOnce(new TypeError('offline'));
+    it('resolves to false when the map store fails to delete', async () => {
+      mapStore.deleteMap.mockResolvedValueOnce(false);
 
       expect(await service.deleteMap('map-1', 'admin-1')).toBe(false);
     });
   });
 
-  describe('prepareExistingMap', () => {
-    let httpService: jest.Mocked<HttpService>;
+  describe('fetchUserMapsFromServer', () => {
+    it('returns the maps the map store lists', async () => {
+      const entries = [
+        {
+          id: 'map-1',
+          cachedAdminMapValue: {
+            adminId: 'admin-1',
+            modificationSecret: 'secret-1',
+            ttl: null,
+            rootName: 'Root',
+          },
+        },
+      ];
+      mapStore.listMaps.mockResolvedValueOnce(entries);
 
+      expect(await service.fetchUserMapsFromServer()).toBe(entries);
+    });
+  });
+
+  describe('prepareNewMap', () => {
+    it('creates the map with the cached root node and stores its admin data', async () => {
+      mapStore.createMap.mockResolvedValueOnce({
+        map: {
+          uuid: 'new-uuid',
+          lastModified: '2026-01-01',
+          deletedAt: null,
+          deleteAfterDays: null,
+          data: [createMockNode({ id: 'root', name: 'Root', isRoot: true })],
+          options: {},
+          createdAt: '2026-01-01',
+        } as unknown as ServerMap,
+        adminId: 'admin-1',
+        modificationSecret: 'secret-1',
+      });
+
+      await service.prepareNewMap();
+
+      expect(mapStore.createMap).toHaveBeenCalledWith('Root');
+      expect(TestBed.inject(StorageService).set).toHaveBeenCalledWith(
+        'new-uuid',
+        expect.objectContaining({
+          adminId: 'admin-1',
+          modificationSecret: 'secret-1',
+        })
+      );
+      expect(getSyncContext(service).getModificationSecret()).toBe('secret-1');
+    });
+  });
+
+  describe('prepareExistingMap', () => {
     const mockServerMap = {
       uuid: 'test-uuid',
       lastModified: '2026-01-01',
@@ -460,58 +507,36 @@ describe('MapSyncService', () => {
       data: [createMockNode({ id: 'root', isRoot: true })],
       options: { fontMaxSize: 18, fontMinSize: 10, fontIncrement: 2 },
       createdAt: '2026-01-01',
-    };
+    } as unknown as ServerMap;
 
-    beforeEach(() => {
-      httpService = TestBed.inject(HttpService) as jest.Mocked<HttpService>;
-    });
-
-    it('sends the secret in X-Map-Modification-Secret and keeps the URL bare', async () => {
-      httpService.get.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ ...mockServerMap, writable: true }),
-      } as unknown as Response);
+    it('loads the map with the secret', async () => {
+      mapStore.getMap.mockResolvedValue({ ...mockServerMap, writable: true });
 
       await service.prepareExistingMap('test-uuid', 'my-secret');
 
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.anything(),
-        '/maps/test-uuid',
-        { 'x-map-modification-secret': 'my-secret' }
-      );
+      expect(mapStore.getMap).toHaveBeenCalledWith('test-uuid', 'my-secret');
     });
 
-    it('omits the secret header when modification secret is empty', async () => {
-      httpService.get.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ ...mockServerMap, writable: true }),
-      } as unknown as Response);
+    it('loads the map without a secret when modification secret is empty', async () => {
+      mapStore.getMap.mockResolvedValue({ ...mockServerMap, writable: true });
 
       await service.prepareExistingMap('test-uuid', '');
 
-      expect(httpService.get).toHaveBeenCalledWith(
-        expect.anything(),
-        '/maps/test-uuid',
-        {}
-      );
+      expect(mapStore.getMap).toHaveBeenCalledWith('test-uuid', '');
     });
 
     describe('with a secret the browser cannot send', () => {
       beforeEach(async () => {
-        httpService.get.mockResolvedValue({
-          ok: true,
-          json: () => Promise.resolve({ ...mockServerMap, writable: false }),
-        } as unknown as Response);
+        mapStore.getMap.mockResolvedValue({
+          ...mockServerMap,
+          writable: false,
+        });
 
         await service.prepareExistingMap('test-uuid', 'geheim-ä)');
       });
 
-      it('omits the secret header', () => {
-        expect(httpService.get).toHaveBeenCalledWith(
-          expect.anything(),
-          '/maps/test-uuid',
-          {}
-        );
+      it('loads the map without the secret', () => {
+        expect(mapStore.getMap).toHaveBeenCalledWith('test-uuid', '');
       });
 
       it('gives the Yjs connection no secret', () => {
@@ -526,10 +551,7 @@ describe('MapSyncService', () => {
     });
 
     it('shows no warning for a valid secret', async () => {
-      httpService.get.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ ...mockServerMap, writable: true }),
-      } as unknown as Response);
+      mapStore.getMap.mockResolvedValue({ ...mockServerMap, writable: true });
 
       await service.prepareExistingMap('test-uuid', 'my-secret');
 
@@ -537,10 +559,7 @@ describe('MapSyncService', () => {
     });
 
     it('sets writable true on sync service when response writable is true', async () => {
-      httpService.get.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ ...mockServerMap, writable: true }),
-      } as unknown as Response);
+      mapStore.getMap.mockResolvedValue({ ...mockServerMap, writable: true });
       const setWritableSpy = jest.spyOn(getSync(service), 'setWritable');
 
       await service.prepareExistingMap('test-uuid', 'secret');
@@ -549,10 +568,7 @@ describe('MapSyncService', () => {
     });
 
     it('sets writable false on sync service when response writable is false', async () => {
-      httpService.get.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ ...mockServerMap, writable: false }),
-      } as unknown as Response);
+      mapStore.getMap.mockResolvedValue({ ...mockServerMap, writable: false });
       const setWritableSpy = jest.spyOn(getSync(service), 'setWritable');
 
       await service.prepareExistingMap('test-uuid', 'wrong');
@@ -561,10 +577,7 @@ describe('MapSyncService', () => {
     });
 
     it('defaults to writable true when response writable is undefined', async () => {
-      httpService.get.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockServerMap),
-      } as unknown as Response);
+      mapStore.getMap.mockResolvedValue(mockServerMap);
       const setWritableSpy = jest.spyOn(getSync(service), 'setWritable');
 
       await service.prepareExistingMap('test-uuid', '');
@@ -575,10 +588,7 @@ describe('MapSyncService', () => {
     // The Y.Doc holds the stored map settings, and YjsSyncService applies
     // them when the map opens. The REST copy would race the map's creation.
     it('leaves the map settings to the Yjs sync', async () => {
-      httpService.get.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockServerMap),
-      } as unknown as Response);
+      mapStore.getMap.mockResolvedValue(mockServerMap);
 
       await service.prepareExistingMap('test-uuid', '');
 
@@ -612,7 +622,7 @@ describe('MapSyncService', () => {
 
     const openMap = async (secret: string) => {
       // A failed fetch still stores the secret the page was opened with.
-      httpService.get.mockResolvedValueOnce({ ok: false } as Response);
+      mapStore.getMap.mockResolvedValueOnce(null);
       await service.prepareExistingMap('map-uuid', secret);
       service.attachMap({
         key: 'map-map-uuid',
@@ -628,58 +638,48 @@ describe('MapSyncService', () => {
       });
     };
 
-    const uploadResponse = (status: number, body: unknown): Response =>
-      ({
-        ok: status >= 200 && status < 300,
-        status,
-        json: () => Promise.resolve(body),
-      }) as unknown as Response;
-
-    it('resolves a reference to the image endpoint of the open map', async () => {
+    it('resolves a reference through the map store for the open map', async () => {
       await openMap('secret');
+      mapStore.imageUrl.mockReturnValueOnce('resolved-url');
 
-      expect(handlers().resolveUrl(REFERENCE)).toBe(
-        'api/maps/map-uuid/images/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
-      );
+      expect(handlers().resolveUrl(REFERENCE)).toBe('resolved-url');
+      expect(mapStore.imageUrl).toHaveBeenCalledWith('map-uuid', REFERENCE);
     });
 
     it('resolves nothing while no map is open', () => {
       expect(handlers().resolveUrl(REFERENCE)).toBeNull();
+      expect(mapStore.imageUrl).not.toHaveBeenCalled();
     });
 
-    it('posts the file with the secret in X-Map-Modification-Secret', async () => {
+    it('uploads the file to the open map with the secret', async () => {
       await openMap('secret');
-      httpService.postForm.mockResolvedValueOnce(
-        uploadResponse(201, { reference: REFERENCE })
-      );
+      mapStore.uploadImage.mockResolvedValueOnce(REFERENCE);
+      const image = new Blob(['x']);
 
-      const reference = await handlers().upload(new Blob(['x']));
+      const reference = await handlers().upload(image);
 
       expect(reference).toBe(REFERENCE);
-      const [, endpoint, form, headers] = httpService.postForm.mock.calls[0];
-      expect(endpoint).toBe('/maps/map-uuid/images');
-      expect(form.get('file')).toBeInstanceOf(Blob);
-      expect(headers).toEqual({ 'x-map-modification-secret': 'secret' });
+      expect(mapStore.uploadImage).toHaveBeenCalledWith(
+        'map-uuid',
+        image,
+        'secret'
+      );
     });
 
-    it('throws the status of a rejected upload', async () => {
+    it('passes the error of a rejected upload on', async () => {
       await openMap('secret');
-      httpService.postForm.mockResolvedValueOnce(uploadResponse(413, {}));
+      mapStore.uploadImage.mockRejectedValueOnce(new ImageUploadError(413));
 
       await expect(handlers().upload(new Blob(['x']))).rejects.toEqual(
         new ImageUploadError(413)
       );
     });
 
-    it('rejects a response that carries no reference', async () => {
-      await openMap('secret');
-      httpService.postForm.mockResolvedValueOnce(
-        uploadResponse(201, { reference: 'https://example.com/a.png' })
+    it('rejects an upload while no map is open', async () => {
+      await expect(handlers().upload(new Blob(['x']))).rejects.toEqual(
+        new ImageUploadError(0)
       );
-
-      await expect(handlers().upload(new Blob(['x']))).rejects.toBeInstanceOf(
-        ImageUploadError
-      );
+      expect(mapStore.uploadImage).not.toHaveBeenCalled();
     });
   });
 

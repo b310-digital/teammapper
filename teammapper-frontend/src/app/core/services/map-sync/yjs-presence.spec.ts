@@ -15,48 +15,16 @@ import {
   MmpHandlers,
   userSettingsNamed,
 } from '../../../../test/mocks/yjs-sync.mock';
+import {
+  FakeMapConnection,
+  FakeMapConnections,
+} from '../../../../test/mocks/map-connection.mock';
 
 /**
  * Presence carries each client's selected node and display name. A client
  * with nothing selected broadcasts an empty selection, and peers draw no ring
  * for it. A client without a display name broadcasts the empty string.
  */
-
-/**
- * Replaces y-websocket's WebsocketProvider. Each test writes peer awareness
- * states into `states`. A local write stores the state in `states` under the
- * doc's client id, as in y-protocols.
- */
-class FakeWebsocketProvider {
-  public static latest: FakeWebsocketProvider | null = null;
-
-  public readonly states = new Map<number, { user: AwarenessUser }>();
-  public readonly awareness = {
-    getStates: () => this.states,
-    setLocalStateField: jest.fn((_field: string, user: AwarenessUser) => {
-      this.states.set(this.localClientId, { user });
-    }),
-    on: jest.fn(),
-    off: jest.fn(),
-  };
-
-  public readonly on = jest.fn();
-  public readonly disconnect = jest.fn();
-  public readonly destroy = jest.fn();
-
-  constructor(public readonly localClientId: number) {
-    FakeWebsocketProvider.latest = this;
-  }
-}
-
-jest.mock('y-websocket', () => ({
-  WebsocketProvider: jest
-    .fn()
-    .mockImplementation(
-      (_url: string, _room: string, doc: { clientID: number }) =>
-        new FakeWebsocketProvider(doc.clientID)
-    ),
-}));
 
 interface PresenceInternals {
   createListeners: () => void;
@@ -71,15 +39,15 @@ describe('YjsSyncService presence', () => {
   let context: MapSyncContext;
   let mmpService: jest.Mocked<MmpService>;
   let userSettings$: BehaviorSubject<UserSettings | null>;
+  let connections: FakeMapConnections;
   let service: YjsSyncService;
 
-  function provider(): FakeWebsocketProvider {
-    if (!FakeWebsocketProvider.latest) throw new Error('No provider created');
-    return FakeWebsocketProvider.latest;
+  function connection(): FakeMapConnection {
+    return connections.latest();
   }
 
   function lastBroadcast(): unknown {
-    return provider().awareness.setLocalStateField.mock.lastCall;
+    return connection().fakeAwareness.setLocalStateField.mock.lastCall;
   }
 
   function internals(): PresenceInternals {
@@ -108,10 +76,12 @@ describe('YjsSyncService presence', () => {
     userSettings$ = new BehaviorSubject<UserSettings | null>(
       userSettingsNamed('')
     );
+    connections = new FakeMapConnections();
     service = createYjsSyncService(
       mmpService,
       context,
-      createMockSettingsService(userSettings$)
+      createMockSettingsService(userSettings$),
+      connections.factory
     );
     service.initMap('test-uuid');
     // attachMap subscribes once the map exists; these tests set awareness up
@@ -128,14 +98,18 @@ describe('YjsSyncService presence', () => {
     it('broadcasts nothing on a select and attaches the node', () => {
       handlers['nodeSelect']({ id: 'root' } as ExportNodeProperties);
 
-      expect(provider().awareness.setLocalStateField).not.toHaveBeenCalled();
+      expect(
+        connection().fakeAwareness.setLocalStateField
+      ).not.toHaveBeenCalled();
       expect(context.setAttachedNode).toHaveBeenLastCalledWith({ id: 'root' });
     });
 
     it('broadcasts nothing on a rename', () => {
       rename('Vorname');
 
-      expect(provider().awareness.setLocalStateField).not.toHaveBeenCalled();
+      expect(
+        connection().fakeAwareness.setLocalStateField
+      ).not.toHaveBeenCalled();
     });
 
     it('keeps the client colour and publishes the selection on setup', () => {
@@ -191,7 +165,7 @@ describe('YjsSyncService presence', () => {
     });
 
     it('draws the ring of a peer that selected a node before the map existed', () => {
-      provider().states.set(PEER_ID, {
+      connection().states.set(PEER_ID, {
         user: {
           color: '#0000ff',
           selectedNodeId: 'peer-node',
@@ -237,7 +211,9 @@ describe('YjsSyncService presence', () => {
       afterThrottle();
 
       // setupAwareness sent the first update, before the burst.
-      expect(provider().awareness.setLocalStateField).toHaveBeenCalledTimes(3);
+      expect(
+        connection().fakeAwareness.setLocalStateField
+      ).toHaveBeenCalledTimes(3);
       expect(lastBroadcast()).toEqual([
         'user',
         { color: '#ff0000', selectedNodeId: 'd', displayName: '' },
@@ -286,12 +262,12 @@ describe('YjsSyncService presence', () => {
       it('stays connected', () => {
         rename('Vorname Test');
 
-        expect(provider().disconnect).not.toHaveBeenCalled();
+        expect(connection().destroy).not.toHaveBeenCalled();
       });
 
       it('broadcasts nothing when another setting changes', () => {
         const before =
-          provider().awareness.setLocalStateField.mock.calls.length;
+          connection().fakeAwareness.setLocalStateField.mock.calls.length;
         const settings = userSettingsNamed('');
 
         userSettings$.next({
@@ -299,37 +275,37 @@ describe('YjsSyncService presence', () => {
           general: { ...settings.general, darkMode: true },
         });
 
-        expect(provider().awareness.setLocalStateField).toHaveBeenCalledTimes(
-          before
-        );
+        expect(
+          connection().fakeAwareness.setLocalStateField
+        ).toHaveBeenCalledTimes(before);
       });
 
       it('broadcasts nothing when the normalized name stays the same', () => {
         rename('Vorname');
         const before =
-          provider().awareness.setLocalStateField.mock.calls.length;
+          connection().fakeAwareness.setLocalStateField.mock.calls.length;
 
         rename('  Vorname ');
 
-        expect(provider().awareness.setLocalStateField).toHaveBeenCalledTimes(
-          before
-        );
+        expect(
+          connection().fakeAwareness.setLocalStateField
+        ).toHaveBeenCalledTimes(before);
       });
 
       it('broadcasts nothing once the map is closed', () => {
-        const closed = provider();
+        const closed = connection();
         service.destroy();
-        closed.awareness.setLocalStateField.mockClear();
+        closed.fakeAwareness.setLocalStateField.mockClear();
 
         rename('Vorname');
 
-        expect(closed.awareness.setLocalStateField).not.toHaveBeenCalled();
+        expect(closed.fakeAwareness.setLocalStateField).not.toHaveBeenCalled();
       });
     });
 
     describe('the client list', () => {
       it('holds the normalized display name of a peer', () => {
-        provider().states.set(PEER_ID, {
+        connection().states.set(PEER_ID, {
           user: {
             color: '#0000ff',
             selectedNodeId: null,
@@ -358,7 +334,7 @@ describe('YjsSyncService presence', () => {
 
         expect(lastMapping()).toEqual(
           expect.objectContaining({
-            [provider().localClientId]: expect.objectContaining({
+            [connection().doc.clientID]: expect.objectContaining({
               displayName: 'Zweiter',
               isSelf: true,
             }),
@@ -376,7 +352,7 @@ describe('YjsSyncService presence', () => {
           isSelf: false,
         },
       });
-      provider().states.set(PEER_ID, {
+      connection().states.set(PEER_ID, {
         user: { color: '#0000ff', selectedNodeId: null, displayName: '' },
       });
 
@@ -397,7 +373,7 @@ describe('YjsSyncService presence', () => {
 
     it('falls back to the defaults for a peer state that holds no strings', () => {
       const hostile = { color: { r: 1 }, selectedNodeId: 123, displayName: [] };
-      provider().states.set(PEER_ID, {
+      connection().states.set(PEER_ID, {
         user: hostile as unknown as AwarenessUser,
       });
 

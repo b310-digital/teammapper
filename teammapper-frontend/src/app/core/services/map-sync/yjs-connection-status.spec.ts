@@ -1,6 +1,4 @@
-import * as Y from 'yjs';
 import { WS_CLOSE_MAP_SYNC_RESET } from '@teammapper/shared';
-import { WebsocketProvider } from 'y-websocket';
 import { MapSyncContext } from './map-sync-context';
 import { SettingsService } from '../settings/settings.service';
 import { YjsSyncService } from './yjs-sync.service';
@@ -9,117 +7,67 @@ import {
   createMockSettingsService,
   createYjsSyncService,
 } from '../../../../test/mocks/yjs-sync.mock';
-
-/**
- * Stands in for the real provider and reproduces the one behavior these tests
- * depend on: disconnecting emits 'connection-close' and 'status' disconnected,
- * the same as y-websocket's closeWebsocketConnection.
- */
-class FakeWebsocketProvider {
-  public static instances: FakeWebsocketProvider[] = [];
-
-  public readonly awareness = {
-    getStates: () => new Map(),
-    setLocalStateField: jest.fn(),
-    on: jest.fn(),
-    off: jest.fn(),
-  };
-
-  private handlers = new Map<string, ((...args: unknown[]) => void)[]>();
-  private connected = true;
-
-  constructor(public readonly doc: Y.Doc) {
-    FakeWebsocketProvider.instances.push(this);
-  }
-
-  on(event: string, handler: (...args: unknown[]) => void): void {
-    const existing = this.handlers.get(event) ?? [];
-    existing.push(handler);
-    this.handlers.set(event, existing);
-  }
-
-  emit(event: string, arg: unknown): void {
-    for (const handler of this.handlers.get(event) ?? []) handler(arg);
-  }
-
-  disconnect(): void {
-    if (!this.connected) return;
-    this.connected = false;
-    this.emit('connection-close', null);
-    this.emit('status', { status: 'disconnected' });
-  }
-
-  destroy(): void {
-    this.disconnect();
-  }
-}
-
-jest.mock('y-websocket', () => ({
-  WebsocketProvider: jest
-    .fn()
-    .mockImplementation(
-      (_url: string, _mapId: string, doc: Y.Doc) =>
-        new FakeWebsocketProvider(doc)
-    ),
-}));
+import {
+  FakeMapConnection,
+  FakeMapConnections,
+} from '../../../../test/mocks/map-connection.mock';
 
 describe('YjsSyncService connection status', () => {
   let context: MapSyncContext;
+  let connections: FakeMapConnections;
   let service: YjsSyncService;
 
   beforeEach(() => {
-    FakeWebsocketProvider.instances = [];
     context = createMockContext();
-    service = createYjsSyncService(undefined, context);
+    connections = new FakeMapConnections();
+    service = createYjsSyncService(
+      undefined,
+      context,
+      undefined,
+      connections.factory
+    );
   });
 
-  function currentProvider(): FakeWebsocketProvider {
-    return FakeWebsocketProvider.instances[
-      FakeWebsocketProvider.instances.length - 1
-    ];
+  function currentConnection(): FakeMapConnection {
+    return connections.latest();
   }
 
   afterEach(() => service.destroy());
 
-  describe('connection authentication', () => {
-    beforeEach(() => service.initMap('test-uuid'));
-    it('keeps the secret out of the URL', () => {
-      expect(jest.mocked(WebsocketProvider).mock.lastCall?.[0]).not.toContain(
-        'secret'
-      );
-    });
-    it('offers the secret as a subprotocol', () => {
-      expect(jest.mocked(WebsocketProvider).mock.lastCall?.[3]).toEqual(
-        expect.objectContaining({
-          protocols: ['teammapper.v2', 'teammapper.secret.secret'],
-        })
-      );
-    });
-    it('does not send query parameters', () => {
-      expect(
-        jest.mocked(WebsocketProvider).mock.lastCall?.[3]
-      ).not.toHaveProperty('params');
-    });
+  it('opens the connection with the secret of the context', () => {
+    service.initMap('test-uuid');
+
+    expect(currentConnection()).toEqual(
+      expect.objectContaining({
+        mapId: 'test-uuid',
+        modificationSecret: 'secret',
+      })
+    );
   });
 
   describe('a server map reset', () => {
-    let old: FakeWebsocketProvider;
-    let fresh: FakeWebsocketProvider;
+    let old: FakeMapConnection;
+    let fresh: FakeMapConnection;
     const settings =
       createMockSettingsService() as jest.Mocked<SettingsService>;
     beforeEach(() => {
       settings.setEditMode.mockClear();
-      service = createYjsSyncService(undefined, context, settings);
+      service = createYjsSyncService(
+        undefined,
+        context,
+        settings,
+        connections.factory
+      );
       service.setWritable(true);
       service.initMap('test-uuid');
-      old = currentProvider();
+      old = currentConnection();
       old.doc.getMap('unused').set('payload', 'unrelated data');
-      old.emit('sync', true);
+      old.emitSynced();
       service.attachMap();
-      old.emit('connection-close', { code: WS_CLOSE_MAP_SYNC_RESET });
-      fresh = currentProvider();
+      old.emitClosed(WS_CLOSE_MAP_SYNC_RESET);
+      fresh = currentConnection();
     });
-    it('replaces the provider', () => {
+    it('replaces the connection', () => {
       expect(fresh).not.toBe(old);
     });
     it('starts fresh Yjs state without rejected data', () => {
@@ -144,7 +92,7 @@ describe('YjsSyncService connection status', () => {
     });
     describe('after fresh sync', () => {
       beforeEach(() => {
-        fresh.emit('sync', true);
+        fresh.emitSynced();
         service.attachMap();
       });
       it('restores editing for a writable map', () => {
@@ -169,21 +117,21 @@ describe('YjsSyncService connection status', () => {
     });
   });
 
-  it('ignores a reset from an old provider', () => {
+  it('ignores a reset from an old connection', () => {
     service.initMap('test-uuid');
-    const old = currentProvider();
+    const old = currentConnection();
     service.destroy();
     service.initMap('test-uuid');
-    const fresh = currentProvider();
-    old.emit('connection-close', { code: WS_CLOSE_MAP_SYNC_RESET });
-    expect(currentProvider()).toBe(fresh);
+    const fresh = currentConnection();
+    old.emitClosed(WS_CLOSE_MAP_SYNC_RESET);
+    expect(currentConnection()).toBe(fresh);
     service.destroy();
   });
 
   it('reports a disconnect of the open connection', () => {
     service.initMap('test-uuid');
 
-    currentProvider().emit('status', { status: 'disconnected' });
+    currentConnection().emitStatus('disconnected');
 
     expect(context.setConnectionStatus).toHaveBeenCalledWith('disconnected');
   });
@@ -193,6 +141,7 @@ describe('YjsSyncService connection status', () => {
 
     service.destroy();
 
+    expect(currentConnection().destroy).toHaveBeenCalled();
     expect(context.setConnectionStatus).not.toHaveBeenCalledWith(
       'disconnected'
     );
@@ -206,26 +155,26 @@ describe('YjsSyncService connection status', () => {
     expect(context.setConnectionStatus).toHaveBeenLastCalledWith(null);
   });
 
-  it('ignores a sync from a provider a later initMap replaced', () => {
+  it('ignores a sync from a connection a later initMap replaced', () => {
     service.initMap('test-uuid');
-    const stale = currentProvider();
+    const stale = currentConnection();
     service.destroy();
     service.initMap('test-uuid');
     (context.setConnectionStatus as jest.Mock).mockClear();
 
-    stale.emit('sync', true);
+    stale.emitSynced();
 
     expect(context.setConnectionStatus).not.toHaveBeenCalledWith('connected');
   });
 
-  it('ignores an event from a provider a later initMap replaced', () => {
+  it('ignores an event from a connection a later initMap replaced', () => {
     service.initMap('test-uuid');
-    const stale = currentProvider();
+    const stale = currentConnection();
     service.destroy();
     service.initMap('test-uuid');
     (context.setConnectionStatus as jest.Mock).mockClear();
 
-    stale.emit('status', { status: 'disconnected' });
+    stale.emitStatus('disconnected');
 
     expect(context.setConnectionStatus).not.toHaveBeenCalled();
   });

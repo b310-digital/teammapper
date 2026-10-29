@@ -21,6 +21,7 @@ import { HotkeyModule } from 'angular2-hotkeys';
 import { RootComponent } from './app/root.component';
 import { provideRouter } from '@angular/router';
 import { rootRoutes } from './app/root.routes';
+import { provideRemoteMapBackend } from './app/core/services/map-backend/remote/remote-map-backend.providers';
 
 if (environment.production) {
   enableProdMode();
@@ -39,6 +40,7 @@ bootstrapApplication(RootComponent, {
       suffix: '.json',
     }),
     provideRouter(rootRoutes),
+    provideRemoteMapBackend(),
     {
       provide: APP_INITIALIZER,
       useFactory: appSettingsFactory,
