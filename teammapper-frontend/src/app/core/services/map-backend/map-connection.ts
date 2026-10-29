@@ -1,6 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import type { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
+import { ConnectionStatus } from '../map-sync/map-sync-context';
 
 /**
  * The presence state of the clients on a map. The type comes from
@@ -17,7 +18,7 @@ export interface MapConnection {
   readonly awareness: Awareness;
   /** Called each time the doc has synced. */
   onSynced(listener: () => void): void;
-  onStatus(listener: (status: 'connected' | 'disconnected') => void): void;
+  onStatus(listener: (status: NonNullable<ConnectionStatus>) => void): void;
   /** The close code of the connection, null when none is known. */
   onClosed(listener: (code: number | null) => void): void;
   destroy(): void;

@@ -2,7 +2,6 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
-  CachedAdminMapEntry,
   CachedAdminMapValue,
   CachedMap,
   CachedMapEntry,
@@ -235,17 +234,6 @@ export class MapSyncService implements OnDestroy {
     this.mmpService.updateAdditionalMapOptions(options);
     const applied = this.mmpService.getAdditionalMapOptions();
     if (applied) this.syncService.updateMapOptions(applied);
-  }
-
-  // Deletes any map the admin id belongs to, not only the attached one, so
-  // the map list can delete maps that are not open. Resolves to false when
-  // the map store fails to delete.
-  public deleteMap(mapId: string, adminId: string): Promise<boolean> {
-    return this.mapStore.deleteMap(mapId, adminId);
-  }
-
-  public fetchUserMapsFromServer(): Promise<CachedAdminMapEntry[]> {
-    return this.mapStore.listMaps();
   }
 
   // ─── Context factory ─────────────────────────────────────────

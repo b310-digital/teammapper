@@ -5,8 +5,10 @@ import {
   MapConnection,
   MapConnectionFactory,
 } from '../../app/core/services/map-backend/map-connection';
+import { ConnectionStatus } from '../../app/core/services/map-sync/map-sync-context';
 
 type Listener<T extends unknown[]> = (...args: T) => void;
+type Status = NonNullable<ConnectionStatus>;
 
 /**
  * Stands in for a `MapConnection`. A test emits the connection's events, and
@@ -28,7 +30,7 @@ export class FakeMapConnection implements MapConnection {
   public readonly destroy = jest.fn(() => this.disconnect());
 
   private readonly synced: Listener<[]>[] = [];
-  private readonly status: Listener<['connected' | 'disconnected']>[] = [];
+  private readonly status: Listener<[Status]>[] = [];
   private readonly closed: Listener<[number | null]>[] = [];
   private connected = true;
 
@@ -46,7 +48,7 @@ export class FakeMapConnection implements MapConnection {
     this.synced.push(listener);
   }
 
-  onStatus(listener: (status: 'connected' | 'disconnected') => void): void {
+  onStatus(listener: (status: Status) => void): void {
     this.status.push(listener);
   }
 
@@ -58,7 +60,7 @@ export class FakeMapConnection implements MapConnection {
     this.synced.forEach(listener => listener());
   }
 
-  emitStatus(status: 'connected' | 'disconnected'): void {
+  emitStatus(status: Status): void {
     this.status.forEach(listener => listener(status));
   }
 

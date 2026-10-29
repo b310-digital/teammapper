@@ -16,6 +16,7 @@ import { AsyncPipe } from '@angular/common';
 import { LocalizedDatePipe } from 'src/app/shared/pipes/localized-date.pipe';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
+import { MAP_STORE } from 'src/app/core/services/map-backend/map-store';
 
 @Component({
   selector: 'teammapper-map-deletion',
@@ -37,6 +38,7 @@ export class MapDeletionComponent {
   private translateService = inject(TranslateService);
   private storageService = inject(StorageService);
   private mapSyncService = inject(MapSyncService);
+  private mapStore = inject(MAP_STORE);
   private router = inject(Router);
   private toastrService = inject(ToastrService);
 
@@ -59,7 +61,7 @@ export class MapDeletionComponent {
 
     const uuid = attachedMap.cachedMap.uuid;
     // Keep the stored admin id when the deletion fails, so the user can retry.
-    if (!(await this.mapSyncService.deleteMap(uuid, adminId))) {
+    if (!(await this.mapStore.deleteMap(uuid, adminId))) {
       this.toastrService.error(
         this.translateService.instant('TOASTS.ERRORS.DELETE_MAP_ERROR')
       );

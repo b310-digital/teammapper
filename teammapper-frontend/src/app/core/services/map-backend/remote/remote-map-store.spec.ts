@@ -166,11 +166,6 @@ describe('RemoteMapStore', () => {
       );
     });
 
-    it('preloads nothing', async () => {
-      await expect(store.preloadImages('map-uuid')).resolves.toBeUndefined();
-      expect(httpService.get).not.toHaveBeenCalled();
-    });
-
     it('posts the file with the secret in X-Map-Modification-Secret', async () => {
       httpService.postForm.mockResolvedValueOnce(
         jsonResponse(201, { reference: REFERENCE })

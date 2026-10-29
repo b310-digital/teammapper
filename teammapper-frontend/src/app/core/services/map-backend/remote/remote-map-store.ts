@@ -42,8 +42,7 @@ export class RemoteMapStore implements MapStore {
       secretHeaders(modificationSecret)
     );
     if (!response.ok) return null;
-    const json: ServerMap = await response.json();
-    return json;
+    return response.json();
   }
 
   async listMaps(): Promise<CachedAdminMapEntry[]> {
@@ -99,11 +98,6 @@ export class RemoteMapStore implements MapStore {
   /** The image endpoint of the map for a reference. */
   imageUrl(mapId: string, reference: ImageReference): string {
     return `${API_URL.ROOT}/maps/${mapId}/images/${imageIdOf(reference)}`;
-  }
-
-  /** The browser loads each image from its endpoint when mmp draws it. */
-  async preloadImages(_mapId: string): Promise<void> {
-    return;
   }
 }
 

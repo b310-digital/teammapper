@@ -26,8 +26,6 @@ export interface MapStore {
     modificationSecret: string
   ): Promise<ImageReference>;
   imageUrl(mapId: string, reference: ImageReference): string | null;
-  /** resolves at once in the remote store */
-  preloadImages(mapId: string): Promise<void>;
 }
 
 export const MAP_STORE = new InjectionToken<MapStore>('MAP_STORE');

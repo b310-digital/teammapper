@@ -90,7 +90,6 @@ describe('MapSyncService', () => {
       deleteMap: jest.fn(),
       uploadImage: jest.fn(),
       imageUrl: jest.fn(),
-      preloadImages: jest.fn(),
     };
 
     settingsService = {
@@ -431,40 +430,6 @@ describe('MapSyncService', () => {
       service.redo();
 
       expect(redoSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe('deleteMap', () => {
-    it('asks the map store to delete the given map with the admin id', async () => {
-      mapStore.deleteMap.mockResolvedValueOnce(true);
-
-      expect(await service.deleteMap('map-1', 'admin-1')).toBe(true);
-      expect(mapStore.deleteMap).toHaveBeenCalledWith('map-1', 'admin-1');
-    });
-
-    it('resolves to false when the map store fails to delete', async () => {
-      mapStore.deleteMap.mockResolvedValueOnce(false);
-
-      expect(await service.deleteMap('map-1', 'admin-1')).toBe(false);
-    });
-  });
-
-  describe('fetchUserMapsFromServer', () => {
-    it('returns the maps the map store lists', async () => {
-      const entries = [
-        {
-          id: 'map-1',
-          cachedAdminMapValue: {
-            adminId: 'admin-1',
-            modificationSecret: 'secret-1',
-            ttl: null,
-            rootName: 'Root',
-          },
-        },
-      ];
-      mapStore.listMaps.mockResolvedValueOnce(entries);
-
-      expect(await service.fetchUserMapsFromServer()).toBe(entries);
     });
   });
 

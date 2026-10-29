@@ -1,6 +1,7 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { buildYjsProtocols, buildYjsWsUrl } from '../../map-sync/yjs-utils';
+import { ConnectionStatus } from '../../map-sync/map-sync-context';
 import { Awareness, MapConnection } from '../map-connection';
 
 /**
@@ -29,7 +30,7 @@ export class WebsocketMapConnection implements MapConnection {
   }
 
   /** Reports connected and disconnected; connecting reports nothing. */
-  onStatus(listener: (status: 'connected' | 'disconnected') => void): void {
+  onStatus(listener: (status: NonNullable<ConnectionStatus>) => void): void {
     this.provider.on(
       'status',
       (event: { status: 'connected' | 'disconnected' | 'connecting' }) => {
