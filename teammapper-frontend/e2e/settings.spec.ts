@@ -175,7 +175,7 @@ test('groups the mind map tab into map settings and user settings', async ({
   ).toBeVisible();
 });
 
-test('disables the map settings for a read-only viewer only', async ({
+test('disables the map settings for a read-only viewer only @server', async ({
   page,
   browser,
 }) => {
@@ -203,7 +203,7 @@ test('disables the map settings for a read-only viewer only', async ({
   }
 });
 
-test('draws curved branches for this browser only', async ({
+test('draws curved branches for this browser only @server', async ({
   page,
   browser,
 }) => {

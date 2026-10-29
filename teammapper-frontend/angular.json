@@ -131,6 +131,7 @@
               "src/**/*.ts",
               "src/**/*.html",
               "e2e/**/*.ts",
+              "e2e-offline/**/*.ts",
               "scripts/**/*.ts"
             ]
           }

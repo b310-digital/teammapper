@@ -61,6 +61,16 @@ service, never at the hostname `app`: Chromium's HSTS preload list covers the
 with `ERR_SSL_PROTOCOL_ERROR`. A new alias also needs an entry in
 `allowedHosts` of the `serve` target in `teammapper-frontend/angular.json`.
 
+`pnpm run test:e2e:offline` in `teammapper-frontend` runs the suite against
+the offline build. `playwright.offline.config.ts` lists the web specs it
+reuses plus `e2e-offline/`, and starts the offline dev server alone. Keep it
+free of the backend: a spec that needs the server does not belong in the
+offline list. When a reused spec holds a test that needs the server, tag that
+test by ending its title with `@server`: the offline config excludes the tag,
+and the web config runs the test as before.
+The offline dev server listens on 4200 like the web one, so stop the web dev
+server first, or `reuseExistingServer` tests the web build instead.
+
 Three version strings must match, because the protocol between client and
 server is not stable across versions:
 
