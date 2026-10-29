@@ -1,7 +1,7 @@
 import * as Y from 'yjs';
 import { AwarenessUser } from '@teammapper/shared';
+import type { Awareness } from 'y-protocols/awareness';
 import {
-  Awareness,
   MapConnection,
   MapConnectionFactory,
 } from '../../app/core/services/map-backend/map-connection';
