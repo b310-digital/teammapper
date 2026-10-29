@@ -8,6 +8,7 @@ import { StorageService } from '../storage/storage.service';
 import { SettingsService } from './settings.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
+import { SETTINGS_URL } from '../map-backend/map-backend-config';
 
 describe('SettingsService', () => {
   let settingsService: SettingsService;
@@ -37,7 +38,7 @@ describe('SettingsService', () => {
 
     // Create mock implementations
     httpService = {
-      get: jest.fn(),
+      getUrl: jest.fn(),
       delete: jest.fn(),
       post: jest.fn(),
     } as unknown as jest.Mocked<HttpService>;
@@ -58,6 +59,7 @@ describe('SettingsService', () => {
       providers: [
         SettingsService,
         { provide: HttpService, useValue: httpService },
+        { provide: SETTINGS_URL, useValue: 'test/settings' },
         { provide: StorageService, useValue: storageService },
         { provide: TranslateService, useValue: translateService },
       ],
@@ -147,6 +149,20 @@ describe('SettingsService', () => {
     expect(storageService.getAllCreatedMapsFromStorage).toHaveBeenCalled();
   });
 
+  describe('getDefaultSettings', () => {
+    it('fetches the default settings from the injected address', async () => {
+      const defaultSettings = { userSettings: {} };
+      httpService.getUrl.mockResolvedValue({
+        json: () => Promise.resolve(defaultSettings),
+      } as unknown as Response);
+
+      expect(await settingsService.getDefaultSettings()).toEqual(
+        defaultSettings
+      );
+      expect(httpService.getUrl).toHaveBeenCalledWith('test/settings');
+    });
+  });
+
   // Additional tests for full coverage
   describe('init', () => {
     it('initializes settings with default values when no cached settings exist', async () => {
@@ -154,7 +170,7 @@ describe('SettingsService', () => {
         userSettings: { general: { language: 'en', darkMode: false } },
       };
 
-      httpService.get.mockResolvedValue({
+      httpService.getUrl.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
       } as unknown as Response);
       storageService.get.mockResolvedValue(null);
@@ -173,7 +189,7 @@ describe('SettingsService', () => {
       };
       const cachedSettings = { general: { language: 'fr', darkMode: true } };
 
-      httpService.get.mockResolvedValue({
+      httpService.getUrl.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
       } as unknown as Response);
       storageService.get.mockResolvedValue(cachedSettings);
@@ -193,7 +209,7 @@ describe('SettingsService', () => {
         general: { language: 'en', darkMode: false },
       };
       storageService.get.mockResolvedValue(cachedSettings);
-      httpService.get.mockResolvedValue({
+      httpService.getUrl.mockResolvedValue({
         json: () =>
           Promise.resolve({
             userSettings: { general: { language: 'en', darkMode: false } },
@@ -219,7 +235,7 @@ describe('SettingsService', () => {
         general: { language: 'en', darkMode: true },
       };
       storageService.get.mockResolvedValue(cachedSettings);
-      httpService.get.mockResolvedValue({
+      httpService.getUrl.mockResolvedValue({
         json: () =>
           Promise.resolve({
             userSettings: { general: { language: 'en', darkMode: true } },
@@ -250,7 +266,7 @@ describe('SettingsService', () => {
     });
 
     async function initWith(stored: object | null) {
-      httpService.get.mockResolvedValue(
+      httpService.getUrl.mockResolvedValue(
         serverDefaults({
           language: 'en',
           darkMode: false,
@@ -354,7 +370,7 @@ describe('SettingsService', () => {
         writable: true,
         value: FakeBroadcastChannel,
       });
-      httpService.get.mockResolvedValue({
+      httpService.getUrl.mockResolvedValue({
         json: () =>
           Promise.resolve({
             userSettings: {
@@ -491,7 +507,7 @@ describe('SettingsService', () => {
         userSettings: { general: { language: 'en', darkMode: false } },
       };
 
-      httpService.get.mockResolvedValue({
+      httpService.getUrl.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
       } as unknown as Response);
       storageService.get.mockResolvedValue(null);
@@ -528,7 +544,7 @@ describe('SettingsService', () => {
         userSettings: { general: { language: 'en', darkMode: false } },
       };
 
-      httpService.get.mockResolvedValue({
+      httpService.getUrl.mockResolvedValue({
         json: () => Promise.resolve(defaultSettings),
       } as unknown as Response);
       storageService.get.mockResolvedValue(legacyCachedSettings);
@@ -545,7 +561,7 @@ describe('SettingsService', () => {
     });
 
     it('falls back to cached settings with an empty display name when they lack one', async () => {
-      httpService.get.mockRejectedValue(new Error('Network error'));
+      httpService.getUrl.mockRejectedValue(new Error('Network error'));
       storageService.get.mockResolvedValue({
         general: { language: 'de', darkMode: true },
       });
@@ -563,7 +579,7 @@ describe('SettingsService', () => {
       const cachedSettings = {
         general: { language: 'de', darkMode: true },
       };
-      httpService.get.mockRejectedValue(new Error('Network error'));
+      httpService.getUrl.mockRejectedValue(new Error('Network error'));
       storageService.get.mockResolvedValue(cachedSettings);
 
       const result = await settingsService.init();

@@ -1,6 +1,7 @@
 import { PictogramService } from './pictogram.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SettingsService } from '../settings/settings.service';
+import { SETTINGS_URL } from '../map-backend/map-backend-config';
 import { IPictogramResponse } from './picto-types';
 import { TestBed } from '@angular/core/testing';
 import {
@@ -37,6 +38,7 @@ describe('PictogramService', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         SettingsService,
+        { provide: SETTINGS_URL, useValue: 'api/settings' },
         provideTranslateService(),
       ],
     });

@@ -22,6 +22,11 @@ export class HttpService {
     return fetch(`${apiUrl}${endpoint}`, { headers });
   }
 
+  /** Constructs a `GET` request to an address relative to the app. */
+  public getUrl(url: string): Promise<Response> {
+    return fetch(url);
+  }
+
   public delete(
     apiUrl: API_URL,
     endpoint: string,

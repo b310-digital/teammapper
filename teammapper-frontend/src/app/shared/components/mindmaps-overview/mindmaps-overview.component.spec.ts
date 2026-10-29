@@ -5,17 +5,15 @@ import { ToastrService } from 'ngx-toastr';
 import { BehaviorSubject } from 'rxjs';
 import { CachedAdminMapEntry, CachedMapEntry } from '@teammapper/shared';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
+import { MAP_STORE } from 'src/app/core/services/map-backend/map-store';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { MindmapsOverview } from './mindmaps-overview.component';
 
 describe('MindmapsOverview', () => {
   let fixture: ComponentFixture<MindmapsOverview>;
-  let mapSyncService: {
-    fetchUserMapsFromServer: jest.Mock;
-    getAttachedMapObservable: jest.Mock;
-    deleteMap: jest.Mock;
-  };
+  let mapSyncService: { getAttachedMapObservable: jest.Mock };
+  let mapStore: { listMaps: jest.Mock; deleteMap: jest.Mock };
   let storageService: { remove: jest.Mock };
   let toastrService: { success: jest.Mock; error: jest.Mock };
   let router: { url: string; navigate: jest.Mock; createUrlTree: jest.Mock };
@@ -42,8 +40,10 @@ describe('MindmapsOverview', () => {
     deleted = true
   ) {
     mapSyncService = {
-      fetchUserMapsFromServer: jest.fn(async () => entries),
       getAttachedMapObservable: jest.fn(() => new BehaviorSubject(attachedMap)),
+    };
+    mapStore = {
+      listMaps: jest.fn(async () => entries),
       deleteMap: jest.fn(async () => deleted),
     };
     storageService = { remove: jest.fn(async () => undefined) };
@@ -58,6 +58,7 @@ describe('MindmapsOverview', () => {
       imports: [MindmapsOverview, TranslateModule.forRoot()],
       providers: [
         { provide: MapSyncService, useValue: mapSyncService },
+        { provide: MAP_STORE, useValue: mapStore },
         {
           provide: SettingsService,
           useValue: { getCachedAdminMapEntries: async () => entries },
@@ -110,7 +111,7 @@ describe('MindmapsOverview', () => {
 
     await fixture.componentInstance.deleteMap(entry('map-1', 'admin-1'));
 
-    expect(mapSyncService.deleteMap).toHaveBeenCalledWith('map-1', 'admin-1');
+    expect(mapStore.deleteMap).toHaveBeenCalledWith('map-1', 'admin-1');
     expect(storageService.remove).toHaveBeenCalledWith('map-1');
     expect(fixture.componentInstance.ownedEntries()).toEqual([]);
     expect(fixture.componentInstance.cachedAdminMapEntries()).toEqual([]);
@@ -157,6 +158,6 @@ describe('MindmapsOverview', () => {
 
     await fixture.componentInstance.deleteMap(entry('map-1', 'admin-1'));
 
-    expect(mapSyncService.deleteMap).not.toHaveBeenCalled();
+    expect(mapStore.deleteMap).not.toHaveBeenCalled();
   });
 });

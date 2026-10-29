@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CachedAdminMapEntry } from '@teammapper/shared';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
+import { MAP_STORE } from 'src/app/core/services/map-backend/map-store';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -43,6 +44,7 @@ import { LocalizedDatePipe } from 'src/app/shared/pipes/localized-date.pipe';
 export class MindmapsOverview implements OnInit {
   private settingsService = inject(SettingsService);
   private mapSyncService = inject(MapSyncService);
+  private mapStore = inject(MAP_STORE);
   private storageService = inject(StorageService);
   private translateService = inject(TranslateService);
   private toastrService = inject(ToastrService);
@@ -55,7 +57,7 @@ export class MindmapsOverview implements OnInit {
     this.cachedAdminMapEntries.set(
       await this.settingsService.getCachedAdminMapEntries()
     );
-    this.ownedEntries.set(await this.mapSyncService.fetchUserMapsFromServer());
+    this.ownedEntries.set(await this.mapStore.listMaps());
   }
 
   public getMapUrl(entry: CachedAdminMapEntry): string {
@@ -76,7 +78,7 @@ export class MindmapsOverview implements OnInit {
     const adminId = entry.cachedAdminMapValue.adminId;
     if (!adminId || !this.confirmDeletion()) return;
 
-    if (!(await this.mapSyncService.deleteMap(entry.id, adminId))) {
+    if (!(await this.mapStore.deleteMap(entry.id, adminId))) {
       this.toast('error', 'TOASTS.ERRORS.DELETE_MAP_ERROR');
       return;
     }

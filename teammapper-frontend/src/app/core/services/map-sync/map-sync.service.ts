@@ -2,7 +2,6 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { MmpService } from '../mmp/mmp.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import {
-  CachedAdminMapEntry,
   CachedAdminMapValue,
   CachedMap,
   CachedMapEntry,
@@ -10,15 +9,13 @@ import {
   ExportNodeProperties,
   findMainRoot,
   ImageReference,
-  imageIdOf,
-  MODIFICATION_SECRET_HEADER,
   normalizeMapData,
-  parseImageUploadResponse,
 } from '@teammapper/shared';
 import { ImageUploadError } from '../mmp/node-images';
 import type { MapData, MmpInstance } from '@teammapper/mmp';
-import { PrivateServerMap, ServerMap, ServerMapInfo } from './server-types';
-import { API_URL, HttpService } from '../../http/http.service';
+import { PrivateServerMap, ServerMap } from './server-types';
+import { MAP_STORE } from '../map-backend/map-store';
+import { MAP_CONNECTION_FACTORY } from '../map-backend/map-connection';
 import { COLORS } from '../mmp/mmp-utils';
 import { UtilsService } from '../utils/utils.service';
 import { StorageService } from '../storage/storage.service';
@@ -41,8 +38,9 @@ interface MapTarget {
 }
 
 /**
- * Loads the attached map from the server and opens it, with `YjsSyncService`
- * keeping it in sync. Opening a map runs in this order:
+ * Loads the attached map from the injected `MapStore` and opens it, with
+ * `YjsSyncService` keeping it in sync over a connection from the injected
+ * factory. Opening a map runs in this order:
  * 1. `openMap` calls `YjsSyncService.initMap`, which creates the Y.Doc and
  *    its `YjsMapData` and connects. No map exists yet.
  * 2. On the first sync, `YjsSyncService` hands the `YjsMapData` back
@@ -55,7 +53,8 @@ interface MapTarget {
 })
 export class MapSyncService implements OnDestroy {
   private mmpService = inject(MmpService);
-  private httpService = inject(HttpService);
+  private mapStore = inject(MAP_STORE);
+  private connectionFactory = inject(MAP_CONNECTION_FACTORY);
   private storageService = inject(StorageService);
   private settingsService = inject(SettingsService);
   private utilsService = inject(UtilsService);
@@ -111,7 +110,8 @@ export class MapSyncService implements OnDestroy {
       this.mmpService,
       this.settingsService,
       this.utilsService,
-      this.toastrService
+      this.toastrService,
+      this.connectionFactory
     );
 
     this.mmpService.registerImageHandlers({
@@ -127,7 +127,7 @@ export class MapSyncService implements OnDestroy {
   // ─── Public API ──────────────────────────────────────────────
 
   public async prepareNewMap(): Promise<PrivateServerMap> {
-    const privateServerMap: PrivateServerMap = await this.postMapToServer();
+    const privateServerMap: PrivateServerMap = await this.createMapInStore();
     this.storePrivateMapData(privateServerMap);
     this.setupNewMapState(privateServerMap);
     return privateServerMap;
@@ -138,7 +138,7 @@ export class MapSyncService implements OnDestroy {
     modificationSecret: string | null
   ): Promise<ServerMap | null> {
     await this.applyModificationSecret(modificationSecret);
-    const serverMap = await this.fetchMapFromServer(id);
+    const serverMap = await this.mapStore.getMap(id, this.modificationSecret);
 
     if (!serverMap) {
       return null;
@@ -234,38 +234,6 @@ export class MapSyncService implements OnDestroy {
     this.mmpService.updateAdditionalMapOptions(options);
     const applied = this.mmpService.getAdditionalMapOptions();
     if (applied) this.syncService.updateMapOptions(applied);
-  }
-
-  // Deletes any map the admin id belongs to, not only the attached one, so
-  // the map list can delete maps that are not open. Resolves to false on an
-  // error status or a failed request. The server answers 200 to a wrong admin
-  // id as well, so true does not prove the map is gone.
-  public async deleteMap(mapId: string, adminId: string): Promise<boolean> {
-    try {
-      const response = await this.httpService.delete(
-        API_URL.ROOT,
-        `/maps/${encodeURIComponent(mapId)}`,
-        JSON.stringify({ adminId })
-      );
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  public async fetchUserMapsFromServer(): Promise<CachedAdminMapEntry[]> {
-    const response = await this.httpService.get(API_URL.ROOT, '/maps');
-    if (!response.ok) return [];
-    const json: ServerMapInfo[] = await response.json();
-    return json.map(map => ({
-      id: map.uuid,
-      cachedAdminMapValue: {
-        adminId: map.adminId,
-        modificationSecret: map.modificationSecret,
-        ttl: map.ttl ? new Date(map.ttl) : null,
-        rootName: map.rootName,
-      },
-    }));
   }
 
   // ─── Context factory ─────────────────────────────────────────
@@ -370,11 +338,11 @@ export class MapSyncService implements OnDestroy {
     return this.attachedMapSubject.getValue()?.cachedMap.uuid ?? null;
   }
 
-  /** The image endpoint of the open map for a reference. */
+  /** The address of an image of the open map. */
   private imageUrl(reference: ImageReference): string | null {
     const mapId = this.attachedMapId();
     if (!mapId) return null;
-    return `${API_URL.ROOT}/maps/${mapId}/images/${imageIdOf(reference)}`;
+    return this.mapStore.imageUrl(mapId, reference);
   }
 
   /**
@@ -391,38 +359,11 @@ export class MapSyncService implements OnDestroy {
     if (msg) this.toastrService.warning(msg);
   }
 
-  /** Headers that carry the modification secret, if the map has one. */
-  private secretHeaders(): Record<string, string> {
-    return this.modificationSecret
-      ? { [MODIFICATION_SECRET_HEADER]: this.modificationSecret }
-      : {};
-  }
-
-  /** Posts the image to the open map, with the secret in its header. */
+  /** Stores the image with the open map, using the map's secret. */
   private async uploadImage(image: Blob): Promise<ImageReference> {
     const mapId = this.attachedMapId();
     if (!mapId) throw new ImageUploadError(0);
-    const form = new FormData();
-    form.append('file', image, 'image');
-    const response = await this.httpService
-      .postForm(
-        API_URL.ROOT,
-        `/maps/${mapId}/images`,
-        form,
-        this.secretHeaders()
-      )
-      .catch(() => null);
-    if (!response?.ok) throw new ImageUploadError(response?.status ?? 0);
-    return this.referenceFromUploadResponse(response);
-  }
-
-  private async referenceFromUploadResponse(
-    response: Response
-  ): Promise<ImageReference> {
-    const body: unknown = await response.json().catch(() => null);
-    const reference = parseImageUploadResponse(body);
-    if (!reference) throw new ImageUploadError(response.status);
-    return reference;
+    return this.mapStore.uploadImage(mapId, image, this.modificationSecret);
   }
 
   // ─── Shared utilities ────────────────────────────────────────
@@ -468,18 +409,7 @@ export class MapSyncService implements OnDestroy {
     this.modificationSecret = privateServerMap.modificationSecret;
   }
 
-  private async fetchMapFromServer(id: string): Promise<ServerMap | null> {
-    const response = await this.httpService.get(
-      API_URL.ROOT,
-      '/maps/' + id,
-      this.secretHeaders()
-    );
-    if (!response.ok) return null;
-    const json: ServerMap = await response.json();
-    return json;
-  }
-
-  private async postMapToServer(): Promise<PrivateServerMap> {
+  private async createMapInStore(): Promise<PrivateServerMap> {
     // The create endpoint requires a root node, so an absent one is a 400 and
     // not a server-side default. Settings init leaves the cache empty when it
     // cannot reach the server, so read the defaults back before posting.
@@ -489,13 +419,7 @@ export class MapSyncService implements OnDestroy {
       (await this.settingsService.getDefaultSettings()).userSettings.mapOptions
         .rootNode;
 
-    const response = await this.httpService.post(
-      API_URL.ROOT,
-      '/maps/',
-      JSON.stringify({ rootNode })
-    );
-
-    return response.json();
+    return this.mapStore.createMap(rootNode);
   }
 
   private createKey(uuid: string): string {
