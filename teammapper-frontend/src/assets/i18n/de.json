@@ -211,6 +211,7 @@
       "MAP_LIST": "Liste erstellter Mindmaps",
       "OWNED_MAPS": "Meine Mindmaps",
       "LAST_MAPS": "Zuletzt geöffnete Mindmaps",
+      "OFFLINE_STORAGE_NOTICE": "Deine Mindmaps bleiben nur in diesem Browser. Wenn du die Browserdaten löschst, gehen sie verloren. Nutze den JSON-Export als Sicherung.",
       "NODE_NAME": "Bezeichnung von Knoten",
       "ROOT_NODE_NAME": "Bezeichnung des Wurzelknotens",
       "TITLE": "Einstellungen",

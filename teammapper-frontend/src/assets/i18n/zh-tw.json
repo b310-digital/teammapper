@@ -210,6 +210,7 @@
       "MAP_LIST": "List of created maps",
       "OWNED_MAPS": "我的心智圖",
       "LAST_MAPS": "最近開啟的心智圖",
+      "OFFLINE_STORAGE_NOTICE": "您的心智圖只儲存在此瀏覽器中。清除瀏覽器資料會刪除這些心智圖。請使用 JSON 匯出作為備份。",
       "ROOT_NODE_NAME": "根節點名稱",
       "NODE_NAME": "節點名稱",
       "TITLE": "設定",
