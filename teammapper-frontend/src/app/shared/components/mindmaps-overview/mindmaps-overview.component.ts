@@ -17,7 +17,7 @@ import { MatList, MatListItem, MatListItemMeta } from '@angular/material/list';
 import { MatLine } from '@angular/material/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { CommonModule } from '@angular/common';
+import { CommonModule, LocationStrategy } from '@angular/common';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LocalizedDatePipe } from 'src/app/shared/pipes/localized-date.pipe';
 
@@ -49,6 +49,7 @@ export class MindmapsOverview implements OnInit {
   private translateService = inject(TranslateService);
   private toastrService = inject(ToastrService);
   private router = inject(Router);
+  private locationStrategy = inject(LocationStrategy);
 
   public cachedAdminMapEntries = signal<CachedAdminMapEntry[]>([]);
   public ownedEntries = signal<CachedAdminMapEntry[]>([]);
@@ -60,12 +61,15 @@ export class MindmapsOverview implements OnInit {
     this.ownedEntries.set(await this.mapStore.listMaps());
   }
 
+  // The location strategy adds the `#` that hash routing needs, so the link
+  // also works on a static host.
   public getMapUrl(entry: CachedAdminMapEntry): string {
-    return this.router
+    const url = this.router
       .createUrlTree([`/map/${entry.id}`], {
         fragment: entry.cachedAdminMapValue.modificationSecret ?? undefined,
       })
       .toString();
+    return this.locationStrategy.prepareExternalUrl(url);
   }
 
   public getMapTitle(entry: CachedAdminMapEntry): string {
