@@ -52,6 +52,7 @@ export class ToolbarComponent {
   public featureFlagPictograms: boolean;
   public featureFlagAI: boolean;
   public featureFlagArrows: boolean;
+  public featureFlagSharing: boolean;
 
   public canUndo$ = this.mapSyncService.canUndo$;
   public canRedo$ = this.mapSyncService.canRedo$;
@@ -73,6 +74,7 @@ export class ToolbarComponent {
     this.featureFlagPictograms = flags?.pictograms ?? false;
     this.featureFlagAI = flags?.ai ?? false;
     this.featureFlagArrows = flags?.arrows ?? false;
+    this.featureFlagSharing = flags?.sharing ?? true;
   }
 
   public async exportMap(format: ExportFormat) {

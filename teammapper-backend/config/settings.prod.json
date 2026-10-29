@@ -11,7 +11,8 @@
     "featureFlags": {
       "pictograms": false,
       "ai": false,
-      "arrows": false
+      "arrows": false,
+      "sharing": true
     }
   },
   "userSettings": {

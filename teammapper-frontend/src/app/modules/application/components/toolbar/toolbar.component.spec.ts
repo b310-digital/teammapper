@@ -104,7 +104,12 @@ async function setupTestBed(): Promise<TestContext> {
         provide: SettingsService,
         useValue: {
           getCachedSystemSettings: jest.fn().mockReturnValue({
-            featureFlags: { pictograms: false, ai: false, arrows: false },
+            featureFlags: {
+              pictograms: false,
+              ai: false,
+              arrows: false,
+              sharing: true,
+            },
           }),
         },
       },
@@ -638,6 +643,48 @@ describe('ToolbarComponent', () => {
       const stopped = ctx.mmpService.stopArrowMode.mock.invocationCallOrder[0];
       const acted = ctx.mmpService.copyNode.mock.invocationCallOrder[0];
       expect(stopped).toBeLessThan(acted);
+    });
+  });
+
+  describe('share', () => {
+    const button = (): HTMLButtonElement | null =>
+      ctx.fixture.nativeElement.querySelector('#share-button');
+
+    it('shows the share button while the sharing flag is on', () => {
+      expect(button()).not.toBeNull();
+    });
+
+    it('opens the share dialog when the button is clicked', () => {
+      button()?.click();
+
+      expect(TestBed.inject(DialogService).openShareDialog).toHaveBeenCalled();
+    });
+
+    it('reads the sharing flag from the system settings', () => {
+      jest
+        .mocked(TestBed.inject(SettingsService).getCachedSystemSettings)
+        .mockReturnValue({
+          info: { name: 'TeamMapper', version: '0', aiModel: null },
+          urls: { pictogramApiUrl: '', pictogramStaticUrl: '' },
+          featureFlags: {
+            pictograms: false,
+            ai: false,
+            arrows: false,
+            sharing: false,
+          },
+        });
+
+      const fixture = TestBed.createComponent(ToolbarComponent);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#share-button')).toBeNull();
+    });
+
+    it('shows no share button while the sharing flag is off', () => {
+      ctx.component.featureFlagSharing = false;
+      refresh(ctx);
+
+      expect(button()).toBeNull();
     });
   });
 
