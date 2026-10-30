@@ -275,7 +275,8 @@
       "IMAGE_UPLOAD_ERROR": "The image could not be uploaded.",
       "DELETE_MAP_ERROR": "The mind map could not be deleted.",
       "BROWSER_STORAGE_FAILED": "The mind map could not be saved in this browser's storage.",
-      "BROWSER_STORAGE_NEWER_FORMAT": "The mind maps in this browser were saved by a newer version of TeamMapper and cannot be opened."
+      "BROWSER_STORAGE_NEWER_FORMAT": "The mind maps in this browser were saved by a newer version of TeamMapper and cannot be opened.",
+      "BROWSER_STORAGE_UPDATE_FAILED": "The mind map could not be updated to the current version of TeamMapper. It stays unchanged."
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",

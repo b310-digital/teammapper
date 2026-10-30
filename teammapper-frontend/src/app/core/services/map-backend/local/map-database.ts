@@ -22,6 +22,13 @@ import {
   yMapToNodeProps,
 } from '../../map-sync/yjs-utils';
 import { DocPersistence } from './doc-persistence';
+import {
+  MapFormat,
+  mapFormatNumber,
+  NewerMapFormatError,
+  pendingMigrations,
+  stampFormatNumber,
+} from './map-format';
 
 /** The content of a map as its Y.Doc holds it. */
 export interface MapContent {
@@ -66,12 +73,14 @@ export function newRootNode(settings: UserMapOptions['rootNode']): MapNode {
 
 /**
  * Stores the Y.Doc of a new map: the root node and the map options, laid out
- * as the backend hydrates the doc of a map it has just created.
+ * as the backend hydrates the doc of a map it has just created, and the
+ * format number it is saved with.
  */
 export function seedMapDoc(
   persistence: DocPersistence,
   mapId: string,
-  root: MapNode
+  root: MapNode,
+  formatNumber: number
 ): Promise<void> {
   const doc = new Y.Doc();
   doc.transact(() => {
@@ -79,10 +88,66 @@ export function seedMapDoc(
     populateYMapFromNodeProps(yRoot, root);
     nodesMapOf(doc).set(root.id, yRoot);
     doc.getMap('mapOptions').set('name', '');
+    stampFormatNumber(doc, formatNumber);
   });
   const update = Y.encodeStateAsUpdate(doc);
   doc.destroy();
   return persistence.store(mapId, update);
+}
+
+/**
+ * Runs the data migrations the stored doc of the map has not gone through,
+ * and stores their changes together with the new format number as one
+ * update. A migration that throws stores nothing. Rejects with
+ * `NewerMapFormatError` for a map a later build saved. The caller keeps two
+ * tabs from migrating the same map at once.
+ */
+export async function migrateMapDoc(
+  persistence: DocPersistence,
+  mapId: string,
+  format: MapFormat
+): Promise<void> {
+  const update = await persistence.read(mapId);
+  if (!update) return;
+  const changes = withScratchDoc(update, doc =>
+    runPendingMigrations(doc, format)
+  );
+  if (changes) await persistence.store(mapId, changes);
+}
+
+/** Loads the update into a doc that lives for the call of `use` alone. */
+function withScratchDoc<T>(update: Uint8Array, use: (doc: Y.Doc) => T): T {
+  const doc = new Y.Doc();
+  try {
+    Y.applyUpdate(doc, update);
+    return use(doc);
+  } finally {
+    doc.destroy();
+  }
+}
+
+/**
+ * The update the pending migrations make to the doc, null when none is
+ * pending.
+ */
+function runPendingMigrations(
+  doc: Y.Doc,
+  format: MapFormat
+): Uint8Array | null {
+  const formatNumber = mapFormatNumber(doc);
+  if (formatNumber > format.formatNumber) {
+    throw new NewerMapFormatError(
+      `The map has the newer format ${formatNumber}`
+    );
+  }
+  if (formatNumber === format.formatNumber) return null;
+  const before = Y.encodeStateVector(doc);
+  doc.transact(() => {
+    const pending = pendingMigrations(format, formatNumber);
+    pending.forEach(migration => migration.migrate(doc));
+    stampFormatNumber(doc, format.formatNumber);
+  });
+  return Y.encodeStateAsUpdate(doc, before);
 }
 
 /** Reads the nodes, arrows and map options from the stored Y.Doc of a map. */

@@ -69,6 +69,24 @@ of these maps. Clearing the browser data for the site deletes them.
 The build limits an image to 150,000 bytes and the images of one map to
 2,000,000 bytes.
 
+## Change how maps are stored
+
+Each stored map records the format number of the build that saved it. To
+change how the build stores a map, add a data migration to
+`teammapper-frontend/src/app/core/services/map-backend/local/migrations/`:
+
+1. Write the migration in its own file, named after its format number, such
+   as `0002-<what-it-changes>.ts`. Its `migrate` function changes the doc of a
+   map on the previous format number in place.
+2. Append the migration to `DATA_MIGRATIONS` in `data-migrations.ts`. The
+   build takes its format number from the length of that list.
+3. Never edit or remove a released migration. A visitor's browser may hold
+   maps on any earlier format number.
+4. Make the migration give the same map when two tabs run it on the same doc,
+   and when an older tab stored content after the migration ran.
+
+The build runs the missing data migrations on a map when it opens the map.
+
 ## Back up
 
 Export a map as JSON from the export dialog and keep the file. Import the file
