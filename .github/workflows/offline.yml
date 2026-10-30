@@ -1,0 +1,58 @@
+name: Offline Build
+permissions:
+  contents: read
+on:
+  pull_request:
+    # labeled starts the E2E tests when the offline-mode label is added later.
+    types: [opened, synchronize, reopened, labeled]
+    branches: [main]
+    paths:
+      - 'teammapper-frontend/**'
+      - 'packages/**'
+      # The offline build bundles these settings.
+      - 'teammapper-backend/config/settings.prod.json'
+      - '.github/workflows/offline.yml'
+jobs:
+  test:
+    # Adding any other label starts no run.
+    if: github.event.action != 'labeled' || github.event.label.name == 'offline-mode'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    env:
+      # The E2E tests run only on pull requests labeled offline-mode.
+      RUN_E2E: ${{ contains(github.event.pull_request.labels.*.name, 'offline-mode') }}
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - uses: ./.github/actions/setup-pnpm
+    - name: Build the offline site
+      run: pnpm --filter teammapper-frontend run build:offline
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: offline-site
+        path: teammapper-frontend/dist-offline/browser
+        retention-days: 7
+    - name: Cache Playwright browsers
+      if: env.RUN_E2E == 'true'
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+      id: playwright-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-browsers-${{ hashFiles('pnpm-lock.yaml') }}-webkit
+    - name: Install Playwright Browsers
+      if: env.RUN_E2E == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
+      run: pnpm --filter teammapper-frontend exec playwright install webkit --with-deps
+    - name: Install Playwright system dependencies
+      if: env.RUN_E2E == 'true' && steps.playwright-cache.outputs.cache-hit == 'true'
+      run: pnpm --filter teammapper-frontend exec playwright install-deps webkit
+    - name: Run the offline Playwright tests
+      if: env.RUN_E2E == 'true'
+      # CI runs one browser to keep the job short. Local runs cover both.
+      run: pnpm --filter teammapper-frontend run test:e2e:offline --project=webkit
+      env:
+        BINDING: localhost
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      if: ${{ !cancelled() && env.RUN_E2E == 'true' }}
+      with:
+        name: playwright-offline
+        path: teammapper-frontend/playwright
+        retention-days: 7

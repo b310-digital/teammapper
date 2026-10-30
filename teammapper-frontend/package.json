@@ -37,7 +37,8 @@
     "doc": "compodoc -p src/tsconfig.app.json",
     "format": "npx prettier . --write",
     "format:check": "npx prettier . --check",
-    "test:e2e": "npx playwright test"
+    "test:e2e": "npx playwright test",
+    "test:e2e:offline": "npx playwright test --config playwright.offline.config.ts"
   },
   "dependencies": {
     "@angular-devkit/build-angular": "21.2.24",

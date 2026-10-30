@@ -31,7 +31,9 @@ test('deletes a map that is not open from the map list', async ({ page }) => {
     await page.waitForURL(/\/map\/[0-9a-f-]+/);
     // The URL changes before initialization finishes. Keep the page open
     // until the map has loaded before navigating away or opening settings.
-    await expect(page.getByText('Root node', { exact: true })).toBeVisible();
+    // The map list on the landing page also shows root names, so wait for a
+    // button only the loaded map enables.
+    await expect(page.locator('#add-tree-button')).toBeEnabled();
     const match = page.url().match(/\/map\/([0-9a-f-]+)/);
     if (!match) throw new Error(`No map id in ${page.url()}`);
     return match[1];
@@ -175,7 +177,7 @@ test('groups the mind map tab into map settings and user settings', async ({
   ).toBeVisible();
 });
 
-test('disables the map settings for a read-only viewer only', async ({
+test('disables the map settings for a read-only viewer only @server', async ({
   page,
   browser,
 }) => {
@@ -203,7 +205,7 @@ test('disables the map settings for a read-only viewer only', async ({
   }
 });
 
-test('draws curved branches for this browser only', async ({
+test('draws curved branches for this browser only @server', async ({
   page,
   browser,
 }) => {

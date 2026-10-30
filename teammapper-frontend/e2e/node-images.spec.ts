@@ -20,7 +20,7 @@ async function uploadImage(page: Page): Promise<void> {
   await page.locator('#image-upload').setInputFiles(IMAGE_PATH);
 }
 
-test('adds image to node', async ({ page }) => {
+test('adds image to node @server', async ({ page }) => {
   await createMapWithNode(page, 'Image Test Node');
 
   const imageInput = page.locator('#image-upload');
@@ -54,7 +54,10 @@ test('adds image to node', async ({ page }) => {
   expect(parseFloat(y ?? '')).toBeLessThan(0); // above the node text
 });
 
-test('a second client sees the uploaded image', async ({ page, browser }) => {
+test('a second client sees the uploaded image @server', async ({
+  page,
+  browser,
+}) => {
   await createMapWithNode(page, 'Shared Image Node');
 
   const secondClientContext = await browser.newContext();
