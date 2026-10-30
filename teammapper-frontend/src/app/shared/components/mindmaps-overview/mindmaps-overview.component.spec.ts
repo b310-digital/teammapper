@@ -15,6 +15,7 @@ import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service'
 import { MAP_STORE } from 'src/app/core/services/map-backend/map-store';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
+import { OFFLINE_MODE } from 'src/app/core/services/map-backend/map-backend-config';
 import { MindmapsOverview } from './mindmaps-overview.component';
 
 describe('MindmapsOverview', () => {
@@ -45,6 +46,7 @@ describe('MindmapsOverview', () => {
     entries: CachedAdminMapEntry[],
     attachedMap: CachedMapEntry | null = null,
     deleted = true,
+    offline = false,
     locationStrategy: Type<LocationStrategy> = PathLocationStrategy
   ) {
     mapSyncService = {
@@ -65,6 +67,7 @@ describe('MindmapsOverview', () => {
     await TestBed.configureTestingModule({
       imports: [MindmapsOverview, TranslateModule.forRoot()],
       providers: [
+        { provide: OFFLINE_MODE, useValue: offline },
         { provide: MapSyncService, useValue: mapSyncService },
         { provide: MAP_STORE, useValue: mapStore },
         {
@@ -102,6 +105,22 @@ describe('MindmapsOverview', () => {
     jest.restoreAllMocks();
   });
 
+  it('shows the storage notice in the offline build', async () => {
+    await render([entry('map-1', 'admin-1')], null, true, true);
+
+    expect(
+      fixture.nativeElement.querySelectorAll('.storage-notice')
+    ).toHaveLength(1);
+  });
+
+  it('shows no storage notice in the web build', async () => {
+    await render([entry('map-1', 'admin-1')]);
+
+    expect(
+      fixture.nativeElement.querySelectorAll('.storage-notice')
+    ).toHaveLength(0);
+  });
+
   it('shows the deletion date of a map that has one', async () => {
     await render([entry('map-1', 'admin-1')]);
 
@@ -121,7 +140,13 @@ describe('MindmapsOverview', () => {
   });
 
   it('links a map through the hash in the offline build', async () => {
-    await render([entry('map-1', 'admin-1')], null, true, HashLocationStrategy);
+    await render(
+      [entry('map-1', 'admin-1')],
+      null,
+      true,
+      false,
+      HashLocationStrategy
+    );
 
     expect(mapLinks()).toEqual(['#/map/map-1', '#/map/map-1']);
   });

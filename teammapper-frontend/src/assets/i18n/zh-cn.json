@@ -210,6 +210,7 @@
       "MAP_LIST": "已创建思维导图列表",
       "OWNED_MAPS": "我的思维导图",
       "LAST_MAPS": "最近打开的思维导图",
+      "OFFLINE_STORAGE_NOTICE": "您的思维导图只保存在此浏览器中。清除浏览器数据会删除这些思维导图。请使用 JSON 导出作为备份。",
       "ROOT_NODE_NAME": "根节点名称",
       "NODE_NAME": "节点名称",
       "TITLE": "设置",

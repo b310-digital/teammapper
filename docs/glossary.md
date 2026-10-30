@@ -304,6 +304,14 @@ add image bytes. Counts image references' stored image sizes and inline image
 data URLs' UTF-8 bytes. Copies of copies consume the same budget. Distinct from
 the image cap, which limits the images of a single map.
 
+### Offline build
+
+A static build of the frontend that runs without a backend. It stores maps in
+the browser's IndexedDB under the site's origin, so no other browser or device
+sees them. It switches off sharing, duplication, pictograms, AI, the deletion
+date and collaboration. See `docs/offline.md`. The web version is the build
+with a backend.
+
 ## Sharing and collaboration
 
 ### Writable

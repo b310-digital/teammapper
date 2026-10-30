@@ -210,6 +210,7 @@
       "MAP_LIST": "List of created maps",
       "OWNED_MAPS": "Mes cartes mentales",
       "LAST_MAPS": "Cartes mentales récentes",
+      "OFFLINE_STORAGE_NOTICE": "Vos cartes mentales restent uniquement dans ce navigateur. Effacer les données du navigateur les supprime. Utilisez l'export JSON comme sauvegarde.",
       "ROOT_NODE_NAME": "Nom du noeud racine",
       "NODE_NAME": "Nom du noeud",
       "TITLE": "Paramètres",

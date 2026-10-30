@@ -1,4 +1,11 @@
 <div class="content map-list">
+  @if (offlineMode) {
+    <mat-card class="storage-notice">
+      <mat-card-content>{{
+        'PAGES.SETTINGS.OFFLINE_STORAGE_NOTICE' | translate
+      }}</mat-card-content>
+    </mat-card>
+  }
   @if (ownedEntries().length > 0) {
     <mat-card class="map-list-main">
       <mat-card-header>

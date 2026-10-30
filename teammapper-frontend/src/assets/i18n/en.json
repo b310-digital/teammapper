@@ -211,6 +211,7 @@
       "MAP_LIST": "List of created maps",
       "OWNED_MAPS": "My mindmaps",
       "LAST_MAPS": "Recently opened mindmaps",
+      "OFFLINE_STORAGE_NOTICE": "Your mindmaps stay in this browser only. Clearing the browser data deletes them. Use the JSON export as a backup.",
       "ROOT_NODE_NAME": "Root node name",
       "NODE_NAME": "Node name",
       "TITLE": "Settings",

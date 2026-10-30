@@ -210,6 +210,7 @@
       "MAP_LIST": "Elenco delle mappe create",
       "OWNED_MAPS": "Le mie mappe mentali",
       "LAST_MAPS": "Mappe mentali recenti",
+      "OFFLINE_STORAGE_NOTICE": "Le tue mappe mentali restano solo in questo browser. Se cancelli i dati del browser, vengono eliminate. Usa l'esportazione JSON come backup.",
       "ROOT_NODE_NAME": "Nome nodo radice",
       "NODE_NAME": "Nome nodo",
       "TITLE": "Impostazioni",

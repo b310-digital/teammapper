@@ -292,6 +292,12 @@ The following environment variables override the feature flags from the JSON con
 | `PICTOGRAM_API_URL` | Upstream the `/arasaac/api` proxy forwards pictogram searches to | `https://api.arasaac.org/api` |
 | `PICTOGRAM_IMAGES_URL` | Upstream the `/arasaac/images` proxy forwards pictogram images to | `https://static.arasaac.org/` |
 
+### Offline build
+
+`pnpm --filter teammapper-frontend run build:offline` builds a static site that
+runs without a backend and stores maps in the browser. Any static host can serve
+it. See [docs/offline.md](docs/offline.md) for building, hosting and backups.
+
 ### Further details
 
 -   Once this docker volume is initialized after the first `docker compose up`, the database-related variables in `.env.prod` will not have any effect; please have this in mind => you will then need to setup your database manually

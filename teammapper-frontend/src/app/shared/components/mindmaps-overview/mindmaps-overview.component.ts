@@ -3,6 +3,7 @@ import { CachedAdminMapEntry } from '@teammapper/shared';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { MAP_STORE } from 'src/app/core/services/map-backend/map-store';
+import { OFFLINE_MODE } from 'src/app/core/services/map-backend/map-backend-config';
 import { StorageService } from 'src/app/core/services/storage/storage.service';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -50,6 +51,8 @@ export class MindmapsOverview implements OnInit {
   private toastrService = inject(ToastrService);
   private router = inject(Router);
   private locationStrategy = inject(LocationStrategy);
+
+  public offlineMode = inject(OFFLINE_MODE);
 
   public cachedAdminMapEntries = signal<CachedAdminMapEntry[]>([]);
   public ownedEntries = signal<CachedAdminMapEntry[]>([]);
