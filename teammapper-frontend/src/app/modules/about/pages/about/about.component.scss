@@ -67,7 +67,7 @@ $logo-teal: #19b8ae;
   }
 }
 
-.map {
+.feature-map {
   position: relative;
   // Keeps the root's glow (z-index -1) above the page background.
   isolation: isolate;
@@ -210,7 +210,7 @@ $logo-teal: #19b8ae;
 
 // Below 800px the hero turns into a vertical list hanging off the root.
 @media (max-width: 800px) {
-  .map {
+  .feature-map {
     aspect-ratio: auto;
     display: flex;
     flex-direction: column;
