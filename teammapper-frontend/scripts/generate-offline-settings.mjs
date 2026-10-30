@@ -2,7 +2,7 @@
 // settings, deep-merged with offline/settings.override.json the way the
 // backend's SettingsService merges its own override file.
 //
-// Usage: node scripts/generate-offline-settings.mjs [output path]
+// Usage: pnpm run settings:offline [output path]
 // The output path defaults to src/assets/settings.offline.json.
 import deepmerge from 'deepmerge';
 import { readFileSync, writeFileSync } from 'node:fs';

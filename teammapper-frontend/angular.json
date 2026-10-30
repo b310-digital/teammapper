@@ -78,6 +78,7 @@
                 "TEAMMAPPER_OFFLINE": "true"
               },
               "baseHref": "./",
+              "serviceWorker": "ngsw-config.json",
               "outputPath": {
                 "base": "dist-offline"
               }

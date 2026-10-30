@@ -233,6 +233,8 @@
     "JSON_FILE_SIZE_TOO_LARGE": "文件大小超过 1 MB，可能会导致导入时出现问题。请通过删除图片等方式减小文件大小。"
   },
   "TOASTS": {
+    "APP_UPDATE_READY": "TeamMapper 新版本已就绪。点击此处重新加载。",
+    "APP_UPDATE_BROKEN": "TeamMapper 需要重新加载才能继续使用。点击此处重新加载。",
     "SUCCESSFULLY_DUPLICATED": "思维导图复制成功！",
     "URL_COPIED": "成功复制 URL",
     "NODE_COPIED": "节点复制成功",

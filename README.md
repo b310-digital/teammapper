@@ -296,7 +296,9 @@ The following environment variables override the feature flags from the JSON con
 
 `pnpm --filter teammapper-frontend run build:offline` builds a static site that
 runs without a backend and stores maps in the browser. Any static host can serve
-it. See [docs/offline.md](docs/offline.md) for building, hosting and backups.
+it. A service worker caches the site, so the site loads without a network
+after the first visit over HTTPS. See [docs/offline.md](docs/offline.md) for building,
+hosting, updates and backups.
 
 ### Further details
 

@@ -2,7 +2,8 @@
 
 The offline build is a static copy of the TeamMapper frontend that runs without
 a backend. It stores every map in the visitor's browser. Any static host can
-serve it.
+serve it. A service worker caches the site, so after the first visit the site
+also loads without a network.
 
 ## Build
 
@@ -40,6 +41,20 @@ The host, the domain and the deploy workflow are not decided yet.
 Keep the origin (scheme, host and port) of the site fixed. The browser ties
 stored maps to the origin, so a new domain starts empty and leaves the maps
 under the old origin orphaned.
+
+Serve the site over HTTPS: browsers register the service worker only there
+or on `localhost`. Do not cache `ngsw.json` and `ngsw-worker.js` for long,
+or visitors miss updates.
+
+## Service worker
+
+The Angular service worker, configured in
+`teammapper-frontend/ngsw-config.json`, caches the site on the first visit.
+After that the site loads without a network.
+
+After a deploy, the worker downloads the new version in the background and
+the page offers a reload. Without the reload, the next visit uses the new
+version.
 
 ## Where the data lives
 

@@ -3,6 +3,8 @@ import {
   APP_INITIALIZER,
   EnvironmentProviders,
   importProvidersFrom,
+  inject,
+  provideAppInitializer,
 } from '@angular/core';
 import { environment } from './environments/environment';
 import {
@@ -23,6 +25,8 @@ import { RootComponent } from './app/root.component';
 import { provideRouter, withHashLocation } from '@angular/router';
 import { rootRoutes } from './app/root.routes';
 import { provideRemoteMapBackend } from './app/core/services/map-backend/remote/remote-map-backend.providers';
+import { provideServiceWorker } from '@angular/service-worker';
+import { AppUpdateService } from './app/core/services/app-update/app-update.service';
 
 if (environment.production) {
   enableProdMode();
@@ -70,6 +74,15 @@ function bootstrap(mapBackend: EnvironmentProviders) {
         ...(TEAMMAPPER_OFFLINE ? [withHashLocation()] : [])
       ),
       mapBackend,
+      // Caches the offline build so it loads without a network.
+      ...(TEAMMAPPER_OFFLINE
+        ? [
+            provideServiceWorker('ngsw-worker.js', {
+              enabled: environment.production,
+            }),
+            provideAppInitializer(() => inject(AppUpdateService).watch()),
+          ]
+        : []),
       {
         provide: APP_INITIALIZER,
         useFactory: appSettingsFactory,

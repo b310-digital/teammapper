@@ -71,6 +71,12 @@ and the web config runs the test as before.
 The offline dev server listens on 4200 like the web one, so stop the web dev
 server first, or `reuseExistingServer` tests the web build instead.
 
+Only the offline build may register a service worker. Keep `serviceWorker`
+`false` in the base build options. `e2e-offline/service-worker.spec.ts` runs
+against the built site, because the worker rejects files the dev server
+rewrites. The spec skips itself in the docker setup, where the browser has no
+secure context.
+
 Three version strings must match, because the protocol between client and
 server is not stable across versions:
 

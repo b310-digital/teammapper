@@ -233,6 +233,8 @@
     "JSON_FILE_SIZE_TOO_LARGE": "The file is exceeding 1 MB in file size and could cause problems during import. Please reduce the file size e.g. by removing images."
   },
   "TOASTS": {
+    "APP_UPDATE_READY": "Hay una nueva versión de TeamMapper lista. Haz clic aquí para recargar.",
+    "APP_UPDATE_BROKEN": "TeamMapper necesita recargarse para seguir funcionando. Haz clic aquí para recargar.",
     "SUCCESSFULLY_DUPLICATED": "¡Mapa mental duplicado con éxito!",
     "URL_COPIED": "URL copiada correctamente",
     "NODE_COPIED": "¡Nodo copiado con éxito!",
