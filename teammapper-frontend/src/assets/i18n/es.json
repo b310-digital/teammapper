@@ -286,6 +286,8 @@
   "GENERAL": {
     "BRANCHES": "Ramificaciones",
     "REPOSITORY": "Source Code",
+    "IMPRINT": "Aviso legal",
+    "PRIVACY": "Privacidad",
     "CREATE": "Create mind map",
     "GENERAL": "General",
     "DISMISS": "Desestimar",

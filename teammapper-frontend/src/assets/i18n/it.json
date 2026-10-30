@@ -286,6 +286,8 @@
   "GENERAL": {
     "BRANCHES": "Rami",
     "REPOSITORY": "Codice sorgente",
+    "IMPRINT": "Note legali",
+    "PRIVACY": "Privacy",
     "APPLICATION": "Applicazione",
     "CREATE": "Provala",
     "DISMISS": "Chiudi",

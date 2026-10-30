@@ -135,6 +135,10 @@ export interface SystemSettingsInfo {
 export interface SystemSettingsUrls {
   pictogramApiUrl: string;
   pictogramStaticUrl: string;
+  /** Target of the imprint link; null hides the link. */
+  imprintUrl: string | null;
+  /** Target of the privacy policy link; null hides the link. */
+  privacyUrl: string | null;
 }
 
 export interface SystemFeatureFlags {

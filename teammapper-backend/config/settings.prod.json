@@ -6,7 +6,9 @@
     },
     "urls": {
       "pictogramApiUrl": "/arasaac/api/pictograms",
-      "pictogramStaticUrl": "/arasaac/images/pictograms"
+      "pictogramStaticUrl": "/arasaac/images/pictograms",
+      "imprintUrl": null,
+      "privacyUrl": null
     },
     "featureFlags": {
       "pictograms": false,

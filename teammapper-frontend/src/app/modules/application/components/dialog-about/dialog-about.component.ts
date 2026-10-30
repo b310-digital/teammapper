@@ -35,11 +35,16 @@ export class DialogAboutComponent {
   public faGithub = faGithub;
   public version = '';
   public applicationName = 'TeamMapper';
+  /** The template shows the imprint and privacy links only when set. */
+  public imprintUrl: string | null = null;
+  public privacyUrl: string | null = null;
 
   constructor() {
     const settings = this.settingsService.getCachedSystemSettings();
     this.version = settings?.info?.version || this.version;
     this.applicationName = settings?.info?.name || this.applicationName;
+    this.imprintUrl = settings?.urls?.imprintUrl || null;
+    this.privacyUrl = settings?.urls?.privacyUrl || null;
   }
 
   language(): string {

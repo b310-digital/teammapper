@@ -56,5 +56,19 @@ export class SettingsService {
     if (configService.isArrowsEnabled()) {
       settings.systemSettings.featureFlags.arrows = true
     }
+    this.applyLegalUrls(settings)
+  }
+
+  /**
+   * Sets the imprint and privacy link targets. `IMPRINT_URL` and
+   * `PRIVACY_URL` win over the settings files, which decide when the
+   * variable is unset. A blank value from either source counts as unset.
+   */
+  private applyLegalUrls(settings: Settings): void {
+    const urls = settings.systemSettings.urls
+    urls.imprintUrl =
+      configService.getImprintUrl() ?? (urls.imprintUrl?.trim() || null)
+    urls.privacyUrl =
+      configService.getPrivacyUrl() ?? (urls.privacyUrl?.trim() || null)
   }
 }
