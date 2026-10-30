@@ -12,6 +12,7 @@ import { Subject } from 'rxjs';
 import type { MapData, MmpInstance, OptionParameters } from '@teammapper/mmp';
 import type { MapNodeSettings, UserMapOptions } from '@teammapper/shared';
 import { ImageUploadError } from './node-images';
+import { ReportedMapStoreError } from '../map-backend/map-store';
 
 jest.mock('dompurify', () => {
   return {
@@ -1327,6 +1328,15 @@ describe('MmpService', () => {
       expect(utilsService.translate).toHaveBeenCalledWith(
         'TOASTS.ERRORS.IMAGE_UPLOAD_ERROR'
       );
+    });
+
+    it('keeps the image and adds no toast to the one the map store showed', async () => {
+      upload.mockRejectedValue(new ReportedMapStoreError('write failed'));
+
+      await service.addNodeImage(image);
+
+      expect(mockMap.updateNode).not.toHaveBeenCalled();
+      expect(toastrService.error).not.toHaveBeenCalled();
     });
 
     it('does nothing when no node is selected', async () => {
