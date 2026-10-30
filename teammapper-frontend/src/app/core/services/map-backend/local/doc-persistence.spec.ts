@@ -93,4 +93,35 @@ describe.each(DRIVERS)('DocPersistence with %s', (_name, driver) => {
 
     expect(doc.getMap('nodes').toJSON()).toEqual({ a: 'first' });
   });
+
+  it('stores an edit on flush, before the write debounce elapses', async () => {
+    const id = nextMapId();
+    const doc = new Y.Doc();
+    const stored = await persistence.attach(id, doc);
+    doc.getMap('nodes').set('a', 'first');
+
+    await stored.flush();
+
+    expect(namesIn(await persistence.read(id))).toEqual({ a: 'first' });
+    await stored.close();
+  });
+
+  it('keeps storing edits after a flush', async () => {
+    const id = nextMapId();
+    const doc = new Y.Doc();
+    const stored = await persistence.attach(id, doc);
+    await stored.flush();
+
+    doc.getMap('nodes').set('b', 'second');
+    await stored.close();
+
+    expect(namesIn(await persistence.read(id))).toEqual({ b: 'second' });
+  });
+
+  it('resolves a flush with nothing pending', async () => {
+    const stored = await persistence.attach(nextMapId(), new Y.Doc());
+
+    await expect(stored.flush()).resolves.toBeUndefined();
+    await stored.close();
+  });
 });

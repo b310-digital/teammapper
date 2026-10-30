@@ -170,3 +170,94 @@ describe.each(DRIVERS)('LocalMapConnection with %s', (_name, driver) => {
     expect(synced).not.toHaveBeenCalled();
   });
 });
+
+describe('LocalMapConnection when the page goes away', () => {
+  let flush: jest.Mock<Promise<void>, []>;
+  let fake: DocPersistence;
+
+  /** Opens a connection on the fake persistence, synced. */
+  async function openFake(): Promise<LocalMapConnection> {
+    const connection = new LocalMapConnection('map', new Y.Doc(), () =>
+      Promise.resolve(fake)
+    );
+    await new Promise<void>(resolve => connection.onSynced(resolve));
+    return connection;
+  }
+
+  function setVisibility(state: DocumentVisibilityState): void {
+    Object.defineProperty(document, 'visibilityState', {
+      value: state,
+      configurable: true,
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }
+
+  beforeEach(() => {
+    flush = jest.fn(() => Promise.resolve());
+    fake = {
+      attach: () => Promise.resolve({ close: () => Promise.resolve(), flush }),
+      store: jest.fn(),
+      read: jest.fn(),
+      delete: jest.fn(),
+    };
+  });
+
+  // Drops the own property, so jsdom's getter applies again.
+  afterEach(() => {
+    Reflect.deleteProperty(document, 'visibilityState');
+  });
+
+  it('writes the pending state on pagehide', async () => {
+    const connection = await openFake();
+
+    window.dispatchEvent(new Event('pagehide'));
+    await Promise.resolve();
+
+    expect(flush).toHaveBeenCalledTimes(1);
+    await connection.destroy();
+  });
+
+  it('writes the pending state when the page turns hidden', async () => {
+    const connection = await openFake();
+
+    setVisibility('hidden');
+    await Promise.resolve();
+
+    expect(flush).toHaveBeenCalledTimes(1);
+    await connection.destroy();
+  });
+
+  it('writes nothing when the page turns visible', async () => {
+    const connection = await openFake();
+
+    setVisibility('visible');
+    await Promise.resolve();
+
+    expect(flush).not.toHaveBeenCalled();
+    await connection.destroy();
+  });
+
+  it('writes nothing on pagehide after destroy', async () => {
+    const connection = await openFake();
+    await connection.destroy();
+
+    window.dispatchEvent(new Event('pagehide'));
+    await Promise.resolve();
+
+    expect(flush).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed write on pagehide', async () => {
+    const error = new Error('quota exceeded');
+    flush.mockRejectedValueOnce(error);
+    const logged = jest.spyOn(console, 'error').mockImplementation();
+    const connection = await openFake();
+
+    window.dispatchEvent(new Event('pagehide'));
+    await new Promise(resolve => setTimeout(resolve));
+
+    expect(logged).toHaveBeenCalledWith('Failed to write the map:', error);
+    logged.mockRestore();
+    await connection.destroy();
+  });
+});
