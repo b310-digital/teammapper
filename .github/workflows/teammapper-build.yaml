@@ -37,9 +37,13 @@ jobs:
       # Installs dependencies and builds the workspace packages.
       - uses: ./.github/actions/setup-pnpm
 
+      # The legal link targets come from the repository variables IMPRINT_URL
+      # and PRIVACY_URL. An unset variable hides its link.
       - name: Build the offline site
         env:
           CI: true
+          IMPRINT_URL: ${{ vars.IMPRINT_URL }}
+          PRIVACY_URL: ${{ vars.PRIVACY_URL }}
         run: pnpm --filter teammapper-frontend run build:offline-site
 
 # Please do not touch the following action
