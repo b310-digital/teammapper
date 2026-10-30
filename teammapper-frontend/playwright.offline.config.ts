@@ -8,7 +8,7 @@ import webConfig from './playwright.config';
  */
 export default defineConfig({
   ...webConfig,
-  // The root keeps the snapshot paths of the web specs under e2e/.
+  // The root still includes the snapshot paths of the web specs under e2e/.
   testDir: '.',
   testMatch: [
     'e2e/app.spec.ts',
