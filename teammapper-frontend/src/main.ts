@@ -1,6 +1,7 @@
 import {
   enableProdMode,
   APP_INITIALIZER,
+  EnvironmentProviders,
   importProvidersFrom,
 } from '@angular/core';
 import { environment } from './environments/environment';
@@ -22,42 +23,63 @@ import { RootComponent } from './app/root.component';
 import { provideRouter, withHashLocation } from '@angular/router';
 import { rootRoutes } from './app/root.routes';
 import { provideRemoteMapBackend } from './app/core/services/map-backend/remote/remote-map-backend.providers';
-import { provideLocalMapBackend } from './app/core/services/map-backend/local/local-map-backend.providers';
 
 if (environment.production) {
   enableProdMode();
 }
 
-bootstrapApplication(RootComponent, {
-  providers: [
-    importProvidersFrom(
-      BrowserModule,
-      ToastrModule.forRoot(),
-      TranslateModule.forRoot(),
-      HotkeyModule.forRoot()
-    ),
-    provideTranslateHttpLoader({
-      prefix: './assets/i18n/',
-      suffix: '.json',
-    }),
-    // A static host has no rewrite rules, so the offline build keeps the
-    // route in the hash.
-    provideRouter(
-      rootRoutes,
-      ...(TEAMMAPPER_OFFLINE ? [withHashLocation()] : [])
-    ),
-    // The web build drops this branch before bundling, so it emits no chunk
-    // for y-indexeddb.
-    TEAMMAPPER_OFFLINE
-      ? provideLocalMapBackend(() => import('y-indexeddb'))
-      : provideRemoteMapBackend(),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: appSettingsFactory,
-      deps: [SettingsService],
-      multi: true,
-    },
-    provideHttpClient(withInterceptorsFromDi()),
-    provideAnimations(),
-  ],
-}).catch(console.error);
+/**
+ * Provides the map backend of the build. The web build drops the offline
+ * branch before bundling. The dynamic imports keep the local backend and
+ * y-indexeddb out of the main chunk even if tree-shaking keeps the branch.
+ * Keep the offline code inside the `if` block: after an early
+ * `if (!TEAMMAPPER_OFFLINE) return`, esbuild keeps the rest and the web build
+ * emits a chunk for each import.
+ */
+async function provideMapBackend(): Promise<EnvironmentProviders> {
+  if (TEAMMAPPER_OFFLINE) {
+    const { provideLocalMapBackend } =
+      await import('./app/core/services/map-backend/local/local-map-backend.providers');
+    return provideLocalMapBackend(() => import('y-indexeddb'));
+  }
+  return provideRemoteMapBackend();
+}
+
+/**
+ * Starts the app with the given map backend.
+ *
+ * @param mapBackend providers of the map store and the map connections
+ */
+function bootstrap(mapBackend: EnvironmentProviders) {
+  return bootstrapApplication(RootComponent, {
+    providers: [
+      importProvidersFrom(
+        BrowserModule,
+        ToastrModule.forRoot(),
+        TranslateModule.forRoot(),
+        HotkeyModule.forRoot()
+      ),
+      provideTranslateHttpLoader({
+        prefix: './assets/i18n/',
+        suffix: '.json',
+      }),
+      // A static host has no rewrite rules, so the offline build keeps the
+      // route in the hash.
+      provideRouter(
+        rootRoutes,
+        ...(TEAMMAPPER_OFFLINE ? [withHashLocation()] : [])
+      ),
+      mapBackend,
+      {
+        provide: APP_INITIALIZER,
+        useFactory: appSettingsFactory,
+        deps: [SettingsService],
+        multi: true,
+      },
+      provideHttpClient(withInterceptorsFromDi()),
+      provideAnimations(),
+    ],
+  });
+}
+
+provideMapBackend().then(bootstrap).catch(console.error);
