@@ -311,6 +311,10 @@
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step"
   },
+  "OFFLINE_MODE": {
+    "LABEL": "Modo offline",
+    "DESCRIPTION": "Seus mapas mentais ficam neste navegador. Ninguém mais pode abri-los ou editá-los, e as alterações não são sincronizadas com outras pessoas ou dispositivos."
+  },
   "CLIENT_LIST": {
     "ANONYMOUS": "Anônimo"
   }

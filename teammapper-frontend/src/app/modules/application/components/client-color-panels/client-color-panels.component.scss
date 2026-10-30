@@ -14,6 +14,11 @@ div.client-colors-panel {
   display: inline-flex;
 }
 
+// The web version renders no badge, and the empty box takes no space.
+.offline:not(:empty) {
+  margin-left: 6px;
+}
+
 button.own-client {
   padding: 0;
   border: none;

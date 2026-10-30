@@ -312,6 +312,10 @@
     "NOT_SAVED": "Nicht gespeichert",
     "LINKS": "Links"
   },
+  "OFFLINE_MODE": {
+    "LABEL": "Offline-Modus",
+    "DESCRIPTION": "Deine Mindmaps bleiben in diesem Browser. Niemand sonst kann sie öffnen oder bearbeiten, und Änderungen werden nicht mit anderen Personen oder Geräten synchronisiert."
+  },
   "CLIENT_LIST": {
     "ANONYMOUS": "Anonym"
   }

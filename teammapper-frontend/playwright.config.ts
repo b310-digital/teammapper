@@ -56,6 +56,12 @@ export default defineConfig({
   ],
   outputDir: './playwright/output',
 
+  /* The offline suite compares against the same snapshots, so screenshots
+     hide what only the offline build renders. */
+  expect: {
+    toHaveScreenshot: { stylePath: './e2e/screenshot.css' },
+  },
+
   /* Run your local dev server before starting the tests */
   webServer: [
     {

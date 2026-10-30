@@ -313,6 +313,9 @@ date and collaboration. A service worker caches the site, so it loads without
 a network after the first visit. See `docs/offline.md`. The web version is the
 build with a backend.
 
+The **offline badge** reads "Offline mode" and marks the start page and the
+map screen of the offline build. The web version renders none.
+
 ## Sharing and collaboration
 
 ### Writable

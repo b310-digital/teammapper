@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import { MapSyncService } from 'src/app/core/services/map-sync/map-sync.service';
 import { ClientListEntry } from 'src/app/core/services/map-sync/yjs-utils';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
+import { OFFLINE_MODE } from 'src/app/core/services/map-backend/map-backend-config';
 import { ClientColorPanelsComponent } from './client-color-panels.component';
 
 describe('ClientColorPanelsComponent', () => {
@@ -24,7 +25,7 @@ describe('ClientColorPanelsComponent', () => {
     color = '#673AB7'
   ): ClientListEntry => ({ clientId, color, displayName, isSelf: false });
 
-  async function render(clients: ClientListEntry[]) {
+  async function render(clients: ClientListEntry[], offline = false) {
     clients$ = new BehaviorSubject(clients);
     openDisplayNameDialog = jest.fn();
 
@@ -36,12 +37,14 @@ describe('ClientColorPanelsComponent', () => {
           useValue: { getClientListObservable: () => clients$ },
         },
         { provide: DialogService, useValue: { openDisplayNameDialog } },
+        { provide: OFFLINE_MODE, useValue: offline },
       ],
     }).compileComponents();
 
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
       CLIENT_LIST: { ANONYMOUS: 'Anonymous' },
+      OFFLINE_MODE: { LABEL: 'Offline mode', DESCRIPTION: 'No sync' },
     });
     translate.use('en');
 
@@ -153,5 +156,23 @@ describe('ClientColorPanelsComponent', () => {
     await render([self()]);
 
     expect(entryLabelled('Anonymous').tagName).toBe('BUTTON');
+  });
+
+  it('shows the offline badge after the own client in the offline build', async () => {
+    await render([self('Vorname Test')], true);
+
+    const badge = root().querySelector('.offline-badge');
+    if (!badge) throw new Error('No offline badge');
+    expect(badge.textContent).toContain('Offline mode');
+    expect(
+      entryLabelled('Vorname Test').compareDocumentPosition(badge) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('shows no offline badge in the web version', async () => {
+    await render([self('Vorname Test')]);
+
+    expect(root().querySelector('.offline-badge')).toBeNull();
   });
 });

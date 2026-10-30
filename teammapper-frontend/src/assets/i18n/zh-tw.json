@@ -311,6 +311,10 @@
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step"
   },
+  "OFFLINE_MODE": {
+    "LABEL": "離線模式",
+    "DESCRIPTION": "您的心智圖只儲存在此瀏覽器中。其他人無法開啟或編輯它們，所做的變更也不會與其他人或裝置同步。"
+  },
   "CLIENT_LIST": {
     "ANONYMOUS": "匿名"
   }

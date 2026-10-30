@@ -79,6 +79,9 @@ body {
 
   // Component-specific theme variables
   --color-start-page-heading: #263238;
+  --color-offline-badge-bg: #fff3e0;
+  --color-offline-badge-border: #ef6c00;
+  --color-offline-badge-text: #8a3a00;
   --color-picto-bg: transparent;
   --color-picto-hover: var(--color-primary-light);
 }
@@ -115,6 +118,9 @@ body.dark-mode {
   --color-toolbar-icon-disabled: rgba(255, 255, 255, 0.38);
 
   --color-start-page-heading: var(--color-text-on-dark);
+  --color-offline-badge-bg: rgba(255, 152, 0, 0.15);
+  --color-offline-badge-border: #ffb74d;
+  --color-offline-badge-text: #ffcc80;
   --color-picto-bg: #ffffff;
   --color-picto-hover: #f0f0f0;
 

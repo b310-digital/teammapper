@@ -311,6 +311,10 @@
     "FONT_MAX_SIZE": "最大字体大小",
     "FONT_INCREMENT": "字体大小步长"
   },
+  "OFFLINE_MODE": {
+    "LABEL": "离线模式",
+    "DESCRIPTION": "您的思维导图只保存在此浏览器中。其他人无法打开或编辑它们，所做的更改也不会与其他人或设备同步。"
+  },
   "CLIENT_LIST": {
     "ANONYMOUS": "匿名"
   }
