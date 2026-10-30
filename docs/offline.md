@@ -2,7 +2,8 @@
 
 The offline build is a static copy of the TeamMapper frontend that runs without
 a backend. It stores every map in the visitor's browser. Any static host can
-serve it.
+serve it. A service worker caches the site, so after the first visit the site
+also loads without a network.
 
 ## Build
 
@@ -40,6 +41,43 @@ The host, the domain and the deploy workflow are not decided yet.
 Keep the origin (scheme, host and port) of the site fixed. The browser ties
 stored maps to the origin, so a new domain starts empty and leaves the maps
 under the old origin orphaned.
+
+Serve the site over HTTPS. A browser registers a service worker only in a
+secure context, which means HTTPS or `localhost`. Over plain HTTP the site
+still works, but needs the network to load.
+
+Let the host revalidate `ngsw.json` and `ngsw-worker.js` on every request
+instead of caching them for long. The worker reads `ngsw.json` to find a new
+version, and the browser reads `ngsw-worker.js` to update the worker itself.
+
+## Load without a network
+
+The build ships the Angular service worker, configured in
+`teammapper-frontend/ngsw-config.json`. The web version registers none.
+
+1. The first visit loads the site from the host and registers the worker.
+2. The worker downloads the scripts, styles, fonts, icons, images,
+   translations and settings in the background. It needs a few seconds of
+   network after the page appears.
+3. From then on the worker serves the site from its cache, with or without a
+   network.
+
+## Updates
+
+After a deploy, open pages keep running the version they started with.
+
+1. On each load the worker asks the host for `ngsw.json` and compares it with
+   the cached version.
+2. The worker downloads a new version in the background.
+3. Once the download finishes, the open page shows a notice. A click on it
+   reloads the page into the new version. Without the click, the next load
+   uses the new version.
+
+A visitor without a network keeps the cached version until the next load
+with a network.
+
+The worker swaps the code only. Maps stay in IndexedDB across updates, and
+their format number decides whether a new version can read them.
 
 ## Where the data lives
 

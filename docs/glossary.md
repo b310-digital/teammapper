@@ -309,8 +309,16 @@ the image cap, which limits the images of a single map.
 A static build of the frontend that runs without a backend. It stores maps in
 the browser's IndexedDB under the site's origin, so no other browser or device
 sees them. It switches off sharing, duplication, pictograms, AI, the deletion
-date and collaboration. See `docs/offline.md`. The web version is the build
-with a backend.
+date and collaboration. A service worker caches the site, so after the first
+visit the build also loads without a network. See `docs/offline.md`. The web
+version is the build with a backend and registers no service worker.
+
+### Site update
+
+A new version of the offline build deployed to its host. The service worker
+downloads it in the background while open pages keep running the old version,
+and offers a reload once the new version is ready. Distinct from the format
+number, which versions the stored data rather than the code.
 
 ## Sharing and collaboration
 

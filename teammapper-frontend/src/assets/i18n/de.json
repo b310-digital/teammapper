@@ -236,6 +236,8 @@
     "JSON_FILE_SIZE_TOO_LARGE": "Die Datei ist größer als 1 MB und kann möglicherweise später nicht importiert werden. Bitte Datei verkleinern (z.B. Bilder entfernen)."
   },
   "TOASTS": {
+    "APP_UPDATE_READY": "Eine neue Version von TeamMapper ist bereit. Klicke hier, um neu zu laden.",
+    "APP_UPDATE_BROKEN": "TeamMapper muss neu geladen werden, um weiter zu funktionieren. Klicke hier, um neu zu laden.",
     "SUCCESSFULLY_DUPLICATED": "Mindmap erfolgreich dupliziert!",
     "URL_COPIED": "URL erfolgreich kopiert!",
     "NODE_COPIED": "Knoten erfolgreich kopiert!",
