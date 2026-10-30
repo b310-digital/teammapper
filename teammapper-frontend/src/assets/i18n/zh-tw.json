@@ -268,7 +268,9 @@
       "AI_MERMAID_ERROR": "無法生成Mermaid",
       "IMAGE_STORAGE_FULL": "此心智圖的圖片儲存空間已滿。移除的圖片會在上傳後 7 天內釋放其空間。",
       "IMAGE_UPLOAD_ERROR": "無法上傳圖片。",
-      "DELETE_MAP_ERROR": "無法刪除心智圖。"
+      "DELETE_MAP_ERROR": "無法刪除心智圖。",
+      "BROWSER_STORAGE_FAILED": "無法將心智圖儲存到此瀏覽器的儲存空間。",
+      "BROWSER_STORAGE_NEWER_FORMAT": "此瀏覽器中的心智圖由較新版本的 TeamMapper 儲存，無法開啟。"
     },
     "DELETE_MAP_SUCCESS": "心智圖已成功刪除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",

@@ -268,7 +268,9 @@
       "AI_MERMAID_ERROR": "Mermaid não pôde ser gerado",
       "IMAGE_STORAGE_FULL": "O armazenamento de imagens deste mapa mental está cheio. Uma imagem removida libera seu espaço em até 7 dias após o envio.",
       "IMAGE_UPLOAD_ERROR": "Não foi possível enviar a imagem.",
-      "DELETE_MAP_ERROR": "Não foi possível excluir o mapa."
+      "DELETE_MAP_ERROR": "Não foi possível excluir o mapa.",
+      "BROWSER_STORAGE_FAILED": "Não foi possível salvar o mapa mental no armazenamento deste navegador.",
+      "BROWSER_STORAGE_NEWER_FORMAT": "Os mapas mentais deste navegador foram salvos por uma versão mais recente do TeamMapper e não podem ser abertos."
     },
     "DELETE_MAP_SUCCESS": "Mapa mental excluído com sucesso!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid gerado com sucesso!",

@@ -270,7 +270,9 @@
       "AI_MERMAID_ERROR": "Mermaid could not be generated",
       "IMAGE_STORAGE_FULL": "The image storage of this mind map is full. A removed image frees its space within 7 days of its upload.",
       "IMAGE_UPLOAD_ERROR": "The image could not be uploaded.",
-      "DELETE_MAP_ERROR": "The mind map could not be deleted."
+      "DELETE_MAP_ERROR": "The mind map could not be deleted.",
+      "BROWSER_STORAGE_FAILED": "The mind map could not be saved in this browser's storage.",
+      "BROWSER_STORAGE_NEWER_FORMAT": "The mind maps in this browser were saved by a newer version of TeamMapper and cannot be opened."
     },
     "DELETE_MAP_SUCCESS": "Mindmap successfully deleted!",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid successfully generated!",

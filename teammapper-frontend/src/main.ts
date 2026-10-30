@@ -46,7 +46,11 @@ bootstrapApplication(RootComponent, {
       rootRoutes,
       ...(TEAMMAPPER_OFFLINE ? [withHashLocation()] : [])
     ),
-    TEAMMAPPER_OFFLINE ? provideLocalMapBackend() : provideRemoteMapBackend(),
+    // The web build drops this branch before bundling, so it emits no chunk
+    // for y-indexeddb.
+    TEAMMAPPER_OFFLINE
+      ? provideLocalMapBackend(() => import('y-indexeddb'))
+      : provideRemoteMapBackend(),
     {
       provide: APP_INITIALIZER,
       useFactory: appSettingsFactory,

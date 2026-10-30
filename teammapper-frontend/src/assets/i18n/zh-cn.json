@@ -268,7 +268,9 @@
       "AI_MERMAID_ERROR": "无法生成Mermaid",
       "IMAGE_STORAGE_FULL": "此思维导图的图片存储空间已满。移除的图片会在上传后 7 天内释放其空间。",
       "IMAGE_UPLOAD_ERROR": "无法上传图片。",
-      "DELETE_MAP_ERROR": "无法删除思维导图。"
+      "DELETE_MAP_ERROR": "无法删除思维导图。",
+      "BROWSER_STORAGE_FAILED": "无法将思维导图保存到此浏览器的存储中。",
+      "BROWSER_STORAGE_NEWER_FORMAT": "此浏览器中的思维导图由较新版本的 TeamMapper 保存，无法打开。"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",

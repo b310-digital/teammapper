@@ -268,7 +268,9 @@
       "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré",
       "IMAGE_STORAGE_FULL": "Le stockage d'images de cette carte mentale est plein. Une image retirée libère sa place dans les 7 jours suivant son téléversement.",
       "IMAGE_UPLOAD_ERROR": "L'image n'a pas pu être téléversée.",
-      "DELETE_MAP_ERROR": "La carte n'a pas pu être supprimée."
+      "DELETE_MAP_ERROR": "La carte n'a pas pu être supprimée.",
+      "BROWSER_STORAGE_FAILED": "La carte mentale n'a pas pu être enregistrée dans le stockage de ce navigateur.",
+      "BROWSER_STORAGE_NEWER_FORMAT": "Les cartes mentales de ce navigateur ont été enregistrées par une version plus récente de TeamMapper et ne peuvent pas être ouvertes."
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",

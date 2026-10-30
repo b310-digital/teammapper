@@ -13,7 +13,10 @@ import { PrivateServerMap, ServerMap } from '../map-sync/server-types';
  */
 export interface MapStore {
   createMap(rootNode: UserMapOptions['rootNode']): Promise<PrivateServerMap>;
-  /** null when the map does not exist or cannot be read */
+  /**
+   * null when the map does not exist or cannot be read. Rejects with a
+   * `ReportedMapStoreError` when the store refuses access.
+   */
   getMap(uuid: string, modificationSecret: string): Promise<ServerMap | null>;
   /** The maps the current user created, empty on an error status. */
   listMaps(): Promise<CachedAdminMapEntry[]>;
@@ -29,3 +32,14 @@ export interface MapStore {
 }
 
 export const MAP_STORE = new InjectionToken<MapStore>('MAP_STORE');
+
+/**
+ * A store failure that the store has already shown the visitor a toast for.
+ * A caller that catches it shows no toast of its own.
+ */
+export class ReportedMapStoreError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ReportedMapStoreError';
+  }
+}
