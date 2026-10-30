@@ -3,7 +3,7 @@
 // checks each file against the hash in ngsw.json, and the Angular dev server
 // rewrites the files it serves.
 //
-// Usage: node scripts/serve-offline-build.mjs <port>
+// Usage: pnpm run serve:offline <port>
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -14,6 +14,10 @@ const root = fileURLToPath(
   new URL('../dist-offline/browser/', import.meta.url)
 );
 const port = Number(process.argv[2]);
+if (!Number.isInteger(port)) {
+  console.error('Usage: pnpm run serve:offline <port>');
+  process.exit(1);
+}
 
 const contentTypes = {
   '.css': 'text/css',

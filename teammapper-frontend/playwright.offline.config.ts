@@ -4,10 +4,10 @@ import webConfig from './playwright.config';
 /** The port of the static server of the production offline build. */
 export const PRODUCTION_BUILD_PORT = 4300;
 
-// The CI workflow builds the site before it runs the suite.
-const buildCommand = process.env.CI
-  ? ''
-  : 'ng build --configuration production,offline && ';
+// The CI workflow builds the site before it runs the suite. The command
+// leaves the workspace packages alone, because the dev server above reads
+// them while it runs.
+const buildCommand = process.env.CI ? '' : 'pnpm run build:offline-site && ';
 
 /**
  * Runs the specs that need no server against the offline build. The offline
@@ -40,7 +40,7 @@ export default defineConfig({
     {
       port: 4200,
       command:
-        'node scripts/generate-offline-settings.mjs && pnpm run start --configuration offline',
+        'pnpm run settings:offline && pnpm run start --configuration offline',
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',
       stderr: 'pipe',
@@ -51,7 +51,7 @@ export default defineConfig({
       // worker accepts only the files the build wrote, so a static server
       // serves the build.
       port: PRODUCTION_BUILD_PORT,
-      command: `node scripts/generate-offline-settings.mjs && ${buildCommand}node scripts/serve-offline-build.mjs ${PRODUCTION_BUILD_PORT}`,
+      command: `${buildCommand}pnpm run serve:offline ${PRODUCTION_BUILD_PORT}`,
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',
       stderr: 'pipe',

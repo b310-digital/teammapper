@@ -81,7 +81,6 @@ function bootstrap(mapBackend: EnvironmentProviders) {
         ? [
             provideServiceWorker('ngsw-worker.js', {
               enabled: environment.production,
-              registrationStrategy: 'registerWhenStable:30000',
             }),
             provideAppInitializer(() => inject(AppUpdateService).watch()),
           ]

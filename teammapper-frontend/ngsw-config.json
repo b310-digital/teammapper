@@ -23,7 +23,7 @@
       "installMode": "lazy",
       "updateMode": "prefetch",
       "resources": {
-        "files": ["/**/*.(svg|png|jpg|jpeg|gif|webp|otf|ttf|eot|woff|woff2)"]
+        "files": ["/assets/**"]
       }
     }
   ]
