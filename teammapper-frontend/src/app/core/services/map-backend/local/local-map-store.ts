@@ -2,9 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import {
   CachedAdminMapEntry,
   ImageReference,
-  imageIdOf,
-  isImageReference,
-  toImageReference,
   UserMapOptions,
 } from '@teammapper/shared';
 import localforage from 'localforage';
@@ -12,7 +9,6 @@ import { ToastrService } from 'ngx-toastr';
 import { v4 as uuidv4 } from 'uuid';
 import * as Y from 'yjs';
 import { PrivateServerMap, ServerMap } from '../../map-sync/server-types';
-import { ImageUploadError } from '../../mmp/node-images';
 import { UtilsService } from '../../utils/utils.service';
 import { MapStore, ReportedMapStoreError } from '../map-store';
 import {
@@ -28,15 +24,6 @@ import {
   seedMapDoc,
 } from './map-database';
 
-/** The backend's default limit for one image. */
-export const MAX_IMAGE_BYTES = 150_000;
-/** The backend's default limit for the images of one map. */
-export const MAX_IMAGE_BYTES_PER_MAP = 2_000_000;
-/**
- * The days an image no node references stays stored after its upload, so
- * undo can restore it. Matches the backend's UNUSED_IMAGE_RETENTION_DAYS.
- */
-export const UNUSED_IMAGE_RETENTION_DAYS = 7;
 /** How long the open map stays unchanged before its record follows it. */
 export const MAP_TOUCH_DEBOUNCE_MS = 1000;
 
@@ -56,43 +43,15 @@ interface LocalMapRecord {
   rootName: string | null;
 }
 
-/**
- * The image keeps its bytes rather than a Blob, because WebKit refuses to
- * store a Blob in IndexedDB in a private window.
- */
-interface LocalImageRecord {
-  mimetype: string;
-  size: number;
-  data: ArrayBuffer;
-  uploadedAt: string;
-}
-
-/** An image record as read back, which may predate the upload time. */
-type StoredImageRecord = Omit<LocalImageRecord, 'uploadedAt'> &
-  Partial<Pick<LocalImageRecord, 'uploadedAt'>>;
-
-interface StoredImage {
-  key: string;
-  image: StoredImageRecord;
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 /** Blocks every access to stored maps that a later build wrote. */
 class NewerFormatError extends ReportedMapStoreError {}
 
 const createStore = (storeName: string): LocalForage =>
   localforage.createInstance({ name: 'teammapper-offline', storeName });
 
-/** Images are keyed by map, so a prefix finds every image of a map. */
-const imageKey = (mapId: string, imageId: string): string =>
-  `${mapId}/${imageId}`;
-
 /**
- * Keeps maps and their node images in the browser. A map's record, its
- * images and its Y.Doc go to three places:
+ * Keeps maps in the browser. A map's record and its Y.Doc go to two places:
  * - the record to the `maps` store of the `teammapper-offline` database
- * - the images to its `images` store
  * - the Y.Doc to the `DocPersistence` that `docPersistence` picks, which
  *   `LocalMapConnection` writes as well
  *
@@ -108,15 +67,10 @@ export class LocalMapStore implements MapStore {
   private loadYIndexeddb = inject(Y_INDEXEDDB_LOADER);
 
   private readonly maps = createStore('maps');
-  private readonly images = createStore('images');
   private readonly meta = createStore('meta');
   private readonly docs = createStore('docs');
   private access: Promise<void> | null = null;
   private persistence: Promise<DocPersistence> | null = null;
-  // The object URLs of the open map's images, by image key.
-  private readonly objectUrls = new Map<string, string>();
-  // Counts the releases, so a load that a release overtook keeps nothing.
-  private imageGeneration = 0;
   // The maps this store deleted, which a pending record update skips.
   private readonly deletedMaps = new Set<string>();
 
@@ -193,63 +147,14 @@ export class LocalMapStore implements MapStore {
     }
   }
 
-  /**
-   * Stores the image within the backend's default limits. A failed write
-   * shows the storage toast and rejects with a `ReportedMapStoreError`. The
-   * secret has no use here: a map opened without it is read-only and uploads
-   * nothing.
-   */
-  async uploadImage(
-    mapId: string,
-    image: Blob,
-    _modificationSecret: string
-  ): Promise<ImageReference> {
-    await this.checkImageLimits(mapId, image);
-    const imageId = uuidv4();
-    const key = imageKey(mapId, imageId);
-    const record: LocalImageRecord = {
-      mimetype: image.type,
-      size: image.size,
-      data: await image.arrayBuffer(),
-      uploadedAt: new Date(Date.now()).toISOString(),
-    };
-    await this.write(() => this.images.setItem(key, record));
-    this.objectUrls.set(key, URL.createObjectURL(image));
-    return toImageReference(imageId);
+  /** Rejects every image, since the store keeps no node images yet. */
+  uploadImage(): Promise<ImageReference> {
+    return Promise.reject(new Error('The browser storage keeps no images'));
   }
 
-  /** The object URL of a preloaded or uploaded image, null for any other. */
-  imageUrl(mapId: string, reference: ImageReference): string | null {
-    return this.objectUrls.get(imageKey(mapId, imageIdOf(reference))) ?? null;
-  }
-
-  /**
-   * Deletes the map's unused images, as the backend's cleanup job does, and
-   * turns every other stored image of the map into an object URL.
-   */
-  async preloadImages(mapId: string): Promise<void> {
-    this.releaseImages();
-    const generation = this.imageGeneration;
-    try {
-      const images = await this.removeUnusedImages(
-        mapId,
-        await this.storedImagesOf(mapId)
-      );
-      // A release while the images loaded closed the map they belong to.
-      if (generation !== this.imageGeneration) return;
-      for (const { key, image } of images) {
-        const blob = new Blob([image.data], { type: image.mimetype });
-        this.objectUrls.set(key, URL.createObjectURL(blob));
-      }
-    } catch (error) {
-      console.error('Failed to load the images of the map:', error);
-    }
-  }
-
-  releaseImages(): void {
-    this.imageGeneration++;
-    this.objectUrls.forEach(url => URL.revokeObjectURL(url));
-    this.objectUrls.clear();
+  /** null for every image, since the store keeps no node images yet. */
+  imageUrl(): null {
+    return null;
   }
 
   /**
@@ -364,112 +269,11 @@ export class LocalMapStore implements MapStore {
       this.deletedMaps.delete(uuid);
       throw error;
     }
-    const cleanup = await Promise.allSettled([
-      this.docPersistence().then(persistence => persistence.delete(uuid)),
-      this.imageKeysOf(uuid).then(keys =>
-        Promise.allSettled(keys.map(key => this.images.removeItem(key))).then(
-          results => {
-            for (const result of results) {
-              if (result.status === 'rejected') throw result.reason;
-            }
-          }
-        )
-      ),
-    ]);
-    for (const result of cleanup) {
-      if (result.status === 'rejected') {
-        console.error('Failed to clean up the deleted map:', result.reason);
-      }
-    }
-  }
-
-  private async imageKeysOf(mapId: string): Promise<string[]> {
-    const keys = await this.images.keys();
-    return keys.filter(key => key.startsWith(imageKey(mapId, '')));
-  }
-
-  private async storedImagesOf(mapId: string): Promise<StoredImage[]> {
-    const stored: StoredImage[] = [];
-    await this.images.iterate<StoredImageRecord, void>((image, key) => {
-      if (key.startsWith(imageKey(mapId, ''))) stored.push({ key, image });
-    });
-    return stored;
-  }
-
-  /**
-   * Deletes the images that no node of the map references and that were
-   * uploaded more than `UNUSED_IMAGE_RETENTION_DAYS` ago, and returns the
-   * others. A failure keeps every image.
-   */
-  private async removeUnusedImages(
-    mapId: string,
-    images: StoredImage[]
-  ): Promise<StoredImage[]> {
     try {
-      const unused = await this.unusedImages(mapId, images);
-      await Promise.all(unused.map(({ key }) => this.images.removeItem(key)));
-      return images.filter(image => !unused.includes(image));
+      await (await this.docPersistence()).delete(uuid);
     } catch (error) {
-      console.error('Failed to delete the unused images of the map:', error);
-      return images;
+      console.error('Failed to clean up the deleted map:', error);
     }
-  }
-
-  /**
-   * The images no node references, past their retention. An image stored
-   * without an upload time gets the current time as its upload time.
-   */
-  private async unusedImages(
-    mapId: string,
-    images: StoredImage[]
-  ): Promise<StoredImage[]> {
-    const referenced = await this.referencedImageKeys(mapId);
-    const unreferenced = images.filter(({ key }) => !referenced.has(key));
-    await this.stampUploadTimes(unreferenced);
-    const uploadedBefore = Date.now() - UNUSED_IMAGE_RETENTION_DAYS * DAY_MS;
-    return unreferenced.filter(
-      ({ image }) =>
-        image.uploadedAt !== undefined &&
-        Date.parse(image.uploadedAt) < uploadedBefore
-    );
-  }
-
-  /** The keys of the images the nodes of the map's stored doc reference. */
-  private async referencedImageKeys(mapId: string): Promise<Set<string>> {
-    const { data } = await readMapDoc(await this.docPersistence(), mapId);
-    const keys = data
-      .map(node => node.image?.src)
-      .filter(isImageReference)
-      .map(reference => imageKey(mapId, imageIdOf(reference)));
-    return new Set(keys);
-  }
-
-  private async stampUploadTimes(images: StoredImage[]): Promise<void> {
-    const uploadedAt = new Date(Date.now()).toISOString();
-    const unstamped = images.filter(({ image }) => !image.uploadedAt);
-    await Promise.all(
-      unstamped.map(({ key, image }) =>
-        this.images.setItem(key, { ...image, uploadedAt })
-      )
-    );
-  }
-
-  /** Throws status 413, as the backend answers, for an image too large. */
-  private async checkImageLimits(mapId: string, image: Blob): Promise<void> {
-    await this.checkAccess();
-    if (image.size > MAX_IMAGE_BYTES) throw new ImageUploadError(413);
-    const stored = await this.storedImageBytes(mapId);
-    if (stored + image.size > MAX_IMAGE_BYTES_PER_MAP) {
-      throw new ImageUploadError(413);
-    }
-  }
-
-  private async storedImageBytes(mapId: string): Promise<number> {
-    let bytes = 0;
-    await this.images.iterate<LocalImageRecord, void>((image, key) => {
-      if (key.startsWith(imageKey(mapId, ''))) bytes += image.size;
-    });
-    return bytes;
   }
 
   private async touchMap(mapId: string, rootName: string | null) {

@@ -144,8 +144,6 @@ export class MapSyncService implements OnDestroy {
       return null;
     }
 
-    // Attaching the map opens it, and mmp resolves each image while it draws.
-    await this.mapStore.preloadImages(id);
     this.syncService.setWritable(serverMap.writable !== false);
     this.updateCachedMapForAdmin(serverMap);
     this.prepareMap(serverMap);
@@ -156,7 +154,6 @@ export class MapSyncService implements OnDestroy {
     this.mapTarget = null;
     this.removeSyncingToast();
     this.syncService.destroy();
-    this.mapStore.releaseImages();
     this.colorMapping = {};
     this.attachedNodeSubject.next(null);
     this.clientListSubject.next([]);

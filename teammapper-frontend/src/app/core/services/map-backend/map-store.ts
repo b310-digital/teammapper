@@ -22,20 +22,13 @@ export interface MapStore {
   listMaps(): Promise<CachedAdminMapEntry[]>;
   /** false on an error or an unknown map */
   deleteMap(uuid: string, adminId: string): Promise<boolean>;
-  /** throws ImageUploadError, or ReportedMapStoreError */
+  /** throws ImageUploadError */
   uploadImage(
     mapId: string,
     image: Blob,
     modificationSecret: string
   ): Promise<ImageReference>;
   imageUrl(mapId: string, reference: ImageReference): string | null;
-  /**
-   * Makes `imageUrl` resolve the images of the map before it opens. Resolves
-   * at once in the remote store.
-   */
-  preloadImages(mapId: string): Promise<void>;
-  /** Frees what `preloadImages` holds, once the map closes. */
-  releaseImages(): void;
 }
 
 export const MAP_STORE = new InjectionToken<MapStore>('MAP_STORE');
