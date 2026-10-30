@@ -29,6 +29,8 @@ export class LocalMapConnection implements MapConnection {
       console.error('Failed to open the stored map:', error);
       return null;
     });
+    window.addEventListener('pagehide', this.flush);
+    document.addEventListener('visibilitychange', this.flushWhenHidden);
   }
 
   /** Calls the listener once the stored updates are in the doc. */
@@ -54,11 +56,30 @@ export class LocalMapConnection implements MapConnection {
    */
   destroy(): Promise<void> {
     this.destroyed = true;
+    window.removeEventListener('pagehide', this.flush);
+    document.removeEventListener('visibilitychange', this.flushWhenHidden);
     this.awareness.destroy();
     const closed = this.stored.then(stored => stored?.close());
     this.release();
     return closed;
   }
+
+  /**
+   * Writes the pending state at once, so a closing tab keeps the edits of
+   * the last write debounce.
+   */
+  private readonly flush = (): void => {
+    this.stored
+      .then(stored => stored?.flush())
+      .catch((error: unknown) => {
+        console.error('Failed to write the map:', error);
+      });
+  };
+
+  // A tab turns hidden before it closes, and on mobile often closes unseen.
+  private readonly flushWhenHidden = (): void => {
+    if (document.visibilityState === 'hidden') this.flush();
+  };
 
   /** Null when the connection was destroyed before the persistence loaded. */
   private async open(

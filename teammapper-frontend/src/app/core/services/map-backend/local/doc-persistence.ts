@@ -24,6 +24,11 @@ export const Y_INDEXEDDB_LOADER = new InjectionToken<YIndexeddbLoader>(
 export interface StoredDoc {
   /** Stops storing the doc's updates and writes what is pending. */
   close(): Promise<void>;
+  /**
+   * Starts any write the doc still holds back and resolves once every write
+   * started so far completed. The doc keeps storing its updates.
+   */
+  flush(): Promise<void>;
 }
 
 /**
@@ -123,19 +128,23 @@ class MergedUpdateDoc implements StoredDoc {
 
   close(): Promise<void> {
     this.doc.off('update', this.schedule);
+    return this.flush();
+  }
+
+  flush(): Promise<void> {
     if (this.timer !== null) {
       clearTimeout(this.timer);
-      this.flush();
+      this.writeState();
     }
     return this.writing;
   }
 
   private readonly schedule = (): void => {
     if (this.timer !== null) clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.flush(), DOC_WRITE_DEBOUNCE_MS);
+    this.timer = setTimeout(() => this.writeState(), DOC_WRITE_DEBOUNCE_MS);
   };
 
-  private flush(): void {
+  private writeState(): void {
     this.timer = null;
     const update = Y.encodeStateAsUpdate(this.doc);
     this.writing = this.writing.then(() => this.write(update));
@@ -143,9 +152,10 @@ class MergedUpdateDoc implements StoredDoc {
 }
 
 /**
- * Keeps each doc in a database of its own. y-indexeddb attaches the open doc.
- * Seeding and reading go to the database directly: y-indexeddb adds an update
- * on every load and reports no failed write.
+ * Keeps each doc in a database of its own. y-indexeddb attaches the open doc
+ * and adds every update at once, without waiting for the write, so a flush
+ * only waits for those writes to complete. Seeding and reading go to the database directly:
+ * y-indexeddb adds an update on every load and reports no failed write.
  */
 function indexeddbPersistence(yIndexeddb: YIndexeddb): DocPersistence {
   return {
@@ -155,7 +165,10 @@ function indexeddbPersistence(yIndexeddb: YIndexeddb): DocPersistence {
         doc
       );
       await persistence.whenSynced;
-      return { close: () => persistence.destroy() };
+      return {
+        close: () => persistence.destroy(),
+        flush: () => awaitWrites(persistence.db),
+      };
     },
     store: (mapId, update) => addUpdate(mapDatabaseName(mapId), update),
     read: async mapId => {
@@ -208,6 +221,20 @@ async function addUpdate(name: string, update: Uint8Array): Promise<void> {
   } finally {
     database.close();
   }
+}
+
+/**
+ * Resolves once every write started on `database` so far completed.
+ * IndexedDB runs read-write transactions on the same store in the order they
+ * were created, so an empty one completes after all earlier ones.
+ */
+async function awaitWrites(database: IDBDatabase | null): Promise<void> {
+  if (!database) return;
+  const transaction = database.transaction(UPDATES_STORE, 'readwrite');
+  await new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = transaction.onabort = () => reject(transaction.error);
+  });
 }
 
 /** The updates in the database of a map, none when it has no database. */
