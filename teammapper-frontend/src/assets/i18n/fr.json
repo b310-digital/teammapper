@@ -273,7 +273,8 @@
       "IMAGE_UPLOAD_ERROR": "L'image n'a pas pu être téléversée.",
       "DELETE_MAP_ERROR": "La carte n'a pas pu être supprimée.",
       "BROWSER_STORAGE_FAILED": "La carte mentale n'a pas pu être enregistrée dans le stockage de ce navigateur.",
-      "BROWSER_STORAGE_NEWER_FORMAT": "Les cartes mentales de ce navigateur ont été enregistrées par une version plus récente de TeamMapper et ne peuvent pas être ouvertes."
+      "BROWSER_STORAGE_NEWER_FORMAT": "Les cartes mentales de ce navigateur ont été enregistrées par une version plus récente de TeamMapper et ne peuvent pas être ouvertes.",
+      "BROWSER_STORAGE_UPDATE_FAILED": "La carte mentale n'a pas pu être mise à jour vers la version actuelle de TeamMapper. Elle reste inchangée."
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid généré avec succès !",

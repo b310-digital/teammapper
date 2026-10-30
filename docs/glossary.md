@@ -400,9 +400,21 @@ a map is an attribute.
 
 ### Format number
 
-The version of the data the offline build stores in a browser. The build
-stamps the number it writes on first access, and refuses to read or change data
-that carries a higher number, which a later build wrote.
+The version of the data the offline build stores in a browser. The browser
+stores one number for all maps, and each map's Y.Doc stores the number it was
+saved with. A doc without one has format number 1. A build refuses to read or
+change data with a higher number, which a later build wrote.
+
+### Migration
+
+A numbered change that brings stored data to the layout a newer release reads.
+Each migration runs once:
+
+- The backend runs TypeORM migrations from `teammapper-backend/src/migrations/`
+  on its PostgreSQL database.
+- The offline build runs a data migration (`DataMigration`) on a map's doc the
+  first time a build with a higher format number opens the map. See
+  `docs/offline.md`.
 
 ### Map data
 

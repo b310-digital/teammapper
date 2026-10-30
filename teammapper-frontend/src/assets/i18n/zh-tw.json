@@ -273,7 +273,8 @@
       "IMAGE_UPLOAD_ERROR": "無法上傳圖片。",
       "DELETE_MAP_ERROR": "無法刪除心智圖。",
       "BROWSER_STORAGE_FAILED": "無法將心智圖儲存到此瀏覽器的儲存空間。",
-      "BROWSER_STORAGE_NEWER_FORMAT": "此瀏覽器中的心智圖由較新版本的 TeamMapper 儲存，無法開啟。"
+      "BROWSER_STORAGE_NEWER_FORMAT": "此瀏覽器中的心智圖由較新版本的 TeamMapper 儲存，無法開啟。",
+      "BROWSER_STORAGE_UPDATE_FAILED": "無法將心智圖更新至目前版本的 TeamMapper，心智圖維持不變。"
     },
     "DELETE_MAP_SUCCESS": "心智圖已成功刪除！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaid生成成功！",

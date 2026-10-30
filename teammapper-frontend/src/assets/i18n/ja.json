@@ -275,7 +275,8 @@
       "IMAGE_UPLOAD_ERROR": "画像をアップロードできませんでした。",
       "DELETE_MAP_ERROR": "マインドマップを削除できませんでした。",
       "BROWSER_STORAGE_FAILED": "このブラウザのストレージにマインドマップを保存できませんでした。",
-      "BROWSER_STORAGE_NEWER_FORMAT": "このブラウザのマインドマップは新しいバージョンの TeamMapper で保存されたため、開くことができません。"
+      "BROWSER_STORAGE_NEWER_FORMAT": "このブラウザのマインドマップは新しいバージョンの TeamMapper で保存されたため、開くことができません。",
+      "BROWSER_STORAGE_UPDATE_FAILED": "マインドマップを現在のバージョンの TeamMapper に更新できませんでした。マインドマップは変更されていません。"
     },
     "DELETE_MAP_SUCCESS": "マインドマップを削除しました！",
     "AI_MERMAID_GENERATED_SUCCESS": "Mermaidを生成しました！",

@@ -1,4 +1,9 @@
 import '../../../../../test/fake-indexeddb';
+import {
+  EnvironmentInjector,
+  Injector,
+  runInInjectionContext,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import localforage from 'localforage';
 import { readFileSync } from 'node:fs';
@@ -29,6 +34,16 @@ import {
   Y_INDEXEDDB_LOADER,
 } from './doc-persistence';
 import { ReportedMapStoreError } from '../map-store';
+import {
+  installFakeLocks,
+  removeFakeLocks,
+} from '../../../../../test/fake-web-locks';
+import {
+  DataMigration,
+  MAP_FORMAT,
+  MapFormat,
+  mapFormatNumber,
+} from './map-format';
 
 const ROOT_NODE: MapNodeSettings = {
   name: 'Root',
@@ -79,6 +94,16 @@ function storedUpdateCount(mapId: string): Promise<number> {
 
 const STORAGE_FAILED_TOAST = 'TOASTS.ERRORS.BROWSER_STORAGE_FAILED';
 const NEWER_FORMAT_TOAST = 'TOASTS.ERRORS.BROWSER_STORAGE_NEWER_FORMAT';
+const UPDATE_FAILED_TOAST = 'TOASTS.ERRORS.BROWSER_STORAGE_UPDATE_FAILED';
+
+/** The store of a build that reads and writes the given format. */
+function storeWith(format: MapFormat): LocalMapStore {
+  const injector = Injector.create({
+    providers: [{ provide: MAP_FORMAT, useValue: format }],
+    parent: TestBed.inject(EnvironmentInjector),
+  });
+  return runInInjectionContext(injector, () => new LocalMapStore());
+}
 
 async function databaseNames(): Promise<(string | undefined)[]> {
   return (await indexedDB.databases()).map(database => database.name);
@@ -689,6 +714,131 @@ describe('LocalMapStore', () => {
           blocked.uploadImage(created.map.uuid, imageOfSize(10), '')
         ).rejects.toBeInstanceOf(ReportedMapStoreError);
         expect(await images.length()).toBe(0);
+      });
+    });
+  });
+
+  describe('data migrations', () => {
+    const renameRootMigration: DataMigration = {
+      formatNumber: 2,
+      migrate: doc => renameRootOf(doc, 'Updated'),
+    };
+    const failingMigration: DataMigration = {
+      formatNumber: 2,
+      migrate: () => {
+        throw new Error('Migration failed');
+      },
+    };
+
+    afterEach(() => {
+      removeFakeLocks();
+    });
+
+    it('stamps the format number of the build into a new map', async () => {
+      const { map } = await storeWith({
+        formatNumber: 2,
+        migrations: [],
+      }).createMap(ROOT_NODE);
+
+      expect(mapFormatNumber(await storedDoc(map.uuid))).toBe(2);
+    });
+
+    it('brings a map up to date when it opens', async () => {
+      const created = await store.createMap(ROOT_NODE);
+      const newer = storeWith({
+        formatNumber: 2,
+        migrations: [renameRootMigration],
+      });
+
+      const map = await newer.getMap(
+        created.map.uuid,
+        created.modificationSecret
+      );
+
+      expect(map?.data.map(node => node.name)).toEqual(['Updated']);
+      expect(mapFormatNumber(await storedDoc(created.map.uuid))).toBe(2);
+    });
+
+    it('runs a migration once when two tabs open the map at the same time', async () => {
+      const countingMigration: DataMigration = {
+        formatNumber: 2,
+        migrate: doc => doc.getArray('runs').push([2]),
+      };
+      const created = await store.createMap(ROOT_NODE);
+      installFakeLocks();
+      const format = { formatNumber: 2, migrations: [countingMigration] };
+
+      await Promise.all(
+        [storeWith(format), storeWith(format)].map(tab =>
+          tab.getMap(created.map.uuid, created.modificationSecret)
+        )
+      );
+
+      const doc = await storedDoc(created.map.uuid);
+      expect(doc.getArray('runs').toArray()).toEqual([2]);
+    });
+
+    it('raises the stored format number to the one of the build', async () => {
+      await store.listMaps();
+
+      await storeWith({ formatNumber: 2, migrations: [] }).listMaps();
+
+      expect(await meta.getItem('formatNumber')).toBe(2);
+    });
+
+    describe('when a migration fails', () => {
+      let created: Awaited<ReturnType<LocalMapStore['createMap']>>;
+      let opened: Promise<unknown>;
+
+      beforeEach(async () => {
+        jest.spyOn(console, 'error').mockImplementation(() => undefined);
+        created = await store.createMap(ROOT_NODE);
+        opened = storeWith({
+          formatNumber: 2,
+          migrations: [failingMigration],
+        }).getMap(created.map.uuid, created.modificationSecret);
+        // Observed at once, so the rejection is never unhandled.
+        opened.catch(() => undefined);
+      });
+
+      it('opens nothing, with an error that reports the toast as shown', async () => {
+        await expect(opened).rejects.toBeInstanceOf(ReportedMapStoreError);
+      });
+
+      it('shows the update failed toast', async () => {
+        await opened.catch(() => undefined);
+        await toastShown;
+
+        expect(toastr.error).toHaveBeenCalledWith(UPDATE_FAILED_TOAST);
+      });
+
+      it('leaves the stored map unchanged', async () => {
+        await opened.catch(() => undefined);
+
+        const doc = await storedDoc(created.map.uuid);
+        expect(mapFormatNumber(doc)).toBe(1);
+        expect(nodeEntries(nodesMapOf(doc))[0][1].get('name')).toBe('Root');
+      });
+    });
+
+    describe('for a map that a later build saved', () => {
+      let created: Awaited<ReturnType<LocalMapStore['createMap']>>;
+
+      beforeEach(async () => {
+        created = await storeWith({
+          formatNumber: 2,
+          migrations: [],
+        }).createMap(ROOT_NODE);
+        await meta.setItem('formatNumber', 1);
+      });
+
+      it('opens nothing and shows the newer format toast', async () => {
+        await expect(
+          store.getMap(created.map.uuid, created.modificationSecret)
+        ).rejects.toBeInstanceOf(ReportedMapStoreError);
+        await toastShown;
+
+        expect(toastr.error).toHaveBeenCalledWith(NEWER_FORMAT_TOAST);
       });
     });
   });

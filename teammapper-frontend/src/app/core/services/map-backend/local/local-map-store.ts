@@ -26,7 +26,10 @@ import {
   newRootNode,
   readMapDoc,
   seedMapDoc,
+  migrateMapDoc,
 } from './map-database';
+import { MAP_FORMAT, NewerMapFormatError } from './map-format';
+import { withLock } from './tab-locks';
 
 /** The backend's default limit for one image. */
 export const MAX_IMAGE_BYTES = 150_000;
@@ -40,10 +43,9 @@ export const UNUSED_IMAGE_RETENTION_DAYS = 7;
 /** How long the open map stays unchanged before its record follows it. */
 export const MAP_TOUCH_DEBOUNCE_MS = 1000;
 
-/** The version of the stored data that this build reads and writes. */
-const FORMAT_NUMBER = 1;
 const FORMAT_NUMBER_KEY = 'formatNumber';
 const FORMAT_ERROR = 'TOASTS.ERRORS.BROWSER_STORAGE_NEWER_FORMAT';
+const UPDATE_ERROR = 'TOASTS.ERRORS.BROWSER_STORAGE_UPDATE_FAILED';
 const WRITE_ERROR = 'TOASTS.ERRORS.BROWSER_STORAGE_FAILED';
 
 /** What the store keeps of a map besides its Y.Doc. */
@@ -99,13 +101,15 @@ const imageKey = (mapId: string, imageId: string): string =>
  * The store generates the admin id and the modification secret, so the map
  * list, deletion and edit mode run the same code as on the web. Every access
  * first checks the format number in the `meta` store, and a format newer
- * than this build reads blocks the store.
+ * than this build reads blocks the store. Opening a map runs the data
+ * migrations it has not gone through.
  */
 @Injectable()
 export class LocalMapStore implements MapStore {
   private toastrService = inject(ToastrService);
   private utilsService = inject(UtilsService);
   private loadYIndexeddb = inject(Y_INDEXEDDB_LOADER);
+  private format = inject(MAP_FORMAT);
 
   private readonly maps = createStore('maps');
   private readonly images = createStore('images');
@@ -133,7 +137,9 @@ export class LocalMapStore implements MapStore {
     const root = newRootNode(rootNode);
     const record = newRecord(root.name ?? null);
     const persistence = await this.docPersistence();
-    await this.write(() => seedMapDoc(persistence, record.uuid, root));
+    await this.write(() =>
+      seedMapDoc(persistence, record.uuid, root, this.format.formatNumber)
+    );
     await this.write(() => this.maps.setItem(record.uuid, record));
     if (isFirstMap) requestPersistentStorage();
     const content = { data: [root], arrows: [], options: {} };
@@ -158,6 +164,7 @@ export class LocalMapStore implements MapStore {
       const record = await this.maps.getItem<LocalMapRecord>(uuid);
       if (!record) return null;
       const writable = modificationSecret === record.modificationSecret;
+      await this.migrateMap(uuid);
       const content = await readMapDoc(await this.docPersistence(), uuid);
       return toServerMap(record, content, writable);
     } catch (error) {
@@ -306,18 +313,57 @@ export class LocalMapStore implements MapStore {
     return this.access;
   }
 
+  /**
+   * Blocks a newer stored format number, and raises a missing or lower one
+   * to the one of this build.
+   */
   private async checkFormatNumber(): Promise<void> {
-    const stored = await this.meta.getItem<number>(FORMAT_NUMBER_KEY);
-    if (stored === null) {
+    const stored = await this.storedFormatNumber();
+    this.blockNewerFormat(stored);
+    const formatNumber = this.format.formatNumber;
+    if (stored !== formatNumber) {
       await this.write(() =>
-        this.meta.setItem(FORMAT_NUMBER_KEY, FORMAT_NUMBER)
-      );
-    } else if (stored > FORMAT_NUMBER) {
-      void this.showError(FORMAT_ERROR);
-      throw new NewerFormatError(
-        `The stored maps have the newer format ${stored}`
+        this.meta.setItem(FORMAT_NUMBER_KEY, formatNumber)
       );
     }
+  }
+
+  private blockNewerFormat(stored: number | null): void {
+    if (stored === null || stored <= this.format.formatNumber) return;
+    void this.showError(FORMAT_ERROR);
+    throw new NewerFormatError(
+      `The stored maps have the newer format ${stored}`
+    );
+  }
+
+  private storedFormatNumber(): Promise<number | null> {
+    return this.meta.getItem<number>(FORMAT_NUMBER_KEY);
+  }
+
+  /**
+   * Runs the data migrations the map has not gone through, while no other
+   * tab runs them for the same map. A failure shows a toast and rejects with
+   * a `ReportedMapStoreError`.
+   */
+  private async migrateMap(mapId: string): Promise<void> {
+    const persistence = await this.docPersistence();
+    try {
+      await withLock(`teammapper-map-${mapId}`, () =>
+        migrateMapDoc(persistence, mapId, this.format)
+      );
+    } catch (error) {
+      throw this.reportMigrationError(error);
+    }
+  }
+
+  private reportMigrationError(error: unknown): ReportedMapStoreError {
+    if (error instanceof NewerMapFormatError) {
+      void this.showError(FORMAT_ERROR);
+      return new NewerFormatError(error.message);
+    }
+    console.error('Failed to migrate the map to the current format:', error);
+    void this.showError(UPDATE_ERROR);
+    return new ReportedMapStoreError('The map could not be migrated');
   }
 
   /**
