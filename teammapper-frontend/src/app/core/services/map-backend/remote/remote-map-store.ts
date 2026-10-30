@@ -99,6 +99,16 @@ export class RemoteMapStore implements MapStore {
   imageUrl(mapId: string, reference: ImageReference): string {
     return `${API_URL.ROOT}/maps/${mapId}/images/${imageIdOf(reference)}`;
   }
+
+  /** The browser loads each image from its endpoint when mmp draws it. */
+  async preloadImages(_mapId: string): Promise<void> {
+    return;
+  }
+
+  /** Holds nothing to free. */
+  releaseImages(): void {
+    return;
+  }
 }
 
 /** Headers that carry the modification secret, if the map has one. */

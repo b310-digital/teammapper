@@ -90,6 +90,8 @@ describe('MapSyncService', () => {
       deleteMap: jest.fn(),
       uploadImage: jest.fn(),
       imageUrl: jest.fn(),
+      preloadImages: jest.fn(),
+      releaseImages: jest.fn(),
     };
 
     settingsService = {
@@ -550,6 +552,30 @@ describe('MapSyncService', () => {
       expect(setWritableSpy).toHaveBeenCalledWith(true);
     });
 
+    // Attaching the map makes MapComponent open it, and mmp resolves each
+    // image reference while it draws the map.
+    it('preloads the images of the map before it attaches the map', async () => {
+      mapStore.getMap.mockResolvedValue(mockServerMap);
+      let attachedWhilePreloading: CachedMapEntry | null = null;
+      mapStore.preloadImages.mockImplementation(async () => {
+        attachedWhilePreloading = service['attachedMapSubject'].getValue();
+      });
+
+      await service.prepareExistingMap('test-uuid', '');
+
+      expect(mapStore.preloadImages).toHaveBeenCalledWith('test-uuid');
+      expect(attachedWhilePreloading).toBeNull();
+      expect(service.getAttachedMap().cachedMap.uuid).toBe('test-uuid');
+    });
+
+    it('preloads no images for an unknown map', async () => {
+      mapStore.getMap.mockResolvedValue(null);
+
+      await service.prepareExistingMap('test-uuid', '');
+
+      expect(mapStore.preloadImages).not.toHaveBeenCalled();
+    });
+
     // The Y.Doc holds the stored map settings, and YjsSyncService applies
     // them when the map opens. The REST copy would race the map's creation.
     it('leaves the map settings to the Yjs sync', async () => {
@@ -558,6 +584,14 @@ describe('MapSyncService', () => {
       await service.prepareExistingMap('test-uuid', '');
 
       expect(mmpService.updateAdditionalMapOptions).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('reset', () => {
+    it('releases the preloaded images of the closed map', () => {
+      service.reset();
+
+      expect(mapStore.releaseImages).toHaveBeenCalled();
     });
   });
 

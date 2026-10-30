@@ -37,6 +37,7 @@ import {
   ImageUploadError,
   resizeImage,
 } from './node-images';
+import { ReportedMapStoreError } from '../map-backend/map-store';
 import { validate as uuidValidate } from 'uuid';
 import { ExportService } from '../export/export.service';
 import { parseMapFile } from './map-import';
@@ -831,9 +832,11 @@ export class MmpService implements OnDestroy {
 
   /**
    * A 413 means the map's cap in practice, since the resize keeps files below
-   * the size limit.
+   * the size limit. The map store has shown a toast of its own for a
+   * `ReportedMapStoreError`.
    */
   private async showImageUploadError(error: unknown): Promise<void> {
+    if (error instanceof ReportedMapStoreError) return;
     const key =
       error instanceof ImageUploadError && error.status === 413
         ? 'TOASTS.ERRORS.IMAGE_STORAGE_FULL'
