@@ -5,11 +5,8 @@ import { filter } from 'rxjs';
 import { UtilsService } from '../utils/utils.service';
 
 /**
- * Offers a reload when the service worker of the offline build holds a new
- * version of the site. The worker checks for a new version each time the
- * site loads and downloads it in the background, while the open page keeps
- * running the version it started with. A click on the toast reloads the
- * page into the new version. Without the click, the next load runs it.
+ * Offers a reload once the service worker has downloaded a new version of
+ * the offline build.
  */
 @Injectable({ providedIn: 'root' })
 export class AppUpdateService {
@@ -24,8 +21,7 @@ export class AppUpdateService {
     this.swUpdate.versionUpdates
       .pipe(filter(event => event.type === 'VERSION_READY'))
       .subscribe(() => this.offerReload('TOASTS.APP_UPDATE_READY'));
-    // The worker lost files the running version still needs, so the page
-    // breaks on its next lazy load. A reload fetches a complete version.
+    // The worker lost cached files; only a reload recovers.
     this.swUpdate.unrecoverable.subscribe(() =>
       this.offerReload('TOASTS.APP_UPDATE_BROKEN')
     );

@@ -4,9 +4,8 @@ import webConfig from './playwright.config';
 /** The port of the static server of the production offline build. */
 export const PRODUCTION_BUILD_PORT = 4300;
 
-// The CI workflow builds the site before it runs the suite. The command
-// leaves the workspace packages alone, because the dev server above reads
-// them while it runs.
+// CI builds the site in an earlier step. Not build:offline: rebuilding the
+// packages breaks the running dev server.
 const buildCommand = process.env.CI ? '' : 'pnpm run build:offline-site && ';
 
 /**
@@ -47,9 +46,7 @@ export default defineConfig({
       timeout: 120 * 1000,
     },
     {
-      // Only the production build registers the service worker, and the
-      // worker accepts only the files the build wrote, so a static server
-      // serves the build.
+      // Serves the production build for the service worker spec.
       port: PRODUCTION_BUILD_PORT,
       command: `${buildCommand}pnpm run serve:offline ${PRODUCTION_BUILD_PORT}`,
       reuseExistingServer: !process.env.CI,

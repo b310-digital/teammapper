@@ -30,9 +30,8 @@ function countCachedAppFiles(page: Page): Promise<number> {
 }
 
 /**
- * Waits until the service worker has stored every file it prefetches. The
- * worker caches the files after it activates, and `ready` resolves at
- * activation, before the cache is complete.
+ * Waits until the worker has cached every prefetched file. `ready` resolves
+ * earlier.
  */
 async function waitForCachedSite(page: Page) {
   await page.evaluate(() => navigator.serviceWorker.ready);

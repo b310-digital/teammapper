@@ -1,7 +1,6 @@
-// Serves dist-offline/browser byte for byte, the way a static host serves the
-// offline build. The e2e tests of the service worker need it: the worker
-// checks each file against the hash in ngsw.json, and the Angular dev server
-// rewrites the files it serves.
+// Serves dist-offline/browser unchanged for the service worker e2e spec. The
+// dev server rewrites files, and the worker rejects files whose hash differs
+// from ngsw.json.
 //
 // Usage: pnpm run serve:offline <port>
 
@@ -48,6 +47,5 @@ createServer(async (request, response) => {
   } catch {
     response.writeHead(404).end();
   }
-  // The browser of the playwright container reaches the server over the
-  // docker network, so it listens on every interface.
+  // All interfaces, so the playwright container can connect.
 }).listen(port, '0.0.0.0');

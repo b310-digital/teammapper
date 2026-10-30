@@ -74,9 +74,7 @@ function bootstrap(mapBackend: EnvironmentProviders) {
         ...(TEAMMAPPER_OFFLINE ? [withHashLocation()] : [])
       ),
       mapBackend,
-      // The service worker caches the site, so the offline build loads
-      // without a network once a visitor has opened it. The web build
-      // registers none, and neither does a development build.
+      // Caches the offline build so it loads without a network.
       ...(TEAMMAPPER_OFFLINE
         ? [
             provideServiceWorker('ngsw-worker.js', {
