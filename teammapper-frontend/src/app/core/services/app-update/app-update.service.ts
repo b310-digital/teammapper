@@ -8,8 +8,8 @@ import { UtilsService } from '../utils/utils.service';
  * Offers a reload when the service worker of the offline build holds a new
  * version of the site. The worker checks for a new version each time the
  * site loads and downloads it in the background, while the open page keeps
- * running the version it started with. A tap on the toast reloads the page
- * into the new version; otherwise the next load picks it up.
+ * running the version it started with. A click on the toast reloads the
+ * page into the new version. Without the click, the next load runs it.
  */
 @Injectable({ providedIn: 'root' })
 export class AppUpdateService {
@@ -31,7 +31,7 @@ export class AppUpdateService {
     );
   }
 
-  /** The toast stays until the visitor taps it, which reloads the page. */
+  /** The toast stays until the visitor clicks it, which reloads the page. */
   private async offerReload(key: string): Promise<void> {
     const message = await this.utilsService.translate(key);
     this.toastrService

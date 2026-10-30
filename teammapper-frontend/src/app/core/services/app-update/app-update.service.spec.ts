@@ -11,6 +11,11 @@ import { UtilsService } from '../utils/utils.service';
 import { AppUpdateService } from './app-update.service';
 
 const VERSION = { hash: 'abc' };
+const VERSION_READY: VersionEvent = {
+  type: 'VERSION_READY',
+  currentVersion: VERSION,
+  latestVersion: { hash: 'def' },
+};
 
 describe('AppUpdateService', () => {
   let versionUpdates: Subject<VersionEvent>;
@@ -49,11 +54,7 @@ describe('AppUpdateService', () => {
   it('offers a reload once the worker holds a new version', async () => {
     setup().watch();
 
-    versionUpdates.next({
-      type: 'VERSION_READY',
-      currentVersion: VERSION,
-      latestVersion: { hash: 'def' },
-    });
+    versionUpdates.next(VERSION_READY);
     await flush();
 
     expect(toastrService.info).toHaveBeenCalledWith(
@@ -63,18 +64,26 @@ describe('AppUpdateService', () => {
     );
   });
 
-  it('reloads the page when the visitor taps the toast', async () => {
+  it('offers a reload once the worker cache breaks', async () => {
     setup().watch();
+
     unrecoverable.next({ type: 'UNRECOVERABLE_STATE', reason: 'gone' });
     await flush();
-
-    toastTaps.next();
 
     expect(toastrService.info).toHaveBeenCalledWith(
       'TOASTS.APP_UPDATE_BROKEN',
       '',
       { disableTimeOut: true }
     );
+  });
+
+  it('reloads the page when the visitor clicks the toast', async () => {
+    setup().watch();
+    versionUpdates.next(VERSION_READY);
+    await flush();
+
+    toastTaps.next();
+
     expect(reload).toHaveBeenCalled();
   });
 
@@ -90,11 +99,7 @@ describe('AppUpdateService', () => {
   it('does nothing without a worker', async () => {
     setup(false).watch();
 
-    versionUpdates.next({
-      type: 'VERSION_READY',
-      currentVersion: VERSION,
-      latestVersion: { hash: 'def' },
-    });
+    versionUpdates.next(VERSION_READY);
     await flush();
 
     expect(toastrService.info).not.toHaveBeenCalled();

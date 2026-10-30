@@ -31,8 +31,8 @@ function countCachedAppFiles(page: Page): Promise<number> {
 
 /**
  * Waits until the service worker has stored every file it prefetches. The
- * worker caches them after it activates, so `ready` alone does not say the
- * site works offline.
+ * worker caches the files after it activates, and `ready` resolves at
+ * activation, before the cache is complete.
  */
 async function waitForCachedSite(page: Page) {
   await page.evaluate(() => navigator.serviceWorker.ready);
