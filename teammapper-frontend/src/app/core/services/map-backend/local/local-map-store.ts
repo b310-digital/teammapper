@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import {
   CachedAdminMapEntry,
   ImageReference,
@@ -28,8 +28,9 @@ import {
   seedMapDoc,
   migrateMapDoc,
 } from './map-database';
+import { FormatChannel } from './format-channel';
 import { MAP_FORMAT, NewerMapFormatError } from './map-format';
-import { withLock } from './tab-locks';
+import { waitForOlderWriters, withLock, WriterLock } from './tab-locks';
 
 /** The backend's default limit for one image. */
 export const MAX_IMAGE_BYTES = 150_000;
@@ -44,7 +45,13 @@ export const UNUSED_IMAGE_RETENTION_DAYS = 7;
 export const MAP_TOUCH_DEBOUNCE_MS = 1000;
 
 const FORMAT_NUMBER_KEY = 'formatNumber';
+/** Keeps two tabs from reading and writing the format number at once. */
+const FORMAT_LOCK = 'teammapper-offline-format-number';
+
+/** Stops storing once a later build raised the format number. */
+type OutdatedListener = () => Promise<void> | void;
 const FORMAT_ERROR = 'TOASTS.ERRORS.BROWSER_STORAGE_NEWER_FORMAT';
+const UPDATED_ERROR = 'TOASTS.ERRORS.BROWSER_STORAGE_UPDATED';
 const UPDATE_ERROR = 'TOASTS.ERRORS.BROWSER_STORAGE_UPDATE_FAILED';
 const WRITE_ERROR = 'TOASTS.ERRORS.BROWSER_STORAGE_FAILED';
 
@@ -102,10 +109,12 @@ const imageKey = (mapId: string, imageId: string): string =>
  * list, deletion and edit mode run the same code as on the web. Every access
  * first checks the format number in the `meta` store, and a format newer
  * than this build reads blocks the store. Opening a map runs the data
- * migrations it has not gone through.
+ * migrations it has not gone through. Once a later build raises the format
+ * number, the store blocks for good and tells the open connection through
+ * `onOutdated`.
  */
 @Injectable()
-export class LocalMapStore implements MapStore {
+export class LocalMapStore implements MapStore, OnDestroy {
   private toastrService = inject(ToastrService);
   private utilsService = inject(UtilsService);
   private loadYIndexeddb = inject(Y_INDEXEDDB_LOADER);
@@ -123,6 +132,15 @@ export class LocalMapStore implements MapStore {
   private imageGeneration = 0;
   // The maps this store deleted, which a pending record update skips.
   private readonly deletedMaps = new Set<string>();
+  private readonly formatChannel = new FormatChannel(
+    this.format.formatNumber,
+    () => this.storedFormatNumber(),
+    () => this.outdate()
+  );
+  // Whether a later build raised the format number since the first access.
+  private outdated = false;
+  private readonly outdatedListeners = new Set<OutdatedListener>();
+  private readonly writerLock = new WriterLock();
 
   /**
    * Seeds the map's doc before it writes the record, so a failed write
@@ -287,6 +305,26 @@ export class LocalMapStore implements MapStore {
   }
 
   /**
+   * Calls the listener once a later build raised the format number of the
+   * stored maps, at once when that already happened. The later build waits
+   * until the promise the listener returns settles. The returned function
+   * removes the listener.
+   */
+  onOutdated(listener: OutdatedListener): () => void {
+    if (this.outdated) {
+      void listener();
+      return () => undefined;
+    }
+    this.outdatedListeners.add(listener);
+    return () => this.outdatedListeners.delete(listener);
+  }
+
+  ngOnDestroy(): void {
+    this.formatChannel.close();
+    this.writerLock.release();
+  }
+
+  /**
    * The storage of the maps' docs, picked once from the driver localforage
    * chose. A failed write of an open doc shows the storage toast.
    */
@@ -314,10 +352,30 @@ export class LocalMapStore implements MapStore {
   }
 
   /**
-   * Blocks a newer stored format number, and raises a missing or lower one
-   * to the one of this build.
+   * Prepares this tab to store, in these steps:
+   * 1. Watch for a later build.
+   * 2. Claim the stored format number.
+   * 3. Wait for the tabs of older builds to stop storing.
+   * 4. Take this build's writer lock.
+   * 5. Read the stored format number again. A tab of an older build that
+   *    took its writer lock after a later build raised the number blocks
+   *    itself here.
    */
   private async checkFormatNumber(): Promise<void> {
+    this.formatChannel.watch();
+    await withLock(FORMAT_LOCK, () => this.claimFormatNumber());
+    await this.waitForOlderTabs();
+    await this.writerLock.acquire(this.format.formatNumber);
+    this.blockNewerFormat(await this.storedFormatNumber());
+  }
+
+  /**
+   * Blocks a newer stored format number, raises a missing or lower one to the
+   * one of this build, and announces the number to the open tabs. The store
+   * announces on every first access, so a tab of an older build that missed
+   * the raise receives the number again.
+   */
+  private async claimFormatNumber(): Promise<void> {
     const stored = await this.storedFormatNumber();
     this.blockNewerFormat(stored);
     const formatNumber = this.format.formatNumber;
@@ -326,18 +384,57 @@ export class LocalMapStore implements MapStore {
         this.meta.setItem(FORMAT_NUMBER_KEY, formatNumber)
       );
     }
+    this.formatChannel.announce();
   }
 
   private blockNewerFormat(stored: number | null): void {
     if (stored === null || stored <= this.format.formatNumber) return;
+    this.writerLock.release();
     void this.showError(FORMAT_ERROR);
     throw new NewerFormatError(
       `The stored maps have the newer format ${stored}`
     );
   }
 
+  /** Shows the update failed toast when an older tab does not stop. */
+  private async waitForOlderTabs(): Promise<void> {
+    try {
+      await waitForOlderWriters(this.format.formatNumber);
+    } catch (error) {
+      console.error('Tabs of an older build kept storing:', error);
+      void this.showError(UPDATE_ERROR);
+      throw new ReportedMapStoreError('Tabs of an older build kept storing');
+    }
+  }
+
   private storedFormatNumber(): Promise<number | null> {
     return this.meta.getItem<number>(FORMAT_NUMBER_KEY);
+  }
+
+  /**
+   * Blocks every further access, stops the open map from storing and asks
+   * the visitor to reload, once.
+   */
+  private outdate(): void {
+    if (this.outdated) return;
+    this.outdated = true;
+    this.access = Promise.reject(
+      new NewerFormatError('A later build updated the stored maps')
+    );
+    this.access.catch(() => undefined);
+    void this.showStickyError(UPDATED_ERROR);
+    void this.stopStoring();
+  }
+
+  /**
+   * Tells every listener to stop storing, and releases the writer lock once
+   * all of them did, so the later build can migrate.
+   */
+  private async stopStoring(): Promise<void> {
+    const stopped = [...this.outdatedListeners].map(listener => listener());
+    this.outdatedListeners.clear();
+    await Promise.allSettled(stopped);
+    this.writerLock.release();
   }
 
   /**
@@ -386,6 +483,12 @@ export class LocalMapStore implements MapStore {
 
   private async showError(key: string): Promise<void> {
     this.toastrService.error(await this.utilsService.translate(key));
+  }
+
+  /** Shows an error toast that stays until the visitor closes it. */
+  private async showStickyError(key: string): Promise<void> {
+    const message = await this.utilsService.translate(key);
+    this.toastrService.error(message, undefined, { disableTimeOut: true });
   }
 
   private async allRecords(): Promise<LocalMapRecord[]> {
@@ -453,6 +556,8 @@ export class LocalMapStore implements MapStore {
   ): Promise<StoredImage[]> {
     try {
       const unused = await this.unusedImages(mapId, images);
+      // A later build may have migrated the doc this build just read.
+      if (this.outdated) return images;
       await Promise.all(unused.map(({ key }) => this.images.removeItem(key)));
       return images.filter(image => !unused.includes(image));
     } catch (error) {
@@ -519,6 +624,8 @@ export class LocalMapStore implements MapStore {
   }
 
   private async touchMap(mapId: string, rootName: string | null) {
+    // A later build may be migrating the stored maps.
+    if (this.outdated) return;
     const record = await this.maps.getItem<LocalMapRecord>(mapId);
     if (!record || this.deletedMaps.has(mapId)) return;
     const lastModified = new Date().toISOString();

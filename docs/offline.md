@@ -71,21 +71,24 @@ The build limits an image to 150,000 bytes and the images of one map to
 
 ## Change how maps are stored
 
-Each stored map records the format number of the build that saved it. To
-change how the build stores a map, add a data migration to
+Each map stores the format number of the build that saved it. To change how
+maps are stored, add a data migration to
 `teammapper-frontend/src/app/core/services/map-backend/local/migrations/`:
 
-1. Write the migration in its own file, named after its format number, such
-   as `0002-<what-it-changes>.ts`. Its `migrate` function changes the doc of a
-   map on the previous format number in place.
-2. Append the migration to `DATA_MIGRATIONS` in `data-migrations.ts`. The
-   build takes its format number from the length of that list.
-3. Never edit or remove a released migration. A visitor's browser may hold
-   maps on any earlier format number.
-4. Make the migration give the same map when two tabs run it on the same doc,
-   and when an older tab stored content after the migration ran.
+1. Write it in its own file, such as `0002-<what-it-changes>.ts`.
+2. Append it to `DATA_MIGRATIONS` in `data-migrations.ts`. The length of that
+   list sets the format number of the build.
+3. Never edit or remove a released migration.
+4. Write the migration so that a second run on the same map changes nothing.
 
-The build runs the missing data migrations on a map when it opens the map.
+A build migrates a map when it opens the map. First it asks open tabs of
+older builds to stop saving, and waits up to ten seconds for them. Tabs reach
+each other through the lock `teammapper-offline-writers-<format number>` and
+the channel `teammapper-offline-format`. Never rename either: released builds
+use them.
+
+Over plain http, outside localhost, the browser offers no Web Locks, so two
+tabs can run the same migration on one map. Step 4 keeps the map intact then.
 
 ## Back up
 

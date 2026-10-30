@@ -8,6 +8,7 @@ import { TestBed } from '@angular/core/testing';
 import localforage from 'localforage';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { BroadcastChannel as NodeBroadcastChannel } from 'node:worker_threads';
 import { ToastrService } from 'ngx-toastr';
 import { v4 as uuidv4 } from 'uuid';
 import * as Y from 'yjs';
@@ -38,6 +39,7 @@ import {
   installFakeLocks,
   removeFakeLocks,
 } from '../../../../../test/fake-web-locks';
+import { OLDER_TABS_TIMEOUT_MS } from './tab-locks';
 import {
   DataMigration,
   MAP_FORMAT,
@@ -95,6 +97,7 @@ function storedUpdateCount(mapId: string): Promise<number> {
 const STORAGE_FAILED_TOAST = 'TOASTS.ERRORS.BROWSER_STORAGE_FAILED';
 const NEWER_FORMAT_TOAST = 'TOASTS.ERRORS.BROWSER_STORAGE_NEWER_FORMAT';
 const UPDATE_FAILED_TOAST = 'TOASTS.ERRORS.BROWSER_STORAGE_UPDATE_FAILED';
+const UPDATED_TOAST = 'TOASTS.ERRORS.BROWSER_STORAGE_UPDATED';
 
 /** The store of a build that reads and writes the given format. */
 function storeWith(format: MapFormat): LocalMapStore {
@@ -765,6 +768,8 @@ describe('LocalMapStore', () => {
         migrate: doc => doc.getArray('runs').push([2]),
       };
       const created = await store.createMap(ROOT_NODE);
+      // Installed after the older tab's first access, so it holds no writer
+      // lock that the two tabs would wait for.
       installFakeLocks();
       const format = { formatNumber: 2, migrations: [countingMigration] };
 
@@ -840,6 +845,274 @@ describe('LocalMapStore', () => {
 
         expect(toastr.error).toHaveBeenCalledWith(NEWER_FORMAT_TOAST);
       });
+    });
+  });
+
+  describe('an open tab of an older build', () => {
+    const newerFormat: MapFormat = { formatNumber: 2, migrations: [] };
+    let other: LocalMapStore[];
+
+    // jsdom has no BroadcastChannel, so the suite lends Node's.
+    const original = Object.getOwnPropertyDescriptor(
+      globalThis,
+      'BroadcastChannel'
+    );
+
+    beforeAll(() => {
+      Object.defineProperty(globalThis, 'BroadcastChannel', {
+        value: NodeBroadcastChannel,
+        configurable: true,
+      });
+    });
+
+    afterAll(() => {
+      if (original)
+        Object.defineProperty(globalThis, 'BroadcastChannel', original);
+      else Reflect.deleteProperty(globalThis, 'BroadcastChannel');
+    });
+
+    beforeEach(async () => {
+      other = [];
+      // The first access starts the watch.
+      await store.listMaps();
+    });
+
+    afterEach(() => {
+      other.forEach(tab => tab.ngOnDestroy());
+    });
+
+    /** Another tab, which the test closes afterwards. */
+    function openTab(format: MapFormat): LocalMapStore {
+      const tab = storeWith(format);
+      other.push(tab);
+      return tab;
+    }
+
+    it('stores no record after it learned of the newer format', async () => {
+      const { map } = await store.createMap(ROOT_NODE);
+      const doc = await storedDoc(map.uuid);
+      const stop = store.watchMap(map.uuid, doc);
+      renameRootOf(doc, 'Renamed');
+
+      await openTab(newerFormat).listMaps();
+      await outdated();
+      await stop();
+
+      const record = await records.getItem<{ rootName: string }>(map.uuid);
+      expect(record?.rootName).toBe('Root');
+    });
+
+    describe('with Web Locks', () => {
+      const renameRootMigration: DataMigration = {
+        formatNumber: 2,
+        migrate: doc => renameRootOf(doc, 'Updated'),
+      };
+      let older: LocalMapStore;
+      let created: Awaited<ReturnType<LocalMapStore['createMap']>>;
+
+      beforeEach(async () => {
+        installFakeLocks();
+        // Only a tab whose first access had the locks holds the writer lock.
+        older = openTab({ formatNumber: 1, migrations: [] });
+        created = await older.createMap(ROOT_NODE);
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+        removeFakeLocks();
+      });
+
+      /** Resolves once the older tab learned of the newer format. */
+      const olderOutdated = () =>
+        new Promise<void>(resolve => older.onOutdated(resolve));
+
+      const openInNewerTab = () =>
+        openTab({ formatNumber: 2, migrations: [renameRootMigration] }).getMap(
+          created.map.uuid,
+          created.modificationSecret
+        );
+
+      it('migrates a map only once the older tab stopped storing', async () => {
+        let stopStoring: () => void = () => undefined;
+        older.onOutdated(
+          () => new Promise<void>(resolve => (stopStoring = resolve))
+        );
+        const notified = olderOutdated();
+        let lateEditsSeen: number | null = null;
+        const opening = openTab({
+          formatNumber: 2,
+          migrations: [
+            {
+              formatNumber: 2,
+              migrate: doc => (lateEditsSeen = doc.getArray('late').length),
+            },
+          ],
+        }).getMap(created.map.uuid, created.modificationSecret);
+
+        await notified;
+        // Without a fence the newer tab migrates in this time. With one it
+        // waits however long the older tab takes.
+        await Promise.race([
+          opening,
+          new Promise(resolve => setTimeout(resolve, 200)),
+        ]);
+        // The older tab stores one last edit before it stops.
+        const late = new Y.Doc();
+        late.getArray('late').push(['edit']);
+        const persistence = await older.docPersistence();
+        await persistence.store(created.map.uuid, Y.encodeStateAsUpdate(late));
+        stopStoring();
+        await opening;
+
+        expect(lateEditsSeen).toBe(1);
+      });
+
+      describe('when the older tab never stops storing', () => {
+        let opening: Promise<unknown>;
+
+        beforeEach(async () => {
+          jest.spyOn(console, 'error').mockImplementation(() => undefined);
+          older.onOutdated(() => new Promise<void>(() => undefined));
+          const notified = olderOutdated();
+          jest.useFakeTimers({
+            doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask'],
+          });
+          opening = openInNewerTab();
+          opening.catch(() => undefined);
+          await notified;
+          await jest.advanceTimersByTimeAsync(OLDER_TABS_TIMEOUT_MS);
+        });
+
+        it('opens nothing, with an error that reports the toast as shown', async () => {
+          await expect(opening).rejects.toBeInstanceOf(ReportedMapStoreError);
+        });
+
+        it('shows the update failed toast', async () => {
+          await opening.catch(() => undefined);
+          await jest.advanceTimersByTimeAsync(1);
+
+          expect(toastr.error).toHaveBeenCalledWith(UPDATE_FAILED_TOAST);
+        });
+
+        it('leaves the stored map unchanged', async () => {
+          await opening.catch(() => undefined);
+          jest.useRealTimers();
+
+          const doc = await storedDoc(created.map.uuid);
+          expect(mapFormatNumber(doc)).toBe(1);
+          expect(nodeEntries(nodesMapOf(doc))[0][1].get('name')).toBe('Root');
+        });
+      });
+    });
+
+    const outdated = () =>
+      new Promise<void>(resolve => store.onOutdated(resolve));
+
+    /**
+     * Announces the format number and resolves once the channel delivered
+     * it. A probe channel sees the message in the same round of deliveries
+     * as the store's, and the next macrotask runs after the store's handler.
+     */
+    async function announce(formatNumber: number): Promise<void> {
+      const probe = new NodeBroadcastChannel('teammapper-offline-format');
+      const delivered = new Promise(resolve => (probe.onmessage = resolve));
+      const announcer = new NodeBroadcastChannel('teammapper-offline-format');
+      try {
+        announcer.postMessage({ formatNumber });
+        await delivered;
+        await new Promise(resolve => setTimeout(resolve, 0));
+      } finally {
+        announcer.close();
+        probe.close();
+      }
+    }
+
+    it('learns from a newer tab that the stored maps have a newer format', async () => {
+      const listener = jest.fn();
+      store.onOutdated(listener);
+
+      await openTab(newerFormat).listMaps();
+      await outdated();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('tells the visitor to reload, in a toast that stays', async () => {
+      await openTab(newerFormat).listMaps();
+      await outdated();
+      await toastShown;
+
+      expect(toastr.error).toHaveBeenCalledWith(
+        UPDATED_TOAST,
+        undefined,
+        expect.objectContaining({ disableTimeOut: true })
+      );
+    });
+
+    it('creates no map after it learned of the newer format', async () => {
+      await openTab(newerFormat).listMaps();
+      await outdated();
+
+      await expect(store.createMap(ROOT_NODE)).rejects.toBeInstanceOf(
+        ReportedMapStoreError
+      );
+      expect(await records.length()).toBe(0);
+    });
+
+    it('calls a listener added after it learned of the newer format', async () => {
+      await openTab(newerFormat).listMaps();
+      await outdated();
+      const listener = jest.fn();
+
+      store.onOutdated(listener);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls no listener that unsubscribed', async () => {
+      const listener = jest.fn();
+      store.onOutdated(listener)();
+
+      await openTab(newerFormat).listMaps();
+      await outdated();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('checks the stored format number when the page becomes visible', async () => {
+      jest.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+      await meta.setItem('formatNumber', 2);
+
+      document.dispatchEvent(new Event('visibilitychange'));
+      await outdated();
+
+      expect(toastr.error).toHaveBeenCalledWith(
+        UPDATED_TOAST,
+        undefined,
+        expect.objectContaining({ disableTimeOut: true })
+      );
+    });
+
+    it('keeps working next to a tab of the same build', async () => {
+      const listener = jest.fn();
+      store.onOutdated(listener);
+      const sameBuild = openTab({ formatNumber: 1, migrations: [] });
+
+      await sameBuild.listMaps();
+      await sameBuild.createMap(ROOT_NODE);
+      await announce(1);
+
+      expect(listener).not.toHaveBeenCalled();
+      await expect(store.createMap(ROOT_NODE)).resolves.toBeDefined();
+    });
+
+    it('ignores an announcement that is no format number', async () => {
+      const listener = jest.fn();
+      store.onOutdated(listener);
+
+      await announce(Infinity);
+
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 

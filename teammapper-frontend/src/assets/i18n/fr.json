@@ -274,6 +274,7 @@
       "DELETE_MAP_ERROR": "La carte n'a pas pu être supprimée.",
       "BROWSER_STORAGE_FAILED": "La carte mentale n'a pas pu être enregistrée dans le stockage de ce navigateur.",
       "BROWSER_STORAGE_NEWER_FORMAT": "Les cartes mentales de ce navigateur ont été enregistrées par une version plus récente de TeamMapper et ne peuvent pas être ouvertes.",
+      "BROWSER_STORAGE_UPDATED": "Une version plus récente de TeamMapper a mis à jour les cartes mentales de ce navigateur. Cet onglet n'enregistre plus aucune modification. Rechargez la page pour continuer à modifier.",
       "BROWSER_STORAGE_UPDATE_FAILED": "La carte mentale n'a pas pu être mise à jour vers la version actuelle de TeamMapper. Elle reste inchangée."
     },
     "DELETE_MAP_SUCCESS": "Mindmap supprimée avec succès !",

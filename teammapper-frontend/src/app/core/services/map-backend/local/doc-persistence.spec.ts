@@ -124,4 +124,41 @@ describe.each(DRIVERS)('DocPersistence with %s', (_name, driver) => {
     await expect(stored.flush()).resolves.toBeUndefined();
     await stored.close();
   });
+
+  it('stores no edit made after a discard', async () => {
+    const id = nextMapId();
+    await persistence.store(id, updateWith('a', 'first'));
+    const doc = new Y.Doc();
+    const stored = await persistence.attach(id, doc);
+
+    await stored.discard();
+    doc.getMap('nodes').set('b', 'after');
+
+    expect(namesIn(await persistence.read(id))).toEqual({ a: 'first' });
+  });
+});
+
+describe('DocPersistence with localStorage, on discard', () => {
+  it('drops the edit still waiting to be written', async () => {
+    const docs = localforage.createInstance({
+      name: 'teammapper-offline',
+      storeName: 'docs',
+      driver: localforage.LOCALSTORAGE,
+    });
+    const persistence = await chooseDocPersistence(
+      loadYIndexeddb,
+      docs,
+      jest.fn()
+    );
+    await persistence.store('pending', updateWith('a', 'first'));
+    const doc = new Y.Doc();
+    const stored = await persistence.attach('pending', doc);
+
+    doc.getMap('nodes').set('b', 'pending');
+    await stored.discard();
+
+    expect(namesIn(await persistence.read('pending'))).toEqual({
+      a: 'first',
+    });
+  });
 });

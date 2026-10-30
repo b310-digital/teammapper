@@ -274,6 +274,7 @@
       "DELETE_MAP_ERROR": "Não foi possível excluir o mapa.",
       "BROWSER_STORAGE_FAILED": "Não foi possível salvar o mapa mental no armazenamento deste navegador.",
       "BROWSER_STORAGE_NEWER_FORMAT": "Os mapas mentais deste navegador foram salvos por uma versão mais recente do TeamMapper e não podem ser abertos.",
+      "BROWSER_STORAGE_UPDATED": "Uma versão mais recente do TeamMapper atualizou os mapas mentais deste navegador. Esta aba não salva mais alterações. Recarregue a página para continuar editando.",
       "BROWSER_STORAGE_UPDATE_FAILED": "Não foi possível atualizar o mapa mental para a versão atual do TeamMapper. Ele permanece inalterado."
     },
     "DELETE_MAP_SUCCESS": "Mapa mental excluído com sucesso!",

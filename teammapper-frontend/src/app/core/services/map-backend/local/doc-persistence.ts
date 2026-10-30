@@ -29,6 +29,11 @@ export interface StoredDoc {
    * started so far completed. The doc keeps storing its updates.
    */
   flush(): Promise<void>;
+  /**
+   * Stops storing the doc's updates and drops what is pending. Resolves once
+   * the writes already under way are done.
+   */
+  discard(): Promise<void>;
 }
 
 /**
@@ -139,6 +144,13 @@ class MergedUpdateDoc implements StoredDoc {
     return this.writing;
   }
 
+  discard(): Promise<void> {
+    this.doc.off('update', this.schedule);
+    if (this.timer !== null) clearTimeout(this.timer);
+    this.timer = null;
+    return this.writing;
+  }
+
   private readonly schedule = (): void => {
     if (this.timer !== null) clearTimeout(this.timer);
     this.timer = setTimeout(() => this.writeState(), DOC_WRITE_DEBOUNCE_MS);
@@ -168,6 +180,13 @@ function indexeddbPersistence(yIndexeddb: YIndexeddb): DocPersistence {
       return {
         close: () => persistence.destroy(),
         flush: () => awaitWrites(persistence.db),
+        discard: async () => {
+          // The transaction starts before the destroy closes the database, so
+          // it completes after every write y-indexeddb started.
+          const written = awaitWrites(persistence.db);
+          await persistence.destroy();
+          await written;
+        },
       };
     },
     store: (mapId, update) => addUpdate(mapDatabaseName(mapId), update),

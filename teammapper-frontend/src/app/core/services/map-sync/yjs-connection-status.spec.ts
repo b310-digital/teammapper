@@ -1,4 +1,5 @@
 import { WS_CLOSE_MAP_SYNC_RESET } from '@teammapper/shared';
+import { CLOSE_STORAGE_OUTDATED } from '../map-backend/map-connection';
 import { MapSyncContext } from './map-sync-context';
 import { SettingsService } from '../settings/settings.service';
 import { YjsSyncService } from './yjs-sync.service';
@@ -114,6 +115,34 @@ describe('YjsSyncService connection status', () => {
           'connected'
         );
       });
+    });
+  });
+
+  describe('a browser storage that a later build updated', () => {
+    let connection: FakeMapConnection;
+    const settings =
+      createMockSettingsService() as jest.Mocked<SettingsService>;
+    beforeEach(() => {
+      service = createYjsSyncService(
+        undefined,
+        context,
+        settings,
+        connections.factory
+      );
+      service.setWritable(true);
+      service.initMap('test-uuid');
+      connection = currentConnection();
+      connection.emitSynced();
+      service.attachMap();
+      settings.setEditMode.mockClear();
+      connection.emitClosed(CLOSE_STORAGE_OUTDATED);
+    });
+    it('turns edit mode off', () => {
+      expect(settings.setEditMode).toHaveBeenLastCalledWith(false);
+    });
+    it('keeps the map on screen', () => {
+      expect(currentConnection()).toBe(connection);
+      expect(context.removeMap).not.toHaveBeenCalled();
     });
   });
 

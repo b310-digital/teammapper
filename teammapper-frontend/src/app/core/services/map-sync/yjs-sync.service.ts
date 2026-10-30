@@ -21,6 +21,7 @@ import { UtilsService } from '../utils/utils.service';
 import { ToastrService } from 'ngx-toastr';
 import type { Awareness } from 'y-protocols/awareness';
 import {
+  CLOSE_STORAGE_OUTDATED,
   MapConnection,
   MapConnectionFactory,
 } from '../map-backend/map-connection';
@@ -299,6 +300,10 @@ export class YjsSyncService {
       } else if (code === WS_CLOSE_MAP_DELETED) {
         this.ctx.mapDeleted();
         window.location.reload();
+      } else if (code === CLOSE_STORAGE_OUTDATED) {
+        // The connection stores nothing more, so the visitor would lose
+        // every further edit.
+        this.setWritable(false);
       }
     });
   }
