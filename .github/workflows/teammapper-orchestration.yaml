@@ -10,16 +10,20 @@ on:
   - push
   - workflow_dispatch
 
+permissions:
+  contents: read
+
 jobs:
   retrieve-project:
     name: check readiness
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       deployment-enabled: ${{ fromJson(steps.project.outputs.info).deployment-enabled }}
       branch-id: ${{ fromJson(steps.project.outputs.info).branch-id }}
     steps:
       - name: Fetch project data
-        uses: ionos-deploy-now/project-action@v1
+        uses: ionos-deploy-now/project-action@95e8bc58cdc22a86df7709493de6054179881470 # v1
         id: project
         with:
           api-key: ${{ secrets.IONOS_API_KEY }}
@@ -36,7 +40,8 @@ jobs:
     with:
       site-url: https://IONOS_DEPLOY_NOW_SITE_URL
       branch-id: ${{ needs.retrieve-project.outputs.branch-id }}
-    secrets: inherit
+    secrets:
+      IONOS_API_KEY: ${{ secrets.IONOS_API_KEY }}
 
   deploy:
     name: trigger deployment
@@ -44,9 +49,10 @@ jobs:
       - retrieve-project
       - build
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Dispatch deployment(s)
-        uses: ionos-deploy-now/project-action@v1
+        uses: ionos-deploy-now/project-action@95e8bc58cdc22a86df7709493de6054179881470 # v1
         with:
           api-key: ${{ secrets.IONOS_API_KEY }}
           service-host: api-eu.ionos.space

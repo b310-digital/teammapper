@@ -12,6 +12,12 @@ on:
       branch-id:
         required: true
         type: string
+    secrets:
+      IONOS_API_KEY:
+        required: true
+
+permissions:
+  contents: read
 
 env:
   DEPLOYMENT_FOLDER: ./teammapper-frontend/dist-offline/browser
@@ -21,28 +27,24 @@ jobs:
   build-project:
     name: build teammapper
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          submodules: 'recursive'
+          persist-credentials: false
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: v24.11.1
+      # Installs dependencies and builds the workspace packages.
+      - uses: ./.github/actions/setup-pnpm
 
-      - name: Build Node assets
+      - name: Build the offline site
         env:
           CI: true
-          SITE_URL: ${{ inputs.site-url }}
-        run: |
-          npm install --global pnpm
-          pnpm install
+        run: pnpm --filter teammapper-frontend run build:offline-site
 
 # Please do not touch the following action
       - name: Store deployment content
-        uses: ionos-deploy-now/artifact-action@v1
+        uses: ionos-deploy-now/artifact-action@184a369b679287c06ff3d4392cf57bf0fd32656e # v1
         with:
           api-key: ${{ secrets.IONOS_API_KEY }}
           service-host: api-eu.ionos.space
