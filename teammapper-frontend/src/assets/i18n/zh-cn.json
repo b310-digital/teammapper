@@ -274,6 +274,7 @@
       "DELETE_MAP_ERROR": "无法删除思维导图。",
       "BROWSER_STORAGE_FAILED": "无法将思维导图保存到此浏览器的存储中。",
       "BROWSER_STORAGE_NEWER_FORMAT": "此浏览器中的思维导图由较新版本的 TeamMapper 保存，无法打开。",
+      "BROWSER_STORAGE_UPDATED": "较新版本的 TeamMapper 已更新此浏览器中的思维导图。此标签页不再保存更改。请重新加载页面以继续编辑。",
       "BROWSER_STORAGE_UPDATE_FAILED": "无法将思维导图更新到当前版本的 TeamMapper，思维导图保持不变。"
     },
     "DELETE_MAP_SUCCESS": "思维导图已成功删除！",

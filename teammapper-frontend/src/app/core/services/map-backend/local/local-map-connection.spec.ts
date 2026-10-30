@@ -6,7 +6,8 @@ import {
   DocPersistence,
   mapDatabaseName,
 } from './doc-persistence';
-import { LocalMapConnection } from './local-map-connection';
+import { CLOSE_STORAGE_OUTDATED } from '../map-connection';
+import { FormatWatch, LocalMapConnection } from './local-map-connection';
 
 const loadYIndexeddb = () => import('y-indexeddb');
 
@@ -160,6 +161,105 @@ describe.each(DRIVERS)('LocalMapConnection with %s', (_name, driver) => {
     expect(release).toHaveBeenCalledTimes(1);
   });
 
+  describe('once a later build changed the format of the stored maps', () => {
+    /** A format watch the test reports the newer format through. */
+    function formatWatch() {
+      let notify: () => Promise<void> = () => Promise.resolve();
+      const stop = jest.fn();
+      const watch: FormatWatch = listener => {
+        notify = listener;
+        return stop;
+      };
+      return { watch, outdate: () => notify(), stop };
+    }
+
+    it('lets the later build wait for a close under way', async () => {
+      const id = nextMapId();
+      const format = formatWatch();
+      const tab = await openWatched(id, format.watch);
+      tab.doc.getMap('nodes').set('a', 'pending');
+
+      void tab.connection.destroy();
+      await format.outdate();
+
+      const stored = new Y.Doc();
+      const update = await (await persistence).read(id);
+      if (update) Y.applyUpdate(stored, update);
+      expect(names(stored)).toEqual({ a: 'pending' });
+    });
+
+    async function openWatched(id: string, watch: FormatWatch) {
+      const doc = new Y.Doc();
+      const connection = new LocalMapConnection(
+        id,
+        doc,
+        () => persistence,
+        undefined,
+        watch
+      );
+      await new Promise<void>(resolve => connection.onSynced(resolve));
+      return { doc, connection };
+    }
+
+    it('stores no further edit', async () => {
+      const id = nextMapId();
+      const stored = new Y.Doc();
+      stored.getMap('nodes').set('a', 'stored');
+      await (await persistence).store(id, Y.encodeStateAsUpdate(stored));
+      const format = formatWatch();
+      const tab = await openWatched(id, format.watch);
+
+      format.outdate();
+      tab.doc.getMap('nodes').set('b', 'after');
+      await tab.connection.destroy();
+      const reopened = await open(id);
+
+      expect(names(reopened.doc)).toEqual({ a: 'stored' });
+      await reopened.connection.destroy();
+    });
+
+    it('reports the outdated storage as its close', async () => {
+      const format = formatWatch();
+      const { connection } = await openWatched(nextMapId(), format.watch);
+      const closed = jest.fn();
+      connection.onClosed(closed);
+
+      format.outdate();
+      await Promise.resolve();
+
+      expect(closed).toHaveBeenCalledWith(CLOSE_STORAGE_OUTDATED);
+      await connection.destroy();
+    });
+
+    it('reports the close to a listener added after it', async () => {
+      const connection = new LocalMapConnection(
+        nextMapId(),
+        new Y.Doc(),
+        () => persistence,
+        undefined,
+        listener => {
+          listener();
+          return () => undefined;
+        }
+      );
+      const closed = jest.fn();
+
+      connection.onClosed(closed);
+
+      expect(closed).toHaveBeenCalledWith(CLOSE_STORAGE_OUTDATED);
+      await connection.destroy();
+    });
+
+    it('stops watching the format on destroy', async () => {
+      const format = formatWatch();
+      const { connection } = await openWatched(nextMapId(), format.watch);
+
+      await connection.destroy();
+
+      expect(format.stop).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('opens nothing when destroyed before the library loaded', async () => {
     const connection = connect(nextMapId());
     const synced = jest.fn();
@@ -195,7 +295,12 @@ describe('LocalMapConnection when the page goes away', () => {
   beforeEach(() => {
     flush = jest.fn(() => Promise.resolve());
     fake = {
-      attach: () => Promise.resolve({ close: () => Promise.resolve(), flush }),
+      attach: () =>
+        Promise.resolve({
+          close: () => Promise.resolve(),
+          discard: () => Promise.resolve(),
+          flush,
+        }),
       store: jest.fn(),
       read: jest.fn(),
       delete: jest.fn(),
@@ -231,6 +336,28 @@ describe('LocalMapConnection when the page goes away', () => {
     const connection = await openFake();
 
     setVisibility('visible');
+    await Promise.resolve();
+
+    expect(flush).not.toHaveBeenCalled();
+    await connection.destroy();
+  });
+
+  it('writes nothing on pagehide once a later build changed the stored maps', async () => {
+    let outdate: () => Promise<void> = () => Promise.resolve();
+    const connection = new LocalMapConnection(
+      'map',
+      new Y.Doc(),
+      () => Promise.resolve(fake),
+      undefined,
+      listener => {
+        outdate = listener;
+        return () => undefined;
+      }
+    );
+    await new Promise<void>(resolve => connection.onSynced(resolve));
+    await outdate();
+
+    window.dispatchEvent(new Event('pagehide'));
     await Promise.resolve();
 
     expect(flush).not.toHaveBeenCalled();

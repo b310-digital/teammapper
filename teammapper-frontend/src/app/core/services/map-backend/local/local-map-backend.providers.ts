@@ -12,7 +12,8 @@ import { Y_INDEXEDDB_LOADER, YIndexeddbLoader } from './doc-persistence';
 /**
  * Opens connections that keep the doc where the store keeps it. The store
  * watches the open map until its connection closes, to keep the map's record
- * current.
+ * current, and tells the connection when a later build updated the stored
+ * maps.
  */
 const connectLocally =
   (store: LocalMapStore): MapConnectionFactory =>
@@ -21,7 +22,8 @@ const connectLocally =
       mapId,
       doc,
       () => store.docPersistence(),
-      store.watchMap(mapId, doc)
+      store.watchMap(mapId, doc),
+      listener => store.onOutdated(listener)
     );
 
 /**

@@ -18,6 +18,12 @@ export interface MapConnection {
   destroy(): void;
 }
 
+/**
+ * The close code of a connection in the offline build once a later build
+ * changed the format of the stored maps. The connection stores nothing more.
+ */
+export const CLOSE_STORAGE_OUTDATED = 4100;
+
 /** Opens the connection that keeps `doc` in sync with the map `mapId`. */
 export type MapConnectionFactory = (
   mapId: string,

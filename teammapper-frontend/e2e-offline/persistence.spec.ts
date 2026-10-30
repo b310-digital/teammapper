@@ -120,6 +120,29 @@ test('keeps the edits of two tabs on the same map', async ({ page }) => {
   }
 });
 
+test('stops an open tab once a later build updated the stored maps', async ({
+  page,
+}) => {
+  await createMap(page);
+  await expect(page.locator('#add-tree-button')).toBeEnabled();
+  const laterBuild = await page.context().newPage();
+  await laterBuild.goto(page.url());
+
+  // A later build announces its format number on first access. The channel
+  // name follows CHANNEL_NAME in format-channel.ts, the text below follows
+  // BROWSER_STORAGE_UPDATED in en.json.
+  await laterBuild.evaluate(() => {
+    const channel = new BroadcastChannel('teammapper-offline-format');
+    channel.postMessage({ formatNumber: 2 });
+    channel.close();
+  });
+
+  await expect(
+    page.getByText('This tab saves no more changes', { exact: false })
+  ).toBeVisible();
+  await expect(page.locator('#add-tree-button')).toBeDisabled();
+});
+
 test('requests nothing from a server', async ({ page, baseURL }) => {
   if (!baseURL) throw new Error('The offline suite needs a base URL');
   const traffic = recordTraffic(page);
