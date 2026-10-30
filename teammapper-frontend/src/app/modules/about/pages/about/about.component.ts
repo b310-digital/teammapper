@@ -5,6 +5,7 @@ import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MindmapsOverview } from 'src/app/shared/components/mindmaps-overview/mindmaps-overview.component';
+import { OfflineBadgeComponent } from 'src/app/shared/components/offline-badge/offline-badge.component';
 import { FooterComponent } from '../../components/footer/footer.component';
 import { ABOUT_CARDS, ABOUT_FEATURES, AboutFeature } from './about-content';
 
@@ -43,6 +44,7 @@ const branchPath = (x: number, y: number): string => {
     FaIconComponent,
     TranslatePipe,
     MindmapsOverview,
+    OfflineBadgeComponent,
     FooterComponent,
   ],
 })

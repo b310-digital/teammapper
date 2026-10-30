@@ -1,0 +1,6 @@
+/* Applied to every toHaveScreenshot call (see playwright.config.ts). The web
+   and offline suites share one set of snapshots, so the offline badge must not
+   take space or pixels in them. */
+teammapper-offline-badge {
+  display: none !important;
+}

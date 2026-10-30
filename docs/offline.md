@@ -70,6 +70,14 @@ The offline build has no backend, so these features are off:
 - The deletion date: maps stay until the visitor deletes them
 - Collaboration: only one visitor edits a map
 
+The app shows an "Offline mode" badge in two places:
+
+- On the start page, in the header and under the heading. The badge under the
+  heading states that nobody else sees the maps and changes do not sync with
+  peers.
+- On the map screen, after the client list. The badge's tooltip shows the
+  same statement.
+
 ## Known limit
 
 Two tabs on the same map do not sync. A tab shows the edits of the other tab

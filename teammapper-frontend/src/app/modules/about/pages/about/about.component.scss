@@ -57,6 +57,14 @@ $logo-teal: #19b8ae;
     margin: 0 auto 2rem;
     color: var(--color-start-page-heading);
   }
+
+  // The web version renders no badge, and the empty box takes no space.
+  .offline-notice:not(:empty) {
+    display: flex;
+    width: fit-content;
+    max-width: 40rem;
+    margin: -1rem auto 2rem;
+  }
 }
 
 .map {

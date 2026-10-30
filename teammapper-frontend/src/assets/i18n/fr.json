@@ -309,6 +309,10 @@
     "FONT_MAX_SIZE": "Maximal font size",
     "FONT_INCREMENT": "Font size step"
   },
+  "OFFLINE_MODE": {
+    "LABEL": "Mode hors ligne",
+    "DESCRIPTION": "Vos cartes mentales restent dans ce navigateur. Personne d'autre ne peut les ouvrir ni les modifier, et les modifications ne sont pas synchronisées avec d'autres personnes ou appareils."
+  },
   "CLIENT_LIST": {
     "ANONYMOUS": "Anonyme"
   }

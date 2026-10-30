@@ -309,6 +309,10 @@
     "NOT_SAVED": "Not saved",
     "LINKS": "Links"
   },
+  "OFFLINE_MODE": {
+    "LABEL": "Offline mode",
+    "DESCRIPTION": "Your mind maps stay in this browser. Nobody else can open or edit them, and changes do not sync with peers or devices."
+  },
   "CLIENT_LIST": {
     "ANONYMOUS": "Anonymous"
   }

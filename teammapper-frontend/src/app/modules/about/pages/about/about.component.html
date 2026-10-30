@@ -2,6 +2,8 @@
   <header class="nav container">
     <img src="./assets/icons/teammapper.svg" width="32" alt="" />
     <span class="brand">TeamMapper</span>
+    <!-- Screen readers read the badge under the heading instead. -->
+    <teammapper-offline-badge aria-hidden="true"></teammapper-offline-badge>
     <span class="spacer"></span>
     <a
       class="nav-link"
@@ -16,6 +18,10 @@
     <h1>
       {{ 'PAGES.ABOUT.INTRODUCTION.APPLICATION_DESCRIPTION' | translate }}
     </h1>
+
+    <teammapper-offline-badge
+      class="offline-notice"
+      [withDescription]="true"></teammapper-offline-badge>
 
     <div class="map">
       <svg

@@ -310,6 +310,10 @@
     "FONT_MAX_SIZE": "Dimensione massima del font",
     "FONT_INCREMENT": "Passo dimensione del font"
   },
+  "OFFLINE_MODE": {
+    "LABEL": "Modalità offline",
+    "DESCRIPTION": "Le tue mappe mentali restano in questo browser. Nessun altro può aprirle o modificarle, e le modifiche non vengono sincronizzate con altre persone o dispositivi."
+  },
   "CLIENT_LIST": {
     "ANONYMOUS": "Anonimo"
   }
