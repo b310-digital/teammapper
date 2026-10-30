@@ -286,6 +286,8 @@
   "GENERAL": {
     "BRANCHES": "分支",
     "REPOSITORY": "源代码",
+    "IMPRINT": "法律声明",
+    "PRIVACY": "隐私",
     "CREATE": "创建思维导图",
     "DISMISS": "解除",
     "SAVED_MAPS": "已保存的思维导图",

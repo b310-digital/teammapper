@@ -18,9 +18,15 @@ export class FooterComponent implements OnInit {
   public languages: string[] = SettingsService.LANGUAGES;
 
   public currentYear = new Date().getFullYear().toString();
+  /** The template shows the imprint and privacy links only when set. */
+  public imprintUrl: string | null = null;
+  public privacyUrl: string | null = null;
 
   public ngOnInit() {
     this.settings = this.settingsService.getCachedUserSettings();
+    const urls = this.settingsService.getCachedSystemSettings()?.urls;
+    this.imprintUrl = urls?.imprintUrl || null;
+    this.privacyUrl = urls?.privacyUrl || null;
   }
 
   public async updateLanguage() {

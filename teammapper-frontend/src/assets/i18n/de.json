@@ -290,6 +290,8 @@
     "BRANCHES": "Zweige",
     "CREATE": "Mindmap erstellen",
     "REPOSITORY": "Source Code",
+    "IMPRINT": "Impressum",
+    "PRIVACY": "Datenschutz",
     "DISMISS": "Verwerfen",
     "SAVED_MAPS": "Gespeicherte Mindmaps",
     "MERMAID": "Mermaid (.mmd)",

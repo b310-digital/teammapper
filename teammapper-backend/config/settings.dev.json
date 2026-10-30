@@ -6,7 +6,9 @@
     },
     "urls": {
       "pictogramApiUrl": "https://api.arasaac.org/v1/pictograms",
-      "pictogramStaticUrl": "https://static.arasaac.org/pictograms"
+      "pictogramStaticUrl": "https://static.arasaac.org/pictograms",
+      "imprintUrl": null,
+      "privacyUrl": null
     },
     "featureFlags": {
       "pictograms": true,

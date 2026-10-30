@@ -288,6 +288,8 @@
   "GENERAL": {
     "BRANCHES": "ブランチ",
     "REPOSITORY": "ソースコード",
+    "IMPRINT": "運営者情報",
+    "PRIVACY": "プライバシー",
     "CREATE": "マインドマップを作成",
     "DISMISS": "閉じる",
     "SAVED_MAPS": "保存済みマップ",

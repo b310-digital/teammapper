@@ -286,6 +286,8 @@
   "GENERAL": {
     "BRANCHES": "Ramos",
     "REPOSITORY": "Source Code",
+    "IMPRINT": "Aviso legal",
+    "PRIVACY": "Privacidade",
     "CREATE": "Create mind map",
     "DISMISS": "Dispensar",
     "SAVED_MAPS": "Saved maps",

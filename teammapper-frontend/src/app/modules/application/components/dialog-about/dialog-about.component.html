@@ -19,6 +19,26 @@
       {{ applicationName }}
       <fa-icon [icon]="faGithub" size="lg"></fa-icon>
     </a>
+    @if (imprintUrl) {
+      -
+      <a
+        [href]="imprintUrl"
+        class="link"
+        target="_blank"
+        rel="noopener noreferrer">
+        {{ 'GENERAL.IMPRINT' | translate }}
+      </a>
+    }
+    @if (privacyUrl) {
+      -
+      <a
+        [href]="privacyUrl"
+        class="link"
+        target="_blank"
+        rel="noopener noreferrer">
+        {{ 'GENERAL.PRIVACY' | translate }}
+      </a>
+    }
   </div>
   <section class="about-modal-section shortcuts-section">
     <h3>{{ 'MODALS.INFO.SHORTCUTS_TITLE' | translate }}</h3>
