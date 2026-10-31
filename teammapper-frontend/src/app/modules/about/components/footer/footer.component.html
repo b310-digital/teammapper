@@ -8,6 +8,16 @@
       <a href="https://github.com/b310-digital/teammapper" target="_blank">
         {{ 'GENERAL.REPOSITORY' | translate }}
       </a>
+      @if (imprintUrl) {
+        <a [href]="imprintUrl" target="_blank" rel="noopener noreferrer">
+          {{ 'GENERAL.IMPRINT' | translate }}
+        </a>
+      }
+      @if (privacyUrl) {
+        <a [href]="privacyUrl" target="_blank" rel="noopener noreferrer">
+          {{ 'GENERAL.PRIVACY' | translate }}
+        </a>
+      }
     </div>
     <div class="spacer"></div>
     @if (settings; as userSettings) {

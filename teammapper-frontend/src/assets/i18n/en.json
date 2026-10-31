@@ -288,6 +288,8 @@
   "GENERAL": {
     "BRANCHES": "Branches",
     "REPOSITORY": "Source Code",
+    "IMPRINT": "Imprint",
+    "PRIVACY": "Privacy",
     "CREATE": "Create mind map",
     "DISMISS": "Dismiss",
     "SAVED_MAPS": "Saved maps",

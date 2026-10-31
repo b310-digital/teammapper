@@ -279,14 +279,36 @@ The settings configuration includes the following feature flags:
 -   `ai`: Disables/Enables AI functionality like generating mindmaps with AI. Can be controlled via the `AI_ENABLED` environment variable (default: `false`).
 -   `arrows`: Shows the button and the `alt+a` shortcut that connect two nodes with an arrow (default: disabled). Maps show, sync and export their arrows with the flag off. `FEATURE_ARROWS=true` turns it on; without the variable the JSON config decides.
 
+The `urls` section of the system settings sets the targets of the two legal links, which the footer of the start page and the info dialog show:
+
+-   `imprintUrl`: target of the imprint link (default: `null`)
+-   `privacyUrl`: target of the privacy policy link (default: `null`)
+
+An unset, `null` or empty value hides the link. Set them in `settings.override.json`, or with the `IMPRINT_URL` and `PRIVACY_URL` environment variables listed below:
+
+```json
+{
+  "systemSettings": {
+    "urls": {
+      "imprintUrl": "https://teammapper.localhost/imprint",
+      "privacyUrl": "https://teammapper.localhost/privacy"
+    }
+  }
+}
+```
+
+The offline build has no backend and bakes its settings in at build time: `pnpm run build:offline` reads `IMPRINT_URL` and `PRIVACY_URL` from the environment of the build.
+
 #### Environment variable overrides
 
-The following environment variables override the feature flags from the JSON config:
+The following environment variables override the feature flags and urls from the JSON config:
 
 | Variable | Description | Default |
 | --- | --- | --- |
 | `AI_ENABLED` | Enable AI features (mindmap generation) | `false` |
 | `FEATURE_ARROWS` | Enable creating arrows between nodes; `true` turns the flag on whatever the JSON config says | unset |
+| `IMPRINT_URL` | Target of the imprint link in the footer and the info dialog; wins over the JSON config, and the link stays hidden when both are unset | unset |
+| `PRIVACY_URL` | Target of the privacy policy link in the footer and the info dialog; wins over the JSON config, and the link stays hidden when both are unset | unset |
 | `DELETE_AFTER_DAYS` | Number of days before mindmaps are deleted | `30` |
 | `LOG_LEVEL` | NestJS log verbosity (`error`, `warn`, `log`, `debug`, `verbose`) | `debug` in DEV, `log` otherwise |
 | `PICTOGRAM_API_URL` | Upstream the `/arasaac/api` proxy forwards pictogram searches to | `https://api.arasaac.org/api` |

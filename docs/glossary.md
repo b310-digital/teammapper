@@ -178,8 +178,15 @@ ordinary nodes.
 ### Info dialog
 
 The dialog that the info button or `?` opens over the map. It shows the app
-version, a hint that the map's deletion date moved to the settings, and every
-keyboard shortcut. Map shortcuts do not act while it is open.
+version, a hint that the map's deletion date moved to the settings, the legal
+links, and every keyboard shortcut. Map shortcuts do not act while it is open.
+
+### Legal links
+
+The imprint link and the privacy link, which the info dialog and the footer of
+the start page show. The operator of an instance sets their targets in the
+system settings as `imprintUrl` and `privacyUrl`, or with `IMPRINT_URL` and
+`PRIVACY_URL`. The app shows a legal link only when its target is set.
 
 ### Settings dialog
 

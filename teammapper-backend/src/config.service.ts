@@ -103,6 +103,16 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
+  /** Target of the imprint link; null when `IMPRINT_URL` is unset or blank. */
+  public getImprintUrl(): string | null {
+    return this.getValue('IMPRINT_URL', false)?.trim() || null
+  }
+
+  /** Target of the privacy link; null when `PRIVACY_URL` is unset or blank. */
+  public getPrivacyUrl(): string | null {
+    return this.getValue('PRIVACY_URL', false)?.trim() || null
+  }
+
   /** Upstream the /arasaac/api proxy forwards pictogram searches to. */
   public getPictogramApiUrl(): string {
     return (

@@ -10,7 +10,11 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { of, Observable } from 'rxjs';
 import { FooterComponent } from './footer.component';
-import { MapNodeSettings, UserSettings } from '@teammapper/shared';
+import {
+  MapNodeSettings,
+  SystemSettings,
+  UserSettings,
+} from '@teammapper/shared';
 
 class FakeTranslateLoader implements TranslateLoader {
   getTranslation(): Observable<Record<string, string>> {
@@ -47,9 +51,32 @@ describe('FooterComponent', () => {
     },
   };
 
+  const repositoryUrl = 'https://github.com/b310-digital/teammapper';
+  const legalUrls = {
+    imprintUrl: 'https://teammapper.localhost/imprint',
+    privacyUrl: 'https://teammapper.localhost/privacy',
+  };
+
+  const linkHrefs = (): (string | null)[] =>
+    Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.links a')
+    ).map(link => link.getAttribute('href'));
+
+  /** Renders a fresh footer whose system settings carry the given urls. */
+  const renderWithUrls = (
+    urls: Pick<SystemSettings['urls'], 'imprintUrl' | 'privacyUrl'> | null
+  ): void => {
+    jest
+      .mocked(mockSettingsService.getCachedSystemSettings)
+      ?.mockReturnValue(urls ? ({ urls } as SystemSettings) : null);
+    fixture = TestBed.createComponent(FooterComponent);
+    fixture.detectChanges();
+  };
+
   beforeEach(async () => {
     mockSettingsService = {
       getCachedUserSettings: jest.fn().mockReturnValue(mockSettings),
+      getCachedSystemSettings: jest.fn().mockReturnValue(null),
       updateCachedSettings: jest.fn().mockResolvedValue(undefined),
     };
     await TestBed.configureTestingModule({
@@ -87,6 +114,36 @@ describe('FooterComponent', () => {
       expect(mockSettingsService.getCachedUserSettings).toHaveBeenCalled();
       expect(component.languages).toEqual(SettingsService.LANGUAGES);
       expect(component.currentYear).toBe(new Date().getFullYear().toString());
+    });
+  });
+
+  describe('Legal links', () => {
+    it('shows the imprint and privacy links when the settings set both', () => {
+      renderWithUrls(legalUrls);
+
+      expect(linkHrefs()).toEqual([
+        repositoryUrl,
+        legalUrls.imprintUrl,
+        legalUrls.privacyUrl,
+      ]);
+    });
+
+    it('shows only the privacy link when the imprint url is null', () => {
+      renderWithUrls({ imprintUrl: null, privacyUrl: legalUrls.privacyUrl });
+
+      expect(linkHrefs()).toEqual([repositoryUrl, legalUrls.privacyUrl]);
+    });
+
+    it('hides both links when the urls are empty', () => {
+      renderWithUrls({ imprintUrl: '', privacyUrl: '' });
+
+      expect(linkHrefs()).toEqual([repositoryUrl]);
+    });
+
+    it('hides both links without system settings', () => {
+      renderWithUrls(null);
+
+      expect(linkHrefs()).toEqual([repositoryUrl]);
     });
   });
 

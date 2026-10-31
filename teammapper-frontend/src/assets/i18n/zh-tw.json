@@ -286,6 +286,8 @@
   "GENERAL": {
     "BRANCHES": "分支",
     "REPOSITORY": "Source Code",
+    "IMPRINT": "法律聲明",
+    "PRIVACY": "隱私",
     "CREATE": "Create mind map",
     "DISMISS": "解除",
     "SAVED_MAPS": "Saved maps",

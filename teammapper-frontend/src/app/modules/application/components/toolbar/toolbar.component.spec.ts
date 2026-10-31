@@ -665,7 +665,12 @@ describe('ToolbarComponent', () => {
         .mocked(TestBed.inject(SettingsService).getCachedSystemSettings)
         .mockReturnValue({
           info: { name: 'TeamMapper', version: '0', aiModel: null },
-          urls: { pictogramApiUrl: '', pictogramStaticUrl: '' },
+          urls: {
+            pictogramApiUrl: '',
+            pictogramStaticUrl: '',
+            imprintUrl: null,
+            privacyUrl: null,
+          },
           featureFlags: {
             pictograms: false,
             ai: false,
