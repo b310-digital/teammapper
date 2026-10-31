@@ -11,18 +11,41 @@ function dialogSurface(page: Page): Locator {
   return page.locator('mat-dialog-container .mat-mdc-dialog-surface');
 }
 
-/** Waits for the open animation, which scales and fades the dialog in. */
+/**
+ * Waits for the open animation, which scales the surface and fades the inner
+ * container in. Reads the computed styles instead of the
+ * `mdc-dialog--opening` class. Angular Material adds that class in an
+ * animation frame and removes it on a timer. When the frame comes after the
+ * timer, Material adds the class to the open dialog and never removes it.
+ */
 async function waitForDialogOpen(page: Page) {
   const container = page.locator('mat-dialog-container');
   await expect(container).toHaveClass(/mdc-dialog--open/);
-  await expect(container).not.toHaveClass(/mdc-dialog--opening/);
+  const inner = container.locator('.mat-mdc-dialog-inner-container');
+  await expect
+    .poll(() =>
+      Promise.all([
+        dialogSurface(page).evaluate(
+          element => getComputedStyle(element).transform
+        ),
+        inner.evaluate(element => getComputedStyle(element).opacity),
+      ])
+    )
+    .toEqual(['none', '1']);
 }
 
-/** Opens a settings tab and waits until its content stops sliding in. */
+/**
+ * Opens a settings tab and waits until its content stops sliding in. Finds the
+ * body through the tab's id. Right after the click, the previous body still
+ * has the active class, and its content already has the transform `none`.
+ */
 async function openSettingsTab(page: Page, label: string) {
-  await page.getByRole('tab', { name: label }).click();
+  const tab = page.getByRole('tab', { name: label });
+  await tab.click();
+  const tabId = await tab.getAttribute('id');
+  if (!tabId) throw new Error(`the ${label} tab has no id`);
   const content = page.locator(
-    'mat-tab-body.mat-mdc-tab-body-active .mat-mdc-tab-body-content'
+    `mat-tab-body[aria-labelledby="${tabId}"] .mat-mdc-tab-body-content`
   );
   await expect
     .poll(() =>
