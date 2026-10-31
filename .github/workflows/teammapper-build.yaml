@@ -14,7 +14,7 @@ on:
         type: string
 
 env:
-  DEPLOYMENT_FOLDER: ./teammapper-frontend/dist-offline
+  DEPLOYMENT_FOLDER: ./teammapper-frontend/dist-offline/browser
 
 jobs:
 # Please do not rename this job
@@ -46,7 +46,7 @@ jobs:
         with:
           api-key: ${{ secrets.IONOS_API_KEY }}
           service-host: api-eu.ionos.space
-          project-id: e17ea95e-7368-457e-8f1d-22337ebb43bb
+          project-id: daa18f9f-c075-4470-b882-0acd3bd1d5a3
           branch-id: ${{ inputs.branch-id }}
           version: ${{ github.sha }}
           folder: ${{ env.DEPLOYMENT_FOLDER }}
