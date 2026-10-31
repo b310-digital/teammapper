@@ -1,0 +1,54 @@
+# To better understand this file read this:
+# https://docs.ionos.space/docs/github-actions-customization/
+
+name: "Deploy Now: Execute Build"
+
+on:
+  workflow_call:
+    inputs:
+      site-url:
+        required: true
+        type: string
+      branch-id:
+        required: true
+        type: string
+
+env:
+  DEPLOYMENT_FOLDER: ./teammapper-frontend/dist-offline
+
+jobs:
+# Please do not rename this job
+  build-project:
+    name: build teammapper
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: v24.11.1
+
+      - name: Build Node assets
+        env:
+          CI: true
+          SITE_URL: ${{ inputs.site-url }}
+        run: |
+          npm install --global pnpm
+          pnpm install
+
+# Please do not touch the following action
+      - name: Store deployment content
+        uses: ionos-deploy-now/artifact-action@v1
+        with:
+          api-key: ${{ secrets.IONOS_API_KEY }}
+          service-host: api-eu.ionos.space
+          project-id: e17ea95e-7368-457e-8f1d-22337ebb43bb
+          branch-id: ${{ inputs.branch-id }}
+          version: ${{ github.sha }}
+          folder: ${{ env.DEPLOYMENT_FOLDER }}
+          config-file: .deploy-now/teammapper/config.yaml
+          action: upload
