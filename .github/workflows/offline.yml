@@ -31,13 +31,25 @@ jobs:
         name: offline-site
         path: teammapper-frontend/dist-offline/browser
         retention-days: 7
+    - name: Read the Playwright version and the runner image
+      if: env.RUN_E2E == 'true'
+      id: playwright-version
+      working-directory: teammapper-frontend
+      # The command prints "Version 1.63.0"; the key takes the number alone.
+      # ImageOS (such as ubuntu24) exists in the shell only, not in the env context.
+      run: |
+        version=$(pnpm exec playwright --version)
+        echo "version=${version#Version }" >> "$GITHUB_OUTPUT"
+        echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
     - name: Cache Playwright browsers
       if: env.RUN_E2E == 'true'
       uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
       id: playwright-cache
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-browsers-${{ hashFiles('pnpm-lock.yaml') }}-webkit
+        # The browser build depends on the Playwright version, and its system
+        # libraries on the runner image. A lockfile change alters neither.
+        key: playwright-webkit-${{ steps.playwright-version.outputs.image }}-${{ steps.playwright-version.outputs.version }}
     - name: Install Playwright Browsers
       if: env.RUN_E2E == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
       run: pnpm --filter teammapper-frontend exec playwright install webkit --with-deps
