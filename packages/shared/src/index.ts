@@ -7,3 +7,5 @@ export * from './images';
 export * from './links';
 export * from './display-names/displayNames';
 export * from './map-file/mapFile';
+export * from './map-file/validateMapFile';
+export * from './map-file/mapFileReportText';

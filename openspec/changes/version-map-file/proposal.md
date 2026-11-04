@@ -12,6 +12,7 @@ A JSON export carries no version, so the import guesses the format from the layo
   - Every node id is a UUID.
   - A file with a higher version is rejected with its own message, which asks the user to update TeamMapper.
   - Any other `version` value is rejected.
+- **Validator**: `pnpm --filter @teammapper/shared run validate-map-file <file>` reports every error and warning the import finds in a file, without importing it.
 
 ## Non-goals
 
@@ -26,7 +27,7 @@ A JSON export carries no version, so the import guesses the format from the layo
 
 ## Impact
 
-- **Shared**: `parseMapFile` in `packages/shared`.
+- **Shared**: `parseMapFile`, `validateMapFile` and `formatMapFileReport` in `packages/shared`, plus the `validate-map-file` script.
 - **mmp**: the loader checks nodes against `LoadableNodeSchema` from shared.
 - **Frontend**: the export writes the version, the import calls `parseMapFile`, and the toolbar shows a dedicated toast for a newer release's file.
 - **Glossary**: an entry for **Map file version**.

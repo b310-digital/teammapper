@@ -1,0 +1,180 @@
+import type { MapNode } from '../models';
+import { readFixture } from './fixtures/readFixture';
+import { validateMapFile } from './validateMapFile';
+import type { MapFileReport } from './validateMapFile';
+
+/** Each finding as `<severity> <path>`, in report order. */
+const summary = (report: MapFileReport) =>
+  report.findings.map(f => `${f.severity} ${f.path}`);
+
+const reasons = (report: MapFileReport) => report.findings.map(f => f.reason);
+
+/** Short names for the node ids of the inline maps, which must be UUIDs. */
+const IDS: Record<string, string> = {
+  root: '00000000-0000-4000-8000-000000000001',
+  a: '00000000-0000-4000-8000-00000000000a',
+  b: '00000000-0000-4000-8000-00000000000b',
+  c: '00000000-0000-4000-8000-00000000000c',
+  gone: '00000000-0000-4000-8000-0000000000ff',
+};
+
+function node(id: string, parent: string | null, isRoot = false): MapNode {
+  return {
+    id: IDS[id],
+    parent: parent && IDS[parent],
+    isRoot,
+    k: 1,
+    name: id,
+    coordinates: { x: 0, y: 0 },
+    colors: { name: '#000000', background: '#ffffff', branch: '' },
+    font: { size: 20, style: 'normal', weight: 'normal' },
+    image: { src: '', size: 60 },
+    link: { href: '' },
+    protected: false,
+  };
+}
+
+const validate = (nodes: MapNode[]) =>
+  validateMapFile(JSON.stringify({ version: 2, nodes, arrows: [] }));
+
+describe('validateMapFile with the fixtures', () => {
+  it('reads a version 1 node list and warns about what the import changes', () => {
+    const report = validateMapFile(readFixture('v1-node-list.json'));
+
+    expect(report.version).toBe(1);
+    expect(report.versionDeclared).toBe(false);
+    expect(summary(report)).toEqual([
+      'warning nodes[0].locked',
+      'warning nodes[1].locked',
+      'warning nodes',
+    ]);
+    expect(reasons(report)[2]).toContain('makes nodes[0] the main root');
+  });
+
+  it('reads an export object without a version field as version 2', () => {
+    const report = validateMapFile(readFixture('v2-unversioned.json'));
+
+    expect(report).toEqual({
+      version: 2,
+      versionDeclared: false,
+      findings: [],
+    });
+  });
+
+  it('finds nothing in a version 2 file', () => {
+    const report = validateMapFile(readFixture('v2.json'));
+
+    expect(report).toEqual({ version: 2, versionDeclared: true, findings: [] });
+  });
+
+  it('requires link and isRoot on every version 2 node', () => {
+    const report = validateMapFile(
+      readFixture('invalid-v2-incomplete-node.json')
+    );
+
+    expect(summary(report)).toEqual([
+      'error nodes[0].link',
+      'error nodes[0].isRoot',
+      'error nodes',
+      'warning nodes',
+    ]);
+  });
+
+  it('rejects a version from a newer release', () => {
+    const report = validateMapFile(readFixture('invalid-newer-version.json'));
+
+    expect(report.version).toBeNull();
+    expect(summary(report)).toEqual(['error version']);
+    expect(reasons(report)[0]).toContain('newer release');
+  });
+
+  it('rejects a version that is no integer', () => {
+    const report = validateMapFile(readFixture('invalid-version-string.json'));
+
+    expect(summary(report)).toEqual(['error version']);
+  });
+
+  it('reports each bad node value with its path', () => {
+    const report = validateMapFile(readFixture('invalid-node-values.json'));
+
+    expect(summary(report)).toEqual([
+      'error nodes[0].colors.background',
+      'error nodes[0].link.href',
+      'error nodes[0].id',
+      'error nodes',
+    ]);
+  });
+
+  it('warns about ignored fields, orphaned nodes and dropped arrows', () => {
+    const report = validateMapFile(readFixture('warnings.json'));
+
+    expect(summary(report)).toEqual([
+      'warning title',
+      'warning nodes[0].hidden',
+      'warning nodes[1].parent',
+      'warning nodes[2].parent',
+      'warning arrows[0]',
+      'warning arrows[1]',
+      'warning arrows[2]',
+      'warning arrows[2]',
+    ]);
+    expect(reasons(report)[3]).toContain(
+      'descends from the orphaned node nodes[1]'
+    );
+  });
+});
+
+describe('validateMapFile', () => {
+  it('reports text that is no JSON', () => {
+    expect(summary(validateMapFile('{'))).toEqual(['error file']);
+  });
+
+  it('reports content that holds no node list', () => {
+    expect(summary(validateMapFile('{"title":"x"}'))).toEqual(['error file']);
+  });
+
+  it('reports a repeated id', () => {
+    const nodes = [
+      node('root', null, true),
+      node('a', 'root'),
+      node('a', 'root'),
+    ];
+
+    expect(summary(validate(nodes))).toEqual(['error nodes[2].id']);
+  });
+
+  it('reports a main root that has a parent', () => {
+    const nodes = [node('root', null), node('a', 'root', true)];
+
+    expect(summary(validate(nodes))).toEqual(['error nodes[1].isRoot']);
+  });
+
+  it('reports a map where every node has a parent', () => {
+    const nodes = [node('a', 'b', true), node('b', 'a')];
+
+    expect(summary(validate(nodes))).toContain('error nodes');
+  });
+
+  it('names the cycle members, and a node below the cycle as a descendant', () => {
+    const nodes = [
+      node('root', null, true),
+      node('a', 'b'),
+      node('b', 'c'),
+      node('c', 'b'),
+    ];
+    const found = reasons(validate(nodes));
+
+    expect(found[0]).toContain('descends from the orphaned node nodes[2]');
+    expect(found[1]).toContain('part of a parent cycle');
+    expect(found[2]).toContain('part of a parent cycle');
+  });
+
+  it('keeps the child nodes of a node that fails the schema out of the orphans', () => {
+    const root = { ...node('root', null, true), k: 'one' };
+    const report = validateMapFile(
+      JSON.stringify({ version: 2, nodes: [root, node('a', 'root')] })
+    );
+
+    expect(summary(report)).toEqual(['error nodes[0].k', 'error nodes']);
+  });
+});
