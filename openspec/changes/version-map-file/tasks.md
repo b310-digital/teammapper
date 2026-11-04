@@ -2,6 +2,8 @@
 
 - [x] 1.1 `MAP_FILE_VERSION` and `MapExport.version`
 - [x] 1.2 `parseMapFile` reads a file by its version and throws `MapFileError` with the field at fault
+- [x] 1.3 `validateMapFile` and `formatMapFileReport` report errors and warnings
+- [x] 1.4 The `validate-map-file` script
 
 ## 2. Renderer
 

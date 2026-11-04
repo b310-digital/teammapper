@@ -26,9 +26,10 @@
     "clean": "rm -rf dist",
     "tsc": "tsc -p tsconfig.typecheck.cjs.json && tsc -p tsconfig.typecheck.esm.json",
     "test": "jest",
-    "lint": "eslint \"src/**/*.ts\"",
-    "format": "prettier --write src",
-    "format:check": "prettier --check src"
+    "validate-map-file": "node scripts/validate-map-file.mjs",
+    "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.mjs\"",
+    "format": "prettier --write src scripts",
+    "format:check": "prettier --check src scripts"
   },
   "dependencies": {
     "valibot": "^1.5.0"
