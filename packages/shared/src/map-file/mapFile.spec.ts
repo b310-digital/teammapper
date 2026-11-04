@@ -30,6 +30,23 @@ describe('parseMapFile', () => {
     expect(file.arrows).toEqual([]);
   });
 
+  it('reads a version 1 node list whose nodes lack coordinates, as the Mermaid import writes it', () => {
+    const [root, child] = JSON.parse(readFixture('v1-node-list.json'));
+    delete root.coordinates;
+    delete child.coordinates;
+
+    const file = parseMapFile(JSON.stringify([root, child]));
+
+    expect(file.nodes).toHaveLength(2);
+  });
+
+  it('rejects a version 2 node without coordinates', () => {
+    const file = JSON.parse(readFixture('v2.json'));
+    delete file.nodes[1].coordinates;
+
+    expect(() => parseMapFile(JSON.stringify(file))).toThrow(MapFileError);
+  });
+
   it('drops the node fields no version knows', () => {
     const [root] = parseMapFile(readFixture('v1-node-list.json')).nodes;
 

@@ -298,8 +298,8 @@ Write the map out. Six formats: JSON, Mermaid, SVG, PNG, JPEG and PDF.
 
 The whole number that names the layout of a JSON export, so an import knows
 which rules to check it against. Version 1 is a plain list of nodes that older
-releases wrote; its nodes may lack a link and the main root mark, and it holds
-no arrows. Version 2 holds the version number, the nodes and the arrows, and
+releases and the Mermaid import write; its nodes may lack a link, the main
+root mark and a position, and it holds no arrows. Version 2 holds the version number, the nodes and the arrows, and
 every node carries all its attributes. An export with nodes and arrows but no
 version number reads as version 2, because releases before the number wrote
 that layout. An import rejects a version it does not know, such as one from a

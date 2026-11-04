@@ -2,7 +2,12 @@ import * as v from 'valibot';
 import { canConnect } from '../algorithms/arrows';
 import type { TreeNodeLike } from '../algorithms/tree';
 import { MAP_FILE_VERSION } from '../constants';
-import { ArrowSchema, LinkSchema, NodeSchema } from '../schemas';
+import {
+  ArrowSchema,
+  CoordinatesSchema,
+  LinkSchema,
+  NodeSchema,
+} from '../schemas';
 import type { ArrowRefusal, MapArrow, MapExport, MapSnapshot } from '../models';
 import { isRecord } from './isRecord';
 
@@ -11,10 +16,13 @@ export type MapFileVersion = 1 | 2;
 
 /**
  * A node of a version 1 file, the bare node list of older releases. Those
- * releases wrote no link and no isRoot attribute.
+ * releases wrote no link and no isRoot attribute. The Mermaid import writes
+ * this layout too, without coordinates, and the map service lays out a node
+ * that has none.
  */
 export const MapFileV1NodeSchema = v.object({
   ...NodeSchema.entries,
+  coordinates: v.optional(CoordinatesSchema),
   link: v.optional(LinkSchema),
   isRoot: v.optional(v.boolean()),
 });

@@ -6,7 +6,7 @@ A JSON export carries no version, so the import guesses the format from the layo
 
 - **Export**: a JSON export writes `version: 2` next to `nodes` and `arrows`.
 - **Import**:
-  - A bare node list reads as version 1, whose nodes may lack `link` and `isRoot`.
+  - A bare node list reads as version 1, whose nodes may lack `link`, `isRoot` and `coordinates`. The Mermaid import writes this layout.
   - An object with a `nodes` list reads as version 2, with or without a `version` field.
   - Every node of a version 2 file needs `link` and `isRoot`.
   - Every node id is a UUID.
