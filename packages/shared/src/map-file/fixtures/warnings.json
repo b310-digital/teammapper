@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "title": "The import ignores this field",
+  "nodes": [
+    {
+      "id": "a4f29fa1-b123-4e45-9067-08b9c0d1e2f3",
+      "parent": null,
+      "k": 1,
+      "name": "Root",
+      "coordinates": { "x": 0, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": { "name": "#787878", "background": "#f0f6f5", "branch": "" },
+      "font": { "size": 20, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": false,
+      "isRoot": true,
+      "hidden": false
+    },
+    {
+      "id": "b503a0b2-c234-4f56-a178-19c0d1e2f3a4",
+      "parent": "c614b1c3-d345-4067-b289-2ad1e2f3a4b5",
+      "k": 1,
+      "name": "Orphaned, its parent is missing",
+      "coordinates": { "x": 600, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": { "name": "#787878", "background": "#f0f6f5", "branch": "" },
+      "font": { "size": 16, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": false,
+      "isRoot": false
+    },
+    {
+      "id": "d725c2d4-e456-4178-839a-3be2f3a4b5c6",
+      "parent": "b503a0b2-c234-4f56-a178-19c0d1e2f3a4",
+      "k": 1,
+      "name": "Below the orphaned node",
+      "coordinates": { "x": 800, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": { "name": "#787878", "background": "#f0f6f5", "branch": "" },
+      "font": { "size": 16, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": false,
+      "isRoot": false
+    }
+  ],
+  "arrows": [
+    {
+      "source": "a4f29fa1-b123-4e45-9067-08b9c0d1e2f3",
+      "target": "a4f29fa1-b123-4e45-9067-08b9c0d1e2f3"
+    },
+    {
+      "source": "a4f29fa1-b123-4e45-9067-08b9c0d1e2f3",
+      "target": "e836d3e5-f567-4289-94ab-4cf3a4b5c6d7"
+    },
+    "no arrow"
+  ]
+}

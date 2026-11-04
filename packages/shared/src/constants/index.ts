@@ -33,6 +33,9 @@ export const MAX_FONT_STYLE_LENGTH = 20;
 export const MAX_FONT_WEIGHT_LENGTH = 20;
 export const MAX_MERMAID_DESCRIPTION_LENGTH = 5000;
 
+/** The map file version a JSON export writes. */
+export const MAP_FILE_VERSION = 2;
+
 /** Levels of nodes below the main root that AI generate asks for. */
 export const AI_LEVELS = { min: 1, max: 3, default: 2 } as const;
 /** Child nodes per node that AI generate asks for. */

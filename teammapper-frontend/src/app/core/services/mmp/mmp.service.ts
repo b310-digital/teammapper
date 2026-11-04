@@ -29,6 +29,8 @@ import {
   findRootNodes,
   ImageReference,
   isImageReference,
+  MAP_FILE_VERSION,
+  parseMapFile,
 } from '@teammapper/shared';
 import { COLORS, EMPTY_IMAGE_DATA } from './mmp-utils';
 import {
@@ -38,9 +40,7 @@ import {
   resizeImage,
 } from './node-images';
 import { ReportedMapStoreError } from '../map-backend/map-store';
-import { validate as uuidValidate } from 'uuid';
 import { ExportService } from '../export/export.service';
-import { parseMapFile } from './map-import';
 
 /**
  * `catch` binds `unknown`. mmp throws the conditions below as `Error` instances
@@ -48,14 +48,6 @@ import { parseMapFile } from './map-import';
  */
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
-
-/**
- * Whether the parsed JSON is an array whose elements are all objects. The
- * check is structural: `MmpService.new` validates the node ids itself.
- */
-const isNodeArray = (data: unknown): data is MapSnapshot =>
-  Array.isArray(data) &&
-  data.every(node => typeof node === 'object' && node !== null);
 
 /**
  * Node names use the font `styles.scss` ships, so a name has the same width
@@ -258,16 +250,6 @@ export class MmpService implements OnDestroy {
    */
   public async new(map: MapSnapshot, arrows: unknown[] = []) {
     const instance = this.map;
-    const hasInvalidUUID = map.some(node => !uuidValidate(node.id));
-
-    if (hasInvalidUUID) {
-      const importErrorMessage = await this.utilsService.translate(
-        'TOASTS.ERRORS.IMPORT_ERROR'
-      );
-      this.toastrService.error(importErrorMessage);
-      return;
-    }
-
     instance.new(instance.applyCoordinatesToMapSnapshot(map), arrows);
   }
 
@@ -381,6 +363,7 @@ export class MmpService implements OnDestroy {
    */
   private async exportWithInlineImages(): Promise<MapExport> {
     const content: MapExport = {
+      version: MAP_FILE_VERSION,
       nodes: this.exportAsJSON(),
       arrows: this.map.getArrows(),
     };
@@ -788,14 +771,11 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Import an existing map from the local file system. Rejects when the JSON
-   * does not parse or is not an array of nodes, and leaves the map as it is.
+   * Import an existing map from the local file system. Rejects when
+   * `parseMapFile` rejects the file, and leaves the map as it is.
    */
   public async importMap(json: string): Promise<void> {
     const { nodes, arrows } = parseMapFile(json);
-    if (!isNodeArray(nodes)) {
-      throw new Error('The JSON is not an array of nodes');
-    }
     await this.new(nodes, arrows);
   }
 

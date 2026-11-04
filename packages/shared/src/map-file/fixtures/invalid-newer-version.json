@@ -1,0 +1,19 @@
+{
+  "version": 3,
+  "nodes": [
+    {
+      "id": "82d07d8f-9e01-4c23-9e45-e6f7a8b9c0d1",
+      "parent": null,
+      "k": 1,
+      "name": "Newer version root",
+      "coordinates": { "x": 0, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": { "name": "#787878", "background": "#f0f6f5", "branch": "" },
+      "font": { "size": 20, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": false,
+      "isRoot": true
+    }
+  ],
+  "arrows": []
+}

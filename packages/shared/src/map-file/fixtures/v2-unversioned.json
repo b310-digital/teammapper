@@ -1,0 +1,57 @@
+{
+  "nodes": [
+    {
+      "id": "1b6f0c1e-2d3a-4b5c-8d6e-7f8091a2b3c4",
+      "parent": null,
+      "k": 1,
+      "name": "Unversioned root",
+      "coordinates": { "x": 0, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": { "name": "#787878", "background": "#f0f6f5", "branch": "" },
+      "font": { "size": 20, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": false,
+      "isRoot": true
+    },
+    {
+      "id": "2c7a1d2f-3e4b-4c6d-9e7f-8091a2b3c4d5",
+      "parent": "1b6f0c1e-2d3a-4b5c-8d6e-7f8091a2b3c4",
+      "k": 0,
+      "name": "Unversioned child A",
+      "coordinates": { "x": 200, "y": -60 },
+      "image": { "src": "", "size": 60 },
+      "colors": {
+        "name": "#787878",
+        "background": "#f0f6f5",
+        "branch": "#009688"
+      },
+      "font": { "size": 16, "style": "normal", "weight": "normal" },
+      "link": { "href": "https://example.com" },
+      "protected": false,
+      "isRoot": false
+    },
+    {
+      "id": "3d8b2e3a-4f5c-4d7e-8f80-91a2b3c4d5e6",
+      "parent": "1b6f0c1e-2d3a-4b5c-8d6e-7f8091a2b3c4",
+      "k": -3,
+      "name": "Unversioned child B",
+      "coordinates": { "x": 200, "y": 60 },
+      "image": { "src": "", "size": 60 },
+      "colors": {
+        "name": "#787878",
+        "background": "#f0f6f5",
+        "branch": "#3f51b5"
+      },
+      "font": { "size": 16, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": true,
+      "isRoot": false
+    }
+  ],
+  "arrows": [
+    {
+      "source": "2c7a1d2f-3e4b-4c6d-9e7f-8091a2b3c4d5",
+      "target": "3d8b2e3a-4f5c-4d7e-8f80-91a2b3c4d5e6"
+    }
+  ]
+}

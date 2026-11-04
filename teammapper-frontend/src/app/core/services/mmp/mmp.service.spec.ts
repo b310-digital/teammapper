@@ -10,9 +10,29 @@ import { UtilsService } from '../utils/utils.service';
 import * as mmp from '@teammapper/mmp';
 import { Subject } from 'rxjs';
 import type { MapData, MmpInstance, OptionParameters } from '@teammapper/mmp';
-import type { MapNodeSettings, UserMapOptions } from '@teammapper/shared';
+import { MapFileError, parseMapFile } from '@teammapper/shared';
+import type {
+  MapFile,
+  MapNodeSettings,
+  UserMapOptions,
+} from '@teammapper/shared';
 import { ImageUploadError } from './node-images';
 import { ReportedMapStoreError } from '../map-backend/map-store';
+
+// The shared package's specs check every map file rule; these specs check
+// that the service passes on what parseMapFile reads.
+jest.mock('@teammapper/shared', () => {
+  const actual = jest.requireActual('@teammapper/shared');
+  return { ...actual, parseMapFile: jest.fn(actual.parseMapFile) };
+});
+const parseMapFileMock = jest.mocked(parseMapFile);
+
+/** A map file as parseMapFile returns it. */
+const MAP_FILE: MapFile = {
+  version: 2,
+  nodes: [{ id: '11111111-1111-4111-8111-111111111111', parent: null, k: 1 }],
+  arrows: [{ source: 'a', target: 'b' }],
+};
 
 jest.mock('dompurify', () => {
   return {
@@ -530,52 +550,35 @@ describe('MmpService', () => {
 
   describe('importMap', () => {
     let newSpy: jest.SpyInstance;
-    const nodes = [{ id: 'a', parent: null, isRoot: true, name: 'Root' }];
 
     beforeEach(async () => {
       await createMap();
       newSpy = jest.spyOn(service, 'new').mockResolvedValue(undefined);
     });
 
-    it('replaces the map with the nodes of a valid JSON array and no arrows', async () => {
-      await service.importMap(JSON.stringify(nodes));
+    it('replaces the map with the nodes and arrows parseMapFile reads', async () => {
+      parseMapFileMock.mockReturnValueOnce(MAP_FILE);
 
+      await service.importMap('file text');
+
+      expect(parseMapFileMock).toHaveBeenCalledWith('file text');
       expect(newSpy).toHaveBeenCalledTimes(1);
-      expect(newSpy).toHaveBeenCalledWith(nodes, []);
+      expect(newSpy).toHaveBeenCalledWith(MAP_FILE.nodes, MAP_FILE.arrows);
+    });
+
+    it('rejects and keeps the map when parseMapFile rejects the file', async () => {
+      parseMapFileMock.mockImplementationOnce(() => {
+        throw new MapFileError('version', 'newer release', true);
+      });
+
+      await expect(service.importMap('file text')).rejects.toThrow(
+        MapFileError
+      );
+      expect(newSpy).not.toHaveBeenCalled();
     });
 
     it('rejects JSON that does not parse', async () => {
       await expect(service.importMap('{not json')).rejects.toThrow();
-    });
-
-    it('does not replace the map with JSON that does not parse', async () => {
-      await service.importMap('{not json').catch(() => undefined);
-
-      expect(newSpy).not.toHaveBeenCalled();
-    });
-
-    it.each([
-      ['an object', '{"id":"a"}'],
-      ['a string', '"text"'],
-      ['a number', '1'],
-      ['null', 'null'],
-    ])('rejects JSON that is %s and not an array', async (_, json) => {
-      await expect(service.importMap(json)).rejects.toThrow();
-    });
-
-    it.each([
-      ['null', '[null]'],
-      ['a number', '[1]'],
-      ['a string', '["a"]'],
-    ])('rejects an array with %s as a node', async (_, json) => {
-      await expect(service.importMap(json)).rejects.toThrow();
-    });
-
-    it('does not replace the map when one element is not a node', async () => {
-      const json = JSON.stringify([...nodes, null]);
-
-      await service.importMap(json).catch(() => undefined);
-
       expect(newSpy).not.toHaveBeenCalled();
     });
   });
@@ -925,6 +928,7 @@ describe('MmpService', () => {
           const json = downloadedJson();
           expect(json).not.toContain('image:');
           expect(JSON.parse(json)).toEqual({
+            version: 2,
             nodes: [nodeWith('a', DATA_URL), nodeWith('b', DATA_URL)],
             arrows: [],
           });
@@ -941,6 +945,7 @@ describe('MmpService', () => {
           expect(result.success).toBe(true);
           expect(downloadedJson()).not.toContain('image:');
           expect(JSON.parse(downloadedJson())).toEqual({
+            version: 2,
             nodes: [nodeWith('a', '')],
             arrows: [],
           });
@@ -1128,23 +1133,12 @@ describe('MmpService', () => {
       expect(mockMap.new).toHaveBeenCalledWith(imported, []);
     });
 
-    it('imports the nodes and arrows of an export file', async () => {
-      const a = '11111111-1111-4111-8111-111111111111';
-      const b = '22222222-2222-4222-8222-222222222222';
-      const c = '33333333-3333-4333-8333-333333333333';
-      const list = [
-        { id: a, parent: null, isRoot: true },
-        { id: b, parent: a },
-        { id: c, parent: a },
-      ];
+    it('imports the nodes and arrows of a map file', async () => {
+      parseMapFileMock.mockReturnValueOnce(MAP_FILE);
 
-      await service.importMap(
-        JSON.stringify({ nodes: list, arrows: [{ source: b, target: c }] })
-      );
+      await service.importMap('file text');
 
-      expect(mockMap.new).toHaveBeenCalledWith(list, [
-        { source: b, target: c },
-      ]);
+      expect(mockMap.new).toHaveBeenCalledWith(MAP_FILE.nodes, MAP_FILE.arrows);
     });
 
     it('reads the arrows of the map', () => {

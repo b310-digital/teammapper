@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "nodes": [
+    {
+      "id": "71cf6c7e-8d90-4b12-8d34-d5e6f7a8b9c0",
+      "parent": null,
+      "k": 1,
+      "name": "Root without link and isRoot",
+      "coordinates": { "x": 0, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": { "name": "#787878", "background": "#f0f6f5", "branch": "" },
+      "font": { "size": 20, "style": "normal", "weight": "normal" }
+    }
+  ],
+  "arrows": []
+}

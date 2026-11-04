@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "nodes": [
+    {
+      "id": "root",
+      "parent": null,
+      "k": 1,
+      "name": "Root with a bad id, color and link",
+      "coordinates": { "x": 0, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": { "name": "#787878", "background": "red", "branch": "" },
+      "font": { "size": 20, "style": "normal", "weight": "normal" },
+      "link": { "href": "ftp://example.com" },
+      "protected": false,
+      "isRoot": true
+    }
+  ],
+  "arrows": []
+}
