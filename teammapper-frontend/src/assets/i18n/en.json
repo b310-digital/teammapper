@@ -270,6 +270,7 @@
       "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!",
       "IMPORT_ERROR": "Could not import mindmap",
+      "IMPORT_NEWER_VERSION": "A newer TeamMapper version created this mind map file. Update TeamMapper to import it.",
       "AI_MERMAID_ERROR": "Mermaid could not be generated",
       "IMAGE_STORAGE_FULL": "The image storage of this mind map is full. A removed image frees its space within 7 days of its upload.",
       "IMAGE_UPLOAD_ERROR": "The image could not be uploaded.",

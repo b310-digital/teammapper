@@ -2,63 +2,15 @@ import MmpMap from '../map.js';
 import * as v from 'valibot';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  ArrowSchema,
-  canConnect,
-  LinkSchema,
-  NodeSchema,
+  acceptedArrows,
+  LoadableNodeSchema,
+  withMainRoot,
 } from '@teammapper/shared';
 import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { DefaultNodeValues } from '../options.js';
 import { randomK } from '../data/node-record.js';
-import type {
-  ExportNodeProperties,
-  MapArrow,
-  MapSnapshot,
-} from '@teammapper/shared';
-
-/**
- * A node of a map the loader accepts. Older maps carry no link and no isRoot
- * attribute.
- */
-const LoadedNodeSchema = v.object({
-  ...NodeSchema.entries,
-  link: v.optional(LinkSchema),
-  isRoot: v.optional(v.boolean()),
-});
-
-/**
- * The nodes with a main root. A map that names none makes the first node
- * without a parent, in the order of the exported map, its main root, so the
- * load centers and selects it and peers see a replacement. Changes the nodes
- * in place.
- */
-function withMainRoot(nodes: ExportNodeProperties[]): ExportNodeProperties[] {
-  if (nodes.some(node => node.isRoot)) return nodes;
-
-  const root = nodes.find(node => !node.parent);
-  if (root) root.isRoot = true;
-  return nodes;
-}
-
-/**
- * The arrows the endpoint rules accept, in order: each one is checked against
- * the nodes and the arrows accepted before it, so a repeated arrow drops.
- */
-function acceptedArrows(
-  nodes: ExportNodeProperties[],
-  arrows: unknown[]
-): MapArrow[] {
-  const accepted: MapArrow[] = [];
-  for (const arrow of arrows) {
-    if (!v.is(ArrowSchema, arrow)) continue;
-    const { source, target } = arrow;
-    if (canConnect(nodes, accepted, source, target) === null) {
-      accepted.push({ source, target });
-    }
-  }
-  return accepted;
-}
+import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
 
 /**
  * Replace every node of the map with the nodes of an exported map, or with a
@@ -154,13 +106,15 @@ export default class MapLoader {
   };
 
   /**
-   * Return true when `nodes` is a list of valid nodes.
+   * Return true when `nodes` is a list of nodes the loader accepts, from a
+   * map file of any version.
    * @param {MapSnapshot} nodes
    * @return {boolean} result
    */
   private isValidMap(nodes: MapSnapshot): boolean {
     return (
-      Array.isArray(nodes) && nodes.every(node => v.is(LoadedNodeSchema, node))
+      Array.isArray(nodes) &&
+      nodes.every(node => v.is(LoadableNodeSchema, node))
     );
   }
 }

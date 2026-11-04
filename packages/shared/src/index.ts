@@ -6,3 +6,4 @@ export * from './algorithms';
 export * from './images';
 export * from './links';
 export * from './display-names/displayNames';
+export * from './map-file/mapFile';

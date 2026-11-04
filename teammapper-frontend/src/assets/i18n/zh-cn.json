@@ -268,6 +268,7 @@
       "EXPORT_IMAGE_ERROR": "导出图像时发生错误。思维导图可能过大。",
       "MAP_COULD_NOT_BE_FOUND": "找不到思维导图！",
       "IMPORT_ERROR": "无法导入思维导图！",
+      "IMPORT_NEWER_VERSION": "此思维导图文件由更新版本的 TeamMapper 创建。请更新 TeamMapper 后再导入。",
       "AI_MERMAID_ERROR": "无法生成Mermaid",
       "IMAGE_STORAGE_FULL": "此思维导图的图片存储空间已满。移除的图片会在上传后 7 天内释放其空间。",
       "IMAGE_UPLOAD_ERROR": "无法上传图片。",

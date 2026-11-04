@@ -268,6 +268,7 @@
       "EXPORT_IMAGE_ERROR": "Si è verificato un errore durante l'esportazione dell'immagine. La mappa mentale potrebbe essere troppo grande.",
       "MAP_COULD_NOT_BE_FOUND": "Impossibile trovare la mappa mentale!",
       "IMPORT_ERROR": "Non è stato possibile importare la mappa mentale!",
+      "IMPORT_NEWER_VERSION": "Una versione più recente di TeamMapper ha creato questo file di mappa mentale. Aggiorna TeamMapper per importarlo.",
       "AI_MERMAID_ERROR": "Mermaid non può essere generato",
       "IMAGE_STORAGE_FULL": "Lo spazio per le immagini di questa mappa mentale è pieno. Un'immagine rimossa libera il suo spazio entro 7 giorni dal caricamento.",
       "IMAGE_UPLOAD_ERROR": "Non è stato possibile caricare l'immagine.",

@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { ExportNodeProperties } from '@teammapper/shared';
+import { ExportNodeProperties, MapFileError } from '@teammapper/shared';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { DialogService } from 'src/app/core/services/dialog/dialog.service';
 import {
@@ -210,12 +210,19 @@ export class ToolbarComponent {
   private async importJSON(json: string): Promise<void> {
     try {
       await this.mmpService.importMap(json);
-    } catch {
+    } catch (error) {
       const message = await this.utilsService.translate(
-        'TOASTS.ERRORS.IMPORT_ERROR'
+        this.importErrorKey(error)
       );
       this.toastrService.error(message);
     }
+  }
+
+  /** The toast for a failed import: a newer release's file gets its own. */
+  private importErrorKey(error: unknown): string {
+    return error instanceof MapFileError && error.fromNewerRelease
+      ? 'TOASTS.ERRORS.IMPORT_NEWER_VERSION'
+      : 'TOASTS.ERRORS.IMPORT_ERROR';
   }
 
   private isValidLink(input: string): boolean {

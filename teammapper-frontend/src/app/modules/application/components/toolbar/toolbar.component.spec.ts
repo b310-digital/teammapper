@@ -13,7 +13,7 @@ import { ToolbarComponent } from './toolbar.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
-import { ExportNodeProperties } from '@teammapper/shared';
+import { ExportNodeProperties, MapFileError } from '@teammapper/shared';
 import { of, Observable, BehaviorSubject, Subject } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -81,7 +81,7 @@ async function setupTestBed(): Promise<TestContext> {
 
   const toastrService = { error: jest.fn() };
   const utilsService = {
-    translate: jest.fn().mockResolvedValue('import failed'),
+    translate: jest.fn((key: string) => Promise.resolve(key)),
   };
 
   await TestBed.configureTestingModule({
@@ -375,7 +375,33 @@ describe('ToolbarComponent', () => {
 
       await readJsonFile('{not json');
 
-      expect(ctx.toastrService.error).toHaveBeenCalledWith('import failed');
+      expect(ctx.toastrService.error).toHaveBeenCalledWith(
+        'TOASTS.ERRORS.IMPORT_ERROR'
+      );
+    });
+
+    it('shows the import error toast for a file the import rejects', async () => {
+      ctx.mmpService.importMap.mockRejectedValue(
+        new MapFileError('nodes', 'A node fails the version 2 schema')
+      );
+
+      await readJsonFile('{"nodes": [{}]}');
+
+      expect(ctx.toastrService.error).toHaveBeenCalledWith(
+        'TOASTS.ERRORS.IMPORT_ERROR'
+      );
+    });
+
+    it('tells the user when a newer release wrote the file', async () => {
+      ctx.mmpService.importMap.mockRejectedValue(
+        new MapFileError('version', 'newer release', true)
+      );
+
+      await readJsonFile('{"version": 3, "nodes": []}');
+
+      expect(ctx.toastrService.error).toHaveBeenCalledWith(
+        'TOASTS.ERRORS.IMPORT_NEWER_VERSION'
+      );
     });
 
     it('shows no error toast when importMap resolves', async () => {

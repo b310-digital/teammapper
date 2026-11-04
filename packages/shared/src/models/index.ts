@@ -1,4 +1,4 @@
-import type { BranchStyle } from '../constants';
+import type { BranchStyle, MAP_FILE_VERSION } from '../constants';
 
 /**
  * Every field of T present and non-null. `Required<T>` only drops the `?`;
@@ -75,8 +75,13 @@ export interface MapArrow {
   target: string;
 }
 
-/** The content of a JSON export: the node list and every arrow of the map. */
+/**
+ * The content of a JSON export: the map file version, the node list and
+ * every arrow of the map.
+ */
 export interface MapExport {
+  /** The map file version a new export writes. */
+  version: typeof MAP_FILE_VERSION;
   nodes: MapSnapshot;
   arrows: MapArrow[];
 }

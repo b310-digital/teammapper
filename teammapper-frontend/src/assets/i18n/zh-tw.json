@@ -268,6 +268,7 @@
       "EXPORT_IMAGE_ERROR": "An error has occurred during image export. The mind map may be too large.",
       "MAP_COULD_NOT_BE_FOUND": "Mindmap could not be found!",
       "IMPORT_ERROR": "Mindmap could not be imported!",
+      "IMPORT_NEWER_VERSION": "此心智圖檔案由較新版本的 TeamMapper 建立。請更新 TeamMapper 後再匯入。",
       "AI_MERMAID_ERROR": "無法生成Mermaid",
       "IMAGE_STORAGE_FULL": "此心智圖的圖片儲存空間已滿。移除的圖片會在上傳後 7 天內釋放其空間。",
       "IMAGE_UPLOAD_ERROR": "無法上傳圖片。",

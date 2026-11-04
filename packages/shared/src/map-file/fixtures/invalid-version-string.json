@@ -1,0 +1,19 @@
+{
+  "version": "2",
+  "nodes": [
+    {
+      "id": "93e18e90-a012-4d34-8f56-f7a8b9c0d1e2",
+      "parent": null,
+      "k": 1,
+      "name": "Text version root",
+      "coordinates": { "x": 0, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": { "name": "#787878", "background": "#f0f6f5", "branch": "" },
+      "font": { "size": 20, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": false,
+      "isRoot": true
+    }
+  ],
+  "arrows": []
+}
