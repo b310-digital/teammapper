@@ -1,12 +1,12 @@
 import sanitizeHtml from 'sanitize-html'
 import {
+  HEX_COLOR_REGEX,
   isImageDataUrl,
   isImageReference,
   isSafeLinkHref,
 } from '@teammapper/shared'
 import { MmpNode } from '../entities/mmpNode.entity'
 
-const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/
 const ALLOWED_FONT_STYLES = ['normal', 'italic']
 const ALLOWED_FONT_WEIGHTS = ['normal', 'bold']
 
@@ -26,7 +26,7 @@ const sanitizeImageSrc = (src: string | undefined | null): string => {
 const sanitizeLinkHref = (href: string | undefined | null): string =>
   isSafeLinkHref(href) ? href : ''
 
-/** Validate a hex color value (#rrggbb or #rrggbbaa). Returns empty string for invalid values. */
+/** Validate a hex color (#rgb, #rrggbb or #rrggbbaa). Returns empty string for invalid values. */
 const sanitizeColor = (color: string | undefined | null): string => {
   if (!color) return ''
   return HEX_COLOR_REGEX.test(color.trim()) ? color.trim() : ''

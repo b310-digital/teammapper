@@ -10,7 +10,11 @@ import Log from '../../utils/log.js';
 import Utils from '../../utils/utils.js';
 import { DefaultNodeValues } from '../options.js';
 import { randomK } from '../data/node-record.js';
-import type { ExportNodeProperties, MapSnapshot } from '@teammapper/shared';
+import type {
+  ExportNodeProperties,
+  MapNodeColors,
+  MapSnapshot,
+} from '@teammapper/shared';
 
 /**
  * Replace every node of the map with the nodes of an exported map, or with a
@@ -97,13 +101,29 @@ export default class MapLoader {
       name: merged.name,
       coordinates: merged.coordinates,
       image: merged.image,
-      colors: merged.colors,
+      colors: this.completedColors(node),
       font: merged.font,
       link: merged.link,
       protected: merged.protected ?? false,
       isRoot: merged.isRoot,
     };
   };
+
+  /**
+   * The node's colors, with the configured default for each color the node
+   * lacks. The import drops a color that is no hex color, such as an rgb()
+   * color older releases wrote. A node without a parent takes the root node
+   * defaults.
+   * @param {ExportNodeProperties} node
+   */
+  private completedColors(node: ExportNodeProperties): MapNodeColors {
+    const { defaultNode, rootNode } = this.map.options;
+    const defaults = node.parent ? defaultNode.colors : rootNode.colors;
+    const present = Object.entries(node.colors ?? {}).filter(
+      ([, color]) => color !== undefined
+    );
+    return { ...defaults, ...Object.fromEntries(present) };
+  }
 
   /**
    * Return true when `nodes` is a list of nodes the loader accepts, from a

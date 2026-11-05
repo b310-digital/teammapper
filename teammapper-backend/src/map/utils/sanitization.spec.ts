@@ -129,12 +129,23 @@ describe('sanitizeColor', () => {
     expect(sanitizeColor('#ff0000cc')).toBe('#ff0000cc')
   })
 
-  it('should reject 3-digit hex color', () => {
-    expect(sanitizeColor('#f00')).toBe('')
+  it('should accept 3-digit hex color, as the client does', () => {
+    expect(sanitizeColor('#f00')).toBe('#f00')
   })
+
+  it.each(['#ff00', '#ff000', '#ff00000'])(
+    'should reject hex color %s of an invalid length',
+    (color) => {
+      expect(sanitizeColor(color)).toBe('')
+    }
+  )
 
   it('should reject rgb color', () => {
     expect(sanitizeColor('rgb(255, 0, 0)')).toBe('')
+  })
+
+  it('should reject rgba color', () => {
+    expect(sanitizeColor('rgba(139,195,74,0.44)')).toBe('')
   })
 
   it('should reject named color', () => {

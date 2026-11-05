@@ -13,9 +13,16 @@ import {
 } from '../constants';
 import type { NodeProperty } from '../models';
 
+/**
+ * A hex color as `#rgb`, `#rrggbb` or `#rrggbbaa`. The color picker writes
+ * `#rrggbbaa`, with the alpha channel, for every color it picks.
+ */
+export const HEX_COLOR_REGEX =
+  /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
 // An empty string means no color, as on the branch of a root node.
 export const CssColorSchema = v.nullable(
-  v.union([v.literal(''), v.pipe(v.string(), v.regex(/^#[0-9a-fA-F]{3,8}$/))])
+  v.union([v.literal(''), v.pipe(v.string(), v.regex(HEX_COLOR_REGEX))])
 );
 
 export const ColorSchema = v.partial(

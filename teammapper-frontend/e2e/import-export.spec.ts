@@ -46,6 +46,33 @@ test('uploads JSON file for import', async ({ page }) => {
   expect(testNodeCount).toBe(1);
 });
 
+test('imports a JSON file with rgba colors in the default colors', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByText('Create mind map').click();
+  await expect(page.getByText('Root node')).toBeVisible({ timeout: 5000 });
+
+  await page.locator('#menu-import').click();
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByText('JSON').click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles('./e2e/fake-data/rgba-colors-map.json');
+
+  // The file holds rgba(139,195,74,0.44) and rgb(255,0,0), which the import
+  // replaces with the configured defaults #f5f5f5 and #666666.
+  const child = page.locator('g.node').filter({ hasText: 'Transparent child' });
+  await expect(child).toBeVisible({ timeout: 5000 });
+  await expect(child.locator('path.background')).toHaveCSS(
+    'fill',
+    'rgb(245, 245, 245)'
+  );
+  await expect(child.locator('foreignObject.name > div')).toHaveCSS(
+    'color',
+    'rgb(102, 102, 102)'
+  );
+});
+
 test('imports Mermaid mindmap via modal', async ({ page }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();

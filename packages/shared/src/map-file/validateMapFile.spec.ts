@@ -38,6 +38,17 @@ const validate = (nodes: MapNode[]) =>
   validateMapFile(JSON.stringify({ version: 2, nodes, arrows: [] }));
 
 describe('validateMapFile with the fixtures', () => {
+  it('warns about each rgb color, which the import replaces with the default', () => {
+    const report = validateMapFile(readFixture('v2-rgb-colors.json'));
+
+    expect(summary(report)).toEqual([
+      'warning nodes[0].colors.name',
+      'warning nodes[0].colors.background',
+      'warning nodes[1].colors.branch',
+    ]);
+    expect(reasons(report)[0]).toContain('default color');
+  });
+
   it('reads a version 1 node list and warns about what the import changes', () => {
     const report = validateMapFile(readFixture('v1-node-list.json'));
 
@@ -98,10 +109,10 @@ describe('validateMapFile with the fixtures', () => {
     const report = validateMapFile(readFixture('invalid-node-values.json'));
 
     expect(summary(report)).toEqual([
-      'error nodes[0].colors.background',
       'error nodes[0].link.href',
       'error nodes[0].id',
       'error nodes',
+      'warning nodes[0].colors.background',
     ]);
   });
 

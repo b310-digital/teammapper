@@ -86,6 +86,14 @@ curve; or `straight`, a thin line from the parent's center to the child's. The
 setting changes the drawing alone, so collaborators may see one map in
 different branch styles. The app never syncs it or stores it with a map.
 
+### Node color
+
+A node holds three colors: the name color, the background color and the branch
+color. Each one is a hex color, `#rgb`, `#rrggbb` or `#rrggbbaa`, or empty for
+no color. A user sets them with the **color picker** in the color panel beside
+the selected node. The color picker writes `#rrggbbaa` for every color, with
+the transparency in the last two digits.
+
 ### Arrow
 
 A directed connection from a source node to a target node of the same map. The
@@ -303,7 +311,8 @@ root mark and a position, and it holds no arrows. Version 2 holds the version nu
 every node carries all its attributes. An export with nodes and arrows but no
 version number reads as version 2, because releases before the number wrote
 that layout. An import rejects a version it does not know, such as one from a
-newer release.
+newer release. An import replaces a node color that is no hex color, such as
+the `rgba()` colors releases before March 2026 wrote, with the default color.
 
 ### Duplicate
 

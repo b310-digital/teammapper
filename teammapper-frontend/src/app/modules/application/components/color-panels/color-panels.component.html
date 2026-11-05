@@ -10,6 +10,8 @@
           colorPickerToggleChange($event, 'backgroundColor', colors.background)
         "
         [(colorPicker)]="colors.background"
+        cpOutputFormat="hex"
+        cpAlphaChannel="always"
         [cpPositionOffset]="'-500%'"
         [cpPresetColors]="options.presetColors"
         [cpPresetLabel]="''"
@@ -27,6 +29,8 @@
           colorPickerToggleChange($event, 'nameColor', colors.name)
         "
         [(colorPicker)]="colors.name"
+        cpOutputFormat="hex"
+        cpAlphaChannel="always"
         [cpPositionOffset]="'-500%'"
         [cpPresetColors]="options.presetColors"
         [cpPresetLabel]="''"
@@ -45,6 +49,8 @@
             colorPickerToggleChange($event, 'branchColor', colors.branch)
           "
           [(colorPicker)]="colors.branch"
+          cpOutputFormat="hex"
+          cpAlphaChannel="always"
           [cpPositionOffset]="'-500%'"
           [cpPresetColors]="options.presetColors"
           [cpPresetLabel]="''"
