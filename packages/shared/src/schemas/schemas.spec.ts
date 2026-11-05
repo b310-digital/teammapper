@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import {
   ColorSchema,
   CoordinatesSchema,
+  CssColorSchema,
   FontSchema,
   ImageSchema,
   LinkSchema,
@@ -80,6 +81,25 @@ describe('Shared Validation Schemas', () => {
 
     it('accepts an empty color, which means no color', () => {
       expect(v.safeParse(ColorSchema, { branch: '' }).success).toBe(true);
+    });
+
+    // The color picker writes #rrggbbaa for a color with transparency.
+    it.each(['#f00', '#ff0000', '#FF0000', '#ff000080'])(
+      'accepts the hex color %s',
+      color => {
+        expect(v.is(CssColorSchema, color)).toBe(true);
+      }
+    );
+
+    it.each([
+      '#ff00',
+      '#ff000',
+      '#ff00000',
+      '#ff0000801',
+      'rgb(255,0,0)',
+      'rgba(139,195,74,0.44)',
+    ])('rejects the color %s', color => {
+      expect(v.is(CssColorSchema, color)).toBe(false);
     });
 
     it('validates CoordinatesSchema', () => {

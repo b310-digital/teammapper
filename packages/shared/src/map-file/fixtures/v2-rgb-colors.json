@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "nodes": [
+    {
+      "id": "4e9c3f4b-5a6d-4e8f-9a01-a2b3c4d5e6f7",
+      "parent": null,
+      "k": 1,
+      "name": "Root with rgb colors",
+      "coordinates": { "x": 0, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": {
+        "name": "rgb(255,0,0)",
+        "background": "rgba(139,195,74,0.44)",
+        "branch": ""
+      },
+      "font": { "size": 20, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": false,
+      "isRoot": true
+    },
+    {
+      "id": "5fad4a5c-6b7e-4f90-8b12-b3c4d5e6f7a8",
+      "parent": "4e9c3f4b-5a6d-4e8f-9a01-a2b3c4d5e6f7",
+      "k": 2.5,
+      "name": "Child with a transparent branch",
+      "coordinates": { "x": 200, "y": 0 },
+      "image": { "src": "", "size": 60 },
+      "colors": {
+        "name": "#787878",
+        "background": "#f0f6f5",
+        "branch": "rgba(0, 150, 136, 0.5)"
+      },
+      "font": { "size": 16, "style": "normal", "weight": "normal" },
+      "link": { "href": "" },
+      "protected": false,
+      "isRoot": false
+    }
+  ],
+  "arrows": []
+}

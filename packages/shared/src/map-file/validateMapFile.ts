@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { findMainRoot, sortNodesParentFirst } from '../algorithms/tree';
 import type { TreeNodeLike } from '../algorithms/tree';
-import { ArrowSchema } from '../schemas';
+import { ArrowSchema, CssColorSchema } from '../schemas';
 import {
   arrowVerdicts,
   MapFileNodeIdSchema,
@@ -188,6 +188,20 @@ function checkNodeFields(
   }
 }
 
+/** Warns about each node color the import replaces with the default color. */
+function checkNodeColors(nodes: readonly FileNode[], findings: Findings): void {
+  for (const node of nodes) {
+    const colors = isRecord(node.raw.colors) ? node.raw.colors : {};
+    for (const [key, color] of Object.entries(colors)) {
+      if (color === undefined || v.is(CssColorSchema, color)) continue;
+      findings.warn(
+        `${nodePath(node)}.colors.${key}`,
+        'The color is no hex color; the import uses the default color instead.'
+      );
+    }
+  }
+}
+
 /**
  * Records nodes that share an id, and returns the nodes the map keeps: the
  * map data stores one node per id, so a later node replaces an earlier one.
@@ -331,6 +345,7 @@ function checkMap(layout: MapFileLayout, findings: Findings): void {
   const allValid = checkNodeSchemas(layout, findings);
   const nodes = fileNodes(layout.nodes);
   checkNodeFields(nodes, layout.version, findings);
+  checkNodeColors(nodes, findings);
   const kept = checkUniqueIds(nodes, findings);
   checkMainRoot(kept, findings);
   checkOrphans(kept, findings);

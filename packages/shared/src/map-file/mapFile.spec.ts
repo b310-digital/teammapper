@@ -69,6 +69,35 @@ describe('parseMapFile', () => {
     expect(file.arrows).toHaveLength(1);
   });
 
+  // The map loader puts the configured default in place of a dropped color.
+  it('drops the rgb colors of a version 2 file and keeps the hex colors', () => {
+    const [root, child] = parseMapFile(readFixture('v2-rgb-colors.json')).nodes;
+
+    expect(root.colors).toEqual({ branch: '' });
+    expect(child.colors).toEqual({ name: '#787878', background: '#f0f6f5' });
+  });
+
+  it('drops the rgb colors of a version 1 node list', () => {
+    const [root, child] = JSON.parse(readFixture('v1-node-list.json'));
+    root.colors.background = 'rgba(139,195,74,0.44)';
+
+    const file = parseMapFile(JSON.stringify([root, child]));
+
+    expect(file.nodes[0].colors?.background).toBeUndefined();
+  });
+
+  it.each(['red', 'rgba(300,0,0,1)', '#ff00', 42])(
+    'drops the color %p, which is no hex color',
+    color => {
+      const file = JSON.parse(readFixture('v2.json'));
+      file.nodes[0].colors.background = color;
+
+      const [root] = parseMapFile(JSON.stringify(file)).nodes;
+
+      expect(root.colors?.background).toBeUndefined();
+    }
+  );
+
   it('passes every arrow entry on unchecked, for the loader to filter', () => {
     const file = parseMapFile(readFixture('warnings.json'));
 
@@ -159,6 +188,13 @@ describe('LoadableNodeSchema', () => {
 
   it('rejects a node without an id', () => {
     expect(v.is(LoadableNodeSchema, { name: 'no id' })).toBe(false);
+  });
+
+  // The loader stores the nodes as they come, so only parseMapFile converts.
+  it('rejects an rgb color, which only the map file import converts', () => {
+    const [v2Node] = JSON.parse(readFixture('v2-rgb-colors.json')).nodes;
+
+    expect(v.is(LoadableNodeSchema, v2Node)).toBe(false);
   });
 
   /** A file of each map file version, read through parseMapFile. */

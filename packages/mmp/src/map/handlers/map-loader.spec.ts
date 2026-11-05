@@ -1,6 +1,7 @@
 import MmpMap from '../map.js';
 import InMemoryMapData from '../../test/in-memory-map-data.js';
 import { stubSvgLengths } from '../../test/svg-lengths.js';
+import { DefaultNodeValues, DefaultRootNodeValues } from '../options.js';
 import type { MapSnapshot } from '@teammapper/shared';
 
 /**
@@ -122,6 +123,43 @@ describe('exportAsJSON', () => {
 });
 
 describe('new', () => {
+  // An import drops a color that is no hex color, such as an rgb() color
+  // older releases stored, and the configured default takes its place.
+  it('fills a missing node color with the configured default', () => {
+    const { map, child } = makeLoadedMap();
+    const exported = map.instance.exportAsJSON().map(node => ({
+      ...node,
+      colors: node.id === child ? { name: '#123456' } : { branch: '' },
+    }));
+    const ref = document.createElement('div');
+    document.body.appendChild(ref);
+    const options = {
+      defaultNode: {
+        ...DefaultNodeValues,
+        colors: { name: '#666666', background: '#f5f5f5', branch: '#546e7a' },
+      },
+      rootNode: {
+        ...DefaultRootNodeValues,
+        colors: { name: '#666666', background: '#eeeeee', branch: '' },
+      },
+    };
+    const target = new MmpMap(ref, options, new InMemoryMapData());
+
+    target.instance.new(exported);
+
+    const [root, loadedChild] = target.instance.exportAsJSON();
+    expect(root.colors).toMatchObject({
+      name: '#666666',
+      background: '#eeeeee',
+      branch: '',
+    });
+    expect(loadedChild.colors).toMatchObject({
+      name: '#123456',
+      background: '#f5f5f5',
+      branch: '#546e7a',
+    });
+  });
+
   it('loads an exported map unchanged', () => {
     const { map } = makeLoadedMap();
     const exported = map.instance.exportAsJSON();

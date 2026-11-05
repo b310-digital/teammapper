@@ -4,7 +4,9 @@ import type { TreeNodeLike } from '../algorithms/tree';
 import { MAP_FILE_VERSION } from '../constants';
 import {
   ArrowSchema,
+  ColorSchema,
   CoordinatesSchema,
+  CssColorSchema,
   LinkSchema,
   NodeSchema,
 } from '../schemas';
@@ -15,31 +17,62 @@ import { isRecord } from './isRecord';
 export type MapFileVersion = 1 | 2;
 
 /**
- * A node of a version 1 file, the bare node list of older releases. Those
- * releases wrote no link and no isRoot attribute. The Mermaid import writes
- * this layout too, without coordinates, and the map service lays out a node
- * that has none.
+ * A node color in a map file. The import drops a color that is no hex color,
+ * such as an rgb() color older releases wrote, and the map loader puts the
+ * configured default in its place.
  */
-export const MapFileV1NodeSchema = v.object({
+const MapFileCssColorSchema = v.pipe(
+  v.unknown(),
+  v.transform(color => (v.is(CssColorSchema, color) ? color : undefined))
+);
+
+/** The node colors of a map file. */
+const MapFileColorSchema = v.partial(
+  v.object({
+    name: MapFileCssColorSchema,
+    background: MapFileCssColorSchema,
+    branch: MapFileCssColorSchema,
+    link: MapFileCssColorSchema,
+  } satisfies Record<keyof typeof ColorSchema.entries, v.GenericSchema>)
+);
+
+/**
+ * A node the map loader accepts, from a file of any version this release
+ * reads, after `parseMapFile` dropped each color that is no hex color. Every
+ * later version so far requires more fields than version 1, so this schema
+ * accepts them all. A version that drops or retypes a version 1 field needs a
+ * union here. The loader stores the nodes unchanged, so this schema accepts hex
+ * colors only.
+ */
+export const LoadableNodeSchema = v.object({
   ...NodeSchema.entries,
   coordinates: v.optional(CoordinatesSchema),
   link: v.optional(LinkSchema),
   isRoot: v.optional(v.boolean()),
 });
 
+/**
+ * A node of a version 1 file, the bare node list of older releases. Those
+ * releases wrote no link and no isRoot attribute. The Mermaid import writes
+ * this layout too, without coordinates, and the map service lays out a node
+ * that has none.
+ */
+export const MapFileV1NodeSchema = v.object({
+  ...LoadableNodeSchema.entries,
+  colors: MapFileColorSchema,
+});
+
+/** A node of a version 2 file. */
+export const MapFileV2NodeSchema = v.object({
+  ...NodeSchema.entries,
+  colors: MapFileColorSchema,
+});
+
 /** The node schema of each map file version. */
 export const MapFileNodeSchemas = {
   1: MapFileV1NodeSchema,
-  2: NodeSchema,
+  2: MapFileV2NodeSchema,
 } as const satisfies Record<MapFileVersion, v.GenericSchema>;
-
-/**
- * A node the map loader accepts, from a file of any version this release
- * reads. Every later version so far only requires more fields than version 1,
- * so the version 1 schema accepts them all. A version that drops or retypes a
- * version 1 field needs a union here.
- */
-export const LoadableNodeSchema = MapFileV1NodeSchema;
 
 /** Every node id in a map file is a UUID. */
 export const MapFileNodeIdSchema = v.pipe(v.string(), v.uuid());
