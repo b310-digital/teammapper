@@ -207,8 +207,8 @@ export class ToolbarComponent {
   }
 
   /**
-   * Imports the map from the JSON text. Shows an error toast when the import
-   * fails, and one warning toast when the import repaired orphaned nodes.
+   * Imports the map from the JSON text. Shows an error toast on failure, and
+   * one warning toast after repairing orphaned nodes.
    */
   private async importJSON(json: string): Promise<void> {
     let repairedNodes: number;

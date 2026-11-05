@@ -771,9 +771,8 @@ export class MmpService implements OnDestroy {
   }
 
   /**
-   * Imports a map from a local file and resolves to the number of orphaned
-   * nodes the import turned into root nodes. Rejects when `parseMapFile`
-   * rejects the file, and leaves the map unchanged.
+   * Imports a map from a local file and resolves to the number of repaired
+   * orphaned nodes. Rejects an invalid file and leaves the map unchanged.
    */
   public async importMap(json: string): Promise<{ repairedNodes: number }> {
     const { nodes, arrows, repairedNodes } = parseMapFile(json);

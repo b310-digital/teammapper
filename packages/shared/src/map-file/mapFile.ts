@@ -249,7 +249,7 @@ export function repairOrphanedNodes<T extends TreeNodeLike>(nodes: T[]): T[] {
 
 /**
  * Breaks each parent cycle at one node and returns those nodes. A cycle
- * through the main root breaks there, so the main root stays the main root.
+ * through the main root breaks there, because a main root has no parent.
  * Visits each node once.
  */
 function repairCycles<T extends TreeNodeLike>(nodes: T[]): T[] {

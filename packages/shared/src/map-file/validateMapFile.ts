@@ -259,11 +259,9 @@ function checkUniqueIds(
 }
 
 /**
- * Checks the main root of the map the loader builds. `nodes` are the nodes as
- * the file lists them, and `loaded` are the same nodes after the import's
- * repair, which leaves at least one root node. `findMainRoot` picks the same
- * node as the loader's `withMainRoot`: the first node with `isRoot`, else the
- * first root node.
+ * Checks the main root of the map the loader builds. `nodes` come from the
+ * file, `loaded` from the import's repair, which leaves at least one root
+ * node. `findMainRoot` picks the same main root as the loader.
  */
 function checkMainRoot(
   nodes: readonly FileNode[],
@@ -301,10 +299,9 @@ function brokenLinkCause(node: FileNode, ids: Set<string>): string {
 }
 
 /**
- * Warns about each orphaned node the import repairs and returns the nodes as
- * the import loads them. The check runs `repairOrphanedNodes` on copies, so it
- * warns about the same nodes the import changes. Nodes below a repaired node
- * stay in its tree and get no warning.
+ * Warns about each orphaned node the import repairs and returns the repaired
+ * copies of all nodes. Running `repairOrphanedNodes` on copies makes the
+ * warnings match the import. Nodes below a repaired node get no warning.
  */
 function checkOrphans(
   nodes: readonly FileNode[],
