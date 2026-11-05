@@ -20,6 +20,10 @@ opens with a table of the other words to avoid.
 Add an entry when you introduce a concept, and correct one when a rename makes
 it wrong.
 
+Keep glossary entries short and domain-specific, with no code or implementation
+details. Use standard mind mapping terms for concepts the glossary does not
+yet define.
+
 ## Test fixtures
 
 Never write binary data into a test: no byte arrays, no base64 literals, no
