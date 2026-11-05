@@ -251,7 +251,7 @@
       "MAP_IMPORT_IN_PROGRESS": "Mindmap wird importiert...",
       "MAP_UPDATE_IN_PROGRESS": "Mindmap wird aktualisiert...",
       "MERMAID_SEVERAL_TREES": "Jeder Baum wurde zu einem eigenen mindmap-Block. Mermaid-Werkzeuge außerhalb von TeamMapper stellen nur einen Block auf einmal dar.",
-      "IMPORT_REPAIRED_NODES": "Einige Knoten in der Datei hatten eine fehlerhafte Verbindung zu ihrem Elternknoten. Der Import hat daraus eigene Bäume gemacht, so geht kein Knoten verloren.",
+      "IMPORT_REPAIRED_NODES": "Fehlerhafte Verbindungen zu Elternknoten entfernt.",
       "ARROW_REFUSED": {
         "SELF": "Ein Pfeil kann nicht von einem Knoten auf sich selbst zeigen.",
         "DUPLICATE": "Zwischen diesen beiden Knoten gibt es in dieser Richtung schon einen Pfeil.",

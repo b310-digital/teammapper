@@ -248,7 +248,7 @@
       "MAP_IMPORT_IN_PROGRESS": "Importation de Mindmap en cours",
       "MAP_UPDATE_IN_PROGRESS": "Mise à jour de la carte heuristique...",
       "MERMAID_SEVERAL_TREES": "Chaque arbre est devenu son propre bloc mindmap. Les outils Mermaid hors de TeamMapper affichent un bloc à la fois.",
-      "IMPORT_REPAIRED_NODES": "Certains nœuds du fichier avaient un lien rompu avec leur nœud parent. L'importation en a fait des arbres séparés, aucun nœud n'est donc perdu.",
+      "IMPORT_REPAIRED_NODES": "Liens rompus vers les nœuds parents supprimés.",
       "ARROW_REFUSED": {
         "SELF": "Une flèche ne peut pas aller d'un noeud vers lui-même.",
         "DUPLICATE": "Une flèche existe déjà entre ces deux noeuds dans ce sens.",

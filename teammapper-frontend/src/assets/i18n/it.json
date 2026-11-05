@@ -248,7 +248,7 @@
       "MAP_IMPORT_IN_PROGRESS": "Importazione della mappa mentale in corso",
       "MAP_UPDATE_IN_PROGRESS": "Aggiornamento della mappa mentale...",
       "MERMAID_SEVERAL_TREES": "Ogni albero è diventato un proprio blocco mindmap. Gli strumenti Mermaid al di fuori di TeamMapper mostrano un blocco alla volta.",
-      "IMPORT_REPAIRED_NODES": "Alcuni nodi del file avevano un collegamento interrotto con il loro nodo padre. L'importazione li ha trasformati in alberi separati, quindi nessun nodo va perso.",
+      "IMPORT_REPAIRED_NODES": "Collegamenti interrotti ai nodi padre rimossi.",
       "ARROW_REFUSED": {
         "SELF": "Una freccia non può puntare da un nodo a se stesso.",
         "DUPLICATE": "Esiste già una freccia tra questi due nodi in questa direzione.",
