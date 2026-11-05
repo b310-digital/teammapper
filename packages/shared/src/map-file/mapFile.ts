@@ -82,6 +82,8 @@ export type MapFile = Omit<MapExport, 'version' | 'arrows'> & {
   version: MapFileVersion;
   /** The arrow entries, unchecked: the loader filters them against the nodes. */
   arrows: unknown[];
+  /** How many orphaned nodes the import turned into root nodes. */
+  repairedNodes: number;
 };
 
 /** How a JSON file lays out its map, before any node check. */
@@ -206,10 +208,12 @@ export function parseMapFile(json: string): MapFile {
     throw new MapFileError(result.path, result.reason, result.fromNewerRelease);
   }
   const { layout } = result;
+  const nodes = checkedNodes(layout);
   return {
     version: layout.version,
-    nodes: checkedNodes(layout),
+    nodes,
     arrows: layout.arrows,
+    repairedNodes: repairOrphanedNodes(nodes).length,
   };
 }
 
@@ -225,6 +229,61 @@ export function withMainRoot<T extends TreeNodeLike>(nodes: T[]): T[] {
   const root = nodes.find(node => !node.parent);
   if (root) root.isRoot = true;
   return nodes;
+}
+
+/**
+ * Repairs the orphaned nodes and returns the nodes it changed. An orphaned
+ * node has a broken parent link, and the server would drop it with every node
+ * below it when it saves the map. A map may hold several trees, so the repair
+ * clears the broken link and the node starts a tree of its own, keeping the
+ * nodes below it. Changes the nodes in place:
+ *
+ * 1. A node that names itself or a node the list lacks as parent loses its
+ *    parent.
+ * 2. In a parent cycle, the first node in list order loses its parent, and the
+ *    rest of the cycle stays below it.
+ *
+ * Marks the main root before the repair, so a repaired node never takes the
+ * place of the main root the loader would pick.
+ */
+export function repairOrphanedNodes<T extends TreeNodeLike>(nodes: T[]): T[] {
+  withMainRoot(nodes);
+  const ids = new Set(nodes.map(node => node.id));
+  const broken = nodes.filter(
+    node => node.parent && (node.parent === node.id || !ids.has(node.parent))
+  );
+  for (const node of broken) node.parent = null;
+  return [...broken, ...repairCycles(nodes)];
+}
+
+/**
+ * Clears the parent of the first node in list order of each parent cycle, and
+ * returns those nodes. From each node, the walk steps from parent to parent
+ * until it reaches a node without a parent or a node it visited before. When
+ * that node lies on the current walk, the walk went round a cycle. The walk
+ * never visits a node twice, so a map twice as large takes twice as long.
+ */
+function repairCycles<T extends TreeNodeLike>(nodes: T[]): T[] {
+  const indexOfId = new Map(nodes.map((node, index) => [node.id, index]));
+  const parentIndex = (index: number) =>
+    indexOfId.get(nodes[index].parent ?? '');
+  const visited = new Set<number>();
+  const repaired: T[] = [];
+  nodes.forEach((_node, start) => {
+    const walk: number[] = [];
+    let current: number | undefined = start;
+    while (current !== undefined && !visited.has(current)) {
+      visited.add(current);
+      walk.push(current);
+      current = parentIndex(current);
+    }
+    const cycleStart = current === undefined ? -1 : walk.indexOf(current);
+    if (cycleStart < 0) return;
+    const first = nodes[Math.min(...walk.slice(cycleStart))];
+    first.parent = null;
+    repaired.push(first);
+  });
+  return repaired;
 }
 
 /** Why the import drops an arrow entry: its shape, or an endpoint rule. */

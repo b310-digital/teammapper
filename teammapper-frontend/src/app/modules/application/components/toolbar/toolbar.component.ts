@@ -206,16 +206,28 @@ export class ToolbarComponent {
     if (file) fileReader.readAsText(file);
   }
 
-  /** Import the map from the JSON text; the user sees an error on failure. */
+  /**
+   * Import the map from the JSON text. The user sees an error on failure, and
+   * one warning when the import had to repair orphaned nodes.
+   */
   private async importJSON(json: string): Promise<void> {
     try {
-      await this.mmpService.importMap(json);
+      const { repairedNodes } = await this.mmpService.importMap(json);
+      if (repairedNodes > 0) await this.warnRepairedNodes();
     } catch (error) {
       const message = await this.utilsService.translate(
         this.importErrorKey(error)
       );
       this.toastrService.error(message);
     }
+  }
+
+  /** Tells the user that the import changed the map to keep every node. */
+  private async warnRepairedNodes(): Promise<void> {
+    const message = await this.utilsService.translate(
+      'TOASTS.WARNINGS.IMPORT_REPAIRED_NODES'
+    );
+    this.toastrService.warning(message);
   }
 
   /** The toast for a failed import: a newer release's file gets its own. */

@@ -116,22 +116,19 @@ describe('validateMapFile with the fixtures', () => {
     ]);
   });
 
-  it('warns about ignored fields, orphaned nodes and dropped arrows', () => {
+  it('warns about ignored fields, repaired orphaned nodes and dropped arrows', () => {
     const report = validateMapFile(readFixture('warnings.json'));
 
     expect(summary(report)).toEqual([
       'warning title',
       'warning nodes[0].hidden',
       'warning nodes[1].parent',
-      'warning nodes[2].parent',
       'warning arrows[0]',
       'warning arrows[1]',
       'warning arrows[2]',
       'warning arrows[2]',
     ]);
-    expect(reasons(report)[3]).toContain(
-      'descends from the orphaned node nodes[1]'
-    );
+    expect(reasons(report)[2]).toContain('starts a tree of its own');
   });
 });
 
@@ -166,21 +163,28 @@ describe('validateMapFile', () => {
     expect(summary(validate(nodes))).toContain('error nodes');
   });
 
-  it('names the cycle members, and a node below the cycle as a descendant', () => {
+  it('warns about the one cycle node whose parent the import clears', () => {
     const nodes = [
       node('root', null, true),
       node('a', 'b'),
       node('b', 'c'),
       node('c', 'b'),
     ];
-    const found = reasons(validate(nodes));
+    const report = validate(nodes);
 
-    expect(found[0]).toContain('descends from the orphaned node nodes[2]');
-    expect(found[1]).toContain('part of a parent cycle');
-    expect(found[2]).toContain('part of a parent cycle');
+    expect(summary(report)).toEqual(['warning nodes[2].parent']);
+    expect(reasons(report)[0]).toContain('part of a parent cycle');
   });
 
-  it('names the nearest orphaned ancestor in a long chain below a missing parent, in linear time', () => {
+  it('warns about a node that names itself as parent', () => {
+    const nodes = [node('root', null, true), node('a', 'a')];
+    const report = validate(nodes);
+
+    expect(summary(report)).toEqual(['warning nodes[1].parent']);
+    expect(reasons(report)[0]).toContain('names itself as parent');
+  });
+
+  it('warns only about the top of a long chain below a missing parent, in linear time', () => {
     const uuid = (n: number) =>
       `00000000-0000-4000-9000-${String(n).padStart(12, '0')}`;
     // Large enough that the old cubic walk takes about a second, small enough
@@ -191,11 +195,11 @@ describe('validateMapFile', () => {
       parent: i === 0 ? IDS.gone : uuid(i),
     }));
     const started = performance.now();
-    const found = reasons(validate([node('root', null, true), ...chain]));
+    const report = validate([node('root', null, true), ...chain]);
     const elapsed = performance.now() - started;
 
-    expect(found[0]).toContain(`No node has the id "${IDS.gone}"`);
-    expect(found[499]).toContain('descends from the orphaned node nodes[1]');
+    expect(summary(report)).toEqual(['warning nodes[1].parent']);
+    expect(reasons(report)[0]).toContain(`No node has the id "${IDS.gone}"`);
     expect(elapsed).toBeLessThan(250);
   });
 

@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { findMainRoot, sortNodesParentFirst } from '../algorithms/tree';
+import { findMainRoot } from '../algorithms/tree';
 import type { TreeNodeLike } from '../algorithms/tree';
 import { ArrowSchema, CssColorSchema } from '../schemas';
 import {
@@ -7,6 +7,7 @@ import {
   MapFileNodeIdSchema,
   MapFileNodeSchemas,
   readMapFileLayout,
+  repairOrphanedNodes,
 } from './mapFile';
 import { isRecord } from './isRecord';
 import type {
@@ -172,8 +173,14 @@ function fileNodes(nodes: readonly unknown[]): FileNode[] {
 }
 
 /**
- * The entries of an object schema such as the one for `font`, read through
- * optional and nullable wrappers, or null when the schema describes no object.
+ * Lists the settings a node attribute group allows, read from its schema. For
+ * `font` the list holds `size`, `style` and `weight`. Returns null for a plain
+ * value such as `name`, which holds no settings of its own.
+ *
+ * A schema wrapped in `v.optional` or `v.nullable` keeps the group schema in
+ * `wrapped`, so the function unwraps it first. Reading the list from the
+ * schema keeps this check in step with the import: a setting added to the
+ * schema needs no change here.
  */
 function objectEntries(schema: unknown): Record<string, unknown> | null {
   if (!isRecord(schema)) return null;
@@ -290,102 +297,30 @@ function checkMainRoot(nodes: FileNode[], findings: Findings): void {
   }
 }
 
-/**
- * The ids of the orphaned nodes in a parent cycle. Each walk follows the
- * parents until it reaches a missing parent or a node it visited before. When
- * that node lies on the current walk, the walk has gone round a cycle. Every
- * node is visited once, so the time grows linearly with the node count.
- */
-function cycleMembers(
-  orphans: readonly FileNode[],
-  byId: Map<string, FileNode>
-): Set<string> {
-  const members = new Set<string>();
-  const visited = new Set<string>();
-  for (const start of orphans) {
-    const walk: string[] = [];
-    let current: FileNode | undefined = start;
-    while (current && !visited.has(current.id)) {
-      visited.add(current.id);
-      walk.push(current.id);
-      current = byId.get(current.parent ?? '');
-    }
-    const cycleStart = current ? walk.indexOf(current.id) : -1;
-    if (cycleStart >= 0) {
-      walk.slice(cycleStart).forEach(id => members.add(id));
-    }
-  }
-  return members;
-}
-
-/**
- * The reason no root node reaches an orphaned node, or null when the node
- * only descends from another orphaned node.
- */
-function orphanCause(
-  node: FileNode,
-  byId: Map<string, FileNode>,
-  cycles: Set<string>
-): string | null {
+/** Why the parent link of a node the import repairs is broken. */
+function brokenLinkCause(node: FileNode, ids: Set<string>): string {
   if (node.parent === node.id) return 'The node names itself as parent';
-  if (!byId.has(node.parent ?? ''))
-    return `No node has the id "${node.parent}"`;
-  if (cycles.has(node.id)) return 'The node is part of a parent cycle';
-  return null;
+  if (!ids.has(node.parent ?? '')) return `No node has the id "${node.parent}"`;
+  return 'The node is part of a parent cycle';
 }
 
 /**
- * Maps each orphaned node without a cause to its nearest orphaned ancestor
- * with one. The walk starts at the nodes with a cause and moves down through
- * the child nodes, so it visits each orphaned node once.
- */
-function orphanAncestors(
-  orphans: readonly FileNode[],
-  causes: Map<string, string>
-): Map<string, FileNode> {
-  const children = new Map<string, FileNode[]>();
-  for (const node of orphans) {
-    const key = node.parent ?? '';
-    const siblings = children.get(key) ?? [];
-    siblings.push(node);
-    children.set(key, siblings);
-  }
-  const ancestors = new Map<string, FileNode>();
-  const pending = orphans.filter(node => causes.has(node.id));
-  for (let node = pending.pop(); node; node = pending.pop()) {
-    const ancestor = causes.has(node.id) ? node : ancestors.get(node.id);
-    for (const child of children.get(node.id) ?? []) {
-      if (!ancestor || causes.has(child.id)) continue;
-      ancestors.set(child.id, ancestor);
-      pending.push(child);
-    }
-  }
-  return ancestors;
-}
-
-/**
- * Warns about each orphaned node `sortNodesParentFirst` returns as unreached,
- * and names its cause or the orphaned ancestor above it. The import keeps
- * orphaned nodes; the backend drops them when it saves the map.
+ * Warns about each orphaned node the import repairs. The check runs the
+ * import's own repair on copies of the nodes, so it reports exactly the nodes
+ * whose parent link the import clears. The nodes below a repaired node stay in
+ * its tree and need no warning.
  */
 function checkOrphans(nodes: readonly FileNode[], findings: Findings): void {
+  const ids = new Set(nodes.map(node => node.id));
   const byId = new Map(nodes.map(node => [node.id, node]));
-  const orphans = sortNodesParentFirst(nodes).unreached;
-  const cycles = cycleMembers(orphans, byId);
-  const causes = new Map<string, string>();
-  for (const node of orphans) {
-    const cause = orphanCause(node, byId, cycles);
-    if (cause !== null) causes.set(node.id, cause);
-  }
-  const ancestors = orphanAncestors(orphans, causes);
-  const suffix =
-    'no root node reaches it, and the server drops it when it saves the map.';
-  for (const node of orphans) {
-    const ancestor = ancestors.get(node.id);
-    const reason =
-      causes.get(node.id) ??
-      `The node descends from the orphaned node ${ancestor ? nodePath(ancestor) : 'above it'}`;
-    findings.warn(`${nodePath(node)}.parent`, `${reason}; ${suffix}`);
+  const repaired = repairOrphanedNodes(nodes.map(node => ({ ...node })))
+    .flatMap(copy => byId.get(copy.id) ?? [])
+    .sort((a, b) => a.index - b.index);
+  for (const node of repaired) {
+    findings.warn(
+      `${nodePath(node)}.parent`,
+      `${brokenLinkCause(node, ids)}; the import clears the parent, so the node starts a tree of its own.`
+    );
   }
 }
 
