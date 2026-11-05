@@ -49,6 +49,12 @@ const createTestMap = (overrides: Partial<MmpMap> = {}): MmpMap => {
   return map
 }
 
+/** The configured default colors, as the settings file names them. */
+const COLOR_DEFAULTS = {
+  node: { name: '#666666', background: '#f5f5f5', branch: '#546e7a' },
+  root: { name: '#666666', background: '#eeeeee' },
+}
+
 const groupOf = (yNode: Y.Map<unknown>, key: string) =>
   (yNode.get(key) as Y.Map<unknown>).toJSON()
 
@@ -75,7 +81,7 @@ const populateAndGet = (
 ): { yNode: Y.Map<unknown>; doc: Y.Doc } => {
   const doc = new Y.Doc()
   const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
-  populateYMapFromNode(nodesMap, node)
+  populateYMapFromNode(nodesMap, node, COLOR_DEFAULTS)
   return { yNode: nodesMap.get(node.id)!, doc }
 }
 
@@ -334,7 +340,8 @@ describe('yDocConversion', () => {
           createTestNode({ id: 'node-2', root: false, name: 'Child' }),
         ],
         createTestMap(),
-        []
+        [],
+        COLOR_DEFAULTS
       )
 
       expect((doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).size).toBe(2)
@@ -344,7 +351,7 @@ describe('yDocConversion', () => {
 
     it('handles an empty node list', () => {
       const doc = new Y.Doc()
-      hydrateYDoc(doc, [], createTestMap(), [])
+      hydrateYDoc(doc, [], createTestMap(), [], COLOR_DEFAULTS)
 
       expect((doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).size).toBe(0)
 
@@ -353,9 +360,13 @@ describe('yDocConversion', () => {
 
     it('fills the arrows map keyed by arrowKey with source and target', () => {
       const doc = new Y.Doc()
-      hydrateYDoc(doc, [], createTestMap(), [
-        { source: 'node-1', target: 'node-2' },
-      ])
+      hydrateYDoc(
+        doc,
+        [],
+        createTestMap(),
+        [{ source: 'node-1', target: 'node-2' }],
+        COLOR_DEFAULTS
+      )
 
       const arrows = doc.getMap('arrows') as Y.Map<Y.Map<unknown>>
       expect(Array.from(arrows.keys())).toEqual([arrowKey('node-1', 'node-2')])
@@ -369,7 +380,7 @@ describe('yDocConversion', () => {
 
     it('gives an empty arrows map when the map has no arrows', () => {
       const doc = new Y.Doc()
-      hydrateYDoc(doc, [createTestNode()], createTestMap(), [])
+      hydrateYDoc(doc, [createTestNode()], createTestMap(), [], COLOR_DEFAULTS)
 
       expect((doc.getMap('arrows') as Y.Map<Y.Map<unknown>>).size).toBe(0)
 
@@ -387,7 +398,8 @@ describe('yDocConversion', () => {
         doc,
         [createTestNode(), createTestNode({ id: 'node-2', root: false })],
         createTestMap(),
-        [{ source: 'node-1', target: 'node-2' }]
+        [{ source: 'node-1', target: 'node-2' }],
+        COLOR_DEFAULTS
       )
 
       expect(updateCount).toBe(1)
@@ -402,7 +414,13 @@ describe('yDocConversion', () => {
       ['a data URL', 'data:image/png;base64,iVBORw0KGgo='],
     ])('keeps %s unchanged through hydrate and persist', (_label, src) => {
       const doc = new Y.Doc()
-      hydrateYDoc(doc, [createTestNode({ imageSrc: src })], createTestMap(), [])
+      hydrateYDoc(
+        doc,
+        [createTestNode({ imageSrc: src })],
+        createTestMap(),
+        [],
+        COLOR_DEFAULTS
+      )
       const yNode = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(
         'node-1'
       )!
@@ -411,6 +429,80 @@ describe('yDocConversion', () => {
       expect(yMapToMmpNode('node-1', yNode, 'map-1').imageSrc).toBe(src)
 
       doc.destroy()
+    })
+  })
+
+  // Releases before March 2026 stored the rgba() colors the color picker
+  // wrote. The map accepts hex colors only, so hydration replaces them.
+  describe('stored colors that are no hex colors', () => {
+    const hydratedColors = (node: MmpNode) => {
+      const doc = new Y.Doc()
+      hydrateYDoc(doc, [node], createTestMap(), [], COLOR_DEFAULTS)
+      const nodes = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
+      const yNode = nodes.get(node.id)
+      if (!yNode) throw new Error('hydration wrote no node')
+      return groupOf(yNode, 'colors')
+    }
+
+    it('hydrates them as the default colors of a child node', () => {
+      const colors = hydratedColors(
+        createTestNode({
+          nodeParentId: 'root-1',
+          root: false,
+          colorsName: 'red',
+          colorsBackground: 'rgba(139,195,74,0.44)',
+          colorsBranch: 'rgb(1,2,3)',
+        })
+      )
+
+      expect(colors).toEqual(COLOR_DEFAULTS.node)
+    })
+
+    it('hydrates them as the default colors of a root node', () => {
+      const colors = hydratedColors(
+        createTestNode({
+          colorsBackground: 'rgba(139,195,74,0.44)',
+          colorsBranch: 'rgba(0,0,0,0.5)',
+        })
+      )
+
+      expect(colors).toEqual({
+        name: '#333333',
+        background: '#eeeeee',
+        branch: '',
+      })
+    })
+
+    // An override file can configure a default the map rejects as well.
+    it('hydrates them as no color when the configured default is no hex color', () => {
+      const doc = new Y.Doc()
+      const node = createTestNode({ colorsBackground: 'rgba(0,0,0,0.5)' })
+      const defaults = {
+        node: COLOR_DEFAULTS.node,
+        root: { background: 'rgb(245,245,245)' },
+      }
+
+      hydrateYDoc(doc, [node], createTestMap(), [], defaults)
+
+      const yNode = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get(node.id)
+      if (!yNode) throw new Error('hydration wrote no node')
+      expect(groupOf(yNode, 'colors').background).toBe('')
+    })
+
+    it('keeps hex colors and empty colors', () => {
+      const colors = hydratedColors(
+        createTestNode({
+          colorsName: '#f00',
+          colorsBackground: '#8bc34a70',
+          colorsBranch: '',
+        })
+      )
+
+      expect(colors).toEqual({
+        name: '#f00',
+        background: '#8bc34a70',
+        branch: '',
+      })
     })
   })
 

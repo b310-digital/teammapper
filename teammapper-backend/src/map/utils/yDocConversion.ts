@@ -2,7 +2,9 @@ import * as Y from 'yjs'
 import { MmpNode } from '../entities/mmpNode.entity'
 import {
   DEFAULT_FONT_MAX_SIZE,
+  HEX_COLOR_REGEX,
   MapArrow,
+  MapNodeColors,
   MapOptions,
   arrowKey,
 } from '@teammapper/shared'
@@ -25,10 +27,45 @@ const readAttributeGroup = <T>(
   return (value instanceof Y.Map ? value.toJSON() : value) as T | undefined
 }
 
+/** The configured default colors of a child node and of a root node. */
+export interface NodeColorDefaults {
+  node: MapNodeColors
+  root: MapNodeColors
+}
+
+/** True for an empty color or a hex color, the colors the map accepts. */
+const isAcceptedColor = (color: string | null | undefined): boolean =>
+  !color || HEX_COLOR_REGEX.test(color)
+
+/**
+ * The stored color, or the default when the stored color is no hex color.
+ * Releases before March 2026 stored the rgba() colors the color picker wrote,
+ * and the map accepts hex colors only. An empty color stays empty. When the
+ * configured default is no hex color either, the color turns empty.
+ */
+const storedColor = (
+  color: string | null,
+  fallback: string | null | undefined
+): string => {
+  if (isAcceptedColor(color)) return color ?? ''
+  return isAcceptedColor(fallback) ? (fallback ?? '') : ''
+}
+
+/** The node's colors, with the default in place of each color that is no hex color. */
+const storedColors = (node: MmpNode, defaults: NodeColorDefaults) => {
+  const fallback = node.nodeParentId ? defaults.node : defaults.root
+  return {
+    name: storedColor(node.colorsName, fallback.name),
+    background: storedColor(node.colorsBackground, fallback.background),
+    branch: storedColor(node.colorsBranch, fallback.branch),
+  }
+}
+
 // Converts an MmpNode entity to a Y.Map and sets it in the nodes container
 export const populateYMapFromNode = (
   nodesMap: Y.Map<Y.Map<unknown>>,
-  node: MmpNode
+  node: MmpNode,
+  colorDefaults: NodeColorDefaults
 ): void => {
   const yNode = new Y.Map<unknown>()
   yNode.set('id', node.id)
@@ -41,14 +78,7 @@ export const populateYMapFromNode = (
     x: node.coordinatesX ?? 0,
     y: node.coordinatesY ?? 0,
   })
-  yNode.set(
-    'colors',
-    attributeGroup({
-      name: node.colorsName ?? '',
-      background: node.colorsBackground ?? '',
-      branch: node.colorsBranch ?? '',
-    })
-  )
+  yNode.set('colors', attributeGroup(storedColors(node, colorDefaults)))
   yNode.set(
     'font',
     attributeGroup({
@@ -163,12 +193,13 @@ export const hydrateYDoc = (
   doc: Y.Doc,
   nodes: MmpNode[],
   map: MmpMap,
-  arrows: MapArrow[]
+  arrows: MapArrow[],
+  colorDefaults: NodeColorDefaults
 ): void => {
   doc.transact(() => {
     const nodesMap = doc.getMap('nodes') as Y.Map<Y.Map<unknown>>
     for (const node of nodes) {
-      populateYMapFromNode(nodesMap, node)
+      populateYMapFromNode(nodesMap, node, colorDefaults)
     }
     const arrowsMap = doc.getMap('arrows') as Y.Map<Y.Map<unknown>>
     for (const arrow of arrows) {
