@@ -182,12 +182,12 @@ describe('validateMapFile', () => {
     expect(reasons(report)[0]).toContain('part of a parent cycle');
   });
 
-  it('warns about a node that names itself as parent', () => {
+  it('warns about a self-referencing node', () => {
     const nodes = [node('root', null, true), node('a', 'a')];
     const report = validate(nodes);
 
     expect(summary(report)).toEqual(['warning nodes[1].parent']);
-    expect(reasons(report)[0]).toContain('names itself as parent');
+    expect(reasons(report)[0]).toContain('is its own parent');
   });
 
   it('warns only about the top of a chain below a missing parent', () => {

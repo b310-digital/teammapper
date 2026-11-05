@@ -89,10 +89,9 @@ parent relationships form a cycle. This includes descendants of affected
 nodes. Orphaned nodes indicate invalid map data. The layout places them in a
 column to the right of the trees, without treating them as trees.
 
-An import repairs orphaned nodes. The import removes the parent link of each
-node whose parent is missing or is the node itself, and of one node in each
-cycle. Each repaired node becomes a root node, with its subtree below it. The user
-sees one warning per import.
+An import turns orphaned nodes into root nodes, with their subtrees below them.
+The import removes the parent link of each self-referencing node, each node
+with a missing parent, and one node in each cycle. The user sees one warning.
 
 When the backend saves or duplicates a map, it omits orphaned nodes, logs their
 IDs and deletes their database rows to satisfy the parent foreign key.

@@ -286,7 +286,7 @@ describe('repairOrphanedNodes', () => {
     expect(parents(nodes)).toEqual([null, null, 'a']);
   });
 
-  it('clears a parent that names the node itself', () => {
+  it('clears the parent of a self-referencing node', () => {
     const nodes = [node('root', null, true), node('a', 'a')];
 
     expect(repairOrphanedNodes(nodes).map(n => n.id)).toEqual(['a']);

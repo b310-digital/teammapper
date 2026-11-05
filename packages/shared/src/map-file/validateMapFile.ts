@@ -295,7 +295,7 @@ function checkMainRoot(
 
 /** Returns the reason the import clears the parent of the node. */
 function brokenLinkCause(node: FileNode, ids: Set<string>): string {
-  if (node.parent === node.id) return 'The node names itself as parent';
+  if (node.parent === node.id) return 'The node is its own parent';
   if (!ids.has(node.parent ?? '')) return `No node has the id "${node.parent}"`;
   return 'The node is part of a parent cycle';
 }

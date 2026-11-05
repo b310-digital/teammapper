@@ -232,18 +232,10 @@ export function withMainRoot<T extends TreeNodeLike>(nodes: T[]): T[] {
 }
 
 /**
- * Turns each orphaned node into a root node and returns the changed nodes.
- * Without the repair, the server drops an orphaned node and its subtree when
- * it saves the map. The function edits the nodes in place and clears these
- * parents:
- *
- * 1. A parent that names the node itself or a node missing from the list.
- * 2. One parent in each parent cycle: the parent of the main root when the
- *    cycle includes the main root, else the parent of the first cycle node in
- *    list order. The other cycle nodes stay below that node.
- *
- * The function marks the main root first, so a repaired node never replaces
- * the main root the loader picks.
+ * Turns each orphaned node into a root node, so the server saves it with its
+ * subtree instead of dropping both. Clears the parent of each self-referencing
+ * node, each node with a missing parent, and one node in each parent cycle.
+ * Changes the nodes in place and returns the changed ones.
  */
 export function repairOrphanedNodes<T extends TreeNodeLike>(nodes: T[]): T[] {
   withMainRoot(nodes);
@@ -256,11 +248,9 @@ export function repairOrphanedNodes<T extends TreeNodeLike>(nodes: T[]): T[] {
 }
 
 /**
- * Clears one parent in each parent cycle and returns the changed nodes. The
- * function clears the parent of the main root when the cycle includes the
- * main root, else the parent of the first cycle node in list order. No walk
- * enters a node an earlier walk visited, so the run time grows linearly with
- * the node count.
+ * Breaks each parent cycle at one node and returns those nodes. A cycle
+ * through the main root breaks there, so the main root stays the main root.
+ * Visits each node once.
  */
 function repairCycles<T extends TreeNodeLike>(nodes: T[]): T[] {
   const indexOfId = new Map(nodes.map((node, index) => [node.id, index]));
@@ -280,10 +270,8 @@ function repairCycles<T extends TreeNodeLike>(nodes: T[]): T[] {
 }
 
 /**
- * Follows the parents up from the node at `start` and returns the indices of
- * the cycle the walk enters. Returns an empty list when the walk ends at a
- * node without a parent or at a node an earlier walk visited. The function
- * adds each node it passes to `visited`.
+ * Returns the indices of the parent cycle above the node at `start`, or an
+ * empty list. Stops at a node in `visited`, which an earlier walk checked.
  */
 function cycleAbove(
   start: number,
