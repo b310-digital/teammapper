@@ -169,7 +169,7 @@ describe('validateMapFile', () => {
     expect(summary(validate(nodes))).toEqual(['warning nodes[0].parent']);
   });
 
-  it('warns about the one cycle node whose parent the import clears', () => {
+  it('warns once per parent cycle', () => {
     const nodes = [
       node('root', null, true),
       node('a', 'b'),

@@ -325,7 +325,7 @@ describe('repairOrphanedNodes', () => {
     expect(nodes).toEqual(NODES);
   });
 
-  it('keeps the main root the loader picks when no node carries isRoot', () => {
+  it('marks the main root before the repair when no node carries isRoot', () => {
     const nodes = [node('a', 'gone'), node('root', null)];
 
     repairOrphanedNodes(nodes);

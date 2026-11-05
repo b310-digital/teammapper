@@ -173,7 +173,7 @@ function fileNodes(nodes: readonly unknown[]): FileNode[] {
 }
 
 /**
- * Returns the fields a node attribute group allows, read from its schema, or
+ * Returns the allowed fields of a node attribute group from its schema, or
  * null for a plain value such as `name`. For `font` the fields are `size`,
  * `style` and `weight`. The function unwraps `v.optional` and `v.nullable`,
  * which store the group schema in `wrapped`. A field added to the schema needs
@@ -210,7 +210,7 @@ function checkFields(
   }
 }
 
-/** Warns about each node field the import drops, attribute groups included. */
+/** Warns about unknown node fields, attribute groups included. */
 function checkNodeFields(
   nodes: readonly FileNode[],
   version: MapFileVersion,
@@ -259,9 +259,9 @@ function checkUniqueIds(
 }
 
 /**
- * Checks the main root of the map the loader builds. `nodes` come from the
- * file, `loaded` from the import's repair, which leaves at least one root
- * node. `findMainRoot` picks the same main root as the loader.
+ * Finds the main root with `findMainRoot`, which picks the same node as the
+ * loader, and checks it. `nodes` come from the file, and `loaded` come from
+ * the import's repair, which leaves at least one root node.
  */
 function checkMainRoot(
   nodes: readonly FileNode[],
@@ -291,7 +291,7 @@ function checkMainRoot(
   }
 }
 
-/** Returns the reason the import clears the parent of the node. */
+/** Returns why the import clears the parent of `node`. */
 function brokenLinkCause(node: FileNode, ids: Set<string>): string {
   if (node.parent === node.id) return 'The node is its own parent';
   if (!ids.has(node.parent ?? '')) return `No node has the id "${node.parent}"`;
@@ -299,7 +299,7 @@ function brokenLinkCause(node: FileNode, ids: Set<string>): string {
 }
 
 /**
- * Warns about each orphaned node the import repairs and returns the repaired
+ * Warns about each orphaned node that needs a repair and returns the repaired
  * copies of all nodes. Running `repairOrphanedNodes` on copies makes the
  * warnings match the import. Nodes below a repaired node get no warning.
  */

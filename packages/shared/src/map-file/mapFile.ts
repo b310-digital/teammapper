@@ -82,7 +82,7 @@ export type MapFile = Omit<MapExport, 'version' | 'arrows'> & {
   version: MapFileVersion;
   /** The arrow entries, unchecked: the loader filters them against the nodes. */
   arrows: unknown[];
-  /** The number of orphaned nodes the import turned into root nodes. */
+  /** Counts the orphaned nodes that the import turned into root nodes. */
   repairedNodes: number;
 };
 

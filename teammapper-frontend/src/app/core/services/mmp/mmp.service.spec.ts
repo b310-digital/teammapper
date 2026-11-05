@@ -567,7 +567,7 @@ describe('MmpService', () => {
       expect(newSpy).toHaveBeenCalledWith(MAP_FILE.nodes, MAP_FILE.arrows);
     });
 
-    it('resolves to the number of orphaned nodes the import repaired', async () => {
+    it('resolves to the number of repaired orphaned nodes', async () => {
       parseMapFileMock.mockReturnValueOnce({ ...MAP_FILE, repairedNodes: 2 });
 
       await expect(service.importMap('file text')).resolves.toEqual({
