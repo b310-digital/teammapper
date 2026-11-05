@@ -171,20 +171,50 @@ function fileNodes(nodes: readonly unknown[]): FileNode[] {
   });
 }
 
-/** Warns about node fields the import drops. */
+/**
+ * The entries of an object schema such as the one for `font`, read through
+ * optional and nullable wrappers, or null when the schema describes no object.
+ */
+function objectEntries(schema: unknown): Record<string, unknown> | null {
+  if (!isRecord(schema)) return null;
+  if (isRecord(schema.wrapped)) return objectEntries(schema.wrapped);
+  return isRecord(schema.entries) ? schema.entries : null;
+}
+
+/**
+ * Warns about each field of the value that the schema entries do not name,
+ * and checks the fields of each attribute group, such as `font`, the same way.
+ */
+function checkFields(
+  value: Record<string, unknown>,
+  entries: Record<string, unknown>,
+  path: string,
+  findings: Findings
+): void {
+  for (const [key, field] of Object.entries(value)) {
+    if (!Object.hasOwn(entries, key)) {
+      findings.warn(
+        `${path}.${key}`,
+        'The file format has no such field; the import drops it.'
+      );
+      continue;
+    }
+    const groupEntries = objectEntries(entries[key]);
+    if (groupEntries && isRecord(field)) {
+      checkFields(field, groupEntries, `${path}.${key}`, findings);
+    }
+  }
+}
+
+/** Warns about node fields the import drops, inside attribute groups too. */
 function checkNodeFields(
   nodes: readonly FileNode[],
   version: MapFileVersion,
   findings: Findings
 ): void {
-  const fields = new Set(Object.keys(MapFileNodeSchemas[version].entries));
+  const { entries } = MapFileNodeSchemas[version];
   for (const node of nodes) {
-    for (const key of Object.keys(node.raw).filter(k => !fields.has(k))) {
-      findings.warn(
-        `${nodePath(node)}.${key}`,
-        'The node has no such field; the import drops it.'
-      );
-    }
+    checkFields(node.raw, entries, nodePath(node), findings);
   }
 }
 
@@ -261,24 +291,32 @@ function checkMainRoot(nodes: FileNode[], findings: Findings): void {
 }
 
 /**
- * The ancestors of the node, parent first. The walk stops at a missing parent
- * or at the first node it reaches twice, so a parent cycle ends it.
+ * The ids of the orphaned nodes in a parent cycle. Each walk follows the
+ * parents until it reaches a missing parent or a node it visited before. When
+ * that node lies on the current walk, the walk has gone round a cycle. Every
+ * node is visited once, so the time grows linearly with the node count.
  */
-function ancestors(node: FileNode, byId: Map<string, FileNode>): FileNode[] {
-  const found: FileNode[] = [];
-  const seen = new Set<string>();
-  let current = byId.get(node.parent ?? '');
-  while (current && !seen.has(current.id)) {
-    found.push(current);
-    seen.add(current.id);
-    current = byId.get(current.parent ?? '');
+function cycleMembers(
+  orphans: readonly FileNode[],
+  byId: Map<string, FileNode>
+): Set<string> {
+  const members = new Set<string>();
+  const visited = new Set<string>();
+  for (const start of orphans) {
+    const walk: string[] = [];
+    let current: FileNode | undefined = start;
+    while (current && !visited.has(current.id)) {
+      visited.add(current.id);
+      walk.push(current.id);
+      current = byId.get(current.parent ?? '');
+    }
+    const cycleStart = current ? walk.indexOf(current.id) : -1;
+    if (cycleStart >= 0) {
+      walk.slice(cycleStart).forEach(id => members.add(id));
+    }
   }
-  return found;
+  return members;
 }
-
-/** Whether following the parents from the node leads back to it. */
-const inCycle = (node: FileNode, byId: Map<string, FileNode>): boolean =>
-  ancestors(node, byId).some(ancestor => ancestor.id === node.id);
 
 /**
  * The reason no root node reaches an orphaned node, or null when the node
@@ -286,21 +324,44 @@ const inCycle = (node: FileNode, byId: Map<string, FileNode>): boolean =>
  */
 function orphanCause(
   node: FileNode,
-  byId: Map<string, FileNode>
+  byId: Map<string, FileNode>,
+  cycles: Set<string>
 ): string | null {
   if (node.parent === node.id) return 'The node names itself as parent';
   if (!byId.has(node.parent ?? ''))
     return `No node has the id "${node.parent}"`;
-  if (inCycle(node, byId)) return 'The node is part of a parent cycle';
+  if (cycles.has(node.id)) return 'The node is part of a parent cycle';
   return null;
 }
 
-/** The nearest ancestor of the node that carries an orphan cause. */
-const orphanAncestor = (
-  node: FileNode,
-  byId: Map<string, FileNode>
-): FileNode | undefined =>
-  ancestors(node, byId).find(ancestor => orphanCause(ancestor, byId) !== null);
+/**
+ * Maps each orphaned node without a cause to its nearest orphaned ancestor
+ * with one. The walk starts at the nodes with a cause and moves down through
+ * the child nodes, so it visits each orphaned node once.
+ */
+function orphanAncestors(
+  orphans: readonly FileNode[],
+  causes: Map<string, string>
+): Map<string, FileNode> {
+  const children = new Map<string, FileNode[]>();
+  for (const node of orphans) {
+    const key = node.parent ?? '';
+    const siblings = children.get(key) ?? [];
+    siblings.push(node);
+    children.set(key, siblings);
+  }
+  const ancestors = new Map<string, FileNode>();
+  const pending = orphans.filter(node => causes.has(node.id));
+  for (let node = pending.pop(); node; node = pending.pop()) {
+    const ancestor = causes.has(node.id) ? node : ancestors.get(node.id);
+    for (const child of children.get(node.id) ?? []) {
+      if (!ancestor || causes.has(child.id)) continue;
+      ancestors.set(child.id, ancestor);
+      pending.push(child);
+    }
+  }
+  return ancestors;
+}
 
 /**
  * Warns about each orphaned node `sortNodesParentFirst` returns as unreached,
@@ -309,13 +370,20 @@ const orphanAncestor = (
  */
 function checkOrphans(nodes: readonly FileNode[], findings: Findings): void {
   const byId = new Map(nodes.map(node => [node.id, node]));
+  const orphans = sortNodesParentFirst(nodes).unreached;
+  const cycles = cycleMembers(orphans, byId);
+  const causes = new Map<string, string>();
+  for (const node of orphans) {
+    const cause = orphanCause(node, byId, cycles);
+    if (cause !== null) causes.set(node.id, cause);
+  }
+  const ancestors = orphanAncestors(orphans, causes);
   const suffix =
     'no root node reaches it, and the server drops it when it saves the map.';
-  for (const node of sortNodesParentFirst(nodes).unreached) {
-    const cause = orphanCause(node, byId);
-    const ancestor = cause === null ? orphanAncestor(node, byId) : undefined;
+  for (const node of orphans) {
+    const ancestor = ancestors.get(node.id);
     const reason =
-      cause ??
+      causes.get(node.id) ??
       `The node descends from the orphaned node ${ancestor ? nodePath(ancestor) : 'above it'}`;
     findings.warn(`${nodePath(node)}.parent`, `${reason}; ${suffix}`);
   }

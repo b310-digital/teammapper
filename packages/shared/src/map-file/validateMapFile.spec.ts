@@ -180,6 +180,41 @@ describe('validateMapFile', () => {
     expect(found[2]).toContain('part of a parent cycle');
   });
 
+  it('names the nearest orphaned ancestor in a long chain below a missing parent, in linear time', () => {
+    const uuid = (n: number) =>
+      `00000000-0000-4000-9000-${String(n).padStart(12, '0')}`;
+    // Large enough that the old cubic walk takes about a second, small enough
+    // that a regression fails fast instead of blocking CI for minutes.
+    const chain = Array.from({ length: 500 }, (_, i) => ({
+      ...node('a', null),
+      id: uuid(i + 1),
+      parent: i === 0 ? IDS.gone : uuid(i),
+    }));
+    const started = performance.now();
+    const found = reasons(validate([node('root', null, true), ...chain]));
+    const elapsed = performance.now() - started;
+
+    expect(found[0]).toContain(`No node has the id "${IDS.gone}"`);
+    expect(found[499]).toContain('descends from the orphaned node nodes[1]');
+    expect(elapsed).toBeLessThan(250);
+  });
+
+  it('warns about fields inside a node attribute group, which the import drops', () => {
+    const root = node('root', null, true);
+    const nodes = [
+      {
+        ...root,
+        font: { ...root.font, family: 'serif' },
+        coordinates: { x: 0, y: 0, z: 1 },
+      },
+    ];
+
+    expect(summary(validate(nodes))).toEqual([
+      'warning nodes[0].coordinates.z',
+      'warning nodes[0].font.family',
+    ]);
+  });
+
   it('keeps the child nodes of a node that fails the schema out of the orphans', () => {
     const root = { ...node('root', null, true), k: 'one' };
     const report = validateMapFile(
