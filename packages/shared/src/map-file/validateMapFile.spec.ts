@@ -157,7 +157,7 @@ describe('validateMapFile', () => {
     expect(summary(validate(nodes))).toEqual(['error nodes[1].isRoot']);
   });
 
-  it('warns about the main root when every node sits in a parent cycle, which the import repairs', () => {
+  it('warns about the main root when every node is in a parent cycle', () => {
     const nodes = [node('b', 'a'), node('a', 'b', true)];
 
     expect(summary(validate(nodes))).toEqual(['warning nodes[1].parent']);

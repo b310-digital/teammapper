@@ -73,7 +73,7 @@ test('imports a JSON file with rgba colors in the default colors', async ({
   );
 });
 
-test('repairs orphaned nodes on import and keeps them after a reload @server', async ({
+test('repairs orphaned nodes on import and shows them after a reload @server', async ({
   page,
 }) => {
   await page.goto('/');
@@ -86,9 +86,9 @@ test('repairs orphaned nodes on import and keeps them after a reload @server', a
   const fileChooser = await fileChooserPromise;
   await fileChooser.setFiles('./e2e/fake-data/orphaned-nodes-map.json');
 
-  // The file holds a node whose parent is missing, its child, and two nodes
-  // that name each other as parent. The import makes the first of each group
-  // a root node and tells the user once.
+  // The file contains a node with a missing parent, that node's child, and two
+  // nodes that name each other as parent. The import turns the first node of
+  // each group into a root node and shows one warning.
   await expect(page.locator('.toast-warning')).toHaveCount(1, {
     timeout: 5000,
   });

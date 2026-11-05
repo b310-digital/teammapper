@@ -277,7 +277,7 @@ describe('withMainRoot', () => {
 describe('repairOrphanedNodes', () => {
   const parents = (nodes: MapNode[]) => nodes.map(n => n.parent);
 
-  it('clears a parent the list lacks and keeps the nodes below in its tree', () => {
+  it('clears a missing parent and keeps the nodes below in the tree', () => {
     const nodes = [node('root', null, true), node('a', 'gone'), node('b', 'a')];
 
     const repaired = repairOrphanedNodes(nodes);
@@ -305,7 +305,7 @@ describe('repairOrphanedNodes', () => {
     expect(parents(nodes)).toEqual([null, 'b', null, 'b']);
   });
 
-  it('clears the parent of the main root when it sits in a parent cycle', () => {
+  it('clears the parent of the main root when the main root is in a parent cycle', () => {
     const nodes = [node('b', 'a'), node('a', 'b', true)];
 
     expect(repairOrphanedNodes(nodes).map(n => n.id)).toEqual(['a']);

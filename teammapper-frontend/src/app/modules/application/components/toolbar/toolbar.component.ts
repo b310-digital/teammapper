@@ -207,8 +207,8 @@ export class ToolbarComponent {
   }
 
   /**
-   * Import the map from the JSON text. The user sees an error on failure, and
-   * one warning when the import had to repair orphaned nodes.
+   * Imports the map from the JSON text. Shows an error toast when the import
+   * fails, and one warning toast when the import repaired orphaned nodes.
    */
   private async importJSON(json: string): Promise<void> {
     let repairedNodes: number;
@@ -221,7 +221,7 @@ export class ToolbarComponent {
     if (repairedNodes > 0) await this.warnRepairedNodes();
   }
 
-  /** Tells the user that the import failed, and leaves the map as it is. */
+  /** Shows the error toast for a failed import. */
   private async showImportError(error: unknown): Promise<void> {
     const message = await this.utilsService.translate(
       this.importErrorKey(error)
@@ -229,7 +229,7 @@ export class ToolbarComponent {
     this.toastrService.error(message);
   }
 
-  /** Tells the user that the import changed the map to keep every node. */
+  /** Shows the warning toast for an import that repaired orphaned nodes. */
   private async warnRepairedNodes(): Promise<void> {
     const message = await this.utilsService.translate(
       'TOASTS.WARNINGS.IMPORT_REPAIRED_NODES'

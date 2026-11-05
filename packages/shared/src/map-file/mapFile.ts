@@ -82,7 +82,7 @@ export type MapFile = Omit<MapExport, 'version' | 'arrows'> & {
   version: MapFileVersion;
   /** The arrow entries, unchecked: the loader filters them against the nodes. */
   arrows: unknown[];
-  /** How many orphaned nodes the import turned into root nodes. */
+  /** The number of orphaned nodes the import turned into root nodes. */
   repairedNodes: number;
 };
 
@@ -232,20 +232,18 @@ export function withMainRoot<T extends TreeNodeLike>(nodes: T[]): T[] {
 }
 
 /**
- * Repairs the orphaned nodes and returns the nodes it changed. An orphaned
- * node has a broken parent link, and the server would drop it with every node
- * below it when it saves the map. A map may hold several trees, so the repair
- * clears the broken link and the node starts a tree of its own, keeping the
- * nodes below it. Changes the nodes in place:
+ * Turns each orphaned node into a root node and returns the changed nodes.
+ * Without the repair, the server drops an orphaned node and its subtree when
+ * it saves the map. The function edits the nodes in place and clears these
+ * parents:
  *
- * 1. A node that names itself or a node the list lacks as parent loses its
- *    parent.
- * 2. In a parent cycle, the main root loses its parent when it is part of the
- *    cycle, else the first node in list order. The rest of the cycle stays
- *    below that node.
+ * 1. A parent that names the node itself or a node missing from the list.
+ * 2. One parent in each parent cycle: the parent of the main root when the
+ *    cycle includes the main root, else the parent of the first cycle node in
+ *    list order. The other cycle nodes stay below that node.
  *
- * Marks the main root before the repair, so a repaired node never takes the
- * place of the main root the loader would pick.
+ * The function marks the main root first, so a repaired node never replaces
+ * the main root the loader picks.
  */
 export function repairOrphanedNodes<T extends TreeNodeLike>(nodes: T[]): T[] {
   withMainRoot(nodes);
@@ -258,12 +256,11 @@ export function repairOrphanedNodes<T extends TreeNodeLike>(nodes: T[]): T[] {
 }
 
 /**
- * Clears one parent in each parent cycle, and returns the nodes it changed:
- * the parent of the main root when the cycle holds it, else the parent of the
- * first node in list order. From each node, the walk steps from parent to parent
- * until it reaches a node without a parent or a node it visited before. When
- * that node lies on the current walk, the walk went round a cycle. The walk
- * never visits a node twice, so a map twice as large takes twice as long.
+ * Clears one parent in each parent cycle and returns the changed nodes. The
+ * function clears the parent of the main root when the cycle includes the
+ * main root, else the parent of the first cycle node in list order. No walk
+ * enters a node an earlier walk visited, so the run time grows linearly with
+ * the node count.
  */
 function repairCycles<T extends TreeNodeLike>(nodes: T[]): T[] {
   const indexOfId = new Map(nodes.map((node, index) => [node.id, index]));
@@ -283,11 +280,10 @@ function repairCycles<T extends TreeNodeLike>(nodes: T[]): T[] {
 }
 
 /**
- * Walks from the node at `start` up from parent to parent and returns the
- * indices of the cycle the walk runs into, or an empty list when it reaches a
- * node without a parent. The walk adds each node it passes to `visited` and
- * stops at a node visited before. That node starts a cycle only when this
- * walk passed it; a node from an earlier walk was already checked.
+ * Follows the parents up from the node at `start` and returns the indices of
+ * the cycle the walk enters. Returns an empty list when the walk ends at a
+ * node without a parent or at a node an earlier walk visited. The function
+ * adds each node it passes to `visited`.
  */
 function cycleAbove(
   start: number,

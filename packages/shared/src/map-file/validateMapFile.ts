@@ -173,14 +173,11 @@ function fileNodes(nodes: readonly unknown[]): FileNode[] {
 }
 
 /**
- * Lists the settings a node attribute group allows, read from its schema. For
- * `font` the list holds `size`, `style` and `weight`. Returns null for a plain
- * value such as `name`, which holds no settings of its own.
- *
- * A schema wrapped in `v.optional` or `v.nullable` keeps the group schema in
- * `wrapped`, so the function unwraps it first. Reading the list from the
- * schema keeps this check in step with the import: a setting added to the
- * schema needs no change here.
+ * Returns the fields a node attribute group allows, read from its schema, or
+ * null for a plain value such as `name`. For `font` the fields are `size`,
+ * `style` and `weight`. The function unwraps `v.optional` and `v.nullable`,
+ * which store the group schema in `wrapped`. A field added to the schema needs
+ * no change here.
  */
 function objectEntries(schema: unknown): Record<string, unknown> | null {
   if (!isRecord(schema)) return null;
@@ -189,8 +186,8 @@ function objectEntries(schema: unknown): Record<string, unknown> | null {
 }
 
 /**
- * Warns about each field of the value that the schema entries do not name,
- * and checks the fields of each attribute group, such as `font`, the same way.
+ * Warns about each field of `value` that `entries` does not name, and checks
+ * the fields inside each attribute group, such as `font`, the same way.
  */
 function checkFields(
   value: Record<string, unknown>,
@@ -213,7 +210,7 @@ function checkFields(
   }
 }
 
-/** Warns about node fields the import drops, inside attribute groups too. */
+/** Warns about each node field the import drops, attribute groups included. */
 function checkNodeFields(
   nodes: readonly FileNode[],
   version: MapFileVersion,
@@ -263,8 +260,8 @@ function checkUniqueIds(
 
 /**
  * Checks the main root of the map the loader builds. `nodes` are the nodes as
- * the file holds them; `loaded` are the same nodes after the import's repair,
- * which always leaves at least one root node. `findMainRoot` picks the same
+ * the file lists them, and `loaded` are the same nodes after the import's
+ * repair, which leaves at least one root node. `findMainRoot` picks the same
  * node as the loader's `withMainRoot`: the first node with `isRoot`, else the
  * first root node.
  */
@@ -296,7 +293,7 @@ function checkMainRoot(
   }
 }
 
-/** Why the parent link of a node the import repairs is broken. */
+/** Returns the reason the import clears the parent of the node. */
 function brokenLinkCause(node: FileNode, ids: Set<string>): string {
   if (node.parent === node.id) return 'The node names itself as parent';
   if (!ids.has(node.parent ?? '')) return `No node has the id "${node.parent}"`;
@@ -304,10 +301,10 @@ function brokenLinkCause(node: FileNode, ids: Set<string>): string {
 }
 
 /**
- * Warns about each orphaned node the import repairs, and returns the nodes as
- * the import loads them. The check runs the import's own repair on copies of
- * the nodes, so it reports exactly the nodes whose parent link the import
- * clears. The nodes below a repaired node stay in its tree and need no warning.
+ * Warns about each orphaned node the import repairs and returns the nodes as
+ * the import loads them. The check runs `repairOrphanedNodes` on copies, so it
+ * warns about the same nodes the import changes. Nodes below a repaired node
+ * stay in its tree and get no warning.
  */
 function checkOrphans(
   nodes: readonly FileNode[],

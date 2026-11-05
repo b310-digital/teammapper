@@ -8,17 +8,17 @@ specific to TeamMapper.
 
 ## Words to avoid
 
-| Do not write                            | Write instead                    |
-| --------------------------------------- | -------------------------------- |
-| board, canvas, diagram, chart, document  | mind map                         |
-| Mindmap, mindmap (one word)              | mind map                         |
-| card, box, bubble, topic, item           | node                             |
-| central topic, main idea, centre         | main root                        |
-| edge                                    | branch                           |
-| fold, collapse, unfold, expand           | hide, show                       |
-| clone, fork                             | duplicate                        |
-| version, revision, snapshot (of a map)   | edit or state; see **Undo / Redo** |
-| flag, mark (for a stored value)          | attribute                        |
+| Do not write                            | Write instead                      |
+| --------------------------------------- | ---------------------------------- |
+| board, canvas, diagram, chart, document | mind map                           |
+| Mindmap, mindmap (one word)             | mind map                           |
+| card, box, bubble, topic, item          | node                               |
+| central topic, main idea, centre        | main root                          |
+| edge                                    | branch                             |
+| fold, collapse, unfold, expand          | hide, show                         |
+| clone, fork                             | duplicate                          |
+| version, revision, snapshot (of a map)  | edit or state; see **Undo / Redo** |
+| flag, mark (for a stored value)         | attribute                          |
 
 ### Reserved
 
@@ -89,9 +89,10 @@ parent relationships form a cycle. This includes descendants of affected
 nodes. Orphaned nodes indicate invalid map data. The layout places them in a
 column to the right of the trees, without treating them as trees.
 
-An import repairs orphaned nodes. It removes a parent link that points to a
-missing node or to the node itself, and one parent link in each cycle. Each
-such node becomes a root node with its subtree, and the user sees one warning.
+An import repairs orphaned nodes. The import removes the parent link of each
+node whose parent is missing or is the node itself, and of one node in each
+cycle. Each repaired node becomes a root node, with its subtree below it. The user
+sees one warning per import.
 
 When the backend saves or duplicates a map, it omits orphaned nodes, logs their
 IDs and deletes their database rows to satisfy the parent foreign key.
