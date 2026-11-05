@@ -86,8 +86,8 @@ test('repairs orphaned nodes on import and shows them after a reload @server', a
   const fileChooser = await fileChooserPromise;
   await fileChooser.setFiles('./e2e/fake-data/orphaned-nodes-map.json');
 
-  // The file has a missing parent and a parent cycle. The import repairs both
-  // and warns once.
+  // The map file contains orphaned nodes from a missing parent and from a
+  // parent cycle. The import repairs them and shows one warning.
   await expect(page.locator('.toast-warning')).toHaveCount(1, {
     timeout: 5000,
   });
