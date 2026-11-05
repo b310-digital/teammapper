@@ -211,15 +211,22 @@ export class ToolbarComponent {
    * one warning when the import had to repair orphaned nodes.
    */
   private async importJSON(json: string): Promise<void> {
+    let repairedNodes: number;
     try {
-      const { repairedNodes } = await this.mmpService.importMap(json);
-      if (repairedNodes > 0) await this.warnRepairedNodes();
+      ({ repairedNodes } = await this.mmpService.importMap(json));
     } catch (error) {
-      const message = await this.utilsService.translate(
-        this.importErrorKey(error)
-      );
-      this.toastrService.error(message);
+      await this.showImportError(error);
+      return;
     }
+    if (repairedNodes > 0) await this.warnRepairedNodes();
+  }
+
+  /** Tells the user that the import failed, and leaves the map as it is. */
+  private async showImportError(error: unknown): Promise<void> {
+    const message = await this.utilsService.translate(
+      this.importErrorKey(error)
+    );
+    this.toastrService.error(message);
   }
 
   /** Tells the user that the import changed the map to keep every node. */

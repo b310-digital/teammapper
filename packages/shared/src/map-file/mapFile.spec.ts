@@ -305,6 +305,13 @@ describe('repairOrphanedNodes', () => {
     expect(parents(nodes)).toEqual([null, 'b', null, 'b']);
   });
 
+  it('clears the parent of the main root when it sits in a parent cycle', () => {
+    const nodes = [node('b', 'a'), node('a', 'b', true)];
+
+    expect(repairOrphanedNodes(nodes).map(n => n.id)).toEqual(['a']);
+    expect(parents(nodes)).toEqual(['a', null]);
+  });
+
   it('repairs a map whose nodes all form one cycle', () => {
     const nodes = [node('a', 'b'), node('b', 'a')];
 

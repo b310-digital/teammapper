@@ -248,7 +248,7 @@
       "MAP_IMPORT_IN_PROGRESS": "Map import in progress...",
       "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
       "MERMAID_SEVERAL_TREES": "每棵樹都成為一個獨立的 mindmap 區塊。TeamMapper 以外的 Mermaid 工具一次只能呈現一個區塊。",
-      "IMPORT_REPAIRED_NODES": "檔案中的部分節點指向了不存在的父節點。匯入時已將它們變為獨立的樹，因此沒有節點遺失。",
+      "IMPORT_REPAIRED_NODES": "檔案中部分節點與父節點的連結已損毀。匯入時已將它們變為獨立的樹，因此沒有節點遺失。",
       "ARROW_REFUSED": {
         "SELF": "箭頭不能從節點指向它自己。",
         "DUPLICATE": "這兩個節點之間已有一條同方向的箭頭。",

@@ -248,7 +248,7 @@
       "MAP_IMPORT_IN_PROGRESS": "Importação de mapa mental em andamento",
       "MAP_UPDATE_IN_PROGRESS": "Atualizando o mapa mental",
       "MERMAID_SEVERAL_TREES": "Cada árvore virou seu próprio bloco mindmap. Ferramentas Mermaid fora do TeamMapper exibem um bloco por vez.",
-      "IMPORT_REPAIRED_NODES": "Alguns nós do arquivo apontavam para um nó pai que não existe. A importação os transformou em árvores separadas, então nenhum nó foi perdido.",
+      "IMPORT_REPAIRED_NODES": "Alguns nós do arquivo tinham um vínculo quebrado com o nó pai. A importação os transformou em árvores separadas, então nenhum nó foi perdido.",
       "ARROW_REFUSED": {
         "SELF": "Uma seta não pode apontar de um nó para ele mesmo.",
         "DUPLICATE": "Já existe uma seta entre estes dois nós nesta direção.",

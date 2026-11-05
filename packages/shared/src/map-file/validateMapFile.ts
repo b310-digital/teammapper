@@ -262,11 +262,17 @@ function checkUniqueIds(
 }
 
 /**
- * Checks the main root of the map the loader builds. `findMainRoot` picks the
- * same node as the loader's `withMainRoot`: the first node with `isRoot`, else
- * the first root node.
+ * Checks the main root of the map the loader builds. `nodes` are the nodes as
+ * the file holds them; `loaded` are the same nodes after the import's repair,
+ * which always leaves at least one root node. `findMainRoot` picks the same
+ * node as the loader's `withMainRoot`: the first node with `isRoot`, else the
+ * first root node.
  */
-function checkMainRoot(nodes: FileNode[], findings: Findings): void {
+function checkMainRoot(
+  nodes: readonly FileNode[],
+  loaded: readonly FileNode[],
+  findings: Findings
+): void {
   const marked = nodes.filter(node => node.isRoot);
   if (marked.length > 1) {
     const list = marked.map(nodePath).join(', ');
@@ -275,14 +281,7 @@ function checkMainRoot(nodes: FileNode[], findings: Findings): void {
       `${marked.length} nodes carry isRoot (${list}); a map has one main root.`
     );
   }
-  if (nodes.length > 0 && nodes.every(node => node.parent !== null)) {
-    findings.error(
-      'nodes',
-      'Every node has a parent, so the map has no root node and no tree to draw.'
-    );
-    return;
-  }
-  const main = findMainRoot(nodes);
+  const main = findMainRoot(loaded);
   if (main && marked.length === 0) {
     findings.warn(
       'nodes',
@@ -305,23 +304,28 @@ function brokenLinkCause(node: FileNode, ids: Set<string>): string {
 }
 
 /**
- * Warns about each orphaned node the import repairs. The check runs the
- * import's own repair on copies of the nodes, so it reports exactly the nodes
- * whose parent link the import clears. The nodes below a repaired node stay in
- * its tree and need no warning.
+ * Warns about each orphaned node the import repairs, and returns the nodes as
+ * the import loads them. The check runs the import's own repair on copies of
+ * the nodes, so it reports exactly the nodes whose parent link the import
+ * clears. The nodes below a repaired node stay in its tree and need no warning.
  */
-function checkOrphans(nodes: readonly FileNode[], findings: Findings): void {
+function checkOrphans(
+  nodes: readonly FileNode[],
+  findings: Findings
+): FileNode[] {
   const ids = new Set(nodes.map(node => node.id));
-  const byId = new Map(nodes.map(node => [node.id, node]));
-  const repaired = repairOrphanedNodes(nodes.map(node => ({ ...node })))
-    .flatMap(copy => byId.get(copy.id) ?? [])
-    .sort((a, b) => a.index - b.index);
-  for (const node of repaired) {
-    findings.warn(
-      `${nodePath(node)}.parent`,
-      `${brokenLinkCause(node, ids)}; the import clears the parent, so the node starts a tree of its own.`
-    );
-  }
+  const loaded = nodes.map(node => ({ ...node }));
+  const repaired = new Set(repairOrphanedNodes(loaded));
+  nodes
+    .filter((_node, i) => repaired.has(loaded[i]))
+    .sort((a, b) => a.index - b.index)
+    .forEach(node => {
+      findings.warn(
+        `${nodePath(node)}.parent`,
+        `${brokenLinkCause(node, ids)}; the import clears the parent, so the node starts a tree of its own.`
+      );
+    });
+  return loaded;
 }
 
 /** Warns about each arrow entry the import drops, with the reason. */
@@ -350,8 +354,8 @@ function checkMap(layout: MapFileLayout, findings: Findings): void {
   checkNodeFields(nodes, layout.version, findings);
   checkNodeColors(nodes, findings);
   const kept = checkUniqueIds(nodes, findings);
-  checkMainRoot(kept, findings);
-  checkOrphans(kept, findings);
+  const loaded = checkOrphans(kept, findings);
+  checkMainRoot(kept, loaded, findings);
   // The loader checks arrows against every node, repeated ids included.
   if (allValid) checkArrows(layout.arrows, nodes, findings);
 }

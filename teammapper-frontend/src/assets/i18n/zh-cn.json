@@ -248,7 +248,7 @@
       "MAP_IMPORT_IN_PROGRESS": "心智图导入中",
       "MAP_UPDATE_IN_PROGRESS": "更新思维导图",
       "MERMAID_SEVERAL_TREES": "每棵树都成为一个独立的 mindmap 块。TeamMapper 之外的 Mermaid 工具一次只能渲染一个块。",
-      "IMPORT_REPAIRED_NODES": "文件中的部分节点指向了不存在的父节点。导入时已将它们变为独立的树，因此没有节点丢失。",
+      "IMPORT_REPAIRED_NODES": "文件中部分节点与父节点的链接已损坏。导入时已将它们变为独立的树，因此没有节点丢失。",
       "ARROW_REFUSED": {
         "SELF": "箭头不能从节点指向它自己。",
         "DUPLICATE": "这两个节点之间已有一条同方向的箭头。",

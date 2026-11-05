@@ -240,8 +240,9 @@ export function withMainRoot<T extends TreeNodeLike>(nodes: T[]): T[] {
  *
  * 1. A node that names itself or a node the list lacks as parent loses its
  *    parent.
- * 2. In a parent cycle, the first node in list order loses its parent, and the
- *    rest of the cycle stays below it.
+ * 2. In a parent cycle, the main root loses its parent when it is part of the
+ *    cycle, else the first node in list order. The rest of the cycle stays
+ *    below that node.
  *
  * Marks the main root before the repair, so a repaired node never takes the
  * place of the main root the loader would pick.
@@ -257,8 +258,9 @@ export function repairOrphanedNodes<T extends TreeNodeLike>(nodes: T[]): T[] {
 }
 
 /**
- * Clears the parent of the first node in list order of each parent cycle, and
- * returns those nodes. From each node, the walk steps from parent to parent
+ * Clears one parent in each parent cycle, and returns the nodes it changed:
+ * the parent of the main root when the cycle holds it, else the parent of the
+ * first node in list order. From each node, the walk steps from parent to parent
  * until it reaches a node without a parent or a node it visited before. When
  * that node lies on the current walk, the walk went round a cycle. The walk
  * never visits a node twice, so a map twice as large takes twice as long.
@@ -270,20 +272,37 @@ function repairCycles<T extends TreeNodeLike>(nodes: T[]): T[] {
   const visited = new Set<number>();
   const repaired: T[] = [];
   nodes.forEach((_node, start) => {
-    const walk: number[] = [];
-    let current: number | undefined = start;
-    while (current !== undefined && !visited.has(current)) {
-      visited.add(current);
-      walk.push(current);
-      current = parentIndex(current);
-    }
-    const cycleStart = current === undefined ? -1 : walk.indexOf(current);
-    if (cycleStart < 0) return;
-    const first = nodes[Math.min(...walk.slice(cycleStart))];
-    first.parent = null;
-    repaired.push(first);
+    const cycle = cycleAbove(start, parentIndex, visited);
+    if (cycle.length === 0) return;
+    const mainRoot = cycle.find(index => nodes[index].isRoot);
+    const cut = nodes[mainRoot ?? cycle.reduce((a, b) => Math.min(a, b))];
+    cut.parent = null;
+    repaired.push(cut);
   });
   return repaired;
+}
+
+/**
+ * Walks from the node at `start` up from parent to parent and returns the
+ * indices of the cycle the walk runs into, or an empty list when it reaches a
+ * node without a parent. The walk adds each node it passes to `visited` and
+ * stops at a node visited before. That node starts a cycle only when this
+ * walk passed it; a node from an earlier walk was already checked.
+ */
+function cycleAbove(
+  start: number,
+  parentIndex: (index: number) => number | undefined,
+  visited: Set<number>
+): number[] {
+  const walk: number[] = [];
+  let current: number | undefined = start;
+  while (current !== undefined && !visited.has(current)) {
+    visited.add(current);
+    walk.push(current);
+    current = parentIndex(current);
+  }
+  const cycleStart = current === undefined ? -1 : walk.indexOf(current);
+  return cycleStart < 0 ? [] : walk.slice(cycleStart);
 }
 
 /** Why the import drops an arrow entry: its shape, or an endpoint rule. */
