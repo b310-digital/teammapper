@@ -116,22 +116,19 @@ describe('validateMapFile with the fixtures', () => {
     ]);
   });
 
-  it('warns about ignored fields, orphaned nodes and dropped arrows', () => {
+  it('warns about ignored fields, repaired orphaned nodes and dropped arrows', () => {
     const report = validateMapFile(readFixture('warnings.json'));
 
     expect(summary(report)).toEqual([
       'warning title',
       'warning nodes[0].hidden',
       'warning nodes[1].parent',
-      'warning nodes[2].parent',
       'warning arrows[0]',
       'warning arrows[1]',
       'warning arrows[2]',
       'warning arrows[2]',
     ]);
-    expect(reasons(report)[3]).toContain(
-      'descends from the orphaned node nodes[1]'
-    );
+    expect(reasons(report)[2]).toContain('starts a tree of its own');
   });
 });
 
@@ -160,24 +157,66 @@ describe('validateMapFile', () => {
     expect(summary(validate(nodes))).toEqual(['error nodes[1].isRoot']);
   });
 
-  it('reports a map where every node has a parent', () => {
-    const nodes = [node('a', 'b', true), node('b', 'a')];
+  it('warns about the main root when every node is in a parent cycle', () => {
+    const nodes = [node('b', 'a'), node('a', 'b', true)];
 
-    expect(summary(validate(nodes))).toContain('error nodes');
+    expect(summary(validate(nodes))).toEqual(['warning nodes[1].parent']);
   });
 
-  it('names the cycle members, and a node below the cycle as a descendant', () => {
+  it('warns about a main root whose parent is missing, which the import repairs', () => {
+    const nodes = [node('root', 'gone', true), node('a', 'root')];
+
+    expect(summary(validate(nodes))).toEqual(['warning nodes[0].parent']);
+  });
+
+  it('warns once per parent cycle', () => {
     const nodes = [
       node('root', null, true),
       node('a', 'b'),
       node('b', 'c'),
       node('c', 'b'),
     ];
-    const found = reasons(validate(nodes));
+    const report = validate(nodes);
 
-    expect(found[0]).toContain('descends from the orphaned node nodes[2]');
-    expect(found[1]).toContain('part of a parent cycle');
-    expect(found[2]).toContain('part of a parent cycle');
+    expect(summary(report)).toEqual(['warning nodes[2].parent']);
+    expect(reasons(report)[0]).toContain('part of a parent cycle');
+  });
+
+  it('warns about a self-referencing node', () => {
+    const nodes = [node('root', null, true), node('a', 'a')];
+    const report = validate(nodes);
+
+    expect(summary(report)).toEqual(['warning nodes[1].parent']);
+    expect(reasons(report)[0]).toContain('is its own parent');
+  });
+
+  it('warns only about the top of a chain below a missing parent', () => {
+    const nodes = [
+      node('root', null, true),
+      node('a', 'gone'),
+      node('b', 'a'),
+      node('c', 'b'),
+    ];
+    const report = validate(nodes);
+
+    expect(summary(report)).toEqual(['warning nodes[1].parent']);
+    expect(reasons(report)[0]).toContain(`No node has the id "${IDS.gone}"`);
+  });
+
+  it('warns about fields inside a node attribute group, which the import drops', () => {
+    const root = node('root', null, true);
+    const nodes = [
+      {
+        ...root,
+        font: { ...root.font, family: 'serif' },
+        coordinates: { x: 0, y: 0, z: 1 },
+      },
+    ];
+
+    expect(summary(validate(nodes))).toEqual([
+      'warning nodes[0].coordinates.z',
+      'warning nodes[0].font.family',
+    ]);
   });
 
   it('keeps the child nodes of a node that fails the schema out of the orphans', () => {

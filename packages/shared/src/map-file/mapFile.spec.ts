@@ -9,6 +9,7 @@ import {
   MapFileNodeSchemas,
   parseMapFile,
   readMapFileLayout,
+  repairOrphanedNodes,
   withMainRoot,
 } from './mapFile';
 
@@ -270,6 +271,82 @@ describe('withMainRoot', () => {
     const nodes = [node('a', null), node('b', null, true)];
 
     expect(withMainRoot(nodes).map(n => n.isRoot)).toEqual([false, true]);
+  });
+});
+
+describe('repairOrphanedNodes', () => {
+  const parents = (nodes: MapNode[]) => nodes.map(n => n.parent);
+
+  it('clears a missing parent and keeps the nodes below in the tree', () => {
+    const nodes = [node('root', null, true), node('a', 'gone'), node('b', 'a')];
+
+    const repaired = repairOrphanedNodes(nodes);
+
+    expect(repaired.map(n => n.id)).toEqual(['a']);
+    expect(parents(nodes)).toEqual([null, null, 'a']);
+  });
+
+  it('clears the parent of a self-referencing node', () => {
+    const nodes = [node('root', null, true), node('a', 'a')];
+
+    expect(repairOrphanedNodes(nodes).map(n => n.id)).toEqual(['a']);
+    expect(parents(nodes)).toEqual([null, null]);
+  });
+
+  it('clears the parent of the first cycle node in list order and keeps the rest of the cycle below it', () => {
+    const nodes = [
+      node('root', null, true),
+      node('a', 'b'),
+      node('b', 'c'),
+      node('c', 'b'),
+    ];
+
+    expect(repairOrphanedNodes(nodes).map(n => n.id)).toEqual(['b']);
+    expect(parents(nodes)).toEqual([null, 'b', null, 'b']);
+  });
+
+  it('clears the parent of the main root when the main root is in a parent cycle', () => {
+    const nodes = [node('b', 'a'), node('a', 'b', true)];
+
+    expect(repairOrphanedNodes(nodes).map(n => n.id)).toEqual(['a']);
+    expect(parents(nodes)).toEqual(['a', null]);
+  });
+
+  it('repairs a map whose nodes all form one cycle', () => {
+    const nodes = [node('a', 'b'), node('b', 'a')];
+
+    expect(repairOrphanedNodes(nodes).map(n => n.id)).toEqual(['a']);
+  });
+
+  it('changes nothing in a list without orphaned nodes', () => {
+    const nodes = [...NODES.map(n => ({ ...n }))];
+
+    expect(repairOrphanedNodes(nodes)).toEqual([]);
+    expect(nodes).toEqual(NODES);
+  });
+
+  it('marks the main root before the repair when no node carries isRoot', () => {
+    const nodes = [node('a', 'gone'), node('root', null)];
+
+    repairOrphanedNodes(nodes);
+
+    expect(nodes.map(n => n.isRoot)).toEqual([false, true]);
+  });
+});
+
+describe('parseMapFile with orphaned nodes', () => {
+  it('repairs the orphaned nodes and counts them', () => {
+    const file = JSON.parse(readFixture('v2.json'));
+    file.nodes[1].parent = '00000000-0000-4000-8000-0000000000ff';
+
+    const { nodes, repairedNodes } = parseMapFile(JSON.stringify(file));
+
+    expect(nodes[1].parent).toBeNull();
+    expect(repairedNodes).toBe(1);
+  });
+
+  it('counts no repaired node in a file without orphaned nodes', () => {
+    expect(parseMapFile(readFixture('v2.json')).repairedNodes).toBe(0);
   });
 });
 

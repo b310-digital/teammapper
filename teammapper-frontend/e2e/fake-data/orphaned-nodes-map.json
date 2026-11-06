@@ -1,0 +1,78 @@
+[
+  {
+    "id": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f601",
+    "parent": "",
+    "name": "Root node",
+    "coordinates": { "x": 0, "y": 0 },
+    "image": { "src": "", "size": 70 },
+    "colors": { "name": "#666666", "background": "#f5f5f5", "branch": "" },
+    "font": { "style": "normal", "size": 26, "weight": "normal" },
+    "link": { "href": "" },
+    "isRoot": true,
+    "k": 1
+  },
+  {
+    "id": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f602",
+    "parent": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f6ff",
+    "name": "Missing parent node",
+    "coordinates": { "x": 400, "y": -200 },
+    "image": { "src": "", "size": 60 },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#FFC107"
+    },
+    "font": { "size": 22, "style": "normal", "weight": "normal" },
+    "link": { "href": "" },
+    "isRoot": false,
+    "k": 1
+  },
+  {
+    "id": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f603",
+    "parent": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f602",
+    "name": "Child of missing parent node",
+    "coordinates": { "x": 600, "y": -200 },
+    "image": { "src": "", "size": 60 },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#FFC107"
+    },
+    "font": { "size": 18, "style": "normal", "weight": "normal" },
+    "link": { "href": "" },
+    "isRoot": false,
+    "k": 1
+  },
+  {
+    "id": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f604",
+    "parent": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f605",
+    "name": "Loop node one",
+    "coordinates": { "x": -400, "y": 200 },
+    "image": { "src": "", "size": 60 },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#4CAF50"
+    },
+    "font": { "size": 22, "style": "normal", "weight": "normal" },
+    "link": { "href": "" },
+    "isRoot": false,
+    "k": 1
+  },
+  {
+    "id": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f605",
+    "parent": "6f1c2a3b-4d5e-4f60-8a71-b2c3d4e5f604",
+    "name": "Loop node two",
+    "coordinates": { "x": -600, "y": 200 },
+    "image": { "src": "", "size": 60 },
+    "colors": {
+      "name": "#666666",
+      "background": "#f5f5f5",
+      "branch": "#4CAF50"
+    },
+    "font": { "size": 18, "style": "normal", "weight": "normal" },
+    "link": { "href": "" },
+    "isRoot": false,
+    "k": 1
+  }
+]

@@ -82,6 +82,8 @@ export type MapFile = Omit<MapExport, 'version' | 'arrows'> & {
   version: MapFileVersion;
   /** The arrow entries, unchecked: the loader filters them against the nodes. */
   arrows: unknown[];
+  /** Counts the orphaned nodes that the import turned into root nodes. */
+  repairedNodes: number;
 };
 
 /** How a JSON file lays out its map, before any node check. */
@@ -206,10 +208,12 @@ export function parseMapFile(json: string): MapFile {
     throw new MapFileError(result.path, result.reason, result.fromNewerRelease);
   }
   const { layout } = result;
+  const nodes = checkedNodes(layout);
   return {
     version: layout.version,
-    nodes: checkedNodes(layout),
+    nodes,
     arrows: layout.arrows,
+    repairedNodes: repairOrphanedNodes(nodes).length,
   };
 }
 
@@ -225,6 +229,64 @@ export function withMainRoot<T extends TreeNodeLike>(nodes: T[]): T[] {
   const root = nodes.find(node => !node.parent);
   if (root) root.isRoot = true;
   return nodes;
+}
+
+/**
+ * Turns each orphaned node into a root node, so the server saves it with its
+ * subtree instead of dropping both. Clears the parent of each self-referencing
+ * node, each node with a missing parent, and one node in each parent cycle.
+ * Changes the nodes in place and returns the changed ones.
+ */
+export function repairOrphanedNodes<T extends TreeNodeLike>(nodes: T[]): T[] {
+  withMainRoot(nodes);
+  const ids = new Set(nodes.map(node => node.id));
+  const broken = nodes.filter(
+    node => node.parent && (node.parent === node.id || !ids.has(node.parent))
+  );
+  for (const node of broken) node.parent = null;
+  return [...broken, ...repairCycles(nodes)];
+}
+
+/**
+ * Breaks each parent cycle at one node and returns those nodes. A cycle
+ * through the main root breaks there, because a main root has no parent.
+ * Visits each node once.
+ */
+function repairCycles<T extends TreeNodeLike>(nodes: T[]): T[] {
+  const indexOfId = new Map(nodes.map((node, index) => [node.id, index]));
+  const parentIndex = (index: number) =>
+    indexOfId.get(nodes[index].parent ?? '');
+  const visited = new Set<number>();
+  const repaired: T[] = [];
+  nodes.forEach((_node, start) => {
+    const cycle = cycleAbove(start, parentIndex, visited);
+    if (cycle.length === 0) return;
+    const mainRoot = cycle.find(index => nodes[index].isRoot);
+    const cut = nodes[mainRoot ?? cycle.reduce((a, b) => Math.min(a, b))];
+    cut.parent = null;
+    repaired.push(cut);
+  });
+  return repaired;
+}
+
+/**
+ * Returns the indices of the parent cycle above the node at `start`, or an
+ * empty list. Stops at a node in `visited`, which an earlier walk checked.
+ */
+function cycleAbove(
+  start: number,
+  parentIndex: (index: number) => number | undefined,
+  visited: Set<number>
+): number[] {
+  const walk: number[] = [];
+  let current: number | undefined = start;
+  while (current !== undefined && !visited.has(current)) {
+    visited.add(current);
+    walk.push(current);
+    current = parentIndex(current);
+  }
+  const cycleStart = current === undefined ? -1 : walk.indexOf(current);
+  return cycleStart < 0 ? [] : walk.slice(cycleStart);
 }
 
 /** Why the import drops an arrow entry: its shape, or an endpoint rule. */

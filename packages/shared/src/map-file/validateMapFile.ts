@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import { findMainRoot, sortNodesParentFirst } from '../algorithms/tree';
+import { findMainRoot } from '../algorithms/tree';
 import type { TreeNodeLike } from '../algorithms/tree';
 import { ArrowSchema, CssColorSchema } from '../schemas';
 import {
@@ -7,6 +7,7 @@ import {
   MapFileNodeIdSchema,
   MapFileNodeSchemas,
   readMapFileLayout,
+  repairOrphanedNodes,
 } from './mapFile';
 import { isRecord } from './isRecord';
 import type {
@@ -171,20 +172,53 @@ function fileNodes(nodes: readonly unknown[]): FileNode[] {
   });
 }
 
-/** Warns about node fields the import drops. */
+/**
+ * Returns the allowed fields of a node attribute group from its schema, or
+ * null for a plain value such as `name`. For `font` the fields are `size`,
+ * `style` and `weight`. The function unwraps `v.optional` and `v.nullable`,
+ * which store the group schema in `wrapped`. A field added to the schema needs
+ * no change here.
+ */
+function objectEntries(schema: unknown): Record<string, unknown> | null {
+  if (!isRecord(schema)) return null;
+  if (isRecord(schema.wrapped)) return objectEntries(schema.wrapped);
+  return isRecord(schema.entries) ? schema.entries : null;
+}
+
+/**
+ * Warns about each field of `value` that `entries` does not name, and checks
+ * the fields inside each attribute group, such as `font`, the same way.
+ */
+function checkFields(
+  value: Record<string, unknown>,
+  entries: Record<string, unknown>,
+  path: string,
+  findings: Findings
+): void {
+  for (const [key, field] of Object.entries(value)) {
+    if (!Object.hasOwn(entries, key)) {
+      findings.warn(
+        `${path}.${key}`,
+        'The file format has no such field; the import drops it.'
+      );
+      continue;
+    }
+    const groupEntries = objectEntries(entries[key]);
+    if (groupEntries && isRecord(field)) {
+      checkFields(field, groupEntries, `${path}.${key}`, findings);
+    }
+  }
+}
+
+/** Warns about unknown node fields, attribute groups included. */
 function checkNodeFields(
   nodes: readonly FileNode[],
   version: MapFileVersion,
   findings: Findings
 ): void {
-  const fields = new Set(Object.keys(MapFileNodeSchemas[version].entries));
+  const { entries } = MapFileNodeSchemas[version];
   for (const node of nodes) {
-    for (const key of Object.keys(node.raw).filter(k => !fields.has(k))) {
-      findings.warn(
-        `${nodePath(node)}.${key}`,
-        'The node has no such field; the import drops it.'
-      );
-    }
+    checkFields(node.raw, entries, nodePath(node), findings);
   }
 }
 
@@ -225,11 +259,15 @@ function checkUniqueIds(
 }
 
 /**
- * Checks the main root of the map the loader builds. `findMainRoot` picks the
- * same node as the loader's `withMainRoot`: the first node with `isRoot`, else
- * the first root node.
+ * Finds the main root with `findMainRoot`, which picks the same node as the
+ * loader, and checks it. `nodes` come from the file, and `loaded` come from
+ * the import's repair, which leaves at least one root node.
  */
-function checkMainRoot(nodes: FileNode[], findings: Findings): void {
+function checkMainRoot(
+  nodes: readonly FileNode[],
+  loaded: readonly FileNode[],
+  findings: Findings
+): void {
   const marked = nodes.filter(node => node.isRoot);
   if (marked.length > 1) {
     const list = marked.map(nodePath).join(', ');
@@ -238,14 +276,7 @@ function checkMainRoot(nodes: FileNode[], findings: Findings): void {
       `${marked.length} nodes carry isRoot (${list}); a map has one main root.`
     );
   }
-  if (nodes.length > 0 && nodes.every(node => node.parent !== null)) {
-    findings.error(
-      'nodes',
-      'Every node has a parent, so the map has no root node and no tree to draw.'
-    );
-    return;
-  }
-  const main = findMainRoot(nodes);
+  const main = findMainRoot(loaded);
   if (main && marked.length === 0) {
     findings.warn(
       'nodes',
@@ -260,65 +291,35 @@ function checkMainRoot(nodes: FileNode[], findings: Findings): void {
   }
 }
 
-/**
- * The ancestors of the node, parent first. The walk stops at a missing parent
- * or at the first node it reaches twice, so a parent cycle ends it.
- */
-function ancestors(node: FileNode, byId: Map<string, FileNode>): FileNode[] {
-  const found: FileNode[] = [];
-  const seen = new Set<string>();
-  let current = byId.get(node.parent ?? '');
-  while (current && !seen.has(current.id)) {
-    found.push(current);
-    seen.add(current.id);
-    current = byId.get(current.parent ?? '');
-  }
-  return found;
+/** Returns why the import clears the parent of `node`. */
+function brokenLinkCause(node: FileNode, ids: Set<string>): string {
+  if (node.parent === node.id) return 'The node is its own parent';
+  if (!ids.has(node.parent ?? '')) return `No node has the id "${node.parent}"`;
+  return 'The node is part of a parent cycle';
 }
 
-/** Whether following the parents from the node leads back to it. */
-const inCycle = (node: FileNode, byId: Map<string, FileNode>): boolean =>
-  ancestors(node, byId).some(ancestor => ancestor.id === node.id);
-
 /**
- * The reason no root node reaches an orphaned node, or null when the node
- * only descends from another orphaned node.
+ * Warns about each orphaned node that needs a repair and returns the repaired
+ * copies of all nodes. Running `repairOrphanedNodes` on copies makes the
+ * warnings match the import. Nodes below a repaired node get no warning.
  */
-function orphanCause(
-  node: FileNode,
-  byId: Map<string, FileNode>
-): string | null {
-  if (node.parent === node.id) return 'The node names itself as parent';
-  if (!byId.has(node.parent ?? ''))
-    return `No node has the id "${node.parent}"`;
-  if (inCycle(node, byId)) return 'The node is part of a parent cycle';
-  return null;
-}
-
-/** The nearest ancestor of the node that carries an orphan cause. */
-const orphanAncestor = (
-  node: FileNode,
-  byId: Map<string, FileNode>
-): FileNode | undefined =>
-  ancestors(node, byId).find(ancestor => orphanCause(ancestor, byId) !== null);
-
-/**
- * Warns about each orphaned node `sortNodesParentFirst` returns as unreached,
- * and names its cause or the orphaned ancestor above it. The import keeps
- * orphaned nodes; the backend drops them when it saves the map.
- */
-function checkOrphans(nodes: readonly FileNode[], findings: Findings): void {
-  const byId = new Map(nodes.map(node => [node.id, node]));
-  const suffix =
-    'no root node reaches it, and the server drops it when it saves the map.';
-  for (const node of sortNodesParentFirst(nodes).unreached) {
-    const cause = orphanCause(node, byId);
-    const ancestor = cause === null ? orphanAncestor(node, byId) : undefined;
-    const reason =
-      cause ??
-      `The node descends from the orphaned node ${ancestor ? nodePath(ancestor) : 'above it'}`;
-    findings.warn(`${nodePath(node)}.parent`, `${reason}; ${suffix}`);
-  }
+function checkOrphans(
+  nodes: readonly FileNode[],
+  findings: Findings
+): FileNode[] {
+  const ids = new Set(nodes.map(node => node.id));
+  const loaded = nodes.map(node => ({ ...node }));
+  const repaired = new Set(repairOrphanedNodes(loaded));
+  nodes
+    .filter((_node, i) => repaired.has(loaded[i]))
+    .sort((a, b) => a.index - b.index)
+    .forEach(node => {
+      findings.warn(
+        `${nodePath(node)}.parent`,
+        `${brokenLinkCause(node, ids)}; the import clears the parent, so the node starts a tree of its own.`
+      );
+    });
+  return loaded;
 }
 
 /** Warns about each arrow entry the import drops, with the reason. */
@@ -347,8 +348,8 @@ function checkMap(layout: MapFileLayout, findings: Findings): void {
   checkNodeFields(nodes, layout.version, findings);
   checkNodeColors(nodes, findings);
   const kept = checkUniqueIds(nodes, findings);
-  checkMainRoot(kept, findings);
-  checkOrphans(kept, findings);
+  const loaded = checkOrphans(kept, findings);
+  checkMainRoot(kept, loaded, findings);
   // The loader checks arrows against every node, repeated ids included.
   if (allValid) checkArrows(layout.arrows, nodes, findings);
 }

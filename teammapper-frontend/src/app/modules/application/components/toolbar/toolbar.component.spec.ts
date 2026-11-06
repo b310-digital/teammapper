@@ -40,7 +40,7 @@ class MmpServiceStub {
   childNodesHidden = jest.fn().mockReturnValue(false);
   distributeNodes = jest.fn();
   addNodeImage = jest.fn();
-  importMap = jest.fn();
+  importMap = jest.fn().mockResolvedValue({ repairedNodes: 0 });
   protectingNode = jest.fn().mockReturnValue(null);
   toggleBranchProtection = jest.fn();
   copyNode = jest.fn();
@@ -61,7 +61,7 @@ interface TestContext {
     canUndo$: Observable<boolean>;
     canRedo$: Observable<boolean>;
   };
-  toastrService: { error: jest.Mock };
+  toastrService: { error: jest.Mock; warning: jest.Mock };
   translateService: TranslateService;
   canUndoSubject: BehaviorSubject<boolean>;
   canRedoSubject: BehaviorSubject<boolean>;
@@ -79,7 +79,7 @@ async function setupTestBed(): Promise<TestContext> {
     canRedo$: canRedoSubject.asObservable(),
   };
 
-  const toastrService = { error: jest.fn() };
+  const toastrService = { error: jest.fn(), warning: jest.fn() };
   const utilsService = {
     translate: jest.fn((key: string) => Promise.resolve(key)),
   };
@@ -404,12 +404,22 @@ describe('ToolbarComponent', () => {
       );
     });
 
-    it('shows no error toast when importMap resolves', async () => {
-      ctx.mmpService.importMap.mockResolvedValue(undefined);
-
+    it('shows no toast when the import changed nothing', async () => {
       await readJsonFile('[]');
 
       expect(ctx.toastrService.error).not.toHaveBeenCalled();
+      expect(ctx.toastrService.warning).not.toHaveBeenCalled();
+    });
+
+    it('shows one warning toast when the import repaired orphaned nodes', async () => {
+      ctx.mmpService.importMap.mockResolvedValue({ repairedNodes: 3 });
+
+      await readJsonFile('[]');
+
+      expect(ctx.toastrService.warning).toHaveBeenCalledTimes(1);
+      expect(ctx.toastrService.warning).toHaveBeenCalledWith(
+        'TOASTS.WARNINGS.IMPORT_REPAIRED_NODES'
+      );
     });
   });
 

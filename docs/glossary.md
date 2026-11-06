@@ -8,17 +8,17 @@ specific to TeamMapper.
 
 ## Words to avoid
 
-| Do not write                            | Write instead                    |
-| --------------------------------------- | -------------------------------- |
-| board, canvas, diagram, chart, document  | mind map                         |
-| Mindmap, mindmap (one word)              | mind map                         |
-| card, box, bubble, topic, item           | node                             |
-| central topic, main idea, centre         | main root                        |
-| edge                                    | branch                           |
-| fold, collapse, unfold, expand           | hide, show                       |
-| clone, fork                             | duplicate                        |
-| version, revision, snapshot (of a map)   | edit or state; see **Undo / Redo** |
-| flag, mark (for a stored value)          | attribute                        |
+| Do not write                            | Write instead                      |
+| --------------------------------------- | ---------------------------------- |
+| board, canvas, diagram, chart, document | mind map                           |
+| Mindmap, mindmap (one word)             | mind map                           |
+| card, box, bubble, topic, item          | node                               |
+| central topic, main idea, centre        | main root                          |
+| edge                                    | branch                             |
+| fold, collapse, unfold, expand          | hide, show                         |
+| clone, fork                             | duplicate                          |
+| version, revision, snapshot (of a map)  | edit or state; see **Undo / Redo** |
+| flag, mark (for a stored value)         | attribute                          |
 
 ### Reserved
 
@@ -88,6 +88,10 @@ A node disconnected from every root node because a parent is missing or the
 parent relationships form a cycle. This includes descendants of affected
 nodes. Orphaned nodes indicate invalid map data. The layout places them in a
 column to the right of the trees, without treating them as trees.
+
+An import turns orphaned nodes into root nodes, with their subtrees below them.
+The import removes the parent link of each self-referencing node, each node
+with a missing parent, and one node in each cycle. The user sees one warning.
 
 When the backend saves or duplicates a map, it omits orphaned nodes, logs their
 IDs and deletes their database rows to satisfy the parent foreign key.

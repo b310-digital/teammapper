@@ -250,6 +250,7 @@
       "MAP_IMPORT_IN_PROGRESS": "Importing mindmap...",
       "MAP_UPDATE_IN_PROGRESS": "Updating mindmap...",
       "MERMAID_SEVERAL_TREES": "Each tree became its own mindmap block. Mermaid tools outside TeamMapper render one block at a time.",
+      "IMPORT_REPAIRED_NODES": "Removed broken links to parent nodes.",
       "ARROW_REFUSED": {
         "SELF": "An arrow cannot point from a node to itself.",
         "DUPLICATE": "An arrow between these two nodes in this direction exists already.",

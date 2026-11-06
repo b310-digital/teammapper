@@ -32,6 +32,7 @@ const MAP_FILE: MapFile = {
   version: 2,
   nodes: [{ id: '11111111-1111-4111-8111-111111111111', parent: null, k: 1 }],
   arrows: [{ source: 'a', target: 'b' }],
+  repairedNodes: 0,
 };
 
 jest.mock('dompurify', () => {
@@ -564,6 +565,14 @@ describe('MmpService', () => {
       expect(parseMapFileMock).toHaveBeenCalledWith('file text');
       expect(newSpy).toHaveBeenCalledTimes(1);
       expect(newSpy).toHaveBeenCalledWith(MAP_FILE.nodes, MAP_FILE.arrows);
+    });
+
+    it('resolves to the number of repaired orphaned nodes', async () => {
+      parseMapFileMock.mockReturnValueOnce({ ...MAP_FILE, repairedNodes: 2 });
+
+      await expect(service.importMap('file text')).resolves.toEqual({
+        repairedNodes: 2,
+      });
     });
 
     it('rejects and keeps the map when parseMapFile rejects the file', async () => {
