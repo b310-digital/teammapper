@@ -1,441 +1,486 @@
 # Glossary
 
-The words TeamMapper uses for its own concepts. Use these terms in code,
-comments, commit messages, issues and documentation, so that one concept keeps
-one name.
+The terms TeamMapper uses for mind maps and the app's behavior. Use the same
+terms in code, comments, commit messages, issues and documentation.
 
-Mind mapping has settled vocabulary, so most entries below use the ordinary
-words. A few concepts have no common name and the app coined one; those entries
-say so.
+Use standard mind mapping vocabulary where possible. Entries explain terms
+specific to TeamMapper.
 
 ## Words to avoid
 
-| Do not write                            | Write instead                              |
-| --------------------------------------- | ------------------------------------------ |
-| board, canvas, diagram, chart, document | mind map                                   |
-| Mindmap, mindmap (one word)             | mind map                                   |
-| card, box, bubble, topic, item          | node                                       |
-| central topic, main idea, centre        | main root                                  |
-| edge                                    | branch                                     |
-| fold, collapse, unfold, expand          | hide, show                                 |
-| clone, fork                             | duplicate                                  |
-| version, revision, snapshot             | (none of these exist; see **Undo / Redo**) |
-| flag, mark (for a stored value)         | attribute                                  |
+| Do not write                            | Write instead                    |
+| --------------------------------------- | -------------------------------- |
+| board, canvas, diagram, chart, document  | mind map                         |
+| Mindmap, mindmap (one word)              | mind map                         |
+| card, box, bubble, topic, item           | node                             |
+| central topic, main idea, centre         | main root                        |
+| edge                                    | branch                           |
+| fold, collapse, unfold, expand           | hide, show                       |
+| clone, fork                             | duplicate                        |
+| version, revision, snapshot (of a map)   | edit or state; see **Undo / Redo** |
+| flag, mark (for a stored value)          | attribute                        |
 
 ### Reserved
 
-The **arrow** names a relation between two nodes that are not parent and child.
-Do not write **connector** or **line** for it, and use none of the three as a
-loose synonym for a branch.
+**Arrow** names a relation between two nodes that are not parent and child. Do
+not write **connector** or **line** for an arrow, and do not use any of the
+three words for a branch.
+
+**Map file version** and **format number** describe data formats. They do not
+refer to earlier states of a map.
 
 ## The model
 
 ### Mind map
 
-The whole map: one or more trees and the map's settings. Write
-"mind map" in prose, and **map** in identifiers and in URLs.
+A visual arrangement of ideas as nodes connected by branches. In TeamMapper,
+a mind map contains one or more trees and the map settings. Write "mind map"
+in prose and **map** in identifiers and URLs.
 
-The product's own screens say "Mindmap" in most places and "mind map" in others.
+The app's own screens say "Mindmap" in most places and "mind map" in others.
 Write "mind map".
 
 ### Node
 
-One labelled unit in a mind map. A node holds a name, a position, colors and a
-font, and it may hold an image and a link. Every node except a root node has a
-parent.
+One idea or piece of information in a mind map. A node has a name, position,
+colors and font, and may include an image and a link. Every node except a root
+node has one parent.
+
+### Parent, child, ancestor, descendant
+
+A **parent** is the node directly above another node in the tree's hierarchy.
+The node directly below it is its **child**. A **descendant** is a child, a
+child's child, or any node further down that hierarchy. An **ancestor** is a
+parent or any node further up the hierarchy. These relationships describe the
+tree structure, regardless of where nodes appear on screen.
 
 ### Tree
 
-A root node and every node that descends from it. A map holds one or more
-trees, and each tree has its own layout around its root node.
+A root node and all its descendants. A map has one or more trees, and the
+layout arranges each tree around its own root node.
+
+### Subtree
+
+A node and all its descendants. Copying, cutting or removing a node acts on
+its whole subtree.
+
+### Layout
+
+The positions of nodes in a map. The layout arranges each tree around its root
+node and leaves space between trees. Dragging changes positions manually;
+redistributing computes them again.
 
 ### Root node
 
 A node with no parent. Each root node starts a tree, and the map draws no
-branch to it. A map holds at least one root node, the main root.
+branch to it. Every map has at least one root node, the main root.
 
 ### Main root
 
-The one root node per map that the app creates with the map. No one can delete,
-copy or cut it. The stored attribute `isRoot` is true for the main root only,
-so do not read `isRoot` to learn whether a node has a parent.
+The map's primary root node, created with the map. Each map has exactly one,
+which no one can delete, copy or cut. The attribute `isRoot` identifies the
+main root; it is false for all other nodes, including other root nodes. Check
+the parent to tell whether a node is a root node.
 
 ### Orphaned node
 
-A node that no root node reaches, because its parent is missing or its
-ancestors form a cycle. An orphaned node is a fault in the data. The layout
-parks it in a column right of every tree and starts no tree at it. The backend
-leaves every orphaned node out when it saves a map or duplicates one, logs the
-node IDs, and deletes their rows, because the parent foreign key rejects them.
+A node disconnected from every root node because a parent is missing or the
+parent relationships form a cycle. This includes descendants of affected
+nodes. Orphaned nodes indicate invalid map data. The layout places them in a
+column to the right of the trees, without treating them as trees.
 
-Do not call a parentless node an orphaned node: a node with no parent is a root
-node.
+When the backend saves or duplicates a map, it omits orphaned nodes, logs their
+IDs and deletes their database rows to satisfy the parent foreign key.
+
+A node with no parent is a root node, never an orphaned node.
 
 ### Branch
 
-What the app draws from a parent node to a child, in the shape the **branch
-style** names. A branch takes styling only; no one selects or addresses one on
-its own. A branch can take its color from the automatic branch colors user
-setting instead of an explicit one.
+The connection between a parent node and a child node. Its shape follows the
+**branch style**, and its color comes from the child's branch color or the
+automatic branch colors user setting. A branch cannot be selected or edited
+independently of its nodes.
 
 ### Branch style
 
-The user setting that names how this browser draws every branch: `tapered`, a
-filled shape that narrows with depth and the default; `curved`, a thin stroked
-curve; or `straight`, a thin line from the parent's center to the child's. The
-setting changes the drawing alone, so collaborators may see one map in
-different branch styles. The app never syncs it or stores it with a map.
+The user setting for the shape of branches in this browser:
+
+- `tapered`, the default: a filled shape that narrows with depth
+- `curved`: a thin curve
+- `straight`: a straight line between the centers of the parent and child
+
+Branch style affects appearance only. It stays in this browser and is not
+stored with the map or shared with collaborators.
 
 ### Node color
 
-A node holds three colors: the name color, the background color and the branch
-color. Each one is a hex color, `#rgb`, `#rrggbb` or `#rrggbbaa`, or empty for
-no color. A user sets them with the **color picker** in the color panel beside
-the selected node. The color picker writes `#rrggbbaa` for every color, with
-the transparency in the last two digits.
+The colors of a node's name, background and branch. Set them with the **color
+picker** in the color panel beside the selected node. Each value is a hex
+color (`#rgb`, `#rrggbb` or `#rrggbbaa`), or an empty value for no color. The
+picker writes `#rrggbbaa`, with the opacity in the last two digits.
 
 ### Arrow
 
-A directed connection from a source node to a target node of the same map. The
-map draws it as a dashed curve with one arrowhead at the target, above the
-branches and below the nodes. An arrow changes no parent, no layout and no
-redistribution, and it carries no name or style of its own. Its key is
-`arrowKey(source, target)`, so a map holds at most one arrow per source and
-target; the opposite direction is a second arrow. The map refuses an arrow from
-a node to itself and one between a node and its parent. Removing a node removes
-its arrows; copying a node copies the arrows that lie inside the copied nodes.
+A directed connection between two nodes in the same map, from the **source**
+to the **target**. Arrows express relationships outside the tree hierarchy.
+They appear as dashed curves with an arrowhead at the target, above branches
+and below nodes. An arrow has no name or style of its own and does not affect
+parent relationships, layout or redistribution.
 
-**Arrow mode** starts from the selected node and creates an arrow on the next
-click on another node. A **dangling arrow** names a node the map no longer
-holds, after a peer removed it while another added the arrow. The map draws no
-dangling arrow and the backend saves none.
+A map allows one arrow per source and target, identified by
+`arrowKey(source, target)`. The reverse direction is a separate arrow. Arrows
+cannot connect a node to itself or to its parent. Removing a node removes its
+arrows. Copying nodes includes arrows whose endpoints are both in the copied
+subtree.
+
+**Arrow mode** starts at the selected node and creates an arrow to the node you
+click next. A **dangling arrow** has a source or target that no longer exists,
+for example when one peer removes a node while another adds an arrow to it.
+The map does not draw dangling arrows, and the backend does not save them.
 
 ### Link
 
-A single http or https address attached to a node. The map draws it as an
-icon, or as **linktext** when that setting is on: the address written out inline
-instead of the icon. "Linktext" is the app's own compound.
+A web address (HTTP or HTTPS) attached to a node. Each node can have one link.
+The map shows it as an icon, or as the full address when the **linktext** user
+setting is on. "Linktext" is TeamMapper's term for that text display.
 
 ### Image
 
-An optional picture on a node. Always "image", never "picture" or
-"attachment". A node holds at most one. A current frontend adds every image as
-an **image reference**; existing maps, older clients and imports carry an
-inline raster data URL. Exports write every image as a data URL.
+A photograph, illustration or other visual attached to a node. Each node can
+have one image. Write "image", never "picture" or "attachment".
+
+The current frontend adds images as **image references**. Existing maps, older
+clients and imports may contain inline raster data URLs. Exports embed every
+image as a data URL.
 
 ### Image reference
 
-The value `image:<uuid>` a node holds for an image the server stores for its
-map. The server generates the uuid per upload; the map and the uuid together
-name the image, so a duplicated map resolves the same references. Never
-"image id" for the whole value: the image id is the uuid alone.
+A reference to an image stored on the server for a map, written as
+`image:<uuid>`. The server generates the UUID on upload. The map and UUID
+together identify the image; a duplicated map resolves the same references.
+"Image id" means the UUID alone, not the whole reference.
 
 ### Pictogram
 
-A symbol from the ARASAAC library. You search the pictogram dialog by term and
-insert the symbol as a node image. Not available on every server.
+A symbol from the ARASAAC library that can be inserted as a node image. Search
+by term in the pictogram dialog. Availability depends on the server.
 
 ### Protected branch
 
-A node and every node below it, which a user declares finished to tell others
-not to change them. The app sets the attribute `protected` on the top node of
-the branch only and draws a lock badge on that node. A node counts as protected
-when its own `protected` attribute or an ancestor's is true. Any writable
-client protects a branch or releases it again from the toolbar's lock button,
-and the attribute syncs to every client.
+A subtree protected against local edits. A user protects or releases it with
+the lock button in the toolbar. The app stores `protected` on the subtree's
+top node and shows a lock badge there. Protection applies to that node and all
+its descendants, and syncs to every client.
 
-A protected branch refuses local edits: rename, style, image, link, drag, add
-child, paste, remove and cut. Peer writes, undo, redo, redistribute and import
-still apply. The server enforces nothing, so any user who can edit the map can
-release the branch and edit it.
+Protection prevents local changes to names, styling, images and links, as well
+as dragging, adding children, pasting, removing and cutting. Peer writes, undo,
+redo, redistribute and import still apply. The server does not enforce
+protection; anyone with edit access can release the branch and edit it.
 
-Write "protect" and "release". Avoid "lock" for the concept, and "freeze" or
-"read-only", which name a client that cannot write.
+Write "protect" and "release". Avoid "lock" for the concept, and avoid "freeze"
+and "read-only", which name a client that cannot write.
 
 ### Hidden node
 
-A node the app does not draw because the view state hides the child nodes of
-one of its ancestors. The app also hides a node a peer adds below such an
-ancestor. A hidden node keeps its room in the layout.
+A node temporarily omitted from view when a user hides an ancestor's children.
+This also hides new nodes that peers add below that ancestor. Hidden nodes
+remain in the map and keep their space in the layout.
 
 Write "hide" and "show". Avoid "collapse" and "fold".
 
 ### View state
 
-The set of nodes whose child nodes one person has hidden. mmp keeps the view
-state apart from the map data, so the undo stack never records it. The
-frontend sends no record of which child nodes are hidden to the server or to a
-peer, and stores none, so a reload shows them again. The view state starts
-empty each time the app opens a map.
+The record of which nodes have their children hidden for one person. mmp keeps
+it separate from map data and undo history. View state is neither saved nor
+shared with the server or peers. Opening or reloading a map shows all nodes.
 
 ### Selection, ring
 
-The **selection** is the one node a client has selected. mmp draws a **ring**
-around it, and around each node a peer has selected, in that peer's client
-color. Each client keeps its own selection apart from the map data and from
-the view state. Peers see it through Yjs awareness (see **Presence**).
+The **selection** is the client's currently selected node, or none. A **ring**
+outlines the selected node. Peers' selections have rings in their respective
+client colors. Each client keeps its selection separate from map data and
+view state, and shares it through Yjs awareness (see **Presence**).
 
 ### Map settings
 
-What a single mind map remembers about how the app draws it, chiefly the font
-size range. Distinct from **user settings**, which are one browser's defaults
-for the maps it creates: automatic branch colors, centering on resize, showing
-linktext, the branch style, and the starting name and styling for root nodes and
-ordinary nodes.
+Settings stored with a mind map, such as its font size range.
+
+**User settings** belong to one browser and control its view preferences and
+defaults for new maps and nodes:
+
+- automatic branch colors
+- centering on resize
+- showing linktext
+- the branch style
+- the starting name and styling of root nodes and ordinary nodes
 
 ### Info dialog
 
-The dialog that the info button or `?` opens over the map. It shows the app
-version, a hint that the map's deletion date moved to the settings, the legal
-links, and every keyboard shortcut. Map shortcuts do not act while it is open.
+The dialog opened by the info button or `?`. It shows the app version, legal
+links, keyboard shortcuts and a note directing users to the deletion date in
+settings. Map shortcuts are inactive while the dialog is open.
 
 ### Legal links
 
-The imprint link and the privacy link, which the info dialog and the footer of
-the start page show. The operator of an instance sets their targets in the
-system settings as `imprintUrl` and `privacyUrl`, or with `IMPRINT_URL` and
-`PRIVACY_URL`. The app shows a legal link only when its target is set.
+Links to the instance's imprint and privacy information, shown in the info
+dialog and the start page footer. The operator sets their addresses with
+`imprintUrl` and `privacyUrl` in system settings, or the environment variables
+`IMPRINT_URL` and `PRIVACY_URL`. Each link appears only when configured.
 
 ### Settings dialog
 
-The dialog that the settings button or `alt+s` opens over the map. The dialog
-shows these tabs:
+The dialog opened by the settings button or `alt+s`, with three tabs:
 
 1. General: language and dark mode.
 2. Map options: the deletion card, the map settings of the open map, and the
    user settings for new nodes, linktext and centering.
 3. The map list.
 
-The map stays drawn behind the dialog and takes each change at once. Map
-shortcuts do not act while the dialog is open.
+Changes take effect immediately in the map behind the dialog. Map shortcuts
+are inactive while the dialog is open.
 
 ### Deletion card
 
-The card at the top of the Map options tab in the settings dialog. It shows the open
-map's deletion date and the server's retention period, and gives the map's
-admin the delete action. The map list, which the settings' third tab and the
-start page both show, offers the same delete action for every listed map whose
-admin id the browser holds, open or not.
+The section at the top of the settings dialog's Map options tab that shows
+the map's deletion date and the server's retention period. It also lets the
+map's admin delete the map.
+
+The map list, available in settings and on the start page, also offers deletion
+for each map whose admin id the browser stores. The map need not be open.
 
 ### Node mark
 
-One visual element of a drawn node: its background, name, image, link, hidden
-eye icon or lock badge. The renderer in `packages/mmp` draws every node from
-the marks in `NODE_MARKS`, so a new visual element is a new mark. The term
-follows the visualization sense of a mark: a visual element bound to one data
-item. A mark can consist of several DOM elements, such as the link's `<a>` and
-`<text>`. Write "DOM element" or the tag name when you mean the browser object,
-and "node group" for the `<g>` that holds all marks of one node.
+A visual part of a node: its background, name, image, link, hidden eye icon or
+lock badge. The term comes from data visualization, where a mark represents
+data visually. The renderer in `packages/mmp` defines these parts in
+`NODE_MARKS`; adding a visual part means adding a mark.
+
+One mark may contain several DOM elements, such as a link's `<a>` and `<text>`.
+Use "DOM element" or the tag name for an individual browser object, and "node
+group" for the `<g>` containing a node's marks.
 
 ## What you can do to a map
 
 ### Add, remove, select, deselect
 
-The four basic node operations. Adding takes a parent. Adding a tree takes
-none: the toolbar's "add tree" button creates a root node at the nearest spot
-to the middle of the viewport that keeps clear of the other trees, and selects
-it. Removing a node removes its descendants with it, so removing a root node
-removes its tree. No one can remove the main root.
+- **Add** creates a child of a parent node. The toolbar's "add tree" button
+  creates a root node instead, at the available spot nearest the viewport's
+  center, clear of other trees, and selects it.
+- **Remove** deletes a node and its descendants. Removing a root node deletes
+  its tree. The main root cannot be removed.
+- **Select** makes a node the target of editing actions. Loading a map selects
+  the main root.
+- **Deselect** clears the selection, even when the main root is selected.
 
-Deselecting leaves no node selected, the main root included. With nothing
-selected, the operations on the selected node do nothing, and the toolbar
-and the floating buttons disable them. Paste is the exception: it adds a tree
-(see Copy, cut, paste). A map load selects the main root.
+With no selection, actions that require a selected node do nothing, and their
+toolbar and floating buttons are disabled. Paste can still add a tree (see
+**Copy, cut, paste**).
 
 ### Drag
 
-Move a node by pointer. A node drags its descendants along. A protected node
-does not move.
+Move a node and its descendants with the pointer. Protected nodes cannot be
+dragged.
 
 ### Redistribute
 
-Recompute the layout of every node in the map at once, spreading the tree
-evenly. Distinct from dragging one node. The app coined the term; the toolbar
-calls it distributing all nodes evenly.
+Arrange all nodes in the map automatically by recomputing their positions.
+TeamMapper calls this **redistribute**; the toolbar describes it as
+distributing all nodes evenly.
 
 ### Copy, cut, paste
 
-Clipboard operations over a node and its whole subtree. No one can copy or cut
-the main root. With nothing selected, paste adds the copied nodes as a new tree.
-The client picks the spot for the pasted tree the way it picks one for an added
-tree, clear of the other trees, and pans the view to show the pasted tree. The
-paste leaves the selection empty, so a second paste adds a second tree. No
-pasted node becomes the main root.
+Clipboard operations on a subtree. Copy puts the subtree on the clipboard;
+cut also removes it from the map. The main root cannot be copied or cut.
+
+With no node selected, paste adds the copied subtree as a new tree, places it
+clear of other trees and pans the view to show it. The selection stays empty,
+so pasting again adds another tree. Pasted nodes never become the main root.
 
 ### Undo / Redo
 
-Step backwards and forwards through your own edits. Undo reverts only the
-changes you made, never a collaborator's.
+**Undo** reverses your most recent edit. **Redo** reapplies an undone edit.
+Each client has its own undo history; undo never reverses a collaborator's
+edits.
 
-TeamMapper keeps no version history. Nothing stores earlier states of a map,
-and there is no restore.
+TeamMapper stores no version history or saved earlier states to restore.
 
 ### Zoom, center
 
-Scale the view, and move the main root back to the middle of the viewport.
+**Zoom** changes the viewing scale. **Center** brings the main root to the
+middle of the viewport. Both change the view without moving nodes in the map.
 
 ### Viewport
 
-The part of the map one client shows on screen. Zooming and panning
-change the viewport; they change no node's coordinates. Each client has its own
-viewport, so a collaborator may not see a tree you just added.
+The visible area of the map in one client. Zoom changes its scale; panning
+moves it across the map. Neither changes node coordinates. Each client has an
+independent viewport, so collaborators may be looking at different trees.
 
 ### Import
 
-Replace the whole map from an external source: Mermaid mindmap syntax, or a
-JSON export. Import discards the current content rather than merging.
+Load a JSON export or Mermaid mindmap syntax into the current map, replacing
+all its content. Import does not merge maps.
 
 ### AI generate
 
-Describe a mind map in prose and have the server write Mermaid syntax for it.
-The app then imports that syntax the normal way. Not available on every server.
+Create map content from a written description. The server generates Mermaid
+syntax, which the app imports through the usual Mermaid import. Availability
+depends on the server.
 
-The request may set the map's shape: **levels**, the node levels below the
-main root (1 to 3, default 2), and **children per node**, the most child nodes
-any node gets (1 to 4, default 4). A shape may ask for at most 20 nodes below
-the main root, so 3 levels allow at most 2 children per node. The server drops
-every node the LLM writes beyond that shape, along with its descendants, and
-never adds a node the LLM omitted. When the LLM runs out of output tokens, the
-app warns the user and imports whatever part of the map arrived.
+The request can set the shape of the map:
+
+- **levels**: the depth below the main root, from 1 to 3 (default 2)
+- **children per node**: the maximum number of children for each node, from
+  1 to 4 (default 4)
+
+The requested shape allows at most 20 nodes below the main root, so 3 levels
+allow at most 2 children per node. The server removes generated nodes beyond
+these limits, along with their descendants, and does not fill in missing nodes.
+If generation reaches the output token limit, the app warns the user and
+imports the content received so far.
 
 ### Export
 
-Write the map out. Six formats: JSON, Mermaid, SVG, PNG, JPEG and PDF.
+Save the map to a file. Available formats are JSON, Mermaid, SVG, PNG, JPEG and
+PDF.
 
 ### Map file version
 
-The whole number that names the layout of a JSON export, so an import knows
-which rules to check it against. Version 1 is a plain list of nodes that older
-releases and the Mermaid import write; its nodes may lack a link, the main
-root mark and a position, and it holds no arrows. Version 2 holds the version number, the nodes and the arrows, and
-every node carries all its attributes. An export with nodes and arrows but no
-version number reads as version 2, because releases before the number wrote
-that layout. An import rejects a version it does not know, such as one from a
-newer release. An import replaces a node color that is no hex color, such as
-the `rgba()` colors releases before March 2026 wrote, with the default color.
+The integer identifying a JSON export's data format. Import uses it to choose
+the validation rules:
+
+- **Version 1** is a plain list of nodes, used by older releases and the
+  Mermaid import. Nodes may lack a link, `isRoot` and coordinates. The format
+  contains no arrows.
+- **Version 2** contains the version number, nodes and arrows. Each node has
+  all its attributes. An export object without a version number also counts
+  as version 2, because earlier releases wrote that format without a number.
+
+Import rejects unknown versions, including those from newer releases. It
+replaces non-hex node colors with the default color, including the `rgba()`
+values written before March 2026.
 
 ### Duplicate
 
-Copy a whole map to a new one with a new address and new secrets. Never "clone"
-or "fork".
+Create an independent copy of a whole map, with a new address and new secrets.
+Write "duplicate", never "clone" or "fork".
 
 ### Image cap
 
-The maximum stored image bytes one map may hold through image uploads or
-duplication. Existing inline images and the image extraction job can exceed it.
+The maximum image storage allowed for one map through uploads or duplication.
+Existing inline images and the image extraction job can exceed this limit.
 
 ### Duplication storage budget
 
-The maximum stored image bytes across all maps under which duplication may
-add image bytes. Counts image references' stored image sizes and inline image
-data URLs' UTF-8 bytes. Copies of copies consume the same budget. Distinct from
-the image cap, which limits the images of a single map.
+The storage limit across all maps that controls whether duplication may add
+image data. It counts the stored bytes of referenced images and the UTF-8
+bytes of inline image data URLs. Copies of copies count toward the same
+budget. See **Image cap** for the limit on a single map.
 
 ### Offline build
 
-A static build of the frontend that runs without a backend. It stores maps in
-the browser's IndexedDB under the site's origin, so no other browser or device
-sees them. It switches off sharing, duplication, pictograms, AI, the deletion
-date and collaboration. A service worker caches the site, so it loads without
-a network after the first visit. See `docs/offline.md`. The web version is the
-build with a backend.
+A static frontend that runs without a backend. Maps stay in this browser's
+IndexedDB, under the site's origin, and are not available in other browsers or
+on other devices. A service worker caches the site for use without a network
+after the first visit.
 
-The **offline badge** reads "Offline mode" and marks the start page and the
-map screen of the offline build. The web version renders none.
+The offline build disables sharing, duplication, pictograms, AI generation,
+the deletion date and collaboration. The **web version** uses a backend. See
+`docs/offline.md`.
+
+The **offline badge** reads "Offline mode" and appears on the start page and
+the map screen of the offline build. The web version shows no badge.
 
 ## Sharing and collaboration
 
 ### Writable
 
-Whether a connection may edit. The app stores one boolean attribute, and
-read-only is its negation. A connection is writable when it presents the map's modification
-secret.
+Allowed to edit the map. A connection gains edit access by presenting the
+map's modification secret. The app represents this permission as one boolean
+attribute: true means writable; false means read-only.
 
 ### Viewer link, editor link
 
-The two addresses the share dialog hands out. The viewer link opens the map
-read-only. The editor link is the same address with the modification secret
-appended after a `#`, which keeps the secret out of anything the server records.
+The two sharing addresses offered by the share dialog. A **viewer link** opens
+the map read-only. An **editor link** grants edit access by adding the
+modification secret after `#` in the same address. This part of the URL, the
+fragment, is not sent in HTTP requests, keeping the secret out of request logs.
 
-The share dialog itself labels these "only observe" and "observe and modify".
+The share dialog labels the two links "only observe" and "observe and modify".
 
 ### Modification secret
 
-The secret that grants editing. The app generates it with the map, and the
-editor link carries it.
+The secret granting edit access to a map. It is generated with the map and
+included in the editor link.
 
 ### Admin id
 
-The app generates a second secret with the map, and that secret authorizes
-deleting the map. TeamMapper has no user accounts, so the admin id is neither an
-account nor a login. Holding it is what makes you a map's owner, and a browser
-remembers the maps it created.
+The secret authorizing deletion of a map, generated separately from the
+modification secret. TeamMapper has no user accounts or logins: possession of
+the admin id establishes ownership. The browser remembers the maps it creates
+and their admin ids.
 
 ### Client
 
-One open connection to a map, not a person: two tabs are two clients.
+One open connection to a map. Two browser tabs are two clients, even when used
+by the same person.
 
 ### Client list, client color
 
-The **client list** is everyone connected to a map right now. Each client gets a
-**client color** from a fixed palette, which tints the ring around whichever
-node that client has selected. A client without a display name is anonymous,
-and its color is the only identity it has. A client with a display name shows
-its initials in its color.
+The **client list** shows the clients currently connected to a map. Each has a
+**client color** from a fixed palette, used for its selection ring. Named
+clients show their initials in that color; anonymous clients are identified
+by color alone.
 
 ### Display name
 
-The optional name a browser announces on every map it opens, so others can
-tell clients apart in the client list. The browser keeps it in its user
-settings, and the server never stores it. Anyone can type any name, so a
-display name proves nothing about who someone is. Write "display name", not
-"username" or "nickname": TeamMapper has no accounts.
+An optional name shown to collaborators to help identify a client. The browser
+keeps it in user settings and announces it when opening a map; the server does
+not store it. Anyone can choose any name, so it does not verify identity.
+Write "display name", not "username" or "nickname": TeamMapper has no accounts.
 
 ### Presence
 
-Who is on a map right now and what each of them has selected. The app sends
-presence separately from the map's content, and losing presence does not lose
-edits.
+Who is connected to a map and which node each client has selected. Presence
+updates travel separately from map content, so losing them does not lose edits.
 
 ### Connection status
 
-Whether this client reaches the server. Losing the connection raises the
-"Connection lost" dialog with a reconnect button.
+Whether this client can reach the server. A lost connection opens the
+"Connection lost" dialog, which offers a reconnect button.
 
 ## Words for code
 
 ### Attribute
 
-A value a data object holds, such as a node's `isRoot`, `protected` or
-`name`. A boolean attribute is still an attribute: write "the `isRoot`
-attribute is true", not "the node carries the root flag".
+A named value stored on an object, such as a node's `name`, `isRoot` or
+`protected`. Boolean values are attributes too. Write "the `isRoot` attribute
+is true", never "the node carries the root flag".
 
 ### Attribute group
 
-A set of related node attributes that a node record holds under one key:
-`colors`, `font`, `image` and `link`. The Y.Doc stores each attribute group
-as a nested Y.Map with one key per attribute. When you change the background
-color while a peer changes the name color, your clients write different keys
-and both colors survive the merge. The frontend and the backend also read a
-group that a peer stored as a plain object.
+A set of related node attributes stored under one key: `colors`, `font`,
+`image` or `link`. Each group is a nested Y.Map in the Y.Doc, with a separate
+key for each attribute. This lets simultaneous changes to different attributes
+merge: one client can change the background color while another changes the
+name color, and both changes survive. The frontend and backend also accept
+groups stored as plain objects by peers.
 
 ### Flag
 
-A switch that configures the app from outside its data: an environment
-variable, a feature flag or a command-line option. A value stored on a node or
-a map is an attribute.
+A configuration switch, such as a feature flag, environment variable or
+command-line option. Use **attribute** for a value stored on a node or map.
 
 ### Format number
 
-The version of the data the offline build stores in a browser. The browser
-stores one number for all maps, and each map's Y.Doc stores the number it was
-saved with. A doc without one has format number 1. A build refuses to read or
-change data with a higher number, which a later build wrote.
+The number identifying the data format of maps stored by the offline build.
+The browser stores one number for all maps, and each map's Y.Doc records the
+format number it was saved with. A Y.Doc without a number has format number 1.
+A build refuses to read or change data with a higher number than it supports.
 
 ### Migration
 
-A numbered change that brings stored data to the layout a newer release reads.
-Each migration runs once:
+A numbered change that updates stored data to a newer format. Each migration
+runs once for the data it updates:
 
 - The backend runs TypeORM migrations from `teammapper-backend/src/migrations/`
   on its PostgreSQL database.
@@ -445,15 +490,17 @@ Each migration runs once:
 
 ### Map data
 
-The nodes of one mind map as every client shares them. The app draws the map
-from the map data and keeps no copy of its own, so your edits, a peer's edits
-and an undo all change the map data first, and the app then redraws.
+The shared content of a mind map, including its nodes and arrows. The renderer
+draws directly from map data rather than maintaining a separate editable copy.
+Local edits, peer edits and undo all update map data first, then trigger a
+redraw.
 
-In the app, the map data syncs with the server and the other clients. The
-mmp specs use `InMemoryMapData`. The **view state** and the
-**selection** stay with one person and never enter the map data.
+In the web version, map data syncs with the server and other clients. The mmp
+specs use `InMemoryMapData`. **View state** and **selection** belong to each
+client and are kept outside map data.
 
 ### Mark
 
-Reserved for the **node mark**, one visual element of a drawn node. Do not use
-"mark" for a stored value: a node holds an attribute, it does not carry a mark.
+Reserved for the **node mark**, one visual element of a drawn node. Write
+"attribute" for a stored value: a node has attributes, and the renderer draws
+marks.
