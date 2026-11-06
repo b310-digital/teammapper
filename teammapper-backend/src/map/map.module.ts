@@ -17,10 +17,12 @@ import { LlmUsageCounterService } from './services/llm-usage-counter.service'
 import cookieParser from 'cookie-parser'
 import { PersonIdMiddleware } from '../auth/person-id.middleware'
 import configService from '../config.service'
+import { SettingsModule } from '../settings/settings.module'
 
 @Module({
   imports: [
     MapDataModule,
+    SettingsModule,
     TypeOrmModule.forFeature([LlmUsageCounter]),
     ScheduleModule.forRoot(),
     // Image uploads and map duplication apply ThrottlerGuard.

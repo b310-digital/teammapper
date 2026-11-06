@@ -20,6 +20,11 @@ import { arrowKey } from '@teammapper/shared'
 import { hydrateYDoc } from '../utils/yDocConversion'
 import { jest } from '@jest/globals'
 
+const COLOR_DEFAULTS = {
+  node: { name: '#666666', background: '#f5f5f5', branch: '#546e7a' },
+  root: { name: '#666666', background: '#f5f5f5' },
+}
+
 describe('YjsPersistenceService', () => {
   let service: YjsPersistenceService
   let nodesRepo: Repository<MmpNode>
@@ -95,7 +100,8 @@ describe('YjsPersistenceService', () => {
       doc,
       dbNodes,
       map,
-      dbArrows.map((a) => ({ source: a.sourceNodeId, target: a.targetNodeId }))
+      dbArrows.map((a) => ({ source: a.sourceNodeId, target: a.targetNodeId })),
+      COLOR_DEFAULTS
     )
     return doc
   }
@@ -329,7 +335,7 @@ describe('YjsPersistenceService', () => {
     it('deletes all DB nodes when Y.Doc nodes map is empty', async () => {
       const { map } = await createMapWithRootNode()
       const doc = new Y.Doc()
-      hydrateYDoc(doc, [], map, [])
+      hydrateYDoc(doc, [], map, [], COLOR_DEFAULTS)
 
       await service.persistDoc(map.id, doc)
 

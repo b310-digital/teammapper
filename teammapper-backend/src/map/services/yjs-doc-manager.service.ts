@@ -2,7 +2,8 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common'
 import * as Y from 'yjs'
 import { MapsService } from './maps.service'
 import { YjsPersistenceService } from './yjs-persistence.service'
-import { hydrateYDoc } from '../utils/yDocConversion'
+import { hydrateYDoc, NodeColorDefaults } from '../utils/yDocConversion'
+import { SettingsService } from '../../settings/settings.service'
 
 interface DocEntry {
   doc: Y.Doc
@@ -27,10 +28,21 @@ export class YjsDocManagerService implements OnModuleDestroy {
   private readonly MAX_FAILED_PERSISTS = 5
   private shuttingDown = false
 
+  // The node colors the settings configure, which hydration puts in place of
+  // a stored color that is no hex color. getSettings reads the settings files
+  // from disk, so the service reads them once; a changed override file takes
+  // effect on restart.
+  private readonly colorDefaults: NodeColorDefaults
+
   constructor(
     private readonly mapsService: MapsService,
-    private readonly persistenceService: YjsPersistenceService
-  ) {}
+    private readonly persistenceService: YjsPersistenceService,
+    settingsService: SettingsService
+  ) {
+    const { defaultNode, rootNode } =
+      settingsService.getSettings().userSettings.mapOptions
+    this.colorDefaults = { node: defaultNode.colors, root: rootNode.colors }
+  }
 
   // Persists every loaded doc before dropping it, so a shutdown keeps the
   // edits the debounce has not saved yet. The flush gives up after
@@ -121,7 +133,7 @@ export class YjsDocManagerService implements OnModuleDestroy {
     }
 
     const doc = new Y.Doc()
-    hydrateYDoc(doc, nodes, map, arrows)
+    hydrateYDoc(doc, nodes, map, arrows, this.colorDefaults)
 
     this.docs.set(mapId, {
       doc,

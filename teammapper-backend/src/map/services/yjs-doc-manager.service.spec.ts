@@ -4,6 +4,8 @@ import { YjsPersistenceService } from './yjs-persistence.service'
 import { MmpNode } from '../entities/mmpNode.entity'
 import { MmpMap } from '../entities/mmpMap.entity'
 import { jest } from '@jest/globals'
+import * as Y from 'yjs'
+import { SettingsService } from '../../settings/settings.service'
 
 const createMockMap = (): MmpMap => {
   const map = new MmpMap()
@@ -51,7 +53,11 @@ describe('YjsDocManagerService', () => {
     mapsService = createMockMapsService()
     persistenceService = createMockPersistenceService()
     persistenceService.persistImmediately.mockResolvedValue(true)
-    service = new YjsDocManagerService(mapsService, persistenceService)
+    service = new YjsDocManagerService(
+      mapsService,
+      persistenceService,
+      new SettingsService()
+    )
   })
 
   afterEach(async () => {
@@ -74,6 +80,40 @@ describe('YjsDocManagerService', () => {
   }
 
   describe('getOrCreateDoc', () => {
+    // getSettings reads two files from disk, which blocks the event loop.
+    it('reads the settings once, not on every hydration', async () => {
+      const settingsService = new SettingsService()
+      const getSettings = jest.spyOn(settingsService, 'getSettings')
+      const manager = new YjsDocManagerService(
+        mapsService,
+        persistenceService,
+        settingsService
+      )
+      setupWithNodes()
+
+      await manager.getOrCreateDoc('map-1')
+      await manager.getOrCreateDoc('map-2')
+
+      expect(getSettings).toHaveBeenCalledTimes(1)
+      await manager.onModuleDestroy()
+    })
+
+    // Releases before March 2026 stored the rgba() colors the color picker
+    // wrote, and the map accepts hex colors only.
+    it('hydrates a stored rgba() color as the configured default color', async () => {
+      const root = createMockNode('root-1', true)
+      root.colorsBackground = 'rgba(139,195,74,0.44)'
+      setupWithNodes([root])
+      const { rootNode } = new SettingsService().getSettings().userSettings
+        .mapOptions
+
+      const doc = await service.getOrCreateDoc('map-1')
+
+      const yRoot = (doc.getMap('nodes') as Y.Map<Y.Map<unknown>>).get('root-1')
+      const colors = (yRoot?.get('colors') as Y.Map<unknown>).toJSON()
+      expect(colors.background).toBe(rootNode.colors.background)
+    })
+
     it('queries database for map and nodes', async () => {
       setupWithNodes()
 
