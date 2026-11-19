@@ -16,10 +16,12 @@ The script builds the workspace packages, generates the settings, and compiles
 the frontend with the `production` and `offline` configurations. The site lands
 in `teammapper-frontend/dist-offline/browser`.
 
-The settings come from `teammapper-backend/config/settings.prod.json`, merged
-with `teammapper-frontend/offline/settings.override.json`. The override turns
-sharing, pictograms and AI off. Edit the override file and rebuild to change
-the settings.
+`scripts/generate-offline-settings.mjs` writes the settings. It starts from
+`DEFAULT_SETTINGS` in `packages/shared`, the defaults the server uses, takes
+the version from `teammapper-backend/package.json`, and turns sharing,
+pictograms and AI off. `IMPRINT_URL` and `PRIVACY_URL` in the environment of
+the build set the legal links. Change the defaults or the script and rebuild
+to change other settings.
 
 ## Host
 

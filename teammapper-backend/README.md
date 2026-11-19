@@ -65,8 +65,10 @@ Copy `.env.default` to `.env` and configure the variables below.
 | Variable | Description | Default |
 |---|---|---|
 | `PORT` | Server port | `3000` |
-| `MODE` | `DEV` disables SSL | `DEV` |
+| `MODE` | Sets the default log level: `debug` with `DEV`, `log` with any other value | unset |
 | `DELETE_AFTER_DAYS` | Days before unused maps are deleted | `30` |
+
+The [README](../README.md#system-settings) lists the variables for feature flags, legal links and pictograms.
 
 ### PostgreSQL (optional)
 

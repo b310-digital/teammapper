@@ -227,9 +227,17 @@ settings. Map shortcuts are inactive while the dialog is open.
 ### Legal links
 
 Links to the instance's imprint and privacy information, shown in the info
-dialog and the start page footer. The operator sets their addresses with
-`imprintUrl` and `privacyUrl` in system settings, or the environment variables
-`IMPRINT_URL` and `PRIVACY_URL`. Each link appears only when configured.
+dialog and the start page footer. The operator sets their addresses with the
+environment variables `IMPRINT_URL` and `PRIVACY_URL`. Each link appears only
+when configured.
+
+### System settings
+
+The settings the server sends to every client: feature flags, the legal links,
+the pictogram addresses, the app version, and the starting user settings. They
+start from defaults built into TeamMapper, and the operator overwrites them
+with environment variables. Users cannot change them. The offline build starts
+from the same defaults.
 
 ### Settings dialog
 

@@ -53,7 +53,6 @@ ENV APP_PROD_PATH=${APP_PATH}/teammapper
 WORKDIR $APP_PROD_PATH
 
 COPY --from=builder --chown=node:node /home/node/deploy/ ./
-COPY --chown=node:node teammapper-backend/config ./config
 COPY --chown=node:node --chmod=755 entrypoint.prod.sh ./
 
 ENTRYPOINT ["/sbin/tini", "--"]

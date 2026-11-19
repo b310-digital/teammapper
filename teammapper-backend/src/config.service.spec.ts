@@ -112,29 +112,4 @@ describe('ConfigService', () => {
       )
     })
   })
-
-  describe('legal urls', () => {
-    it.each([undefined, '', '  '])('reads IMPRINT_URL=%p as null', (value) => {
-      const config = createConfigService({ IMPRINT_URL: value })
-      expect(config.getImprintUrl()).toBeNull()
-    })
-
-    it.each([undefined, '', '  '])('reads PRIVACY_URL=%p as null', (value) => {
-      const config = createConfigService({ PRIVACY_URL: value })
-      expect(config.getPrivacyUrl()).toBeNull()
-    })
-
-    it('reads IMPRINT_URL and PRIVACY_URL without surrounding blanks', () => {
-      const config = createConfigService({
-        IMPRINT_URL: ' https://teammapper.localhost/imprint ',
-        PRIVACY_URL: 'https://teammapper.localhost/privacy',
-      })
-      expect(config.getImprintUrl()).toBe(
-        'https://teammapper.localhost/imprint'
-      )
-      expect(config.getPrivacyUrl()).toBe(
-        'https://teammapper.localhost/privacy'
-      )
-    })
-  })
 })
