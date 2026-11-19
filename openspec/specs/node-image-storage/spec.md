@@ -125,7 +125,7 @@ Deleting a node, replacing its image or removing its image SHALL NOT delete the 
 - **THEN** the restored node SHALL display its image
 
 ### Requirement: A daily job deletes unused images
-Once a day the server SHALL delete every image that no node row of its map references and that was uploaded more than 7 days ago. The server SHALL keep every other image.
+Once a day the server SHALL delete every image that no node row of its map references and that was uploaded more than 7 days ago. The server SHALL keep every other image. The same job SHALL delete stored bytes that no map holds.
 
 #### Scenario: Unused old image deleted
 - **GIVEN** an image that no node row references, uploaded 8 days ago
@@ -138,7 +138,15 @@ Once a day the server SHALL delete every image that no node row of its map refer
 - **THEN** the server SHALL keep both images
 
 ### Requirement: Images follow their map
-Duplicating a map SHALL copy every image under the same id, with the time of duplication as its upload time, and SHALL leave the node references unchanged. Deleting a map SHALL delete every image of the map.
+Duplicating a map SHALL give the copy every image under the same id, with the time of duplication as its upload time, and SHALL leave the node references unchanged. The copy SHALL share the stored bytes with the source and SHALL store no second set. Deleting a map SHALL delete every image of the map. The server SHALL delete the stored bytes of an image once no map holds the image any more.
+
+#### Scenario: Duplicate without a second set of bytes
+- **WHEN** the user duplicates a map whose nodes reference images
+- **THEN** the server SHALL store the bytes of each image once
+
+#### Scenario: Delete the last map that holds an image
+- **WHEN** a map and every copy that holds the same image are deleted
+- **THEN** the server SHALL delete the stored bytes of that image
 
 #### Scenario: Duplicate a map with images
 - **WHEN** the user duplicates a map whose nodes reference images and then deletes the source map

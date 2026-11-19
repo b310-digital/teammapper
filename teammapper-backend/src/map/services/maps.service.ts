@@ -497,29 +497,34 @@ export class MapsService {
 
     if (outdatedMapsIdsFlat.length === 0) return 0
 
-    const affected = (
-      await this.mapsRepository
-        .createQueryBuilder()
-        .where('id IN (:...ids)', { ids: outdatedMapsIdsFlat })
-        .delete()
-        .execute()
-    ).affected
-    await this.deleteImagesOfMaps(outdatedMapsIdsFlat)
-    return affected
-  }
-
-  private async deleteImagesOfMaps(mapIds: string[]): Promise<void> {
-    for (const mapId of mapIds) {
-      await this.imagesService.deleteImagesOfMap(mapId)
-    }
+    return this.deleteMapsWithImages(outdatedMapsIdsFlat)
   }
 
   /**
-   * Deletes the map, then its images. The foreign key cascade reaches only
-   * what the database holds, so the image store is called explicitly.
+   * Deletes the map with its images. Copies of the map share the bytes of
+   * those images, so the bytes stay while a copy references them.
    */
   async deleteMap(uuid: string): Promise<void> {
-    await this.mapsRepository.delete({ id: uuid })
-    await this.imagesService.deleteImagesOfMap(uuid)
+    await this.deleteMapsWithImages([uuid])
+  }
+
+  /**
+   * Deletes the images of the maps, then the maps, in one transaction, and
+   * returns the number of maps deleted. Waits for a running duplication that
+   * holds the bytes of those images.
+   */
+  private async deleteMapsWithImages(
+    mapIds: string[]
+  ): Promise<number | null | undefined> {
+    return this.mapsRepository.manager.transaction(async (manager) => {
+      await this.imagesService.deleteImagesOfMaps(manager, mapIds)
+      const result = await manager
+        .createQueryBuilder()
+        .delete()
+        .from(MmpMap)
+        .where('id IN (:...ids)', { ids: mapIds })
+        .execute()
+      return result.affected
+    })
   }
 }

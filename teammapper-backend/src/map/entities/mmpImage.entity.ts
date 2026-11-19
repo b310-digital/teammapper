@@ -5,13 +5,15 @@ import {
   ManyToOne,
   JoinColumn,
   Check,
+  Index,
 } from 'typeorm'
 import type { RasterImageMimeType } from '@teammapper/shared'
 import { MmpMap } from './mmpMap.entity'
 
 /**
- * The metadata of one uploaded image. The cap and the cleanup job read only
- * this table; `ImageStore` keeps the bytes.
+ * The metadata of one image a map references. A copied map gets its own row
+ * under the same id. The cap and the cleanup job read only this table;
+ * `ImageStore` keeps the bytes, one copy per id.
  */
 // Columns take `!` and no initializer; AGENTS.md, TypeScript strictness rule 3.
 @Entity('mmp_image')
@@ -23,6 +25,8 @@ export class MmpImage {
   @PrimaryColumn('uuid')
   mapId!: string
 
+  // Serves the check whether any map still references the bytes of an image.
+  @Index('IDX_mmp_image_id')
   @PrimaryColumn('uuid')
   id!: string
 
