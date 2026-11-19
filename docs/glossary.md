@@ -445,6 +445,21 @@ updates travel separately from map content, so losing them does not lose edits.
 Whether this client can reach the server. A lost connection opens the
 "Connection lost" dialog, which offers a reconnect button.
 
+### Map size limit
+
+The most data one mind map may hold on the server. A map at the limit accepts
+no change that makes it larger. The operator sets the limit.
+
+### Rejected change
+
+A change the server refuses to store, such as one that would exceed the map
+size limit. The client that sent it turns read-only and shows a message until
+the page reloads.
+
+When the map content fails validation, the server also discards the live map
+and reloads its last saved state. That reload is a **map reset**. The other
+clients of the map reconnect and show a message that explains the reset.
+
 ## Words for code
 
 ### Attribute

@@ -4,6 +4,9 @@ import {
   collectSubtreeIds,
   ExportNodeProperties,
   MapArrow,
+  MapUpdateRejectionReason,
+  WS_CLOSE_MAP_UPDATE_REJECTED,
+  WS_CLOSE_MESSAGE_TOO_BIG,
   YJS_SECRET_SUBPROTOCOL_PREFIX,
   YJS_SUBPROTOCOL,
 } from '@teammapper/shared';
@@ -173,6 +176,23 @@ export function yMapToNodeProps(yNode: Y.Map<unknown>): StoredNode {
     if (yNode.has(key)) record[key] = toPlainValue(yNode.get(key));
   }
   return record;
+}
+
+const MAP_TOO_LARGE: MapUpdateRejectionReason = 'mapTooLarge';
+
+/** Whether a close with this code ends the reconnect attempts. */
+export function stopsReconnecting(code: number): boolean {
+  const isRejection =
+    code >= WS_CLOSE_MAP_UPDATE_REJECTED &&
+    code < WS_CLOSE_MAP_UPDATE_REJECTED + 100;
+  return isRejection || code === WS_CLOSE_MESSAGE_TOO_BIG;
+}
+
+/** The translation key of the message that explains a rejected change. */
+export function rejectionMessageKey(code: number, reason: string): string {
+  const tooLarge =
+    code === WS_CLOSE_MESSAGE_TOO_BIG || reason === MAP_TOO_LARGE;
+  return tooLarge ? 'TOASTS.MAP_TOO_LARGE' : 'TOASTS.MAP_UPDATE_REJECTED';
 }
 
 export function buildYjsWsUrl(): string {

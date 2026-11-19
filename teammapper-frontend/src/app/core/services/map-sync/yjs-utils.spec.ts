@@ -9,6 +9,8 @@ import {
   resolveClientColor,
   findAffectedNodes,
   collectDescendantIds,
+  rejectionMessageKey,
+  stopsReconnecting,
 } from './yjs-utils';
 
 function createMockNode(
@@ -393,5 +395,35 @@ describe('collectDescendantIds', () => {
     const result = collectDescendantIds(nodesMap, 'A');
 
     expect(result).toEqual(['B']);
+  });
+});
+
+// ─── Close handling ──────────────────────────────────────────
+
+describe('stopsReconnecting', () => {
+  it.each([4400, 4450, 4499, 1009])(
+    'stops reconnecting after code %d',
+    code => {
+      expect(stopsReconnecting(code)).toBe(true);
+    }
+  );
+
+  it.each([4002, 4001, 4399, 4500, 1006, 1008, 1013])(
+    'keeps reconnecting after code %d',
+    code => {
+      expect(stopsReconnecting(code)).toBe(false);
+    }
+  );
+});
+
+describe('rejectionMessageKey', () => {
+  it.each([
+    [4400, 'mapTooLarge', 'TOASTS.MAP_TOO_LARGE'],
+    [1009, '', 'TOASTS.MAP_TOO_LARGE'],
+    [4400, 'invalidContent', 'TOASTS.MAP_UPDATE_REJECTED'],
+    [4400, 'garbage', 'TOASTS.MAP_UPDATE_REJECTED'],
+    [4400, '', 'TOASTS.MAP_UPDATE_REJECTED'],
+  ])('names %d with reason %p as %s', (code, reason, key) => {
+    expect(rejectionMessageKey(code, reason)).toBe(key);
   });
 });

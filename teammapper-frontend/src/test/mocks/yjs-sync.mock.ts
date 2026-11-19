@@ -3,7 +3,7 @@ import { UserSettings } from '@teammapper/shared';
 import { MmpService } from '../../app/core/services/mmp/mmp.service';
 import { SettingsService } from '../../app/core/services/settings/settings.service';
 import { UtilsService } from '../../app/core/services/utils/utils.service';
-import { ToastrService } from 'ngx-toastr';
+import { IndividualConfig, ToastrService } from 'ngx-toastr';
 import { MapSyncContext } from '../../app/core/services/map-sync/map-sync-context';
 import { YjsSyncService } from '../../app/core/services/map-sync/yjs-sync.service';
 import { MapConnectionFactory } from '../../app/core/services/map-backend/map-connection';
@@ -97,14 +97,52 @@ export function createYjsSyncService(
   mmpService: jest.Mocked<MmpService> = createMockMmpService(),
   context: MapSyncContext = createMockContext(),
   settingsService: SettingsService = createMockSettingsService(),
-  connectionFactory: MapConnectionFactory = new FakeMapConnections().factory
+  connectionFactory: MapConnectionFactory = new FakeMapConnections().factory,
+  utilsService: UtilsService = {} as UtilsService,
+  toastrService: ToastrService = {} as ToastrService
 ): YjsSyncService {
   return new YjsSyncService(
     context,
     mmpService,
     settingsService,
-    {} as UtilsService,
-    {} as ToastrService,
+    utilsService,
+    toastrService,
     connectionFactory
   );
+}
+
+/** A recorded toast: its message and the ngx-toastr options it took. */
+export interface ShownToast {
+  message: string;
+  options: Partial<IndividualConfig> | undefined;
+}
+
+export interface RecordingToastr {
+  toastr: ToastrService;
+  shown: () => ShownToast[];
+  messages: () => string[];
+}
+
+/**
+ * A ToastrService that records each toast of every level. `shown()` lists
+ * them in the order they appeared, so a test asserts on the message and
+ * options without naming the level.
+ */
+export function createRecordingToastr(): RecordingToastr {
+  const shown: ShownToast[] = [];
+  const record = jest.fn(
+    (message?: string, _title?: string, options?: Partial<IndividualConfig>) =>
+      shown.push({ message: message ?? '', options })
+  );
+  const toastr = {
+    success: record,
+    info: record,
+    warning: record,
+    error: record,
+  } as unknown as ToastrService;
+  return {
+    toastr,
+    shown: () => shown,
+    messages: () => shown.map(toast => toast.message),
+  };
 }
