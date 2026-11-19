@@ -5,7 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { IPictogramResponse } from 'src/app/core/services/pictograms/picto-types';
+import { Pictogram } from '@teammapper/shared';
 import { PictogramService } from 'src/app/core/services/pictograms/pictogram.service';
 import {
   Breakpoints,
@@ -34,6 +34,8 @@ import { AsyncPipe } from '@angular/common';
 import { MatGridList, MatGridTile } from '@angular/material/grid-list';
 import { MatDivider } from '@angular/material/divider';
 import { TranslatePipe } from '@ngx-translate/core';
+import { ToastrService } from 'ngx-toastr';
+import { UtilsService } from 'src/app/core/services/utils/utils.service';
 
 @Component({
   selector: 'teammapper-dialog-pictograms',
@@ -63,8 +65,11 @@ export class DialogPictogramsComponent {
   private pictoService = inject(PictogramService);
   private breakpointObserver = inject(BreakpointObserver);
   private mmpService = inject(MmpService);
+  private toastService = inject(ToastrService);
+  private utilsService = inject(UtilsService);
+  private previewErrorShown = false;
 
-  public pictos = signal<IPictogramResponse[]>([]);
+  public pictos = signal<Pictogram[]>([]);
   public onPictogramAdd = new EventEmitter();
   public searchTerm = '';
   public cardLayout = this.breakpointObserver
@@ -94,17 +99,38 @@ export class DialogPictogramsComponent {
 
   @HostListener('document:keydown.enter')
   async search() {
-    this.pictoService.getPictos(this.searchTerm).subscribe(pictos => {
-      this.pictos.set(pictos);
+    this.previewErrorShown = false;
+    this.pictoService.getPictos(this.searchTerm).subscribe({
+      next: pictos => this.pictos.set(pictos),
+      error: () => {
+        this.pictos.set([]);
+        void this.showPictogramsError();
+      },
     });
   }
 
   async getImageFileOfId(id: number) {
-    this.pictoService.getPictoImage(id).subscribe(async img => {
-      // No resize: it would turn the transparent background black.
-      await this.mmpService.addNodeImage(img);
-      this.onPictogramAdd.emit();
+    this.pictoService.getPictoImage(id).subscribe({
+      next: async img => {
+        // No resize: it would turn the transparent background black.
+        await this.mmpService.addNodeImage(img);
+        this.onPictogramAdd.emit();
+      },
+      error: () => void this.showPictogramsError(),
     });
+  }
+
+  // Many previews can fail together, so one search shows one toast.
+  async onPreviewError(): Promise<void> {
+    if (this.previewErrorShown) return;
+    this.previewErrorShown = true;
+    await this.showPictogramsError();
+  }
+
+  private async showPictogramsError(): Promise<void> {
+    this.toastService.error(
+      await this.utilsService.translate('TOASTS.ERRORS.PICTOGRAMS_ERROR')
+    );
   }
 
   getImageUrlOfId(id: number): string {

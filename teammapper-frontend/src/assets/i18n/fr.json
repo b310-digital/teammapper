@@ -276,6 +276,7 @@
       "IMPORT_ERROR": "La Mindmap n'a pas pu être importée !",
       "IMPORT_NEWER_VERSION": "Une version plus récente de TeamMapper a créé ce fichier de carte mentale. Mettez TeamMapper à jour pour l'importer.",
       "AI_MERMAID_ERROR": "Mermaid n'a pas pu être généré",
+      "PICTOGRAMS_ERROR": "Les pictogrammes n'ont pas pu être chargés. Veuillez réessayer plus tard.",
       "IMAGE_STORAGE_FULL": "Le stockage d'images de cette carte mentale est plein. Une image retirée libère sa place dans les 7 jours suivant son téléversement.",
       "IMAGE_UPLOAD_ERROR": "L'image n'a pas pu être téléversée.",
       "DELETE_MAP_ERROR": "La carte n'a pas pu être supprimée.",

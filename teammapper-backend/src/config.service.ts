@@ -93,14 +93,14 @@ class ConfigService {
     return value?.toLowerCase() === 'true'
   }
 
-  /** Upstream the /arasaac/api proxy forwards pictogram searches to. */
+  /** ARASAAC search API that the /arasaac/api/pictograms endpoint calls. */
   public getPictogramApiUrl(): string {
     return (
       this.getValue('PICTOGRAM_API_URL', false) || 'https://api.arasaac.org/api'
     )
   }
 
-  /** Upstream the /arasaac/images proxy forwards pictogram images to. */
+  /** ARASAAC image server that the /arasaac/images/pictograms endpoint calls. */
   public getPictogramImagesUrl(): string {
     return (
       this.getValue('PICTOGRAM_IMAGES_URL', false) ||

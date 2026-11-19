@@ -81,5 +81,15 @@ export default defineConfig({
       stderr: 'pipe',
       timeout: 120 * 1000, // 2 minutes timeout
     },
+    {
+      // Stands in for the ARASAAC servers that the backend's pictogram
+      // endpoints call (PICTOGRAM_API_URL and PICTOGRAM_IMAGES_URL).
+      port: 3100,
+      command: 'node e2e/arasaac-stub.ts',
+      reuseExistingServer: !process.env.CI,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 30 * 1000,
+    },
   ],
 });

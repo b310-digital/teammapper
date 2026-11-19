@@ -40,6 +40,10 @@ services:
       # upgrades http://app to https, so the browser uses the alias below.
       TESTING_PLAYWRIGHT_BASE_URL: "http://teammapper:4200"
       PLAYWRIGHT_MCP_CDP_ENDPOINT: "http://chrome:9222"
+      # The e2e suite starts a stub of ARASAAC on this port. Every backend
+      # started in this container calls the stub instead of ARASAAC.
+      PICTOGRAM_API_URL: "http://localhost:3100/api"
+      PICTOGRAM_IMAGES_URL: "http://localhost:3100/images"
     ports:
       - "${APP_FRONTEND_PORT:-4200}:4200"
       - "${APP_BACKEND_PORT:-3000}:3000"

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Locator, Page } from '@playwright/test';
 
 const mockPictogramResponse = [
   {
@@ -76,4 +76,73 @@ test('pictogram search results appear immediately', async ({ page }) => {
   // Pictogram images should appear immediately without additional interaction
   const images = dialog.locator('mat-grid-tile img');
   await expect(images).toHaveCount(2, { timeout: 5000 });
+});
+
+const SERVER_MODE_URLS = {
+  pictogramApiUrl: '/arasaac/api/pictograms',
+  pictogramStaticUrl: '/arasaac/images/pictograms',
+};
+
+/** Enables pictograms and points the app at the backend's two endpoints. */
+async function useServerMode(page: Page): Promise<void> {
+  await page.route('**/api/settings', async route => {
+    const response = await route.fetch();
+    const json = await response.json();
+    json.systemSettings.featureFlags.pictograms = true;
+    json.systemSettings.urls = {
+      ...json.systemSettings.urls,
+      ...SERVER_MODE_URLS,
+    };
+    await route.fulfill({ response, json });
+  });
+}
+
+async function openPictogramDialog(page: Page): Promise<Locator> {
+  await page.goto('/');
+  await page.getByText('Create mind map').click();
+  await expect(page.locator('.map')).toBeVisible();
+  await page.locator('button:has(mat-icon:has-text("nature_people"))').click();
+  const dialog = page.locator('mat-dialog-container');
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+async function searchPictograms(dialog: Locator, term: string): Promise<void> {
+  await dialog.locator('input[matInput]').fill(term);
+  await dialog.locator('button:has(mat-icon:has-text("search"))').click();
+}
+
+// The server tests need a backend that calls the stub on port 3100. With
+// reuseExistingServer, a running backend without PICTOGRAM_API_URL and
+// PICTOGRAM_IMAGES_URL pointing at the stub makes these tests fail.
+test('inserts a pictogram through the server endpoints @server', async ({
+  page,
+}) => {
+  const requestedUrls: string[] = [];
+  page.on('request', request => requestedUrls.push(request.url()));
+  await useServerMode(page);
+  const dialog = await openPictogramDialog(page);
+
+  await searchPictograms(dialog, 'dog');
+  const images = dialog.locator('mat-grid-tile img');
+  await expect(images).toHaveCount(2, { timeout: 5000 });
+  await images.first().click();
+
+  await expect(page.locator('svg image').first()).toBeVisible({
+    timeout: 5000,
+  });
+  const hosts = requestedUrls.map(url => new URL(url).hostname);
+  expect(hosts.filter(host => host.endsWith('arasaac.org'))).toEqual([]);
+});
+
+test('shows an error toast when the pictogram search fails @server', async ({
+  page,
+}) => {
+  await useServerMode(page);
+  const dialog = await openPictogramDialog(page);
+
+  await searchPictograms(dialog, 'fail');
+
+  await expect(page.locator('.toast-error')).toBeVisible({ timeout: 5000 });
+  await expect(dialog.locator('mat-grid-tile img')).toHaveCount(0);
 });

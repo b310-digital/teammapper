@@ -65,6 +65,8 @@ jobs:
         POSTGRES_QUERY_TIMEOUT: 100000
         POSTGRES_STATEMENT_TIMEOUT: 100000
         BINDING: localhost
+        PICTOGRAM_API_URL: http://localhost:3100/api
+        PICTOGRAM_IMAGES_URL: http://localhost:3100/images
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       if: ${{ !cancelled() }}
       with:

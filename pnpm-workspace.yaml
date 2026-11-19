@@ -32,7 +32,8 @@ overrides:
   'underscore@<=1.13.7': '1.13.8'
   'picomatch@>=4.0.0 <4.0.4': '>=4.0.4 <5.0.0'
   'lodash@<4.18.0': '>=4.18.0'
-  # GHSA-q3jh-wrc6-jgq8 / -8r9p-f939-6h3c. Parent: http-proxy-middleware > http-proxy.
+  # GHSA-q3jh-wrc6-jgq8 / -8r9p-f939-6h3c. Parents: @angular-devkit/build-angular and
+  # webpack-dev-server, through http-proxy-middleware > http-proxy.
   # GHSA-mrwp-f3q8-3g9p raised the floor.
   'follow-redirects@<1.16.2': '>=1.16.2 <2.0.0'
   # GHSA-6qxp-vccf-f47h / -22jm-h49p-29qw / -46jr-4wx8-v453. Parent: @angular/cli.
