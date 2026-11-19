@@ -12,6 +12,7 @@ import {
   MermaidCreateSchema,
   NodeBasicsSchema,
   NodeSchema,
+  PictogramListSchema,
   sanitizeIssues,
   NodePropertySchemas,
 } from './index';
@@ -429,6 +430,36 @@ describe('Shared Validation Schemas', () => {
           ...shape,
         }).success
       ).toBe(false);
+    });
+  });
+
+  describe('PictogramListSchema', () => {
+    const arasaacItem = {
+      _id: 6009,
+      keywords: [{ keyword: 'dog', type: 3 }],
+      schematic: false,
+      categories: ['animal'],
+    };
+
+    it('reduces an ARASAAC item to its _id', () => {
+      const result = v.safeParse(PictogramListSchema, [arasaacItem]);
+
+      expect(result.success && result.output).toEqual([{ _id: 6009 }]);
+    });
+
+    it('accepts an empty list', () => {
+      const result = v.safeParse(PictogramListSchema, []);
+
+      expect(result.success && result.output).toEqual([]);
+    });
+
+    it.each<[string, unknown]>([
+      ['an object instead of a list', { _id: 1 }],
+      ['an item without _id', [{ keywords: [] }]],
+      ['a string _id', [{ _id: '6009' }]],
+      ['a fractional _id', [{ _id: 1.5 }]],
+    ])('rejects %s', (_name, body) => {
+      expect(v.safeParse(PictogramListSchema, body).success).toBe(false);
     });
   });
 });

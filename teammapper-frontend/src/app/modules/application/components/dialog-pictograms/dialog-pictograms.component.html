@@ -24,6 +24,7 @@
             src="{{ getImageUrlOfId(picto._id) }}"
             (click)="getImageFileOfId(picto._id)"
             (keydown.enter)="getImageFileOfId(picto._id)"
+            (error)="onPreviewError()"
             width="150"
             height="150"
             alt="Pictogram"

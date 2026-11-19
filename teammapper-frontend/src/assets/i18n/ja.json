@@ -278,6 +278,7 @@
       "IMPORT_ERROR": "マインドマップをインポートできませんでした",
       "IMPORT_NEWER_VERSION": "このマインドマップファイルは新しいバージョンの TeamMapper で作成されました。インポートするには TeamMapper を更新してください。",
       "AI_MERMAID_ERROR": "Mermaidを生成できませんでした",
+      "PICTOGRAMS_ERROR": "ピクトグラムを読み込めませんでした。しばらくしてからもう一度お試しください。",
       "IMAGE_STORAGE_FULL": "このマインドマップの画像ストレージがいっぱいです。削除した画像の容量は、アップロードから7日以内に解放されます。",
       "IMAGE_UPLOAD_ERROR": "画像をアップロードできませんでした。",
       "DELETE_MAP_ERROR": "マインドマップを削除できませんでした。",

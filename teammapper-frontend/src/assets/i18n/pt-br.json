@@ -276,6 +276,7 @@
       "IMPORT_ERROR": "O mapa mental não pôde ser importado!",
       "IMPORT_NEWER_VERSION": "Uma versão mais recente do TeamMapper criou este arquivo de mapa mental. Atualize o TeamMapper para importá-lo.",
       "AI_MERMAID_ERROR": "Mermaid não pôde ser gerado",
+      "PICTOGRAMS_ERROR": "Não foi possível carregar os pictogramas. Tente novamente mais tarde.",
       "IMAGE_STORAGE_FULL": "O armazenamento de imagens deste mapa mental está cheio. Uma imagem removida libera seu espaço em até 7 dias após o envio.",
       "IMAGE_UPLOAD_ERROR": "Não foi possível enviar a imagem.",
       "DELETE_MAP_ERROR": "Não foi possível excluir o mapa.",

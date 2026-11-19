@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core'
 import AppModule from './app.module'
 import configService from './config.service'
-import { mountPictogramProxy } from './pictogram-proxy'
 import { GlobalExceptionFilter } from './filters/global-exception.filter'
 import { Logger } from '@nestjs/common'
 import { NestExpressApplication } from '@nestjs/platform-express'
@@ -36,8 +35,6 @@ async function bootstrap() {
   // off, Express keeps its default and reads the socket address.
   const trustProxy = configService.getTrustProxy()
   if (trustProxy !== false) app.set('trust proxy', trustProxy)
-
-  mountPictogramProxy(app)
 
   app.useStaticAssets(join(__dirname, '..', 'client/browser/assets'), {
     prefix: '/assets/',

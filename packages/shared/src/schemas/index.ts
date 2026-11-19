@@ -241,3 +241,10 @@ const sanitizeIssue = (issue: AnyIssue): SanitizedIssue => {
 
 export const sanitizeIssues = (issues: readonly AnyIssue[]): SanitizedIssue[] =>
   issues.map(sanitizeIssue);
+
+// A pictogram search result, reduced to its id because `v.object` drops unknown keys.
+export const PictogramSchema = v.object({
+  _id: v.pipe(v.number(), v.integer()),
+});
+export const PictogramListSchema = v.array(PictogramSchema);
+export type Pictogram = v.InferOutput<typeof PictogramSchema>;

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
-import { IPictogramResponse } from './picto-types';
+import { Pictogram } from '@teammapper/shared';
 import { SettingsService } from '../settings/settings.service';
 
 @Injectable({
@@ -22,14 +22,15 @@ export class PictogramService {
       settings?.urls?.pictogramStaticUrl || this.staticAssetUrl;
   }
 
-  getPictos(seachTerm: string): Observable<IPictogramResponse[]> {
+  getPictos(seachTerm: string): Observable<Pictogram[]> {
     const language = this.settingsSerivce.getLanguage();
-    const url = `${this.apirUrl}/${language}/${this.apiResource}/${seachTerm}`;
-    return this.http.get<IPictogramResponse[]>(url);
+    const term = encodeURIComponent(seachTerm);
+    const url = `${this.apirUrl}/${language}/${this.apiResource}/${term}`;
+    return this.http.get<Pictogram[]>(url);
   }
 
-  getPictoImageUrl(id: number, size = 300, fileType = 'png') {
-    return `${this.staticAssetUrl}/${id}/${id}_${size}.${fileType}`;
+  getPictoImageUrl(id: number) {
+    return `${this.staticAssetUrl}/${id}/${id}_300.png`;
   }
 
   getPictoImage(id: number): Observable<Blob> {

@@ -6,6 +6,7 @@ import { MapModule } from './map/map.module'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { join } from 'path'
 import { SettingsModule } from './settings/settings.module'
+import { PictogramsModule } from './pictograms/pictograms.module'
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { SettingsModule } from './settings/settings.module'
     TypeOrmModule.forRoot(configService.getTypeOrmConfig()),
     MapModule,
     SettingsModule,
+    PictogramsModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'client', 'browser'),
       exclude: ['/assets/'],

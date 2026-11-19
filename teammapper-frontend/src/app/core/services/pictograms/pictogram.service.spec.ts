@@ -2,7 +2,7 @@ import { PictogramService } from './pictogram.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SettingsService } from '../settings/settings.service';
 import { SETTINGS_URL } from '../map-backend/map-backend-config';
-import { IPictogramResponse } from './picto-types';
+import { Pictogram } from '@teammapper/shared';
 import { TestBed } from '@angular/core/testing';
 import {
   HttpTestingController,
@@ -10,23 +10,7 @@ import {
 } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 
-const testData: IPictogramResponse = {
-  schematic: false,
-  sex: false,
-  violence: false,
-  aac: false,
-  aacColor: false,
-  skin: false,
-  hair: false,
-  downloads: 0,
-  categories: [],
-  synsets: [],
-  tags: [],
-  _id: 1,
-  created: new Date(),
-  lastUpdated: new Date(),
-  keywords: [],
-};
+const testData: Pictogram = { _id: 1 };
 
 describe('PictogramService', () => {
   let service: PictogramService;
@@ -60,6 +44,28 @@ describe('PictogramService', () => {
     httpTesting.expectOne(expectedUrl).flush([testData]);
   });
 
+  it('encodes a slash in the search term', done => {
+    const expectedUrl =
+      'https://api.arasaac.org/v1/pictograms/en/search/black%2Fwhite';
+
+    service.getPictos('black/white').subscribe({
+      next: () => done(),
+      error: done.fail,
+    });
+    httpTesting.expectOne(expectedUrl).flush([testData]);
+  });
+
+  it('encodes a question mark and a space in the search term', done => {
+    const expectedUrl =
+      'https://api.arasaac.org/v1/pictograms/en/search/why%3F%20not';
+
+    service.getPictos('why? not').subscribe({
+      next: () => done(),
+      error: done.fail,
+    });
+    httpTesting.expectOne(expectedUrl).flush([testData]);
+  });
+
   it('constructs the asset url', () => {
     const imageUrl = service.getPictoImageUrl(3);
 
@@ -80,26 +86,5 @@ describe('PictogramService', () => {
       error: done.fail,
     });
     httpTesting.expectOne(expectedUrl).flush(blob);
-  });
-
-  it('uses default language when settings are not available', done => {
-    const searchTerm = 'House';
-    const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';
-
-    service.getPictos(searchTerm).subscribe({
-      next: _ => {
-        done();
-      },
-      error: done.fail,
-    });
-    httpTesting.expectOne(expectedUrl).flush([testData]);
-  });
-
-  it('constructs the asset url with custom size and file type', () => {
-    const imageUrl = service.getPictoImageUrl(3, 500, 'jpg');
-
-    expect(imageUrl).toEqual(
-      'https://static.arasaac.org/pictograms/3/3_500.jpg'
-    );
   });
 });

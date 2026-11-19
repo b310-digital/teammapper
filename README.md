@@ -266,12 +266,12 @@ or lower case. An unset, empty or other value keeps the default.
 | Variable | Description | Default |
 | --- | --- | --- |
 | `AI_ENABLED` | Turns on AI generate and its API endpoints | `false` |
-| `FEATURE_PICTOGRAMS` | Turns on pictograms. With the flag on, the server also forwards `/arasaac/api` and `/arasaac/images` to ARASAAC; with the flag off it serves neither route | `true` |
+| `FEATURE_PICTOGRAMS` | Turns on pictograms. With the flag on, the server also serves two endpoints that call ARASAAC: `/arasaac/api/pictograms` for searches and `/arasaac/images/pictograms` for images; with the flag off, both answer 404 | `true` |
 | `FEATURE_ARROWS` | Shows the button and the `alt+a` shortcut that connect two nodes with an arrow. Maps show, sync and export their arrows with the flag off | `false` |
 | `FEATURE_SHARING` | Shows the share button and the share dialog, which duplicates maps | `true` |
-| `PICTOGRAMS_VIA_SERVER` | With `true`, the browser sends every pictogram request to the server, which forwards it to ARASAAC. Otherwise the browser loads pictograms from ARASAAC directly | `false` |
-| `PICTOGRAM_API_URL` | Upstream the `/arasaac/api` route forwards pictogram searches to | `https://api.arasaac.org/api` |
-| `PICTOGRAM_IMAGES_URL` | Upstream the `/arasaac/images` route forwards pictogram images to | `https://static.arasaac.org/` |
+| `PICTOGRAMS_VIA_SERVER` | With `true`, the browser sends every pictogram search and image request to the server, which calls ARASAAC. Otherwise the browser loads pictograms from ARASAAC directly | `false` |
+| `PICTOGRAM_API_URL` | ARASAAC search API that the `/arasaac/api/pictograms` endpoint calls | `https://api.arasaac.org/api` |
+| `PICTOGRAM_IMAGES_URL` | ARASAAC image server that the `/arasaac/images/pictograms` endpoint calls | `https://static.arasaac.org/` |
 | `IMPRINT_URL` | Target of the imprint link in the start page footer and the info dialog; unset or empty hides the link | unset |
 | `PRIVACY_URL` | Target of the privacy policy link in the start page footer and the info dialog; unset or empty hides the link | unset |
 | `AI_LLM_MODEL` | The LLM that AI generate uses; the AI dialog shows its name while `AI_ENABLED` is on | unset |

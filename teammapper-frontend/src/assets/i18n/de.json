@@ -279,6 +279,7 @@
       "IMPORT_ERROR": "Mindmap konnte nicht importiert werden!",
       "IMPORT_NEWER_VERSION": "Eine neuere TeamMapper-Version hat diese Mindmap-Datei erstellt. Aktualisiere TeamMapper, um sie zu importieren.",
       "AI_MERMAID_ERROR": "Mermaid konnte nicht generiert werden.",
+      "PICTOGRAMS_ERROR": "Die Piktogramme konnten nicht geladen werden. Bitte versuche es später erneut.",
       "IMAGE_STORAGE_FULL": "Der Bildspeicher dieser Mindmap ist voll. Ein entferntes Bild gibt seinen Platz innerhalb von 7 Tagen nach dem Hochladen frei.",
       "IMAGE_UPLOAD_ERROR": "Das Bild konnte nicht hochgeladen werden.",
       "DELETE_MAP_ERROR": "Die Mindmap konnte nicht gelöscht werden.",
