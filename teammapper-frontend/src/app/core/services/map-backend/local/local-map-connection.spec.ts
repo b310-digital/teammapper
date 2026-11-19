@@ -227,7 +227,7 @@ describe.each(DRIVERS)('LocalMapConnection with %s', (_name, driver) => {
       format.outdate();
       await Promise.resolve();
 
-      expect(closed).toHaveBeenCalledWith(CLOSE_STORAGE_OUTDATED);
+      expect(closed).toHaveBeenCalledWith(CLOSE_STORAGE_OUTDATED, '');
       await connection.destroy();
     });
 
@@ -246,7 +246,7 @@ describe.each(DRIVERS)('LocalMapConnection with %s', (_name, driver) => {
 
       connection.onClosed(closed);
 
-      expect(closed).toHaveBeenCalledWith(CLOSE_STORAGE_OUTDATED);
+      expect(closed).toHaveBeenCalledWith(CLOSE_STORAGE_OUTDATED, '');
       await connection.destroy();
     });
 

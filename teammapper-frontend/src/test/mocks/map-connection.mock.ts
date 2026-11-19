@@ -31,7 +31,7 @@ export class FakeMapConnection implements MapConnection {
 
   private readonly synced: Listener<[]>[] = [];
   private readonly status: Listener<[Status]>[] = [];
-  private readonly closed: Listener<[number | null]>[] = [];
+  private readonly closed: Listener<[number | null, string]>[] = [];
   private connected = true;
 
   constructor(
@@ -52,7 +52,7 @@ export class FakeMapConnection implements MapConnection {
     this.status.push(listener);
   }
 
-  onClosed(listener: (code: number | null) => void): void {
+  onClosed(listener: (code: number | null, reason: string) => void): void {
     this.closed.push(listener);
   }
 
@@ -64,8 +64,8 @@ export class FakeMapConnection implements MapConnection {
     this.status.forEach(listener => listener(status));
   }
 
-  emitClosed(code: number | null): void {
-    this.closed.forEach(listener => listener(code));
+  emitClosed(code: number | null, reason = ''): void {
+    this.closed.forEach(listener => listener(code, reason));
   }
 
   private disconnect(): void {

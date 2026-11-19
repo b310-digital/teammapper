@@ -18,7 +18,7 @@ import * as Y from 'yjs';
 import { MmpService } from '../mmp/mmp.service';
 import { SettingsService } from '../settings/settings.service';
 import { UtilsService } from '../utils/utils.service';
-import { ToastrService } from 'ngx-toastr';
+import { IndividualConfig, ToastrService } from 'ngx-toastr';
 import type { Awareness } from 'y-protocols/awareness';
 import {
   CLOSE_STORAGE_OUTDATED,
@@ -33,6 +33,8 @@ import {
   arrowsMapOf,
   NodesMap,
   nodesMapOf,
+  rejectionMessageKey,
+  stopsReconnecting,
 } from './yjs-utils';
 import {
   MapSyncContext,
@@ -75,6 +77,9 @@ export class YjsSyncService {
   private yjsMapData: YjsMapData | null = null;
   private mapConnection: MapConnection | null = null;
   private yjsSynced = false;
+  // Set once the server rejected a change: the status listener then ignores
+  // the provider's later events, so no connection-lost dialog opens.
+  private stopped = false;
   private yjsWritable = false;
   private yjsSubscriptions: Subscription[] = [];
   private yjsMapId: string | null = null;
@@ -280,23 +285,18 @@ export class YjsSyncService {
 
   private setupConnectionStatus(connection: MapConnection): void {
     connection.onStatus(status => {
-      if (!this.isCurrentConnection(connection)) return;
+      if (!this.isCurrentConnection(connection) || this.stopped) return;
       this.ctx.setConnectionStatus(status);
     });
   }
 
   private setupMapCloseHandler(connection: MapConnection): void {
-    connection.onClosed(code => {
+    connection.onClosed((code, reason) => {
       if (!this.isCurrentConnection(connection)) return;
       if (code === WS_CLOSE_MAP_SYNC_RESET && this.yjsMapId) {
-        const mapId = this.yjsMapId;
-        const writable = this.yjsWritable;
-        this.settingsService.setEditMode(false);
-        this.ctx.removeMap();
-        this.destroy();
-        this.setWritable(writable);
-        this.initMap(mapId);
-        this.ctx.setConnectionStatus('disconnected');
+        this.handleMapReset(this.yjsMapId);
+      } else if (code !== null && stopsReconnecting(code)) {
+        this.handleRejection(code, reason);
       } else if (code === WS_CLOSE_MAP_DELETED) {
         this.ctx.mapDeleted();
         window.location.reload();
@@ -306,6 +306,40 @@ export class YjsSyncService {
         this.setWritable(false);
       }
     });
+  }
+
+  /** Reopen the map the server rebuilt, and tell the visitor why. */
+  private handleMapReset(mapId: string): void {
+    const writable = this.yjsWritable;
+    this.settingsService.setEditMode(false);
+    this.ctx.removeMap();
+    this.destroy();
+    this.setWritable(writable);
+    this.initMap(mapId);
+    this.ctx.setConnectionStatus('disconnected');
+    void this.showToast('TOASTS.MAP_RESET', {});
+  }
+
+  /**
+   * The server rejected this client's change and will not take it back: stop
+   * editing and keep the toast until the visitor reloads.
+   */
+  private handleRejection(code: number, reason: string): void {
+    this.stopped = true;
+    this.setWritable(false);
+    this.ctx.setConnectionStatus(null);
+    void this.showToast(rejectionMessageKey(code, reason), {
+      disableTimeOut: true,
+      tapToDismiss: false,
+    });
+  }
+
+  private async showToast(
+    key: string,
+    options: Partial<IndividualConfig>
+  ): Promise<void> {
+    const msg = await this.utilsService.translate(key);
+    if (msg) this.toastrService.warning(msg, undefined, options);
   }
 
   // ─── Cleanup ────────────────────────────────────────────────
@@ -320,6 +354,7 @@ export class YjsSyncService {
     this.destroyUndoManager();
     this.destroyConnection();
     this.yjsSynced = false;
+    this.stopped = false;
     this.yjsWritable = false;
     this.yjsMapId = null;
     this.selectedNodeId = null;

@@ -13,8 +13,11 @@ export interface MapConnection {
   /** Called each time the doc has synced. */
   onSynced(listener: () => void): void;
   onStatus(listener: (status: NonNullable<ConnectionStatus>) => void): void;
-  /** The close code of the connection, null when none is known. */
-  onClosed(listener: (code: number | null) => void): void;
+  /**
+   * The close code of the connection, null when none is known, and the close
+   * reason, empty when none is known.
+   */
+  onClosed(listener: (code: number | null, reason: string) => void): void;
   destroy(): void;
 }
 

@@ -1,6 +1,10 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { WS_CLOSE_MAP_SYNC_RESET } from '@teammapper/shared';
+import {
+  WS_CLOSE_MAP_SYNC_RESET,
+  WS_CLOSE_MAP_UPDATE_REJECTED,
+  WS_CLOSE_MESSAGE_TOO_BIG,
+} from '@teammapper/shared';
 import { WebsocketMapConnection } from './websocket-map-connection';
 
 /**
@@ -121,6 +125,45 @@ describe('WebsocketMapConnection', () => {
     provider().emit('connection-close', null);
 
     expect(codes).toEqual([WS_CLOSE_MAP_SYNC_RESET, null]);
+  });
+
+  it.each([
+    [
+      'the close reason with the code',
+      { code: WS_CLOSE_MAP_UPDATE_REJECTED, reason: 'mapTooLarge' },
+      [WS_CLOSE_MAP_UPDATE_REJECTED, 'mapTooLarge'],
+    ],
+    [
+      'an empty reason when the close event has none',
+      { code: 1006 },
+      [1006, ''],
+    ],
+    ['a null code and an empty reason without a close event', null, [null, '']],
+  ])('reports %s', (_name, event, expected) => {
+    const closes: [number | null, string][] = [];
+    connection.onClosed((code, reason) => closes.push([code, reason]));
+
+    provider().emit('connection-close', event);
+
+    expect(closes).toEqual([expected]);
+  });
+
+  describe('shouldReconnect option', () => {
+    function shouldReconnect(code: number): boolean {
+      const options = providerArgs()[3] as {
+        shouldReconnect: (event: { code: number }) => boolean;
+      };
+      return options.shouldReconnect({ code });
+    }
+
+    it.each([
+      ['a rejected change', WS_CLOSE_MAP_UPDATE_REJECTED, false],
+      ['a message too big close', WS_CLOSE_MESSAGE_TOO_BIG, false],
+      ['an abnormal close', 1006, true],
+      ['a map reset close', WS_CLOSE_MAP_SYNC_RESET, true],
+    ])('after %s reconnects: %s', (_name, code, reconnects) => {
+      expect(shouldReconnect(code)).toBe(reconnects);
+    });
   });
 
   it('disconnects and destroys the provider on destroy', () => {

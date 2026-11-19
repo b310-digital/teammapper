@@ -26,7 +26,10 @@ export class LocalMapConnection implements MapConnection {
   // The stored doc once it has attached, which `outdate` stops at once.
   private attached: StoredDoc | null = null;
   private readonly stopFormatWatch: () => void;
-  private readonly closedListeners: ((code: number | null) => void)[] = [];
+  private readonly closedListeners: ((
+    code: number | null,
+    reason: string
+  ) => void)[] = [];
   private destroyed = false;
   private outdated = false;
   // Settles once `destroy` wrote the pending state, null before `destroy`.
@@ -71,8 +74,8 @@ export class LocalMapConnection implements MapConnection {
    * Calls the listener with `CLOSE_STORAGE_OUTDATED` once a later build
    * changed the stored maps, at once when that already happened.
    */
-  onClosed(listener: (code: number | null) => void): void {
-    if (this.outdated) listener(CLOSE_STORAGE_OUTDATED);
+  onClosed(listener: (code: number | null, reason: string) => void): void {
+    if (this.outdated) listener(CLOSE_STORAGE_OUTDATED, '');
     else this.closedListeners.push(listener);
   }
 
@@ -137,7 +140,9 @@ export class LocalMapConnection implements MapConnection {
     const discarded = this.attached
       ? this.attached.discard()
       : this.stored.then(stored => stored?.discard());
-    this.closedListeners.forEach(listener => listener(CLOSE_STORAGE_OUTDATED));
+    this.closedListeners.forEach(listener =>
+      listener(CLOSE_STORAGE_OUTDATED, '')
+    );
     await discarded.catch((error: unknown) =>
       console.error('Failed to stop storing the map:', error)
     );

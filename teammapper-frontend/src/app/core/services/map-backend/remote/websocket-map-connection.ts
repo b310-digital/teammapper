@@ -1,6 +1,10 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { buildYjsProtocols, buildYjsWsUrl } from '../../map-sync/yjs-utils';
+import {
+  buildYjsProtocols,
+  buildYjsWsUrl,
+  stopsReconnecting,
+} from '../../map-sync/yjs-utils';
 import { ConnectionStatus } from '../../map-sync/map-sync-context';
 import type { Awareness } from 'y-protocols/awareness';
 import { MapConnection } from '../map-connection';
@@ -17,6 +21,7 @@ export class WebsocketMapConnection implements MapConnection {
       protocols: buildYjsProtocols(modificationSecret),
       maxBackoffTime: 5000,
       disableBc: true,
+      shouldReconnect: (event: CloseEvent) => !stopsReconnecting(event.code),
     });
   }
 
@@ -40,9 +45,9 @@ export class WebsocketMapConnection implements MapConnection {
     );
   }
 
-  onClosed(listener: (code: number | null) => void): void {
+  onClosed(listener: (code: number | null, reason: string) => void): void {
     this.provider.on('connection-close', (event: CloseEvent | null) =>
-      listener(event?.code ?? null)
+      listener(event?.code ?? null, event?.reason ?? '')
     );
   }
 
