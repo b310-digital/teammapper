@@ -135,7 +135,8 @@ export class ImagesService {
       )
     )
     const held = images.filter((image) => heldIds.has(image.id))
-    this.warnAboutDroppedImages(sourceMapId, targetMapId, images, held)
+    const dropped = images.filter((image) => !heldIds.has(image.id))
+    this.warnAboutDroppedImages(sourceMapId, targetMapId, dropped)
     await this.insertImageReferences(manager, targetMapId, held)
   }
 
@@ -148,9 +149,8 @@ export class ImagesService {
     manager: EntityManager,
     mapIds: string[]
   ): Promise<void> {
-    if (mapIds.length === 0) return
     const imageIds = await this.deleteImageRows(manager, mapIds)
-    await this.imageStore.deleteUnreferenced(manager, [...new Set(imageIds)])
+    await this.imageStore.deleteUnreferenced(manager, imageIds)
   }
 
   /**
@@ -194,12 +194,9 @@ export class ImagesService {
   private warnAboutDroppedImages(
     sourceMapId: string,
     targetMapId: string,
-    images: MmpImage[],
-    held: MmpImage[]
+    dropped: MmpImage[]
   ): void {
-    if (held.length === images.length) return
-    const heldIds = new Set(held.map((image) => image.id))
-    const dropped = images.filter((image) => !heldIds.has(image.id))
+    if (dropped.length === 0) return
     this.logger.warn(
       `copyImages(): map ${sourceMapId} to map ${targetMapId} dropped images without bytes: ${dropped.map((image) => image.id).join(', ')}`
     )

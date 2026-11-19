@@ -46,33 +46,12 @@ export class DatabaseImageStore extends ImageStore {
     return rows.map((row) => row.id)
   }
 
-  async deleteUnreferenced(
-    manager: EntityManager,
-    imageIds: string[]
-  ): Promise<void> {
-    await this.lockAndDeleteUnreferenced(manager, imageIds)
-  }
-
-  /** Locks and deletes the candidates in one transaction, as deleteUnreferenced does. */
-  async deleteAllUnreferenced(): Promise<number> {
-    return this.imageDataRepository.manager.transaction(async (manager) => {
-      const candidates = await manager
-        .createQueryBuilder(MmpImageData, 'mmp_image_data')
-        .select('mmp_image_data.id', 'id')
-        .where(notReferenced('mmp_image_data'))
-        .getRawMany<{ id: string }>()
-      const imageIds = candidates.map((candidate) => candidate.id)
-      return this.lockAndDeleteUnreferenced(manager, imageIds)
-    })
-  }
-
   /**
    * Waits for every copy that holds the rows, then deletes the unreferenced
    * ones. The delete runs as a second statement, so under READ COMMITTED it
-   * sees the metadata rows a copy committed while this one waited. Returns
-   * the number of rows deleted.
+   * sees the metadata rows a copy committed while this one waited.
    */
-  private async lockAndDeleteUnreferenced(
+  async deleteUnreferenced(
     manager: EntityManager,
     imageIds: string[]
   ): Promise<number> {
@@ -86,6 +65,19 @@ export class DatabaseImageStore extends ImageStore {
       .andWhere(notReferenced('mmp_image_data'))
       .execute()
     return result.affected ?? 0
+  }
+
+  /** Locks and deletes the candidates in one transaction, as deleteUnreferenced does. */
+  async deleteAllUnreferenced(): Promise<number> {
+    return this.imageDataRepository.manager.transaction(async (manager) => {
+      const candidates = await manager
+        .createQueryBuilder(MmpImageData, 'mmp_image_data')
+        .select('mmp_image_data.id', 'id')
+        .where(notReferenced('mmp_image_data'))
+        .getRawMany<{ id: string }>()
+      const imageIds = candidates.map((candidate) => candidate.id)
+      return this.deleteUnreferenced(manager, imageIds)
+    })
   }
 
   /** Locks the rows FOR UPDATE in id order, which waits for every FOR SHARE holder. */

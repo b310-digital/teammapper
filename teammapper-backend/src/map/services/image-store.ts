@@ -31,13 +31,13 @@ export abstract class ImageStore {
 
   /**
    * Deletes the bytes of the given images that no metadata row references,
-   * inside the transaction of `manager`. Call it after deleting the
-   * metadata rows in that transaction.
+   * inside the transaction of `manager`, and returns how many it deleted.
+   * Call it after deleting the metadata rows in that transaction.
    */
   abstract deleteUnreferenced(
     manager: EntityManager,
     imageIds: string[]
-  ): Promise<void>
+  ): Promise<number>
 
   /**
    * Deletes all bytes that no metadata row references. Returns the number of

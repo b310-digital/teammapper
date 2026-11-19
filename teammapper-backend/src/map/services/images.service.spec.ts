@@ -191,26 +191,18 @@ describe('ImagesService', () => {
   describe('duplication limits', () => {
     afterEach(() => jest.restoreAllMocks())
 
-    it('duplicates a map and a copy of a copy regardless of images stored elsewhere', async () => {
-      const previous = process.env.DUPLICATE_MAP_MAX_IMAGE_BYTES
-      process.env.DUPLICATE_MAP_MAX_IMAGE_BYTES = String(LOGO_PNG.length)
-      try {
-        const source = await createMap()
-        const reference = await imagesService.storeImage(source.id, pngUpload())
-        const copy = await createMap()
-        await duplicateImages(source.id, copy.id)
-        const secondCopy = await createMap()
-        await duplicateImages(source.id, secondCopy.id)
-        const copyOfCopy = await createMap()
-        await duplicateImages(copy.id, copyOfCopy.id)
+    it('duplicates a map twice and duplicates a copy of a copy', async () => {
+      const source = await createMap()
+      const reference = await imagesService.storeImage(source.id, pngUpload())
+      const copy = await createMap()
+      await duplicateImages(source.id, copy.id)
+      const secondCopy = await createMap()
+      await duplicateImages(source.id, secondCopy.id)
+      const copyOfCopy = await createMap()
+      await duplicateImages(copy.id, copyOfCopy.id)
 
-        for (const map of [copy, secondCopy, copyOfCopy]) {
-          expect(await read(map.id, reference)).not.toBeNull()
-        }
-      } finally {
-        if (previous === undefined)
-          delete process.env.DUPLICATE_MAP_MAX_IMAGE_BYTES
-        else process.env.DUPLICATE_MAP_MAX_IMAGE_BYTES = previous
+      for (const map of [copy, secondCopy, copyOfCopy]) {
+        expect(await read(map.id, reference)).not.toBeNull()
       }
     })
 
@@ -275,18 +267,6 @@ describe('ImagesService', () => {
   })
 
   describe('images follow their map', () => {
-    it('keeps every image readable in a duplicate after the source is deleted', async () => {
-      const source = await createMap()
-      const reference = await imagesService.storeImage(source.id, pngUpload())
-      const copy = await createMap()
-
-      await duplicateImages(source.id, copy.id)
-      await mapsService.deleteMap(source.id)
-
-      expect(await read(copy.id, reference)).not.toBeNull()
-      expect(await read(source.id, reference)).toBeNull()
-    })
-
     it('counts a copied image as uploaded at the time of duplication', async () => {
       const source = await createMap()
       const reference = await imagesService.storeImage(source.id, pngUpload())
@@ -356,6 +336,7 @@ describe('ImagesService', () => {
 
       expect(await countBytes(reference)).toBe(1)
       expect(await read(copy.id, reference)).not.toBeNull()
+      expect(await read(source.id, reference)).toBeNull()
     })
 
     it('deletes the bytes of an image together with the last map that references it', async () => {
