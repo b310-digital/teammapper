@@ -4,6 +4,7 @@ import {
   Signal,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
@@ -34,7 +35,13 @@ import {
   MatCardTitle,
   MatCardContent,
 } from '@angular/material/card';
-import { MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
+import {
+  MatFormField,
+  MatHint,
+  MatLabel,
+  MatPrefix,
+  MatSuffix,
+} from '@angular/material/form-field';
 import { MatSelect, MatOption } from '@angular/material/select';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { FormsModule } from '@angular/forms';
@@ -42,6 +49,11 @@ import { MatInput } from '@angular/material/input';
 import { InverseBoolPipe } from '../../../../shared/pipes/inverse-bool.pipe';
 import { MindmapsOverview } from 'src/app/shared/components/mindmaps-overview/mindmaps-overview.component';
 import { MapDeletionComponent } from '../map-deletion/map-deletion.component';
+import {
+  MAP_SETTINGS_CARDS,
+  matchingCards,
+  USER_SETTINGS_CARDS,
+} from './settings-search';
 
 @Component({
   selector: 'teammapper-dialog-settings',
@@ -64,6 +76,8 @@ import { MapDeletionComponent } from '../map-deletion/map-deletion.component';
     MatFormField,
     MatLabel,
     MatHint,
+    MatPrefix,
+    MatSuffix,
     MatSelect,
     MatOption,
     MatSlideToggle,
@@ -101,6 +115,36 @@ export class DialogSettingsComponent {
   );
   public editMode: Observable<boolean | null>;
 
+  /** The text the user types into the search field in the dialog header. */
+  public readonly searchQuery = signal('');
+  /** The open tab: 0 for the settings, 1 for the list of created maps. */
+  public readonly selectedTab = signal(0);
+  // A language change translates the card titles, so the search runs again.
+  private readonly languageChange = toSignal(
+    this.translateService.onLangChange,
+    { initialValue: null }
+  );
+  /** The cards whose title or setting names match the search. */
+  public readonly visibleCards = computed(() => {
+    this.languageChange();
+    return matchingCards(this.searchQuery(), key =>
+      this.translateService.instant(key)
+    );
+  });
+  public readonly showsUserSettings = computed(() =>
+    USER_SETTINGS_CARDS.some(card => this.visibleCards().has(card))
+  );
+  /** MmpService loads the map options once a map is created. Until then the
+   * map settings stay hidden. */
+  public readonly showsMapSettings = computed(
+    () =>
+      this.mapOptions() !== null &&
+      MAP_SETTINGS_CARDS.some(card => this.visibleCards().has(card))
+  );
+  public readonly nothingMatches = computed(
+    () => !this.showsUserSettings() && !this.showsMapSettings()
+  );
+
   constructor() {
     this.languages = SettingsService.LANGUAGES;
     this.editMode = this.settingsService.getEditModeObservable();
@@ -117,6 +161,15 @@ export class DialogSettingsComponent {
     this.settings = withBranchStyle(settings);
     this.displayName = settings?.general.displayName ?? '';
     this.changeDetector.markForCheck();
+  }
+
+  /**
+   * Filter the settings by the query. The search finds settings only, so it
+   * opens the settings tab when the list of created maps is open.
+   */
+  public search(query: string) {
+    this.searchQuery.set(query);
+    this.selectedTab.set(0);
   }
 
   /**
