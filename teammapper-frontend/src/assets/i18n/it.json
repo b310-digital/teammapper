@@ -136,8 +136,7 @@
       "LINK_TYPE_EDIT": "Osservare e modificare"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "Scorciatoie da tastiera",
-      "DELETION_MOVED": "Nota: la data di eliminazione di questa mappa mentale si trova ora nelle impostazioni, in Opzioni mappa. Chi ha creato la mappa può anche eliminarla da lì."
+      "SHORTCUTS_TITLE": "Scorciatoie da tastiera"
     },
     "LINK": {
       "URL": "Link URL (https://...)"

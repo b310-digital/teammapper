@@ -136,8 +136,7 @@
       "LINK_TYPE_EDIT": "查看并修改"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "快捷键",
-      "DELETION_MOVED": "提示：此思维导图的删除日期已移至设置中的“思维导图选项”。思维导图的创建者也可以在那里删除它。"
+      "SHORTCUTS_TITLE": "快捷键"
     },
     "LINK": {
       "URL": "链接 URL (https://...)"

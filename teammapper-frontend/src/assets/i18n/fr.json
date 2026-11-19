@@ -136,8 +136,7 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "Raccourcis",
-      "DELETION_MOVED": "Remarque : la date de suppression de cette carte se trouve désormais dans les paramètres, sous Options de carte. La personne qui a créé la carte peut aussi la supprimer à cet endroit."
+      "SHORTCUTS_TITLE": "Raccourcis"
     },
     "LINK": {
       "URL": "Link URL (https://...)"

@@ -137,8 +137,7 @@
       "LINK_TYPE_EDIT": "Änderungen erlauben"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "Shortcuts",
-      "DELETION_MOVED": "Hinweis: Das Löschdatum dieser Mindmap steht jetzt in den Einstellungen unter Mindmap Optionen. Wer die Mindmap erstellt hat, kann sie dort auch löschen."
+      "SHORTCUTS_TITLE": "Shortcuts"
     },
     "LINK": {
       "URL": "Link-URL (https://...)"
