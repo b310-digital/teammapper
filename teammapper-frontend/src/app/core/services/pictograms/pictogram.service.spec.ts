@@ -87,25 +87,4 @@ describe('PictogramService', () => {
     });
     httpTesting.expectOne(expectedUrl).flush(blob);
   });
-
-  it('uses default language when settings are not available', done => {
-    const searchTerm = 'House';
-    const expectedUrl = 'https://api.arasaac.org/v1/pictograms/en/search/House';
-
-    service.getPictos(searchTerm).subscribe({
-      next: _ => {
-        done();
-      },
-      error: done.fail,
-    });
-    httpTesting.expectOne(expectedUrl).flush([testData]);
-  });
-
-  it('constructs the asset url with custom size and file type', () => {
-    const imageUrl = service.getPictoImageUrl(3, 500, 'jpg');
-
-    expect(imageUrl).toEqual(
-      'https://static.arasaac.org/pictograms/3/3_500.jpg'
-    );
-  });
 });

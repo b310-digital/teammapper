@@ -29,8 +29,8 @@ export class PictogramService {
     return this.http.get<Pictogram[]>(url);
   }
 
-  getPictoImageUrl(id: number, size = 300, fileType = 'png') {
-    return `${this.staticAssetUrl}/${id}/${id}_${size}.${fileType}`;
+  getPictoImageUrl(id: number) {
+    return `${this.staticAssetUrl}/${id}/${id}_300.png`;
   }
 
   getPictoImage(id: number): Observable<Blob> {
