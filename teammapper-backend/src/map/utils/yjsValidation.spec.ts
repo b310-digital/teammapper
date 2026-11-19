@@ -3,9 +3,26 @@ import {
   applyValidatedMapUpdate,
   MapUpdateOrigin,
   isRejectedMap,
+  MapUpdateRejectedError,
 } from './yjsValidation'
-import { DEFAULT_YJS_MAP_LIMITS } from './yjsLimits'
+import { arrowKey, MAX_NODE_NAME_LENGTH } from '@teammapper/shared'
+import { DEFAULT_YJS_MAP_LIMITS, YjsMapLimits } from './yjsLimits'
 import { LOGO_URL } from '../../../test/imageFixtures'
+
+// Applies the update and returns the reason a rejection names, null for an
+// accepted update, or any other error the call threw.
+const rejectionOf = (
+  doc: Y.Doc,
+  update: Uint8Array,
+  limits: YjsMapLimits = DEFAULT_YJS_MAP_LIMITS
+): unknown => {
+  try {
+    applyValidatedMapUpdate(doc, update, null, limits)
+  } catch (error) {
+    return error instanceof MapUpdateRejectedError ? error.reason : error
+  }
+  return null
+}
 
 // Capture genuine Yjs updates instead of constructing protocol bytes by hand.
 const change = (
@@ -63,9 +80,13 @@ describe('applyValidatedMapUpdate', () => {
       expect(accepted).not.toHaveBeenCalled()
     })
 
-    it('refuses further updates after rejection', () => {
+    it('names unknownRoot for the first rejection', () => {
+      expect(rejectionOf(server, update)).toBe('unknownRoot')
+    })
+
+    it('refuses further updates after rejection with mapRejected', () => {
       expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
-      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+      expect(rejectionOf(server, update)).toBe('mapRejected')
     })
   })
 
@@ -260,17 +281,16 @@ describe('applyValidatedMapUpdate', () => {
   })
 
   it.each(['unused', 'awareness', '__proto__'])(
-    'rejects arbitrary top-level map %s',
+    'rejects arbitrary top-level map %s as unknownRoot',
     (key) => {
-      expect(() =>
-        applyValidatedMapUpdate(
+      expect(
+        rejectionOf(
           server,
           change(client, () => {
             client.getMap(key).set('payload', 'unrelated data')
-          }),
-          null
+          })
         )
-      ).toThrow()
+      ).toBe('unknownRoot')
     }
   )
 
@@ -294,27 +314,35 @@ describe('applyValidatedMapUpdate', () => {
     ['name', { payload: 'extra' }],
     ['constructor', 'extra'],
     ['image', ['invalid image']],
-  ])('rejects invalid node attribute %s', (key, value) => {
+  ])('rejects invalid node attribute %s as invalidContent', (key, value) => {
     const node = new Y.Map<unknown>()
-    expect(() =>
-      applyValidatedMapUpdate(
+    expect(
+      rejectionOf(
         server,
         change(client, () => {
           client.getMap('nodes').set('root', node)
           node.set(String(key), value)
-        }),
-        null
+        })
       )
-    ).toThrow()
+    ).toBe('invalidContent')
   })
 
-  it('rejects a node whose id field names another node', () => {
+  it('rejects an over-long node name as invalidContent', () => {
+    const node = new Y.Map<unknown>()
+    const update = change(client, () => {
+      client.getMap('nodes').set('root', node)
+      node.set('name', 'a'.repeat(MAX_NODE_NAME_LENGTH + 1))
+    })
+    expect(rejectionOf(server, update)).toBe('invalidContent')
+  })
+
+  it('rejects a node whose id field names another node as invalidNode', () => {
     const node = new Y.Map<unknown>()
     const update = change(client, () => {
       client.getMap('nodes').set('A', node)
       node.set('id', 'B')
     })
-    expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    expect(rejectionOf(server, update)).toBe('invalidNode')
     expect(isRejectedMap(server)).toBe(true)
   })
 
@@ -329,7 +357,7 @@ describe('applyValidatedMapUpdate', () => {
       null
     )
     const update = change(client, () => node.set('id', 'B'))
-    expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    expect(rejectionOf(server, update)).toBe('invalidNode')
   })
 
   it('accepts a node whose id field matches its key', () => {
@@ -370,27 +398,30 @@ describe('applyValidatedMapUpdate', () => {
       ['a numeric source', { source: 1, target: 'b' }],
       ['an object target', { source: 'a', target: { id: 'b' } }],
       ['an unknown field', { source: 'a', target: 'b', label: 'extra' }],
-    ])('rejects an arrow with %s', (_name, fields) => {
-      const update = writeArrow('a:b', fields)
-      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    ])('rejects an arrow with %s as invalidContent', (_name, fields) => {
+      // The key matches the fields, so the key check passes and the schema
+      // check names the rejection.
+      const key = arrowKey(String(fields.source), String(fields.target))
+      const update = writeArrow(key, fields)
+      expect(rejectionOf(server, update)).toBe('invalidContent')
     })
 
-    it('rejects an arrow entry that is no Y.Map', () => {
+    it('rejects an arrow entry that is no Y.Map as invalidArrow', () => {
       const update = change(client, () =>
         client.getMap('arrows').set('a:b', { source: 'a', target: 'b' })
       )
-      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+      expect(rejectionOf(server, update)).toBe('invalidArrow')
     })
 
-    it('rejects an arrow whose key is not the key of its source and target', () => {
+    it('rejects an arrow whose key is not the key of its source and target as invalidArrow', () => {
       const update = writeArrow('a:c', { source: 'a', target: 'b' })
-      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+      expect(rejectionOf(server, update)).toBe('invalidArrow')
     })
 
-    it('rejects an arrow whose source is longer than a node id', () => {
+    it('rejects an arrow whose source is longer than a node id as invalidContent', () => {
       const source = 'a'.repeat(129)
       const update = writeArrow(`${source}:b`, { source, target: 'b' })
-      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+      expect(rejectionOf(server, update)).toBe('invalidContent')
     })
 
     it('rejects an arrow past the arrow limit', () => {
@@ -400,12 +431,12 @@ describe('applyValidatedMapUpdate', () => {
         null
       )
       const update = writeArrow('b:a', { source: 'b', target: 'a' })
-      expect(() =>
-        applyValidatedMapUpdate(server, update, null, {
+      expect(
+        rejectionOf(server, update, {
           ...DEFAULT_YJS_MAP_LIMITS,
           maxArrows: 1,
         })
-      ).toThrow()
+      ).toBe('tooManyArrows')
     })
 
     it('keeps the arrow limit low enough for one insert of every arrow', () => {
@@ -414,10 +445,10 @@ describe('applyValidatedMapUpdate', () => {
     })
 
     it.each(['__proto__', 'constructor', 'prototype'])(
-      'rejects arrow key %s that JSON validation could omit',
+      'rejects arrow key %s that JSON validation could omit as invalidArrow',
       (key) => {
         const update = writeArrow(key, { source: 'a', target: 'b' })
-        expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+        expect(rejectionOf(server, update)).toBe('invalidArrow')
       }
     )
   })
@@ -425,32 +456,32 @@ describe('applyValidatedMapUpdate', () => {
   it.each([
     ['arrays', () => new Y.Array()],
     ['submaps', () => new Y.Doc()],
-  ])('rejects %s as nodes', (_name, createValue) => {
+  ])('rejects %s as nodes as invalidNode', (_name, createValue) => {
     const value = createValue()
     try {
       const update = change(client, () =>
         client.getMap('nodes').set('root', value)
       )
-      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+      expect(rejectionOf(server, update)).toBe('invalidNode')
     } finally {
       if (value instanceof Y.Doc) value.destroy()
     }
   })
 
-  it('rejects ordinary objects as shared nodes', () => {
+  it('rejects ordinary objects as shared nodes as invalidNode', () => {
     const update = change(client, () =>
       client.getMap('nodes').set('root', { name: 'Root' })
     )
-    expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    expect(rejectionOf(server, update)).toBe('invalidNode')
   })
 
   it.each(['__proto__', 'constructor', 'prototype'])(
-    'rejects node key %s that JSON validation could omit',
+    'rejects node key %s that JSON validation could omit as invalidContent',
     (key) => {
       const update = change(client, () =>
         client.getMap('nodes').set(key, new Y.Map())
       )
-      expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+      expect(rejectionOf(server, update)).toBe('invalidContent')
     }
   )
 
@@ -461,19 +492,32 @@ describe('applyValidatedMapUpdate', () => {
     const update = change(client, () =>
       client.getMap('mapOptions').set('name', 'Updated map')
     )
-    expect(() => applyValidatedMapUpdate(server, update, null)).toThrow()
+    expect(rejectionOf(server, update)).toBe('invalidContent')
   })
 
-  it('rejects updates with missing dependencies', () => {
+  it('rejects updates with missing dependencies as incompleteUpdate', () => {
     const node = new Y.Map<unknown>()
     client.getMap('nodes').set('root', node)
-    expect(() =>
-      applyValidatedMapUpdate(
+    expect(
+      rejectionOf(
         server,
-        change(client, () => node.set('name', 'Pending')),
-        null
+        change(client, () => node.set('name', 'Pending'))
       )
-    ).toThrow()
+    ).toBe('incompleteUpdate')
+  })
+
+  it('rejects an incoming update past the map size limit as mapTooLarge', () => {
+    const update = change(client, () => {
+      const node = new Y.Map<unknown>()
+      node.set('name', 'a'.repeat(200))
+      client.getMap('nodes').set('one', node)
+    })
+    expect(
+      rejectionOf(server, update, {
+        ...DEFAULT_YJS_MAP_LIMITS,
+        maxBytes: update.byteLength - 1,
+      })
+    ).toBe('mapTooLarge')
   })
 
   it('bounds cumulative encoded size across individually small updates', () => {
@@ -490,12 +534,9 @@ describe('applyValidatedMapUpdate', () => {
       client.getMap('nodes').set('two', node)
     })
     expect(second.byteLength).toBeLessThan(maxBytes)
-    expect(() =>
-      applyValidatedMapUpdate(server, second, null, {
-        ...DEFAULT_YJS_MAP_LIMITS,
-        maxBytes,
-      })
-    ).toThrow()
+    expect(
+      rejectionOf(server, second, { ...DEFAULT_YJS_MAP_LIMITS, maxBytes })
+    ).toBe('mapTooLarge')
   })
 
   it('bounds retained history even when the visible node count stays constant', () => {
@@ -515,14 +556,13 @@ describe('applyValidatedMapUpdate', () => {
       )
     }
     const before = Y.encodeStateAsUpdate(server)
-    expect(() =>
-      applyValidatedMapUpdate(
+    expect(
+      rejectionOf(
         server,
         change(client, () => node.set('name', 'too many')),
-        null,
         limits
       )
-    ).toThrow()
+    ).toBe('tooManyEntries')
     expect(Y.encodeStateAsUpdate(server)).toEqual(before)
   })
 
@@ -535,25 +575,40 @@ describe('applyValidatedMapUpdate', () => {
     const update = change(client, () =>
       client.getMap('nodes').set('two', new Y.Map())
     )
-    expect(() =>
-      applyValidatedMapUpdate(server, update, null, {
-        ...DEFAULT_YJS_MAP_LIMITS,
-        maxNodes: 1,
-      })
-    ).toThrow()
+    expect(
+      rejectionOf(server, update, { ...DEFAULT_YJS_MAP_LIMITS, maxNodes: 1 })
+    ).toBe('tooManyNodes')
     expect(isRejectedMap(server)).toBe(true)
   })
 
-  it('rejects malformed updates', () => {
+  it('rejects malformed updates as malformedUpdate', () => {
     const update = change(client, () =>
       client.getMap('mapOptions').set('name', 'Map name')
     )
-    expect(() =>
+    expect(rejectionOf(server, update.slice(0, update.byteLength - 1))).toBe(
+      'malformedUpdate'
+    )
+  })
+
+  it('rejects bytes that are no update as malformedUpdate and marks the map', () => {
+    expect(rejectionOf(server, new TextEncoder().encode('not an update'))).toBe(
+      'malformedUpdate'
+    )
+    expect(isRejectedMap(server)).toBe(true)
+  })
+
+  it('passes the Yjs error on as the cause of a malformedUpdate', () => {
+    let thrown: unknown = null
+    try {
       applyValidatedMapUpdate(
         server,
-        update.slice(0, update.byteLength - 1),
+        new TextEncoder().encode('not an update'),
         null
       )
-    ).toThrow()
+    } catch (error) {
+      thrown = error
+    }
+    expect(thrown).toBeInstanceOf(MapUpdateRejectedError)
+    expect(thrown).toHaveProperty('cause', expect.any(Error))
   })
 })

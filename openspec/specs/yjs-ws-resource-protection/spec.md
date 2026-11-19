@@ -8,17 +8,63 @@ Limits message size, concurrent connections and connection rate on the Yjs WebSo
 
 ### Requirement: Maximum message payload size
 
-The WebSocketServer SHALL be configured with a `maxPayload` of 1,048,576 bytes (1 MiB). Messages exceeding this limit SHALL cause the connection to be closed automatically by the `ws` library with close code 1009 (Message Too Big).
+The WebSocketServer SHALL set its `maxPayload` to the map size limit (`YJS_MAP_MAX_BYTES`, default 5,242,880 bytes) plus 65,536 bytes of headroom. For a larger message, the `ws` library SHALL close the connection with code 1009 (Message Too Big). The gateway SHALL reject a message larger than the map size limit before it checks any message budget.
 
 #### Scenario: Normal-sized message accepted
 
-- **WHEN** a client sends a Yjs sync message under 1 MiB
-- **THEN** the message is processed normally
+- **WHEN** a client sends a Yjs sync message under the map size limit
+- **THEN** the gateway processes the message
+
+#### Scenario: Limit follows the configured map size
+
+- **WHEN** `YJS_MAP_MAX_BYTES` is 65,536
+- **THEN** the `maxPayload` is 131,072 bytes
+
+#### Scenario: Message above the map size limit rejected by name
+
+- **WHEN** a client sends a message larger than the map size limit but within the headroom
+- **THEN** the gateway closes that connection with code 4400 and the close reason `mapTooLarge`
+- **AND** the other clients stay connected
 
 #### Scenario: Oversized message rejected
 
-- **WHEN** a client sends a message exceeding 1 MiB
-- **THEN** the `ws` library closes the connection with code 1009 (Message Too Big) and the standard close cleanup path executes
+- **WHEN** a client sends a message larger than the `maxPayload`
+- **THEN** the `ws` library closes the connection with code 1009 (Message Too Big)
+- **AND** the gateway logs the rejection with reason `mapTooLarge`
+- **AND** the standard close cleanup path runs
+
+### Requirement: Rejected change handling
+
+The gateway SHALL close the sender of a rejected change with code 4400 and a close reason from the shared rejection vocabulary. A client that receives code 4400 or 1009 SHALL stop reconnecting, turn read-only and show a translated message.
+
+When validation rejects a change, the gateway SHALL also discard the live map. The gateway SHALL close every other client of the map with code 4002 and the same reason, so those clients reconnect and show a message that explains the reset.
+
+A sender over a message budget SHALL close with code 1008 and the reason `rateLimited`. That client SHALL reconnect.
+
+#### Scenario: Sender of a rejected change stops
+
+- **WHEN** validation rejects a client's change
+- **THEN** the gateway closes that client with code 4400 and the rejection reason
+- **AND** the client stays read-only without reconnecting
+
+#### Scenario: Peers reset with a message
+
+- **WHEN** validation rejects a client's change
+- **THEN** the gateway closes every other client of the map with code 4002 and the rejection reason
+- **AND** each peer reconnects to the last saved state and shows the reset message
+
+#### Scenario: Rejection logged once per map and reason per minute
+
+- **WHEN** the gateway rejects several changes on one map for the same reason within one minute
+- **THEN** the gateway writes one WARN line with the map, reason, byte count, client count and action
+- **AND** the first line after that minute states how many repeats the gateway suppressed
+
+#### Scenario: Message budget exceeded
+
+- **WHEN** a client exceeds its message budget
+- **THEN** the gateway closes that connection with code 1008 and the reason `rateLimited`
+- **AND** the gateway logs the rejection with action `retry`
+- **AND** the client reconnects
 
 ### Requirement: Global concurrent connection limit
 
