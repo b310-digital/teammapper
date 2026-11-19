@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { DEFAULT_SETTINGS, Settings } from '@teammapper/shared'
+import { DEFAULT_SYSTEM_SETTINGS, SystemSettings } from '@teammapper/shared'
 
 type Env = Record<string, string | undefined>
 
@@ -8,12 +8,15 @@ const SERVER_PICTOGRAM_API_URL = '/arasaac/api/pictograms'
 const SERVER_PICTOGRAM_STATIC_URL = '/arasaac/images/pictograms'
 
 /**
- * Builds the settings from DEFAULT_SETTINGS and the environment variables.
- * The result shares no object with DEFAULT_SETTINGS.
+ * Builds the system settings from DEFAULT_SYSTEM_SETTINGS and the
+ * environment variables. The result shares no object with the defaults.
  */
-export function resolveSettings(env: Env, version: string): Settings {
-  const settings = structuredClone(DEFAULT_SETTINGS)
-  settings.systemSettings.info.version = version
+export function resolveSystemSettings(
+  env: Env,
+  version: string
+): SystemSettings {
+  const settings = structuredClone(DEFAULT_SYSTEM_SETTINGS)
+  settings.info.version = version
   applyFeatureFlags(settings, env)
   applyUrls(settings, env)
   return settings
@@ -31,19 +34,17 @@ export function readServerVersion(): string {
   return packageJson.version
 }
 
-function applyFeatureFlags(settings: Settings, env: Env): void {
-  const flags = settings.systemSettings.featureFlags
+function applyFeatureFlags(settings: SystemSettings, env: Env): void {
+  const flags = settings.featureFlags
   flags.ai = parseFlag(env.AI_ENABLED) ?? flags.ai
   flags.pictograms = parseFlag(env.FEATURE_PICTOGRAMS) ?? flags.pictograms
   flags.arrows = parseFlag(env.FEATURE_ARROWS) ?? flags.arrows
   flags.sharing = parseFlag(env.FEATURE_SHARING) ?? flags.sharing
-  settings.systemSettings.info.aiModel = flags.ai
-    ? blankToNull(env.AI_LLM_MODEL)
-    : null
+  settings.info.aiModel = flags.ai ? blankToNull(env.AI_LLM_MODEL) : null
 }
 
-function applyUrls(settings: Settings, env: Env): void {
-  const urls = settings.systemSettings.urls
+function applyUrls(settings: SystemSettings, env: Env): void {
+  const urls = settings.urls
   urls.imprintUrl = blankToNull(env.IMPRINT_URL)
   urls.privacyUrl = blankToNull(env.PRIVACY_URL)
   if (parseFlag(env.PICTOGRAMS_VIA_SERVER) === true) {

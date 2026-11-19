@@ -11,15 +11,23 @@ const sharedCjsBuild = join(
   '../../packages/shared/dist/cjs/index.js'
 );
 const backendPackage = join(__dirname, '../../teammapper-backend/package.json');
+const defaultSettingsFile = join(
+  __dirname,
+  '../../teammapper-backend/config/settings.default.json'
+);
 
 const readJson = (path: string): unknown =>
   JSON.parse(readFileSync(path, 'utf-8'));
 
 const loadDefaultSettings = (): Settings => {
   const shared = createRequire(__filename)(sharedCjsBuild) as {
-    DEFAULT_SETTINGS: Settings;
+    DEFAULT_SYSTEM_SETTINGS: Settings['systemSettings'];
   };
-  return JSON.parse(JSON.stringify(shared.DEFAULT_SETTINGS)) as Settings;
+  const file = readJson(defaultSettingsFile) as Pick<Settings, 'userSettings'>;
+  return {
+    systemSettings: JSON.parse(JSON.stringify(shared.DEFAULT_SYSTEM_SETTINGS)),
+    userSettings: file.userSettings,
+  };
 };
 
 const backendVersion = (): string =>

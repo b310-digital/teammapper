@@ -254,15 +254,11 @@ docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod
 ### System settings
 
 The server sends system settings to the app: feature flags, the legal links,
-the pictogram addresses, the version, and the defaults for new maps. The
-defaults are part of the code (`DEFAULT_SETTINGS` in `packages/shared`), and
-environment variables overwrite them. The server resolves the settings once
-at startup and reads no settings file. The version shown in the info dialog
-comes from `teammapper-backend/package.json`.
-
-**User settings**, such as language, dark mode and the defaults for new nodes,
-belong to one browser. The server sends their starting values, and a change
-to a starting value requires a rebuild.
+the pictogram addresses and the version. Their defaults are part of the code
+(`DEFAULT_SYSTEM_SETTINGS` in `packages/shared`), and only the environment
+variables below change them. The server resolves the settings once at
+startup. The version shown in the info dialog comes from
+`teammapper-backend/package.json`.
 
 A flag variable turns its flag on with `true` and off with `false`, in upper
 or lower case. An unset, empty or other value keeps the default.
@@ -287,22 +283,59 @@ The [backend README](teammapper-backend/README.md#environment-variables) lists
 the variables for the database, real-time collaboration, node images and the
 LLM connection.
 
-The offline build has no server and bakes its settings in at build time. It
-starts from the same defaults, turns sharing, pictograms and AI off, and reads
-`IMPRINT_URL` and `PRIVACY_URL` from the environment of
-`pnpm run build:offline`.
+### User settings
 
-#### Upgrading from settings files
+**User settings**, such as language, dark mode, the branch style and the
+styling of new nodes, belong to one browser. The server sends their starting
+values from `teammapper-backend/config/settings.default.json`.
+
+To change the starting values, mount a complete settings file at
+`config/settings.override.json` in the app directory, as the commented
+`volumes` entry in `docker-compose-prod.yml` shows. The override replaces the
+default file; the server merges nothing. Start from a copy of
+`settings.default.json` and change the values you need:
+
+```json
+{
+  "userSettings": {
+    "general": { "language": "de", "darkMode": false, "displayName": "" },
+    "mapOptions": {
+      "branchStyle": "curved",
+      ...
+    }
+  }
+}
+```
+
+The server checks the file at startup and refuses to start when a field is
+missing, unknown or invalid, such as a branch style other than `tapered`,
+`curved` or `straight`. The file holds user settings only: feature flags,
+links and pictogram addresses come from the environment variables above.
+
+### Offline build settings
+
+The offline build has no server and bakes its settings in at build time. It
+starts from the same system settings defaults, turns sharing, pictograms and
+AI off, and reads `IMPRINT_URL` and `PRIVACY_URL` from the environment of
+`pnpm run build:offline`. Its user settings come from
+`settings.default.json`.
+
+### Upgrading from earlier settings files
 
 Earlier releases read `teammapper-backend/config/settings.dev.json` or
-`settings.prod.json`, chosen by `MODE`, plus a mounted
-`config/settings.override.json`. The server now ignores all three files. Move
-each value to its variable:
+`settings.prod.json`, chosen by `MODE`, and merged a mounted
+`config/settings.override.json` over it. The server now reads the system
+settings from environment variables only:
 
 1. Feature flags: `AI_ENABLED`, `FEATURE_PICTOGRAMS`, `FEATURE_ARROWS` and
    `FEATURE_SHARING`.
 2. Legal links: `IMPRINT_URL` and `PRIVACY_URL`.
 3. Pictogram requests through the server: `PICTOGRAMS_VIA_SERVER=true`.
+
+An existing override file that sets `systemSettings`, or only part of the user
+settings, stops the server at startup. Move its system settings to the
+variables above. Then either delete the file, or turn it into a complete user
+settings file.
 
 The published image set no `MODE` and therefore loaded the development
 settings, so its behaviour stays the same: pictograms on, loaded from ARASAAC.

@@ -1,30 +1,31 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { DEFAULT_SETTINGS } from '@teammapper/shared'
-import { readServerVersion, resolveSettings } from './resolveSettings'
+import { DEFAULT_SYSTEM_SETTINGS } from '@teammapper/shared'
+import { readServerVersion, resolveSystemSettings } from './resolveSettings'
 
 const VERSION = '1.2.3'
 
-const flagsOf = (env: Record<string, string | undefined>) =>
-  resolveSettings(env, VERSION).systemSettings.featureFlags
+type Env = Record<string, string | undefined>
 
-describe('resolveSettings', () => {
+const flagsOf = (env: Env) => resolveSystemSettings(env, VERSION).featureFlags
+
+const urlsOf = (env: Env) => resolveSystemSettings(env, VERSION).urls
+
+describe('resolveSystemSettings', () => {
   describe('without environment variables', () => {
-    it('returns the default settings with the given version', () => {
-      const expected = structuredClone(DEFAULT_SETTINGS)
-      expected.systemSettings.info.version = VERSION
+    it('returns the default system settings with the given version', () => {
+      const expected = structuredClone(DEFAULT_SYSTEM_SETTINGS)
+      expected.info.version = VERSION
 
-      expect(resolveSettings({}, VERSION)).toEqual(expected)
+      expect(resolveSystemSettings({}, VERSION)).toEqual(expected)
     })
 
-    it('does not share objects with DEFAULT_SETTINGS', () => {
-      const result = resolveSettings({}, VERSION)
+    it('does not share objects with DEFAULT_SYSTEM_SETTINGS', () => {
+      const result = resolveSystemSettings({}, VERSION)
 
-      result.systemSettings.featureFlags.sharing = false
-      result.userSettings.general.language = 'xx'
+      result.featureFlags.sharing = false
 
-      expect(DEFAULT_SETTINGS.systemSettings.featureFlags.sharing).toBe(true)
-      expect(DEFAULT_SETTINGS.userSettings.general.language).toBe('en')
+      expect(DEFAULT_SYSTEM_SETTINGS.featureFlags.sharing).toBe(true)
     })
   })
 
@@ -80,34 +81,31 @@ describe('resolveSettings', () => {
 
   describe('ai model', () => {
     it('takes AI_LLM_MODEL when ai is on', () => {
-      const settings = resolveSettings(
+      const settings = resolveSystemSettings(
         { AI_ENABLED: 'true', AI_LLM_MODEL: 'model-test' },
         VERSION
       )
 
-      expect(settings.systemSettings.info.aiModel).toBe('model-test')
+      expect(settings.info.aiModel).toBe('model-test')
     })
 
     it('is null when ai is off', () => {
-      const settings = resolveSettings(
+      const settings = resolveSystemSettings(
         { AI_ENABLED: 'false', AI_LLM_MODEL: 'model-test' },
         VERSION
       )
 
-      expect(settings.systemSettings.info.aiModel).toBeNull()
+      expect(settings.info.aiModel).toBeNull()
     })
 
     it('is null when ai is on and AI_LLM_MODEL is unset', () => {
-      const settings = resolveSettings({ AI_ENABLED: 'true' }, VERSION)
+      const settings = resolveSystemSettings({ AI_ENABLED: 'true' }, VERSION)
 
-      expect(settings.systemSettings.info.aiModel).toBeNull()
+      expect(settings.info.aiModel).toBeNull()
     })
   })
 
   describe('legal urls', () => {
-    const urlsOf = (env: Record<string, string | undefined>) =>
-      resolveSettings(env, VERSION).systemSettings.urls
-
     it('trims IMPRINT_URL', () => {
       const urls = urlsOf({
         IMPRINT_URL: ' https://teammapper.localhost/imprint ',
@@ -141,9 +139,6 @@ describe('resolveSettings', () => {
   })
 
   describe('pictogram urls', () => {
-    const urlsOf = (env: Record<string, string | undefined>) =>
-      resolveSettings(env, VERSION).systemSettings.urls
-
     it('switches both urls to the server routes when PICTOGRAMS_VIA_SERVER is true', () => {
       const urls = urlsOf({ PICTOGRAMS_VIA_SERVER: 'true' })
 

@@ -218,6 +218,9 @@ defaults for new maps and nodes:
 - the branch style
 - the starting name and styling of root nodes and ordinary nodes
 
+The server sends the starting values of the user settings from a settings
+file. The operator can replace that file with a complete one of their own.
+
 ### Info dialog
 
 The dialog opened by the info button or `?`. It shows the app version, legal
@@ -234,10 +237,10 @@ when configured.
 ### System settings
 
 The settings the server sends to every client: feature flags, the legal links,
-the pictogram addresses, the app version, and the starting user settings. They
-start from defaults built into TeamMapper, and the operator overwrites them
-with environment variables. Users cannot change them. The offline build starts
-from the same defaults.
+the pictogram addresses and the app version. They start from defaults built
+into TeamMapper, and the operator changes them with environment variables
+only. Users cannot change them. The offline build starts from the same
+defaults.
 
 ### Settings dialog
 
