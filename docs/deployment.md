@@ -99,13 +99,52 @@ These limits apply independently of `FEATURE_YJS_RATE_LIMITING`.
 When a limit is reached:
 
 - **Map size** (`YJS_MAP_*`), or invalid content: the backend discards the
-  live map and disconnects every peer. Peers reload the saved map after the
-  cooldown, and unsaved edits may be lost.
+  live map. The client that sent the change stops reconnecting, shows the map
+  read-only and tells the user why. Every other client sees a message, reloads
+  the saved map after the cooldown, and may lose unsaved edits.
 - **Messages per connection**, all messages including presence: the backend
   disconnects that connection.
 - **Messages per map**, edits only: the backend disconnects the connection that
   sent the most in the window, and the other peers keep working. At twice the
   limit it disconnects every sender.
 
-A disconnected client reconnects after a few hundred milliseconds and resends
-any edits the backend did not apply.
+A client disconnected by a message limit reconnects after a few hundred
+milliseconds and resends any edits the backend did not apply.
+
+`YJS_MAP_MAX_BYTES` also sets the WebSocket message limit: the map limit plus
+64 KiB of headroom (5308416 bytes at the default). The backend names the
+reason for any message up to that size. A larger message closes with code 1009
+before the backend reads it. Keep `YJS_MESSAGE_MAX_BYTES` at or above
+`YJS_MAP_MAX_BYTES`, or a large map hits the message budget.
+
+Each connection can buffer one message of that size, so memory grows with the
+number of open connections. At the default map limit, 50 connections from one
+IP can hold about 253 MiB, and 500 connections about 2.5 GiB. To cap the
+connections, set `FEATURE_YJS_RATE_LIMITING=true`. Then size
+`WS_GLOBAL_MAX_CONNECTIONS` and `WS_PER_IP_MAX_CONNECTIONS` to the memory of
+the host. Without the feature flag, the backend caps neither.
+
+### Rejected map updates
+
+The backend logs a rejected change as a WARN line:
+
+```
+Rejected map update on map <mapId>: reason=<reason> bytes=<bytes> clients=<count> action=<action> suppressed=<n>
+```
+
+- `reason`: the rule that rejected the change, for example `mapTooLarge`,
+  `tooManyNodes`, `invalidContent`, `malformedUpdate` or `rateLimited`.
+- `bytes`: size of the rejected message. For a message past the WebSocket
+  limit, the field shows `>` and that limit, because the backend never reads
+  the message.
+- `clients`: open connections on the map before the close.
+- `action`: what the backend did with the connections:
+  - `closed`: disconnected the sender only.
+  - `reset`: discarded the live map and disconnected every client.
+  - `retry`: disconnected a sender over a message budget. That client
+    reconnects and resends its edits.
+- `suppressed`: repeats of the same map and reason that the backend dropped
+  since the last line. The backend omits the field when it is zero.
+
+The backend writes at most one line per map and reason per minute. It logs
+other socket faults at ERROR.

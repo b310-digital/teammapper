@@ -77,3 +77,27 @@ export const YJS_SECRET_SUBPROTOCOL_PREFIX = 'teammapper.secret.';
 
 /** The loaded map was discarded; clients must reconnect with fresh Yjs state. */
 export const WS_CLOSE_MAP_SYNC_RESET = 4002;
+
+/** The sender's change was rejected; the reason travels as the close reason. */
+export const WS_CLOSE_MAP_UPDATE_REJECTED = 4400;
+
+/** Message Too Big (RFC 6455): `ws` sends it for a message above `maxPayload`. */
+export const WS_CLOSE_MESSAGE_TOO_BIG = 1009;
+
+export const MAP_UPDATE_REJECTION_REASONS = [
+  'mapTooLarge',
+  'tooManyEntries',
+  'tooManyNodes',
+  'tooManyArrows',
+  'incompleteUpdate',
+  'unknownRoot',
+  'invalidNode',
+  'invalidArrow',
+  'invalidContent',
+  'malformedUpdate',
+  'mapRejected',
+  'rateLimited',
+] as const;
+
+export type MapUpdateRejectionReason =
+  (typeof MAP_UPDATE_REJECTION_REASONS)[number];

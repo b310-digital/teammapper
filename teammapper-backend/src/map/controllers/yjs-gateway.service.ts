@@ -19,9 +19,16 @@ import configService from '../../config.service'
 import {
   applyValidatedMapUpdate,
   MapUpdateOrigin,
+  MapUpdateRejectedError,
   isRejectedMap,
 } from '../utils/yjsValidation'
-import { WS_CLOSE_MAP_SYNC_RESET } from '@teammapper/shared'
+import { maxMessagePayload } from '../utils/yjsLimits'
+import { LogThrottle } from '../utils/logThrottle'
+import {
+  MapUpdateRejectionReason,
+  WS_CLOSE_MAP_SYNC_RESET,
+  WS_CLOSE_MAP_UPDATE_REJECTED,
+} from '@teammapper/shared'
 import { MapsService } from '../services/maps.service'
 import { WsConnectionLimiterService } from '../services/ws-connection-limiter.service'
 import {
@@ -32,10 +39,10 @@ import {
   WS_CLOSE_MAP_NOT_FOUND,
   WS_CLOSE_INTERNAL_ERROR,
   WS_CLOSE_SERVER_SHUTDOWN,
-  WS_MAX_PAYLOAD,
   HEARTBEAT_INTERVAL_MS,
   CONNECTION_SETUP_TIMEOUT_MS,
   WS_CLOSE_TRY_AGAIN,
+  WS_CLOSE_POLICY_VIOLATION,
   ConnectionMeta,
   extractPathname,
   parseMapId,
@@ -62,6 +69,15 @@ import {
   overrunsMap,
 } from '../utils/yjsMessageBudget'
 
+// What a rejection did to the map's clients: closed the sender alone, reset
+// the map for every client, or closed a sender that may retry.
+type RejectionAction = 'closed' | 'reset' | 'retry'
+
+// `ws` raises this error code for a message above `maxPayload`, and closes
+// the socket with 1009 on its own.
+const isPayloadOverflow = (error: Error): boolean =>
+  'code' in error && error.code === 'WS_ERR_UNSUPPORTED_MESSAGE_LENGTH'
+
 @Injectable()
 export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(YjsGateway.name)
@@ -76,6 +92,8 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
   private readonly mapBudgets = new WeakMap<Y.Doc, MapMessageBudget>()
   private readonly rejectedConnections = new WeakSet<WebSocket>()
   private readonly resetUntil = new Map<string, number>()
+  // At most one rejection line per map and reason per minute
+  private readonly rejectionLog = new LogThrottle()
 
   // Connections per map
   private readonly mapConnections = new Map<string, Set<WebSocket>>()
@@ -107,7 +125,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     // clears the field.
     const wss = new WebSocketServer({
       noServer: true,
-      maxPayload: WS_MAX_PAYLOAD,
+      maxPayload: maxMessagePayload(configService.getYjsMapLimits()),
       handleProtocols: selectSubprotocol,
     })
     this.wss = wss
@@ -193,6 +211,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     for (const [mapId, until] of this.resetUntil) {
       if (until <= Date.now()) this.resetUntil.delete(mapId)
     }
+    this.rejectionLog.prune()
   }
 
   private async handleConnection(
@@ -289,12 +308,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
         const count = this.mapConnections.get(mapId)?.size ?? 0
         this.docManager.restoreGraceTimer(mapId, count)
         if (!signal.aborted)
-          this.rejectConnection(
-            ws,
-            ip,
-            WS_CLOSE_MAP_SYNC_RESET,
-            'Map sync reset'
-          )
+          this.rejectConnection(ws, ip, WS_CLOSE_MAP_SYNC_RESET, 'mapRejected')
         return
       }
 
@@ -410,8 +424,7 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     })
 
     ws.on('error', (error: Error) => {
-      this.logger.error(`WebSocket error on map ${mapId}: ${error.message}`)
-      ws.terminate()
+      this.handleSocketError(ws, mapId, error)
     })
 
     ws.on('close', () => {
@@ -459,47 +472,121 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     writable: boolean,
     data: Uint8Array
   ): void {
-    if (
-      ws.readyState !== WebSocket.OPEN ||
-      this.rejectedConnections.has(ws) ||
-      isRejectedMap(doc)
-    )
-      return
-    if (!this.acceptConnectionMessage(ws, data.byteLength)) {
-      this.rejectOverLimit(ws)
-      return
-    }
+    if (!this.readsMessages(ws, doc)) return
+    if (this.rejectsBeforeDecoding(ws, mapId, data.byteLength)) return
     try {
-      if (data.byteLength > WS_MAX_PAYLOAD) throw new Error('Message too large')
-      const decoder = decoding.createDecoder(data)
-      const messageType = decoding.readVarUint(decoder)
-
-      switch (messageType) {
-        case MESSAGE_SYNC:
-          if (this.acceptMapMessage(ws, doc, data.byteLength))
-            this.handleSyncMessage(ws, doc, decoder, writable, mapId)
-          else this.rejectOverLimit(ws)
-          break
-        case MESSAGE_AWARENESS:
-          this.handleAwarenessMessage(ws, awareness, mapId, decoder)
-          break
-      }
+      this.dispatchMessage(ws, doc, awareness, mapId, writable, data)
     } catch (error) {
-      this.rejectedConnections.add(ws)
-      ws.close(1008, 'Invalid or oversized map update')
+      this.rejectSender(ws, mapId, 'malformedUpdate', data.byteLength)
       this.logger.debug(
-        `Rejected message on map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
+        `Malformed message on map ${mapId}: ${error instanceof Error ? error.message : String(error)}`
       )
     }
   }
 
   /**
-   * Closes a connection that exceeded a message budget, and ignores the rest
-   * of its messages.
+   * Closes the sender of a message above the map size limit or over the
+   * connection budget, and returns whether it did.
    */
-  private rejectOverLimit(ws: WebSocket): void {
+  private rejectsBeforeDecoding(
+    ws: WebSocket,
+    mapId: string,
+    bytes: number
+  ): boolean {
+    // A message this large holds no valid change, so the gateway names it
+    // before the budget, which would otherwise close it as a retry.
+    if (bytes > configService.getYjsMapLimits().maxBytes) {
+      this.rejectSender(ws, mapId, 'mapTooLarge', bytes)
+      return true
+    }
+    if (this.acceptConnectionMessage(ws, bytes)) return false
+    this.rejectSender(ws, mapId, 'rateLimited', bytes)
+    return true
+  }
+
+  /** False for a socket or map whose messages the gateway ignores. */
+  private readsMessages(ws: WebSocket, doc: Y.Doc): boolean {
+    return (
+      ws.readyState === WebSocket.OPEN &&
+      !this.rejectedConnections.has(ws) &&
+      !isRejectedMap(doc)
+    )
+  }
+
+  /** Decodes the message type and passes the message to its handler. */
+  private dispatchMessage(
+    ws: WebSocket,
+    doc: Y.Doc,
+    awareness: awarenessProtocol.Awareness,
+    mapId: string,
+    writable: boolean,
+    data: Uint8Array
+  ): void {
+    const decoder = decoding.createDecoder(data)
+    const messageType = decoding.readVarUint(decoder)
+    if (messageType === MESSAGE_AWARENESS) {
+      this.handleAwarenessMessage(ws, awareness, mapId, decoder)
+      return
+    }
+    if (messageType !== MESSAGE_SYNC) return
+    if (!this.acceptMapMessage(ws, doc, data.byteLength)) {
+      this.rejectSender(ws, mapId, 'rateLimited', data.byteLength)
+      return
+    }
+    this.handleSyncMessage(ws, doc, decoder, writable, mapId, data.byteLength)
+  }
+
+  /**
+   * Closes the sender of a message the gateway rejected before validation,
+   * and ignores the rest of its messages. A sender over a budget may retry;
+   * any other sender stops.
+   */
+  private rejectSender(
+    ws: WebSocket,
+    mapId: string,
+    reason: MapUpdateRejectionReason,
+    bytes: number
+  ): void {
+    const retries = reason === 'rateLimited'
+    this.logRejection(mapId, reason, bytes, retries ? 'retry' : 'closed')
     this.rejectedConnections.add(ws)
-    ws.close(1008, 'Map message rate limit exceeded')
+    const code = retries
+      ? WS_CLOSE_POLICY_VIOLATION
+      : WS_CLOSE_MAP_UPDATE_REJECTED
+    ws.close(code, reason)
+  }
+
+  /**
+   * Logs a payload overflow as a map too large, and any other socket fault
+   * as an error.
+   */
+  private handleSocketError(ws: WebSocket, mapId: string, error: Error): void {
+    if (!isPayloadOverflow(error)) {
+      this.logger.error(`WebSocket error on map ${mapId}: ${error.message}`)
+      ws.terminate()
+      return
+    }
+    const maxPayload = maxMessagePayload(configService.getYjsMapLimits())
+    this.logRejection(mapId, 'mapTooLarge', `>${maxPayload}`, 'closed')
+    this.rejectedConnections.add(ws)
+    // `ws` has queued its 1009 close; terminating now could drop that frame.
+    setTimeout(() => ws.terminate(), 1000).unref()
+  }
+
+  /** Writes one WARN line per map and reason per minute. */
+  private logRejection(
+    mapId: string,
+    reason: MapUpdateRejectionReason,
+    bytes: number | string,
+    action: RejectionAction
+  ): void {
+    const suppressed = this.rejectionLog.admit(`${mapId}:${reason}`)
+    if (suppressed === null) return
+    const clients = this.mapConnections.get(mapId)?.size ?? 0
+    const repeats = suppressed > 0 ? ` suppressed=${suppressed}` : ''
+    this.logger.warn(
+      `Rejected map update on map ${mapId}: reason=${reason} bytes=${bytes} clients=${clients} action=${action}${repeats}`
+    )
   }
 
   /**
@@ -546,34 +633,14 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     doc: Y.Doc,
     decoder: decoding.Decoder,
     writable: boolean,
-    mapId: string
+    mapId: string,
+    bytes: number
   ): void {
     const encoder = encoding.createEncoder()
     encoding.writeVarUint(encoder, MESSAGE_SYNC)
 
     if (writable) {
-      const syncType = decoding.readVarUint(decoder)
-      if (syncType === syncProtocol.messageYjsSyncStep1) {
-        syncProtocol.readSyncStep1(decoder, encoder, doc)
-      } else if (
-        syncType === syncProtocol.messageYjsSyncStep2 ||
-        syncType === syncProtocol.messageYjsUpdate
-      ) {
-        const update = decoding.readVarUint8Array(decoder)
-        if (decoding.hasContent(decoder)) throw new Error('Trailing sync data')
-        try {
-          applyValidatedMapUpdate(
-            doc,
-            update,
-            ws,
-            configService.getYjsMapLimits()
-          )
-        } catch {
-          this.resetMap(mapId)
-        }
-      } else {
-        throw new Error('Unknown sync message')
-      }
+      this.readWritableSyncMessage(ws, doc, decoder, encoder, mapId, bytes)
     } else {
       processReadOnlySyncMessage(decoder, encoder, doc)
     }
@@ -583,30 +650,103 @@ export class YjsGateway implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private resetMap(mapId: string): void {
+  /**
+   * Answers a state vector, or applies an update. Throws for a sync type or
+   * trailing data that no client sends.
+   */
+  private readWritableSyncMessage(
+    ws: WebSocket,
+    doc: Y.Doc,
+    decoder: decoding.Decoder,
+    encoder: encoding.Encoder,
+    mapId: string,
+    bytes: number
+  ): void {
+    const syncType = decoding.readVarUint(decoder)
+    if (syncType === syncProtocol.messageYjsSyncStep1) {
+      syncProtocol.readSyncStep1(decoder, encoder, doc)
+      return
+    }
+    if (
+      syncType !== syncProtocol.messageYjsSyncStep2 &&
+      syncType !== syncProtocol.messageYjsUpdate
+    ) {
+      throw new Error('Unknown sync message')
+    }
+    const update = decoding.readVarUint8Array(decoder)
+    if (decoding.hasContent(decoder)) throw new Error('Trailing sync data')
+    this.applyUpdate(ws, doc, update, mapId, bytes)
+  }
+
+  /** Applies a validated update, or resets the map when validation rejects it. */
+  private applyUpdate(
+    ws: WebSocket,
+    doc: Y.Doc,
+    update: Uint8Array,
+    mapId: string,
+    bytes: number
+  ): void {
+    try {
+      applyValidatedMapUpdate(doc, update, ws, configService.getYjsMapLimits())
+    } catch (error) {
+      // applyValidatedMapUpdate throws only MapUpdateRejectedError.
+      if (!(error instanceof MapUpdateRejectedError)) throw error
+      this.resetMap(mapId, ws, error.reason, bytes)
+    }
+  }
+
+  /**
+   * Discards a map whose state validation rejected. The sender stops with
+   * the reason; every other client reconnects to the reloaded map.
+   */
+  private resetMap(
+    mapId: string,
+    sender: WebSocket,
+    reason: MapUpdateRejectionReason,
+    bytes: number
+  ): void {
+    this.logRejection(mapId, reason, bytes, 'reset')
     this.resetUntil.set(
       mapId,
       Date.now() + configService.getYjsMessageLimits().windowMs
     )
-    const connections = this.mapConnections.get(mapId)
-    // Detach old sockets before closing them: their close callbacks must not
-    // persist rejected state or clean up resources belonging to a new map.
+    const connections = this.detachConnections(mapId)
+    this.cleanupMapResources(mapId)
+    this.docManager.destroyDoc(mapId)
+    this.closeResetConnections(connections, sender, reason)
+  }
+
+  /** Closes the sender as rejected and every other socket as reset. */
+  private closeResetConnections(
+    connections: Set<WebSocket>,
+    sender: WebSocket,
+    reason: MapUpdateRejectionReason
+  ): void {
+    for (const ws of connections) {
+      const code =
+        ws === sender ? WS_CLOSE_MAP_UPDATE_REJECTED : WS_CLOSE_MAP_SYNC_RESET
+      ws.close(code, reason)
+      // A peer ignoring the close handshake must not keep rejected state
+      // alive through the message handlers captured by its socket.
+      setTimeout(() => ws.terminate(), 1000).unref()
+    }
+  }
+
+  /**
+   * Removes a map's sockets from the gateway and returns them. Their close
+   * callbacks then cannot persist rejected state or clean up resources that
+   * belong to the reloaded map.
+   */
+  private detachConnections(mapId: string): Set<WebSocket> {
+    const connections = this.mapConnections.get(mapId) ?? new Set<WebSocket>()
     this.mapConnections.delete(mapId)
-    for (const ws of connections ?? []) {
+    for (const ws of connections) {
       const meta = this.connectionMeta.get(ws)
       if (meta) this.limiter.releaseConnection(meta.ip)
       this.connectionMeta.delete(ws)
       this.rejectedConnections.add(ws)
     }
-    this.cleanupMapResources(mapId)
-    this.docManager.destroyDoc(mapId)
-    for (const ws of connections ?? []) {
-      ws.close(WS_CLOSE_MAP_SYNC_RESET, 'Map sync reset')
-      // A peer ignoring the close handshake must not keep rejected state
-      // alive through the message handlers captured by its socket.
-      setTimeout(() => ws.terminate(), 1000).unref()
-    }
-    this.logger.warn(`Discarded rejected sync state for map ${mapId}`)
+    return connections
   }
 
   private handleAwarenessMessage(

@@ -6,6 +6,7 @@ import {
   NodeSchema,
   MapOptionsSchema,
   MAX_NODE_NAME_LENGTH,
+  MapUpdateRejectionReason,
 } from '@teammapper/shared'
 import { DEFAULT_YJS_MAP_LIMITS, YjsMapLimits } from './yjsLimits'
 
@@ -63,8 +64,18 @@ const mapSchema = strictObject({
 // Every top-level Y.Map a map holds
 const MAP_ROOT_KEYS = ['nodes', 'arrows', 'mapOptions', 'meta']
 
-function invalid(): never {
-  throw new Error('Invalid map update')
+/** `cause` holds the error Yjs threw for a malformed update. */
+export class MapUpdateRejectedError extends Error {
+  constructor(
+    readonly reason: MapUpdateRejectionReason,
+    readonly cause?: unknown
+  ) {
+    super(`Map update rejected: ${reason}`)
+  }
+}
+
+function invalid(reason: MapUpdateRejectionReason): never {
+  throw new MapUpdateRejectedError(reason)
 }
 
 /** Origin shared by the gateway and persistence observers. */
@@ -96,18 +107,20 @@ const validateIncomingUpdateLimits = (
 ): void => {
   const bytes = mapBytes.get(doc) ?? Y.encodeStateAsUpdate(doc).byteLength
   // Each update can add only bounded state before post-application checks.
-  if (bytes + update.byteLength > limits.maxBytes) invalid()
+  if (bytes + update.byteLength > limits.maxBytes) invalid('mapTooLarge')
 
   const decoded = Y.decodeUpdate(update)
   let incomingEntries = 0
   const existingEntries = entryCount(doc)
-  if (existingEntries > limits.maxEntries) invalid()
+  if (existingEntries > limits.maxEntries) invalid('tooManyEntries')
   for (const struct of decoded.structs) {
     incomingEntries +=
       struct instanceof Y.Item && struct.content instanceof Y.ContentAny
         ? struct.length
         : 1
-    if (incomingEntries + existingEntries > limits.maxEntries) invalid()
+    if (incomingEntries + existingEntries > limits.maxEntries) {
+      invalid('tooManyEntries')
+    }
   }
 }
 
@@ -115,48 +128,59 @@ const validateIncomingUpdateLimits = (
 // key must be the arrow key of the entry's own fields once both are written,
 // so clients and persistence agree about which arrow an entry is.
 const validateArrows = (arrows: Y.Map<unknown>, limits: YjsMapLimits) => {
-  if (arrows.size > limits.maxArrows) invalid()
+  if (arrows.size > limits.maxArrows) invalid('tooManyArrows')
   for (const [key, arrow] of arrows.entries()) {
-    if (!(arrow instanceof Y.Map)) invalid()
+    if (!(arrow instanceof Y.Map)) invalid('invalidArrow')
     const source = arrow.get('source')
     const target = arrow.get('target')
     if (source === undefined || target === undefined) continue
-    if (key !== arrowKey(String(source), String(target))) invalid()
+    if (key !== arrowKey(String(source), String(target))) {
+      invalid('invalidArrow')
+    }
   }
 }
 
 // Check the resulting shared structure and exported map before observers run.
 const validateMapContent = (doc: Y.Doc, limits: YjsMapLimits): void => {
-  if (doc.store.pendingStructs || doc.store.pendingDs) invalid()
+  if (doc.store.pendingStructs || doc.store.pendingDs) {
+    invalid('incompleteUpdate')
+  }
   // Unknown roots can disappear from JSON export (for example __proto__).
   for (const key of doc.share.keys()) {
-    if (!MAP_ROOT_KEYS.includes(key)) invalid()
+    if (!MAP_ROOT_KEYS.includes(key)) invalid('unknownRoot')
   }
 
   validateArrows(doc.getMap('arrows'), limits)
   const nodes = doc.getMap('nodes')
-  if (nodes.size > limits.maxNodes) invalid()
+  if (nodes.size > limits.maxNodes) invalid('tooManyNodes')
   // Nodes must remain Y.Maps for client and persistence operations. JSON
   // alone cannot distinguish a shared node from an ordinary object.
   // The map key is the node's id, so an `id` field naming another node would
   // make clients and persistence disagree about which node an entry is.
   for (const [key, node] of nodes.entries()) {
-    if (!(node instanceof Y.Map)) invalid()
-    if (node.has('id') && node.get('id') !== key) invalid()
+    if (!(node instanceof Y.Map)) invalid('invalidNode')
+    if (node.has('id') && node.get('id') !== key) invalid('invalidNode')
   }
-  if (!v.safeParse(mapSchema, doc.toJSON()).success) invalid()
+  if (!v.safeParse(mapSchema, doc.toJSON()).success) invalid('invalidContent')
 }
 
 // Enforce the resulting encoded size and cache it for the next update's check.
 const validateAndCacheMapSize = (doc: Y.Doc, maxBytes: number): void => {
   const bytes = Y.encodeStateAsUpdate(doc).byteLength
-  if (bytes > maxBytes) invalid()
+  if (bytes > maxBytes) invalid('mapTooLarge')
   mapBytes.set(doc, bytes)
 }
+
+// Yjs throws its own errors for bytes it cannot decode; name them as such.
+const asRejection = (error: unknown): MapUpdateRejectedError =>
+  error instanceof MapUpdateRejectedError
+    ? error
+    : new MapUpdateRejectedError('malformedUpdate', error)
 
 /**
  * Apply once to the live map and validate before update observers run.
  * Rejection is terminal: the gateway must discard the map and reset peers.
+ * Throws only MapUpdateRejectedError.
  */
 export const applyValidatedMapUpdate = (
   doc: Y.Doc,
@@ -164,7 +188,7 @@ export const applyValidatedMapUpdate = (
   sender: unknown,
   limits: YjsMapLimits = DEFAULT_YJS_MAP_LIMITS
 ): void => {
-  if (isRejectedMap(doc)) invalid()
+  if (isRejectedMap(doc)) invalid('mapRejected')
   const origin = new MapUpdateOrigin(sender)
   try {
     validateIncomingUpdateLimits(doc, update, limits)
@@ -177,6 +201,6 @@ export const applyValidatedMapUpdate = (
     }, origin)
   } catch (error) {
     rejectedMaps.add(doc)
-    throw error
+    throw asRejection(error)
   }
 }

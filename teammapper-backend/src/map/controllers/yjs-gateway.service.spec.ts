@@ -4,8 +4,13 @@ import { YjsPersistenceService } from '../services/yjs-persistence.service'
 import { MapsService } from '../services/maps.service'
 import { WsConnectionLimiterService } from '../services/ws-connection-limiter.service'
 import configService from '../../config.service'
+import { Logger } from '@nestjs/common'
+import { applyValidatedMapUpdate } from '../utils/yjsValidation'
+import { DEFAULT_YJS_MAP_LIMITS, maxMessagePayload } from '../utils/yjsLimits'
 import {
+  MapUpdateRejectionReason,
   WS_CLOSE_MAP_SYNC_RESET,
+  WS_CLOSE_MAP_UPDATE_REJECTED,
   YJS_SECRET_SUBPROTOCOL_PREFIX,
   YJS_SUBPROTOCOL,
 } from '@teammapper/shared'
@@ -27,6 +32,7 @@ import {
   encodeSyncUpdateMessage,
   encodeSyncStep1Message,
   encodeAwarenessMessage,
+  toUint8Array,
 } from '../utils/yjsProtocol'
 import * as syncProtocol from 'y-protocols/sync'
 import * as awarenessProtocol from 'y-protocols/awareness'
@@ -128,6 +134,21 @@ describe('YjsGateway', () => {
   let doc: Y.Doc
   let persistenceService: jest.Mocked<YjsPersistenceService>
 
+  const createGateway = (): YjsGateway => {
+    const httpAdapterHost: Pick<HttpAdapterHost, 'httpAdapter'> = {
+      httpAdapter: {
+        getHttpServer: jest.fn().mockReturnValue({ on: jest.fn() }),
+      } as unknown as HttpAdapterHost['httpAdapter'],
+    }
+    return new YjsGateway(
+      httpAdapterHost as HttpAdapterHost,
+      docManager,
+      persistenceService,
+      mapsService,
+      limiter
+    )
+  }
+
   beforeEach(() => {
     doc = new Y.Doc()
 
@@ -167,19 +188,7 @@ describe('YjsGateway', () => {
       onModuleDestroy: jest.fn(),
     } as unknown as jest.Mocked<WsConnectionLimiterService>
 
-    const httpAdapterHost: Pick<HttpAdapterHost, 'httpAdapter'> = {
-      httpAdapter: {
-        getHttpServer: jest.fn().mockReturnValue({ on: jest.fn() }),
-      } as unknown as HttpAdapterHost['httpAdapter'],
-    }
-
-    gateway = new YjsGateway(
-      httpAdapterHost as HttpAdapterHost,
-      docManager,
-      persistenceService,
-      mapsService,
-      limiter
-    )
+    gateway = createGateway()
   })
 
   afterEach(() => {
@@ -388,6 +397,29 @@ describe('YjsGateway', () => {
       }
     }
 
+    const syncMessageWith = (
+      syncType: number,
+      update: Uint8Array,
+      trailing = false
+    ): Uint8Array => {
+      const encoder = encoding.createEncoder()
+      encoding.writeVarUint(encoder, MESSAGE_SYNC)
+      encoding.writeVarUint(encoder, syncType)
+      encoding.writeVarUint8Array(encoder, update)
+      if (trailing) encoding.writeVarUint(encoder, 7)
+      return encoding.toUint8Array(encoder)
+    }
+
+    const expectRejected = (
+      ws: MockWs,
+      reason: MapUpdateRejectionReason
+    ): void => {
+      expect(ws.close).toHaveBeenCalledWith(
+        WS_CLOSE_MAP_UPDATE_REJECTED,
+        reason
+      )
+    }
+
     describe.each([
       syncProtocol.messageYjsUpdate,
       syncProtocol.messageYjsSyncStep2,
@@ -398,22 +430,15 @@ describe('YjsGateway', () => {
         attacker = await connectWriter()
         peer = await connectWriter()
         peer.send.mockClear()
-        const encoder = encoding.createEncoder()
-        encoding.writeVarUint(encoder, MESSAGE_SYNC)
-        encoding.writeVarUint(encoder, syncType)
-        encoding.writeVarUint8Array(encoder, unrelatedUpdate())
-        attacker._triggerMessage(encoding.toUint8Array(encoder))
+        attacker._triggerMessage(syncMessageWith(syncType, unrelatedUpdate()))
       })
-      it('closes the writer with a map reset', () => {
-        expect(attacker.close).toHaveBeenCalledWith(
-          WS_CLOSE_MAP_SYNC_RESET,
-          'Map sync reset'
-        )
+      it('closes the writer as the sender of a rejected change', () => {
+        expectRejected(attacker, 'unknownRoot')
       })
-      it('closes the peer with a map reset', () => {
+      it('closes the peer with a map reset that names the reason', () => {
         expect(peer.close).toHaveBeenCalledWith(
           WS_CLOSE_MAP_SYNC_RESET,
-          'Map sync reset'
+          'unknownRoot'
         )
       })
       it('discards the rejected state', () => {
@@ -448,10 +473,7 @@ describe('YjsGateway', () => {
             encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client, vector))
           )
         }
-        expect(ws.close).toHaveBeenCalledWith(
-          WS_CLOSE_MAP_SYNC_RESET,
-          'Map sync reset'
-        )
+        expectRejected(ws, 'mapTooLarge')
         expect(docManager.destroyDoc).toHaveBeenCalledWith('map-1')
       } finally {
         client.destroy()
@@ -609,10 +631,7 @@ describe('YjsGateway', () => {
       ws._triggerMessage(message)
       expect(ws.close).not.toHaveBeenCalled()
       ws._triggerMessage(message)
-      expect(ws.close).toHaveBeenCalledWith(
-        1008,
-        'Map message rate limit exceeded'
-      )
+      expect(ws.close).toHaveBeenCalledWith(1008, 'rateLimited')
     })
 
     it('allows messages again when the rate window expires', async () => {
@@ -665,10 +684,7 @@ describe('YjsGateway', () => {
         const selecting = await connectWriter()
         for (const nodeId of ['a', 'b', 'c', 'd'])
           selecting._triggerMessage(presenceMessage(nodeId))
-        expect(selecting.close).toHaveBeenCalledWith(
-          1008,
-          'Map message rate limit exceeded'
-        )
+        expect(selecting.close).toHaveBeenCalledWith(1008, 'rateLimited')
       })
 
       describe('when one connection exceeds it', () => {
@@ -687,10 +703,7 @@ describe('YjsGateway', () => {
         })
         it('closes the heaviest sender on its next message', () => {
           heavy._triggerMessage(encodeSyncStep1Message(doc))
-          expect(heavy.close).toHaveBeenCalledWith(
-            1008,
-            'Map message rate limit exceeded'
-          )
+          expect(heavy.close).toHaveBeenCalledWith(1008, 'rateLimited')
         })
       })
 
@@ -710,10 +723,277 @@ describe('YjsGateway', () => {
         for (let i = 0; i < 3; i++)
           (await connectWriter())._triggerMessage(encodeSyncStep1Message(doc))
         light._triggerMessage(encodeSyncStep1Message(doc))
-        expect(light.close).toHaveBeenCalledWith(
-          1008,
-          'Map message rate limit exceeded'
-        )
+        expect(light.close).toHaveBeenCalledWith(1008, 'rateLimited')
+      })
+    })
+
+    describe('rejection reasons and log lines', () => {
+      let warn: ReturnType<typeof jest.spyOn>
+      let error: ReturnType<typeof jest.spyOn>
+
+      const lines = (spy: {
+        mock: { calls: ReadonlyArray<ReadonlyArray<unknown>> }
+      }): string[] => spy.mock.calls.map((call) => String(call[0]))
+
+      const rejectionLines = (): string[] =>
+        lines(warn).filter((line) => line.includes('Rejected map update'))
+
+      // A fake clock needs a gateway built after it starts, because the
+      // gateway reads the clock when it is constructed.
+      const rebuildGateway = (): void => {
+        gateway.onModuleDestroy()
+        gateway = createGateway()
+      }
+
+      const emptyUpdate = (): Uint8Array => {
+        const client = new Y.Doc()
+        try {
+          return Y.encodeStateAsUpdate(client)
+        } finally {
+          client.destroy()
+        }
+      }
+
+      // A message that carries a node with a long name, bigger than `bytes`
+      const oversizedMessage = (): Uint8Array => {
+        const client = new Y.Doc()
+        try {
+          const node = new Y.Map<unknown>()
+          node.set('name', 'a'.repeat(500))
+          client.getMap('nodes').set('big', node)
+          return encodeSyncUpdateMessage(Y.encodeStateAsUpdate(client))
+        } finally {
+          client.destroy()
+        }
+      }
+
+      const limitMapBytes = (maxBytes: number): void => {
+        jest
+          .spyOn(configService, 'getYjsMapLimits')
+          .mockReturnValue({ ...DEFAULT_YJS_MAP_LIMITS, maxBytes })
+      }
+
+      beforeEach(() => {
+        warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {})
+        error = jest
+          .spyOn(Logger.prototype, 'error')
+          .mockImplementation(() => {})
+      })
+
+      describe('when validation rejects a change', () => {
+        let message: Uint8Array
+        beforeEach(async () => {
+          const attacker = await connectWriter()
+          await connectWriter()
+          message = encodeSyncUpdateMessage(unrelatedUpdate())
+          attacker._triggerMessage(message)
+        })
+
+        it('logs one WARN line with reason, size, client count and action', () => {
+          expect(rejectionLines()).toEqual([
+            `Rejected map update on map map-1: reason=unknownRoot bytes=${message.byteLength} clients=2 action=reset`,
+          ])
+        })
+
+        it('logs no separate line for the discarded state', () => {
+          expect(lines(warn).some((line) => line.includes('Discarded'))).toBe(
+            false
+          )
+        })
+      })
+
+      it.each([
+        [
+          'trailing sync data',
+          'closed',
+          () =>
+            syncMessageWith(syncProtocol.messageYjsUpdate, emptyUpdate(), true),
+        ],
+        [
+          'an unknown sync type',
+          'closed',
+          () => syncMessageWith(9, emptyUpdate()),
+        ],
+        [
+          'undecodable update bytes',
+          'reset',
+          () =>
+            syncMessageWith(
+              syncProtocol.messageYjsUpdate,
+              new TextEncoder().encode('not an update')
+            ),
+        ],
+      ])(
+        'closes the sender of %s as malformedUpdate, action=%s',
+        async (_name, action, message) => {
+          const ws = await connectWriter()
+          ws._triggerMessage(message())
+          expectRejected(ws, 'malformedUpdate')
+          expect(rejectionLines()[0]).toContain(`action=${action}`)
+        }
+      )
+
+      it('logs a budget overrun as a retry', async () => {
+        const message = encodeSyncStep1Message(doc)
+        jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
+          windowMs: 10_000,
+          maxMessages: 1,
+          maxBytes: 10_000,
+        })
+        const ws = await connectWriter()
+        ws._triggerMessage(message)
+        ws._triggerMessage(message)
+        expect(rejectionLines()).toEqual([
+          expect.stringContaining('reason=rateLimited'),
+        ])
+        expect(rejectionLines()[0]).toContain('action=retry')
+      })
+
+      describe('a message above the map size limit', () => {
+        let sender: MockWs
+        let peer: MockWs
+        beforeEach(async () => {
+          limitMapBytes(300)
+          sender = await connectWriter()
+          peer = await connectWriter()
+          sender._triggerMessage(oversizedMessage())
+        })
+
+        it('closes the sender with mapTooLarge', () => {
+          expectRejected(sender, 'mapTooLarge')
+        })
+
+        it('leaves the peer connected', () => {
+          expect(peer.close).not.toHaveBeenCalled()
+        })
+
+        it('resets no map', () => {
+          expect(docManager.destroyDoc).not.toHaveBeenCalled()
+        })
+
+        it('logs one WARN line that closes the sender alone', () => {
+          expect(rejectionLines()).toEqual([
+            expect.stringMatching(
+              /reason=mapTooLarge bytes=\d+ clients=2 action=closed$/
+            ),
+          ])
+        })
+      })
+
+      it('names the message size, not the budget, when a large message exceeds the budget', async () => {
+        limitMapBytes(300)
+        jest.spyOn(configService, 'getYjsMessageLimits').mockReturnValue({
+          windowMs: 10_000,
+          maxMessages: 100,
+          maxBytes: 300,
+        })
+        const ws = await connectWriter()
+        ws._triggerMessage(oversizedMessage())
+        expectRejected(ws, 'mapTooLarge')
+      })
+
+      describe('throttling', () => {
+        beforeEach(() => {
+          jest.useFakeTimers()
+          rebuildGateway()
+          limitMapBytes(300)
+        })
+        afterEach(() => jest.useRealTimers())
+
+        const rejectOversized = async (): Promise<void> => {
+          const ws = await connectWriter()
+          ws._triggerMessage(oversizedMessage())
+        }
+
+        it('logs one line for 50 rejections of one map and reason within a minute', async () => {
+          for (let i = 0; i < 50; i++) await rejectOversized()
+          expect(rejectionLines()).toHaveLength(1)
+        })
+
+        it('logs the suppressed count on the first line after the window', async () => {
+          for (let i = 0; i < 50; i++) await rejectOversized()
+          jest.advanceTimersByTime(61_000)
+          await rejectOversized()
+          expect(rejectionLines()).toHaveLength(2)
+          expect(rejectionLines()[1]).toContain('suppressed=49')
+        })
+
+        it('logs another reason for the same map on its own line', async () => {
+          await rejectOversized()
+          const ws = await connectWriter()
+          ws._triggerMessage(
+            syncMessageWith(syncProtocol.messageYjsUpdate, emptyUpdate(), true)
+          )
+          expect(rejectionLines()).toHaveLength(2)
+        })
+
+        it('drops an ended window at the heartbeat', async () => {
+          await rejectOversized()
+          await rejectOversized()
+          jest.advanceTimersByTime(61_000)
+          ;(gateway as unknown as { runHeartbeat(): void }).runHeartbeat()
+          await rejectOversized()
+          expect(rejectionLines()[1]).not.toContain('suppressed')
+        })
+      })
+
+      describe('a socket error', () => {
+        const overflow = (): Error =>
+          Object.assign(new Error('Max payload size exceeded'), {
+            code: 'WS_ERR_UNSUPPORTED_MESSAGE_LENGTH',
+          })
+
+        it('logs a payload overflow as mapTooLarge at WARN, not ERROR', async () => {
+          jest
+            .spyOn(configService, 'getYjsMapLimits')
+            .mockReturnValue(DEFAULT_YJS_MAP_LIMITS)
+          const ws = await connectWriter()
+          ws._triggerError(overflow())
+          expect(rejectionLines()).toEqual([
+            `Rejected map update on map map-1: reason=mapTooLarge bytes=>${5 * 1024 * 1024 + 64 * 1024} clients=1 action=closed`,
+          ])
+          expect(error).not.toHaveBeenCalled()
+        })
+
+        it('terminates a payload overflow after 1 s, not at once', async () => {
+          jest.useFakeTimers()
+          try {
+            const ws = await connectWriter()
+            ws._triggerError(overflow())
+            expect(ws.terminate).not.toHaveBeenCalled()
+            jest.advanceTimersByTime(1000)
+            expect(ws.terminate).toHaveBeenCalledTimes(1)
+          } finally {
+            jest.useRealTimers()
+          }
+        })
+
+        it('logs any other error at ERROR and terminates at once', async () => {
+          const ws = await connectWriter()
+          ws._triggerError(new Error('ECONNRESET'))
+          expect(error).toHaveBeenCalledWith(
+            expect.stringContaining('ECONNRESET')
+          )
+          expect(ws.terminate).toHaveBeenCalledTimes(1)
+          expect(rejectionLines()).toHaveLength(0)
+        })
+      })
+
+      it('closes a client that connects to a map awaiting its reset as mapRejected', async () => {
+        const rejected = new Y.Doc()
+        try {
+          expect(() =>
+            applyValidatedMapUpdate(rejected, unrelatedUpdate(), null)
+          ).toThrow()
+          docManager.getOrCreateDoc.mockResolvedValue(rejected)
+          const ws = await connectWriter()
+          expect(ws.close).toHaveBeenCalledWith(
+            WS_CLOSE_MAP_SYNC_RESET,
+            'mapRejected'
+          )
+        } finally {
+          rejected.destroy()
+        }
       })
     })
   })
@@ -893,6 +1173,10 @@ describe('YjsGateway', () => {
     let realGateway: YjsGateway
 
     beforeEach(async () => {
+      jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {})
+      jest
+        .spyOn(configService, 'getYjsMapLimits')
+        .mockReturnValue(DEFAULT_YJS_MAP_LIMITS)
       mapsService.findMap.mockResolvedValue(createMockMap())
       server = createServer()
       const host = { httpAdapter: { getHttpServer: () => server } }
@@ -970,6 +1254,108 @@ describe('YjsGateway', () => {
         upgradeRequired,
         upgradeRequired,
       ])
+    })
+
+    // Opens a writable client that keeps a replica of the map. `synced`
+    // resolves once the server sent its first message, which means the server
+    // reads this client's messages from then on.
+    const openClient = () => {
+      const { port } = server.address() as AddressInfo
+      const client = new WebSocket(`ws://127.0.0.1:${port}/yjs/map-1`, [
+        YJS_SUBPROTOCOL,
+        `${YJS_SECRET_SUBPROTOCOL_PREFIX}test-secret`,
+      ])
+      const replica = new Y.Doc()
+      const synced = new Promise<void>((resolve, reject) => {
+        client.on('message', (data: Buffer | ArrayBuffer | Buffer[]) => {
+          const decoder = decoding.createDecoder(toUint8Array(data))
+          if (decoding.readVarUint(decoder) === MESSAGE_SYNC)
+            syncProtocol.readSyncMessage(
+              decoder,
+              encoding.createEncoder(),
+              replica,
+              null
+            )
+          resolve()
+        })
+        client.on('error', reject)
+      })
+      const closed = new Promise<number>((resolve) =>
+        client.on('close', (code) => resolve(code))
+      )
+      return { client, replica, synced, closed }
+    }
+
+    // Resolves once the replica holds `count` nodes, and fails if the server
+    // closes the socket first
+    const nodesArrive = (
+      replica: Y.Doc,
+      count: number,
+      closed: Promise<number>
+    ): Promise<void> => {
+      const arrived = new Promise<void>((resolve) => {
+        const check = (): void => {
+          if (replica.getMap('nodes').size >= count) resolve()
+        }
+        replica.on('update', check)
+        check()
+      })
+      const closedFirst = closed.then((code) => {
+        throw new Error(`The server closed the socket with code ${code}`)
+      })
+      return Promise.race([arrived, closedFirst])
+    }
+
+    it('delivers a valid 2 MiB map change to a second client', async () => {
+      const sender = openClient()
+      const receiver = openClient()
+      await Promise.all([sender.synced, receiver.synced])
+      const nodeCount = 4100
+      sender.replica.transact(() => {
+        for (let i = 0; i < nodeCount; i++) {
+          const node = new Y.Map<unknown>()
+          node.set('name', 'a'.repeat(512))
+          sender.replica.getMap('nodes').set(`node-${i}`, node)
+        }
+      })
+      const update = Y.encodeStateAsUpdate(sender.replica)
+      expect(update.byteLength).toBeGreaterThan(2 * 1024 * 1024)
+
+      sender.client.send(encodeSyncUpdateMessage(update))
+
+      await expect(
+        nodesArrive(
+          receiver.replica,
+          nodeCount,
+          Promise.race([sender.closed, receiver.closed])
+        )
+      ).resolves.toBeUndefined()
+      sender.client.close()
+      receiver.client.close()
+    }, 20_000)
+
+    it('closes a sender with 1009 when its message exceeds the payload limit', async () => {
+      const sender = openClient()
+      await sender.synced
+
+      sender.client.send(
+        'a'.repeat(maxMessagePayload(DEFAULT_YJS_MAP_LIMITS) + 1)
+      )
+
+      await expect(sender.closed).resolves.toBe(1009)
+    }, 20_000)
+
+    it('sets the payload limit from the configured map size limit', () => {
+      realGateway.onModuleDestroy()
+      jest
+        .spyOn(configService, 'getYjsMapLimits')
+        .mockReturnValue({ ...DEFAULT_YJS_MAP_LIMITS, maxBytes: 65536 })
+      realGateway.onModuleInit()
+
+      const { wss } = realGateway as unknown as {
+        wss: { options: { maxPayload: number } }
+      }
+      expect(wss.options.maxPayload).toBe(131072)
     })
   })
 })
