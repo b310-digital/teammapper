@@ -52,7 +52,7 @@ function applyUrls(settings: Settings, env: Env): void {
   }
 }
 
-/** Reads `true` or `false` in any case; any other value gives undefined. */
+/** Reads `true` or `false` in upper or lower case; other values give undefined. */
 function parseFlag(value: string | undefined): boolean | undefined {
   const normalized = value?.trim().toLowerCase()
   if (normalized === 'true') return true

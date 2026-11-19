@@ -28,8 +28,8 @@ describe('SettingsService', () => {
     expect(settings.systemSettings.info.version).toBe(packageJson.version)
   })
 
-  // The server resolves the settings when serverSettings loads, so this
-  // checks that a request reads no file.
+  // The server resolves the settings when serverSettings loads, so a
+  // request must read no file.
   it('reads no file when it answers', () => {
     new SettingsService().getSettings()
 

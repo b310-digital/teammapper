@@ -20,8 +20,8 @@ in `teammapper-frontend/dist-offline/browser`.
 `DEFAULT_SETTINGS` in `packages/shared`, the defaults the server uses, takes
 the version from `teammapper-backend/package.json`, and turns sharing,
 pictograms and AI off. `IMPRINT_URL` and `PRIVACY_URL` in the environment of
-the build set the legal links. Change the defaults or the script and rebuild
-to change other settings.
+the build set the legal links. To change any other setting, edit the defaults
+or the script and rebuild.
 
 ## Host
 

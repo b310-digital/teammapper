@@ -261,11 +261,11 @@ at startup and reads no settings file. The version shown in the info dialog
 comes from `teammapper-backend/package.json`.
 
 **User settings**, such as language, dark mode and the defaults for new nodes,
-belong to one browser. The server only sends their starting values, and
-changing those requires a rebuild.
+belong to one browser. The server sends their starting values, and a change
+to a starting value requires a rebuild.
 
-A flag variable turns its flag on with `true` and off with `false`, in any
-case. An unset, empty or other value keeps the default.
+A flag variable turns its flag on with `true` and off with `false`, in upper
+or lower case. An unset, empty or other value keeps the default.
 
 | Variable | Description | Default |
 | --- | --- | --- |
