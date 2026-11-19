@@ -34,12 +34,14 @@ async function typeDisplayName(page: Page, name: string) {
 
 /**
  * Opens the settings dialog and waits for its open animation to end. The
- * dialog then focuses the close button, and a field filled before that focus
+ * dialog then focuses the search field, and a field filled before that focus
  * move loses the typed text on a slow machine.
  */
 async function openSettings(page: Page) {
   await page.locator('#settings-button').click();
-  await expect(page.locator('.close-button')).toBeFocused();
+  await expect(
+    page.getByRole('searchbox', { name: 'Search settings' })
+  ).toBeFocused();
 }
 
 async function saveDisplayName(page: Page, name: string) {
