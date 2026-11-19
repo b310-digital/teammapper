@@ -1,14 +1,59 @@
 div.settings-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   padding-right: 8px;
+
+  h2 {
+    flex: none;
+  }
+
+  // The search field takes up to 320px between the title and the close
+  // button. On a phone it shrinks to the remaining width.
+  mat-form-field.settings-search {
+    flex: 0 1 320px;
+    min-width: 0;
+    margin: 12px 0 0 auto;
+    // Without a fill, the field reads as a header tool and not as a setting.
+    // The dialog focuses the field on open, so the focus and hover layers
+    // stay off. The underline shows the focus.
+    --mat-form-field-filled-container-color: transparent;
+    --mat-form-field-focus-state-layer-opacity: 0;
+    --mat-form-field-hover-state-layer-opacity: 0;
+
+    // The browser's own clear button ignores the app's colors, so the
+    // template adds a Material one.
+    input::-webkit-search-cancel-button {
+      appearance: none;
+    }
+  }
 }
 
 .settings {
-  div.content {
+  p.settings-search-empty {
+    margin: 16px 0;
+    color: var(--color-text-secondary);
+  }
+
+  div.settings-overview {
+    padding-top: 16px;
+
+    section.settings-group + section.settings-group {
+      margin-top: 32px;
+    }
+
+    h3.settings-group-heading {
+      margin: 0;
+    }
+
+    p.settings-group-explanation {
+      margin: 4px 0 12px;
+      color: var(--color-text-secondary);
+    }
+
     mat-card {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
+      padding-bottom: 15px;
 
       hr {
         margin-top: 0;
@@ -19,72 +64,36 @@ div.settings-header {
       }
     }
 
-    mat-card:last-child {
+    mat-slide-toggle {
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    // The hint below a toggle explains that toggle, so it follows closely.
+    mat-slide-toggle.with-hint {
+      margin-bottom: 4px;
+    }
+
+    p.settings-hint {
+      margin: 0 0 20px;
+      font-size: 0.875em;
+      color: var(--color-text-secondary);
+    }
+
+    mat-card-content > p.settings-hint:last-child {
       margin-bottom: 0;
     }
 
-    div.general-options {
-      mat-card.general-options-main {
-        padding-bottom: 15px;
-      }
+    mat-card.settings-appearance mat-form-field,
+    mat-card.settings-profile mat-form-field {
+      width: 100%;
     }
 
-    div.map-options {
-      section.settings-group {
-        margin-top: 24px;
-
-        h3.settings-group-heading {
-          margin: 0;
-        }
-
-        p.settings-group-explanation {
-          margin: 4px 0 12px;
-          color: var(--color-text-secondary);
-        }
-      }
-
-      p.settings-hint {
-        margin: 4px 0 0;
-        font-size: 0.875em;
-        color: var(--color-text-secondary);
-      }
-
-      mat-card.map-options-editor {
-        mat-slide-toggle {
-          display: block;
-          margin-bottom: 20px;
-        }
-      }
-
-      mat-card.map-options-fonts {
-        mat-form-field {
-          margin-top: 16px;
-        }
-      }
-
-      mat-card.map-options-branches,
-      mat-card.map-options-nodes {
-        padding-bottom: 15px;
-
-        mat-form-field {
-          margin-right: 20px;
-        }
-      }
-    }
-
-    .dark-mode-row {
-      margin-bottom: 16px;
-
-      mat-slide-toggle {
-        display: flex;
-        align-items: center;
-      }
-    }
-
-    .language-row,
-    .display-name-row {
+    mat-card.settings-editor,
+    mat-card.settings-new-nodes,
+    mat-card.settings-fonts {
       mat-form-field {
-        width: 100%;
+        margin-right: 20px;
       }
     }
   }

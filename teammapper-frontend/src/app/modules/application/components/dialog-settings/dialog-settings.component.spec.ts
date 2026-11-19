@@ -19,9 +19,9 @@ import { MAP_STORE } from 'src/app/core/services/map-backend/map-store';
 import { SettingsService } from 'src/app/core/services/settings/settings.service';
 import { DialogSettingsComponent } from './dialog-settings.component';
 
-// The Mind map tab edits the font bounds of the open map, which MmpService
+// The map settings edit the font bounds of the open map, which MmpService
 // only has once a map has been created. Until then the dialog has to leave
-// that tab out rather than show made-up numbers.
+// that group out rather than show made-up numbers.
 describe('DialogSettingsComponent', () => {
   let fixture: ComponentFixture<DialogSettingsComponent>;
   let mapOptions$: BehaviorSubject<AdditionalMapOptions | null>;
@@ -150,7 +150,7 @@ describe('DialogSettingsComponent', () => {
       return input;
     }
 
-    it('sits on the general tab, with its label and hint', async () => {
+    it('shows its label and hint', async () => {
       await render(null);
 
       displayNameInput();
@@ -203,35 +203,26 @@ describe('DialogSettingsComponent', () => {
     });
   });
 
-  it('shows the mind map tab once a map holds options', async () => {
+  it('shows one settings tab next to the list of created maps', async () => {
     await render({ fontMaxSize: 70, fontMinSize: 15, fontIncrement: 5 });
 
-    expect(tabLabels()).toContain('PAGES.SETTINGS.MIND_MAP');
+    expect(tabLabels()).toEqual([
+      'PAGES.SETTINGS.TITLE',
+      'PAGES.SETTINGS.MAP_LIST',
+    ]);
   });
 
-  it('leaves the mind map tab out while no map has been created', async () => {
-    await render(null);
-
-    expect(tabLabels()).not.toContain('PAGES.SETTINGS.MIND_MAP');
-    expect(tabLabels()).toContain('PAGES.SETTINGS.GENERAL');
-  });
-
-  describe('the mind map tab', () => {
+  describe('the settings tab', () => {
     const defaultOptions = {
       fontMaxSize: 70,
       fontMinSize: 15,
       fontIncrement: 5,
     };
 
-    async function openMindMapTab() {
-      const root = fixture.nativeElement as HTMLElement;
-      const tab = root.querySelectorAll<HTMLElement>('.mat-mdc-tab')[1];
-      if (!tab) throw new Error('No mind map tab');
-      tab.click();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-      return root;
+    /** The rendered dialog. The settings tab opens first, so its cards are
+     * in the DOM. */
+    function dialogElement(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
     }
 
     function group(root: HTMLElement, name: string): HTMLElement {
@@ -240,23 +231,212 @@ describe('DialogSettingsComponent', () => {
       return element;
     }
 
-    it('heads the map settings first, then the user settings', async () => {
+    function cardTitles(element: HTMLElement): string[] {
+      return Array.from(element.querySelectorAll('mat-card-title')).map(
+        title => title.textContent?.trim() ?? ''
+      );
+    }
+
+    it('heads the user settings first, then the map settings', async () => {
       await render(defaultOptions);
-      const root = await openMindMapTab();
+      const root = dialogElement();
 
       const headings = Array.from(
         root.querySelectorAll('.settings-group-heading')
       ).map(heading => heading.textContent?.trim());
 
       expect(headings).toEqual([
-        'PAGES.SETTINGS.MAP_SETTINGS',
         'PAGES.SETTINGS.USER_SETTINGS',
+        'PAGES.SETTINGS.MAP_SETTINGS',
       ]);
+    });
+
+    it('leaves the map settings out while no map has been created', async () => {
+      await render(null);
+      const root = dialogElement();
+
+      expect(root.querySelector('.map-settings-group')).toBe(null);
+      expect(group(root, 'user-settings')).toBeTruthy();
+    });
+
+    it('orders the user settings by topic', async () => {
+      await render(defaultOptions);
+      const root = dialogElement();
+
+      expect(cardTitles(group(root, 'user-settings'))).toEqual([
+        'PAGES.SETTINGS.APPEARANCE',
+        'PAGES.SETTINGS.PROFILE',
+        'PAGES.SETTINGS.EDITOR',
+        'PAGES.SETTINGS.NEW_NODES',
+      ]);
+    });
+
+    it('puts dark mode, language and display name under the user settings', async () => {
+      await render(defaultOptions);
+      const userGroup = group(dialogElement(), 'user-settings');
+
+      expect(userGroup.textContent).toContain('PAGES.SETTINGS.DARK_MODE');
+      expect(userGroup.querySelector('mat-select.language')).not.toBe(null);
+      expect(userGroup.querySelector('input[name="displayName"]')).not.toBe(
+        null
+      );
+    });
+
+    // A placeholder disappears once the field contains a value, so a font
+    // size would show as a bare number.
+    it('labels every field', async () => {
+      await render(defaultOptions);
+      const fields = Array.from(
+        dialogElement().querySelectorAll('.settings-overview mat-form-field')
+      );
+
+      expect(fields.length).toBe(8);
+      for (const field of fields) {
+        expect(field.querySelector('mat-label')?.textContent?.trim()).toMatch(
+          /^(PAGES\.SETTINGS|GENERAL)\./
+        );
+      }
+    });
+
+    describe('the search', () => {
+      /** Types the query into the search field. Without a loader, the
+       * translate pipe and the search both read the translation keys. */
+      async function search(query: string) {
+        const input = dialogElement().querySelector<HTMLInputElement>(
+          'input[name="settingsSearch"]'
+        );
+        if (!input) throw new Error('No search field');
+        input.value = query;
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+      }
+
+      it('shows only the cards that match the query', async () => {
+        await render(defaultOptions);
+
+        await search('font');
+
+        expect(cardTitles(dialogElement())).toEqual([
+          'PAGES.SETTINGS.FONT_SIZES',
+        ]);
+      });
+
+      it('hides the heading of a group without a matching card', async () => {
+        await render(defaultOptions);
+
+        await search('font');
+
+        expect(dialogElement().querySelector('.user-settings-group')).toBe(
+          null
+        );
+        expect(group(dialogElement(), 'map-settings')).toBeTruthy();
+      });
+
+      it('says so when no setting matches', async () => {
+        await render(defaultOptions);
+
+        await search('zebra');
+
+        expect(dialogElement().querySelectorAll('mat-card').length).toBe(0);
+        expect(dialogElement().textContent).toContain(
+          'PAGES.SETTINGS.SEARCH_NO_RESULTS'
+        );
+      });
+
+      it('shows every card again once the query is cleared', async () => {
+        await render(defaultOptions);
+
+        await search('font');
+        await search('');
+
+        expect(cardTitles(dialogElement()).length).toBe(5);
+        expect(dialogElement().textContent).not.toContain(
+          'PAGES.SETTINGS.SEARCH_NO_RESULTS'
+        );
+      });
+
+      it('shows the field in the dialog header, outside the tabs', async () => {
+        await render(defaultOptions);
+
+        const header = dialogElement().querySelector('.settings-header');
+        expect(header?.querySelector('input[name="settingsSearch"]')).not.toBe(
+          null
+        );
+        expect(
+          dialogElement().querySelector(
+            'mat-tab-group input[name="settingsSearch"]'
+          )
+        ).toBe(null);
+      });
+
+      function clearButton(): HTMLButtonElement | null {
+        return dialogElement().querySelector<HTMLButtonElement>(
+          'button.settings-search-clear'
+        );
+      }
+
+      it('offers a clear button only while the field contains text', async () => {
+        await render(defaultOptions);
+        expect(clearButton()).toBe(null);
+
+        await search('font');
+
+        expect(clearButton()?.getAttribute('aria-label')).toBe(
+          'PAGES.SETTINGS.SEARCH_CLEAR'
+        );
+      });
+
+      it('shows every card again once the clear button is clicked', async () => {
+        await render(defaultOptions);
+        await search('font');
+
+        clearButton()?.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(cardTitles(dialogElement()).length).toBe(5);
+        expect(clearButton()).toBe(null);
+      });
+
+      it('switches to the settings tab when the map list is open', async () => {
+        await render(defaultOptions);
+        dialogElement()
+          .querySelectorAll<HTMLElement>('.mat-mdc-tab')[1]
+          .click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        await search('font');
+
+        expect(fixture.componentInstance.selectedTab()).toBe(0);
+      });
+
+      it('finds nothing among the map settings before a map exists', async () => {
+        await render(null);
+
+        await search('font');
+
+        expect(dialogElement().textContent).toContain(
+          'PAGES.SETTINGS.SEARCH_NO_RESULTS'
+        );
+      });
+    });
+
+    it('ends the map settings with the deletion', async () => {
+      await render(defaultOptions);
+      const mapGroup = group(dialogElement(), 'map-settings');
+
+      expect(mapGroup.lastElementChild?.tagName).toBe(
+        'TEAMMAPPER-MAP-DELETION'
+      );
     });
 
     it('explains both groups', async () => {
       await render(defaultOptions);
-      const root = await openMindMapTab();
+      const root = dialogElement();
 
       expect(group(root, 'map-settings').textContent).toContain(
         'PAGES.SETTINGS.MAP_SETTINGS_EXPLANATION'
@@ -268,7 +448,7 @@ describe('DialogSettingsComponent', () => {
 
     it('puts the font sizes under the map settings only', async () => {
       await render(defaultOptions);
-      const root = await openMindMapTab();
+      const root = dialogElement();
 
       for (const name of ['fontMinSize', 'fontMaxSize', 'fontIncrement']) {
         const selector = `input[name="${name}"]`;
@@ -281,7 +461,7 @@ describe('DialogSettingsComponent', () => {
 
     it('puts the branch style under the user settings', async () => {
       await render(defaultOptions);
-      const root = await openMindMapTab();
+      const root = dialogElement();
 
       expect(
         group(root, 'user-settings').querySelector('mat-select.branch-style')
@@ -290,7 +470,7 @@ describe('DialogSettingsComponent', () => {
 
     it('shows the hints of the settings that write onto nodes', async () => {
       await render(defaultOptions);
-      const root = await openMindMapTab();
+      const root = dialogElement();
       const text = group(root, 'user-settings').textContent;
 
       expect(text).toContain('PAGES.SETTINGS.AUTO_BRANCH_COLORS_HINT');
@@ -299,7 +479,7 @@ describe('DialogSettingsComponent', () => {
 
     it('disables the map settings for a read-only viewer only', async () => {
       await render(defaultOptions, false);
-      const root = await openMindMapTab();
+      const root = dialogElement();
 
       const mapInputs = group(root, 'map-settings').querySelectorAll('input');
       const userInputs = group(root, 'user-settings').querySelectorAll(
@@ -446,12 +626,6 @@ describe('DialogSettingsComponent', () => {
       mapOptions$.next({ ...options });
     });
     const root = fixture.nativeElement as HTMLElement;
-    const tab = root.querySelectorAll<HTMLElement>('.mat-mdc-tab')[1];
-    if (!tab) throw new Error('No map settings tab');
-    tab.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
 
     for (const [name, value] of [
       ['fontMinSize', '20'],

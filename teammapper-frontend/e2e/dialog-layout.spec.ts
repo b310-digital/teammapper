@@ -54,7 +54,7 @@ async function openSettingsTab(page: Page, label: string) {
     .toBe('none');
 }
 
-/** Turns dark mode on from the General tab of the settings dialog. */
+/** Turns dark mode on from the settings dialog. */
 async function enableDarkMode(page: Page) {
   await page.locator('#settings-button').click();
   await page.getByRole('switch', { name: 'Dark mode' }).click();
@@ -124,7 +124,7 @@ for (const theme of themes) {
     await waitForDialogOpen(page);
 
     const heights: number[] = [];
-    for (const tab of ['General', 'Mind map', 'List of created maps']) {
+    for (const tab of ['Settings', 'List of created maps']) {
       await openSettingsTab(page, tab);
       heights.push(await surfaceHeight(page));
     }
@@ -142,7 +142,7 @@ test.describe('on a phone', () => {
     await createMap(page);
     await page.locator('#settings-button').click();
     await waitForDialogOpen(page);
-    await openSettingsTab(page, 'Mind map');
+    await openSettingsTab(page, 'Settings');
 
     const box = await dialogSurface(page).boundingBox();
     if (!box) throw new Error('the dialog surface is not visible');

@@ -7,11 +7,10 @@ test('changes language in settings', async ({ page }) => {
   await page.locator('#settings-button').click();
   await expect(page.locator('.settings')).toBeVisible();
 
-  // Wait for the language dropdown to be visible
-  await page.waitForSelector('mat-select', { state: 'visible' });
+  const language = page.locator('mat-select.language');
 
   // Open language dropdown
-  await page.locator('mat-select').click();
+  await language.click();
 
   // Wait for options to appear
   await page.waitForSelector('mat-option', { state: 'visible' });
@@ -21,7 +20,7 @@ test('changes language in settings', async ({ page }) => {
   await page.locator('mat-option').nth(6).click();
 
   // Verify language change (would need to check actual translations in real test)
-  await expect(page.locator('mat-select')).toBeVisible();
+  await expect(language).toBeVisible();
 });
 
 test('deletes a map that is not open from the map list', async ({ page }) => {
@@ -70,16 +69,12 @@ test('keeps the stored map settings when the user reopens the map', async ({
   const fontMinSize = page.locator('input[name="fontMinSize"]');
   const fontMaxSize = page.locator('input[name="fontMaxSize"]');
   const fontIncrement = page.locator('input[name="fontIncrement"]');
-  const openMapSettings = async () => {
-    await page.locator('#settings-button').click();
-    await page.locator('.mat-mdc-tab').nth(1).click();
-  };
   await page.goto('/');
   await page.getByText('Create mind map').click();
   await page.waitForURL(/\/map\/[0-9a-f-]+/);
   const mapUrl = page.url();
 
-  await openMapSettings();
+  await openSettings(page);
   await fontMinSize.fill('20');
   await fontMinSize.press('Tab');
   await expect(fontMinSize).toHaveValue('20');
@@ -94,7 +89,7 @@ test('keeps the stored map settings when the user reopens the map', async ({
 
   await page.goto(mapUrl);
   await expect(page.locator('.map')).toBeVisible();
-  await openMapSettings();
+  await openSettings(page);
 
   await expect(fontMinSize).toHaveValue('20');
   await expect(fontMaxSize).toHaveValue('80');
@@ -112,8 +107,7 @@ test('shows the linktext on the open map once the dialog turns it on', async ({
   const linkText = page.locator('svg a > text.link-text');
   await expect(linkText).toHaveText('link');
 
-  await page.locator('#settings-button').click();
-  await page.locator('.mat-mdc-tab').nth(1).click();
+  await openSettings(page);
   await page
     .locator('mat-slide-toggle', { hasText: 'Show linktext' })
     .locator('button')
@@ -134,9 +128,8 @@ async function createMapWithChild(page: Page) {
   await expect(page.locator('path.branch')).toHaveCount(1);
 }
 
-async function openMindMapTab(page: Page) {
+async function openSettings(page: Page) {
   await page.locator('#settings-button').click();
-  await page.locator('.mat-mdc-tab', { hasText: 'Mind map' }).click();
 }
 
 /** The paint the browser draws the only branch with. */
@@ -151,21 +144,37 @@ function branchPaint(page: Page) {
   });
 }
 
-test('groups the mind map tab into map settings and user settings', async ({
+test('lists the user settings first, then the map settings', async ({
   page,
 }) => {
   await page.goto('/');
   await page.getByText('Create mind map').click();
 
-  await openMindMapTab(page);
+  await openSettings(page);
 
+  await expect(page.getByRole('tab')).toHaveText([
+    'Settings',
+    'List of created maps',
+  ]);
+  await expect(page.locator('.settings-group-heading')).toHaveText([
+    'User settings',
+    'Map settings',
+  ]);
   const mapSettings = page.locator('.map-settings-group');
   const userSettings = page.locator('.user-settings-group');
-  await expect(mapSettings.getByText('Map settings')).toBeVisible();
+  await expect(userSettings.locator('mat-card-title')).toHaveText([
+    'Appearance',
+    'Profile',
+    'Editor',
+    'New nodes',
+  ]);
+  await expect(mapSettings.locator('mat-card-title')).toHaveText([
+    'Font sizes',
+    'Deletion',
+  ]);
   await expect(
     mapSettings.getByText('Shared with everyone on this map')
   ).toBeVisible();
-  await expect(userSettings.getByText('User settings')).toBeVisible();
   await expect(
     userSettings.getByText('Only for you, in this browser')
   ).toBeVisible();
@@ -175,6 +184,30 @@ test('groups the mind map tab into map settings and user settings', async ({
   await expect(
     userSettings.getByText(/Used as the name of maps and nodes/)
   ).toBeVisible();
+});
+
+test('filters the settings by the search query', async ({ page }) => {
+  await page.goto('/');
+  await page.getByText('Create mind map').click();
+  await openSettings(page);
+  const search = page.getByRole('searchbox', { name: 'Search settings' });
+  const cardTitles = page.locator('.settings-overview mat-card-title');
+
+  await search.fill('font');
+  await expect(cardTitles).toHaveText(['Font sizes']);
+  await expect(page.locator('.settings-group-heading')).toHaveText([
+    'Map settings',
+  ]);
+
+  await search.fill('dark');
+  await expect(cardTitles).toHaveText(['Appearance']);
+
+  await search.fill('zebra');
+  await expect(cardTitles).toHaveCount(0);
+  await expect(page.getByText('No setting matches your search.')).toBeVisible();
+
+  await search.fill('');
+  await expect(cardTitles).toHaveCount(6);
 });
 
 test('disables the map settings for a read-only viewer only @server', async ({
@@ -191,7 +224,7 @@ test('disables the map settings for a read-only viewer only @server', async ({
     const viewer = await viewerContext.newPage();
     await viewer.goto(viewerUrl);
     await expect(viewer.getByText('Root node')).toBeVisible();
-    await openMindMapTab(viewer);
+    await openSettings(viewer);
 
     await expect(viewer.locator('input[name="fontMinSize"]')).toBeDisabled();
     await expect(
@@ -214,7 +247,7 @@ test('draws curved branches for this browser only @server', async ({
   const tapered = await branchPaint(page);
   expect(tapered.fill).not.toBe('none');
 
-  await openMindMapTab(page);
+  await openSettings(page);
   await page.locator('mat-select.branch-style').click();
   await page.getByRole('option', { name: 'Curved' }).click();
 
@@ -247,17 +280,10 @@ test('modifies map options in settings', async ({ page }) => {
 
   await page.locator('#settings-button').click();
 
-  // Click on Mind map tab - wait for it to be visible
-  await page.waitForSelector('mat-tab-group', { state: 'visible' });
-
-  // Click on second tab - Mind map
-  await page.locator('.mat-mdc-tab').nth(1).click();
-
-  // Wait for the tab content to load
-  await page.waitForSelector('mat-slide-toggle', { state: 'visible' });
-
-  // Toggle auto branch colors (use nth(1) for second toggle)
-  await page.locator('mat-slide-toggle').nth(1).click();
+  await page
+    .locator('mat-slide-toggle', { hasText: 'Automatic branch colors' })
+    .locator('button')
+    .click();
 
   // Change font sizes
   await page.locator('input[name="fontMinSize"]').fill('20');

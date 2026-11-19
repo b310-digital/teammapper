@@ -1,5 +1,26 @@
 <div class="settings-header">
   <h2 mat-dialog-title>{{ 'PAGES.SETTINGS.TITLE' | translate }}</h2>
+  <mat-form-field class="settings-search" subscriptSizing="dynamic">
+    <mat-icon matIconPrefix>search</mat-icon>
+    <mat-label>{{ 'PAGES.SETTINGS.SEARCH' | translate }}</mat-label>
+    <input
+      [ngModel]="searchQuery()"
+      (ngModelChange)="search($event)"
+      type="search"
+      autocomplete="off"
+      matInput
+      name="settingsSearch" />
+    @if (searchQuery()) {
+      <button
+        class="settings-search-clear"
+        matIconSuffix
+        mat-icon-button
+        (click)="search('')"
+        [attr.aria-label]="'PAGES.SETTINGS.SEARCH_CLEAR' | translate">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
   <button
     class="close-button"
     color="primary"
@@ -12,246 +33,258 @@
 
 <mat-dialog-content class="settings">
   <div class="content">
-    <mat-tab-group>
-      <mat-tab [label]="'PAGES.SETTINGS.GENERAL' | translate">
+    <mat-tab-group
+      [selectedIndex]="selectedTab()"
+      (selectedIndexChange)="selectedTab.set($event)">
+      <mat-tab [label]="'PAGES.SETTINGS.TITLE' | translate">
         @if (settings; as userSettings) {
-          <div class="content general-options">
-            <mat-card class="general-options-main">
-              <mat-card-header>
-                <mat-card-title>{{
-                  'PAGES.SETTINGS.MAIN' | translate
-                }}</mat-card-title>
-              </mat-card-header>
-              <hr />
-              <mat-card-content>
-                <div class="dark-mode-row">
-                  <mat-slide-toggle
-                    (change)="updateDarkMode()"
-                    [(ngModel)]="userSettings.general.darkMode"
-                    color="primary">
-                    {{ 'PAGES.SETTINGS.DARK_MODE' | translate }}
-                  </mat-slide-toggle>
-                </div>
-                <hr />
-                <div class="language-row">
-                  <mat-form-field>
-                    <mat-select
-                      (selectionChange)="updateLanguage()"
-                      [(value)]="userSettings.general.language"
-                      [placeholder]="'GENERAL.LANGUAGE' | translate"
-                      [title]="'TOOLTIPS.LANGUAGE' | translate">
-                      @for (language of languages; track language) {
-                        <mat-option [value]="language">{{
-                          'LANGUAGES.' + language.toUpperCase() | translate
-                        }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-                <hr />
-                <div class="display-name-row">
-                  <mat-form-field>
-                    <mat-label>{{
-                      'PAGES.SETTINGS.DISPLAY_NAME' | translate
-                    }}</mat-label>
-                    <input
-                      (change)="updateDisplayName()"
-                      [(ngModel)]="displayName"
-                      autocomplete="nickname"
-                      matInput
-                      name="displayName" />
-                    <mat-hint>{{
-                      'PAGES.SETTINGS.DISPLAY_NAME_HINT' | translate
-                    }}</mat-hint>
-                  </mat-form-field>
-                </div>
-              </mat-card-content>
-            </mat-card>
+          <div class="content settings-overview">
+            @let visible = visibleCards();
+            @if (showsUserSettings()) {
+              <section class="settings-group user-settings-group">
+                <h3 class="settings-group-heading">
+                  {{ 'PAGES.SETTINGS.USER_SETTINGS' | translate }}
+                </h3>
+                <p class="settings-group-explanation">
+                  {{ 'PAGES.SETTINGS.USER_SETTINGS_EXPLANATION' | translate }}
+                </p>
+                @if (visible.has('appearance')) {
+                  <mat-card class="settings-appearance">
+                    <mat-card-header>
+                      <mat-card-title>{{
+                        'PAGES.SETTINGS.APPEARANCE' | translate
+                      }}</mat-card-title>
+                    </mat-card-header>
+                    <hr />
+                    <mat-card-content>
+                      <mat-slide-toggle
+                        (change)="updateDarkMode()"
+                        [(ngModel)]="userSettings.general.darkMode"
+                        color="primary">
+                        {{ 'PAGES.SETTINGS.DARK_MODE' | translate }}
+                      </mat-slide-toggle>
+                      <mat-form-field>
+                        <mat-label>{{
+                          'GENERAL.LANGUAGE' | translate
+                        }}</mat-label>
+                        <mat-select
+                          class="language"
+                          (selectionChange)="updateLanguage()"
+                          [(value)]="userSettings.general.language"
+                          [title]="'TOOLTIPS.LANGUAGE' | translate">
+                          @for (language of languages; track language) {
+                            <mat-option [value]="language">{{
+                              'LANGUAGES.' + language.toUpperCase() | translate
+                            }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+                }
+                @if (visible.has('profile')) {
+                  <mat-card class="settings-profile">
+                    <mat-card-header>
+                      <mat-card-title>{{
+                        'PAGES.SETTINGS.PROFILE' | translate
+                      }}</mat-card-title>
+                    </mat-card-header>
+                    <hr />
+                    <mat-card-content>
+                      <mat-form-field>
+                        <mat-label>{{
+                          'PAGES.SETTINGS.DISPLAY_NAME' | translate
+                        }}</mat-label>
+                        <input
+                          (change)="updateDisplayName()"
+                          [(ngModel)]="displayName"
+                          autocomplete="nickname"
+                          matInput
+                          name="displayName" />
+                        <mat-hint>{{
+                          'PAGES.SETTINGS.DISPLAY_NAME_HINT' | translate
+                        }}</mat-hint>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+                }
+                @if (visible.has('editor')) {
+                  <mat-card class="settings-editor">
+                    <mat-card-header>
+                      <mat-card-title>{{
+                        'PAGES.SETTINGS.EDITOR' | translate
+                      }}</mat-card-title>
+                    </mat-card-header>
+                    <hr />
+                    <mat-card-content>
+                      <mat-slide-toggle
+                        (change)="updateGeneralMapOptions()"
+                        [(ngModel)]="userSettings.mapOptions.centerOnResize"
+                        [title]="'TOOLTIPS.CENTER_ON_RESIZING' | translate"
+                        color="primary">
+                        {{ 'PAGES.SETTINGS.CENTER_ON_RESIZING' | translate }}
+                      </mat-slide-toggle>
+                      <mat-slide-toggle
+                        (change)="updateGeneralMapOptions()"
+                        [(ngModel)]="userSettings.mapOptions.showLinktext"
+                        [title]="'TOOLTIPS.SHOW_LINKTEXT' | translate"
+                        color="primary">
+                        {{ 'PAGES.SETTINGS.SHOW_LINKTEXT' | translate }}
+                      </mat-slide-toggle>
+                      <mat-slide-toggle
+                        class="with-hint"
+                        (change)="updateGeneralMapOptions()"
+                        [(ngModel)]="userSettings.mapOptions.autoBranchColors"
+                        [title]="'TOOLTIPS.AUTO_BRANCH_COLORS' | translate"
+                        color="primary">
+                        {{ 'PAGES.SETTINGS.AUTO_BRANCH_COLORS' | translate }}
+                      </mat-slide-toggle>
+                      <p class="settings-hint">
+                        {{
+                          'PAGES.SETTINGS.AUTO_BRANCH_COLORS_HINT' | translate
+                        }}
+                      </p>
+                      <mat-form-field>
+                        <mat-label>{{
+                          'PAGES.SETTINGS.BRANCH_STYLE' | translate
+                        }}</mat-label>
+                        <mat-select
+                          class="branch-style"
+                          (selectionChange)="updateGeneralMapOptions()"
+                          [(value)]="userSettings.mapOptions.branchStyle"
+                          [title]="'TOOLTIPS.BRANCH_STYLE' | translate">
+                          @for (style of branchStyles; track style) {
+                            <mat-option [value]="style">{{
+                              'PAGES.SETTINGS.BRANCH_STYLES.' +
+                                style.toUpperCase() | translate
+                            }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+                }
+                @if (visible.has('newNodes')) {
+                  <mat-card class="settings-new-nodes">
+                    <mat-card-header>
+                      <mat-card-title>{{
+                        'PAGES.SETTINGS.NEW_NODES' | translate
+                      }}</mat-card-title>
+                    </mat-card-header>
+                    <hr />
+                    <mat-card-content>
+                      <mat-form-field>
+                        <mat-label>{{
+                          'PAGES.SETTINGS.ROOT_NODE_NAME' | translate
+                        }}</mat-label>
+                        <input
+                          (change)="updateGeneralMapOptions()"
+                          [(ngModel)]="userSettings.mapOptions.rootNode.name"
+                          [title]="'TOOLTIPS.ROOT_NODE_NAME_INPUT' | translate"
+                          matInput
+                          name="rootNodeName" />
+                      </mat-form-field>
+                      <mat-form-field>
+                        <mat-label>{{
+                          'PAGES.SETTINGS.NODE_NAME' | translate
+                        }}</mat-label>
+                        <input
+                          (change)="updateGeneralMapOptions()"
+                          [(ngModel)]="userSettings.mapOptions.defaultNode.name"
+                          [title]="'TOOLTIPS.NODE_NAME_INPUT' | translate"
+                          matInput
+                          name="defaultNodeName" />
+                      </mat-form-field>
+                      <p class="settings-hint">
+                        {{ 'PAGES.SETTINGS.NODE_NAMES_HINT' | translate }}
+                      </p>
+                    </mat-card-content>
+                  </mat-card>
+                }
+              </section>
+            }
+
+            <!-- The font sizes and the deletion belong to the open map, which
+            gets its options only once it is created. -->
+            @let options = mapOptions();
+            @if (options && showsMapSettings()) {
+              <section class="settings-group map-settings-group">
+                <h3 class="settings-group-heading">
+                  {{ 'PAGES.SETTINGS.MAP_SETTINGS' | translate }}
+                </h3>
+                <p class="settings-group-explanation">
+                  {{ 'PAGES.SETTINGS.MAP_SETTINGS_EXPLANATION' | translate }}
+                </p>
+                @if (visible.has('fonts')) {
+                  <mat-card class="settings-fonts">
+                    <mat-card-header>
+                      <mat-card-title>{{
+                        'PAGES.SETTINGS.FONT_SIZES' | translate
+                      }}</mat-card-title>
+                    </mat-card-header>
+                    <hr />
+                    <mat-card-content>
+                      <mat-form-field>
+                        <mat-label>{{
+                          'PAGES.SETTINGS.FONT_MIN_SIZE' | translate
+                        }}</mat-label>
+                        <input
+                          (change)="updateMapOptions('fontMinSize', $event)"
+                          [(ngModel)]="options.fontMinSize"
+                          [title]="'TOOLTIPS.FONT_MIN_SIZE' | translate"
+                          [disabled]="editMode | async | inverseBool"
+                          type="number"
+                          min="15"
+                          max="100"
+                          matInput
+                          name="fontMinSize" />
+                      </mat-form-field>
+                      <mat-form-field>
+                        <mat-label>{{
+                          'PAGES.SETTINGS.FONT_MAX_SIZE' | translate
+                        }}</mat-label>
+                        <input
+                          (change)="updateMapOptions('fontMaxSize', $event)"
+                          [(ngModel)]="options.fontMaxSize"
+                          [title]="'TOOLTIPS.FONT_MAX_SIZE' | translate"
+                          [disabled]="editMode | async | inverseBool"
+                          type="number"
+                          min="15"
+                          max="100"
+                          matInput
+                          name="fontMaxSize" />
+                      </mat-form-field>
+                      <mat-form-field>
+                        <mat-label>{{
+                          'PAGES.SETTINGS.FONT_INCREMENT' | translate
+                        }}</mat-label>
+                        <input
+                          (change)="updateMapOptions('fontIncrement', $event)"
+                          [(ngModel)]="options.fontIncrement"
+                          [title]="'TOOLTIPS.FONT_INCREMENT' | translate"
+                          [disabled]="editMode | async | inverseBool"
+                          type="number"
+                          min="1"
+                          max="100"
+                          matInput
+                          name="fontIncrement" />
+                      </mat-form-field>
+                    </mat-card-content>
+                  </mat-card>
+                }
+                @if (visible.has('deletion')) {
+                  <teammapper-map-deletion></teammapper-map-deletion>
+                }
+              </section>
+            }
+            @if (nothingMatches()) {
+              <p class="settings-search-empty">
+                {{ 'PAGES.SETTINGS.SEARCH_NO_RESULTS' | translate }}
+              </p>
+            }
           </div>
         }
       </mat-tab>
-
-      <!-- The font fields below belong to the open map, so this tab needs the
-      map options as well as the user settings. -->
-      @let options = mapOptions();
-      @if (options && settings; as userSettings) {
-        <mat-tab [label]="'PAGES.SETTINGS.MIND_MAP' | translate">
-          <div class="content map-options">
-            <teammapper-map-deletion></teammapper-map-deletion>
-            <section class="settings-group map-settings-group">
-              <h3 class="settings-group-heading">
-                {{ 'PAGES.SETTINGS.MAP_SETTINGS' | translate }}
-              </h3>
-              <p class="settings-group-explanation">
-                {{ 'PAGES.SETTINGS.MAP_SETTINGS_EXPLANATION' | translate }}
-              </p>
-              <mat-card class="map-options-fonts">
-                <mat-card-header>
-                  <mat-card-title>{{
-                    'PAGES.SETTINGS.FONT_SIZES' | translate
-                  }}</mat-card-title>
-                </mat-card-header>
-                <hr />
-                <mat-card-content>
-                  <mat-form-field>
-                    <input
-                      (change)="updateMapOptions('fontMinSize', $event)"
-                      [(ngModel)]="options.fontMinSize"
-                      [placeholder]="'PAGES.SETTINGS.FONT_MIN_SIZE' | translate"
-                      [title]="'TOOLTIPS.FONT_MIN_SIZE' | translate"
-                      [disabled]="editMode | async | inverseBool"
-                      type="number"
-                      min="15"
-                      max="100"
-                      matInput
-                      name="fontMinSize" />
-                  </mat-form-field>
-                  <br />
-                  <mat-form-field>
-                    <input
-                      (change)="updateMapOptions('fontMaxSize', $event)"
-                      [(ngModel)]="options.fontMaxSize"
-                      [placeholder]="'PAGES.SETTINGS.FONT_MAX_SIZE' | translate"
-                      [title]="'TOOLTIPS.FONT_MAX_SIZE' | translate"
-                      [disabled]="editMode | async | inverseBool"
-                      type="number"
-                      min="15"
-                      max="100"
-                      matInput
-                      name="fontMaxSize" />
-                  </mat-form-field>
-                  <br />
-                  <mat-form-field>
-                    <input
-                      (change)="updateMapOptions('fontIncrement', $event)"
-                      [(ngModel)]="options.fontIncrement"
-                      [placeholder]="
-                        'PAGES.SETTINGS.FONT_INCREMENT' | translate
-                      "
-                      [title]="'TOOLTIPS.FONT_INCREMENT' | translate"
-                      [disabled]="editMode | async | inverseBool"
-                      type="number"
-                      min="1"
-                      max="100"
-                      matInput
-                      name="fontIncrement" />
-                  </mat-form-field>
-                </mat-card-content>
-              </mat-card>
-            </section>
-            <section class="settings-group user-settings-group">
-              <h3 class="settings-group-heading">
-                {{ 'PAGES.SETTINGS.USER_SETTINGS' | translate }}
-              </h3>
-              <p class="settings-group-explanation">
-                {{ 'PAGES.SETTINGS.USER_SETTINGS_EXPLANATION' | translate }}
-              </p>
-              <mat-card class="map-options-editor">
-                <mat-card-header>
-                  <mat-card-title>{{
-                    'PAGES.SETTINGS.EDITOR' | translate
-                  }}</mat-card-title>
-                </mat-card-header>
-                <hr />
-                <mat-card-content>
-                  <mat-slide-toggle
-                    (change)="updateGeneralMapOptions()"
-                    [(ngModel)]="userSettings.mapOptions.centerOnResize"
-                    [title]="'TOOLTIPS.CENTER_ON_RESIZING' | translate"
-                    color="primary">
-                    {{ 'PAGES.SETTINGS.CENTER_ON_RESIZING' | translate }}
-                  </mat-slide-toggle>
-                  <mat-slide-toggle
-                    (change)="updateGeneralMapOptions()"
-                    [(ngModel)]="userSettings.mapOptions.autoBranchColors"
-                    [title]="'TOOLTIPS.AUTO_BRANCH_COLORS' | translate"
-                    color="primary">
-                    {{ 'PAGES.SETTINGS.AUTO_BRANCH_COLORS' | translate }}
-                  </mat-slide-toggle>
-                  <p class="settings-hint">
-                    {{ 'PAGES.SETTINGS.AUTO_BRANCH_COLORS_HINT' | translate }}
-                  </p>
-                </mat-card-content>
-              </mat-card>
-              <mat-card class="map-options-branches">
-                <mat-card-header>
-                  <mat-card-title>{{
-                    'GENERAL.BRANCHES' | translate
-                  }}</mat-card-title>
-                </mat-card-header>
-                <hr />
-                <mat-card-content>
-                  <mat-form-field>
-                    <mat-select
-                      class="branch-style"
-                      (selectionChange)="updateGeneralMapOptions()"
-                      [(value)]="userSettings.mapOptions.branchStyle"
-                      [placeholder]="'PAGES.SETTINGS.BRANCH_STYLE' | translate"
-                      [title]="'TOOLTIPS.BRANCH_STYLE' | translate">
-                      @for (style of branchStyles; track style) {
-                        <mat-option [value]="style">{{
-                          'PAGES.SETTINGS.BRANCH_STYLES.' + style.toUpperCase()
-                            | translate
-                        }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-                </mat-card-content>
-              </mat-card>
-              <mat-card>
-                <mat-card-header>
-                  <mat-card-title>{{
-                    'GENERAL.LINKS' | translate
-                  }}</mat-card-title>
-                </mat-card-header>
-                <hr />
-                <mat-card-content>
-                  <mat-slide-toggle
-                    (change)="updateGeneralMapOptions()"
-                    [(ngModel)]="userSettings.mapOptions.showLinktext"
-                    [title]="'TOOLTIPS.SHOW_LINKTEXT' | translate"
-                    color="primary">
-                    {{ 'PAGES.SETTINGS.SHOW_LINKTEXT' | translate }}
-                  </mat-slide-toggle>
-                </mat-card-content>
-              </mat-card>
-              <mat-card class="map-options-nodes">
-                <mat-card-header>
-                  <mat-card-title>{{
-                    'GENERAL.NODES' | translate
-                  }}</mat-card-title>
-                </mat-card-header>
-                <hr />
-                <mat-card-content>
-                  <mat-form-field>
-                    <input
-                      (change)="updateGeneralMapOptions()"
-                      [(ngModel)]="userSettings.mapOptions.rootNode.name"
-                      [placeholder]="
-                        'PAGES.SETTINGS.ROOT_NODE_NAME' | translate
-                      "
-                      [title]="'TOOLTIPS.ROOT_NODE_NAME_INPUT' | translate"
-                      matInput
-                      name="rootNodeName" />
-                  </mat-form-field>
-                  <mat-form-field>
-                    <input
-                      (change)="updateGeneralMapOptions()"
-                      [(ngModel)]="userSettings.mapOptions.defaultNode.name"
-                      [placeholder]="'PAGES.SETTINGS.NODE_NAME' | translate"
-                      [title]="'TOOLTIPS.NODE_NAME_INPUT' | translate"
-                      matInput
-                      name="defaultNodeName" />
-                  </mat-form-field>
-                  <p class="settings-hint">
-                    {{ 'PAGES.SETTINGS.NODE_NAMES_HINT' | translate }}
-                  </p>
-                </mat-card-content>
-              </mat-card>
-            </section>
-          </div>
-        </mat-tab>
-      }
       <mat-tab [label]="'PAGES.SETTINGS.MAP_LIST' | translate">
         <teammapper-mindmaps-overview></teammapper-mindmaps-overview>
       </mat-tab>
