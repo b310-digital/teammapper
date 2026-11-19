@@ -1,4 +1,5 @@
 import { test, expect, Locator, Page } from '@playwright/test';
+import path from 'path';
 
 const mockPictogramResponse = [
   {
@@ -112,15 +113,40 @@ async function searchPictograms(dialog: Locator, term: string): Promise<void> {
   await dialog.locator('button:has(mat-icon:has-text("search"))').click();
 }
 
-// The server tests need a backend that calls the stub on port 3100. With
-// reuseExistingServer, a running backend without PICTOGRAM_API_URL and
-// PICTOGRAM_IMAGES_URL pointing at the stub makes these tests fail.
+const LOGO_PATH = path.join(
+  __dirname,
+  '..',
+  'src',
+  'assets',
+  'icons',
+  'icon-72x72.png'
+);
+
+/**
+ * Answers the backend's two pictogram endpoints in the browser: a search for
+ * "fail" gets a 502, any other search two pictograms, and every image the logo.
+ */
+async function mockServerEndpoints(page: Page): Promise<void> {
+  await page.route('**/arasaac/api/pictograms/*/search/*', async route => {
+    const term = route.request().url().split('/').pop();
+    if (term === 'fail') {
+      await route.fulfill({ status: 502, json: { message: 'Bad Gateway' } });
+      return;
+    }
+    await route.fulfill({ json: [{ _id: 6009 }, { _id: 6010 }] });
+  });
+  await page.route('**/arasaac/images/pictograms/**', route =>
+    route.fulfill({ contentType: 'image/png', path: LOGO_PATH })
+  );
+}
+
 test('inserts a pictogram through the server endpoints @server', async ({
   page,
 }) => {
   const requestedUrls: string[] = [];
   page.on('request', request => requestedUrls.push(request.url()));
   await useServerMode(page);
+  await mockServerEndpoints(page);
   const dialog = await openPictogramDialog(page);
 
   await searchPictograms(dialog, 'dog');
@@ -132,13 +158,17 @@ test('inserts a pictogram through the server endpoints @server', async ({
     timeout: 5000,
   });
   const hosts = requestedUrls.map(url => new URL(url).hostname);
-  expect(hosts.filter(host => host.endsWith('arasaac.org'))).toEqual([]);
+  const arasaacHosts = hosts.filter(
+    host => host === 'arasaac.org' || host.endsWith('.arasaac.org')
+  );
+  expect(arasaacHosts).toEqual([]);
 });
 
 test('shows an error toast when the pictogram search fails @server', async ({
   page,
 }) => {
   await useServerMode(page);
+  await mockServerEndpoints(page);
   const dialog = await openPictogramDialog(page);
 
   await searchPictograms(dialog, 'fail');
