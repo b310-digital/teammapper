@@ -205,7 +205,7 @@ If needed, you can make the connection to Postgres more secure by using a SSL co
 
     within the docker-compose-prod file.
 
-Anonymous map duplication has shared rate and concurrency limits and an image storage budget. See the [backend configuration](teammapper-backend/README.md#node-images).
+Anonymous map duplication has shared rate and concurrency limits, and a copy must fit the image cap of one map. See the [backend configuration](teammapper-backend/README.md#node-images).
 
 #### Migrating node images to image references
 

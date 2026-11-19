@@ -191,22 +191,26 @@ describe('ImagesService', () => {
   describe('duplication limits', () => {
     afterEach(() => jest.restoreAllMocks())
 
-    it('counts repeated copies and copies of copies against one budget', async () => {
-      jest
-        .spyOn(configService, 'getDuplicateMapMaxImageBytes')
-        .mockReturnValue(2 * LOGO_PNG.length)
-      const source = await createMap()
-      const reference = await imagesService.storeImage(source.id, pngUpload())
-      const copy = await createMap()
-      await duplicateImages(source.id, copy.id)
-      expect(await read(copy.id, reference)).not.toBeNull()
-      for (const map of [source, copy]) {
-        const target = await createMap()
-        await expect(duplicateImages(map.id, target.id)).rejects.toThrow(
-          PayloadTooLargeException
-        )
-        expect(await imagesRepo.countBy({ mapId: target.id })).toBe(0)
-        expect(await read(target.id, reference)).toBeNull()
+    it('duplicates a map and a copy of a copy regardless of images stored elsewhere', async () => {
+      const previous = process.env.DUPLICATE_MAP_MAX_IMAGE_BYTES
+      process.env.DUPLICATE_MAP_MAX_IMAGE_BYTES = String(LOGO_PNG.length)
+      try {
+        const source = await createMap()
+        const reference = await imagesService.storeImage(source.id, pngUpload())
+        const copy = await createMap()
+        await duplicateImages(source.id, copy.id)
+        const secondCopy = await createMap()
+        await duplicateImages(source.id, secondCopy.id)
+        const copyOfCopy = await createMap()
+        await duplicateImages(copy.id, copyOfCopy.id)
+
+        for (const map of [copy, secondCopy, copyOfCopy]) {
+          expect(await read(map.id, reference)).not.toBeNull()
+        }
+      } finally {
+        if (previous === undefined)
+          delete process.env.DUPLICATE_MAP_MAX_IMAGE_BYTES
+        else process.env.DUPLICATE_MAP_MAX_IMAGE_BYTES = previous
       }
     })
 
@@ -223,18 +227,19 @@ describe('ImagesService', () => {
       expect(await read(target.id, reference)).toBeNull()
     })
 
-    it('includes inline images in both stored usage and the proposed copy', async () => {
+    it('counts inline image bytes toward the image cap of the copy', async () => {
       const source = await mapsService.createEmptyMap(createClientRootNode())
       const inline = `data:image/png;base64,${LOGO_PNG.toString('base64')}`
       await nodesRepo.update({ nodeMapId: source.id }, { imageSrc: inline })
       const bytes = Buffer.byteLength(inline)
       jest
-        .spyOn(configService, 'getDuplicateMapMaxImageBytes')
-        .mockReturnValue(2 * bytes - 1)
+        .spyOn(configService, 'getMaxImageBytesPerMap')
+        .mockReturnValue(bytes - 1)
       const target = await createMap()
       await expect(
         duplicateImages(source.id, target.id, bytes)
       ).rejects.toThrow(PayloadTooLargeException)
+      expect(await imagesRepo.countBy({ mapId: target.id })).toBe(0)
     })
 
     it('rejects concurrent duplication and releases the lock after failure', async () => {

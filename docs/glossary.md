@@ -373,13 +373,6 @@ Write "duplicate", never "clone" or "fork".
 The maximum image storage allowed for one map through uploads or duplication.
 Existing inline images and the image extraction job can exceed this limit.
 
-### Duplication storage budget
-
-The storage limit across all maps that controls whether duplication may add
-image data. It counts the stored bytes of referenced images and the UTF-8
-bytes of inline image data URLs. Copies of copies count toward the same
-budget. See **Image cap** for the limit on a single map.
-
 ### Offline build
 
 A static frontend that runs without a backend. Maps stay in this browser's

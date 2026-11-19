@@ -113,8 +113,10 @@ export class ImagesService {
    * Copies every image of the source map to the target map under the same
    * id, so no node reference needs rewriting. The copies count as uploaded
    * now. Writes the metadata rows before the bytes, as storeImageWithoutCap
-   * does. Pass the manager withDuplicationLimit provides, so budget checks
-   * and copies cannot race another duplication and roll back with it.
+   * does. Pass the manager withDuplicationLimit provides, so the copies
+   * cannot race another duplication and roll back with it. Throws before
+   * inserting anything when the stored and inline bytes to copy exceed the
+   * image cap. Reads the image sizes of the source map only.
    */
   async copyImages(
     manager: EntityManager,
@@ -126,7 +128,7 @@ export class ImagesService {
       where: { mapId: sourceMapId },
     })
     const copyBytes = totalStoredImageBytes(images) + inlineBytes
-    await this.assertDuplicationFitsImageLimits(manager, copyBytes)
+    this.assertBelowMapCap(copyBytes)
     if (images.length === 0) return
     await manager.insert(
       MmpImage,
@@ -196,35 +198,6 @@ export class ImagesService {
     if (totalBytes > configService.getMaxImageBytesPerMap()) {
       throw new PayloadTooLargeException('Image storage of the map is full')
     }
-  }
-
-  /** Requires the duplication lock until the copy and its nodes are stored. */
-  private async assertDuplicationFitsImageLimits(
-    manager: EntityManager,
-    copyBytes: number
-  ): Promise<void> {
-    this.assertBelowMapCap(copyBytes)
-    const storedBytes = await this.totalImageBytesAcrossMaps(manager)
-    if (
-      copyBytes > 0 &&
-      storedBytes + copyBytes > configService.getDuplicateMapMaxImageBytes()
-    ) {
-      throw new PayloadTooLargeException(
-        'Image storage budget for map duplication is full'
-      )
-    }
-  }
-
-  /** Counts referenced and inline images across every map, including duplicates. */
-  private async totalImageBytesAcrossMaps(
-    manager: EntityManager
-  ): Promise<number> {
-    const totals: { total: string }[] = await manager.query(`
-      SELECT (SELECT COALESCE(SUM(size), 0) FROM mmp_image)
-        + (SELECT COALESCE(SUM(octet_length("imageSrc")), 0)
-           FROM mmp_node WHERE "imageSrc" LIKE 'data:%') AS total
-    `)
-    return Number(totals[0]?.total ?? 0)
   }
 
   private findUnusedImages(uploadedBefore: Date): Promise<MmpImage[]> {

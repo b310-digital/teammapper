@@ -207,11 +207,6 @@ class ConfigService {
     return this.parsePositiveInt('DUPLICATE_MAP_RATE_WINDOW_MS', 60_000)
   }
 
-  /** Duplication stops when stored images across all maps would exceed 1 GB. */
-  public getDuplicateMapMaxImageBytes(): number {
-    return this.parsePositiveInt('DUPLICATE_MAP_MAX_IMAGE_BYTES', 1_000_000_000)
-  }
-
   private parsePositiveInt(key: string, fallback: number): number {
     const raw = this.getValue(key, false)
     if (!raw) return fallback
