@@ -1,24 +1,39 @@
 import { execFileSync } from 'child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
+import { createRequire } from 'module';
 import { join } from 'path';
+import type { Settings } from '@teammapper/shared';
 
 const script = join(__dirname, 'generate-offline-settings.mjs');
-const backendSettings = join(
+const sharedCjsBuild = join(
   __dirname,
-  '../../teammapper-backend/config/settings.prod.json'
+  '../../packages/shared/dist/cjs/index.js'
+);
+const backendPackage = join(__dirname, '../../teammapper-backend/package.json');
+const defaultSettingsFile = join(
+  __dirname,
+  '../../teammapper-backend/config/settings.default.json'
 );
 
 const readJson = (path: string): unknown =>
   JSON.parse(readFileSync(path, 'utf-8'));
 
-interface OfflineSettings {
-  systemSettings: {
-    info: Record<string, unknown>;
-    urls: Record<string, string | null>;
-    featureFlags: Record<string, boolean>;
+const loadDefaultSettings = (): Settings => {
+  const shared = createRequire(__filename)(sharedCjsBuild) as {
+    DEFAULT_SYSTEM_SETTINGS: Settings['systemSettings'];
   };
-}
+  const file = readJson(defaultSettingsFile) as Pick<Settings, 'userSettings'>;
+  return {
+    systemSettings: JSON.parse(JSON.stringify(shared.DEFAULT_SYSTEM_SETTINGS)),
+    userSettings: file.userSettings,
+  };
+};
+
+const backendVersion = (): string =>
+  (readJson(backendPackage) as { version: string }).version;
+
+type OfflineSettings = Settings;
 
 /** Runs the script with the given url variables and nothing else set. */
 const generate = (output: string, env: Record<string, string> = {}): void => {
@@ -41,10 +56,10 @@ describe('generate-offline-settings', () => {
     rmSync(outputDir, { recursive: true, force: true });
   });
 
-  it('writes the production settings with the server features off', () => {
+  it('writes the default settings with the backend version and the server features off', () => {
     const output = join(outputDir, 'settings.offline.json');
-    const expected = readJson(backendSettings) as OfflineSettings;
-    expected.systemSettings.info['aiModel'] = null;
+    const expected = loadDefaultSettings();
+    expected.systemSettings.info.version = backendVersion();
     Object.assign(expected.systemSettings.featureFlags, {
       sharing: false,
       pictograms: false,

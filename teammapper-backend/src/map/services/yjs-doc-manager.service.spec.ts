@@ -80,7 +80,7 @@ describe('YjsDocManagerService', () => {
   }
 
   describe('getOrCreateDoc', () => {
-    // getSettings reads two files from disk, which blocks the event loop.
+    // getSettings copies the whole settings object on every call.
     it('reads the settings once, not on every hydration', async () => {
       const settingsService = new SettingsService()
       const getSettings = jest.spyOn(settingsService, 'getSettings')

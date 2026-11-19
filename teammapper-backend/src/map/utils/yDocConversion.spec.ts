@@ -49,7 +49,7 @@ const createTestMap = (overrides: Partial<MmpMap> = {}): MmpMap => {
   return map
 }
 
-/** The configured default colors, as the settings file names them. */
+/** The configured default colors, as the settings name them. */
 const COLOR_DEFAULTS = {
   node: { name: '#666666', background: '#f5f5f5', branch: '#546e7a' },
   root: { name: '#666666', background: '#eeeeee' },

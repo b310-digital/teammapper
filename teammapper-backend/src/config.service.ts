@@ -77,11 +77,6 @@ class ConfigService {
     return parseInt(this.getValue('DELETE_AFTER_DAYS', false) || '30')
   }
 
-  public isAiEnabled(): boolean {
-    const value = this.getValue('AI_ENABLED', false)
-    return value?.toLowerCase() === 'true'
-  }
-
   /**
    * Reads WS_TRUST_PROXY: `true` trusts every proxy, a positive integer
    * trusts that many hops, anything else trusts none.
@@ -96,21 +91,6 @@ class ConfigService {
   public isYjsRateLimitingEnabled(): boolean {
     const value = this.getValue('FEATURE_YJS_RATE_LIMITING', false)
     return value?.toLowerCase() === 'true'
-  }
-
-  public isArrowsEnabled(): boolean {
-    const value = this.getValue('FEATURE_ARROWS', false)
-    return value?.toLowerCase() === 'true'
-  }
-
-  /** Target of the imprint link; null when `IMPRINT_URL` is unset or blank. */
-  public getImprintUrl(): string | null {
-    return this.getValue('IMPRINT_URL', false)?.trim() || null
-  }
-
-  /** Target of the privacy link; null when `PRIVACY_URL` is unset or blank. */
-  public getPrivacyUrl(): string | null {
-    return this.getValue('PRIVACY_URL', false)?.trim() || null
   }
 
   /** Upstream the /arasaac/api proxy forwards pictogram searches to. */

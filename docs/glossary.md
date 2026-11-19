@@ -218,6 +218,9 @@ defaults for new maps and nodes:
 - the branch style
 - the starting name and styling of root nodes and ordinary nodes
 
+The server sends the starting values of the user settings from a settings
+file. The operator can replace that file with a complete one of their own.
+
 ### Info dialog
 
 The dialog opened by the info button or `?`. It shows the app version, legal
@@ -227,9 +230,17 @@ settings. Map shortcuts are inactive while the dialog is open.
 ### Legal links
 
 Links to the instance's imprint and privacy information, shown in the info
-dialog and the start page footer. The operator sets their addresses with
-`imprintUrl` and `privacyUrl` in system settings, or the environment variables
-`IMPRINT_URL` and `PRIVACY_URL`. Each link appears only when configured.
+dialog and the start page footer. The operator sets their addresses with the
+environment variables `IMPRINT_URL` and `PRIVACY_URL`. Each link appears only
+when configured.
+
+### System settings
+
+The settings the server sends to every client: feature flags, the legal links,
+the pictogram addresses and the app version. They start from defaults built
+into TeamMapper, and the operator changes them with environment variables
+only. Users cannot change them. The offline build starts from the same
+defaults.
 
 ### Settings dialog
 

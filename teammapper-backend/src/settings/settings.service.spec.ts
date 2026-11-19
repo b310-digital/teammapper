@@ -1,308 +1,57 @@
 import { jest } from '@jest/globals'
 import * as fs from 'fs'
 import * as path from 'path'
-import configService from '../config.service'
 import { SettingsService } from './settings.service'
-import { Settings } from '@teammapper/shared'
 
-jest.mock('fs')
-jest.mock('../config.service')
-
-const mockedFs = fs as jest.Mocked<typeof fs>
-
-const defaultSettings: Settings = {
-  systemSettings: {
-    info: { name: 'TeamMapper', version: '1.0.0', aiModel: null },
-    urls: {
-      pictogramApiUrl: 'https://api.teammapper.localhost',
-      pictogramStaticUrl: 'https://static.teammapper.localhost',
-      imprintUrl: null,
-      privacyUrl: null,
-    },
-    featureFlags: { pictograms: true, ai: false, arrows: false, sharing: true },
-  },
-  userSettings: {
-    general: { language: 'en', darkMode: false, displayName: '' },
-    mapOptions: {
-      centerOnResize: false,
-      autoBranchColors: true,
-      showLinktext: false,
-      branchStyle: 'tapered',
-      fontMaxSize: 70,
-      fontMinSize: 15,
-      fontIncrement: 5,
-      defaultNode: {
-        name: '',
-        link: { href: '' },
-        image: { src: '', size: 60 },
-        colors: { name: '#666666', background: '#f5f5f5', branch: '#546e7a' },
-        font: { size: 22, style: 'normal', weight: 'normal' },
-      },
-      rootNode: {
-        name: 'Root node',
-        link: { href: '' },
-        image: { src: '', size: 70 },
-        colors: { name: '#666666', background: '#f5f5f5' },
-        font: { size: 26, style: 'normal', weight: 'normal' },
-      },
-    },
-  },
-}
+jest.mock('fs', () => {
+  const actual = jest.requireActual<typeof import('fs')>('fs')
+  return {
+    ...actual,
+    readFileSync: jest.fn(actual.readFileSync),
+    existsSync: jest.fn(actual.existsSync),
+  }
+})
 
 describe('SettingsService', () => {
-  let service: SettingsService
-
   beforeEach(() => {
-    jest.clearAllMocks()
-    ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
-    ;(configService.isArrowsEnabled as jest.Mock).mockReturnValue(false)
-    ;(configService.getImprintUrl as jest.Mock).mockReturnValue(null)
-    ;(configService.getPrivacyUrl as jest.Mock).mockReturnValue(null)
-    ;(configService.getLLMConfig as jest.Mock).mockReturnValue({
-      provider: 'openai',
-      model: 'gpt-test',
-    })
-    mockedFs.readFileSync.mockReturnValue(JSON.stringify(defaultSettings))
-    mockedFs.existsSync.mockReturnValue(false)
-
-    service = new SettingsService()
+    jest.mocked(fs.readFileSync).mockClear()
+    jest.mocked(fs.existsSync).mockClear()
   })
 
-  describe('loading default settings', () => {
-    it('should return settings parsed from the default config file', () => {
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.info).toEqual({
-        name: 'TeamMapper',
-        version: '1.0.0',
-        aiModel: null,
-      })
-    })
-
-    it.each(['settings.dev.json', 'settings.prod.json'])(
-      'gives users an empty display name by default in %s',
-      (file) => {
-        const realFs = jest.requireActual<typeof fs>('fs')
-        const config: Settings = JSON.parse(
-          realFs.readFileSync(
-            path.join(__dirname, '../../config', file),
-            'utf8'
-          )
-        )
-
-        expect(config.userSettings.general.displayName).toBe('')
-      }
+  it('returns settings carrying the backend package version', () => {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')
     )
 
-    it('should include user settings from the default config file', () => {
-      const settings = service.getSettings()
+    const settings = new SettingsService().getSettings()
 
-      expect(settings.userSettings.general.language).toBe('en')
-      expect(settings.userSettings.general.darkMode).toBe(false)
-    })
+    expect(settings.systemSettings.info.version).toBe(packageJson.version)
   })
 
-  describe('override settings', () => {
-    it('should deep merge override file into default settings', () => {
-      const overrideSettings = {
-        systemSettings: {
-          info: { version: '2.0.0' },
-        },
-      }
-      mockedFs.existsSync.mockReturnValue(true)
-      mockedFs.statSync.mockReturnValue({ size: 100 } as fs.Stats)
-      mockedFs.readFileSync
-        .mockReturnValueOnce(JSON.stringify(defaultSettings))
-        .mockReturnValueOnce(JSON.stringify(overrideSettings))
+  // The server resolves the settings when serverSettings loads, so a
+  // request must read no file.
+  it('reads no file when it answers', () => {
+    new SettingsService().getSettings()
 
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.info).toEqual({
-        name: 'TeamMapper',
-        version: '2.0.0',
-        aiModel: null,
-      })
-    })
-
-    it('should skip override file when it does not exist', () => {
-      mockedFs.existsSync.mockReturnValue(false)
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.info.version).toBe('1.0.0')
-    })
-
-    it('should skip override file when it is empty', () => {
-      mockedFs.existsSync.mockReturnValue(true)
-      mockedFs.statSync.mockReturnValue({ size: 0 } as fs.Stats)
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.info.version).toBe('1.0.0')
-    })
+    expect(fs.readFileSync).not.toHaveBeenCalled()
+    expect(fs.existsSync).not.toHaveBeenCalled()
   })
 
-  describe('feature flags', () => {
-    it('should set ai flag to true when AI_ENABLED is true', () => {
-      ;(configService.isAiEnabled as jest.Mock).mockReturnValue(true)
+  it('returns equal settings on two calls', () => {
+    const service = new SettingsService()
 
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.featureFlags.ai).toBe(true)
-    })
-
-    it('should set ai flag to false when AI_ENABLED is false', () => {
-      ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.featureFlags.ai).toBe(false)
-    })
-
-    it('should override file-based feature flags with config service values', () => {
-      const settingsWithFlags = {
-        ...defaultSettings,
-        systemSettings: {
-          ...defaultSettings.systemSettings,
-          featureFlags: {
-            pictograms: true,
-            ai: true,
-            arrows: false,
-            sharing: true,
-          },
-        },
-      }
-      mockedFs.readFileSync.mockReturnValue(JSON.stringify(settingsWithFlags))
-      ;(configService.isAiEnabled as jest.Mock).mockReturnValue(false)
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.featureFlags).toEqual({
-        pictograms: true,
-        ai: false,
-        arrows: false,
-        sharing: true,
-      })
-    })
-
-    it('should turn the sharing flag off through the override file', () => {
-      const overrideSettings = {
-        systemSettings: { featureFlags: { sharing: false } },
-      }
-      mockedFs.existsSync.mockReturnValue(true)
-      mockedFs.statSync.mockReturnValue({ size: 100 } as fs.Stats)
-      mockedFs.readFileSync
-        .mockReturnValueOnce(JSON.stringify(defaultSettings))
-        .mockReturnValueOnce(JSON.stringify(overrideSettings))
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.featureFlags.sharing).toBe(false)
-    })
-
-    it('should turn the arrows flag on through the override file', () => {
-      const overrideSettings = {
-        systemSettings: { featureFlags: { arrows: true } },
-      }
-      mockedFs.existsSync.mockReturnValue(true)
-      mockedFs.statSync.mockReturnValue({ size: 100 } as fs.Stats)
-      mockedFs.readFileSync
-        .mockReturnValueOnce(JSON.stringify(defaultSettings))
-        .mockReturnValueOnce(JSON.stringify(overrideSettings))
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.featureFlags.arrows).toBe(true)
-    })
-
-    it('should turn the arrows flag on when FEATURE_ARROWS is true', () => {
-      ;(configService.isArrowsEnabled as jest.Mock).mockReturnValue(true)
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.featureFlags.arrows).toBe(true)
-    })
-
-    it('should expose the AI model when AI_ENABLED is true', () => {
-      ;(configService.isAiEnabled as jest.Mock).mockReturnValue(true)
-
-      const settings = service.getSettings()
-
-      expect(settings.systemSettings.info.aiModel).toBe('gpt-test')
-    })
+    expect(service.getSettings()).toEqual(service.getSettings())
   })
 
-  describe('legal urls', () => {
-    const imprintUrl = 'https://teammapper.localhost/imprint'
-    const privacyUrl = 'https://teammapper.localhost/privacy'
+  it('returns a distinct object on each call', () => {
+    const service = new SettingsService()
+    const first = service.getSettings()
 
-    const withOverrideUrls = (urls: Record<string, string>): void => {
-      mockedFs.existsSync.mockReturnValue(true)
-      mockedFs.statSync.mockReturnValue({ size: 100 } as fs.Stats)
-      mockedFs.readFileSync
-        .mockReturnValueOnce(JSON.stringify(defaultSettings))
-        .mockReturnValueOnce(JSON.stringify({ systemSettings: { urls } }))
-    }
+    first.systemSettings.featureFlags.sharing =
+      !first.systemSettings.featureFlags.sharing
 
-    it('leaves both urls null without file values or variables', () => {
-      const { urls } = service.getSettings().systemSettings
-
-      expect(urls.imprintUrl).toBeNull()
-      expect(urls.privacyUrl).toBeNull()
-    })
-
-    it('reads both urls from the override file', () => {
-      withOverrideUrls({ imprintUrl, privacyUrl })
-
-      const { urls } = service.getSettings().systemSettings
-
-      expect(urls.imprintUrl).toBe(imprintUrl)
-      expect(urls.privacyUrl).toBe(privacyUrl)
-    })
-
-    it('lets IMPRINT_URL and PRIVACY_URL win over the override file', () => {
-      withOverrideUrls({ imprintUrl, privacyUrl })
-      ;(configService.getImprintUrl as jest.Mock).mockReturnValue(
-        'https://env.teammapper.localhost/imprint'
-      )
-      ;(configService.getPrivacyUrl as jest.Mock).mockReturnValue(
-        'https://env.teammapper.localhost/privacy'
-      )
-
-      const { urls } = service.getSettings().systemSettings
-
-      expect(urls.imprintUrl).toBe('https://env.teammapper.localhost/imprint')
-      expect(urls.privacyUrl).toBe('https://env.teammapper.localhost/privacy')
-    })
-
-    it('reads a blank url from the override file as null', () => {
-      withOverrideUrls({ imprintUrl: '  ', privacyUrl: '' })
-
-      const { urls } = service.getSettings().systemSettings
-
-      expect(urls.imprintUrl).toBeNull()
-      expect(urls.privacyUrl).toBeNull()
-    })
-
-    it('fills a url the settings files omit with null', () => {
-      const urlsWithoutImprint = {
-        pictogramApiUrl: 'https://api.teammapper.localhost',
-        pictogramStaticUrl: 'https://static.teammapper.localhost',
-        privacyUrl: null,
-      }
-      mockedFs.readFileSync.mockReturnValue(
-        JSON.stringify({
-          ...defaultSettings,
-          systemSettings: {
-            ...defaultSettings.systemSettings,
-            urls: urlsWithoutImprint,
-          },
-        })
-      )
-
-      const { urls } = service.getSettings().systemSettings
-
-      expect(urls.imprintUrl).toBeNull()
-    })
+    expect(service.getSettings().systemSettings.featureFlags.sharing).not.toBe(
+      first.systemSettings.featureFlags.sharing
+    )
   })
 })

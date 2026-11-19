@@ -251,68 +251,98 @@ Example of running sql via typeorm:
 docker compose --file docker-compose-prod.yml --env-file .env.prod exec app_prod pnpm --filter teammapper-backend exec typeorm query "select * from mmp_node" --dataSource ./dist/data-source.js
 ```
 
-### Default Settings
+### System settings
 
-The following files contain configurations for default settings:
+The server sends system settings to the app: feature flags, the legal links,
+the pictogram addresses and the version. Their defaults are part of the code
+(`DEFAULT_SYSTEM_SETTINGS` in `packages/shared`), and only the environment
+variables below change them. The server resolves the settings once at
+startup. The version shown in the info dialog comes from
+`teammapper-backend/package.json`.
 
-1. `/teammapper-backend/config/settings.dev.json`
+A flag variable turns its flag on with `true` and off with `false`, in upper
+or lower case. An unset, empty or other value keeps the default.
 
-    - Contains the default values for development mode
+| Variable | Description | Default |
+| --- | --- | --- |
+| `AI_ENABLED` | Turns on AI generate and its API endpoints | `false` |
+| `FEATURE_PICTOGRAMS` | Turns on pictograms. With the flag on, the server also forwards `/arasaac/api` and `/arasaac/images` to ARASAAC; with the flag off it serves neither route | `true` |
+| `FEATURE_ARROWS` | Shows the button and the `alt+a` shortcut that connect two nodes with an arrow. Maps show, sync and export their arrows with the flag off | `false` |
+| `FEATURE_SHARING` | Shows the share button and the share dialog, which duplicates maps | `true` |
+| `PICTOGRAMS_VIA_SERVER` | With `true`, the browser sends every pictogram request to the server, which forwards it to ARASAAC. Otherwise the browser loads pictograms from ARASAAC directly | `false` |
+| `PICTOGRAM_API_URL` | Upstream the `/arasaac/api` route forwards pictogram searches to | `https://api.arasaac.org/api` |
+| `PICTOGRAM_IMAGES_URL` | Upstream the `/arasaac/images` route forwards pictogram images to | `https://static.arasaac.org/` |
+| `IMPRINT_URL` | Target of the imprint link in the start page footer and the info dialog; unset or empty hides the link | unset |
+| `PRIVACY_URL` | Target of the privacy policy link in the start page footer and the info dialog; unset or empty hides the link | unset |
+| `AI_LLM_MODEL` | The LLM that AI generate uses; the AI dialog shows its name while `AI_ENABLED` is on | unset |
+| `DELETE_AFTER_DAYS` | Number of days before unused maps are deleted | `30` |
+| `MODE` | Sets the default log level: `debug` with `DEV`, `log` with any other value | unset |
+| `LOG_LEVEL` | NestJS log verbosity (`error`, `warn`, `log`, `debug`, `verbose`); wins over `MODE` | `debug` with `MODE=DEV`, `log` otherwise |
 
-2. `/teammapper-backend/config/settings.prod.json`
+The [backend README](teammapper-backend/README.md#environment-variables) lists
+the variables for the database, real-time collaboration, node images and the
+LLM connection.
 
-    - Contains the default values for production mode
-    - Changes here require rebuilding the Docker image
+### User settings
 
-3. `/config/settings.override.json`
-    - Values defined in `settings.override.json` override the values in `settings.prod.json`
-    - Values can be adjusted at runtime
+**User settings**, such as language, dark mode, the branch style and the
+styling of new nodes, belong to one browser. The server sends their starting
+values from `teammapper-backend/config/settings.default.json`.
 
-The settings are conceptually divided into:
-
--   **System Settings**: Settings provided by the application, which are not cached by the frontend and can only be adjusted in the backend
--   **User Settings**: values configured by the user in the frontend, which persist separately and override system defaults where applicable.
-
-The settings configuration includes the following feature flags:
-
--   `pictograms`: Disables/Enables the pictogram feature (default: disabled). Note: You have to set this flag before build time in the JSON config! With the flag on, the backend proxies `/arasaac/api` and `/arasaac/images` to ARASAAC; with the flag off it mounts neither route.
--   `ai`: Disables/Enables AI functionality like generating mindmaps with AI. Can be controlled via the `AI_ENABLED` environment variable (default: `false`).
--   `arrows`: Shows the button and the `alt+a` shortcut that connect two nodes with an arrow (default: disabled). Maps show, sync and export their arrows with the flag off. `FEATURE_ARROWS=true` turns it on; without the variable the JSON config decides.
-
-The `urls` section of the system settings sets the targets of the two legal links, which the footer of the start page and the info dialog show:
-
--   `imprintUrl`: target of the imprint link (default: `null`)
--   `privacyUrl`: target of the privacy policy link (default: `null`)
-
-An unset, `null` or empty value hides the link. Set them in `settings.override.json`, or with the `IMPRINT_URL` and `PRIVACY_URL` environment variables listed below:
+To change the starting values, mount a complete settings file at
+`config/settings.override.json` in the app directory, as the commented
+`volumes` entry in `docker-compose-prod.yml` shows. The override replaces the
+default file; the server merges nothing. Start from a copy of
+`settings.default.json` and change the values you need:
 
 ```json
 {
-  "systemSettings": {
-    "urls": {
-      "imprintUrl": "https://teammapper.localhost/imprint",
-      "privacyUrl": "https://teammapper.localhost/privacy"
+  "userSettings": {
+    "general": { "language": "de", "darkMode": false, "displayName": "" },
+    "mapOptions": {
+      "branchStyle": "curved",
+      ...
     }
   }
 }
 ```
 
-The offline build has no backend and bakes its settings in at build time: `pnpm run build:offline` reads `IMPRINT_URL` and `PRIVACY_URL` from the environment of the build.
+The server checks the file at startup and refuses to start when a field is
+missing, unknown or invalid, such as a branch style other than `tapered`,
+`curved` or `straight`. The file holds user settings only: feature flags,
+links and pictogram addresses come from the environment variables above.
 
-#### Environment variable overrides
+### Offline build settings
 
-The following environment variables override the feature flags and urls from the JSON config:
+The offline build has no server and bakes its settings in at build time. It
+starts from the same system settings defaults, turns sharing, pictograms and
+AI off, and reads `IMPRINT_URL` and `PRIVACY_URL` from the environment of
+`pnpm run build:offline`. Its user settings come from
+`settings.default.json`.
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `AI_ENABLED` | Enable AI features (mindmap generation) | `false` |
-| `FEATURE_ARROWS` | Enable creating arrows between nodes; `true` turns the flag on whatever the JSON config says | unset |
-| `IMPRINT_URL` | Target of the imprint link in the footer and the info dialog; wins over the JSON config, and the link stays hidden when both are unset | unset |
-| `PRIVACY_URL` | Target of the privacy policy link in the footer and the info dialog; wins over the JSON config, and the link stays hidden when both are unset | unset |
-| `DELETE_AFTER_DAYS` | Number of days before mindmaps are deleted | `30` |
-| `LOG_LEVEL` | NestJS log verbosity (`error`, `warn`, `log`, `debug`, `verbose`) | `debug` in DEV, `log` otherwise |
-| `PICTOGRAM_API_URL` | Upstream the `/arasaac/api` proxy forwards pictogram searches to | `https://api.arasaac.org/api` |
-| `PICTOGRAM_IMAGES_URL` | Upstream the `/arasaac/images` proxy forwards pictogram images to | `https://static.arasaac.org/` |
+### Upgrading from earlier settings files
+
+Earlier releases read `teammapper-backend/config/settings.dev.json` or
+`settings.prod.json`, chosen by `MODE`, and merged a mounted
+`config/settings.override.json` over it. The server now reads the system
+settings from environment variables only:
+
+1. Feature flags: `AI_ENABLED`, `FEATURE_PICTOGRAMS`, `FEATURE_ARROWS` and
+   `FEATURE_SHARING`.
+2. Legal links: `IMPRINT_URL` and `PRIVACY_URL`.
+3. Pictogram requests through the server: `PICTOGRAMS_VIA_SERVER=true`.
+
+An existing override file that sets `systemSettings`, or only part of the user
+settings, stops the server at startup. Move its system settings to the
+variables above. Then either delete the file, or turn it into a complete user
+settings file.
+
+The published image set no `MODE` and therefore loaded the development
+settings, so its behaviour stays the same: pictograms on, loaded from ARASAAC.
+A deployment with `MODE=PROD` used the production settings, which turned
+pictograms off and routed them through the server. To keep that, set
+`FEATURE_PICTOGRAMS=false`, or `PICTOGRAMS_VIA_SERVER=true` to offer
+pictograms through the server. `MODE` now sets only the default log level.
 
 ### Offline build
 

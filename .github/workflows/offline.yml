@@ -9,8 +9,9 @@ on:
     paths:
       - 'teammapper-frontend/**'
       - 'packages/**'
-      # The offline build bundles these settings.
-      - 'teammapper-backend/config/settings.prod.json'
+      # The offline build reads its version and its user settings from these files.
+      - 'teammapper-backend/package.json'
+      - 'teammapper-backend/config/settings.default.json'
       - '.github/workflows/offline.yml'
 jobs:
   test:

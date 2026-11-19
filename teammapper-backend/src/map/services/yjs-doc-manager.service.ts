@@ -29,9 +29,8 @@ export class YjsDocManagerService implements OnModuleDestroy {
   private shuttingDown = false
 
   // The node colors the settings configure, which hydration puts in place of
-  // a stored color that is no hex color. getSettings reads the settings files
-  // from disk, so the service reads them once; a changed override file takes
-  // effect on restart.
+  // a stored color that is no hex color. getSettings copies the whole
+  // settings object, so the service reads the colors once.
   private readonly colorDefaults: NodeColorDefaults
 
   constructor(
