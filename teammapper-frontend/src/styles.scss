@@ -238,11 +238,17 @@ body {
   color: var(--color-text-primary);
 }
 
-// The settings dialog fills a phone screen, held upright or sideways. The
-// overlay writes the configured size into the pane's inline style, so these
-// rules need !important to win.
+// The settings and info dialogs have a fixed height, so their content fills
+// the panel in place of Material's 65vh cap and scrolls when it runs longer.
+.large-dialog-panel .mat-mdc-dialog-content {
+  max-height: none;
+}
+
+// The settings and info dialogs fill a phone screen, held upright or
+// sideways. The overlay writes the configured size into the pane's inline
+// style, so these rules need !important to win.
 @media (max-width: 599.98px), (max-height: 599.98px) {
-  .settings-dialog-panel {
+  .large-dialog-panel {
     --mat-dialog-container-shape: 0;
     width: 100% !important;
     max-width: 100% !important;

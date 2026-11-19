@@ -1,5 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogConfig,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { HotkeysService } from 'angular2-hotkeys';
 import { filter, Subscription } from 'rxjs';
@@ -11,6 +15,19 @@ import { DialogImportAiComponent } from 'src/app/modules/application/components/
 import { DialogPictogramsComponent } from 'src/app/modules/application/components/dialog-pictograms/dialog-pictograms.component';
 import { DialogSettingsComponent } from 'src/app/modules/application/components/dialog-settings/dialog-settings.component';
 import { DialogShareComponent } from 'src/app/modules/application/components/dialog-share/dialog-share.component';
+
+/**
+ * Size of the settings and info dialogs. The fixed height keeps a dialog
+ * still when the user switches between tabs of different length. On a
+ * phone, styles.scss stretches the panel to fill the screen.
+ */
+const LARGE_DIALOG_CONFIG: MatDialogConfig = {
+  width: '800px',
+  maxWidth: '95vw',
+  height: '720px',
+  maxHeight: '90vh',
+  panelClass: 'large-dialog-panel',
+};
 
 @Injectable({
   providedIn: 'root',
@@ -82,9 +99,10 @@ export class DialogService {
     // angular2-hotkeys listens on the document, so a map shortcut pressed
     // inside the dialog would act on the map behind it.
     this.hotkeysService.pause();
-    this.aboutModalRef = this.dialog.open(DialogAboutComponent, {
-      maxHeight: '90vh',
-    });
+    this.aboutModalRef = this.dialog.open(
+      DialogAboutComponent,
+      LARGE_DIALOG_CONFIG
+    );
     this.aboutModalRef.afterClosed().subscribe(() => {
       this.aboutModalRef = null;
       this.hotkeysService.unpause();
@@ -101,21 +119,16 @@ export class DialogService {
    * Open the settings dialog over the map. Hotkeys pause as for the info
    * dialog, so typing `-` into a field removes no node. A navigation closes
    * the dialog, because deleting the open map sends the user to the start
-   * page. The fixed height keeps the dialog still when the user switches
-   * between tabs of different length. On a phone, styles.scss stretches the
-   * panel to fill the screen.
+   * page.
    */
   openSettingsDialog() {
     if (this.settingsModalRef) return;
 
     this.hotkeysService.pause();
-    const dialogRef = this.dialog.open(DialogSettingsComponent, {
-      width: '800px',
-      maxWidth: '95vw',
-      height: '720px',
-      maxHeight: '90vh',
-      panelClass: 'settings-dialog-panel',
-    });
+    const dialogRef = this.dialog.open(
+      DialogSettingsComponent,
+      LARGE_DIALOG_CONFIG
+    );
     const navigation = this.closeOnNavigation(dialogRef);
     dialogRef.afterClosed().subscribe(() => {
       navigation.unsubscribe();

@@ -137,8 +137,7 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "Keyboard shortcuts",
-      "DELETION_MOVED": "Hint: The deletion date of this mind map is now in the settings under Map options. If you created the mind map, you can also delete it there."
+      "SHORTCUTS_TITLE": "Keyboard shortcuts"
     },
     "LINK": {
       "URL": "Link URL (https://...)"

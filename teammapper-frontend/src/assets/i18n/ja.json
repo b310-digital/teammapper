@@ -137,8 +137,7 @@
       "LINK_TYPE_EDIT": "閲覧と編集"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "ショートカット",
-      "DELETION_MOVED": "注：このマインドマップの削除予定日は、設定の「マップオプション」に移動しました。マインドマップの作成者は、そこで削除することもできます。"
+      "SHORTCUTS_TITLE": "ショートカット"
     },
     "LINK": {
       "URL": "リンクURL（https://...）"

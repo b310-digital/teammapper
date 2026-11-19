@@ -136,8 +136,7 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "快捷鍵",
-      "DELETION_MOVED": "提示：此心智圖的刪除日期已移至設定中的「地圖選項」。心智圖的建立者也可以在那裡刪除它。"
+      "SHORTCUTS_TITLE": "快捷鍵"
     },
     "LINK": {
       "URL": "Link URL (https://...)"

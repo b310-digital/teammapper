@@ -136,8 +136,7 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "Atajos",
-      "DELETION_MOVED": "Nota: la fecha de eliminación de este mapa está ahora en Ajustes, en Opciones del mapa. Quien creó el mapa también puede eliminarlo allí."
+      "SHORTCUTS_TITLE": "Atajos"
     },
     "LINK": {
       "URL": "Link URL (https://...)"

@@ -72,6 +72,14 @@ describe('DialogAboutComponent', () => {
     expect(linkHrefs()).toEqual(['https://github.com/b310-digital/teammapper']);
   });
 
+  it('shows no hint that the deletion moved to the settings', () => {
+    renderWithUrls(null);
+
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'DELETION_MOVED'
+    );
+  });
+
   it('hides both links without system settings', () => {
     renderWithUrls(null);
 

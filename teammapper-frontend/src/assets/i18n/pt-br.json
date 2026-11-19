@@ -136,8 +136,7 @@
       "LINK_TYPE_EDIT": "Observe and modify"
     },
     "INFO": {
-      "SHORTCUTS_TITLE": "Atalhos",
-      "DELETION_MOVED": "Observação: a data de exclusão deste mapa agora está nas configurações, em Opções de mapa. Quem criou o mapa também pode excluí-lo lá."
+      "SHORTCUTS_TITLE": "Atalhos"
     },
     "LINK": {
       "URL": "Link URL (https://...)"
