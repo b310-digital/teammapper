@@ -36,7 +36,7 @@ export interface StoredImage {
   mimetype: RasterImageMimeType
 }
 
-/** Stores, reads, copies and deletes node images. */
+/** Stores, reads, copies and deletes node images. Copied maps share the bytes. */
 @Injectable()
 export class ImagesService {
   private readonly logger = new Logger(ImagesService.name)
@@ -72,7 +72,7 @@ export class ImagesService {
   ): Promise<ImageReference> {
     const id = uuidv4()
     await this.reserveImageUpload(mapId, id, upload)
-    await this.imageStore.put(mapId, id, upload.buffer)
+    await this.imageStore.put(id, upload.buffer)
     return toImageReference(id)
   }
 
@@ -94,7 +94,7 @@ export class ImagesService {
       mimetype: upload.mimetype,
       size: upload.size,
     })
-    await this.imageStore.put(mapId, id, upload.buffer)
+    await this.imageStore.put(id, upload.buffer)
   }
 
   /** Returns the image the map holds, or null for any other id. */
@@ -104,17 +104,19 @@ export class ImagesService {
       where: { mapId, id: imageId },
     })
     if (!image) return null
-    const data = await this.imageStore.get(mapId, imageId)
+    const data = await this.imageStore.get(imageId)
     if (!data) return null
     return { data, mimetype: image.mimetype }
   }
 
   /**
-   * Copies every image of the source map to the target map under the same
-   * id, so no node reference needs rewriting. The copies count as uploaded
-   * now. Writes the metadata rows before the bytes, as storeImageWithoutCap
-   * does. Pass the manager withDuplicationLimit provides, so budget checks
-   * and copies cannot race another duplication and roll back with it.
+   * Gives the target map a metadata row for every image of the source map,
+   * under the same id, so no node reference needs rewriting. Both maps then
+   * share the bytes. The copies count as uploaded now. Pass the manager
+   * withDuplicationLimit provides, so the copies roll back with the
+   * duplication. Throws before inserting anything when the stored and inline
+   * bytes to copy exceed the image cap. Leaves out every image whose bytes a
+   * concurrent deletion removed.
    */
   async copyImages(
     manager: EntityManager,
@@ -125,8 +127,87 @@ export class ImagesService {
     const images = await manager.find(MmpImage, {
       where: { mapId: sourceMapId },
     })
-    const copyBytes = totalStoredImageBytes(images) + inlineBytes
-    await this.assertDuplicationFitsImageLimits(manager, copyBytes)
+    this.assertBelowMapCap(totalStoredImageBytes(images) + inlineBytes)
+    const heldIds = new Set(
+      await this.imageStore.holdForCopy(
+        manager,
+        images.map((image) => image.id)
+      )
+    )
+    const held = images.filter((image) => heldIds.has(image.id))
+    const dropped = images.filter((image) => !heldIds.has(image.id))
+    this.warnAboutDroppedImages(sourceMapId, targetMapId, dropped)
+    await this.insertImageReferences(manager, targetMapId, held)
+  }
+
+  /**
+   * Deletes the metadata rows of the given maps, then the bytes no other map
+   * references, inside the transaction of `manager`. Waits for a running
+   * duplication that holds those bytes.
+   */
+  async deleteImagesOfMaps(
+    manager: EntityManager,
+    mapIds: string[]
+  ): Promise<void> {
+    const imageIds = await this.deleteImageRows(manager, mapIds)
+    await this.imageStore.deleteUnreferenced(manager, imageIds)
+  }
+
+  /**
+   * Deletes every image that no node row of its map references and that was
+   * uploaded more than `afterDays` days ago, with the bytes no other map
+   * references. Keeping recent images lets undo restore a removed image for
+   * that long. Then deletes all bytes no map references. Returns the number
+   * of unused images deleted.
+   */
+  async deleteUnusedImages(
+    afterDays = UNUSED_IMAGE_RETENTION_DAYS
+  ): Promise<number> {
+    const uploadedBefore = new Date(Date.now() - afterDays * DAY_MS)
+    const unused = await this.findUnusedImages(uploadedBefore)
+    for (const image of unused) await this.deleteUnusedImage(image)
+    await this.imageStore.deleteAllUnreferenced()
+    return unused.length
+  }
+
+  /** Deletes one metadata row and, unless another map references them, the bytes. */
+  private async deleteUnusedImage(image: MmpImage): Promise<void> {
+    await this.imagesRepository.manager.transaction(async (manager) => {
+      await manager.delete(MmpImage, { mapId: image.mapId, id: image.id })
+      await this.imageStore.deleteUnreferenced(manager, [image.id])
+    })
+  }
+
+  /** Deletes the metadata rows of the maps and returns the image ids they held. */
+  private async deleteImageRows(
+    manager: EntityManager,
+    mapIds: string[]
+  ): Promise<string[]> {
+    const [rows]: [{ id: string }[], number] = await manager.query(
+      'DELETE FROM "mmp_image" WHERE "mapId" = ANY($1::uuid[]) RETURNING "id"',
+      [mapIds]
+    )
+    return rows.map((row) => row.id)
+  }
+
+  /** Logs the images a concurrent deletion left without bytes. */
+  private warnAboutDroppedImages(
+    sourceMapId: string,
+    targetMapId: string,
+    dropped: MmpImage[]
+  ): void {
+    if (dropped.length === 0) return
+    this.logger.warn(
+      `copyImages(): map ${sourceMapId} to map ${targetMapId} dropped images without bytes: ${dropped.map((image) => image.id).join(', ')}`
+    )
+  }
+
+  /** Inserts a metadata row for each image into the target map. */
+  private async insertImageReferences(
+    manager: EntityManager,
+    targetMapId: string,
+    images: MmpImage[]
+  ): Promise<void> {
     if (images.length === 0) return
     await manager.insert(
       MmpImage,
@@ -137,35 +218,6 @@ export class ImagesService {
         size,
       }))
     )
-    await this.imageStore.copy(
-      manager,
-      sourceMapId,
-      targetMapId,
-      images.map((image) => image.id)
-    )
-  }
-
-  /** Deletes the metadata rows of a map, then the bytes. */
-  async deleteImagesOfMap(mapId: string): Promise<void> {
-    await this.imagesRepository.delete({ mapId })
-    await this.imageStore.deleteAllOfMap(mapId)
-  }
-
-  /**
-   * Deletes every image that no node row of its map references and that was
-   * uploaded more than `afterDays` days ago. Keeping recent images lets undo
-   * restore a removed image for that long. Returns the number deleted.
-   */
-  async deleteUnusedImages(
-    afterDays = UNUSED_IMAGE_RETENTION_DAYS
-  ): Promise<number> {
-    const uploadedBefore = new Date(Date.now() - afterDays * DAY_MS)
-    const unused = await this.findUnusedImages(uploadedBefore)
-    for (const image of unused) {
-      await this.imagesRepository.delete({ mapId: image.mapId, id: image.id })
-      await this.imageStore.delete(image.mapId, image.id)
-    }
-    return unused.length
   }
 
   /** Commits metadata before writing bytes, reserving space for concurrent uploads. */
@@ -196,35 +248,6 @@ export class ImagesService {
     if (totalBytes > configService.getMaxImageBytesPerMap()) {
       throw new PayloadTooLargeException('Image storage of the map is full')
     }
-  }
-
-  /** Requires the duplication lock until the copy and its nodes are stored. */
-  private async assertDuplicationFitsImageLimits(
-    manager: EntityManager,
-    copyBytes: number
-  ): Promise<void> {
-    this.assertBelowMapCap(copyBytes)
-    const storedBytes = await this.totalImageBytesAcrossMaps(manager)
-    if (
-      copyBytes > 0 &&
-      storedBytes + copyBytes > configService.getDuplicateMapMaxImageBytes()
-    ) {
-      throw new PayloadTooLargeException(
-        'Image storage budget for map duplication is full'
-      )
-    }
-  }
-
-  /** Counts referenced and inline images across every map, including duplicates. */
-  private async totalImageBytesAcrossMaps(
-    manager: EntityManager
-  ): Promise<number> {
-    const totals: { total: string }[] = await manager.query(`
-      SELECT (SELECT COALESCE(SUM(size), 0) FROM mmp_image)
-        + (SELECT COALESCE(SUM(octet_length("imageSrc")), 0)
-           FROM mmp_node WHERE "imageSrc" LIKE 'data:%') AS total
-    `)
-    return Number(totals[0]?.total ?? 0)
   }
 
   private findUnusedImages(uploadedBefore: Date): Promise<MmpImage[]> {

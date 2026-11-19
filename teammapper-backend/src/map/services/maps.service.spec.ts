@@ -9,7 +9,7 @@ import { MmpArrow } from '../entities/mmpArrow.entity'
 import { MmpImage } from '../entities/mmpImage.entity'
 import { MmpImageData } from '../entities/mmpImageData.entity'
 import { LOGO_PNG } from '../../../test/imageFixtures'
-import { MapNode } from '@teammapper/shared'
+import { imageIdOf, MapNode } from '@teammapper/shared'
 import { createMmpClientMap } from '../utils/tests/mapFactories'
 import { Repository } from 'typeorm'
 import { ConfigModule } from '@nestjs/config'
@@ -661,6 +661,70 @@ describe('MapsService', () => {
 
       await mapsService.deleteOutdatedMaps(30)
       expect(await mapsService.findMap(map.id)).toBeNull()
+    })
+
+    describe('with a duplicated image', () => {
+      const mapWithImage = async (mapOptions: Partial<MmpMap>) => {
+        const map = await mapsRepo.save(mapsRepo.create(mapOptions))
+        const reference = await moduleFixture
+          .get(ImagesService)
+          .storeImage(map.id, {
+            buffer: LOGO_PNG,
+            mimetype: 'image/png',
+            size: LOGO_PNG.length,
+          })
+        return { map, imageId: imageIdOf(reference) }
+      }
+
+      const copyOf = async (
+        sourceMapId: string,
+        mapOptions: Partial<MmpMap>
+      ) => {
+        const imagesService = moduleFixture.get(ImagesService)
+        const map = await mapsRepo.save(mapsRepo.create(mapOptions))
+        await imagesService.withDuplicationLimit((manager) =>
+          imagesService.copyImages(manager, sourceMapId, map.id)
+        )
+        return map
+      }
+
+      const countBytes = async (imageId: string): Promise<number> => {
+        const rows: { count: number }[] = await mapsRepo.manager.query(
+          'SELECT count(*)::int AS count FROM mmp_image_data WHERE id = $1',
+          [imageId]
+        )
+        return rows[0].count
+      }
+
+      const outdated = { lastModified: new Date('2021-01-01') }
+      const recent = { lastModified: new Date('2024-09-01') }
+
+      it('keeps the image of a copy when the outdated source map is deleted', async () => {
+        jest.setSystemTime(new Date('2024-09-01'))
+        const source = await mapWithImage(outdated)
+        const copy = await copyOf(source.map.id, recent)
+
+        await mapsService.deleteOutdatedMaps(30)
+
+        expect(await mapsService.findMap(source.map.id)).toBeNull()
+        expect(await mapsService.findMap(copy.id)).not.toBeNull()
+        expect(await countBytes(source.imageId)).toBe(1)
+        expect(
+          await moduleFixture
+            .get(ImagesService)
+            .readImage(copy.id, source.imageId)
+        ).not.toBeNull()
+      })
+
+      it('deletes the bytes of an image when both maps are outdated', async () => {
+        jest.setSystemTime(new Date('2024-09-01'))
+        const source = await mapWithImage(outdated)
+        await copyOf(source.map.id, outdated)
+
+        await mapsService.deleteOutdatedMaps(30)
+
+        expect(await countBytes(source.imageId)).toBe(0)
+      })
     })
   })
 

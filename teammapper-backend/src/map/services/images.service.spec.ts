@@ -2,7 +2,7 @@ import configService from '../../config.service'
 import { ThrottlerException } from '@nestjs/throttler'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm'
-import { PayloadTooLargeException } from '@nestjs/common'
+import { Logger, PayloadTooLargeException } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { Repository } from 'typeorm'
 import { imageIdOf, ImageReference } from '@teammapper/shared'
@@ -191,22 +191,18 @@ describe('ImagesService', () => {
   describe('duplication limits', () => {
     afterEach(() => jest.restoreAllMocks())
 
-    it('counts repeated copies and copies of copies against one budget', async () => {
-      jest
-        .spyOn(configService, 'getDuplicateMapMaxImageBytes')
-        .mockReturnValue(2 * LOGO_PNG.length)
+    it('duplicates a map twice and duplicates a copy of a copy', async () => {
       const source = await createMap()
       const reference = await imagesService.storeImage(source.id, pngUpload())
       const copy = await createMap()
       await duplicateImages(source.id, copy.id)
-      expect(await read(copy.id, reference)).not.toBeNull()
-      for (const map of [source, copy]) {
-        const target = await createMap()
-        await expect(duplicateImages(map.id, target.id)).rejects.toThrow(
-          PayloadTooLargeException
-        )
-        expect(await imagesRepo.countBy({ mapId: target.id })).toBe(0)
-        expect(await read(target.id, reference)).toBeNull()
+      const secondCopy = await createMap()
+      await duplicateImages(source.id, secondCopy.id)
+      const copyOfCopy = await createMap()
+      await duplicateImages(copy.id, copyOfCopy.id)
+
+      for (const map of [copy, secondCopy, copyOfCopy]) {
+        expect(await read(map.id, reference)).not.toBeNull()
       }
     })
 
@@ -223,18 +219,19 @@ describe('ImagesService', () => {
       expect(await read(target.id, reference)).toBeNull()
     })
 
-    it('includes inline images in both stored usage and the proposed copy', async () => {
+    it('counts inline image bytes toward the image cap of the copy', async () => {
       const source = await mapsService.createEmptyMap(createClientRootNode())
       const inline = `data:image/png;base64,${LOGO_PNG.toString('base64')}`
       await nodesRepo.update({ nodeMapId: source.id }, { imageSrc: inline })
       const bytes = Buffer.byteLength(inline)
       jest
-        .spyOn(configService, 'getDuplicateMapMaxImageBytes')
-        .mockReturnValue(2 * bytes - 1)
+        .spyOn(configService, 'getMaxImageBytesPerMap')
+        .mockReturnValue(bytes - 1)
       const target = await createMap()
       await expect(
         duplicateImages(source.id, target.id, bytes)
       ).rejects.toThrow(PayloadTooLargeException)
+      expect(await imagesRepo.countBy({ mapId: target.id })).toBe(0)
     })
 
     it('rejects concurrent duplication and releases the lock after failure', async () => {
@@ -270,18 +267,6 @@ describe('ImagesService', () => {
   })
 
   describe('images follow their map', () => {
-    it('keeps every image readable in a duplicate after the source is deleted', async () => {
-      const source = await createMap()
-      const reference = await imagesService.storeImage(source.id, pngUpload())
-      const copy = await createMap()
-
-      await duplicateImages(source.id, copy.id)
-      await mapsService.deleteMap(source.id)
-
-      expect(await read(copy.id, reference)).not.toBeNull()
-      expect(await read(source.id, reference)).toBeNull()
-    })
-
     it('counts a copied image as uploaded at the time of duplication', async () => {
       const source = await createMap()
       const reference = await imagesService.storeImage(source.id, pngUpload())
@@ -318,6 +303,164 @@ describe('ImagesService', () => {
       await mapsService.deleteOutdatedMaps(30)
 
       expect(await read(map.id, reference)).toBeNull()
+    })
+  })
+
+  describe('shared image bytes', () => {
+    const countBytes = async (reference: ImageReference): Promise<number> => {
+      const rows: { count: number }[] = await imagesRepo.manager.query(
+        'SELECT count(*)::int AS count FROM mmp_image_data WHERE id = $1',
+        [imageIdOf(reference)]
+      )
+      return rows[0].count
+    }
+
+    it('adds no bytes row when a map is duplicated', async () => {
+      const source = await createMap()
+      const reference = await imagesService.storeImage(source.id, pngUpload())
+      const copy = await createMap()
+
+      await duplicateImages(source.id, copy.id)
+
+      expect(await countBytes(reference)).toBe(1)
+      expect(await read(copy.id, reference)).not.toBeNull()
+    })
+
+    it('keeps the bytes of a copied image after the source map is deleted', async () => {
+      const source = await createMap()
+      const reference = await imagesService.storeImage(source.id, pngUpload())
+      const copy = await createMap()
+      await duplicateImages(source.id, copy.id)
+
+      await mapsService.deleteMap(source.id)
+
+      expect(await countBytes(reference)).toBe(1)
+      expect(await read(copy.id, reference)).not.toBeNull()
+      expect(await read(source.id, reference)).toBeNull()
+    })
+
+    it('deletes the bytes of an image together with the last map that references it', async () => {
+      const source = await createMap()
+      const reference = await imagesService.storeImage(source.id, pngUpload())
+      const copy = await createMap()
+      await duplicateImages(source.id, copy.id)
+
+      await mapsService.deleteMap(source.id)
+      await mapsService.deleteMap(copy.id)
+
+      expect(await countBytes(reference)).toBe(0)
+    })
+
+    it('keeps the bytes of the source when deleteUnusedImages removes the unused image of a copy', async () => {
+      const source = await createMap()
+      const reference = await imagesService.storeImage(source.id, pngUpload())
+      await referenceFromNode(source, reference)
+      const copy = await createMap()
+      await duplicateImages(source.id, copy.id)
+      await ageImage(copy.id, reference, 8)
+
+      expect(await imagesService.deleteUnusedImages()).toBe(1)
+
+      expect(await read(copy.id, reference)).toBeNull()
+      expect(await read(source.id, reference)).not.toBeNull()
+      expect(await countBytes(reference)).toBe(1)
+    })
+
+    it('deletes the bytes when deleteUnusedImages removes the last reference', async () => {
+      const map = await createMap()
+      const reference = await imagesService.storeImage(map.id, pngUpload())
+      await ageImage(map.id, reference, 8)
+
+      expect(await imagesService.deleteUnusedImages()).toBe(1)
+
+      expect(await countBytes(reference)).toBe(0)
+    })
+
+    it('deletes bytes that no reference row points at when deleteUnusedImages runs', async () => {
+      const map = await createMap()
+      const reference = await imagesService.storeImage(map.id, pngUpload())
+      await imagesRepo.manager.query('DELETE FROM mmp_image WHERE id = $1', [
+        imageIdOf(reference),
+      ])
+
+      await imagesService.deleteUnusedImages()
+
+      expect(await countBytes(reference)).toBe(0)
+    })
+
+    it('copies a reference only for the image whose bytes exist and logs the dropped one', async () => {
+      const source = await createMap()
+      const kept = await imagesService.storeImage(source.id, pngUpload())
+      const lost = await imagesService.storeImage(source.id, pngUpload())
+      await imagesRepo.manager.query(
+        'DELETE FROM mmp_image_data WHERE id = $1',
+        [imageIdOf(lost)]
+      )
+      const target = await createMap()
+      const warn = jest.spyOn(Logger.prototype, 'warn')
+
+      await duplicateImages(source.id, target.id)
+
+      const rows = await imagesRepo.findBy({ mapId: target.id })
+      expect(rows.map((row) => row.id)).toEqual([imageIdOf(kept)])
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `copyImages(): map ${source.id} to map ${target.id} dropped images without bytes: ${imageIdOf(lost)}`
+        )
+      )
+      warn.mockRestore()
+    })
+
+    /** Polls until a backend waits for a lock, so the test needs no fixed sleep. */
+    const waitForLockWaiter = async (): Promise<void> => {
+      const deadline = Date.now() + 5000
+      while (Date.now() < deadline) {
+        const rows: { count: number }[] = await imagesRepo.manager.query(
+          `SELECT count(*)::int AS count FROM pg_stat_activity
+           WHERE wait_event_type = 'Lock' AND datname = current_database()`
+        )
+        if (rows[0].count > 0) return
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      }
+      throw new Error('No backend waited for a lock within 5 seconds')
+    }
+
+    it('keeps the copy readable when the source map is deleted during the duplication', async () => {
+      const source = await createMap()
+      const reference = await imagesService.storeImage(source.id, pngUpload())
+      const target = await createMap()
+      let release: () => void = () => undefined
+      const pending = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      let copied: () => void = () => undefined
+      let copyFailed: (error: unknown) => void = () => undefined
+      const copyDone = new Promise<void>((resolve, reject) => {
+        copied = resolve
+        copyFailed = reject
+      })
+      // Without the row locks the deletion removes the bytes the open copy still needs.
+      const duplication = imagesService.withDuplicationLimit(
+        async (manager) => {
+          try {
+            await imagesService.copyImages(manager, source.id, target.id)
+          } catch (error) {
+            copyFailed(error)
+            throw error
+          }
+          copied()
+          await pending
+        }
+      )
+      await copyDone
+
+      const deletion = mapsService.deleteMap(source.id)
+      await waitForLockWaiter()
+      release()
+      await Promise.all([duplication, deletion])
+
+      expect(await read(target.id, reference)).not.toBeNull()
+      expect(await countBytes(reference)).toBe(1)
     })
   })
 

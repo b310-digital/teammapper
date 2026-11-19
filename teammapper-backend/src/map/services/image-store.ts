@@ -1,33 +1,47 @@
 import { EntityManager } from 'typeorm'
 
 /**
- * Puts, gets, copies and deletes the bytes of node images. No other code reads
- * or writes image bytes, so a later object storage switch replaces only the
- * implementation. Callers write the metadata row before the bytes and delete
- * the metadata row before the bytes.
+ * Stores the bytes of node images, one entry per image id, which a map and
+ * its copies share. No other code reads or writes image bytes, so a switch to
+ * object storage replaces only the implementation. Callers write the metadata
+ * row before the bytes and delete it before the bytes.
+ *
+ * Locking: a copy locks the bytes shared, a deletion locks them exclusively,
+ * both in id order. A deletion therefore waits for a running copy before it
+ * deletes the bytes no metadata row references.
+ *
+ * Bytes written after a concurrent map deletion stay unreferenced until the
+ * daily job calls deleteAllUnreferenced.
  */
 export abstract class ImageStore {
   /** Stores the bytes of one image. */
-  abstract put(mapId: string, imageId: string, data: Buffer): Promise<void>
+  abstract put(imageId: string, data: Buffer): Promise<void>
 
-  /** Returns the bytes of one image, or null when the store holds none. */
-  abstract get(mapId: string, imageId: string): Promise<Buffer | null>
+  /** Returns the bytes of one image, or null when they are missing. */
+  abstract get(imageId: string): Promise<Buffer | null>
 
   /**
-   * Copies the bytes of the given images to another map under the same ids.
-   * A store that keeps bytes in the database writes them through `manager`,
-   * so the copy commits or rolls back with the map duplication.
+   * Locks the bytes of the given images for a copy until the transaction of
+   * `manager` ends. Returns the ids whose bytes exist.
    */
-  abstract copy(
+  abstract holdForCopy(
     manager: EntityManager,
-    sourceMapId: string,
-    targetMapId: string,
     imageIds: string[]
-  ): Promise<void>
+  ): Promise<string[]>
 
-  /** Deletes the bytes of one image. */
-  abstract delete(mapId: string, imageId: string): Promise<void>
+  /**
+   * Deletes the bytes of the given images that no metadata row references,
+   * inside the transaction of `manager`, and returns how many it deleted.
+   * Call it after deleting the metadata rows in that transaction.
+   */
+  abstract deleteUnreferenced(
+    manager: EntityManager,
+    imageIds: string[]
+  ): Promise<number>
 
-  /** Deletes the bytes of every image of one map. */
-  abstract deleteAllOfMap(mapId: string): Promise<void>
+  /**
+   * Deletes all bytes that no metadata row references. Returns the number of
+   * images whose bytes it deleted.
+   */
+  abstract deleteAllUnreferenced(): Promise<number>
 }
