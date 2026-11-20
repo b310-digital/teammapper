@@ -42,7 +42,8 @@ export class YjsPersistenceService implements OnModuleDestroy {
     }
   }
 
-  // Persists a Y.Doc's nodes and options to the database in a transaction
+  // Persists a Y.Doc's nodes and options to the database in a transaction,
+  // and skips a map that no longer exists
   async persistDoc(mapId: string, doc: Y.Doc): Promise<void> {
     this.assertMapAccepted(doc)
     const queryRunner =
@@ -51,6 +52,11 @@ export class YjsPersistenceService implements OnModuleDestroy {
 
     try {
       await queryRunner.startTransaction()
+      if (!(await this.lockMap(queryRunner, mapId))) {
+        this.logger.debug(`Skipped persist of deleted map ${mapId}`)
+        await queryRunner.rollbackTransaction()
+        return
+      }
 
       this.assertMapAccepted(doc)
       const nodesMap = doc.getMap('nodes')
@@ -121,7 +127,8 @@ export class YjsPersistenceService implements OnModuleDestroy {
   }
 
   // Persists without waiting for the debounce, on last client disconnect and
-  // on shutdown. Returns whether the doc reached the database.
+  // on shutdown. Returns false when the save failed. A deleted map counts as
+  // saved, so nobody retries it.
   async persistImmediately(mapId: string, doc: Y.Doc): Promise<boolean> {
     this.cancelDebounceTimer(mapId)
 
@@ -285,6 +292,19 @@ export class YjsPersistenceService implements OnModuleDestroy {
       return { source, target }
     }
     return null
+  }
+
+  // Locks the map row until the transaction ends, so a save and a deletion of
+  // the same map run one after the other. Returns false for a deleted map.
+  private async lockMap(
+    queryRunner: QueryRunner,
+    mapId: string
+  ): Promise<boolean> {
+    const rows: unknown[] = await queryRunner.query(
+      'SELECT 1 FROM "mmp_map" WHERE "id" = $1 FOR NO KEY UPDATE',
+      [mapId]
+    )
+    return rows.length > 0
   }
 
   private async updateMapMetadata(

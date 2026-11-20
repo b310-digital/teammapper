@@ -37,6 +37,7 @@ describe('Yjs persistence validation', () => {
     commitTransaction: jest.fn<Promise<void>, []>(),
     rollbackTransaction: jest.fn<Promise<void>, []>(),
     release: jest.fn<Promise<void>, []>(),
+    query: jest.fn<Promise<unknown[]>, []>(),
     isTransactionActive: true,
     isReleased: false,
     manager: {
@@ -58,6 +59,8 @@ describe('Yjs persistence validation', () => {
     ]) {
       method.mockResolvedValue(undefined)
     }
+    // The map row exists, so the save locks it and continues
+    runner.query.mockResolvedValue([{}])
     const nodes = {
       manager: { connection: { createQueryRunner: () => runner } },
     } as unknown as Repository<MmpNode>
