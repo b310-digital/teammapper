@@ -361,6 +361,45 @@ describe('YjsPersistenceService', () => {
     })
   })
 
+  describe('persistDoc on a deleted map', () => {
+    // Resolves once a query of this database waits for a lock
+    const waitForBlockedQuery = async (): Promise<void> => {
+      const blocked = `SELECT 1 FROM pg_stat_activity
+        WHERE datname = current_database() AND wait_event_type = 'Lock'`
+      while ((await mapsRepo.query(blocked)).length === 0);
+    }
+
+    it('skips the save without an error', async () => {
+      const { map } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      await mapsRepo.delete(map.id)
+
+      await expect(service.persistDoc(map.id, doc)).resolves.toBeUndefined()
+      expect(await nodesRepo.countBy({ nodeMapId: map.id })).toBe(0)
+
+      doc.destroy()
+    })
+
+    it('waits for a running deletion, then skips the save', async () => {
+      const { map } = await createMapWithRootNode()
+      const doc = await hydrateFromDb(map)
+      const deletion = mapsRepo.manager.connection.createQueryRunner()
+      await deletion.connect()
+      await deletion.startTransaction()
+      await deletion.manager.delete(MmpMap, map.id)
+
+      const save = service.persistDoc(map.id, doc)
+      await waitForBlockedQuery()
+      await deletion.commitTransaction()
+      await deletion.release()
+
+      await expect(save).resolves.toBeUndefined()
+      expect(await nodesRepo.countBy({ nodeMapId: map.id })).toBe(0)
+
+      doc.destroy()
+    })
+  })
+
   describe('persistDoc arrows', () => {
     // A map with a root and two children, loaded into a Y.Doc
     const setUpTwoChildren = async () => {
