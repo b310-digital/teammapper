@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { DEFAULT_SYSTEM_SETTINGS, SystemSettings } from '@teammapper/shared'
 
-type Env = Record<string, string | undefined>
+export type Env = Record<string, string | undefined>
 
 const SERVER_PICTOGRAM_API_URL = '/arasaac/api/pictograms'
 const SERVER_PICTOGRAM_STATIC_URL = '/arasaac/images/pictograms'
@@ -54,7 +54,7 @@ function applyUrls(settings: SystemSettings, env: Env): void {
 }
 
 /** Reads `true` or `false` in upper or lower case; other values give undefined. */
-function parseFlag(value: string | undefined): boolean | undefined {
+export function parseFlag(value: string | undefined): boolean | undefined {
   const normalized = value?.trim().toLowerCase()
   if (normalized === 'true') return true
   if (normalized === 'false') return false

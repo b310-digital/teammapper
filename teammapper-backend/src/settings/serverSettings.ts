@@ -5,5 +5,5 @@ import { readUserSettings } from './readUserSettings'
 // The server resolves the settings once, at startup.
 export const serverSettings: Settings = {
   systemSettings: resolveSystemSettings(process.env, readServerVersion()),
-  userSettings: readUserSettings(),
+  userSettings: readUserSettings(process.env),
 }

@@ -103,6 +103,8 @@ jobs:
                   POSTGRES_USER: "teammapper-user"
                   POSTGRES_QUERY_TIMEOUT: 10000
                   POSTGRES_STATEMENT_TIMEOUT: 10000
+                  # The specs expect the values of settings.default.json.
+                  IGNORE_SETTINGS_OVERRIDE: true
 
     teammapper-frontend-test:
         runs-on: ubuntu-latest
