@@ -276,6 +276,7 @@ or lower case. An unset, empty or other value keeps the default.
 | `PRIVACY_URL` | Target of the privacy policy link in the start page footer and the info dialog; unset or empty hides the link | unset |
 | `AI_LLM_MODEL` | The LLM that AI generate uses; the AI dialog shows its name while `AI_ENABLED` is on | unset |
 | `DELETE_AFTER_DAYS` | Number of days before unused maps are deleted | `30` |
+| `IGNORE_SETTINGS_OVERRIDE` | With `true`, the server skips `config/settings.override.json` and reads the [user settings](#user-settings) from `settings.default.json` | `false` |
 | `MODE` | Sets the default log level: `debug` with `DEV`, `log` with any other value | unset |
 | `LOG_LEVEL` | NestJS log verbosity (`error`, `warn`, `log`, `debug`, `verbose`); wins over `MODE` | `debug` with `MODE=DEV`, `log` otherwise |
 
@@ -311,6 +312,10 @@ The server checks the file at startup and refuses to start when a field is
 missing, unknown or invalid, such as a branch style other than `tapered`,
 `curved` or `straight`. The file holds user settings only: feature flags,
 links and pictogram addresses come from the environment variables above.
+
+`IGNORE_SETTINGS_OVERRIDE=true` makes the server skip the override file and
+read `settings.default.json`. The tests expect the default values, so the CI
+workflows set it, and a fork that ships an override keeps its tests green.
 
 ### Offline build settings
 
