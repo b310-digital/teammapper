@@ -517,6 +517,25 @@ describe('MapSyncService', () => {
       });
     });
 
+    it('writes the creation date into the stored entry of an opened map', async () => {
+      const storage = TestBed.inject(StorageService);
+      jest.mocked(storage.get).mockResolvedValue({
+        adminId: 'admin-1',
+        modificationSecret: 'secret-1',
+        ttl: null,
+        rootName: 'Root',
+      });
+      mapStore.getMap.mockResolvedValue({ ...mockServerMap, writable: true });
+
+      await service.prepareExistingMap('test-uuid', 'my-secret');
+      await Promise.resolve();
+
+      expect(storage.set).toHaveBeenCalledWith(
+        'test-uuid',
+        expect.objectContaining({ createdAt: new Date('2026-01-01') })
+      );
+    });
+
     it('shows no warning for a valid secret', async () => {
       mapStore.getMap.mockResolvedValue({ ...mockServerMap, writable: true });
 

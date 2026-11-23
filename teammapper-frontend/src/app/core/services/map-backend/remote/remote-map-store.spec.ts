@@ -92,6 +92,7 @@ describe('RemoteMapStore', () => {
             adminId: 'admin-1',
             modificationSecret: 'secret-1',
             ttl: '2026-02-01T00:00:00.000Z',
+            createdAt: '2026-01-01T00:00:00.000Z',
             rootName: 'Root',
           },
           {
@@ -99,6 +100,7 @@ describe('RemoteMapStore', () => {
             adminId: 'admin-2',
             modificationSecret: 'secret-2',
             ttl: null,
+            createdAt: null,
             rootName: null,
           },
         ])
@@ -112,6 +114,7 @@ describe('RemoteMapStore', () => {
             modificationSecret: 'secret-1',
             ttl: new Date('2026-02-01T00:00:00.000Z'),
             rootName: 'Root',
+            createdAt: new Date('2026-01-01T00:00:00.000Z'),
           },
         },
         {
@@ -121,6 +124,7 @@ describe('RemoteMapStore', () => {
             modificationSecret: 'secret-2',
             ttl: null,
             rootName: null,
+            createdAt: null,
           },
         },
       ]);

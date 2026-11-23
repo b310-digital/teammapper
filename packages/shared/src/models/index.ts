@@ -114,6 +114,7 @@ export interface ClientMapInfo {
   adminId: string | null;
   modificationSecret: string | null;
   ttl?: Date | number | string | null;
+  createdAt?: Date | number | string | null;
   rootName: string | null;
 }
 
@@ -257,6 +258,8 @@ export interface CachedAdminMapValue {
   /** Null when the map never expires. */
   ttl: Date | number | string | null;
   rootName: string | null;
+  /** Missing on entries that a release before the creation date stored. */
+  createdAt?: Date | number | string | null;
 }
 
 export interface CachedAdminMapEntry {

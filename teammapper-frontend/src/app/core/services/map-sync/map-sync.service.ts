@@ -464,6 +464,7 @@ export class MapSyncService implements OnDestroy {
         serverMap.deletedAt === null ? null : new Date(serverMap.deletedAt);
       map.rootName =
         findMainRoot(serverMap.data)?.name ?? serverMap.data[0]?.name ?? null;
+      map.createdAt = new Date(serverMap.createdAt);
       this.storageService.set(serverMap.uuid, map);
     }
   }

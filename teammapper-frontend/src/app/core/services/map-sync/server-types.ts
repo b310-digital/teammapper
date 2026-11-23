@@ -24,8 +24,9 @@ interface PrivateServerMap extends Omit<ClientPrivateMap, 'map'> {
   modificationSecret: string;
 }
 
-interface ServerMapInfo extends Omit<ClientMapInfo, 'ttl'> {
+interface ServerMapInfo extends Omit<ClientMapInfo, 'ttl' | 'createdAt'> {
   ttl: string | null;
+  createdAt: string | null;
 }
 
 export { ServerMap, ServerMapInfo, PrivateServerMap };

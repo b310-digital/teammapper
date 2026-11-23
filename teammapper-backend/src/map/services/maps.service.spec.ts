@@ -838,5 +838,14 @@ describe('MapsService', () => {
         expect.arrayContaining([map1.id, map2.id])
       )
     })
+
+    it('lists the creation date of each map', async () => {
+      const createdAt = new Date('2026-01-01T00:00:00.000Z')
+      await mapsRepo.save({ ownerExternalId: 'user1', createdAt })
+
+      const [map] = await mapsService.getMapsOfUser('user1')
+
+      expect(map.createdAt).toEqual(createdAt)
+    })
   })
 })

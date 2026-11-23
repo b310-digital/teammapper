@@ -29,15 +29,16 @@ describe('MindmapsOverview', () => {
   function entry(
     id: string,
     adminId: string | null,
-    ttl: Date | null = new Date('2099-01-01')
+    createdAt: Date | null = new Date('2026-11-01')
   ): CachedAdminMapEntry {
     return {
       id,
       cachedAdminMapValue: {
         adminId,
         modificationSecret: null,
-        ttl,
+        ttl: new Date('2099-01-01'),
         rootName: id,
+        createdAt,
       },
     };
   }
@@ -121,16 +122,20 @@ describe('MindmapsOverview', () => {
     ).toHaveLength(0);
   });
 
-  it('shows the deletion date of a map that has one', async () => {
+  it('shows the creation date of a map in both lists', async () => {
     await render([entry('map-1', 'admin-1')]);
 
-    expect(fixture.nativeElement.querySelectorAll('.map-ttl')).toHaveLength(2);
+    expect(
+      fixture.nativeElement.querySelectorAll('.map-created-at')
+    ).toHaveLength(2);
   });
 
-  it('shows no deletion date for a map without one', async () => {
+  it('shows no creation date for an entry stored without one', async () => {
     await render([entry('map-1', 'admin-1', null)]);
 
-    expect(fixture.nativeElement.querySelectorAll('.map-ttl')).toHaveLength(0);
+    expect(
+      fixture.nativeElement.querySelectorAll('.map-created-at')
+    ).toHaveLength(0);
   });
 
   it('links a map by its path in the web build', async () => {

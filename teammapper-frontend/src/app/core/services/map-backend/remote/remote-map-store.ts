@@ -56,6 +56,7 @@ export class RemoteMapStore implements MapStore {
         modificationSecret: map.modificationSecret,
         ttl: map.ttl ? new Date(map.ttl) : null,
         rootName: map.rootName,
+        createdAt: map.createdAt ? new Date(map.createdAt) : null,
       },
     }));
   }

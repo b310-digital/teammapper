@@ -253,7 +253,7 @@ describe('LocalMapStore', () => {
   });
 
   describe('listMaps', () => {
-    it('lists every stored map with its root name and no deletion date', async () => {
+    it('lists every stored map with its root name, creation date and no deletion date', async () => {
       const first = await store.createMap(ROOT_NODE);
       const second = await store.createMap({ ...ROOT_NODE, name: 'Other' });
 
@@ -269,6 +269,7 @@ describe('LocalMapStore', () => {
               modificationSecret: first.modificationSecret,
               ttl: null,
               rootName: 'Root',
+              createdAt: first.map.createdAt,
             },
           },
           expect.objectContaining({

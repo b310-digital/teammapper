@@ -216,7 +216,7 @@
       "ROOT_NODE_NAME": "Nom du noeud racine",
       "NODE_NAME": "Nom du noeud",
       "TITLE": "Paramètres",
-      "TTL": "Dernière date de suppression connue",
+      "CREATED_AT": "Créée le",
       "DARK_MODE": "Mode sombre",
       "DELETION": "Suppression",
       "DELETED_AT": "Date de suppression :",
