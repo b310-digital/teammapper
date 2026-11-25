@@ -216,7 +216,7 @@
       "ROOT_NODE_NAME": "根节点名称",
       "NODE_NAME": "节点名称",
       "TITLE": "设置",
-      "TTL": "最后已知删除日期",
+      "CREATED_AT": "创建日期",
       "DARK_MODE": "深色模式",
       "DELETION": "删除",
       "DELETED_AT": "删除日期：",

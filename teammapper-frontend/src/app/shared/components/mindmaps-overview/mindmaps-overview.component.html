@@ -23,10 +23,10 @@
                   getMapTitle(ownedEntry)
                 }}</a>
               </span>
-              @if (ownedEntry.cachedAdminMapValue.ttl !== null) {
-                <span matLine class="map-ttl">
-                  {{ 'PAGES.SETTINGS.TTL' | translate }}:
-                  {{ ownedEntry.cachedAdminMapValue.ttl | localizedDate }}
+              @if (ownedEntry.cachedAdminMapValue.createdAt) {
+                <span matLine class="map-created-at">
+                  {{ 'PAGES.SETTINGS.CREATED_AT' | translate }}:
+                  {{ ownedEntry.cachedAdminMapValue.createdAt | localizedDate }}
                 </span>
               }
               @if (ownedEntry.cachedAdminMapValue.adminId) {
@@ -69,10 +69,12 @@
                 getMapTitle(cachedMapEntry)
               }}</a>
             </span>
-            @if (cachedMapEntry.cachedAdminMapValue.ttl !== null) {
-              <span matLine class="map-ttl">
-                {{ 'PAGES.SETTINGS.TTL' | translate }}:
-                {{ cachedMapEntry.cachedAdminMapValue.ttl | localizedDate }}
+            @if (cachedMapEntry.cachedAdminMapValue.createdAt) {
+              <span matLine class="map-created-at">
+                {{ 'PAGES.SETTINGS.CREATED_AT' | translate }}:
+                {{
+                  cachedMapEntry.cachedAdminMapValue.createdAt | localizedDate
+                }}
               </span>
             }
             @if (cachedMapEntry.cachedAdminMapValue.adminId) {

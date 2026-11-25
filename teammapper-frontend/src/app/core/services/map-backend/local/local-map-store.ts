@@ -674,6 +674,7 @@ function toAdminEntry(record: LocalMapRecord): CachedAdminMapEntry {
       modificationSecret: record.modificationSecret,
       ttl: null,
       rootName: record.rootName,
+      createdAt: record.createdAt,
     },
   };
 }

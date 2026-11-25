@@ -216,7 +216,7 @@
       "ROOT_NODE_NAME": "根節點名稱",
       "NODE_NAME": "節點名稱",
       "TITLE": "設定",
-      "TTL": "最後已知的刪除日期",
+      "CREATED_AT": "建立日期",
       "DARK_MODE": "深色模式",
       "DELETION": "刪除",
       "DELETED_AT": "刪除日期：",

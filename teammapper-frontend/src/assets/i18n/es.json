@@ -216,7 +216,7 @@
       "ROOT_NODE_NAME": "Nombre del nodo raíz",
       "NODE_NAME": "Nombre del nodo",
       "TITLE": "Ajustes",
-      "TTL": "Última fecha de eliminación conocida",
+      "CREATED_AT": "Creado el",
       "DARK_MODE": "Modo oscuro",
       "DELETION": "Eliminación",
       "DELETED_AT": "Fecha de eliminación:",

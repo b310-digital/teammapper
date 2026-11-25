@@ -154,6 +154,7 @@ export class DialogShareComponent implements OnInit {
         modificationSecret: newMap.modificationSecret,
         ttl: newMap.map.deletedAt,
         rootName: newMap.map.data[0].name,
+        createdAt: newMap.map.createdAt,
       });
 
       this.dialogRef.close();

@@ -173,10 +173,10 @@ test('lists the user settings first, then the map settings', async ({
     'Deletion',
   ]);
   await expect(
-    mapSettings.getByText('Shared with everyone on this map')
+    mapSettings.getByText('For everyone on every device')
   ).toBeVisible();
   await expect(
-    userSettings.getByText('Only for you, in this browser')
+    userSettings.getByText('Only for you in this browser')
   ).toBeVisible();
   await expect(
     userSettings.getByText(/Picks a color for each new branch/)

@@ -216,7 +216,7 @@
       "ROOT_NODE_NAME": "Nome do nó raiz",
       "NODE_NAME": "Nome do nó",
       "TITLE": "Configurações",
-      "TTL": "Última data de exclusão conhecida",
+      "CREATED_AT": "Criado em",
       "DARK_MODE": "Modo escuro",
       "DELETION": "Exclusão",
       "DELETED_AT": "Data de exclusão:",

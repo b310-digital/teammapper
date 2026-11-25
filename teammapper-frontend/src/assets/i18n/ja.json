@@ -217,7 +217,7 @@
       "ROOT_NODE_NAME": "ルートノード名",
       "NODE_NAME": "ノード名",
       "TITLE": "設定",
-      "TTL": "削除予定日",
+      "CREATED_AT": "作成日",
       "SHOW_LINKTEXT": "リンクテキストを表示",
       "DARK_MODE": "ダークモード",
       "DELETION": "削除",
